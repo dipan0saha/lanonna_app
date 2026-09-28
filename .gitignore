@@ -8,6 +8,8 @@ credentials.json
 service-account*.json
 **/google-services.json
 **/GoogleService-Info.plist
+firebase-debug.log
+firebase-debug.*.log
 
 # OS and editors
 .DS_Store

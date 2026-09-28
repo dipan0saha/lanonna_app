@@ -1,11 +1,11 @@
 # GCP / Firebase
 
-Placeholder for:
+**Live dev project:** `lanonna-dev` — see **[SETUP.md](SETUP.md)** for resources, service accounts, and manual Firebase steps.
 
-- API enablement checklist
-- Cloud Run deploy scripts (`api`, `worker`)
-- GCS bucket CORS and IAM notes
-- Pub/Sub topic + GCS notification wiring
-- Optional Terraform modules
+| File | Purpose |
+|------|---------|
+| [SETUP.md](SETUP.md) | What is provisioned, console links, automation key path |
+| [project.env.example](project.env.example) | Template for `project.env` |
+| [bootstrap.sh](bootstrap.sh) | Idempotent API/bucket/topic setup |
 
-Follow [docs/path_b_gcp_stack.md](../../docs/path_b_gcp_stack.md) for the target topology.
+Architecture: [docs/path_b_gcp_stack.md](../../docs/path_b_gcp_stack.md).
