@@ -63,7 +63,7 @@ gcloud config set project lanonna-dev
 
 ## Infrastructure as code
 
-Platform resources are managed with **Terraform** — see [docs/infra.md](../../docs/infra.md).
+Platform resources are managed with **Terraform** — see [docs/Initial_Setup.md](../../docs/Initial_Setup.md).
 
 Legacy `bootstrap.sh` is deprecated.
 

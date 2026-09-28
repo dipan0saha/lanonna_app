@@ -48,5 +48,5 @@ Apply migrations from `infra/db/migrations/` against Cloud SQL (tooling choice: 
 
 ## Related reading
 
-- [Infrastructure (Terraform)](infra.md) — dev/prod projects, apply, import
+- [Initial GCP & infrastructure setup](Initial_Setup.md) — Terraform, dev/prod, manual steps
 - [Path B GCP stack](path_b_gcp_stack.md) — media flow (display + thumb), security checklist, cost assumptions
