@@ -5,7 +5,7 @@
 | Topic | Doc |
 |-------|-----|
 | Resource names, console links, manual Firebase steps | [infra/gcp/SETUP.md](../infra/gcp/SETUP.md) |
-| Architecture (Path B) | [path_b_gcp_stack.md](path_b_gcp_stack.md) |
+| Platform architecture | [platform-architecture.md](platform-architecture.md) |
 | Local dev layout | [development.md](development.md) |
 
 ---
@@ -96,7 +96,7 @@ terraform plan
 4. Copy `terraform.tfvars.example` → `terraform.tfvars` (globally unique bucket names).
 5. `terraform init && terraform apply` — **fresh apply**, no import.
 
-Switching real users to prod is a **new Firebase project + prod app flavor**, not renaming dev. See [path_b_gcp_stack.md](path_b_gcp_stack.md) for architecture; migrate only if you had real users on dev.
+Switching real users to prod is a **new Firebase project + prod app flavor**, not renaming dev. See [platform-architecture.md](platform-architecture.md) for architecture; migrate only if you had real users on dev.
 
 ---
 

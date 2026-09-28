@@ -23,4 +23,4 @@ Migrations live in `infra/db/migrations/`, not in this folder.
 - **Min instances:** 0 (scale on demand)
 - **Auth:** `Authorization: Bearer <Firebase ID token>`; App Check header before public beta
 
-See [docs/path_b_gcp_stack.md](../../docs/path_b_gcp_stack.md).
+See [docs/platform-architecture.md](../../docs/platform-architecture.md).

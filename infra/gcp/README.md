@@ -8,4 +8,4 @@
 | [project.env.example](project.env.example) | Template for `project.env` |
 | [bootstrap.sh](bootstrap.sh) | **Deprecated** — use [Terraform](../terraform/environments/dev) |
 
-Architecture: [docs/path_b_gcp_stack.md](../../docs/path_b_gcp_stack.md).
+Architecture: [docs/platform-architecture.md](../../docs/platform-architecture.md).

@@ -1,9 +1,9 @@
-# La Nonna — Path B GCP target stack
+# La Nonna — platform architecture (GCP)
 
-**Document version:** 1.4  
+**Document version:** 1.5  
 **Last updated:** 2026-09-28  
-**Location:** `docs/path_b_gcp_stack.md` (this repository)  
-**Status:** Target architecture for greenfield build
+**Location:** `docs/platform-architecture.md` (this repository)  
+**Status:** Target platform architecture for greenfield build
 
 ---
 

@@ -20,4 +20,4 @@ services/worker/
 - **Trigger:** Pub/Sub push (authenticated)
 - **Idempotency:** key on `bucket/object/generation` for thumbnail jobs
 
-See [docs/path_b_gcp_stack.md](../../docs/path_b_gcp_stack.md).
+See [docs/platform-architecture.md](../../docs/platform-architecture.md).

@@ -19,7 +19,7 @@ lanonna_app/
 └── .github/workflows/       # CI
 ```
 
-**Deploy model:** `api` and `worker` share domain logic where practical (single backend repo or shared `packages/` module) but ship as **two Cloud Run services** — see [path_b_gcp_stack.md](path_b_gcp_stack.md).
+**Deploy model:** `api` and `worker` share domain logic where practical (single backend repo or shared `packages/` module) but ship as **two Cloud Run services** — see [platform-architecture.md](platform-architecture.md).
 
 ## Prerequisites
 
@@ -49,4 +49,4 @@ Apply migrations from `infra/db/migrations/` against Cloud SQL (tooling choice: 
 ## Related reading
 
 - [Initial GCP & infrastructure setup](Initial_Setup.md) — Terraform, dev/prod, manual steps
-- [Path B GCP stack](path_b_gcp_stack.md) — media flow (display + thumb), security checklist, cost assumptions
+- [Platform architecture](platform-architecture.md) — media flow (display + thumb), security checklist, cost assumptions
