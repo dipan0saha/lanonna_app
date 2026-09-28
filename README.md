@@ -1,11 +1,9 @@
 # lanonna_app
 
-Greenfield **La Nonna** — Flutter client and GCP backend (Path B).
+**La Nonna** — greenfield Flutter client and GCP backend.
 
-- **Stack target:** Firebase Auth, Cloud Run API, Cloud SQL (PostgreSQL), GCS (display + thumbnails), Pub/Sub workers.
-- **Architecture doc (workspace):** `Neo_Workspace/docs/nonna_path_b_gcp_stack.md`
-
-This repository is separate from the legacy `nonna_app` codebase.
+- **Stack:** Firebase Auth, Cloud Run API, Cloud SQL (PostgreSQL), GCS (display + thumbnails), Pub/Sub workers.
+- **Architecture:** [docs/path_b_gcp_stack.md](docs/path_b_gcp_stack.md)
 
 ## Status
 
