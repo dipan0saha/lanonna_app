@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# DEPRECATED: Use infra/terraform/environments/dev instead.
 # Idempotent Path B GCP bootstrap for La Nonna (dev).
 set -euo pipefail
 

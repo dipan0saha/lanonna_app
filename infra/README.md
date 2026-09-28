@@ -2,8 +2,9 @@
 
 | Path | Purpose |
 |------|---------|
+| [terraform/](terraform/) | **Terraform** — platform module, dev/prod environments |
 | [db/migrations/](db/migrations/) | PostgreSQL schema (Cloud SQL) |
-| [gcp/](gcp/) | GCP/Firebase provisioning, deploy scripts, Terraform (as added) |
+| [gcp/](gcp/) | Runbook, console links, legacy bootstrap (deprecated) |
 
 **Region:** `us-central1` unless documented otherwise.
 

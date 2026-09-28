@@ -32,9 +32,19 @@ firebase-debug.*.log
 
 # GCP / tooling
 .terraform/
-*.tfstate*
+**/.terraform/
+*.tfstate
+*.tfstate.*
 *.tfvars
 !*.tfvars.example
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
 
 # Test / coverage
 **/coverage/

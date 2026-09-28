@@ -61,13 +61,11 @@ gcloud config set project lanonna-dev
 5. **Flutter** — Register iOS/Android apps in Firebase; download `google-services.json` / `GoogleService-Info.plist` into `apps/mobile` (gitignored).
 6. **Firebase CLI login** — Use an account with access to `lanonna-dev` (`firebase login`); if you use `lanonnaapp@gmail.com` for GCP, prefer that account for Firebase CLI too.
 
-## Re-run / extend
+## Infrastructure as code
 
-```bash
-cd infra/gcp
-cp project.env.example project.env   # edit if needed
-./bootstrap.sh                       # idempotent enable APIs, buckets, IAM (see script)
-```
+Platform resources are managed with **Terraform** — see [docs/infra.md](../../docs/infra.md).
+
+Legacy `bootstrap.sh` is deprecated.
 
 ## Cloud SQL access from laptop
 

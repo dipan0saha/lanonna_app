@@ -1,0 +1,44 @@
+resource "google_pubsub_topic" "upload" {
+  name    = var.pubsub_topic_upload
+  project = var.project_id
+
+  labels = {
+    environment = var.environment
+  }
+
+  depends_on = [google_project_service.apis]
+}
+
+resource "google_pubsub_subscription" "worker" {
+  name    = var.pubsub_subscription_worker
+  project = var.project_id
+  topic   = google_pubsub_topic.upload.name
+
+  ack_deadline_seconds = 120
+
+  labels = {
+    environment = var.environment
+  }
+}
+
+# GCS service agent must publish object events to the topic.
+resource "google_pubsub_topic_iam_member" "gcs_publisher" {
+  project = var.project_id
+  topic   = google_pubsub_topic.upload.name
+  role    = "roles/pubsub.publisher"
+  member  = "serviceAccount:service-${data.google_project.current.number}@gs-project-accounts.iam.gserviceaccount.com"
+}
+
+resource "google_pubsub_topic_iam_member" "api_publisher" {
+  project = var.project_id
+  topic   = google_pubsub_topic.upload.name
+  role    = "roles/pubsub.publisher"
+  member  = "serviceAccount:${google_service_account.api.email}"
+}
+
+resource "google_pubsub_subscription_iam_member" "worker_subscriber" {
+  project      = var.project_id
+  subscription = google_pubsub_subscription.worker.name
+  role         = "roles/pubsub.subscriber"
+  member       = "serviceAccount:${google_service_account.worker.email}"
+}

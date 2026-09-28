@@ -1,0 +1,9 @@
+# Create project lanonna-prod, link billing, create gs://lanonna-prod-terraform-state, then:
+# cp terraform.tfvars.example terraform.tfvars
+
+project_id        = "lanonna-prod"
+region            = "us-central1"
+bucket_display    = "lanonna-prod-display"
+bucket_thumbnails = "lanonna-prod-thumbnails"
+sql_tier          = "db-custom-2-7680"
+sql_disk_gb       = 20

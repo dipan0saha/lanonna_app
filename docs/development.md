@@ -13,7 +13,8 @@ lanonna_app/
 │   └── email-templates/     # Mailjet HTML/text templates (versioned)
 ├── infra/
 │   ├── db/migrations/       # PostgreSQL schema migrations (source of truth)
-│   └── gcp/                 # Deploy scripts, Terraform, env templates (as added)
+│   ├── terraform/           # GCP platform (dev/prod)
+│   └── gcp/                 # Runbook + console-only steps
 ├── docs/                    # Architecture and engineering docs
 └── .github/workflows/       # CI
 ```
@@ -47,4 +48,5 @@ Apply migrations from `infra/db/migrations/` against Cloud SQL (tooling choice: 
 
 ## Related reading
 
+- [Infrastructure (Terraform)](infra.md) — dev/prod projects, apply, import
 - [Path B GCP stack](path_b_gcp_stack.md) — media flow (display + thumb), security checklist, cost assumptions

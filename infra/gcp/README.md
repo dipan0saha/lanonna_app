@@ -6,6 +6,6 @@
 |------|---------|
 | [SETUP.md](SETUP.md) | What is provisioned, console links, automation key path |
 | [project.env.example](project.env.example) | Template for `project.env` |
-| [bootstrap.sh](bootstrap.sh) | Idempotent API/bucket/topic setup |
+| [bootstrap.sh](bootstrap.sh) | **Deprecated** — use [Terraform](../terraform/environments/dev) |
 
 Architecture: [docs/path_b_gcp_stack.md](../../docs/path_b_gcp_stack.md).
