@@ -88,6 +88,7 @@ terraform plan
 | GET | `/health` | Public |
 | GET | `/v1/me` | Firebase ID token (`Authorization: Bearer …`) |
 | GET | `/v1/profile` | Same; upserts row in `app_users` (Cloud SQL) |
+| POST | `/v1/uploads/display/signed-url` | Same; returns V4 signed **PUT** to `lanonna-dev-display` (`{"content_type":"image/jpeg"}`) |
 
 ### Deploy (no local Docker required)
 
@@ -105,8 +106,9 @@ Scripts use **Cloud Build** to push images to `us-central1-docker.pkg.dev/lanonn
 
 - Cloud SQL instance `lanonna-dev:us-central1:lanonna-db`
 - Secret `db-lanonna-app-password` → env `DB_PASSWORD`
+- `DISPLAY_BUCKET=lanonna-dev-display`, `GCS_SIGNING_SERVICE_ACCOUNT=lanonna-api@lanonna-dev.iam.gserviceaccount.com`
 
-**GCS signed uploads (API):** `lanonna-api` needs `roles/iam.serviceAccountTokenCreator` on itself so Cloud Run can mint V4 signed URLs without a JSON key.
+**GCS signed uploads (API):** `lanonna-api` needs `roles/iam.serviceAccountTokenCreator` on itself so Cloud Run can mint V4 signed URLs without a JSON key. **Granted on dev** (not in Terraform yet — add to `modules/platform` before prod).
 
 **Cloud Build:** `cloudbuild.googleapis.com` is enabled on dev. If source deploy fails with IAM errors on the default compute SA, grant Cloud Build / compute default SAs `cloudbuild.builds.builder`, `storage.admin`, `artifactregistry.writer`, `logging.logWriter` (and `run.admin` + `iam.serviceAccountUser` on the Cloud Build SA for deploy steps).
 
@@ -212,7 +214,7 @@ Switch back for interactive work: `gcloud config set account lanonnaapp@gmail.co
 | Item | Status / action |
 |------|-----------------|
 | Firebase Blaze on `lanonna-dev` | Done |
-| Email/Password Auth | Enabled — **add test users** in console |
+| Email/Password Auth | Enabled — add users in console, or use dev smoke account `lanonna.dev.smoke@test.com` (password via `SMOKE_TEST_PASSWORD` / team store) |
 | Billing budgets ($50 / $150 / $300) | Created for `lanonna-dev` |
 | Mailjet secrets in Secret Manager | Versions set — **rotate** if keys were ever exposed |
 | FCM, Crashlytics, App Check | Enable when you build those features |
