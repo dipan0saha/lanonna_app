@@ -1,26 +1,31 @@
-# API service (Cloud Run)
+# La Nonna API (Python / FastAPI)
 
-HTTP surface for La Nonna: Firebase JWT verification, App Check, baby/membership authorization, CRUD, signed GCS URLs for `display/` uploads and reads.
+Cloud Run service **`api`** in `lanonna-dev`.
 
-## Planned layout
+## Endpoints (dev)
 
+| Method | Path | Auth |
+|--------|------|------|
+| GET | `/health` | Public |
+| GET | `/v1/me` | Firebase Bearer JWT |
+| GET | `/v1/profile` | Firebase Bearer JWT (upserts `app_users` in Cloud SQL) |
+
+## Deploy
+
+```bash
+gcloud config set account lanonnaapp@gmail.com
+gcloud config set project lanonna-dev
+./scripts/deploy.sh
 ```
-services/api/
-├── Dockerfile
-├── .env.example
-└── src/                 # Language TBD — keep handlers thin
-    ├── http/            # Routes + middleware
-    ├── domain/          # Business rules (shared with worker where possible)
-    ├── repositories/    # SQL access
-    └── adapters/        # GCS signing, Pub/Sub publish, EmailSender
+
+Uses **Cloud Build** by default (`USE_LOCAL_DOCKER=1` if you have Docker).
+
+## Local run
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+export ENVIRONMENT=dev GCP_PROJECT_ID=lanonna-dev
+# Optional DB via Cloud SQL proxy + DB_PASSWORD
+uvicorn lanonna_api.main:app --reload --app-dir src
 ```
-
-Migrations live in `infra/db/migrations/`, not in this folder.
-
-## Operations
-
-- **Service name:** `api` (Cloud Run)
-- **Min instances:** 0 (scale on demand)
-- **Auth:** `Authorization: Bearer <Firebase ID token>`; App Check header before public beta
-
-See [docs/platform-architecture.md](../../docs/platform-architecture.md).

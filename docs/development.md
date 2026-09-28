@@ -33,14 +33,21 @@ lanonna_app/
 ```bash
 cd apps/mobile
 flutter pub get
-flutter run
+flutter run --dart-define-from-file=flavors/dev.json
 ```
 
-Configure Firebase when `google-services.json` / `GoogleService-Info.plist` are added (not committed; use team secret store).
+`google-services.json` / `GoogleService-Info.plist` are local (gitignored). Dev flavor defines: `apps/mobile/flavors/dev.json`.
 
 ## API and worker
 
-Scaffold only — implementation TBD. Environment variables live in **Secret Manager** in production; use `.env.example` files locally (never commit `.env`).
+| Service | Cloud Run name | Deploy |
+|--------|----------------|--------|
+| API | `api` | `services/api/scripts/deploy.sh` (uses Cloud Build; no local Docker required) |
+| Worker | `worker` | `services/worker/scripts/deploy.sh` |
+
+Dev API URL: `https://api-1008830071001.us-central1.run.app`
+
+DB password and Mailjet keys live in **Secret Manager**; never commit `.env`.
 
 ## Database
 
