@@ -106,6 +106,8 @@ Scripts use **Cloud Build** to push images to `us-central1-docker.pkg.dev/lanonn
 - Cloud SQL instance `lanonna-dev:us-central1:lanonna-db`
 - Secret `db-lanonna-app-password` → env `DB_PASSWORD`
 
+**GCS signed uploads (API):** `lanonna-api` needs `roles/iam.serviceAccountTokenCreator` on itself so Cloud Run can mint V4 signed URLs without a JSON key.
+
 **Cloud Build:** `cloudbuild.googleapis.com` is enabled on dev. If source deploy fails with IAM errors on the default compute SA, grant Cloud Build / compute default SAs `cloudbuild.builds.builder`, `storage.admin`, `artifactregistry.writer`, `logging.logWriter` (and `run.admin` + `iam.serviceAccountUser` on the Cloud Build SA for deploy steps).
 
 ### Worker (dev Pub/Sub push)
@@ -114,11 +116,11 @@ Scripts use **Cloud Build** to push images to `us-central1-docker.pkg.dev/lanonn
 - Handler: `POST /pubsub/push` (logs payload, returns 204)
 - **Dev only:** worker allows **`allUsers`** as `run.invoker` so push works without OIDC. **Remove before prod** — use push OIDC + `lanonna-worker` as `run.invoker` and `roles/iam.serviceAccountTokenCreator` for the Pub/Sub agent on that SA.
 
-Test:
+Infra smoke (signed URL → GCS → Pub/Sub → worker):
 
 ```bash
-curl -sS https://api-1008830071001.us-central1.run.app/health
-gcloud pubsub topics publish photo-upload-finalized --project=lanonna-dev --message='{"ping":1}'
+export SMOKE_TEST_PASSWORD='…'   # Firebase test user
+./scripts/infra-smoke-display-upload.sh
 ```
 
 ---

@@ -16,5 +16,9 @@ class Settings(BaseSettings):
     db_name: str = "lanonna"
     db_password: str = ""
 
+    display_bucket: str = "lanonna-dev-display"
+    display_allowed_content_types: tuple[str, ...] = ("image/jpeg", "image/webp")
+    gcs_signing_service_account: str = "lanonna-api@lanonna-dev.iam.gserviceaccount.com"
+
 
 settings = Settings()

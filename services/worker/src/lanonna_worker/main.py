@@ -30,10 +30,20 @@ async def pubsub_push(request: Request) -> Response:
             payload = json.loads(base64.b64decode(raw).decode("utf-8"))
         except (json.JSONDecodeError, UnicodeDecodeError):
             payload = {"raw": raw}
-    logger.info(
-        "pubsub message_id=%s subscription=%s payload=%s",
-        message.get("messageId"),
-        body.get("subscription"),
-        payload,
-    )
+    bucket = payload.get("bucket")
+    name = payload.get("name")
+    if bucket and name:
+        logger.info(
+            "gcs_object_finalized message_id=%s bucket=%s name=%s",
+            message.get("messageId"),
+            bucket,
+            name,
+        )
+    else:
+        logger.info(
+            "pubsub message_id=%s subscription=%s payload=%s",
+            message.get("messageId"),
+            body.get("subscription"),
+            payload,
+        )
     return Response(status_code=204)
