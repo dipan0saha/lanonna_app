@@ -6,25 +6,33 @@
 *.p12
 credentials.json
 service-account*.json
+**/google-services.json
+**/GoogleService-Info.plist
 
 # OS and editors
 .DS_Store
 .idea/
 *.swp
+.vscode/
 
-# Flutter / Dart (when added)
-.dart_tool/
-.packages
-build/
-.flutter-plugins
-.flutter-plugins-dependencies
-.pub-cache/
+# Flutter / Dart (all packages under apps/ and packages/)
+**/.dart_tool/
+**/.packages
+**/build/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.pub-cache/
 
-# Node / backend (when added)
-node_modules/
-dist/
-coverage/
+# Node / backend (when added under services/)
+**/node_modules/
+**/dist/
+**/coverage/
 
 # GCP / tooling
 .terraform/
 *.tfstate*
+*.tfvars
+!*.tfvars.example
+
+# Test / coverage
+**/coverage/

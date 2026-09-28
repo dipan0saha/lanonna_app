@@ -1,13 +1,27 @@
 # lanonna_app
 
-**La Nonna** — greenfield Flutter client and GCP backend.
+**La Nonna** — greenfield Flutter client and GCP backend (Path B).
 
-- **Stack:** Firebase Auth, Cloud Run API, Cloud SQL (PostgreSQL), GCS (display + thumbnails), Pub/Sub workers.
-- **Architecture:** [docs/path_b_gcp_stack.md](docs/path_b_gcp_stack.md)
+| Area | Path | Role |
+|------|------|------|
+| Mobile | [`apps/mobile`](apps/mobile) | Flutter app |
+| API | [`services/api`](services/api) | Cloud Run HTTP API |
+| Worker | [`services/worker`](services/worker) | Cloud Run Pub/Sub jobs |
+| DB | [`infra/db/migrations`](infra/db/migrations) | PostgreSQL schema |
+| GCP | [`infra/gcp`](infra/gcp) | Deploy & cloud config |
+| Docs | [`docs`](docs) | Architecture & development |
+
+**Architecture:** [docs/path_b_gcp_stack.md](docs/path_b_gcp_stack.md) · **Local dev:** [docs/development.md](docs/development.md)
+
+## Quick start (mobile)
+
+```bash
+cd apps/mobile && flutter pub get && flutter run
+```
 
 ## Status
 
-Repository scaffold — application code not yet added.
+Monorepo scaffold in place; API and worker implementation not started.
 
 ## License
 
