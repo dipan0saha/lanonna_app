@@ -19,13 +19,18 @@ else
   gcloud builds submit "${WORKER_DIR}" --tag "${IMAGE}" --project "${PROJECT_ID}" --quiet
 fi
 
+SQL_INSTANCE="${SQL_INSTANCE_NAME:-lanonna-db}"
+CONN="${PROJECT_ID}:${REGION}:${SQL_INSTANCE}"
+
 gcloud run deploy "${SERVICE}" \
   --image="${IMAGE}" \
   --region="${REGION}" \
   --platform=managed \
   --service-account="lanonna-worker@${PROJECT_ID}.iam.gserviceaccount.com" \
   --no-allow-unauthenticated \
-  --set-env-vars="ENVIRONMENT=dev,GCP_PROJECT_ID=${PROJECT_ID}" \
+  --add-cloudsql-instances="${CONN}" \
+  --set-secrets="DB_PASSWORD=db-lanonna-app-password:latest" \
+  --set-env-vars="ENVIRONMENT=dev,GCP_PROJECT_ID=${PROJECT_ID},CLOUD_SQL_CONNECTION_NAME=${CONN},DB_USER=lanonna_app,DB_NAME=lanonna,DISPLAY_BUCKET=${PROJECT_ID}-display,THUMBNAILS_BUCKET=${PROJECT_ID}-thumbnails" \
   --min-instances=0 \
   --max-instances=5 \
   --memory=512Mi \

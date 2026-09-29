@@ -6,6 +6,7 @@ from typing import Any
 from fastapi import FastAPI, Request, Response
 
 from lanonna_worker.config import settings
+from lanonna_worker.thumbnails import process_gcs_finalize
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("lanonna.worker")
@@ -39,6 +40,11 @@ async def pubsub_push(request: Request) -> Response:
             bucket,
             name,
         )
+        try:
+            process_gcs_finalize(payload)
+        except Exception:
+            logger.exception("thumbnail_processing_failed name=%s", name)
+            return Response(status_code=500)
     else:
         logger.info(
             "pubsub message_id=%s subscription=%s payload=%s",

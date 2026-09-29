@@ -20,6 +20,26 @@ def mint_display_upload_url(
         raise ValueError(f"Unsupported content type: {content_type}")
 
     object_name = f"smoke/{firebase_uid}/{uuid.uuid4().hex}.jpg"
+    return _sign_put(object_name, content_type, max_bytes)
+
+
+def mint_display_upload_for_object(
+    object_name: str,
+    content_type: str = "image/jpeg",
+    max_bytes: int = 2_097_152,
+) -> dict[str, str | int]:
+    if content_type not in settings.display_allowed_content_types:
+        raise ValueError(f"Unsupported content type: {content_type}")
+    if not object_name.startswith("display/"):
+        raise ValueError("Upload path must be under display/")
+    return _sign_put(object_name, content_type, max_bytes)
+
+
+def _sign_put(
+    object_name: str,
+    content_type: str,
+    max_bytes: int,
+) -> dict[str, str | int]:
     credentials, _ = google.auth.default()
     auth_request = google_requests.Request()
     credentials.refresh(auth_request)
@@ -44,4 +64,7 @@ def mint_display_upload_url(
         "content_type": content_type,
         "max_bytes": max_bytes,
         "expires_in_seconds": 900,
+        "required_headers": {
+            "Content-Type": content_type,
+        },
     }
