@@ -6,3 +6,4 @@
 | [development.md](development.md) | Repository layout, local development, conventions |
 | [initial-setup.md](initial-setup.md) | GCP/Terraform dev/prod, import, sizing, manual steps |
 | [building-the-app.md](building-the-app.md) | Prerequisite gate before main product work |
+| [product/](product/) | Product requirements (PRD) and traceability |
