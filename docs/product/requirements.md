@@ -11,7 +11,7 @@
 
 ### 1.1 Purpose
 
-This document defines **what** La Nonna must do for end users. It consolidates capabilities from the legacy **Nonna** prototype (`nonna_app`) and expresses them for the **Path B GCP** stack documented in [platform-architecture.md](../platform-architecture.md). Implementation details belong in architecture and migration docs, not here.
+This document defines **what** La Nonna must do for end users on the **Path B GCP** stack documented in [platform-architecture.md](../platform-architecture.md). Implementation details belong in architecture and migration docs, not here.
 
 ### 1.2 Related documents (La Nonna)
 
@@ -21,18 +21,6 @@ This document defines **what** La Nonna must do for end users. It consolidates c
 | [building-the-app.md](../building-the-app.md) | Engineering prerequisite gate and build order |
 | [development.md](../development.md) | Repo layout and conventions |
 | [product/README.md](README.md) | Index for this folder |
-
-### 1.3 Source documents (legacy audit only)
-
-These paths are **reference only**; La Nonna does not implement Supabase, OneSignal, or the database tile engine.
-
-| Source | Path (in `nonna_app`) |
-|--------|-------------------------|
-| Project understanding | `docs/99_master_reference_docs/Nonna_Project_Understanding.md` |
-| App structure | `docs/99_master_reference_docs/App_Structure_Nonna.md` |
-| Schema and server jobs | `docs/99_master_reference_docs/Database_Schema_and_Functions.md` |
-| Known gaps | `docs/99_master_reference_docs/Current_System_Gaps.md` |
-| E2E scenarios | `integration_test/FLUTTER_DRIVE_E2E_SCENARIOS.md` |
 
 ---
 
@@ -47,29 +35,21 @@ The experience is **role-aware**: owners see edit controls and baby-scoped manag
 
 ---
 
-## 3. Goals, non-goals, and principles
+## 3. Goals and principles
 
 ### 3.1 Goals
 
-- **User-visible parity** with Nonna prototype capabilities (onboarding, baby profile, home hub, gallery, calendar, registry, gamification, notifications, settings, profile, deep links).
-- **API-first security**: all domain data via authenticated Cloud Run API; Postgres never exposed to the client.
-- **Display-only media v1**: client encodes a display asset before upload; worker generates feed thumbnails per [platform-architecture.md §2.5](../platform-architecture.md).
-- **Fixed information architecture**: home and tabs use **explicit Flutter layouts**, not server-driven widget placement.
+- Ship **v1 product scope**: onboarding, baby profile, home hub, gallery, calendar, registry, gamification, notifications, settings, profile, and deep links.
+- **Secure, API-mediated data**: all domain reads and writes through the authenticated La Nonna API (see [platform-architecture.md](../platform-architecture.md)).
+- **Photos**: client prepares a display-sized upload; feed uses thumbnails; detail uses the display asset (see platform doc §2.5).
+- **Clear navigation**: fixed home sections and tab screens defined in this document (§6), not remote layout configuration.
 
-### 3.2 Non-goals (v1)
-
-- Supabase client, Row Level Security in the app, or Realtime subscriptions as the primary sync model.
-- Database-driven **tile engine** (`screens`, `tile_definitions`, `tile_configs`) or equivalent CMS for home layout.
-- Storing full-resolution camera originals in cloud storage (v1).
-- OneSignal (use **FCM**).
-- User-selectable dark mode or alternate font families (light theme only; Inter + Baloo 2).
-
-### 3.3 Principles
+### 3.2 Principles
 
 - **Notify, don’t poll** for feed updates where possible (push + pull-to-refresh); see platform architecture.
-- **Deep links and push** must open the correct screen with only an entity id in the URL (hybrid screen pattern).
-- **English and Spanish** for every user-facing string (corrects legacy partial localization).
-- **Email-first invitations** in v1, with a documented path to shareable links; SMS/contacts/QR deferred.
+- **Deep links and push** open the correct screen with an entity id in the URL (hybrid screen pattern).
+- **English and Spanish** for every user-facing string.
+- **Email-first invitations** in v1; shareable links, SMS, contacts, and QR are later (§10.2).
 
 ---
 
@@ -92,7 +72,7 @@ When the user holds both owner and follower memberships:
 
 ### 4.3 Authorization model (requirements)
 
-Legacy Nonna enforced permissions with Postgres RLS. La Nonna must enforce **equivalent rules in API domain services** before any read or write:
+La Nonna must enforce **permission rules in API domain services** before any read or write (no direct database access from the client):
 
 - Membership role and `removed_at` / soft-delete flags gate access.
 - Followers cannot mutate owner-only resources (baby edit, event create, registry item create, etc.).
@@ -117,7 +97,7 @@ Use `Theme.of(context).colorScheme.error` for destructive actions; avoid ad hoc 
 ### 5.2 Shell navigation
 
 - **Bottom navigation** with five destinations: **Home**, **Gallery**, **Calendar**, **Registry**, **Fun** (gamification). Tab order and labels may be localized (en/es).
-- **Offline**: When the device is offline, show a **banner**; retain last-loaded content; suppress per-section error UI that would spam the home scroll (legacy Gaps §6 behavior).
+- **Offline**: When the device is offline, show a **banner**; retain last-loaded content; suppress per-section error UI that would spam the home scroll.
 
 ### 5.3 Accessibility and forms
 
@@ -128,13 +108,11 @@ Use `Theme.of(context).colorScheme.error` for destructive actions; avoid ad hoc 
 
 ## 6. Information architecture
 
-### 6.1 Architecture decision: no tile engine
-
-Legacy Nonna composed **Home** from 18 “smart tiles” loaded via Supabase config tables and an edge function. **La Nonna does not use that pattern.** Instead:
+### 6.1 Home and tabs
 
 - **Home** is a **fixed-order scrollable screen** of **sections** (cards, lists, teasers).
 - **Calendar, Gallery, Registry, and Fun** screens own full lists and detail flows.
-- Section **visibility** follows **product rules** (e.g. hide countdown after birth), implemented in Flutter and/or API responses—not `tile_configs.params.hideWhenEmpty`.
+- Section **visibility** follows **product rules** (e.g. hide countdown after birth), implemented in Flutter and/or API responses.
 
 ### 6.2 Home sections (owner context)
 
@@ -158,11 +136,11 @@ Recommended vertical order (adjust in design wireframes without dropping capabil
 
 ### 6.3 Home sections (follower context)
 
-Same components where applicable, with **aggregated or read-only** data across followed babies (per legacy follower query rules). Omit owner-only sections (checklist, invite status, storage usage). Editing controls hidden.
+Same components where applicable, with **aggregated or read-only** data across followed babies. Omit owner-only sections (checklist, invite status, storage usage). Editing controls hidden.
 
 ### 6.4 Feature screens (full flows)
 
-Retain route-level flows from legacy navigation (see Appendix B): auth, onboarding, baby profile CRUD, followers management, gallery subviews, photo detail, calendar CRUD and RSVP, registry CRUD and purchase, gamification hub, settings, user profile.
+Retain route-level flows documented in Appendix B: auth, onboarding, baby profile CRUD, followers management, gallery subviews, photo detail, calendar CRUD and RSVP, registry CRUD and purchase, gamification hub, settings, user profile.
 
 ### 6.5 Onboarding flows (high level)
 
@@ -182,7 +160,7 @@ Rules:
 
 ## 7. Functional requirements
 
-Each requirement has an ID for traceability. **Implementation note** describes La Nonna stack mapping (not legacy).
+Each requirement has an ID for traceability. **Implementation note** describes the La Nonna stack where helpful.
 
 ### 7.1 Authentication — FR-AUTH
 
@@ -273,7 +251,7 @@ Each requirement has an ID for traceability. **Implementation note** describes L
 | FR-REG-001 | Item CRUD | Owner creates/edits/deletes items (E2E-010) | API + routes |
 | FR-REG-002 | Purchase claim | Follower marks item purchased; only one purchase per item | Unique index on `registry_item_id` |
 | FR-REG-003 | Owner undo purchase | Owner can delete any purchase to reset item | API delete |
-| FR-REG-004 | Registry list on tab | Full list on Registry screen | Former `RegistryListTile` → screen body |
+| FR-REG-004 | Registry list on tab | Full list on Registry screen | Registry tab primary content |
 | FR-REG-005 | Item detail/edit nav | Deep link and in-app nav (E2E-019) | `/registry/item/:id` |
 
 ### 7.9 Gamification — FR-GAM
@@ -304,8 +282,8 @@ Each requirement has an ID for traceability. **Implementation note** describes L
 | FR-PROF-001 | View profile | User sees display name, avatar, stats | Profile tab |
 | FR-PROF-002 | Edit profile | Update display name, avatar | `/profile/edit` |
 | FR-SET-001 | Settings screen | Notification prefs, help/support entry | `/settings` |
-| FR-SET-002 | Language | User can switch **English / Spanish**; all strings update (La Nonna fixes legacy gap) | `app_en.arb` / `app_es.arb` |
-| FR-SET-003 | No dark mode picker | Theme remains light only | Product decision vs legacy E2E-014 |
+| FR-SET-002 | Language | User can switch **English / Spanish**; all strings update | `app_en.arb` / `app_es.arb` |
+| FR-SET-003 | No dark mode picker | Theme remains light only | Product decision (light-only brand) |
 
 ### 7.12 Deep linking — FR-DEEP
 
@@ -316,30 +294,29 @@ Each requirement has an ID for traceability. **Implementation note** describes L
 | FR-DEEP-003 | Route ordering | Static `create` routes before `:id` siblings | Router config |
 | FR-DEEP-004 | Cold-start capture | Invite links set initial route before `runApp` | Deep link service |
 
-### 7.13 Background jobs (legacy edge functions → La Nonna)
+### 7.13 Background jobs
 
-| Legacy (Nonna) | La Nonna requirement |
-|----------------|----------------------|
-| `tile-configs` | **Not used** — fixed IA §6 |
-| `send-invitation-email` | Worker/API + Mailjet (FR-INV-004) |
-| `send-push-notification` | FCM send with preference checks (FR-NOTIF-002) |
-| `generate-thumbnail` | GCS finalize → Pub/Sub → worker thumb ~320px width |
-| `image-processing` | Client EXIF/dimensions at encode; API may validate |
-| `notification-trigger` | Cloud Scheduler → internal API for digests/batches |
+| Job | Requirement |
+|-----|-------------|
+| Invite email | Worker/API + Mailjet (FR-INV-004) |
+| Push notification | FCM send with preference checks (FR-NOTIF-002) |
+| Thumbnail generation | GCS finalize → Pub/Sub → worker thumb ~320px width |
+| Image metadata | Client EXIF/dimensions at encode; API may validate |
+| Notification digests | Cloud Scheduler → internal API for digests/batches |
 
-### 7.14 Invitation RPC behaviors (API equivalents)
+### 7.14 Invitation API operations
 
-Legacy Postgres RPCs must become **API operations** with the same semantics:
+The API must support these invitation flows with the semantics described in FR-INV:
 
-- `get_invitation_preview(token_hash)` — FR-INV-001
-- `accept_invitation(token_hash)` — FR-INV-002
-- `check_baby_membership_by_email(baby_id, email)` — FR-INV-006
+- **Preview invitation** by token (FR-INV-001)
+- **Accept invitation** by token with email match and idempotency (FR-INV-002)
+- **Check membership by email** for batch invite UI (FR-INV-006)
 
 ---
 
 ## 8. Data requirements (conceptual entities)
 
-La Nonna stores domain data in **Cloud SQL**. Migrations live under `infra/db/`; this section is the **entity checklist** (25 legacy tables; 3 tile-engine tables are **not** required for La Nonna v1).
+La Nonna stores domain data in **Cloud SQL**. Migrations live under `infra/db/`; this section is the **entity checklist** for v1.
 
 | Entity | Purpose | v1 |
 |--------|---------|-----|
@@ -348,7 +325,7 @@ La Nonna stores domain data in **Cloud SQL**. Migrations live under `infra/db/`;
 | `baby_profiles` | Baby metadata, dates, gender, birth stats | Yes |
 | `baby_memberships` | RBAC owner/follower + relationship | Yes |
 | `invitations` | Token invites, roles, expiry | Yes |
-| `owner_update_markers` | Legacy tile cache invalidation | **Optional** — replace with client refresh / short TTL |
+| `owner_update_markers` | Content-change marker for cache refresh | **Optional** — client pull-to-refresh / short TTL may suffice |
 | `photos` | Media metadata, paths, status | Yes |
 | `photo_squishes` | Likes | Yes |
 | `photo_comments` | Photo threads | Yes |
@@ -365,7 +342,6 @@ La Nonna stores domain data in **Cloud SQL**. Migrations live under `infra/db/`;
 | `notification_preferences` | Channel toggles | Yes |
 | `activity_events` | Activity recap feed | Yes |
 | `app_versions` | Force-update config | Yes |
-| `screens`, `tile_definitions`, `tile_configs` | Tile engine | **No** (v1) |
 
 Firebase Auth holds identity; link `user_id` to Firebase UID in SQL.
 
@@ -384,7 +360,7 @@ Firebase Auth holds identity; link `user_id` to Firebase UID in SQL.
 | **NFR-OBS-001** | Structured logging and monitoring per platform architecture. |
 | **NFR-FORCE-001** | Minimum app version per platform from `app_versions`; block with upgrade prompt. |
 | **NFR-CI-001** | Maintain E2E scenario coverage (P0 first); device/integration CI for release confidence. |
-| **NFR-DATA-001** | Support export/deletion flows for compliance (align with legacy service intents). |
+| **NFR-DATA-001** | Support export/deletion flows for compliance and account closure. |
 
 ---
 
@@ -416,38 +392,38 @@ Engineering order aligns with [building-the-app.md](../building-the-app.md): SQL
 | Fun tab label | “Fun” vs “Games” vs localized string | E2E uses “Fun” |
 | Activity recap density | Full audit stream vs weekly rollup | Affects `activity_events` API |
 | System announcements | SQL table vs Remote Config | FR-HOME section 4 |
-| Social auth | Google/Apple sign-in | Not in legacy P0 E2E; clarify for v1 |
+| Social auth | Google/Apple sign-in | Clarify for v1 scope |
 
 ---
 
 ## 12. Appendices
 
-### Appendix A — Legacy tile → La Nonna section mapping
+### Appendix A — Home section capability mapping
 
-| Legacy tile | La Nonna placement | Behavior summary |
-|-------------|-------------------|------------------|
-| NewBabyWelcomeTile | Home §1 | Owner; 7 days post-birth |
-| CountdownTile | Home §2 | Pre-birth due date |
-| ChecklistTile | Home §3 | Owner onboarding tasks |
-| SystemAnnouncementsTile | Home §4 | Dismissible banners |
-| NotificationsTile | Home §5 | Preview + link to full inbox if separate |
-| UpcomingEventsTile | Home §6; Calendar | Teaser + full upcoming screen |
-| RsvpTasksTile | Home §7 | Events needing RSVP |
-| RecentPhotosTile | Home §8; Gallery | Teaser + recent route |
-| GalleryFavoritesTile | Home §9; Gallery | Top squished teaser |
-| RegistryHighlightsTile | Home §10; Registry | Featured items |
-| RecentPurchasesTile | Home §11; Registry | Last 15 days |
-| ActivityListTile | Home §12 | Engagement recap |
-| NewFollowersTile | Home §13 | Last 30 days; owner |
-| InvitesStatusTile | Home §14 | Pending invites; revoke |
-| StorageUsageTile | Home §15 | Owner storage meter |
-| RegistryListTile | Registry tab body | Full wishlist |
-| NameSuggestionsTile | Fun tab | List + add flow |
-| PredictionVotesTile | Fun tab | Gender + birthdate votes |
+| Capability | Placement | Behavior summary |
+|------------|-----------|------------------|
+| New baby welcome | Home §1 | Owner; 7 days post-birth |
+| Due date countdown | Home §2 | Pre-birth due date |
+| Onboarding checklist | Home §3 | Owner onboarding tasks |
+| System announcements | Home §4 | Dismissible banners |
+| Notifications preview | Home §5 | Preview + link to full inbox if separate |
+| Upcoming events | Home §6; Calendar | Teaser + full upcoming screen |
+| RSVP tasks | Home §7 | Events needing RSVP |
+| Recent photos | Home §8; Gallery | Teaser + recent route |
+| Gallery favorites | Home §9; Gallery | Top squished teaser |
+| Registry highlights | Home §10; Registry | Featured items |
+| Recent purchases | Home §11; Registry | Last 15 days |
+| Activity recap | Home §12 | Engagement summary |
+| New followers | Home §13 | Last 30 days; owner |
+| Invite status | Home §14 | Pending invites; revoke |
+| Storage usage | Home §15 | Owner storage meter |
+| Registry list | Registry tab body | Full wishlist |
+| Name suggestions | Fun tab | List + add flow |
+| Prediction votes | Fun tab | Gender + birthdate votes |
 
 ### Appendix B — Route inventory
 
-| Route constant (legacy) | Path | Screen |
+| Route name | Path | Screen |
 |-------------------------|------|--------|
 | home | `/home` | Home |
 | login | `/login` | Login |
@@ -495,16 +471,16 @@ Use static URL builder helpers (e.g. `galleryPhotoRoute(id)`) for navigation and
 
 ### Appendix C — Entity checklist (one line each)
 
-See §8 table; all rows except tile-engine tables are in scope for La Nonna product data model.
+See §8 entity table for v1 data model scope.
 
-### Appendix D — E2E traceability
+### Appendix D — Acceptance scenario traceability
 
-| E2E ID | Priority | FR / section coverage | La Nonna notes |
-|--------|----------|----------------------|----------------|
+| Scenario ID | Priority | FR / section coverage | Notes |
+|-------------|----------|----------------------|-------|
 | E2E-001 | P0 | FR-AUTH-005 | |
-| E2E-002 | P0 | FR-AUTH-001, FR-HOME-001 | `tile_list_view` → home scroll/sections |
+| E2E-002 | P0 | FR-AUTH-001, FR-HOME-001 | Home scroll / sections visible |
 | E2E-003 | P0 | §5.2 shell | Five tabs |
-| E2E-004 | P0 | FR-HOME-002 | Tile reload → section reload |
+| E2E-004 | P0 | FR-HOME-002 | Home reload on profile switch |
 | E2E-005 | P0 | FR-BABY-001, FR-BABY-003 | |
 | E2E-006 | P0 | FR-BABY-004, FR-INV-004 | |
 | E2E-007 | P0 | FR-GAL-001–003 | |
@@ -523,19 +499,6 @@ See §8 table; all rows except tile-engine tables are in scope for La Nonna prod
 | E2E-020 | P2 | FR-HOME-004 | |
 | E2E-021 | P2 | FR-HOME-003 | + calendar/registry refresh |
 | E2E-022 | P2 | §4.1 roles | Follower cannot owner-actions |
-
-### Appendix E — Legacy stack mapping (reference only)
-
-| Legacy component | La Nonna target |
-|------------------|-----------------|
-| Supabase Auth | Firebase Auth |
-| Supabase Postgres + RLS | Cloud SQL + API authorization |
-| Supabase Storage | GCS display + thumbnails buckets |
-| Supabase Realtime | FCM + pull-to-refresh |
-| Edge Functions | Cloud Run API + worker + Scheduler |
-| OneSignal | FCM |
-| Resend (invites) | Mailjet |
-| Tile engine tables + `tile-configs` | Fixed home sections §6 |
 
 ---
 

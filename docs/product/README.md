@@ -2,7 +2,7 @@
 
 | Document | Description |
 |----------|-------------|
-| [requirements.md](requirements.md) | La Nonna product requirements (PRD): features, roles, IA, FR/NFR IDs, traceability from legacy Nonna reference |
+| [requirements.md](requirements.md) | La Nonna product requirements (PRD): features, roles, IA, FR/NFR IDs, and acceptance traceability |
 
 ## How this fits the repo
 
@@ -11,4 +11,4 @@
 - **When engineering is unblocked:** [building-the-app.md](../building-the-app.md)
 - **Day-to-day dev:** [development.md](../development.md)
 
-**Status:** Requirements v1 (draft) — consolidated from `nonna_app` master reference docs and E2E matrix, remapped to Path B GCP (Firebase Auth, Cloud Run API/worker, Cloud SQL, GCS, Pub/Sub, FCM, Mailjet). No server-driven tile engine; home uses fixed Flutter sections.
+**Status:** Requirements v1 (draft) — Path B GCP (Firebase Auth, Cloud Run API/worker, Cloud SQL, GCS, Pub/Sub, FCM, Mailjet). Home uses fixed Flutter sections, not a server-driven widget engine.
