@@ -186,7 +186,7 @@ Recommended vertical order (adjust in design wireframes without dropping capabil
 9. **Gallery favorites** — top squished photos teaser; → `/gallery/favorites`.
 10. **Registry highlights** — featured/open items; → Registry tab.
 11. **Recent registry purchases** — last 15 days; owner/follower views per role.
-12. **Activity recap** — engagement summary from activity events.
+12. **Activity recap** — **full stream** of recent `activity_events` (chronological audit-style feed), not a weekly rollup.
 13. **New followers** — joined in last 30 days; owner only.
 14. **Invite status** — pending email invites; revoke; owner only.
 15. **Storage usage** — media allocation meter; owner only.
@@ -277,6 +277,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-HOME-006 | Calendar/registry refresh | Calendar and Registry tabs support pull-to-refresh (E2E-021) | Client refresh |
 | FR-HOME-004 | Empty states | No baby profile shows CTA to create (E2E-020) | Empty state UI |
 | FR-HOME-005 | Hide rules | Welcome/countdown/checklist follow §6.2 visibility rules | Client + API fields |
+| FR-HOME-007 | Activity recap | Home shows full-stream activity feed from `activity_events` (paginated) | API list by baby/membership |
 
 ### 7.6 Gallery — FR-GAL
 
@@ -402,7 +403,7 @@ La Nonna stores domain data in **Cloud SQL**. Migrations live under `infra/db/`;
 | `name_suggestion_likes` | Likes on names | Yes |
 | `notifications` | In-app alerts | Yes |
 | `notification_preferences` | Channel toggles | Yes |
-| `activity_events` | Activity recap feed | Yes |
+| `activity_events` | Full-stream activity recap on home (chronological events) | Yes |
 | `app_versions` | Force-update config | Yes |
 | `system_announcements` | Dismissible home banners (content, schedule, targeting) | Yes |
 | `announcement_dismissals` | Per-user dismiss records for announcements | Yes |
@@ -460,13 +461,8 @@ Engineering order aligns with [building-the-app.md](../building-the-app.md): SQL
 | Language | English only; no Spanish (FR-SET-002) |
 | System announcements | **Cloud SQL** (`system_announcements` + dismissals) for per-user dismiss and API control |
 | Social auth | Email/password + **Google** (FR-AUTH-006); Apple later |
-
-### 11.1 Still open
-
-| Topic | Options | Notes |
-|-------|---------|-------|
-| Fun tab label | “Fun” vs “Games” | E2E scenarios use “Fun” |
-| Activity recap density | Full audit stream vs weekly rollup | Affects `activity_events` API |
+| Fun tab label | Bottom nav and UI copy use **“Fun”** (route `/gamification`) |
+| Activity recap | **Full stream** of `activity_events` on home (FR-HOME-007) |
 
 ---
 
@@ -489,7 +485,7 @@ Engineering order aligns with [building-the-app.md](../building-the-app.md): SQL
 | Gallery favorites | Home §9; Gallery | Top squished teaser |
 | Registry highlights | Home §10; Registry | Featured items |
 | Recent purchases | Home §11; Registry | Last 15 days |
-| Activity recap | Home §12 | Engagement summary |
+| Activity recap | Home §12 | Full-stream `activity_events` |
 | New followers | Home §13 | Last 30 days; owner |
 | Invite status | Home §14 | Pending invites; revoke |
 | Storage usage | Home §15 | Owner storage meter |
