@@ -48,7 +48,7 @@ The experience is **role-aware**: owners see edit controls and baby-scoped manag
 
 - **Notify, don’t poll** for feed updates where possible (push + pull-to-refresh); see platform architecture.
 - **Deep links and push** open the correct screen with an entity id in the URL (hybrid screen pattern).
-- **English** copy for every user-facing string in v1 (keep strings externalized for future locales).
+- **English** copy for every user-facing string (externalized in localization files).
 - **Email-first invitations** in v1; shareable links, SMS, contacts, and QR are later (§10.2).
 
 ---
@@ -343,7 +343,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-PROF-001 | View profile | User sees display name, avatar, stats | `/profile` from shell menu |
 | FR-PROF-002 | Edit profile | Update display name, avatar | `/profile/edit` |
 | FR-SET-001 | Settings screen | Notification prefs, help/support entry | `/settings` |
-| FR-SET-002 | Language (v1) | **English only** in v1; copy in ARB/localization files (no hardcoded UI strings) | `app_en.arb`; Spanish deferred (§10.2) |
+| FR-SET-002 | Language | **English only**; copy in ARB/localization files (no hardcoded UI strings). No Spanish or other locales in product scope. | `app_en.arb` |
 | FR-SET-003 | No dark mode picker | Theme remains light only | Product decision (light-only brand) |
 | FR-SET-004 | Minimum app version | Below minimum: **hard block** — full-screen prompt; only action is open store / update | Reads `app_versions`; no dismiss |
 
@@ -418,7 +418,7 @@ Firebase Auth holds identity; link `user_id` to Firebase UID in SQL.
 | **NFR-SEC-001** | All API calls use `Authorization: Bearer` Firebase ID token. |
 | **NFR-SEC-002** | Enforce Firebase App Check before public beta. |
 | **NFR-SEC-003** | GCS access via short-lived signed URLs; upload only to scoped display paths. |
-| **NFR-L10N-001** | v1: **English** for all user-visible strings via localization files (no hardcoded copy in widgets). Structure code for future locales. |
+| **NFR-L10N-001** | **English** for all user-visible strings via localization files (no hardcoded copy in widgets). |
 | **NFR-OFFLINE-001** | Show offline banner; retain cached thumbs/content; avoid per-section error spam offline. |
 | **NFR-PERF-001** | Feed and lists use thumbnail URLs; detail uses display asset. |
 | **NFR-OBS-001** | Structured logging and monitoring per platform architecture. |
@@ -442,7 +442,6 @@ Engineering order aligns with [building-the-app.md](../building-the-app.md): SQL
 
 ### 10.2 Later
 
-- **Spanish** (and additional locales) with in-app language picker.
 - SMS, contacts picker, QR invites (growth).
 - Shareable invite link without email (copy to WhatsApp).
 - Apple Sign-In (v1 is email + Google only).
@@ -458,7 +457,7 @@ Engineering order aligns with [building-the-app.md](../building-the-app.md): SQL
 | Bottom nav | Home → Gallery → Calendar → Registry → Fun; Profile/Settings via shell menu |
 | Notifications | Home preview + bell opens full inbox (FR-NOTIF-001) |
 | Force update | Hard block below minimum version (FR-SET-004, NFR-FORCE-001) |
-| Language | English only in v1; externalized strings (FR-SET-002) |
+| Language | English only; no Spanish (FR-SET-002) |
 | System announcements | **Cloud SQL** (`system_announcements` + dismissals) for per-user dismiss and API control |
 | Social auth | Email/password + **Google** (FR-AUTH-006); Apple later |
 
