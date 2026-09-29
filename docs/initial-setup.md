@@ -1,6 +1,6 @@
 # Initial GCP & infrastructure setup
 
-**`lanonna-dev`** is provisioned and managed by **Terraform**. State is in **`gs://lanonna-dev-terraform-state`**. When infrastructure matches the repo, **`terraform plan`** in dev should show **no changes**.
+**`lanonna-dev`** is provisioned and managed by **Terraform**. State is in **`gs://lanonna-dev-terraform-state`**. Run **`terraform plan`** in dev after infra changes; some principals see **403** on Pub/Sub IAM policy refresh (use owner account `lanonnaapp@gmail.com`). Gate for app work: **`./scripts/verify-dev-prerequisites.sh`** ([building-the-app.md](building-the-app.md)).
 
 | Topic | Doc |
 |-------|-----|
@@ -108,7 +108,7 @@ Scripts use **Cloud Build** to push images to `us-central1-docker.pkg.dev/lanonn
 - Secret `db-lanonna-app-password` → env `DB_PASSWORD`
 - `DISPLAY_BUCKET=lanonna-dev-display`, `GCS_SIGNING_SERVICE_ACCOUNT=lanonna-api@lanonna-dev.iam.gserviceaccount.com`
 
-**GCS signed uploads (API):** `lanonna-api` needs `roles/iam.serviceAccountTokenCreator` on itself so Cloud Run can mint V4 signed URLs without a JSON key. **Granted on dev** (not in Terraform yet — add to `modules/platform` before prod).
+**GCS signed uploads (API):** `lanonna-api` needs `roles/iam.serviceAccountTokenCreator` on itself (Terraform: `run_iam.tf` → `api_self_token_creator`) so Cloud Run can mint V4 signed URLs without a JSON key.
 
 **Cloud Build:** `cloudbuild.googleapis.com` is enabled on dev. If source deploy fails with IAM errors on the default compute SA, grant Cloud Build / compute default SAs `cloudbuild.builds.builder`, `storage.admin`, `artifactregistry.writer`, `logging.logWriter` (and `run.admin` + `iam.serviceAccountUser` on the Cloud Build SA for deploy steps).
 
@@ -227,7 +227,7 @@ Switch back for interactive work: `gcloud config set account lanonnaapp@gmail.co
 - Do not commit service account JSON, `terraform.tfvars` with secrets, or Firebase plist/json (gitignored).
 - Rotate `lanonna-automation` key if exposed; no broad automation SA in prod.
 - Terraform manages Secret Manager **IDs** only; **values** stay in Secret Manager.
-- Tighten worker **invoker** and Pub/Sub **push auth** before prod.
+- Dev worker uses **OIDC push** (no `allUsers`); re-run `./scripts/apply-dev-run-iam.sh` after worker deploy. Harden further for prod (TF-managed Run IAM, no public API surface beyond `/health`).
 
 ---
 

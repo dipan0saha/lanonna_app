@@ -1,9 +1,11 @@
 # La Nonna — platform architecture (GCP)
 
-**Document version:** 1.5  
-**Last updated:** 2026-09-28  
+**Document version:** 1.6  
+**Last updated:** 2026-09-29  
 **Location:** `docs/platform-architecture.md` (this repository)  
 **Status:** Target platform architecture for greenfield build
+
+**Dev implementation status:** Operational gate and what is already running on `lanonna-dev` are in [building-the-app.md](building-the-app.md) and [initial-setup.md](initial-setup.md). This doc stays the long-term design reference; the playbook below mixes **done (dev)** and **still to build**.
 
 ---
 
@@ -35,11 +37,12 @@
 8. **Region discipline** — primary **`us-central1`** (free-tier eligible for Run; co-locate SQL, GCS, Run, Pub/Sub).
 9. **Notify, don’t poll** — **FCM** for new content; batch/paginate API reads to stay within Run free tier.
 
+**Implemented on dev (2026):** separate **Cloud Run `api`** and **`worker`** services; GCS display bucket + Pub/Sub finalize → worker push; API JWT + signed display upload URL; Flutter dev auth screen.
+
 **Deferred (initial years):**
 
 - **Cloud SQL HA (regional)** until paid users or SLA needs justify ~2× SQL cost
 - **Cloud CDN** until egress justifies it
-- **Dedicated API + worker Run services** — **one codebase, two Cloud Run services** (`api` min-instances **0**, lower memory; `worker` sized for image decode only on small display inputs)
 - **Camera-original / print-quality archive** — product tier later if needed; not stored in v1
 
 **Reliability stance (no paid users ~first two years):**
@@ -300,20 +303,20 @@ Isolates **storage + egress** if behavior drifts from §2.5 (SQL/Run/email held 
 
 ### Month 1 — Foundation
 
-- [ ] GCP project + **Blaze**; billing alerts; **`us-central1`**
-- [ ] Enable APIs: Run, SQL, Storage, Pub/Sub, Secret Manager, Artifact Registry, Scheduler
-- [ ] Firebase: Auth, FCM, Crashlytics, Analytics, Remote Config; plan **App Check**
-- [ ] Cloud SQL: zonal Postgres, backups + PITR, private IP or Cloud SQL Auth Proxy from Run
-- [ ] GCS buckets (`display`, `thumbnails`); CORS; uniform access
-- [ ] Secret Manager: DB URL, placeholder Mailjet key
-- [ ] Cloud Run **api**: health, JWT middleware, one CRUD path
-- [ ] Flutter: Auth login; call API with ID token
+- [x] GCP project + **Blaze**; billing alerts; **`us-central1`** (`lanonna-dev`)
+- [x] Enable APIs: Run, SQL, Storage, Pub/Sub, Secret Manager, Artifact Registry, Cloud Build (+ Scheduler in TF)
+- [ ] Firebase: FCM, Crashlytics, Analytics, Remote Config in app; plan **App Check** (Auth enabled on dev)
+- [x] Cloud SQL: zonal Postgres; Run connects via Cloud SQL socket + proxy for laptops
+- [x] GCS buckets (`display`, `thumbnails`); display **CORS** (dev origins); uniform access
+- [x] Secret Manager: DB + Mailjet secret containers (values in SM)
+- [x] Cloud Run **api**: health, JWT, `app_users` profile, signed display upload URL
+- [x] Flutter: Auth login dev screen; call API with ID token
 - [ ] Flutter: **display encode** helper (resize, WebP/JPEG, max bytes)
-- [ ] POC: signed upload → `display/` → Pub/Sub → worker thumb
+- [x] POC: signed upload → `display/` → Pub/Sub → worker (logs finalize); [ ] **worker thumb** generation
 
 ### Month 2 — Core product
 
-- [ ] SQL migrations: users, babies, memberships, invitations, photos, device_tokens
+- [x] SQL migrations: `app_users` stub (`001_app_users.sql`); [ ] babies, memberships, invitations, photos, device_tokens
 - [ ] Domain services + repository layer; permission checks per baby
 - [ ] **EmailSender** + Mailjet adapter; invite templates in repo
 - [ ] Worker: thumb-from-display + `send_invite_email` handlers (**idempotent**)

@@ -19,12 +19,12 @@ export SMOKE_TEST_PASSWORD='…'
 
 | Area | Status | Notes |
 |------|--------|--------|
-| Terraform `lanonna-dev` | Plan clean after apply | Push sub, CORS, API signing IAM in `modules/platform` |
+| Terraform `lanonna-dev` | `terraform validate` passes; apply when module changes | Push sub, CORS, API/worker TokenCreator in `modules/platform` |
 | Cloud Run `api` / `worker` | Deployed | `services/*/scripts/deploy.sh` |
 | Auth + API | Smoke-tested | Flutter dev screen or curl with Firebase JWT |
 | Cloud SQL | `001_app_users.sql` applied | Proxy + `psql` — [initial-setup.md](initial-setup.md) |
 | GCS → Pub/Sub → worker | `./scripts/infra-smoke-display-upload.sh` | Signed PUT + worker `gcs_object_finalized` log |
-| Worker security (dev) | **No** `allUsers` on `worker` | OIDC push via Terraform |
+| Worker security (dev) | **No** `allUsers` on `worker` | Push sub + OIDC in Terraform; **Run invoker** via `apply-dev-run-iam.sh` |
 | CI | Green on `main` | Flutter + API compile in GitHub Actions |
 | Firebase config | Local plist/json + `firebase_options.dart` | [initial-setup.md](initial-setup.md) |
 | Mailjet | Secrets set | App code not required until invites |
