@@ -85,14 +85,70 @@ La Nonna must enforce **permission rules in API domain services** before any rea
 
 ### 5.1 Visual design
 
-| Element | Requirement |
-|---------|-------------|
-| Theme | Single **light** global theme for onboarding, shell, and features |
-| Typography | **Inter** (body, labels, inputs); **Baloo 2** (display headings) |
-| Palette | Sage and peach brand colors; semantic success/warning/info/error via theme extension |
-| Scaffold | Light gray background (`#F6F6F7` class); sage-dark home title; peach-dark active bottom-nav item |
+Onboarding, authentication, and the signed-in shell share **one** light brand theme. Do not use a separate onboarding theme or per-route `Theme` overrides. `ThemeMode` is **light** only; Settings does not offer dark mode, accent pickers, or font pickers.
 
-Use `Theme.of(context).colorScheme.error` for destructive actions; avoid ad hoc `Colors.red` / `Colors.green`.
+**Foundation**
+
+| Concern | Requirement |
+|---------|-------------|
+| Material | Material 3 (`useMaterial3: true`) |
+| Theme assembly | Central `ThemeData` with component themes (app bar, cards, buttons, inputs, bottom nav, chips, dialogs) |
+| Tokens | Named brand palette + semantic colors exposed via `ThemeData.colorScheme` and a **brand theme extension** (sage/peach tints + success/warning/info) |
+| Layout metrics | Shared spacing and radii for onboarding and in-app surfaces (horizontal page padding, card radius, pill buttons, carousel dots) |
+| Contrast | Palette chosen for **WCAG 2.1 Level AA** for primary text on surfaces and CTA labels on sage fills |
+
+**Color tokens**
+
+| Token | Hex | Use |
+|-------|-----|-----|
+| Sage (primary) | `#A8C99B` | Primary buttons, key accents, `colorScheme.primary` |
+| Sage dark | `#7FAE6E` | Links, focus accents, home app bar title, active carousel indicator |
+| Sage tint | `#EAF3E4` | Insight cards, icon backgrounds, light fills |
+| Peach (secondary) | `#F5B99B` | Secondary accents, `colorScheme.secondary` |
+| Peach dark | `#EF9F76` | Bottom nav **selected** item, notification highlight dot |
+| Peach tint | `#FCE8DC` | Warm cards and soft gradients |
+| Scaffold background | `#F6F6F7` | App-wide scaffold |
+| Surface | `#FFFFFF` | Cards, sheets, app bar background |
+| Text primary | `#2D2D2D` | Headlines and body on surface |
+| Text muted | `#9B9B9B` | Supporting copy, `bodyMedium` / helper text |
+| Border / divider | `#E9E9EA` | Card outlines, dividers, input borders |
+| CTA on sage | `#1C2E17` | Label on filled primary (sage) buttons |
+| Nav inactive | `#B0B0B2` | Bottom nav unselected icon/label |
+
+Semantic success, warning, info, and error use dedicated tokens on the brand extension. Destructive actions use `colorScheme.error`; avoid raw `Colors.red` / `Colors.green` in product UI.
+
+**Typography**
+
+| Role | Font | Spec |
+|------|------|------|
+| Body, labels, inputs, buttons | **Inter** (Google Fonts) | Support text ~14.5px, line height ~1.45; labels ~15px semibold on CTAs |
+| Display / headlines | **Baloo 2** | Onboarding headlines and app bar titles ~24px bold, line height ~1.15; smaller headlines ~20px bold |
+
+**Components (onboarding-aligned)**
+
+| Component | Spec |
+|-----------|------|
+| Primary CTA | Filled **sage**, pill shape (radius 999), min height **52px**, horizontal padding 24px; label **CTA on sage** |
+| Secondary CTA | Outlined pill with border `#E9E9EA`; same min height and padding as primary |
+| Text fields | Corner radius **12px**; labels and hints use Inter; focused border/accent **sage dark** |
+| Cards / hero surfaces | White surface, **16px** corner radius, **1px** border `#E9E9EA`, no elevation shadow; content padding ~18px; horizontal margin ~16px |
+| Onboarding page layout | Horizontal content padding **26px**; carousel page indicators — inactive dot 7px; active indicator **20×7px** pill in **sage dark** |
+| App bar | Elevation 0, centered title, white background, dark status bar icons; title uses brand headline styles |
+| FAB | Uses primary sage family per global FAB theme |
+
+**Shell chrome (same theme as onboarding)**
+
+| Element | Spec |
+|---------|------|
+| Bottom navigation | Selected: **peach dark**; unselected: **nav inactive** |
+| Home app bar title | **Sage dark** (not primary sage) |
+| First-run / notification dot | **Peach dark** |
+
+**How to build new UI**
+
+1. Read colors from `Theme.of(context).colorScheme` and the brand theme extension — not scattered hex literals.
+2. Use shared layout metrics for onboarding-style spacing, card radius, and button sizing on home sections and forms.
+3. Reserve hard-coded hex only for third-party brand assets (e.g. social sign-in icons).
 
 ### 5.2 Shell navigation
 
