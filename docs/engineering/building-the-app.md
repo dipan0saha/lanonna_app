@@ -54,6 +54,6 @@ cd infra/terraform/environments/dev && terraform apply
 
 ## Related
 
-- [product/requirements.md](product/requirements.md) — product scope and FR/NFR IDs
+- [product/requirements.md](../product/requirements.md) — product scope and FR/NFR IDs
 - [initial-setup.md](initial-setup.md) — GCP, deploy, secrets
 - [development.md](development.md) — repo layout

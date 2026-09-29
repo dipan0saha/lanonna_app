@@ -7,8 +7,8 @@
 ## How this fits the repo
 
 - **What to build (product):** [requirements.md](requirements.md)
-- **How to run the platform:** [platform-architecture.md](../platform-architecture.md)
-- **When engineering is unblocked:** [building-the-app.md](../building-the-app.md)
-- **Day-to-day dev:** [development.md](../development.md)
+- **How to run the platform:** [platform-architecture.md](../engineering/platform-architecture.md)
+- **When engineering is unblocked:** [building-the-app.md](../engineering/building-the-app.md)
+- **Day-to-day dev:** [development.md](../engineering/development.md)
 
 **Status:** Requirements v1 (draft) — Path B GCP (Firebase Auth, Cloud Run API/worker, Cloud SQL, GCS, Pub/Sub, FCM, Mailjet). Home uses fixed Flutter sections, not a server-driven widget engine.

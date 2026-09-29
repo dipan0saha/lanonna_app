@@ -2,7 +2,7 @@
 
 **Document version:** 1.6  
 **Last updated:** 2026-09-29  
-**Location:** `docs/platform-architecture.md` (this repository)  
+**Location:** `docs/engineering/platform-architecture.md` (this repository)  
 **Status:** Target platform architecture for greenfield build
 
 **Dev implementation status:** Operational gate and what is already running on `lanonna-dev` are in [building-the-app.md](building-the-app.md) and [initial-setup.md](initial-setup.md). This doc stays the long-term design reference; the playbook below mixes **done (dev)** and **still to build**.

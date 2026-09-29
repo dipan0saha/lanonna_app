@@ -14,4 +14,4 @@ Dev API default: `https://api-1008830071001.us-central1.run.app` (override in `f
 
 Firebase config files are environment-specific — obtain from Firebase console; do not commit production keys in public repos without review.
 
-Parent repo layout: [docs/development.md](../../docs/development.md).
+Parent repo layout: [docs/engineering/development.md](../../docs/engineering/development.md).

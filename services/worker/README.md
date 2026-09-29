@@ -20,4 +20,4 @@ services/worker/
 - **Trigger:** Pub/Sub push (authenticated)
 - **Idempotency:** key on `bucket/object/generation` for thumbnail jobs
 
-See [docs/platform-architecture.md](../../docs/platform-architecture.md).
+See [docs/engineering/platform-architecture.md](../../docs/engineering/platform-architecture.md).

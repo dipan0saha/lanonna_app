@@ -11,15 +11,15 @@
 
 ### 1.1 Purpose
 
-This document defines **what** La Nonna must do for end users on the **Path B GCP** stack documented in [platform-architecture.md](../platform-architecture.md). Implementation details belong in architecture and migration docs, not here.
+This document defines **what** La Nonna must do for end users on the **Path B GCP** stack documented in [platform-architecture.md](../engineering/platform-architecture.md). Implementation details belong in architecture and migration docs, not here.
 
 ### 1.2 Related documents (La Nonna)
 
 | Document | Role |
 |----------|------|
-| [platform-architecture.md](../platform-architecture.md) | Target stack, media pipeline, security, ops |
-| [building-the-app.md](../building-the-app.md) | Engineering prerequisite gate and build order |
-| [development.md](../development.md) | Repo layout and conventions |
+| [platform-architecture.md](../engineering/platform-architecture.md) | Target stack, media pipeline, security, ops |
+| [building-the-app.md](../engineering/building-the-app.md) | Engineering prerequisite gate and build order |
+| [development.md](../engineering/development.md) | Repo layout and conventions |
 | [product/README.md](README.md) | Index for this folder |
 
 ---
@@ -40,7 +40,7 @@ The experience is **role-aware**: owners see edit controls and baby-scoped manag
 ### 3.1 Goals
 
 - Ship **v1 product scope**: onboarding, baby profile, home hub, gallery, calendar, registry, gamification, notifications, settings, profile, and deep links.
-- **Secure, API-mediated data**: all domain reads and writes through the authenticated La Nonna API (see [platform-architecture.md](../platform-architecture.md)).
+- **Secure, API-mediated data**: all domain reads and writes through the authenticated La Nonna API (see [platform-architecture.md](../engineering/platform-architecture.md)).
 - **Photos**: client prepares a display-sized upload; feed uses thumbnails; detail uses the display asset (see platform doc §2.5).
 - **Clear navigation**: fixed home sections and tab screens defined in this document (§6), not remote layout configuration.
 
@@ -283,7 +283,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 
 | ID | Requirement | Acceptance criteria | Implementation note |
 |----|-------------|---------------------|---------------------|
-| FR-GAL-001 | Upload photo | Owner picks image; optional caption; success feedback (E2E-007) | Client encode → `POST /photos/init` + signed PUT per [platform-architecture.md §2.4](../platform-architecture.md) (interim dev: `POST /v1/uploads/display/signed-url` until photo domain migration lands) |
+| FR-GAL-001 | Upload photo | Owner picks image; optional caption; success feedback (E2E-007) | Client encode → `POST /photos/init` + signed PUT per [platform-architecture.md §2.4](../engineering/platform-architecture.md) (interim dev: `POST /v1/uploads/display/signed-url` until photo domain migration lands) |
 | FR-GAL-002 | Display asset policy | Long edge ~2048px; WebP preferred; max size enforced at init | Flutter encode; API rejects oversize |
 | FR-GAL-003 | Thumbnail ready | Feed shows thumb after worker processes finalize event | Pub/Sub worker → `thumbnails/` |
 | FR-GAL-004 | Gallery views | Recent and favorites routes | `/gallery/recent`, `/gallery/favorites` |
@@ -439,7 +439,7 @@ Firebase Auth holds identity; link `user_id` to Firebase UID in SQL.
 - Display encode + worker thumbnails.
 - English UI copy via localization files.
 
-Engineering order aligns with [building-the-app.md](../building-the-app.md): SQL domain migrations → photo pipeline → replace dev smoke UI with shell and features.
+Engineering order aligns with [building-the-app.md](../engineering/building-the-app.md): SQL domain migrations → photo pipeline → replace dev smoke UI with shell and features.
 
 ### 10.2 Later
 

@@ -11,7 +11,7 @@
 | GCP | [`infra/gcp`](infra/gcp) | Deploy & cloud config |
 | Docs | [`docs`](docs) | Architecture & development |
 
-**Architecture:** [docs/platform-architecture.md](docs/platform-architecture.md) · **GCP setup:** [docs/initial-setup.md](docs/initial-setup.md) · **Local dev:** [docs/development.md](docs/development.md)
+**Docs:** [docs/](docs/) · **Architecture:** [docs/engineering/platform-architecture.md](docs/engineering/platform-architecture.md) · **GCP setup:** [docs/engineering/initial-setup.md](docs/engineering/initial-setup.md) · **Local dev:** [docs/engineering/development.md](docs/engineering/development.md)
 
 ## Quick start (mobile)
 

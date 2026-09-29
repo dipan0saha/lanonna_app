@@ -16,7 +16,7 @@ lanonna_app/
 │   ├── db/migrations/       # PostgreSQL schema migrations (source of truth)
 │   ├── terraform/           # GCP platform (dev/prod)
 │   └── gcp/                 # Resource inventory (SETUP.md)
-├── docs/                    # Architecture and engineering docs
+├── docs/                    # product/ + engineering/ documentation
 └── .github/workflows/       # CI (Flutter + Python compile)
 ```
 

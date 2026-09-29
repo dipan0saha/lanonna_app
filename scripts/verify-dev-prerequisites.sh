@@ -58,7 +58,7 @@ fi
 step "Worker public invoker (should be absent)"
 if gcloud run services get-iam-policy worker --region=us-central1 --project="${PROJECT}" --format=json 2>/dev/null \
   | grep -q 'allUsers'; then
-  echo "FAIL: worker still has allUsers run.invoker — remove before prod (see docs/building-the-app.md)"
+  echo "FAIL: worker still has allUsers run.invoker — remove before prod (see docs/engineering/building-the-app.md)"
   FAIL=1
 else
   echo "OK: no allUsers on worker"
