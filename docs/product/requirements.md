@@ -5,7 +5,7 @@
 | **Version** | 1.0 (draft) |
 | **Status** | Authoritative product spec for greenfield La Nonna (`lanonna_app`) |
 | **Audience** | Product, design, mobile and backend engineering |
-| **Last updated** | 2026-09-28 |
+| **Last updated** | 2026-09-29 |
 
 ## 1. Document control
 
@@ -48,7 +48,7 @@ The experience is **role-aware**: owners see edit controls and baby-scoped manag
 
 - **Notify, don’t poll** for feed updates where possible (push + pull-to-refresh); see platform architecture.
 - **Deep links and push** open the correct screen with an entity id in the URL (hybrid screen pattern).
-- **English and Spanish** for every user-facing string.
+- **English** copy for every user-facing string in v1 (keep strings externalized for future locales).
 - **Email-first invitations** in v1; shareable links, SMS, contacts, and QR are later (§10.2).
 
 ---
@@ -61,7 +61,7 @@ The experience is **role-aware**: owners see edit controls and baby-scoped manag
 |------|----------------|
 | **Owner** | Full access to a baby profile they own: edit profile, calendar, registry, photos; manage followers and invitations; delete any registry purchase on their baby; see owner-only home sections (checklist, invite status, storage usage). |
 | **Follower** | Read access to followed babies; squish and comment on photos; RSVP and comment on events; purchase/claim registry items (one purchase per item); submit predictions and name suggestions. |
-| **Co-owner** | Onboarded via invitation with `invited_role` = owner; receives **owner** membership and relationship label (e.g. spouse); same capabilities as owner for that baby. |
+| **Co-owner** | Onboarded via invitation that grants **owner** membership and a relationship label (e.g. spouse); same capabilities as owner for that baby. |
 
 ### 4.2 Dual-role users
 
@@ -152,7 +152,8 @@ Semantic success, warning, info, and error use dedicated tokens on the brand ext
 
 ### 5.2 Shell navigation
 
-- **Bottom navigation** with five destinations: **Home**, **Gallery**, **Calendar**, **Registry**, **Fun** (gamification). Tab order and labels may be localized (en/es).
+- **Bottom navigation** with five destinations, in order: **Home**, **Gallery**, **Calendar**, **Registry**, **Fun** (gamification).
+- **Profile** and **Settings** are **stack screens** (`/profile`, `/settings`, `/profile/edit`), reached from the shell app bar or account menu — they are **not** bottom-nav tabs.
 - **Offline**: When the device is offline, show a **banner**; retain last-loaded content; suppress per-section error UI that would spam the home scroll.
 
 ### 5.3 Accessibility and forms
@@ -227,6 +228,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-AUTH-003 | Session persistence | Returning users with valid session land on Home (or onboarding resume) | Firebase session + app router guards |
 | FR-AUTH-004 | Sign out | Sign out clears Firebase session and local push identity hooks | Clear FCM token association on server optional in v1 |
 | FR-AUTH-005 | Unauthenticated guard | Cold launch without session shows sign-in (E2E-001) | GoRouter redirect |
+| FR-AUTH-006 | Google sign-in | User can sign in or sign up with Google (v1); links to same Firebase user model as email | Firebase Auth Google provider |
 
 ### 7.2 Onboarding — FR-ONB
 
@@ -272,6 +274,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-HOME-001 | Section composition | All capabilities in §6.2–6.3 present as sections | Fixed Flutter layout |
 | FR-HOME-002 | Profile switch reload | Changing selected baby refreshes home content and title (E2E-004) | API calls scoped by `baby_id` |
 | FR-HOME-003 | Pull to refresh | Home supports pull-to-refresh (E2E-021) | Client refresh |
+| FR-HOME-006 | Calendar/registry refresh | Calendar and Registry tabs support pull-to-refresh (E2E-021) | Client refresh |
 | FR-HOME-004 | Empty states | No baby profile shows CTA to create (E2E-020) | Empty state UI |
 | FR-HOME-005 | Hide rules | Welcome/countdown/checklist follow §6.2 visibility rules | Client + API fields |
 
@@ -288,6 +291,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-GAL-007 | Comments | Create, edit own, delete own on photo | API `photo_comments` |
 | FR-GAL-008 | Tags | Tag babies in photo where product allows | API `photo_tags` |
 | FR-GAL-009 | Pending visibility | Photos not visible to others until processing complete | SQL status + API filter |
+| FR-GAL-010 | Owner edit caption | Owner can edit photo caption from detail (E2E-008) | API update; follower read-only |
 
 ### 7.7 Calendar — FR-CAL
 
@@ -309,6 +313,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-REG-003 | Owner undo purchase | Owner can delete any purchase to reset item | API delete |
 | FR-REG-004 | Registry list on tab | Full list on Registry screen | Registry tab primary content |
 | FR-REG-005 | Item detail/edit nav | Deep link and in-app nav (E2E-019) | `/registry/item/:id` |
+| FR-REG-006 | Edit purchased item | Owner cannot edit item fields after purchase; can open detail; owner may reset via purchase delete (FR-REG-003) | API + UI guard |
 
 ### 7.9 Gamification — FR-GAM
 
@@ -326,7 +331,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 
 | ID | Requirement | Acceptance criteria | Implementation note |
 |----|-------------|---------------------|---------------------|
-| FR-NOTIF-001 | In-app inbox | List notifications; mark read | `notifications` table |
+| FR-NOTIF-001 | In-app inbox | Bell (or equivalent) opens full notification list; mark read; home shows preview of recent unread (§6.2 item 5) | `notifications` table |
 | FR-NOTIF-002 | Push delivery | New photo, RSVP, etc. respect user prefs | FCM from API/worker |
 | FR-NOTIF-003 | Deep link payload | Push opens correct `:id` route | FCM data + router |
 | FR-NOTIF-004 | Preferences | Per-channel toggles in settings (E2E-014 partial) | `notification_preferences` |
@@ -335,11 +340,12 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 
 | ID | Requirement | Acceptance criteria | Implementation note |
 |----|-------------|---------------------|---------------------|
-| FR-PROF-001 | View profile | User sees display name, avatar, stats | Profile tab |
+| FR-PROF-001 | View profile | User sees display name, avatar, stats | `/profile` from shell menu |
 | FR-PROF-002 | Edit profile | Update display name, avatar | `/profile/edit` |
 | FR-SET-001 | Settings screen | Notification prefs, help/support entry | `/settings` |
-| FR-SET-002 | Language | User can switch **English / Spanish**; all strings update | `app_en.arb` / `app_es.arb` |
+| FR-SET-002 | Language (v1) | **English only** in v1; copy in ARB/localization files (no hardcoded UI strings) | `app_en.arb`; Spanish deferred (§10.2) |
 | FR-SET-003 | No dark mode picker | Theme remains light only | Product decision (light-only brand) |
+| FR-SET-004 | Minimum app version | Below minimum: **hard block** — full-screen prompt; only action is open store / update | Reads `app_versions`; no dismiss |
 
 ### 7.12 Deep linking — FR-DEEP
 
@@ -398,6 +404,8 @@ La Nonna stores domain data in **Cloud SQL**. Migrations live under `infra/db/`;
 | `notification_preferences` | Channel toggles | Yes |
 | `activity_events` | Activity recap feed | Yes |
 | `app_versions` | Force-update config | Yes |
+| `system_announcements` | Dismissible home banners (content, schedule, targeting) | Yes |
+| `announcement_dismissals` | Per-user dismiss records for announcements | Yes |
 
 Firebase Auth holds identity; link `user_id` to Firebase UID in SQL.
 
@@ -410,11 +418,11 @@ Firebase Auth holds identity; link `user_id` to Firebase UID in SQL.
 | **NFR-SEC-001** | All API calls use `Authorization: Bearer` Firebase ID token. |
 | **NFR-SEC-002** | Enforce Firebase App Check before public beta. |
 | **NFR-SEC-003** | GCS access via short-lived signed URLs; upload only to scoped display paths. |
-| **NFR-L10N-001** | English and Spanish for **all** user-visible strings (no hardcoded English in widgets). |
+| **NFR-L10N-001** | v1: **English** for all user-visible strings via localization files (no hardcoded copy in widgets). Structure code for future locales. |
 | **NFR-OFFLINE-001** | Show offline banner; retain cached thumbs/content; avoid per-section error spam offline. |
 | **NFR-PERF-001** | Feed and lists use thumbnail URLs; detail uses display asset. |
 | **NFR-OBS-001** | Structured logging and monitoring per platform architecture. |
-| **NFR-FORCE-001** | Minimum app version per platform from `app_versions`; block with upgrade prompt. |
+| **NFR-FORCE-001** | Minimum app version per platform from `app_versions`; **hard block** until update (FR-SET-004). |
 | **NFR-CI-001** | Maintain E2E scenario coverage (P0 first); device/integration CI for release confidence. |
 | **NFR-DATA-001** | Support export/deletion flows for compliance and account closure. |
 
@@ -428,31 +436,44 @@ Firebase Auth holds identity; link `user_id` to Firebase UID in SQL.
 - Fixed home sections (§6).
 - Email invitations + Mailjet.
 - Display encode + worker thumbnails.
-- en/es localization mandatory.
+- English UI copy via localization files.
 
 Engineering order aligns with [building-the-app.md](../building-the-app.md): SQL domain migrations → photo pipeline → replace dev smoke UI with shell and features.
 
 ### 10.2 Later
 
+- **Spanish** (and additional locales) with in-app language picker.
 - SMS, contacts picker, QR invites (growth).
 - Shareable invite link without email (copy to WhatsApp).
+- Apple Sign-In (v1 is email + Google only).
 - Dynamic home layout / remote section config (if ever needed).
 - Optional realtime feed (still prefer push + refresh).
 
 ---
 
-## 11. Open product decisions
+## 11. Resolved product decisions (v1)
+
+| Topic | Decision |
+|-------|----------|
+| Bottom nav | Home → Gallery → Calendar → Registry → Fun; Profile/Settings via shell menu |
+| Notifications | Home preview + bell opens full inbox (FR-NOTIF-001) |
+| Force update | Hard block below minimum version (FR-SET-004, NFR-FORCE-001) |
+| Language | English only in v1; externalized strings (FR-SET-002) |
+| System announcements | **Cloud SQL** (`system_announcements` + dismissals) for per-user dismiss and API control |
+| Social auth | Email/password + **Google** (FR-AUTH-006); Apple later |
+
+### 11.1 Still open
 
 | Topic | Options | Notes |
 |-------|---------|-------|
-| Fun tab label | “Fun” vs “Games” vs localized string | E2E uses “Fun” |
+| Fun tab label | “Fun” vs “Games” | E2E scenarios use “Fun” |
 | Activity recap density | Full audit stream vs weekly rollup | Affects `activity_events` API |
-| System announcements | SQL table vs Remote Config | FR-HOME section 4 |
-| Social auth | Google/Apple sign-in | Clarify for v1 scope |
 
 ---
 
 ## 12. Appendices
+
+**Scenario IDs** (`E2E-001`, …): La Nonna acceptance test identifiers; mapped to FRs in Appendix D.
 
 ### Appendix A — Home section capability mapping
 
@@ -527,7 +548,23 @@ Use static URL builder helpers (e.g. `galleryPhotoRoute(id)`) for navigation and
 
 ### Appendix C — Entity checklist (one line each)
 
-See §8 entity table for v1 data model scope.
+| Entity | One-line purpose |
+|--------|------------------|
+| `profiles` | User display profile |
+| `user_stats` | Participation aggregates |
+| `baby_profiles` | Baby metadata |
+| `baby_memberships` | User–baby roles |
+| `invitations` | Email/token invites |
+| `photos` + squish/comment/tag | Gallery media and social |
+| `events` + RSVP/comments | Calendar |
+| `registry_items` + `registry_purchases` | Wishlist and claims |
+| `votes`, `name_suggestions`, `name_suggestion_likes` | Gamification |
+| `notifications`, `notification_preferences` | Alerts and prefs |
+| `activity_events` | Activity recap |
+| `app_versions` | Minimum version enforcement |
+| `system_announcements`, `announcement_dismissals` | Home banners |
+
+Full v1 scope and optional rows: see §8.
 
 ### Appendix D — Acceptance scenario traceability
 
@@ -546,7 +583,7 @@ See §8 entity table for v1 data model scope.
 | E2E-011 | P0 | FR-GAM-001–006 | |
 | E2E-012 | P0 | FR-AUTH-004 | |
 | E2E-013 | P1 | FR-AUTH-001 | Persisted data |
-| E2E-014 | P1 | FR-SET-002, FR-NOTIF-004 | **No** dark mode (FR-SET-003) |
+| E2E-014 | P1 | FR-NOTIF-004 | **No** dark mode or language picker in v1 (FR-SET-002, FR-SET-003) |
 | E2E-015 | P1 | FR-HOME-001 (announcements) | |
 | E2E-016 | P1 | FR-INV-005 | Invite status section |
 | E2E-017 | P1 | FR-GAL-004 | |
