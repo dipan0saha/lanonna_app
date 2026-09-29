@@ -25,6 +25,10 @@ firebase-debug.*.log
 **/.flutter-plugins-dependencies
 **/.pub-cache/
 
+# Python
+**/__pycache__/
+**/*.py[cod]
+
 # Node / backend (when added under services/)
 **/node_modules/
 **/dist/
