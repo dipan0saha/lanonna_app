@@ -24,9 +24,9 @@ lanonna_app/
 ## Prerequisites
 
 - Flutter SDK (see `apps/mobile`)
-- GCP project on Blaze, `us-central1`
-- Firebase project linked to GCP
-- Docker (for API/worker container builds later)
+- GCP `lanonna-dev` on Blaze, `us-central1` — see [initial-setup.md](initial-setup.md)
+- Before main product work: run `./scripts/verify-dev-prerequisites.sh` — [building-the-app.md](building-the-app.md)
+- Docker optional (deploy uses Cloud Build)
 
 ## Mobile app
 

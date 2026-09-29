@@ -27,7 +27,7 @@ Path B GCP platform lives in **`infra/terraform/`** — one **`platform`** modul
 
 Legacy **`infra/gcp/bootstrap.sh`** is deprecated — do not add resources there.
 
-**Outside Terraform (dev):** push subscription **`photo-upload-finalized-push-dev`** → Cloud Run **worker** (created by `services/worker/scripts/deploy.sh`). Codify in Terraform before prod.
+**Terraform (dev):** push subscription **`photo-upload-finalized-push-dev`** (OIDC), display bucket **CORS**, API **TokenCreator** IAM. **Run invoker** on `worker`: `./scripts/apply-dev-run-iam.sh` (gcloud; TF may 403 on `setIamPolicy`).
 
 ---
 
@@ -116,7 +116,7 @@ Scripts use **Cloud Build** to push images to `us-central1-docker.pkg.dev/lanonn
 
 - Push subscription: **`photo-upload-finalized-push-dev`** on topic **`photo-upload-finalized`**
 - Handler: `POST /pubsub/push` (logs payload, returns 204)
-- **Dev only:** worker allows **`allUsers`** as `run.invoker` so push works without OIDC. **Remove before prod** — use push OIDC + `lanonna-worker` as `run.invoker` and `roles/iam.serviceAccountTokenCreator` for the Pub/Sub agent on that SA.
+- **Push auth:** OIDC with `lanonna-worker`; Run invoker IAM via `./scripts/apply-dev-run-iam.sh` after deploy.
 
 Infra smoke (signed URL → GCS → Pub/Sub → worker):
 

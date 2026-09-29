@@ -1,5 +1,6 @@
 locals {
   standard_apis = [
+    "cloudbuild.googleapis.com",
     "run.googleapis.com",
     "sqladmin.googleapis.com",
     "storage.googleapis.com",
@@ -38,4 +39,7 @@ module "platform" {
   create_automation_sa      = true
   manage_sql_app_password   = false
   enable_firebase           = true
+
+  enable_worker_push_subscription = true
+  worker_push_endpoint            = "https://worker-1008830071001.us-central1.run.app/pubsub/push"
 }

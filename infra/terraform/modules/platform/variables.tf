@@ -39,6 +39,29 @@ variable "pubsub_subscription_worker" {
   default = "photo-upload-finalized-worker"
 }
 
+variable "enable_worker_push_subscription" {
+  type        = bool
+  default     = false
+  description = "When true, manage Pub/Sub push subscription to Cloud Run worker (worker must exist)."
+}
+
+variable "worker_push_subscription_name" {
+  type    = string
+  default = "photo-upload-finalized-push-dev"
+}
+
+variable "worker_push_endpoint" {
+  type        = string
+  default     = ""
+  description = "Full URL e.g. https://worker-….run.app/pubsub/push"
+}
+
+variable "display_bucket_cors_origins" {
+  type        = list(string)
+  default     = ["http://localhost:7357", "http://localhost:8080", "http://127.0.0.1:7357"]
+  description = "CORS origins for browser uploads to the display bucket."
+}
+
 variable "artifact_repository_id" {
   type    = string
   default = "lanonna"

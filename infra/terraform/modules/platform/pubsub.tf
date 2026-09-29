@@ -42,3 +42,25 @@ resource "google_pubsub_subscription_iam_member" "worker_subscriber" {
   role         = "roles/pubsub.subscriber"
   member       = "serviceAccount:${google_service_account.worker.email}"
 }
+
+resource "google_pubsub_subscription" "worker_push" {
+  count = var.enable_worker_push_subscription ? 1 : 0
+
+  name    = var.worker_push_subscription_name
+  project = var.project_id
+  topic   = google_pubsub_topic.upload.name
+
+  ack_deadline_seconds = 120
+
+  push_config {
+    push_endpoint = var.worker_push_endpoint
+
+    oidc_token {
+      service_account_email = google_service_account.worker.email
+    }
+  }
+
+  labels = {
+    environment = var.environment
+  }
+}

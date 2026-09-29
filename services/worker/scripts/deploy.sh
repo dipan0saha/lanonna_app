@@ -34,19 +34,9 @@ gcloud run deploy "${SERVICE}" \
 WORKER_URL="$(gcloud run services describe "${SERVICE}" --region="${REGION}" --format='value(status.url)')"
 echo "Worker URL: ${WORKER_URL}"
 
-# Dev stub: public push endpoint (tighten with OIDC push auth before prod).
-PUSH_SUB="photo-upload-finalized-push-dev"
-gcloud pubsub subscriptions delete "${PUSH_SUB}" --project="${PROJECT_ID}" --quiet 2>/dev/null || true
-gcloud pubsub subscriptions create "${PUSH_SUB}" \
-  --project="${PROJECT_ID}" \
-  --topic=photo-upload-finalized \
-  --push-endpoint="${WORKER_URL}/pubsub/push" \
-  --ack-deadline=120
+# Pub/Sub push + Run invoker IAM: managed in Terraform (see infra/terraform).
+if [[ "${CONFIGURE_PUBSUB_IN_DEPLOY:-0}" == "1" ]]; then
+  echo "CONFIGURE_PUBSUB_IN_DEPLOY=1 is deprecated; use Terraform worker_push subscription."
+fi
 
-gcloud run services add-iam-policy-binding "${SERVICE}" \
-  --region="${REGION}" \
-  --member="allUsers" \
-  --role="roles/run.invoker" \
-  --quiet
-
-echo "Deploy complete."
+echo "Deploy complete. Update Terraform worker_push_endpoint if this URL changed."

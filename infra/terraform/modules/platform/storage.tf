@@ -5,6 +5,14 @@ resource "google_storage_bucket" "display" {
 
   uniform_bucket_level_access = true
 
+  # Flutter web / local dev signed PUT uploads (mobile native uploads do not use CORS).
+  cors {
+    origin          = var.display_bucket_cors_origins
+    method          = ["GET", "PUT", "HEAD", "OPTIONS"]
+    response_header = ["Content-Type", "Content-Length", "x-goog-content-length-range", "x-goog-resumable"]
+    max_age_seconds = 3600
+  }
+
   labels = {
     environment = var.environment
     purpose     = "display"

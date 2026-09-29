@@ -21,6 +21,7 @@ terraform import "${ROOT}.google_storage_bucket.thumbnails" "${PROJECT}/lanonna-
 echo "Importing Pub/Sub..."
 terraform import "${ROOT}.google_pubsub_topic.upload" "projects/${PROJECT}/topics/photo-upload-finalized"
 terraform import "${ROOT}.google_pubsub_subscription.worker" "projects/${PROJECT}/subscriptions/photo-upload-finalized-worker"
+terraform import "${ROOT}.google_pubsub_subscription.worker_push[0]" "projects/${PROJECT}/subscriptions/photo-upload-finalized-push-dev" || true
 
 echo "Importing Artifact Registry..."
 terraform import "${ROOT}.google_artifact_registry_repository.docker" "projects/${PROJECT}/locations/${REGION}/repositories/lanonna"
@@ -48,7 +49,7 @@ terraform import "${ROOT}.google_firebase_project.default[0]" "${PROJECT}" || tr
 
 echo "Importing enabled APIs (ignore errors if already in state)..."
 APIS=(
-  run.googleapis.com sqladmin.googleapis.com storage.googleapis.com pubsub.googleapis.com
+  cloudbuild.googleapis.com run.googleapis.com sqladmin.googleapis.com storage.googleapis.com pubsub.googleapis.com
   secretmanager.googleapis.com artifactregistry.googleapis.com cloudscheduler.googleapis.com
   iam.googleapis.com iamcredentials.googleapis.com cloudresourcemanager.googleapis.com
   servicenetworking.googleapis.com compute.googleapis.com eventarc.googleapis.com
