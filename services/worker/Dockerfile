@@ -10,6 +10,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY src ./src
+COPY email_templates ./email_templates
 
 ENV PORT=8080
 CMD ["sh", "-c", "exec uvicorn lanonna_worker.main:app --host 0.0.0.0 --port ${PORT}"]

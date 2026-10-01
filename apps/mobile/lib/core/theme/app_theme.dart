@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'app_brand_theme.dart';
 import 'app_colors.dart';
 import 'app_metrics.dart';
+import 'app_text_theme.dart';
 
+/// Single entry point for product UI theme (colors, type, component themes).
+///
+/// Features should use [Theme.of] / [LaNonnaTheme] and [AppMetrics] — not
+/// ad-hoc [GoogleFonts] or hex literals. See PRD §5.1 and development.md.
 abstract final class AppTheme {
   static ThemeData get light {
     final colorScheme = ColorScheme.light(
@@ -19,30 +25,7 @@ abstract final class AppTheme {
       outline: AppColors.border,
     );
 
-    final inter = GoogleFonts.interTextTheme();
-    final textTheme = inter.copyWith(
-      headlineMedium: GoogleFonts.baloo2(
-        fontSize: AppMetrics.headlineSize,
-        fontWeight: FontWeight.w700,
-        color: AppColors.textPrimary,
-        height: 1.15,
-      ),
-      titleLarge: GoogleFonts.baloo2(
-        fontSize: AppMetrics.headlineSize,
-        fontWeight: FontWeight.w700,
-        color: AppColors.textPrimary,
-      ),
-      bodyMedium: GoogleFonts.inter(
-        fontSize: AppMetrics.supportTextSize,
-        color: AppColors.muted,
-        height: 1.45,
-      ),
-      labelLarge: GoogleFonts.inter(
-        fontSize: 15,
-        fontWeight: FontWeight.w600,
-        color: AppColors.primaryButtonForeground,
-      ),
-    );
+    final textTheme = AppTextTheme.build();
 
     return ThemeData(
       useMaterial3: true,
@@ -50,6 +33,7 @@ abstract final class AppTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.background,
       textTheme: textTheme,
+      extensions: const [AppBrandTheme.light],
       appBarTheme: AppBarTheme(
         elevation: 0,
         centerTitle: true,
@@ -57,11 +41,7 @@ abstract final class AppTheme {
         foregroundColor: AppColors.textPrimary,
         surfaceTintColor: Colors.transparent,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
-        titleTextStyle: GoogleFonts.baloo2(
-          fontSize: 20,
-          fontWeight: FontWeight.w700,
-          color: AppColors.primaryDark,
-        ),
+        titleTextStyle: textTheme.titleMedium,
       ),
       cardTheme: CardThemeData(
         elevation: 0,
@@ -85,10 +65,7 @@ abstract final class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppMetrics.buttonRadius),
           ),
-          textStyle: GoogleFonts.inter(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-          ),
+          textStyle: textTheme.labelLarge,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(

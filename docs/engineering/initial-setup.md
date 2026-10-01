@@ -79,16 +79,20 @@ terraform plan
 | Service | Cloud Run name | URL |
 |---------|----------------|-----|
 | **API** (FastAPI) | `api` | `https://api-1008830071001.us-central1.run.app` |
-| **Worker** (Pub/Sub push stub) | `worker` | `https://worker-1008830071001.us-central1.run.app` |
+| **Worker** (Pub/Sub push) | `worker` | `https://worker-1008830071001.us-central1.run.app` |
 
 ### API endpoints
+
+The live surface is larger than the bootstrap routes below. **Authoritative list:** [development.md](development.md) (profile, onboarding, babies, invitations, photos/gallery, events/calendar, registry, fun, home-summary).
 
 | Method | Path | Auth |
 |--------|------|------|
 | GET | `/health` | Public |
-| GET | `/v1/me` | Firebase ID token (`Authorization: Bearer …`) |
-| GET | `/v1/profile` | Same; upserts row in `app_users` (Cloud SQL) |
-| POST | `/v1/uploads/display/signed-url` | Same; returns V4 signed **PUT** to `lanonna-dev-display` (`{"content_type":"image/jpeg"}`) |
+| GET | `/v1/me`, GET/PATCH `/v1/profile` | Firebase ID token (`Authorization: Bearer …`) |
+| GET, POST, PATCH | `/v1/babies`, `…/home-summary`, onboarding, invitations | JWT + membership / owner rules |
+| POST | `/v1/photos/init` | JWT (owner upload init → signed PUT to `display/`) |
+| GET/PATCH/DELETE | `/v1/babies/{id}/photos…`, `…/events…`, `…/registry…`, `…/fun…` | JWT (see development.md) |
+| POST | `/v1/uploads/display/signed-url` | JWT; legacy/smoke signed **PUT** to `lanonna-dev-display` |
 
 ### Deploy (no local Docker required)
 
@@ -115,7 +119,7 @@ Scripts use **Cloud Build** to push images to `us-central1-docker.pkg.dev/lanonn
 ### Worker (dev Pub/Sub push)
 
 - Push subscription: **`photo-upload-finalized-push-dev`** on topic **`photo-upload-finalized`**
-- Handler: `POST /pubsub/push` (logs payload, returns 204)
+- Handler: `POST /pubsub/push` — **`send_invite_email`** (Mailjet), **GCS finalize** → thumbnail + `photos.status = ready` + `photo_shared` activity event
 - **Push auth:** OIDC with `lanonna-worker`; Run invoker IAM via `./scripts/apply-dev-run-iam.sh` after deploy.
 
 Infra smoke (signed URL → GCS → Pub/Sub → worker):
@@ -129,17 +133,21 @@ export SMOKE_TEST_PASSWORD='…'   # Firebase test user
 
 ## Database migrations
 
-Schema lives in **`infra/db/migrations/`**. Initial migration **`001_app_users.sql`** defines `app_users` + `schema_migrations`.
+Schema lives in **`infra/db/migrations/`** (`001`–`008`). See [infra/db/migrations/README.md](../../infra/db/migrations/README.md) for each file (users, babies/photos, invitations, first-moment tables, avatars, home `activity_events`, gallery/calendar social, registry/fun social).
 
 From a laptop (with [Cloud SQL Auth Proxy](https://cloud.google.com/sql/docs/postgres/connect-auth-proxy)):
 
 ```bash
-cloud-sql-proxy lanonna-dev:us-central1:lanonna-db --port 5432
+cloud-sql-proxy lanonna-dev:us-central1:lanonna-db --port 5432   # or --port 5433
 export PGPASSWORD=$(gcloud secrets versions access latest --secret=db-lanonna-app-password --project=lanonna-dev)
-psql -h 127.0.0.1 -U lanonna_app -d lanonna -f infra/db/migrations/001_app_users.sql
+cd infra/db
+python3 -m venv .venv && .venv/bin/pip install 'psycopg[binary]'
+DB_PASSWORD="$PGPASSWORD" DB_PORT=5432 .venv/bin/python apply_migrations.py
 ```
 
-See [infra/db/migrations/README.md](../infra/db/migrations/README.md). Optional: `infra/db/apply_migrations.py` inside a venv with `psycopg`.
+Manual single file: `psql -h 127.0.0.1 -p 5432 -U lanonna_app -d lanonna -f infra/db/migrations/006_home_activity.sql`.
+
+**Retest onboarding / new baby on dev:** `clear_dev_test_data.py --email you@example.com --reset-onboarding` (see [development.md](development.md)).
 
 Secrets: **`db-lanonna-app-password`**, **`database-url`**, **`db-postgres-root-password`** (values in Secret Manager only).
 

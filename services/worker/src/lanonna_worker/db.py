@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import uuid
 from contextlib import contextmanager
 from typing import Any, Iterator
 
 import psycopg
 from psycopg.rows import dict_row
+from psycopg.types.json import Json
 
 from lanonna_worker.config import settings
 
@@ -70,8 +72,25 @@ def mark_photo_ready(
                 updated_at = now()
             WHERE display_path = %s
               AND status = 'pending'
-            RETURNING id
+            RETURNING id, baby_profile_id, uploader_firebase_uid
             """,
             (thumb_path, object_generation, byte_length, display_path),
         ).fetchone()
-    return row is not None
+        if row is not None:
+            conn.execute(
+                """
+                INSERT INTO activity_events (
+                    id, baby_profile_id, actor_firebase_uid,
+                    event_type, summary, payload
+                )
+                VALUES (%s, %s, %s, 'photo_shared', 'A new photo was shared', %s)
+                """,
+                (
+                    uuid.uuid4(),
+                    row["baby_profile_id"],
+                    row["uploader_firebase_uid"],
+                    Json({"photo_id": str(row["id"])}),
+                ),
+            )
+            return True
+    return False

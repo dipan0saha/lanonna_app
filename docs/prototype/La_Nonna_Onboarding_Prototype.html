@@ -1,0 +1,1893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>La Nonna Onboarding Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sage: #A8C99B;
+    --sage-dark: #7FAE6E;
+    --sage-tint: #EAF3E4;
+    --peach: #F5B99B;
+    --peach-dark: #EF9F76;
+    --peach-tint: #FCE8DC;
+    --bg: #F6F6F7;
+    --surface: #FFFFFF;
+    --text: #2D2D2D;
+    --muted: #9B9B9B;
+    --border: #E9E9EA;
+    --font-display: 'Baloo 2', sans-serif;
+    --font-body: 'Inter', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family: var(--font-body);
+    background: #EDEDEE;
+    color: var(--text);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding: 24px 16px 60px;
+  }
+
+  /* ---------- Prototype chrome (not part of the app UI) ---------- */
+  .proto-toolbar{
+    width:100%;
+    max-width:920px;
+    background:#232323;
+    border-radius:14px;
+    padding:14px 18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+    margin-bottom:22px;
+  }
+  .proto-toolbar .label{
+    color:#8f8f8f;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    font-weight:600;
+  }
+  .proto-toolbar .title{
+    color:#fff;
+    font-size:14px;
+    font-weight:600;
+    margin-top:2px;
+  }
+  .flow-tabs{
+    display:flex;
+    background:#333;
+    border-radius:999px;
+    padding:4px;
+    gap:4px;
+  }
+  .flow-tabs button{
+    border:none;
+    background:transparent;
+    color:#bdbdbd;
+    font-family:var(--font-body);
+    font-size:13px;
+    font-weight:600;
+    padding:8px 16px;
+    border-radius:999px;
+    cursor:pointer;
+    transition: background .2s ease, color .2s ease;
+  }
+  .flow-tabs button.active{
+    background: var(--sage);
+    color:#1c2e17;
+  }
+
+  .stage{
+    display:flex;
+    gap:28px;
+    align-items:flex-start;
+    max-width:920px;
+    width:100%;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+
+  /* ---------- Phone frame ---------- */
+  .phone-wrap{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:14px;
+  }
+  .phone-frame{
+    width:375px;
+    height:812px;
+    background: var(--surface);
+    border-radius:44px;
+    border: 10px solid #1c1c1c;
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,0.35), 0 4px 12px rgba(0,0,0,0.08);
+    position:relative;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+  .notch{
+    position:absolute;
+    top:10px; left:50%;
+    transform:translateX(-50%);
+    width:120px; height:26px;
+    background:#1c1c1c;
+    border-radius:0 0 16px 16px;
+    z-index:50;
+  }
+  .status-bar{
+    height:44px;
+    min-height:44px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 24px;
+    font-size:13px;
+    font-weight:600;
+    color:var(--text);
+    background:transparent;
+    position:relative;
+    z-index:10;
+  }
+  .status-icons{ display:flex; align-items:center; gap:5px; }
+  .screen-container{
+    position:relative;
+    flex:1;
+    overflow:hidden;
+  }
+  .screen{
+    position:absolute;
+    inset:0;
+    display:flex;
+    flex-direction:column;
+    background:var(--surface);
+    opacity:0;
+    transform: translateY(10px) scale(.99);
+    pointer-events:none;
+    transition: opacity .32s ease, transform .32s ease;
+    overflow-y:auto;
+  }
+  .screen.active{
+    opacity:1;
+    transform:none;
+    pointer-events:auto;
+    z-index:5;
+  }
+
+  /* meta nav under phone */
+  .meta-nav{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:#fff;
+    border-radius:999px;
+    padding:6px 8px 6px 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    font-size:12px;
+  }
+  .meta-nav .screen-id{
+    font-weight:700;
+    color:var(--sage-dark);
+    font-family:var(--font-body);
+  }
+  .meta-nav .screen-name{ color:#6b6b6b; }
+  .meta-nav .chev{
+    width:28px; height:28px;
+    border-radius:50%;
+    border:1px solid var(--border);
+    background:#fafafa;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    color:var(--text);
+    font-size:14px;
+    user-select:none;
+  }
+  .meta-nav .chev:hover{ background:var(--sage-tint); }
+
+  /* ---------- shared UI atoms ---------- */
+  .px{ padding-left:26px; padding-right:26px; }
+  .top-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 6px 22px 0;
+    min-height:34px;
+  }
+  .back-btn{
+    width:34px; height:34px;
+    border-radius:50%;
+    background:#F2F2F3;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    font-size:16px;
+    color:var(--text);
+  }
+  .skip-link{
+    font-size:14px;
+    color:var(--muted);
+    font-weight:500;
+    cursor:pointer;
+  }
+  .logo-mark{
+    font-family:var(--font-display);
+    font-weight:700;
+    color:var(--sage-dark);
+    font-size:26px;
+    text-align:center;
+  }
+  .tagline{
+    text-align:center;
+    color:var(--muted);
+    font-size:12px;
+    letter-spacing:.04em;
+    margin-top:2px;
+  }
+  .btn{
+    display:flex; align-items:center; justify-content:center;
+    width:100%;
+    padding:15px 20px;
+    border-radius:999px;
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:15px;
+    cursor:pointer;
+    border:none;
+    transition: transform .12s ease, filter .12s ease;
+  }
+  .btn:active{ transform: scale(.98); }
+  .btn-primary{ background:var(--sage); color:#1c2e17; }
+  .btn-primary:hover{ filter:brightness(1.03); }
+  .btn-outline{
+    background:#fff; color:var(--text);
+    border:1.5px solid var(--border);
+  }
+  .btn-outline img, .btn-outline svg{ margin-right:10px; }
+  .divider{
+    display:flex; align-items:center; gap:12px;
+    color:var(--muted); font-size:12px; margin:18px 0;
+  }
+  .divider::before, .divider::after{
+    content:""; flex:1; height:1px; background:var(--border);
+  }
+  .field-label{
+    font-size:13px; font-weight:600; color:var(--text); margin-bottom:6px; display:block;
+  }
+  .field{
+    width:100%;
+    padding:13px 16px;
+    border-radius:12px;
+    border:1.5px solid var(--border);
+    font-family:var(--font-body);
+    font-size:14px;
+    color:var(--text);
+    background:#FCFCFD;
+    margin-bottom:16px;
+  }
+  .field::placeholder{ color:#B8B8BA; }
+  .helper{ font-size:11.5px; color:var(--muted); margin-top:-11px; margin-bottom:16px; }
+  .checkbox-row{
+    display:flex; align-items:flex-start; gap:10px;
+    font-size:12.5px; color:var(--muted); margin-bottom:20px; line-height:1.5;
+  }
+  .checkbox-row input{ margin-top:3px; accent-color: var(--sage-dark); }
+  .checkbox-row a{ color:var(--sage-dark); font-weight:600; text-decoration:none; }
+  .bottom-link{
+    text-align:center; font-size:13px; color:var(--muted); margin-top:16px;
+  }
+  .bottom-link b{ color:var(--sage-dark); font-weight:700; cursor:pointer; }
+
+  h1.headline{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:24px;
+    line-height:1.25;
+    color:var(--text);
+    margin:0 0 10px;
+  }
+  p.support{
+    font-size:14.5px;
+    line-height:1.55;
+    color:var(--muted);
+    margin:0;
+  }
+
+  /* ---------- Carousel screens ---------- */
+  .carousel-art{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px 40px 0;
+  }
+  .carousel-text{ padding:0 30px; text-align:center; margin-top:6px; }
+  .dots{ display:flex; justify-content:center; gap:7px; margin:22px 0 14px; }
+  .dot{ width:7px; height:7px; border-radius:50%; background:var(--border); cursor:pointer; transition:.2s; }
+  .dot.on{ background:var(--sage-dark); width:20px; border-radius:5px; }
+  .carousel-footer{ padding: 0 26px 28px; }
+  .carousel-footer .row{ display:flex; align-items:center; gap:12px; }
+  .icon-blob{
+    width:180px; height:180px; border-radius:44% 56% 60% 40% / 50% 45% 55% 50%;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  /* ---------- Segmented toggle ---------- */
+  .segmented{
+    display:flex;
+    background:#F1F1F2;
+    border-radius:14px;
+    padding:5px;
+    gap:4px;
+  }
+  .segmented button{
+    flex:1;
+    border:none;
+    background:transparent;
+    padding:13px 8px;
+    border-radius:10px;
+    font-family:var(--font-body);
+    font-weight:700;
+    font-size:14px;
+    color:#8b8b8d;
+    cursor:pointer;
+    transition: all .2s ease;
+  }
+  .segmented button.on{
+    background:var(--surface);
+    color:var(--sage-dark);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+
+  .pill-select{
+    display:flex; flex-wrap:wrap; gap:9px;
+  }
+  .pill-opt{
+    padding:10px 16px;
+    border-radius:999px;
+    border:1.5px solid var(--border);
+    font-size:13px;
+    font-weight:600;
+    color:var(--text);
+    cursor:pointer;
+    background:#fff;
+  }
+  .pill-opt.gender{ flex:1; text-align:center; }
+  .pill-opt.on{
+    background:var(--sage-tint);
+    border-color:var(--sage-dark);
+    color:var(--sage-dark);
+  }
+
+  .photo-upload{
+    width:88px; height:88px;
+    border-radius:50%;
+    background:#F1F1F2;
+    border:1.5px dashed #CFCFD1;
+    display:flex; align-items:center; justify-content:center;
+    margin: 4px auto 6px;
+    cursor:pointer;
+    color:#9b9b9d;
+  }
+  .upload-label{ text-align:center; font-size:12px; color:var(--muted); margin-bottom:22px; }
+
+  .date-input{
+    width:100%;
+    padding:13px 16px;
+    border-radius:12px;
+    border:1.5px solid var(--border);
+    background:#FCFCFD;
+    display:flex; align-items:center; justify-content:space-between;
+    font-size:14px; color:#B8B8BA;
+    margin-bottom:18px;
+    cursor:pointer;
+  }
+  .date-input.filled{ color:var(--text); }
+
+  /* ---------- Invite preview ---------- */
+  .invite-card{
+    margin:0 26px;
+    background:linear-gradient(180deg, var(--sage-tint), #fff 60%);
+    border:1px solid var(--sage-tint);
+    border-radius:22px;
+    padding:26px 22px;
+    text-align:center;
+  }
+  .baby-avatar{
+    width:84px; height:84px; border-radius:50%;
+    margin:0 auto 14px;
+    background: linear-gradient(135deg, var(--peach-tint), var(--sage-tint));
+    display:flex; align-items:center; justify-content:center;
+    font-size:34px;
+  }
+  .reassure{
+    display:flex; align-items:center; gap:10px;
+    background:#F7F7F8; border-radius:14px; padding:14px 16px;
+    margin:22px 26px 0; font-size:12.5px; color:#6b6b6b; line-height:1.5;
+  }
+
+  /* relationship pills grid */
+  .rel-grid{ display:flex; flex-wrap:wrap; gap:10px; }
+  .rel-pill{
+    padding:12px 18px;
+    border-radius:14px;
+    border:1.5px solid var(--border);
+    font-size:13.5px; font-weight:600; color:var(--text);
+    cursor:pointer; background:#fff;
+  }
+  .rel-pill.on{
+    background: var(--sage); border-color:var(--sage);
+    color:#1c2e17;
+  }
+
+  footer.note{
+    max-width:920px; margin-top:26px; text-align:center;
+    color:#8a8a8a; font-size:12px; line-height:1.6;
+  }
+
+  /* ---------- Add Your First Moment ---------- */
+  .moment-card{
+    border:1.5px solid var(--border);
+    border-radius:16px;
+    padding:16px 16px 18px;
+    margin-bottom:14px;
+  }
+  .moment-head{
+    display:flex; align-items:center; gap:10px; margin-bottom:12px;
+  }
+  .moment-icon{
+    width:34px; height:34px; border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .moment-title{ font-weight:700; font-size:14px; color:var(--text); }
+  .moment-sub{ font-size:11.5px; color:var(--muted); margin-top:1px; }
+  .chip-row{ display:flex; flex-wrap:wrap; gap:8px; }
+  .chip{
+    display:flex; align-items:center; gap:6px;
+    padding:8px 13px;
+    border-radius:999px;
+    border:1.5px solid var(--border);
+    font-size:12.5px; font-weight:600; color:var(--text);
+    cursor:pointer; background:#fff;
+  }
+  .chip.on{ background:var(--sage-tint); border-color:var(--sage-dark); color:var(--sage-dark); }
+  .inline-add{ display:flex; gap:8px; }
+  .inline-add input{ flex:1; margin-bottom:0; }
+  .inline-add button{
+    width:44px; border-radius:12px; border:none; background:var(--sage);
+    font-weight:700; color:#1c2e17; cursor:pointer; font-size:18px;
+  }
+  .mini-toggle{ display:flex; background:#F1F1F2; border-radius:10px; padding:3px; gap:3px; width:140px; }
+  .mini-toggle button{
+    flex:1; border:none; background:transparent; padding:7px 0; border-radius:7px;
+    font-family:var(--font-body); font-weight:700; font-size:12px; color:#8b8b8d; cursor:pointer;
+  }
+  .mini-toggle button.on{ background:var(--surface); color:var(--sage-dark); box-shadow:0 1px 4px rgba(0,0,0,0.08); }
+
+  /* ---------- Invite Family & Friends ---------- */
+  .invitee-row{
+    border:1.5px solid var(--border);
+    border-radius:14px;
+    padding:14px;
+    margin-bottom:12px;
+    display:flex; flex-direction:column; gap:8px;
+    position:relative;
+  }
+  .invitee-row input, .invitee-row select{
+    padding:10px 12px; border-radius:10px; border:1.5px solid var(--border);
+    font-family:var(--font-body); font-size:13px; color:var(--text); background:#FCFCFD;
+  }
+  .invitee-row select{ appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239B9B9D'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; }
+  .add-another{
+    display:flex; align-items:center; justify-content:center; gap:6px;
+    padding:12px; border-radius:12px; border:1.5px dashed #CFCFD1;
+    color:var(--sage-dark); font-weight:600; font-size:13px; cursor:pointer;
+    margin-bottom:18px;
+  }
+  .owner-badge{
+    display:none; align-items:center; gap:6px;
+    background: var(--peach-tint); color:#8a4a24;
+    font-size:11.5px; font-weight:700;
+    padding:8px 10px; border-radius:10px;
+  }
+  .invitee-row.is-owner-invite{ border-color:var(--peach-dark); border-left-width:3px; }
+  .invitee-row.is-owner-invite .owner-badge{ display:flex; }
+
+  /* ---------- Home first-run ---------- */
+  .home-topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:2px 20px 14px;
+  }
+  .home-logo{ font-family:var(--font-display); font-weight:700; color:var(--sage-dark); font-size:19px; }
+  .avatar-chip{ width:30px; height:30px; border-radius:50%; background:#E8E4DE; display:flex; align-items:center; justify-content:center; font-size:14px; }
+  .hero-card{
+    margin:0 20px 18px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:26px 20px;
+    text-align:center;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+  }
+  .countdown-num{
+    font-family:var(--font-display); font-weight:800; font-size:40px; color:var(--peach-dark);
+    margin:6px 0 2px;
+  }
+  .countdown-label{ font-size:11px; letter-spacing:.06em; color:var(--muted); text-transform:uppercase; margin-bottom:16px; }
+  .empty-insight{
+    margin:0 20px 18px;
+    background: var(--sage-tint);
+    border-radius:16px;
+    padding:16px 18px;
+    display:flex; align-items:center; gap:12px;
+  }
+  .empty-insight .txt{ flex:1; font-size:12.5px; color:#3f5a37; line-height:1.5; }
+  .empty-insight button{
+    background:var(--sage-dark); color:#fff; border:none; border-radius:999px;
+    padding:8px 14px; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap;
+  }
+  .welcome-banner{
+    margin:8px 20px 18px;
+    background: linear-gradient(135deg, var(--peach-tint), var(--sage-tint));
+    border-radius:20px;
+    padding:30px 22px;
+    text-align:center;
+  }
+  .welcome-banner .emoji{ font-size:34px; margin-bottom:8px; }
+  .section-label{
+    font-size:11px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted);
+    font-weight:700; margin:0 20px 10px;
+  }
+  .bottom-nav{
+    position:absolute;
+    left:0; right:0; bottom:0;
+    display:flex; border-top:1px solid var(--border);
+    padding:10px 6px 6px;
+    background:#fff;
+  }
+  .nav-item{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;
+    font-size:10px; font-weight:600; color:#B0B0B2;
+  }
+  .nav-item.active{ color: var(--peach-dark); }
+
+  /* ---------- Context chip / bell ---------- */
+  .context-chip{
+    display:inline-flex; align-items:center; gap:6px;
+    background:#F1F1F2; border-radius:999px; padding:6px 12px;
+    font-size:11.5px; font-weight:700; color:var(--text); margin:0 20px 14px;
+  }
+  .bell-wrap{ position:relative; }
+  .bell-dot{
+    position:absolute; top:-2px; right:-2px; width:8px; height:8px;
+    border-radius:50%; background:var(--peach-dark); border:1.5px solid #fff;
+  }
+
+  /* ---------- Modal / baby switcher ---------- */
+  .modal-overlay{
+    position:absolute; inset:0; background:rgba(20,20,20,0.42); z-index:40;
+    display:flex; align-items:flex-end;
+  }
+  .sheet{
+    background:#fff; width:100%; border-radius:22px 22px 0 0;
+    padding:10px 20px 24px; max-height:80%; overflow-y:auto;
+  }
+  .sheet-handle{ width:36px; height:4px; background:#E2E2E3; border-radius:3px; margin:6px auto 16px; }
+  .sheet-title{ font-family:var(--font-display); font-weight:700; font-size:17px; margin-bottom:14px; }
+  .baby-row{
+    display:flex; align-items:center; gap:12px;
+    padding:12px 4px; border-bottom:1px solid var(--border);
+    cursor:pointer;
+  }
+  .baby-row:last-of-type{ border-bottom:none; }
+  .baby-thumb{ width:42px; height:42px; border-radius:50%; background:var(--sage-tint); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+  .baby-row .info{ flex:1; }
+  .baby-row .name{ font-weight:700; font-size:14px; }
+  .baby-row .sub{ font-size:11.5px; color:var(--muted); margin-top:1px; }
+  .role-badge{
+    padding:5px 11px; border-radius:999px; font-size:10.5px; font-weight:800;
+    text-transform:uppercase; letter-spacing:.03em;
+  }
+  .role-badge.owner{ background:var(--peach-tint); color:#a35a2e; }
+  .role-badge.follower{ background:#EDEDEE; color:#6b6b6b; }
+  .sheet-close{
+    text-align:center; padding:12px; margin-top:6px; font-weight:700; color:var(--muted); font-size:13px; cursor:pointer;
+  }
+
+  /* ---------- Notifications ---------- */
+  .notif-item{
+    display:flex; gap:12px; padding:14px 4px; border-bottom:1px solid var(--border);
+  }
+  .notif-icon{ width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:15px; }
+  .notif-text{ font-size:13px; line-height:1.4; }
+  .notif-time{ font-size:11px; color:var(--muted); margin-top:2px; }
+  .notif-unread{ width:8px; height:8px; border-radius:50%; background:var(--peach-dark); margin-top:6px; flex-shrink:0; }
+
+  /* ---------- Aggregated home ---------- */
+  .filter-bar{ display:flex; gap:8px; padding:0 20px 16px; overflow-x:auto; }
+  .filter-chip{
+    padding:8px 15px; border-radius:999px; border:1.5px solid var(--border);
+    font-size:12.5px; font-weight:700; color:var(--text); white-space:nowrap; cursor:pointer; background:#fff;
+  }
+  .filter-chip.on{ background:var(--sage); border-color:var(--sage); color:#1c2e17; }
+  .mini-countdown{
+    display:flex; align-items:center; gap:14px;
+    background:var(--surface); border:1px solid var(--border); border-radius:16px;
+    padding:14px 16px; margin:0 20px 12px;
+  }
+  .mini-countdown .num{ font-family:var(--font-display); font-weight:800; font-size:22px; color:var(--peach-dark); width:44px; text-align:center; }
+  .mini-countdown .info b{ font-size:13px; } .mini-countdown .info div{ font-size:11px; color:var(--muted); }
+  .activity-row{ display:flex; gap:10px; padding:11px 4px; border-bottom:1px solid var(--border); align-items:flex-start; }
+  .activity-row .tag{ font-size:10px; font-weight:800; color:var(--sage-dark); background:var(--sage-tint); padding:2px 7px; border-radius:6px; margin-top:2px; white-space:nowrap; }
+  .activity-row .txt{ font-size:12.5px; line-height:1.4; }
+
+  /* ---------- Memory Lane ---------- */
+  .memory-tabs{ display:flex; gap:8px; padding:0 20px 14px; }
+  .memory-tabs .t{ padding:8px 14px; border-radius:999px; font-size:12.5px; font-weight:700; cursor:pointer; background:#F1F1F2; color:#8b8b8d; }
+  .memory-tabs .t.on{ background:var(--sage); color:#1c2e17; }
+  .memory-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:0 20px; }
+  .memory-photo{ aspect-ratio:1; border-radius:14px; background:linear-gradient(135deg,var(--sage-tint),var(--peach-tint)); display:flex; align-items:center; justify-content:center; font-size:26px; position:relative; }
+  .memory-photo .cap{ position:absolute; bottom:6px; left:8px; right:8px; font-size:10px; color:#fff; background:rgba(0,0,0,0.35); padding:3px 6px; border-radius:6px; }
+
+  /* ---------- Follow / manage lists ---------- */
+  .follow-row{
+    display:flex; align-items:center; gap:12px; padding:13px 4px; border-bottom:1px solid var(--border);
+  }
+  .follow-row .info{ flex:1; }
+  .follow-row .name{ font-weight:700; font-size:13.5px; }
+  .follow-row .sub{ font-size:11px; color:var(--muted); margin-top:1px; }
+  .link-btn{ font-size:12px; font-weight:700; color:var(--sage-dark); cursor:pointer; background:none; border:none; }
+  .link-btn.danger{ color:#C0554A; }
+
+  /* ---------- Settings atoms ---------- */
+  .toggle-switch{ width:42px; height:24px; border-radius:999px; background:#E2E2E3; position:relative; cursor:pointer; flex-shrink:0; }
+  .toggle-switch.on{ background:var(--sage); }
+  .toggle-switch .knob{ width:18px; height:18px; border-radius:50%; background:#fff; position:absolute; top:3px; left:3px; transition:.2s; box-shadow:0 1px 3px rgba(0,0,0,0.2); }
+  .toggle-switch.on .knob{ left:21px; }
+  .settings-row{ display:flex; align-items:center; justify-content:space-between; padding:14px 4px; border-bottom:1px solid var(--border); }
+  .settings-row .label{ font-size:13.5px; font-weight:600; }
+  .settings-row .sub{ font-size:11px; color:var(--muted); margin-top:2px; }
+  .radio-row{ display:flex; align-items:center; gap:12px; padding:13px 4px; border-bottom:1px solid var(--border); cursor:pointer; }
+  .radio-circle{ width:19px; height:19px; border-radius:50%; border:2px solid var(--border); flex-shrink:0; position:relative; }
+  .radio-row.on .radio-circle{ border-color:var(--sage-dark); }
+  .radio-row.on .radio-circle::after{ content:""; position:absolute; inset:3px; border-radius:50%; background:var(--sage-dark); }
+  .storage-track{ height:10px; border-radius:999px; background:#EDEDEE; overflow:hidden; margin:10px 0 8px; }
+  .storage-fill{ height:100%; background:linear-gradient(90deg,var(--sage),var(--peach)); border-radius:999px; }
+</style>
+</head>
+<body>
+
+  <div class="proto-toolbar">
+    <div>
+      <div class="label">La Nonna · Clickable Prototype</div>
+      <div class="title">Onboarding — MVP screens</div>
+    </div>
+    <div class="flow-tabs">
+      <button id="tab-owner" class="active" onclick="switchFlow('owner')">Owner Onboarding</button>
+      <button id="tab-follower" onclick="switchFlow('follower')">Follower Onboarding</button>
+      <button id="tab-coowner" onclick="switchFlow('coowner')">Co-Owner (gap)</button>
+      <button id="tab-gaps" onclick="switchFlow('gaps')">Post-Onboarding Gaps</button>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="phone-wrap">
+      <div class="phone-frame">
+        <div class="notch"></div>
+        <div class="status-bar">
+          <span>9:41</span>
+          <div class="status-icons">
+            <svg width="18" height="10" viewBox="0 0 18 10" fill="none"><rect x="0" y="6" width="3" height="4" rx="0.5" fill="#2D2D2D"/><rect x="4.5" y="4" width="3" height="6" rx="0.5" fill="#2D2D2D"/><rect x="9" y="2" width="3" height="8" rx="0.5" fill="#2D2D2D"/><rect x="13.5" y="0" width="3" height="10" rx="0.5" fill="#2D2D2D"/></svg>
+            <svg width="22" height="11" viewBox="0 0 22 11" fill="none"><rect x="0.5" y="0.5" width="19" height="10" rx="2.5" stroke="#2D2D2D"/><rect x="2" y="2" width="14" height="7" rx="1.3" fill="#2D2D2D"/><rect x="20.5" y="3.5" width="1.5" height="4" rx="0.7" fill="#2D2D2D"/></svg>
+          </div>
+        </div>
+
+        <div class="screen-container">
+
+          <!-- ============ OWNER: CAROUSEL 1 ============ -->
+          <div class="screen active" data-flow="owner" id="owner-carousel-1">
+            <div class="top-row"><span></span><span class="skip-link" onclick="showScreen('owner-signup')">Skip</span></div>
+            <div class="carousel-art">
+              <div class="icon-blob" style="background:var(--sage-tint);">
+                <svg width="70" height="70" viewBox="0 0 24 24" fill="none"><path d="M12 3L4 9v11a1 1 0 001 1h5v-6h4v6h5a1 1 0 001-1V9l-8-6z" stroke="#7FAE6E" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="13" r="1.4" fill="#7FAE6E"/></svg>
+              </div>
+            </div>
+            <div class="carousel-text">
+              <h1 class="headline">Your baby's story, in one private place</h1>
+              <p class="support">Photos, updates, and everything in between, visible only to the people you invite.</p>
+            </div>
+            <div class="dots">
+              <span class="dot on" onclick="showScreen('owner-carousel-1')"></span>
+              <span class="dot" onclick="showScreen('owner-carousel-2')"></span>
+              <span class="dot" onclick="showScreen('owner-carousel-3')"></span>
+              <span class="dot" onclick="showScreen('owner-carousel-4')"></span>
+            </div>
+            <div class="carousel-footer">
+              <button class="btn btn-primary" onclick="showScreen('owner-carousel-2')">Next</button>
+            </div>
+          </div>
+
+          <!-- ============ OWNER: CAROUSEL 2 ============ -->
+          <div class="screen" data-flow="owner" id="owner-carousel-2">
+            <div class="top-row"><span></span><span class="skip-link" onclick="showScreen('owner-signup')">Skip</span></div>
+            <div class="carousel-art">
+              <div class="icon-blob" style="background:var(--peach-tint);">
+                <svg width="72" height="72" viewBox="0 0 24 24" fill="none"><circle cx="8" cy="9" r="3" stroke="#EF9F76" stroke-width="1.6"/><circle cx="16" cy="9" r="3" stroke="#EF9F76" stroke-width="1.6"/><path d="M2.5 20c.6-3.6 3-5.5 5.5-5.5s4.9 1.9 5.5 5.5M10.5 20c.6-3.6 3-5.5 5.5-5.5s4.9 1.9 5.5 5.5" stroke="#EF9F76" stroke-width="1.6" stroke-linecap="round"/></svg>
+              </div>
+            </div>
+            <div class="carousel-text">
+              <h1 class="headline">Everyone gets to feel close</h1>
+              <p class="support">Grandparents, aunts, uncles, and friends can follow along, no matter how far away they live.</p>
+            </div>
+            <div class="dots">
+              <span class="dot" onclick="showScreen('owner-carousel-1')"></span>
+              <span class="dot on" onclick="showScreen('owner-carousel-2')"></span>
+              <span class="dot" onclick="showScreen('owner-carousel-3')"></span>
+              <span class="dot" onclick="showScreen('owner-carousel-4')"></span>
+            </div>
+            <div class="carousel-footer">
+              <button class="btn btn-primary" onclick="showScreen('owner-carousel-3')">Next</button>
+            </div>
+          </div>
+
+          <!-- ============ OWNER: CAROUSEL 3 ============ -->
+          <div class="screen" data-flow="owner" id="owner-carousel-3">
+            <div class="top-row"><span></span><span class="skip-link" onclick="showScreen('owner-signup')">Skip</span></div>
+            <div class="carousel-art">
+              <div class="icon-blob" style="background:var(--sage-tint);">
+                <svg width="70" height="70" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2.4" stroke="#7FAE6E" stroke-width="1.6"/><path d="M3 9.5h18" stroke="#7FAE6E" stroke-width="1.6"/><path d="M8 3v4M16 3v4" stroke="#7FAE6E" stroke-width="1.6" stroke-linecap="round"/><circle cx="8.2" cy="14" r="1.1" fill="#7FAE6E"/><circle cx="12" cy="14" r="1.1" fill="#7FAE6E"/><circle cx="15.8" cy="14" r="1.1" fill="#7FAE6E"/></svg>
+              </div>
+            </div>
+            <div class="carousel-text">
+              <h1 class="headline">Celebrate every milestone together</h1>
+              <p class="support">Calendar events, a shared registry, and fun ways to mark the big days.</p>
+            </div>
+            <div class="dots">
+              <span class="dot" onclick="showScreen('owner-carousel-1')"></span>
+              <span class="dot" onclick="showScreen('owner-carousel-2')"></span>
+              <span class="dot on" onclick="showScreen('owner-carousel-3')"></span>
+              <span class="dot" onclick="showScreen('owner-carousel-4')"></span>
+            </div>
+            <div class="carousel-footer">
+              <button class="btn btn-primary" onclick="showScreen('owner-carousel-4')">Next</button>
+            </div>
+          </div>
+
+          <!-- ============ OWNER: CAROUSEL 4 ============ -->
+          <div class="screen" data-flow="owner" id="owner-carousel-4">
+            <div class="top-row"><span></span><span></span></div>
+            <div class="carousel-art">
+              <div class="icon-blob" style="background:var(--peach-tint);">
+                <svg width="70" height="70" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="14" height="14" rx="2" stroke="#EF9F76" stroke-width="1.6"/><path d="M7 4V2.5M13 4V2.5" stroke="#EF9F76" stroke-width="1.6" stroke-linecap="round"/><circle cx="8" cy="9" r="1.4" stroke="#EF9F76" stroke-width="1.5"/><path d="M4 15l3.5-4 2.5 3 2-2.4L17 15" stroke="#EF9F76" stroke-width="1.6" stroke-linejoin="round"/><rect x="7" y="9" width="14" height="14" rx="2" fill="#fff" stroke="#EF9F76" stroke-width="1.6"/></svg>
+              </div>
+            </div>
+            <div class="carousel-text">
+              <h1 class="headline">Never lose a moment</h1>
+              <p class="support">Every photo and comment, saved in one safe place, for good.</p>
+            </div>
+            <div class="dots">
+              <span class="dot" onclick="showScreen('owner-carousel-1')"></span>
+              <span class="dot" onclick="showScreen('owner-carousel-2')"></span>
+              <span class="dot" onclick="showScreen('owner-carousel-3')"></span>
+              <span class="dot on" onclick="showScreen('owner-carousel-4')"></span>
+            </div>
+            <div class="carousel-footer">
+              <button class="btn btn-primary" onclick="showScreen('owner-signup')">Get Started</button>
+            </div>
+          </div>
+
+          <!-- ============ OWNER: SIGN UP ============ -->
+          <div class="screen" data-flow="owner" id="owner-signup">
+            <div class="top-row">
+              <span class="back-btn" onclick="showScreen('owner-carousel-4')">&#8592;</span><span></span>
+            </div>
+            <div class="px" style="margin-top:6px;">
+              <div class="logo-mark">Nonna</div>
+              <div class="tagline">PRIVATE. ORGANIZED. CONNECTED.</div>
+            </div>
+            <div class="px" style="margin-top:26px;">
+              <button class="btn btn-outline" style="margin-bottom:10px;" onclick="goSignup('oauth','owner')">
+                <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.6 9.2c0-.6-.05-1.24-.15-1.84H9v3.68h4.8c-.2 1.1-.85 2.05-1.8 2.68v2.2h2.9c1.7-1.57 2.7-3.88 2.7-6.72z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.2c-.8.55-1.85.87-3.06.87-2.35 0-4.34-1.58-5.05-3.72H.95v2.28C2.44 15.98 5.48 18 9 18z"/><path fill="#FBBC05" d="M3.95 10.77A5.4 5.4 0 013.68 9c0-.62.1-1.22.27-1.77V4.95H.95A9 9 0 000 9c0 1.45.35 2.83.95 4.05l3-2.28z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.9 11.42 0 9 0 5.48 0 2.44 2.02.95 4.95l3 2.28C4.66 5.16 6.65 3.58 9 3.58z"/></svg>
+                Continue with Google
+              </button>
+              <button class="btn btn-outline" onclick="goSignup('oauth','owner')">
+                <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#1877F2" d="M18 9a9 9 0 10-10.4 8.9v-6.3H5.3V9h2.3V7c0-2.3 1.36-3.55 3.44-3.55.99 0 2.03.18 2.03.18v2.24h-1.14c-1.13 0-1.48.7-1.48 1.42V9h2.52l-.4 2.6h-2.12v6.3A9 9 0 0018 9z"/></svg>
+                Continue with Facebook
+              </button>
+              <div class="divider">or sign up with email</div>
+              <label class="field-label">Email</label>
+              <input class="field" placeholder="you@email.com" />
+              <label class="field-label">Password</label>
+              <input class="field" type="password" placeholder="Create a password" />
+              <div class="helper">At least 6 characters, with a number or symbol.</div>
+              <button class="btn btn-primary" onclick="goSignup('email','owner')">Create Account</button>
+              <div class="bottom-link">Already have an account? <b>Log in</b></div>
+            </div>
+          </div>
+
+          <!-- ============ OWNER: CREATE BABY PROFILE ============ -->
+          <div class="screen" data-flow="owner" id="owner-create-profile">
+            <div class="top-row">
+              <span class="back-btn" onclick="showScreen('owner-signup')">&#8592;</span><span></span>
+            </div>
+            <div class="px" style="margin-top:10px;">
+              <h1 class="headline">Create your baby's profile</h1>
+              <p class="support" style="margin-bottom:20px;">You can always add or change these details later.</p>
+
+              <div class="segmented" id="bb-toggle">
+                <button class="on" onclick="setBabyStatus('expecting')">Expecting</button>
+                <button onclick="setBabyStatus('born')">Already Born</button>
+              </div>
+
+              <div style="margin-top:18px;">
+                <label class="field-label" id="bb-date-label">Expected Due Date</label>
+                <div class="date-input">
+                  <span id="bb-date-placeholder">Select a date</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="#B8B8BA" stroke-width="1.6"/><path d="M3 9h18M8 3v4M16 3v4" stroke="#B8B8BA" stroke-width="1.6" stroke-linecap="round"/></svg>
+                </div>
+              </div>
+
+              <label class="field-label">Gender</label>
+              <div class="pill-select" style="margin-bottom:22px;">
+                <div class="pill-opt gender" id="gender-boy-pill" onclick="selectGender(this,'boy')">Boy</div>
+                <div class="pill-opt gender" onclick="selectGender(this,'girl')">Girl</div>
+                <div class="pill-opt gender on" id="gender-unsure-pill" onclick="selectGender(this,'unsure')">Not sure yet</div>
+              </div>
+
+              <div id="name-fields">
+                <label class="field-label">Boy's name (optional)</label>
+                <input class="field" placeholder="e.g. Liam" />
+                <label class="field-label">Girl's name (optional)</label>
+                <input class="field" placeholder="e.g. Olivia" />
+              </div>
+
+              <div class="photo-upload">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M4 8a2 2 0 012-2h1.2l.9-1.5a1 1 0 01.86-.5h6.08a1 1 0 01.86.5L16.8 6H18a2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2V8z" stroke="#9B9B9D" stroke-width="1.5"/><circle cx="12" cy="13" r="3.2" stroke="#9B9B9D" stroke-width="1.5"/></svg>
+              </div>
+              <div class="upload-label">Add a photo</div>
+
+              <button class="btn btn-primary" style="margin-bottom:26px;" onclick="goToFirstMoment()">Continue</button>
+            </div>
+          </div>
+
+          <!-- ============ OWNER: ADD YOUR FIRST MOMENT (Expecting) ============ -->
+          <div class="screen" data-flow="owner" id="owner-first-moment-expecting">
+            <div class="top-row">
+              <span class="back-btn" onclick="showScreen('owner-create-profile')">&#8592;</span><span></span>
+            </div>
+            <div class="px" style="margin-top:10px;">
+              <h1 class="headline">Add your first moment</h1>
+              <p class="support" style="margin-bottom:20px;">Totally optional, but it helps family feel like there's already something here.</p>
+
+              <div class="moment-card">
+                <div class="moment-head">
+                  <div class="moment-icon" style="background:var(--sage-tint);">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 4l2.2 4.6 5 .7-3.6 3.6.9 5-4.5-2.4-4.5 2.4.9-5-3.6-3.6 5-.7L12 4z" stroke="#7FAE6E" stroke-width="1.6" stroke-linejoin="round"/></svg>
+                  </div>
+                  <div><div class="moment-title">Suggest a name</div><div class="moment-sub">Seeds the vote in Family Fun</div></div>
+                </div>
+                <div class="mini-toggle" id="name-gender-toggle">
+                  <button class="on" onclick="setNameGender(this,'boy')">Boy</button>
+                  <button onclick="setNameGender(this,'girl')">Girl</button>
+                </div>
+                <div class="inline-add" style="margin-top:10px;">
+                  <input id="name-suggest-input" class="field" style="margin-bottom:0;" placeholder="Add a name..." />
+                  <button onclick="addSuggestedName()">+</button>
+                </div>
+                <div class="chip-row" id="suggested-names-list" style="margin-top:10px;"></div>
+              </div>
+
+              <div class="moment-card">
+                <div class="moment-head">
+                  <div class="moment-icon" style="background:var(--peach-tint);">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2.4" stroke="#EF9F76" stroke-width="1.6"/><path d="M3 9.5h18M8 3v4M16 3v4" stroke="#EF9F76" stroke-width="1.6" stroke-linecap="round"/></svg>
+                  </div>
+                  <div><div class="moment-title">Add a calendar event</div><div class="moment-sub">AI-suggested for this stage</div></div>
+                </div>
+                <div class="chip-row">
+                  <div class="chip" onclick="this.classList.toggle('on')">+ Gender Reveal</div>
+                  <div class="chip" onclick="this.classList.toggle('on')">+ Baby Shower</div>
+                  <div class="chip" onclick="this.classList.toggle('on')">+ Due Date</div>
+                </div>
+              </div>
+
+              <div class="moment-card">
+                <div class="moment-head">
+                  <div class="moment-icon" style="background:var(--sage-tint);">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 8a2 2 0 012-2h1.2l.9-1.5a1 1 0 01.86-.5h6.08a1 1 0 01.86.5L16.8 6H18a2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2V8z" stroke="#7FAE6E" stroke-width="1.6"/></svg>
+                  </div>
+                  <div><div class="moment-title">Add a registry item</div><div class="moment-sub">AI-suggested for this stage</div></div>
+                </div>
+                <div class="chip-row">
+                  <div class="chip" onclick="this.classList.toggle('on')">+ Swaddles</div>
+                  <div class="chip" onclick="this.classList.toggle('on')">+ Crib &amp; Mattress</div>
+                  <div class="chip" onclick="this.classList.toggle('on')">+ Diapers</div>
+                </div>
+              </div>
+
+              <button class="btn btn-primary" style="margin:20px 0 26px;" onclick="showScreen('owner-invite')">Continue</button>
+            </div>
+          </div>
+
+          <!-- ============ OWNER: ADD YOUR FIRST MOMENT (Born) ============ -->
+          <div class="screen" data-flow="owner" id="owner-first-moment-born">
+            <div class="top-row">
+              <span class="back-btn" onclick="showScreen('owner-create-profile')">&#8592;</span><span></span>
+            </div>
+            <div class="px" style="margin-top:10px;">
+              <h1 class="headline">Add your first moment</h1>
+              <p class="support" style="margin-bottom:20px;">Totally optional, but it helps family feel like there's already something here.</p>
+
+              <div class="moment-card">
+                <div class="moment-head">
+                  <div class="moment-icon" style="background:var(--peach-tint);">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 8a2 2 0 012-2h1.2l.9-1.5a1 1 0 01.86-.5h6.08a1 1 0 01.86.5L16.8 6H18a2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2V8z" stroke="#EF9F76" stroke-width="1.6"/><circle cx="12" cy="13" r="3.2" stroke="#EF9F76" stroke-width="1.5"/></svg>
+                  </div>
+                  <div><div class="moment-title">Upload your first photo</div><div class="moment-sub">From your camera or library</div></div>
+                </div>
+                <div class="photo-upload" style="margin:2px auto;">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 8a2 2 0 012-2h1.2l.9-1.5a1 1 0 01.86-.5h6.08a1 1 0 01.86.5L16.8 6H18a2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2V8z" stroke="#9B9B9D" stroke-width="1.5"/><circle cx="12" cy="13" r="3.2" stroke="#9B9B9D" stroke-width="1.5"/></svg>
+                </div>
+              </div>
+
+              <div class="moment-card">
+                <div class="moment-head">
+                  <div class="moment-icon" style="background:var(--sage-tint);">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 8a2 2 0 012-2h1.2l.9-1.5a1 1 0 01.86-.5h6.08a1 1 0 01.86.5L16.8 6H18a2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2V8z" stroke="#7FAE6E" stroke-width="1.6"/></svg>
+                  </div>
+                  <div><div class="moment-title">Add a registry item</div><div class="moment-sub">AI-suggested for newborns</div></div>
+                </div>
+                <div class="chip-row">
+                  <div class="chip" onclick="this.classList.toggle('on')">+ Diapers</div>
+                  <div class="chip" onclick="this.classList.toggle('on')">+ Onesies</div>
+                  <div class="chip" onclick="this.classList.toggle('on')">+ Bottles</div>
+                </div>
+              </div>
+
+              <div class="moment-card">
+                <div class="moment-head">
+                  <div class="moment-icon" style="background:var(--peach-tint);">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2.4" stroke="#EF9F76" stroke-width="1.6"/><path d="M3 9.5h18M8 3v4M16 3v4" stroke="#EF9F76" stroke-width="1.6" stroke-linecap="round"/></svg>
+                  </div>
+                  <div><div class="moment-title">Add a calendar event</div><div class="moment-sub">AI-suggested for newborns</div></div>
+                </div>
+                <div class="chip-row">
+                  <div class="chip" onclick="this.classList.toggle('on')">+ First Checkup</div>
+                  <div class="chip" onclick="this.classList.toggle('on')">+ Baptism</div>
+                  <div class="chip" onclick="this.classList.toggle('on')">+ First Holidays</div>
+                </div>
+              </div>
+
+              <button class="btn btn-primary" style="margin:20px 0 26px;" onclick="showScreen('owner-invite')">Continue</button>
+            </div>
+          </div>
+
+          <!-- ============ OWNER: INVITE FAMILY & FRIENDS ============ -->
+          <div class="screen" data-flow="owner" id="owner-invite">
+            <div class="top-row">
+              <span class="back-btn" onclick="goBackToFirstMoment()">&#8592;</span><span></span>
+            </div>
+            <div class="px" style="margin-top:10px;">
+              <h1 class="headline">Invite family &amp; friends</h1>
+              <p class="support" style="margin-bottom:18px;">Add the people you want to share this with. You can always invite more later.</p>
+
+              <div id="invitee-list">
+                <div class="invitee-row">
+                  <input placeholder="Name" value="Grandma Sue" />
+                  <input placeholder="Email or phone" value="sue@email.com" />
+                  <select onchange="checkOwnerRole(this)">
+                    <option>Wife</option><option>Husband</option>
+                    <option selected>Grandma</option><option>Grandpa</option><option>Aunt</option>
+                    <option>Uncle</option><option>Godmother</option><option>Godfather</option><option>Family Friend</option>
+                  </select>
+                  <div class="owner-badge">👑 This person will also be a Baby Profile Owner</div>
+                </div>
+              </div>
+              <div class="add-another" onclick="addInviteeRow()">+ Add another</div>
+
+              <button class="btn btn-primary" onclick="goToHome()">Send Invites</button>
+              <div class="bottom-link" onclick="goToHome()" style="cursor:pointer;">Skip for now</div>
+              <div style="height:20px;"></div>
+            </div>
+          </div>
+
+          <!-- ============ OWNER: HOME FIRST-RUN (Unborn) ============ -->
+          <div class="screen" data-flow="owner" id="owner-home-unborn">
+            <div class="home-topbar">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" onclick="showScreen('gaps-switcher')" style="cursor:pointer;"><circle cx="11" cy="11" r="7" stroke="#9B9B9D" stroke-width="1.8"/><path d="M21 21l-4.3-4.3" stroke="#9B9B9D" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <div class="home-logo">Nonna</div>
+              <div class="bell-wrap" onclick="showScreen('gaps-notifications')" style="cursor:pointer;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3a5 5 0 00-5 5v2.6c0 .8-.3 1.6-.9 2.2L5 14h14l-1.1-1.2a3 3 0 01-.9-2.2V8a5 5 0 00-5-5z" stroke="#6b6b6b" stroke-width="1.6" stroke-linejoin="round"/><path d="M9.5 17a2.5 2.5 0 005 0" stroke="#6b6b6b" stroke-width="1.6" stroke-linecap="round"/></svg>
+                <div class="bell-dot"></div>
+              </div>
+            </div>
+            <div class="hero-card">
+              <div style="font-weight:700; font-size:15px;">Waiting for Baby Parker</div>
+              <div class="countdown-num">33</div>
+              <div class="countdown-label">Days to due date</div>
+              <button class="btn btn-primary">Announce Arrival</button>
+            </div>
+            <div class="section-label">Family Insight</div>
+            <div class="empty-insight">
+              <div class="txt">No votes yet. Invite family so they can guess names, gender, and the big day.</div>
+              <button onclick="showScreen('owner-invite')">Invite</button>
+            </div>
+            <div class="bottom-nav">
+              <div class="nav-item active">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 11l8-7 8 7v8a1 1 0 01-1 1h-4v-6h-6v6H5a1 1 0 01-1-1v-8z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+                Home
+              </div>
+              <div class="nav-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.7"/><circle cx="8.5" cy="9.5" r="1.6" stroke="currentColor" stroke-width="1.5"/><path d="M21 16l-5.5-5.5L5 21" stroke="currentColor" stroke-width="1.6"/></svg>Gallery</div>
+              <div class="nav-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2.2" stroke="currentColor" stroke-width="1.7"/><path d="M3 9.5h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>Calendar</div>
+              <div class="nav-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 8a2 2 0 012-2h1.2l.9-1.5a1 1 0 01.86-.5h6.08a1 1 0 01.86.5L16.8 6H18a2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2V8z" stroke="currentColor" stroke-width="1.7"/></svg>Registry</div>
+              <div class="nav-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 4l2.2 4.6 5 .7-3.6 3.6.9 5-4.5-2.4-4.5 2.4.9-5-3.6-3.6 5-.7L12 4z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>Fun</div>
+            </div>
+          </div>
+
+          <!-- ============ OWNER: HOME FIRST-RUN (Born) ============ -->
+          <div class="screen" data-flow="owner" id="owner-home-born">
+            <div class="home-topbar">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" onclick="showScreen('gaps-switcher')" style="cursor:pointer;"><circle cx="11" cy="11" r="7" stroke="#9B9B9D" stroke-width="1.8"/><path d="M21 21l-4.3-4.3" stroke="#9B9B9D" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <div class="home-logo">Nonna</div>
+              <div class="bell-wrap" onclick="showScreen('gaps-notifications')" style="cursor:pointer;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3a5 5 0 00-5 5v2.6c0 .8-.3 1.6-.9 2.2L5 14h14l-1.1-1.2a3 3 0 01-.9-2.2V8a5 5 0 00-5-5z" stroke="#6b6b6b" stroke-width="1.6" stroke-linejoin="round"/><path d="M9.5 17a2.5 2.5 0 005 0" stroke="#6b6b6b" stroke-width="1.6" stroke-linecap="round"/></svg>
+                <div class="bell-dot"></div>
+              </div>
+            </div>
+            <div class="welcome-banner">
+              <div class="emoji">🎉</div>
+              <div style="font-family:var(--font-display); font-weight:700; font-size:19px;">Baby Parker is here!</div>
+              <div style="font-size:12.5px; color:#6b6b6b; margin-top:6px;">Everyone you've invited has been notified. Updates will show up here.</div>
+            </div>
+            <div class="section-label">Recent Activity</div>
+            <div class="empty-insight" style="background:#F7F7F8;">
+              <div class="txt" style="color:#6b6b6b;">Nothing yet. Once family starts commenting and squishing photos, you'll see it here.</div>
+            </div>
+            <div class="bottom-nav">
+              <div class="nav-item active">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 11l8-7 8 7v8a1 1 0 01-1 1h-4v-6h-6v6H5a1 1 0 01-1-1v-8z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+                Home
+              </div>
+              <div class="nav-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.7"/><circle cx="8.5" cy="9.5" r="1.6" stroke="currentColor" stroke-width="1.5"/><path d="M21 16l-5.5-5.5L5 21" stroke="currentColor" stroke-width="1.6"/></svg>Gallery</div>
+              <div class="nav-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2.2" stroke="currentColor" stroke-width="1.7"/><path d="M3 9.5h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>Calendar</div>
+              <div class="nav-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 8a2 2 0 012-2h1.2l.9-1.5a1 1 0 01.86-.5h6.08a1 1 0 01.86.5L16.8 6H18a2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2V8z" stroke="currentColor" stroke-width="1.7"/></svg>Registry</div>
+              <div class="nav-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 4l2.2 4.6 5 .7-3.6 3.6.9 5-4.5-2.4-4.5 2.4.9-5-3.6-3.6 5-.7L12 4z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>Fun</div>
+            </div>
+          </div>
+
+          <!-- ============ FOLLOWER: INVITE LANDING ============ -->
+          <div class="screen" data-flow="follower" id="follower-invite">
+            <div class="top-row"><span></span><span></span></div>
+            <div class="px" style="margin-top:22px; text-align:center;">
+              <div style="font-size:13px; color:var(--muted); margin-bottom:4px;">Sarah invited you to follow</div>
+            </div>
+            <div class="invite-card" style="margin-top:6px;">
+              <div class="baby-avatar">👶</div>
+              <div style="font-family:var(--font-display); font-weight:700; font-size:20px; color:var(--text);">Baby Parker</div>
+              <div style="font-size:13px; color:var(--muted); margin-top:4px;">Arriving October 9, 2026</div>
+            </div>
+            <div class="reassure">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;"><path d="M12 2l8 3v6c0 5-3.4 8.7-8 10-4.6-1.3-8-5-8-10V5l8-3z" stroke="#7FAE6E" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="#7FAE6E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span>A private space just for family &amp; friends. Nothing here is public.</span>
+            </div>
+            <div class="px" style="margin-top:24px;">
+              <button class="btn btn-primary" onclick="showScreen('follower-signup')">Accept Invitation</button>
+              <div class="bottom-link">Not who this was meant for?</div>
+            </div>
+          </div>
+
+          <!-- ============ FOLLOWER: SIGN UP ============ -->
+          <div class="screen" data-flow="follower" id="follower-signup">
+            <div class="top-row">
+              <span class="back-btn" onclick="showScreen('follower-invite')">&#8592;</span><span></span>
+            </div>
+            <div class="px" style="margin-top:6px;">
+              <div class="logo-mark">Nonna</div>
+              <div class="tagline">PRIVATE. ORGANIZED. CONNECTED.</div>
+            </div>
+            <div class="px" style="margin-top:26px;">
+              <button class="btn btn-outline" style="margin-bottom:10px;" onclick="goSignup('oauth','follower')">
+                <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.6 9.2c0-.6-.05-1.24-.15-1.84H9v3.68h4.8c-.2 1.1-.85 2.05-1.8 2.68v2.2h2.9c1.7-1.57 2.7-3.88 2.7-6.72z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.2c-.8.55-1.85.87-3.06.87-2.35 0-4.34-1.58-5.05-3.72H.95v2.28C2.44 15.98 5.48 18 9 18z"/><path fill="#FBBC05" d="M3.95 10.77A5.4 5.4 0 013.68 9c0-.62.1-1.22.27-1.77V4.95H.95A9 9 0 000 9c0 1.45.35 2.83.95 4.05l3-2.28z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.9 11.42 0 9 0 5.48 0 2.44 2.02.95 4.95l3 2.28C4.66 5.16 6.65 3.58 9 3.58z"/></svg>
+                Continue with Google
+              </button>
+              <button class="btn btn-outline" onclick="goSignup('oauth','follower')">
+                <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#1877F2" d="M18 9a9 9 0 10-10.4 8.9v-6.3H5.3V9h2.3V7c0-2.3 1.36-3.55 3.44-3.55.99 0 2.03.18 2.03.18v2.24h-1.14c-1.13 0-1.48.7-1.48 1.42V9h2.52l-.4 2.6h-2.12v6.3A9 9 0 0018 9z"/></svg>
+                Continue with Facebook
+              </button>
+              <div class="divider">or sign up with email</div>
+              <label class="field-label">Email</label>
+              <input class="field" placeholder="you@email.com" />
+              <label class="field-label">Password</label>
+              <input class="field" type="password" placeholder="Create a password" />
+              <div class="helper">At least 6 characters, with a number or symbol.</div>
+              <button class="btn btn-primary" onclick="goSignup('email','follower')">Create Account</button>
+              <div class="bottom-link">Already have an account? <b>Log in</b></div>
+            </div>
+          </div>
+
+          <!-- ============ CO-OWNER: INVITE (spouse/partner accepting as Owner) ============ -->
+          <div class="screen" data-flow="coowner" id="coowner-invite">
+            <div class="top-row"><span></span><span></span></div>
+            <div class="px" style="margin-top:22px; text-align:center;">
+              <div style="font-size:13px; color:var(--muted); margin-bottom:4px;">Sarah invited you to co-own</div>
+            </div>
+            <div class="invite-card" style="margin-top:6px;">
+              <div class="baby-avatar">👶</div>
+              <div style="font-family:var(--font-display); font-weight:700; font-size:20px; color:var(--text);">Baby Parker</div>
+              <div style="font-size:13px; color:var(--muted); margin-top:4px;">Arriving October 9, 2026</div>
+            </div>
+            <div class="reassure">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;"><path d="M12 2l8 3v6c0 5-3.4 8.7-8 10-4.6-1.3-8-5-8-10V5l8-3z" stroke="#7FAE6E" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="#7FAE6E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span>As a co-owner, you'll have full access to edit, invite, and manage, just like Sarah.</span>
+            </div>
+            <div class="px" style="margin-top:24px;">
+              <button class="btn btn-primary" onclick="showScreen('coowner-signup')">Accept &amp; Join as Owner</button>
+              <div class="bottom-link">Not who this was meant for?</div>
+            </div>
+          </div>
+
+          <!-- ============ CO-OWNER: SIGN UP ============ -->
+          <div class="screen" data-flow="coowner" id="coowner-signup">
+            <div class="top-row">
+              <span class="back-btn" onclick="showScreen('coowner-invite')">&#8592;</span><span></span>
+            </div>
+            <div class="px" style="margin-top:6px;">
+              <div class="logo-mark">Nonna</div>
+              <div class="tagline">PRIVATE. ORGANIZED. CONNECTED.</div>
+            </div>
+            <div class="px" style="margin-top:26px;">
+              <button class="btn btn-outline" style="margin-bottom:10px;" onclick="goSignup('oauth','coowner')">
+                <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.6 9.2c0-.6-.05-1.24-.15-1.84H9v3.68h4.8c-.2 1.1-.85 2.05-1.8 2.68v2.2h2.9c1.7-1.57 2.7-3.88 2.7-6.72z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.2c-.8.55-1.85.87-3.06.87-2.35 0-4.34-1.58-5.05-3.72H.95v2.28C2.44 15.98 5.48 18 9 18z"/><path fill="#FBBC05" d="M3.95 10.77A5.4 5.4 0 013.68 9c0-.62.1-1.22.27-1.77V4.95H.95A9 9 0 000 9c0 1.45.35 2.83.95 4.05l3-2.28z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.9 11.42 0 9 0 5.48 0 2.44 2.02.95 4.95l3 2.28C4.66 5.16 6.65 3.58 9 3.58z"/></svg>
+                Continue with Google
+              </button>
+              <button class="btn btn-outline" onclick="goSignup('oauth','coowner')">
+                <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#1877F2" d="M18 9a9 9 0 10-10.4 8.9v-6.3H5.3V9h2.3V7c0-2.3 1.36-3.55 3.44-3.55.99 0 2.03.18 2.03.18v2.24h-1.14c-1.13 0-1.48.7-1.48 1.42V9h2.52l-.4 2.6h-2.12v6.3A9 9 0 0018 9z"/></svg>
+                Continue with Facebook
+              </button>
+              <div class="divider">or sign up with email</div>
+              <label class="field-label">Email</label>
+              <input class="field" placeholder="you@email.com" />
+              <label class="field-label">Password</label>
+              <input class="field" type="password" placeholder="Create a password" />
+              <div class="helper">At least 6 characters, with a number or symbol.</div>
+              <button class="btn btn-primary" onclick="goSignup('email','coowner')">Create Account</button>
+              <div class="bottom-link">Already have an account? <b>Log in</b></div>
+            </div>
+          </div>
+
+          <!-- ============ SHARED: EMAIL VERIFICATION ============ -->
+          <div class="screen" data-flow="shared" id="email-verify">
+            <div class="top-row">
+              <span class="back-btn" onclick="backFromVerify()">&#8592;</span><span></span>
+            </div>
+            <div class="px" style="margin-top:30px; text-align:center;">
+              <div class="icon-blob" style="background:var(--sage-tint); width:96px; height:96px; margin:0 auto 22px;">
+                <svg width="38" height="38" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="#7FAE6E" stroke-width="1.6"/><path d="M3 6l9 7 9-7" stroke="#7FAE6E" stroke-width="1.6" stroke-linejoin="round"/></svg>
+              </div>
+              <h1 class="headline" style="text-align:center;">Check your email</h1>
+              <p class="support">We sent a verification link to <b>you@email.com</b>. Click it to activate your account. This screen only applies to email/password sign-ups; Google and Facebook accounts skip straight past it.</p>
+            </div>
+            <div class="px" style="margin-top:28px;">
+              <button class="btn btn-primary" onclick="afterVerify()">Continue</button>
+              <div class="bottom-link"><b>Resend email</b></div>
+            </div>
+          </div>
+
+          <!-- ============ SHARED: COMPLETE YOUR PROFILE ============ -->
+          <div class="screen" data-flow="shared" id="complete-profile">
+            <div class="top-row">
+              <span class="back-btn" onclick="backFromProfile()">&#8592;</span><span></span>
+            </div>
+            <div class="px" style="margin-top:10px;">
+              <h1 class="headline">Complete your profile</h1>
+              <p class="support" id="cp-subtext" style="margin-bottom:20px;">Add your name and photo so family knows who's who.</p>
+
+              <div class="photo-upload" id="cp-avatar" style="margin:4px auto 6px;">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M4 8a2 2 0 012-2h1.2l.9-1.5a1 1 0 01.86-.5h6.08a1 1 0 01.86.5L16.8 6H18a2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2V8z" stroke="#9B9B9D" stroke-width="1.5"/><circle cx="12" cy="13" r="3.2" stroke="#9B9B9D" stroke-width="1.5"/></svg>
+              </div>
+              <div class="upload-label" id="cp-avatar-label">Add a photo</div>
+
+              <label class="field-label">Full name</label>
+              <input class="field" id="cp-name-input" placeholder="Your name" />
+
+              <div class="checkbox-row">
+                <input type="checkbox" checked />
+                <span>I agree to the <a>Terms of Service</a> and <a>Privacy Policy</a></span>
+              </div>
+              <button class="btn btn-primary" onclick="finishProfile()">Continue</button>
+            </div>
+          </div>
+
+          <!-- ============ CO-OWNER: WELCOME ============ -->
+          <div class="screen" data-flow="coowner" id="coowner-welcome">
+            <div class="top-row"><span></span><span></span></div>
+            <div class="welcome-banner" style="margin-top:60px;">
+              <div class="emoji">👑</div>
+              <div style="font-family:var(--font-display); font-weight:700; font-size:19px;">You're officially an Owner!</div>
+              <div style="font-size:12.5px; color:#6b6b6b; margin-top:6px;">You now have full access to edit Baby Parker's profile, add events, manage the registry, and invite others, just like Sarah.</div>
+            </div>
+            <div class="px" style="margin-top:10px;">
+              <button class="btn btn-primary" onclick="showScreen(babyStatus==='expecting' ? 'owner-home-unborn' : 'owner-home-born')">Go to Home</button>
+            </div>
+          </div>
+
+          <!-- ============ FOLLOWER: RELATIONSHIP NOTICE (set by the Owner, not editable here) ============ -->
+          <div class="screen" data-flow="follower" id="follower-confirm-rel">
+            <div class="top-row">
+              <span class="back-btn" onclick="showScreen('follower-signup')">&#8592;</span><span></span>
+            </div>
+            <div class="px" style="margin-top:20px; text-align:center;">
+              <h1 class="headline" style="text-align:center;">Welcome to Baby Parker's circle</h1>
+              <p class="support" style="margin-bottom:20px;">Sarah added you as</p>
+              <div style="display:inline-flex; align-items:center; gap:8px; background:var(--sage-tint); border:1.5px solid var(--sage-dark); border-radius:999px; padding:14px 30px; font-family:var(--font-display); font-weight:700; font-size:20px; color:var(--sage-dark); margin-bottom:22px;">
+                Grandma
+              </div>
+              <p class="support">This is how you'll appear to the rest of the family. Sarah can update it anytime from her side.</p>
+            </div>
+            <div class="px" style="margin-top:28px;">
+              <button class="btn btn-primary" onclick="showScreen('follower-carousel-1')">Continue</button>
+            </div>
+          </div>
+
+          <!-- ============ FOLLOWER: WELCOME CAROUSEL 1 ============ -->
+          <div class="screen" data-flow="follower" id="follower-carousel-1">
+            <div class="top-row"><span></span><span class="skip-link" onclick="showScreen('follower-home')">Skip</span></div>
+            <div class="carousel-art">
+              <div class="icon-blob" style="background:var(--sage-tint);">
+                <svg width="70" height="70" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 3v6c0 5-3.4 8.7-8 10-4.6-1.3-8-5-8-10V5l8-3z" stroke="#7FAE6E" stroke-width="1.6" stroke-linejoin="round"/></svg>
+              </div>
+            </div>
+            <div class="carousel-text">
+              <h1 class="headline">Welcome, you're in!</h1>
+              <p class="support">A private space just for the family and friends closest to Baby Parker.</p>
+            </div>
+            <div class="dots">
+              <span class="dot on" onclick="showScreen('follower-carousel-1')"></span><span class="dot" onclick="showScreen('follower-carousel-2')"></span><span class="dot" onclick="showScreen('follower-carousel-events')"></span><span class="dot" onclick="goToFollowerCarousel3()"></span><span class="dot" onclick="showScreen('follower-carousel-4')"></span>
+            </div>
+            <div class="carousel-footer">
+              <button class="btn btn-primary" onclick="showScreen('follower-carousel-2')">Next</button>
+            </div>
+          </div>
+
+          <!-- ============ FOLLOWER: WELCOME CAROUSEL 2 ============ -->
+          <div class="screen" data-flow="follower" id="follower-carousel-2">
+            <div class="top-row"><span></span><span class="skip-link" onclick="showScreen('follower-home')">Skip</span></div>
+            <div class="carousel-art">
+              <div class="icon-blob" style="background:var(--peach-tint);">
+                <svg width="70" height="70" viewBox="0 0 24 24" fill="none"><path d="M12 20s-7-4.35-9.5-8.8C1 8 2.4 4.5 5.8 4.5c1.9 0 3.3 1 4.2 2.4 0.9-1.4 2.3-2.4 4.2-2.4 3.4 0 4.8 3.5 3.3 6.7C19 15.65 12 20 12 20z" stroke="#EF9F76" stroke-width="1.6" stroke-linejoin="round"/></svg>
+              </div>
+            </div>
+            <div class="carousel-text">
+              <h1 class="headline">Squish photos &amp; leave comments</h1>
+              <p class="support">Tap the heart to "squish" any photo the family shares.</p>
+            </div>
+            <div class="dots">
+              <span class="dot" onclick="showScreen('follower-carousel-1')"></span><span class="dot on" onclick="showScreen('follower-carousel-2')"></span><span class="dot" onclick="showScreen('follower-carousel-events')"></span><span class="dot" onclick="goToFollowerCarousel3()"></span><span class="dot" onclick="showScreen('follower-carousel-4')"></span>
+            </div>
+            <div class="carousel-footer">
+              <button class="btn btn-primary" onclick="showScreen('follower-carousel-events')">Next</button>
+            </div>
+          </div>
+
+          <!-- ============ FOLLOWER: WELCOME CAROUSEL 3 (Events — new) ============ -->
+          <div class="screen" data-flow="follower" id="follower-carousel-events">
+            <div class="top-row"><span></span><span class="skip-link" onclick="showScreen('follower-home')">Skip</span></div>
+            <div class="carousel-art">
+              <div class="icon-blob" style="background:var(--sage-tint);">
+                <svg width="70" height="70" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2.4" stroke="#7FAE6E" stroke-width="1.6"/><path d="M3 9.5h18" stroke="#7FAE6E" stroke-width="1.6"/><path d="M8 3v4M16 3v4" stroke="#7FAE6E" stroke-width="1.6" stroke-linecap="round"/><circle cx="8.2" cy="14" r="1.1" fill="#7FAE6E"/><circle cx="12" cy="14" r="1.1" fill="#7FAE6E"/><circle cx="15.8" cy="14" r="1.1" fill="#7FAE6E"/></svg>
+              </div>
+            </div>
+            <div class="carousel-text">
+              <h1 class="headline">Never miss what's next</h1>
+              <p class="support">See upcoming events, like gender reveals and baby showers, and RSVP right from the app.</p>
+            </div>
+            <div class="dots">
+              <span class="dot" onclick="showScreen('follower-carousel-1')"></span><span class="dot" onclick="showScreen('follower-carousel-2')"></span><span class="dot on" onclick="showScreen('follower-carousel-events')"></span><span class="dot" onclick="goToFollowerCarousel3()"></span><span class="dot" onclick="showScreen('follower-carousel-4')"></span>
+            </div>
+            <div class="carousel-footer">
+              <button class="btn btn-primary" onclick="goToFollowerCarousel3()">Next</button>
+            </div>
+          </div>
+
+          <!-- ============ FOLLOWER: WELCOME CAROUSEL 4 (Unborn branch) ============ -->
+          <div class="screen" data-flow="follower" id="follower-carousel-3-unborn">
+            <div class="top-row"><span></span><span class="skip-link" onclick="showScreen('follower-home')">Skip</span></div>
+            <div class="carousel-art">
+              <div class="icon-blob" style="background:var(--sage-tint);">
+                <svg width="70" height="70" viewBox="0 0 24 24" fill="none"><path d="M12 4l2.2 4.6 5 .7-3.6 3.6.9 5-4.5-2.4-4.5 2.4.9-5-3.6-3.6 5-.7L12 4z" stroke="#7FAE6E" stroke-width="1.6" stroke-linejoin="round"/></svg>
+              </div>
+            </div>
+            <div class="carousel-text">
+              <h1 class="headline">Vote &amp; guess in Family Fun</h1>
+              <p class="support">Suggest names, vote on favorites, and guess the birthdate. Results reveal once baby arrives.</p>
+            </div>
+            <div class="dots">
+              <span class="dot" onclick="showScreen('follower-carousel-1')"></span><span class="dot" onclick="showScreen('follower-carousel-2')"></span><span class="dot" onclick="showScreen('follower-carousel-events')"></span><span class="dot on" onclick="goToFollowerCarousel3()"></span><span class="dot" onclick="showScreen('follower-carousel-4')"></span>
+            </div>
+            <div class="carousel-footer">
+              <button class="btn btn-primary" onclick="showScreen('follower-carousel-4')">Next</button>
+            </div>
+          </div>
+
+          <!-- ============ FOLLOWER: WELCOME CAROUSEL 3 (Born branch) ============ -->
+          <div class="screen" data-flow="follower" id="follower-carousel-3-born">
+            <div class="top-row"><span></span><span class="skip-link" onclick="showScreen('follower-home')">Skip</span></div>
+            <div class="carousel-art">
+              <div class="icon-blob" style="background:var(--peach-tint);">
+                <svg width="70" height="70" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="14" height="14" rx="2" stroke="#EF9F76" stroke-width="1.6"/><circle cx="8" cy="9" r="1.4" stroke="#EF9F76" stroke-width="1.5"/><path d="M4 15l3.5-4 2.5 3 2-2.4L17 15" stroke="#EF9F76" stroke-width="1.6" stroke-linejoin="round"/></svg>
+              </div>
+            </div>
+            <div class="carousel-text">
+              <h1 class="headline">Relive every milestone in the Gallery</h1>
+              <p class="support">Baby Parker's already here. See the first photos and everything since.</p>
+            </div>
+            <div class="dots">
+              <span class="dot" onclick="showScreen('follower-carousel-1')"></span><span class="dot" onclick="showScreen('follower-carousel-2')"></span><span class="dot" onclick="showScreen('follower-carousel-events')"></span><span class="dot on" onclick="goToFollowerCarousel3()"></span><span class="dot" onclick="showScreen('follower-carousel-4')"></span>
+            </div>
+            <div class="carousel-footer">
+              <button class="btn btn-primary" onclick="showScreen('follower-carousel-4')">Next</button>
+            </div>
+          </div>
+
+          <!-- ============ FOLLOWER: WELCOME CAROUSEL 4 ============ -->
+          <div class="screen" data-flow="follower" id="follower-carousel-4">
+            <div class="top-row"><span></span><span></span></div>
+            <div class="carousel-art">
+              <div class="icon-blob" style="background:var(--sage-tint);">
+                <svg width="70" height="70" viewBox="0 0 24 24" fill="none"><path d="M12 2a6 6 0 00-6 6v3.2L4.5 14a1 1 0 00.9 1.5h13.2a1 1 0 00.9-1.5L18 11.2V8a6 6 0 00-6-6z" stroke="#7FAE6E" stroke-width="1.6" stroke-linejoin="round"/><path d="M9.5 18a2.5 2.5 0 005 0" stroke="#7FAE6E" stroke-width="1.6" stroke-linecap="round"/></svg>
+              </div>
+            </div>
+            <div class="carousel-text">
+              <h1 class="headline">Get updates your way</h1>
+              <p class="support">Choose how often you hear from us: real-time, daily, or a weekly digest. You can change this anytime.</p>
+            </div>
+            <div class="dots">
+              <span class="dot" onclick="showScreen('follower-carousel-1')"></span><span class="dot" onclick="showScreen('follower-carousel-2')"></span><span class="dot" onclick="showScreen('follower-carousel-events')"></span><span class="dot" onclick="goToFollowerCarousel3()"></span><span class="dot on" onclick="showScreen('follower-carousel-4')"></span>
+            </div>
+            <div class="carousel-footer">
+              <button class="btn btn-primary" onclick="showScreen('follower-home')">Get Started</button>
+            </div>
+          </div>
+
+          <!-- ============ FOLLOWER: HOME FIRST-RUN ============ -->
+          <div class="screen" data-flow="follower" id="follower-home">
+            <div class="home-topbar">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" onclick="showScreen('gaps-switcher')" style="cursor:pointer;"><circle cx="11" cy="11" r="7" stroke="#9B9B9D" stroke-width="1.8"/><path d="M21 21l-4.3-4.3" stroke="#9B9B9D" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <div class="home-logo">Nonna</div>
+              <div class="bell-wrap" onclick="showScreen('gaps-notifications')" style="cursor:pointer;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3a5 5 0 00-5 5v2.6c0 .8-.3 1.6-.9 2.2L5 14h14l-1.1-1.2a3 3 0 01-.9-2.2V8a5 5 0 00-5-5z" stroke="#6b6b6b" stroke-width="1.6" stroke-linejoin="round"/><path d="M9.5 17a2.5 2.5 0 005 0" stroke="#6b6b6b" stroke-width="1.6" stroke-linecap="round"/></svg>
+                <div class="bell-dot"></div>
+              </div>
+            </div>
+            <div class="hero-card" id="follower-home-hero">
+              <div style="font-weight:700; font-size:15px;">Waiting for Baby Parker</div>
+              <div class="countdown-num">33</div>
+              <div class="countdown-label">Days to due date</div>
+            </div>
+            <div class="section-label">Quick Actions</div>
+            <div style="display:flex; gap:10px; padding:0 20px 18px;">
+              <div class="btn btn-outline" style="flex:1; padding:12px;" onclick="showScreen('follower-carousel-3-unborn')">Vote in Fun</div>
+              <div class="btn btn-outline" style="flex:1; padding:12px;">View Gallery</div>
+            </div>
+            <div class="section-label">Family Insight</div>
+            <div class="empty-insight">
+              <div class="txt">3 family votes so far. Liam is the top boy name, Olivia is the top girl name.</div>
+            </div>
+            <div class="bottom-nav">
+              <div class="nav-item active">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 11l8-7 8 7v8a1 1 0 01-1 1h-4v-6h-6v6H5a1 1 0 01-1-1v-8z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+                Home
+              </div>
+              <div class="nav-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.7"/><circle cx="8.5" cy="9.5" r="1.6" stroke="currentColor" stroke-width="1.5"/><path d="M21 16l-5.5-5.5L5 21" stroke="currentColor" stroke-width="1.6"/></svg>Gallery</div>
+              <div class="nav-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2.2" stroke="currentColor" stroke-width="1.7"/><path d="M3 9.5h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>Calendar</div>
+              <div class="nav-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 8a2 2 0 012-2h1.2l.9-1.5a1 1 0 01.86-.5h6.08a1 1 0 01.86.5L16.8 6H18a2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2V8z" stroke="currentColor" stroke-width="1.7"/></svg>Registry</div>
+              <div class="nav-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 4l2.2 4.6 5 .7-3.6 3.6.9 5-4.5-2.4-4.5 2.4.9-5-3.6-3.6 5-.7L12 4z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>Fun</div>
+            </div>
+          </div>
+
+          <!-- ============ GAP S21: BABY PROFILE SWITCHER ============ -->
+          <div class="screen" data-flow="gaps" id="gaps-switcher">
+            <div class="home-topbar">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" onclick="event.stopPropagation();" style="cursor:pointer;"><circle cx="11" cy="11" r="7" stroke="var(--sage-dark)" stroke-width="2.2"/><path d="M21 21l-4.3-4.3" stroke="var(--sage-dark)" stroke-width="2.2" stroke-linecap="round"/></svg>
+              <div class="home-logo">Nonna</div>
+              <div class="avatar-chip">🙂</div>
+            </div>
+            <div class="context-chip">Baby Parker · Owner ▾</div>
+            <div class="hero-card">
+              <div style="font-weight:700; font-size:15px;">Waiting for Baby Parker</div>
+              <div class="countdown-num">33</div>
+              <div class="countdown-label">Days to due date</div>
+            </div>
+            <div class="modal-overlay">
+              <div class="sheet">
+                <div class="sheet-handle"></div>
+                <div class="sheet-title">Switch profile</div>
+                <div class="baby-row">
+                  <div class="baby-thumb">🐣</div>
+                  <div class="info"><div class="name">Baby Parker</div><div class="sub">Due Oct 9, 2026</div></div>
+                  <div class="role-badge owner">Owner</div>
+                </div>
+                <div class="baby-row">
+                  <div class="baby-thumb">👶</div>
+                  <div class="info"><div class="name">Baby Smith</div><div class="sub">Born Jan 20, 2025</div></div>
+                  <div class="role-badge follower">Follower</div>
+                </div>
+                <div class="sheet-close">Close</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============ GAP S23: NOTIFICATIONS ============ -->
+          <div class="screen" data-flow="gaps" id="gaps-notifications">
+            <div class="home-topbar">
+              <span class="back-btn">&#8592;</span>
+              <div class="home-logo">Notifications</div>
+              <span style="width:30px;"></span>
+            </div>
+            <div class="px">
+              <div class="notif-item">
+                <div class="notif-icon" style="background:var(--sage-tint);">💬</div>
+                <div style="flex:1;"><div class="notif-text"><b>Sarah</b> commented on "First Ultrasound"</div><div class="notif-time">2 minutes ago</div></div>
+                <div class="notif-unread"></div>
+              </div>
+              <div class="notif-item">
+                <div class="notif-icon" style="background:var(--peach-tint);">❤️</div>
+                <div style="flex:1;"><div class="notif-text"><b>Grandma Sue</b> squished a photo</div><div class="notif-time">1 hour ago</div></div>
+                <div class="notif-unread"></div>
+              </div>
+              <div class="notif-item">
+                <div class="notif-icon" style="background:var(--sage-tint);">🎁</div>
+                <div style="flex:1;"><div class="notif-text"><b>John Doe</b> purchased "Swaddles" from the registry</div><div class="notif-time">3 hours ago</div></div>
+              </div>
+              <div class="notif-item">
+                <div class="notif-icon" style="background:var(--peach-tint);">⭐</div>
+                <div style="flex:1;"><div class="notif-text">Liam took the lead in Family Fun name voting</div><div class="notif-time">Yesterday</div></div>
+              </div>
+              <div class="notif-item">
+                <div class="notif-icon" style="background:#F1F1F2;">🔒</div>
+                <div style="flex:1;"><div class="notif-text">New sign-in to your account from a new device</div><div class="notif-time">2 days ago</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============ GAP S24/S22: AGGREGATED HOME (Follower, 1+ babies) ============ -->
+          <div class="screen" data-flow="gaps" id="gaps-aggregated-home">
+            <div class="home-topbar">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#9B9B9D" stroke-width="1.8"/><path d="M21 21l-4.3-4.3" stroke="#9B9B9D" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <div class="home-logo">Nonna</div>
+              <div class="bell-wrap" onclick="showScreen('gaps-notifications')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3a5 5 0 00-5 5v2.6c0 .8-.3 1.6-.9 2.2L5 14h14l-1.1-1.2a3 3 0 01-.9-2.2V8a5 5 0 00-5-5z" stroke="#6b6b6b" stroke-width="1.6" stroke-linejoin="round"/><path d="M9.5 17a2.5 2.5 0 005 0" stroke="#6b6b6b" stroke-width="1.6" stroke-linecap="round"/></svg>
+                <div class="bell-dot"></div>
+              </div>
+            </div>
+            <div class="context-chip" onclick="showScreen('gaps-switcher')" style="cursor:pointer;">All Babies ▾</div>
+            <div class="section-label">Countdowns</div>
+            <div class="mini-countdown">
+              <div class="num">33</div>
+              <div class="info"><b>Baby Parker</b><div>days to due date</div></div>
+            </div>
+            <div class="filter-bar">
+              <div class="filter-chip on">All Babies</div>
+              <div class="filter-chip">Baby Parker</div>
+              <div class="filter-chip">Baby Smith</div>
+            </div>
+            <div class="section-label">Recent Activity</div>
+            <div class="px" style="margin-bottom:10px;">
+              <div class="activity-row"><span class="tag">Parker</span><span class="txt">Grandma Sue uploaded a new photo</span></div>
+              <div class="activity-row"><span class="tag">Smith</span><span class="txt">New comment on "First Steps"</span></div>
+              <div class="activity-row"><span class="tag">Parker</span><span class="txt">Gender Reveal Party added to calendar</span></div>
+              <div class="activity-row"><span class="tag">Smith</span><span class="txt">Sarah squished a photo</span></div>
+            </div>
+            <div class="bottom-nav">
+              <div class="nav-item active"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 11l8-7 8 7v8a1 1 0 01-1 1h-4v-6h-6v6H5a1 1 0 01-1-1v-8z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>Home</div>
+              <div class="nav-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.7"/></svg>Gallery</div>
+              <div class="nav-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2.2" stroke="currentColor" stroke-width="1.7"/></svg>Calendar</div>
+              <div class="nav-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 8a2 2 0 012-2h1.2l.9-1.5a1 1 0 01.86-.5h6.08a1 1 0 01.86.5L16.8 6H18a2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2V8z" stroke="currentColor" stroke-width="1.7"/></svg>Registry</div>
+              <div class="nav-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 4l2.2 4.6 5 .7-3.6 3.6.9 5-4.5-2.4-4.5 2.4.9-5-3.6-3.6 5-.7L12 4z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>Fun</div>
+            </div>
+          </div>
+
+          <!-- ============ GAP S25: MEMORY LANE ============ -->
+          <div class="screen" data-flow="gaps" id="gaps-memory-lane">
+            <div class="home-topbar">
+              <span class="back-btn">&#8592;</span>
+              <div class="home-logo">Memory Lane</div>
+              <span style="width:30px;"></span>
+            </div>
+            <div class="memory-tabs">
+              <div class="t on">On This Day</div>
+              <div class="t">Surprises</div>
+            </div>
+            <p class="support px" style="margin-bottom:14px;">September 6, one year ago</p>
+            <div class="memory-grid">
+              <div class="memory-photo">📷<div class="cap">First smile</div></div>
+              <div class="memory-photo">📷<div class="cap">Nursery setup</div></div>
+              <div class="memory-photo">📷<div class="cap">Gender reveal</div></div>
+              <div class="memory-photo">📷<div class="cap">Baby shower</div></div>
+            </div>
+          </div>
+
+          <!-- ============ GAP S26: PROFILES I FOLLOW ============ -->
+          <div class="screen" data-flow="gaps" id="gaps-profiles-i-follow">
+            <div class="top-row"><span class="back-btn">&#8592;</span><span></span></div>
+            <div class="px" style="margin-top:6px;">
+              <h1 class="headline">Profiles I follow</h1>
+              <p class="support" style="margin-bottom:14px;">Babies you've been invited to follow.</p>
+              <div class="follow-row">
+                <div class="baby-thumb">🐣</div>
+                <div class="info"><div class="name">Baby Parker</div><div class="sub">Following since Sep 2026</div></div>
+                <button class="link-btn danger">Remove</button>
+              </div>
+              <div class="follow-row">
+                <div class="baby-thumb">👶</div>
+                <div class="info"><div class="name">Baby Smith</div><div class="sub">Following since Jan 2025</div></div>
+                <button class="link-btn danger">Remove</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============ GAP S27: MANAGE FOLLOWERS ============ -->
+          <div class="screen" data-flow="gaps" id="gaps-manage-followers">
+            <div class="top-row"><span class="back-btn">&#8592;</span><span></span></div>
+            <div class="px" style="margin-top:6px;">
+              <h1 class="headline">Manage followers</h1>
+              <p class="support" style="margin-bottom:14px;">Baby Parker · 3 followers</p>
+              <div class="follow-row">
+                <div class="baby-thumb">👵</div>
+                <div class="info"><div class="name">Grandma Sue</div><div class="sub">Accepted · Sep 2, 2026</div></div>
+                <button class="link-btn danger">Revoke</button>
+              </div>
+              <div class="follow-row">
+                <div class="baby-thumb">🧑</div>
+                <div class="info"><div class="name">John Doe</div><div class="sub">Accepted · Sep 3, 2026</div></div>
+                <button class="link-btn danger">Revoke</button>
+              </div>
+              <div class="follow-row">
+                <div class="baby-thumb">⏳</div>
+                <div class="info"><div class="name">Aunt Carol</div><div class="sub">Invite pending · expires in 4 days</div></div>
+                <button class="link-btn">Resend</button>
+              </div>
+              <div class="add-another" style="margin-top:16px;">+ Invite more people</div>
+            </div>
+          </div>
+
+          <!-- ============ GAP S28: NOTIFICATION PREFERENCES ============ -->
+          <div class="screen" data-flow="gaps" id="gaps-notification-prefs">
+            <div class="top-row"><span class="back-btn">&#8592;</span><span></span></div>
+            <div class="px" style="margin-top:6px;">
+              <h1 class="headline">Notification preferences</h1>
+              <p class="support" style="margin-bottom:14px;">Choose how often you'd like updates from Baby Parker.</p>
+              <div class="radio-row on" onclick="selectRadio(this)"><div class="radio-circle"></div>Real-time</div>
+              <div class="radio-row" onclick="selectRadio(this)"><div class="radio-circle"></div>Daily digest</div>
+              <div class="radio-row" onclick="selectRadio(this)"><div class="radio-circle"></div>Weekly digest</div>
+              <div class="settings-row" style="margin-top:10px; border-bottom:none;">
+                <div><div class="label">Push notifications</div><div class="sub">Get alerts on your phone</div></div>
+                <div class="toggle-switch on" onclick="this.classList.toggle('on')"><div class="knob"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============ GAP S29: STORAGE USAGE ============ -->
+          <div class="screen" data-flow="gaps" id="gaps-storage">
+            <div class="top-row"><span class="back-btn">&#8592;</span><span></span></div>
+            <div class="px" style="margin-top:6px;">
+              <h1 class="headline">Storage</h1>
+              <p class="support" style="margin-bottom:6px;">10.4 GB of 15 GB used</p>
+              <div class="storage-track"><div class="storage-fill" style="width:70%;"></div></div>
+              <p class="support" style="margin-bottom:20px; font-size:11.5px;">You're at 70%. Free tier storage is shared across every baby profile you own.</p>
+              <button class="btn btn-primary">Upgrade for unlimited storage</button>
+            </div>
+          </div>
+
+          <!-- ============ GAP S30: FUN EMPTY STATE (Already Born) ============ -->
+          <div class="screen" data-flow="gaps" id="gaps-fun-empty-born">
+            <div class="px" style="margin-top:10px;">
+              <h1 class="headline">Community Fun</h1>
+              <p class="support" style="margin-bottom:20px;">Vote on names and guess the arrival date.</p>
+            </div>
+            <div class="px" style="text-align:center; margin-top:30px;">
+              <div class="icon-blob" style="background:var(--sage-tint); width:110px; height:110px; margin:0 auto 22px;">
+                <svg width="42" height="42" viewBox="0 0 24 24" fill="none"><path d="M12 4l2.2 4.6 5 .7-3.6 3.6.9 5-4.5-2.4-4.5 2.4.9-5-3.6-3.6 5-.7L12 4z" stroke="#7FAE6E" stroke-width="1.6" stroke-linejoin="round"/></svg>
+              </div>
+              <p class="support" style="margin-bottom:20px;">Family Fun wraps up once baby's here. See what's new in the Gallery instead.</p>
+              <button class="btn btn-primary">Go to Gallery</button>
+            </div>
+          </div>
+
+
+      <div class="meta-nav">
+        <span class="chev" onclick="stepBy(-1)">&#8249;</span>
+        <div>
+          <div class="screen-id" id="meta-id">S01</div>
+          <div class="screen-name" id="meta-name">Welcome Carousel — Owner (1/4)</div>
+        </div>
+        <span class="chev" onclick="stepBy(1)">&#8250;</span>
+      </div>
+    </div>
+  </div>
+
+  <footer class="note">
+    Tap anything inside the phone frame — it's a real clickable flow. Use the tabs above to jump between the<br/>
+    Owner and Follower onboarding tracks, or the arrows below the phone to step through in order.
+  </footer>
+
+<script>
+  const flows = {
+    owner: ['owner-carousel-1','owner-carousel-2','owner-carousel-3','owner-carousel-4','owner-signup','email-verify','complete-profile','owner-create-profile','owner-first-moment-expecting','owner-invite','owner-home-unborn'],
+    follower: ['follower-invite','follower-signup','email-verify','complete-profile','follower-confirm-rel','follower-carousel-1','follower-carousel-2','follower-carousel-events','follower-carousel-3-unborn','follower-carousel-4','follower-home'],
+    coowner: ['coowner-invite','coowner-signup','email-verify','complete-profile','coowner-welcome'],
+    gaps: ['gaps-switcher','gaps-notifications','gaps-aggregated-home','gaps-memory-lane','gaps-profiles-i-follow','gaps-manage-followers','gaps-notification-prefs','gaps-storage','gaps-fun-empty-born']
+  };
+  const meta = {
+    'owner-carousel-1': ['S01','Welcome Carousel — Owner (1/4)'],
+    'owner-carousel-2': ['S01','Welcome Carousel — Owner (2/4)'],
+    'owner-carousel-3': ['S01','Welcome Carousel — Owner (3/4)'],
+    'owner-carousel-4': ['S01','Welcome Carousel — Owner (4/4)'],
+    'owner-signup': ['S02','Sign Up / Log In'],
+    'email-verify': ['S03','Email Verification'],
+    'complete-profile': ['S04','Complete Your Profile'],
+    'owner-create-profile': ['S05','Create Baby Profile'],
+    'owner-first-moment-expecting': ['S06','Add Your First Moment — Expecting'],
+    'owner-first-moment-born': ['S06','Add Your First Moment — Already Born'],
+    'owner-invite': ['S07','Invite Family & Friends'],
+    'owner-home-unborn': ['S11','Home — Owner first-run (Unborn)'],
+    'owner-home-born': ['S12','Home — Owner first-run (Born)'],
+    'follower-invite': ['S08','Invite Landing / Preview'],
+    'follower-signup': ['S02','Sign Up / Log In (Follower)'],
+    'follower-confirm-rel': ['S09','Relationship Notice (view-only — set by Owner)'],
+    'follower-carousel-1': ['S10','Welcome Carousel — Follower (1/5)'],
+    'follower-carousel-2': ['S10','Welcome Carousel — Follower (2/5)'],
+    'follower-carousel-events': ['S10','Welcome Carousel — Follower (3/5, new — Events)'],
+    'follower-carousel-3-unborn': ['S10','Welcome Carousel — Follower (4/5, Unborn)'],
+    'follower-carousel-3-born': ['S10','Welcome Carousel — Follower (4/5, Born)'],
+    'follower-carousel-4': ['S10','Welcome Carousel — Follower (5/5)'],
+    'follower-home': ['S13','Home — Follower first-run'],
+    'coowner-invite': ['GAP','Co-Owner Invite Preview (new — Decision #7)'],
+    'coowner-signup': ['S02','Sign Up / Log In (Co-Owner)'],
+    'coowner-welcome': ['GAP','Co-Owner Welcome (new — Decision #7)'],
+    'gaps-switcher': ['S21','Baby Profile Switcher'],
+    'gaps-notifications': ['S23','Global Notification Bell'],
+    'gaps-aggregated-home': ['S24 / S22','Aggregated Home + Context Chip'],
+    'gaps-memory-lane': ['S25','Memory Lane'],
+    'gaps-profiles-i-follow': ['S26','Profiles I Follow'],
+    'gaps-manage-followers': ['S27','Manage Followers'],
+    'gaps-notification-prefs': ['S28','Notification Preferences'],
+    'gaps-storage': ['S29','Storage Usage Indicator'],
+    'gaps-fun-empty-born': ['S30','Fun — Empty State (Already Born)'],
+  };
+  let currentFlow = 'owner';
+  let babyStatus = 'expecting';
+
+  function showScreen(id){
+    var screens = document.querySelectorAll('.screen');
+    for(var i=0; i<screens.length; i++){ screens[i].classList.remove('active'); }
+    document.getElementById(id).classList.add('active');
+    document.getElementById('meta-id').textContent = meta[id][0];
+    document.getElementById('meta-name').textContent = meta[id][1];
+    if(id.startsWith('owner')){ currentFlow='owner'; syncTabs(); }
+    else if(id.startsWith('follower')){ currentFlow='follower'; syncTabs(); }
+    else if(id.startsWith('coowner')){ currentFlow='coowner'; syncTabs(); }
+    else if(id.startsWith('gaps')){ currentFlow='gaps'; syncTabs(); }
+    // shared screens (email-verify, complete-profile) keep whatever flow was already active
+  }
+
+  function switchFlow(flow){
+    currentFlow = flow;
+    syncTabs();
+    showScreen(flows[flow][0]);
+  }
+
+  function syncTabs(){
+    document.getElementById('tab-owner').classList.toggle('active', currentFlow==='owner');
+    document.getElementById('tab-follower').classList.toggle('active', currentFlow==='follower');
+    document.getElementById('tab-coowner').classList.toggle('active', currentFlow==='coowner');
+    document.getElementById('tab-gaps').classList.toggle('active', currentFlow==='gaps');
+  }
+
+  function stepBy(dir){
+    const list = flows[currentFlow];
+    const activeId = document.querySelector('.screen.active').id;
+    let idx = list.indexOf(activeId);
+    idx = Math.max(0, Math.min(list.length-1, idx+dir));
+    showScreen(list[idx]);
+  }
+
+  let currentGender = 'unsure';
+
+  function setBabyStatus(status){
+    babyStatus = status;
+    const buttons = document.querySelectorAll('#bb-toggle button');
+    for(var i=0;i<buttons.length;i++){ buttons[i].classList.remove('on'); }
+    const label = document.getElementById('bb-date-label');
+    if(status === 'expecting'){
+      buttons[0].classList.add('on');
+      label.textContent = 'Expected Due Date';
+    } else {
+      buttons[1].classList.add('on');
+      label.textContent = 'Date of Birth';
+    }
+
+    const unsurePill = document.getElementById('gender-unsure-pill');
+    if(status === 'born'){
+      unsurePill.style.display = 'none';
+      if(unsurePill.classList.contains('on')){
+        selectGender(document.getElementById('gender-boy-pill'), 'boy');
+        return; // selectGender already calls renderNameFields
+      }
+    } else {
+      unsurePill.style.display = '';
+    }
+    renderNameFields();
+  }
+
+  function selectGender(el, gender){
+    var opts = el.parentElement.querySelectorAll('.pill-opt');
+    for(var i=0;i<opts.length;i++){ opts[i].classList.remove('on'); }
+    el.classList.add('on');
+    currentGender = gender;
+    renderNameFields();
+  }
+
+  function renderNameFields(){
+    const box = document.getElementById('name-fields');
+    const boyField = '<label class="field-label">Boy\'s name (optional)</label><input class="field" placeholder="e.g. Liam" />';
+    const girlField = '<label class="field-label">Girl\'s name (optional)</label><input class="field" placeholder="e.g. Olivia" />';
+    if(babyStatus === 'expecting'){
+      // Expecting: always show both, regardless of which gender guess is selected —
+      // an ultrasound guess isn't certain, so parents may want a name ready either way.
+      box.innerHTML = boyField + girlField;
+    } else if(currentGender === 'girl'){
+      box.innerHTML = girlField;
+    } else {
+      box.innerHTML = boyField;
+    }
+  }
+
+  function selectRel(el){
+    var pills = el.parentElement.querySelectorAll('.rel-pill');
+    for(var i=0;i<pills.length;i++){ pills[i].classList.remove('on'); }
+    el.classList.add('on');
+  }
+
+  let nameGender = 'boy';
+  function setNameGender(el, gender){
+    nameGender = gender;
+    var btns = el.parentElement.querySelectorAll('button');
+    for(var i=0;i<btns.length;i++){ btns[i].classList.remove('on'); }
+    el.classList.add('on');
+  }
+  function addSuggestedName(){
+    const input = document.getElementById('name-suggest-input');
+    const val = input.value.trim();
+    if(!val) return;
+    const list = document.getElementById('suggested-names-list');
+    const tag = document.createElement('div');
+    tag.className = 'chip on';
+    tag.style.cursor = 'default';
+    tag.textContent = val + ' · ' + (nameGender === 'boy' ? 'Boy' : 'Girl');
+    list.appendChild(tag);
+    input.value = '';
+  }
+
+  // Owner flow routing — branches on Expecting vs. Already Born
+  function goToFirstMoment(){
+    const list = flows.owner;
+    const target = babyStatus === 'expecting' ? 'owner-first-moment-expecting' : 'owner-first-moment-born';
+    list[8] = target; // keep the stepper in sync with whichever variant is live
+    showScreen(target);
+  }
+
+  function goBackToFirstMoment(){
+    showScreen(babyStatus === 'expecting' ? 'owner-first-moment-expecting' : 'owner-first-moment-born');
+  }
+
+  function goToHome(){
+    const list = flows.owner;
+    const target = babyStatus === 'expecting' ? 'owner-home-unborn' : 'owner-home-born';
+    list[10] = target;
+    showScreen(target);
+  }
+
+  // Shared Sign Up -> Email Verification -> Complete Your Profile routing,
+  // used by Owner, Follower, and Co-Owner tracks alike
+  let authMethod = 'email';
+  let profileContext = 'owner';
+
+  function goSignup(method, context){
+    authMethod = method;
+    profileContext = context;
+    if(method === 'oauth'){
+      showScreen('complete-profile');
+      renderCompleteProfile();
+    } else {
+      showScreen('email-verify');
+    }
+  }
+
+  function afterVerify(){
+    showScreen('complete-profile');
+    renderCompleteProfile();
+  }
+
+  function renderCompleteProfile(){
+    const nameInput = document.getElementById('cp-name-input');
+    const avatarLabel = document.getElementById('cp-avatar-label');
+    const avatar = document.getElementById('cp-avatar');
+    const subtext = document.getElementById('cp-subtext');
+    if(authMethod === 'oauth'){
+      nameInput.value = 'Sarah Parker';
+      avatarLabel.textContent = 'Imported from your account';
+      avatar.innerHTML = '<span style="font-size:28px;">🙂</span>';
+      subtext.textContent = "We've pulled your name and photo from Google/Facebook. Just confirm they look right.";
+    } else {
+      nameInput.value = '';
+      avatarLabel.textContent = 'Add a photo';
+      avatar.innerHTML = '<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M4 8a2 2 0 012-2h1.2l.9-1.5a1 1 0 01.86-.5h6.08a1 1 0 01.86.5L16.8 6H18a2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2V8z" stroke="#9B9B9D" stroke-width="1.5"/><circle cx="12" cy="13" r="3.2" stroke="#9B9B9D" stroke-width="1.5"/></svg>';
+      subtext.textContent = 'Add your name and photo so family knows who\'s who.';
+    }
+  }
+
+  function backFromVerify(){
+    if(profileContext === 'owner') showScreen('owner-signup');
+    else if(profileContext === 'follower') showScreen('follower-signup');
+    else showScreen('coowner-signup');
+  }
+
+  function backFromProfile(){
+    if(authMethod === 'email'){ showScreen('email-verify'); }
+    else { backFromVerify(); }
+  }
+
+  function finishProfile(){
+    if(profileContext === 'owner') showScreen('owner-create-profile');
+    else if(profileContext === 'follower') showScreen('follower-confirm-rel');
+    else showScreen('coowner-welcome');
+  }
+
+  function selectRadio(el){
+    var rows = el.parentElement.querySelectorAll('.radio-row');
+    for(var i=0;i<rows.length;i++){ rows[i].classList.remove('on'); }
+    el.classList.add('on');
+  }
+
+  function goToFollowerCarousel3(){
+    const target = babyStatus === 'expecting' ? 'follower-carousel-3-unborn' : 'follower-carousel-3-born';
+    flows.follower[8] = target;
+    showScreen(target);
+  }
+
+  function checkOwnerRole(select){
+    const row = select.closest('.invitee-row');
+    if(select.value === 'Wife' || select.value === 'Husband'){
+      row.classList.add('is-owner-invite');
+    } else {
+      row.classList.remove('is-owner-invite');
+    }
+  }
+
+  let inviteeCount = 1;
+  function addInviteeRow(){
+    inviteeCount++;
+    const list = document.getElementById('invitee-list');
+    const row = document.createElement('div');
+    row.className = 'invitee-row';
+    row.innerHTML = '<input placeholder="Name" />'
+      + '<input placeholder="Email or phone" />'
+      + '<select onchange="checkOwnerRole(this)"><option selected disabled>Select relationship</option>'
+      + '<option>Wife</option><option>Husband</option>'
+      + '<option>Grandma</option><option>Grandpa</option><option>Aunt</option>'
+      + '<option>Uncle</option><option>Godmother</option><option>Godfather</option><option>Family Friend</option></select>'
+      + '<div class="owner-badge">👑 This person will also be a Baby Profile Owner</div>';
+    list.appendChild(row);
+  }
+
+  showScreen('owner-carousel-1');
+</script>
+</body>
+</html>

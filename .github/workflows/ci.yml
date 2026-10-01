@@ -32,7 +32,14 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r services/api/requirements.txt
-      - run: PYTHONPATH=services/api/src python -m compileall services/api/src
+      - run: PYTHONPATH=services/api/src pytest -q services/api/tests
+
+  email-templates:
+    name: Email template sync
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/sync-email-templates.sh check
 
   worker:
     name: Python worker (services/worker)

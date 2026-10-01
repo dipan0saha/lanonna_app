@@ -1,0 +1,20 @@
+{
+  "newborn": [
+    {"name": "Swaddle Blankets (set of 3)", "description": "Muslin cotton, breathable"},
+    {"name": "Diaper Pail", "description": "Odor-sealing, easy one-hand use"},
+    {"name": "Bottle Sterilizer", "description": "Steam, fits most bottle brands"},
+    {"name": "Baby Bathtub", "description": "Newborn-to-toddler, non-slip"}
+  ],
+  "3to6": [
+    {"name": "High Chair", "description": "For when solids start around 6 months"},
+    {"name": "Teething Toys", "description": "Safe chew toys for sore gums"},
+    {"name": "Baby Carrier", "description": "Hands-free for errands & naps"},
+    {"name": "Baby-Proofing Starter Kit", "description": "Outlet covers & corner guards"}
+  ],
+  "6to12": [
+    {"name": "Convertible Car Seat", "description": "Grows with your toddler"},
+    {"name": "Toddler Utensils & Plates", "description": "Suction base, easy grip"},
+    {"name": "Stair Gate", "description": "For a newly-mobile crawler"},
+    {"name": "First Walking Shoes", "description": "Soft-sole, flexible fit"}
+  ]
+}

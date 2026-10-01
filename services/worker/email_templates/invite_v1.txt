@@ -1,0 +1,9 @@
+La Nonna — You're invited
+
+{{inviter_name}} invited you to follow {{baby_name}}'s journey on La Nonna.
+{{relationship_line}}
+
+Accept your invitation:
+{{invite_url}}
+
+This invitation was sent to {{invitee_email}} and expires on {{expires_at}}.

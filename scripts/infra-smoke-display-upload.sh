@@ -7,6 +7,12 @@ PROJECT="${GCP_PROJECT_ID:-lanonna-dev}"
 FIREBASE_API_KEY="${FIREBASE_API_KEY:-}"
 TEST_EMAIL="${SMOKE_TEST_EMAIL:-lanonna.dev.smoke@test.com}"
 TEST_PASSWORD="${SMOKE_TEST_PASSWORD:-}"
+SMOKE_CREDS_FILE="${SMOKE_CREDS_FILE:-}"
+
+if [[ -z "${TEST_PASSWORD}" && -n "${SMOKE_CREDS_FILE}" && -f "${SMOKE_CREDS_FILE}" ]]; then
+  TEST_EMAIL="$(grep '^email=' "${SMOKE_CREDS_FILE}" | cut -d= -f2-)"
+  TEST_PASSWORD="$(grep '^password=' "${SMOKE_CREDS_FILE}" | cut -d= -f2-)"
+fi
 
 if [[ -z "${FIREBASE_API_KEY}" ]]; then
   FIREBASE_API_KEY="$(python3 -c "import re; print(re.search(r\"apiKey: '([^']+)'\", open('apps/mobile/lib/firebase_options.dart').read()).group(1))")"

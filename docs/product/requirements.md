@@ -237,12 +237,14 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-ONB-001 | Owner carousel entry | New owners start at owner carousel when no session/onboarding complete | Fixed routes |
 | FR-ONB-002 | Onboarding signup/login variants | Query `path=owner\|follower\|coOwner` selects copy and next routes | Flutter onboarding module |
 | FR-ONB-003 | Complete profile | Display name and required fields saved to user profile | `GET/PUT /v1/profile` (extend beyond `app_users` as needed) |
-| FR-ONB-004 | Create baby (onboarding) | Owner creates first baby with name, optional gender/dates | API baby create + membership owner |
-| FR-ONB-005 | First moment | Optional chips for preset events/registry items | API batch or deferred create |
+| FR-ONB-004 | Create baby (onboarding) | Owner creates first baby; optional names (default display **Baby**), gender, expecting/born dates | `POST /v1/babies` + membership owner |
+| FR-ONB-005 | First moment | Optional preset event/registry chips and name ideas; skippable | `POST /v1/babies/{id}/onboarding/first-moment` |
 | FR-ONB-006 | Batch email invite | Multiple invite rows; co-owner badges (Wife/Husband); skip row if email already member | API + `check membership by email` |
-| FR-ONB-007 | Follower relationship confirm | Follower sets relationship label before Home | Membership update |
+| FR-ONB-007 | Follower relationship confirm | Follower **views** owner-set relationship label (S09) before carousel; not editable by invitee | Invite preview `relationship_label` |
 | FR-ONB-008 | Coordinator resume | Kill app mid-onboarding → resume same step | Local persistence of path/step |
 | FR-ONB-009 | Deprecated role selection | `/role-selection` redirects to owner carousel | Router redirect |
+| FR-ONB-010 | Owner UI prototype parity | Owner onboarding screens (S01–S07) and first-run Home (S11–S12) match `docs/prototype/La_Nonna_Onboarding_Prototype.html` for layout/copy; onboarding **login** mirrors signup stack (OAuth → divider → email; “Welcome back”); Facebook omitted; phone invites deferred (email-only) | Flutter onboarding + home modules |
+| FR-ONB-011 | Follower/co-owner invite onboarding | Follower S08–S10 + follower first-run Home; co-owner S08 + welcome; wrong-email screen; accept after complete profile; prototype copy (Facebook omitted) | `/invite-accept` bootstrap, invite path coordinator |
 
 ### 7.3 Invitations — FR-INV
 
@@ -439,7 +441,7 @@ Firebase Auth holds identity; link `user_id` to Firebase UID in SQL.
 - Display encode + worker thumbnails.
 - English UI copy via localization files.
 
-Engineering order aligns with [building-the-app.md](../engineering/building-the-app.md): SQL domain migrations → photo pipeline → replace dev smoke UI with shell and features.
+Engineering order aligns with [building-the-app.md](../engineering/building-the-app.md): SQL domain migrations → photo pipeline → Flutter shell and **owner onboarding** (done); next: home sections and gallery upload in-app.
 
 ### 10.2 Later
 

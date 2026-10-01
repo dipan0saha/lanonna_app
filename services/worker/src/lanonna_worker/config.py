@@ -17,5 +17,11 @@ class Settings(BaseSettings):
     db_name: str = "lanonna"
     db_password: str = ""
 
+    mailjet_api_key: str = ""  # MAILJET_API_KEY
+    mailjet_api_secret: str = ""  # MAILJET_API_SECRET
+    mailjet_from_email: str = "hello@lanonna.app"  # MAILJET_FROM_EMAIL
+    mailjet_from_name: str = "La Nonna"  # MAILJET_FROM_NAME
+    invite_deep_link_base: str = "lanonna://app"  # INVITE_DEEP_LINK_BASE
+
 
 settings = Settings()

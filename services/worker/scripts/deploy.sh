@@ -29,8 +29,8 @@ gcloud run deploy "${SERVICE}" \
   --service-account="lanonna-worker@${PROJECT_ID}.iam.gserviceaccount.com" \
   --no-allow-unauthenticated \
   --add-cloudsql-instances="${CONN}" \
-  --set-secrets="DB_PASSWORD=db-lanonna-app-password:latest" \
-  --set-env-vars="ENVIRONMENT=dev,GCP_PROJECT_ID=${PROJECT_ID},CLOUD_SQL_CONNECTION_NAME=${CONN},DB_USER=lanonna_app,DB_NAME=lanonna,DISPLAY_BUCKET=${PROJECT_ID}-display,THUMBNAILS_BUCKET=${PROJECT_ID}-thumbnails" \
+  --set-secrets="DB_PASSWORD=db-lanonna-app-password:latest,MAILJET_API_KEY=mailjet-api-key:latest,MAILJET_API_SECRET=mailjet-api-secret:latest" \
+  --set-env-vars="ENVIRONMENT=dev,GCP_PROJECT_ID=${PROJECT_ID},CLOUD_SQL_CONNECTION_NAME=${CONN},DB_USER=lanonna_app,DB_NAME=lanonna,DISPLAY_BUCKET=${PROJECT_ID}-display,THUMBNAILS_BUCKET=${PROJECT_ID}-thumbnails,INVITE_DEEP_LINK_BASE=lanonna://app,MAILJET_FROM_EMAIL=${MAILJET_FROM_EMAIL:-hello@lanonna.app},MAILJET_FROM_NAME=La Nonna" \
   --min-instances=0 \
   --max-instances=5 \
   --memory=512Mi \

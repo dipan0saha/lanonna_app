@@ -1,0 +1,165 @@
+import '../../../core/api/api_client.dart';
+import '../../onboarding/data/models/baby_summary.dart';
+
+class UserEngagementStats {
+  const UserEngagementStats({
+    required this.photosSquished,
+    required this.eventsAttended,
+    required this.itemsBought,
+    required this.comments,
+  });
+
+  final int photosSquished;
+  final int eventsAttended;
+  final int itemsBought;
+  final int comments;
+
+  factory UserEngagementStats.fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return const UserEngagementStats(
+        photosSquished: 0,
+        eventsAttended: 0,
+        itemsBought: 0,
+        comments: 0,
+      );
+    }
+    return UserEngagementStats(
+      photosSquished: json['photos_squished'] as int? ?? 0,
+      eventsAttended: json['events_attended'] as int? ?? 0,
+      itemsBought: json['items_bought'] as int? ?? 0,
+      comments: json['comments'] as int? ?? 0,
+    );
+  }
+}
+
+class StorageUsage {
+  const StorageUsage({required this.usedBytes, required this.quotaBytes});
+
+  final int usedBytes;
+  final int quotaBytes;
+
+  factory StorageUsage.fromJson(Map<String, dynamic>? json) {
+    if (json == null) return const StorageUsage(usedBytes: 0, quotaBytes: 0);
+    return StorageUsage(
+      usedBytes: json['used_bytes'] as int? ?? 0,
+      quotaBytes: json['quota_bytes'] as int? ?? 0,
+    );
+  }
+
+  double get usedFraction =>
+      quotaBytes > 0 ? (usedBytes / quotaBytes).clamp(0.0, 1.0) : 0;
+}
+
+class AccountPayload {
+  AccountPayload({
+    required this.displayName,
+    required this.email,
+    required this.babies,
+    required this.engagement,
+    this.storageUsage,
+  });
+
+  final String? displayName;
+  final String? email;
+  final List<BabySummary> babies;
+  final UserEngagementStats engagement;
+  final StorageUsage? storageUsage;
+
+  bool get hasOwnerBaby => babies.any((b) => b.role == 'owner');
+
+  factory AccountPayload.fromJson(Map<String, dynamic> json) {
+    final profile = json['profile'] as Map<String, dynamic>? ?? {};
+    final babies = json['babies'] as List<dynamic>? ?? [];
+    final storageRaw = json['storage_usage'] as Map<String, dynamic>?;
+    return AccountPayload(
+      displayName: profile['display_name'] as String?,
+      email: profile['email'] as String?,
+      babies: babies
+          .whereType<Map<String, dynamic>>()
+          .map(BabySummary.fromJson)
+          .toList(),
+      engagement: UserEngagementStats.fromJson(
+        json['engagement'] as Map<String, dynamic>?,
+      ),
+      storageUsage: storageRaw != null ? StorageUsage.fromJson(storageRaw) : null,
+    );
+  }
+}
+
+class MemberRow {
+  MemberRow({
+    required this.displayName,
+    required this.role,
+    this.email,
+    this.relationshipLabel,
+  });
+
+  final String displayName;
+  final String role;
+  final String? email;
+  final String? relationshipLabel;
+
+  factory MemberRow.fromJson(Map<String, dynamic> json) {
+    return MemberRow(
+      displayName: json['display_name'] as String? ?? 'Member',
+      role: json['role'] as String? ?? 'follower',
+      email: json['email'] as String?,
+      relationshipLabel: json['relationship_label'] as String?,
+    );
+  }
+}
+
+class InvitationRow {
+  InvitationRow({
+    required this.id,
+    required this.email,
+    required this.status,
+    this.relationshipLabel,
+  });
+
+  final String id;
+  final String email;
+  final String status;
+  final String? relationshipLabel;
+
+  factory InvitationRow.fromJson(Map<String, dynamic> json) {
+    return InvitationRow(
+      id: json['id']?.toString() ?? '',
+      email: json['invitee_email'] as String? ?? '',
+      status: json['status'] as String? ?? '',
+      relationshipLabel: json['relationship_label'] as String?,
+    );
+  }
+}
+
+class AccountRepository {
+  AccountRepository(this._api);
+
+  final ApiClient _api;
+
+  Future<AccountPayload> fetchAccount() async {
+    final json = await _api.getJson('/v1/me/account');
+    return AccountPayload.fromJson(json);
+  }
+
+  Future<void> updateDisplayName(String displayName) async {
+    await _api.patchJson('/v1/profile', body: {'display_name': displayName});
+  }
+
+  Future<List<MemberRow>> listMembers(String babyId) async {
+    final list = await _api.getJsonList('/v1/babies/$babyId/members');
+    return list.whereType<Map<String, dynamic>>().map(MemberRow.fromJson).toList();
+  }
+
+  Future<List<InvitationRow>> listInvitations(String babyId) async {
+    final list = await _api.getJsonList('/v1/babies/$babyId/invitations');
+    return list
+        .whereType<Map<String, dynamic>>()
+        .map(InvitationRow.fromJson)
+        .toList();
+  }
+
+  Future<void> revokeInvitation(String babyId, String invitationId) async {
+    await _api.deleteJson('/v1/babies/$babyId/invitations/$invitationId');
+  }
+}

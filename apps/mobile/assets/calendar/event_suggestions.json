@@ -1,0 +1,38 @@
+{
+  "expecting": [
+    {
+      "title": "20-week anatomy scan",
+      "description": "Ultrasound to check growth and development."
+    },
+    {
+      "title": "Baby shower",
+      "description": "Celebrate with family and friends."
+    },
+    {
+      "title": "Gender reveal",
+      "description": "Share the big news with loved ones."
+    }
+  ],
+  "newborn": [
+    {
+      "title": "First pediatric visit",
+      "description": "Well-baby checkup in the first week."
+    },
+    {
+      "title": "Family meet & greet",
+      "description": "Introduce baby to close family."
+    }
+  ],
+  "3to6": [
+    {
+      "title": "Tummy time playdate",
+      "description": "Short visit with grandparents for supervised play."
+    }
+  ],
+  "6to12": [
+    {
+      "title": "Half birthday",
+      "description": "Celebrate six months of milestones."
+    }
+  ]
+}

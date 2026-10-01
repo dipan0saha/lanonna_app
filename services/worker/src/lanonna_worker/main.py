@@ -5,7 +5,10 @@ from typing import Any
 
 from fastapi import FastAPI, Request, Response
 
+import uuid
+
 from lanonna_worker.config import settings
+from lanonna_worker.invite_email import send_invite_email
 from lanonna_worker.thumbnails import process_gcs_finalize
 
 logging.basicConfig(level=logging.INFO)
@@ -31,6 +34,19 @@ async def pubsub_push(request: Request) -> Response:
             payload = json.loads(base64.b64decode(raw).decode("utf-8"))
         except (json.JSONDecodeError, UnicodeDecodeError):
             payload = {"raw": raw}
+    if payload.get("type") == "send_invite_email":
+        invitation_id_raw = payload.get("invitation_id")
+        invite_token = payload.get("invite_token")
+        if not invitation_id_raw or not invite_token:
+            logger.warning("send_invite_email missing fields message_id=%s", message.get("messageId"))
+            return Response(status_code=204)
+        try:
+            send_invite_email(uuid.UUID(str(invitation_id_raw)), str(invite_token))
+        except Exception:
+            logger.exception("send_invite_email_failed invitation_id=%s", invitation_id_raw)
+            return Response(status_code=500)
+        return Response(status_code=204)
+
     bucket = payload.get("bucket")
     name = payload.get("name")
     if bucket and name:

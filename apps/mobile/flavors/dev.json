@@ -1,4 +1,5 @@
 {
   "API_BASE_URL": "https://api-1008830071001.us-central1.run.app",
-  "APP_ENV": "dev"
+  "APP_ENV": "dev",
+  "GOOGLE_SIGN_IN_SERVER_CLIENT_ID": "1008830071001-gqrvshsif0hqlmeumfkbt7l8jgf898gm.apps.googleusercontent.com"
 }

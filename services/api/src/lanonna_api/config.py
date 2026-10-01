@@ -17,8 +17,15 @@ class Settings(BaseSettings):
     db_password: str = ""
 
     display_bucket: str = "lanonna-dev-display"
+    thumbnails_bucket: str = "lanonna-dev-thumbnails"  # THUMBNAILS_BUCKET
     display_allowed_content_types: tuple[str, ...] = ("image/jpeg", "image/webp")
     gcs_signing_service_account: str = "lanonna-api@lanonna-dev.iam.gserviceaccount.com"
+
+    pubsub_topic_upload: str = "photo-upload-finalized"  # PUBSUB_TOPIC_UPLOAD
+    # Deep link base for invite emails (no trailing slash), e.g. lanonna://app
+    invite_deep_link_base: str = "lanonna://app"  # INVITE_DEEP_LINK_BASE
+    # When true, API logs invite publish instead of calling Pub/Sub (local dev).
+    invite_email_publish_disabled: bool = False  # INVITE_EMAIL_PUBLISH_DISABLED
 
 
 settings = Settings()

@@ -15,4 +15,6 @@ abstract final class AppColors {
   static const Color primaryButtonForeground = Color(0xFF1C2E17);
   static const Color navInactive = Color(0xFFB0B0B2);
   static const Color error = Color(0xFFC62828);
+  static const Color sageTint = primaryLight;
+  static const Color peachTint = Color(0xFFFCE8DC);
 }

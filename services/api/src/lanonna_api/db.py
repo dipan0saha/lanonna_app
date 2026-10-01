@@ -41,19 +41,3 @@ def get_connection() -> Iterator[psycopg.Connection[Any]]:
         conn.close()
 
 
-def upsert_app_user(firebase_uid: str, email: str | None) -> dict[str, Any]:
-    with get_connection() as conn:
-        row = conn.execute(
-            """
-            INSERT INTO app_users (firebase_uid, email)
-            VALUES (%s, %s)
-            ON CONFLICT (firebase_uid) DO UPDATE
-              SET email = EXCLUDED.email,
-                  updated_at = now()
-            RETURNING firebase_uid, email, created_at, updated_at
-            """,
-            (firebase_uid, email),
-        ).fetchone()
-    if row is None:
-        raise RuntimeError("upsert_app_user returned no row")
-    return dict(row)

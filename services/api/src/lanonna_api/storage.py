@@ -66,5 +66,21 @@ def _sign_put(
         "expires_in_seconds": 900,
         "required_headers": {
             "Content-Type": content_type,
+            "x-goog-content-length-range": f"0,{max_bytes}",
         },
     }
+
+
+def mint_signed_read_url(bucket: str, object_name: str, minutes: int = 15) -> str:
+    credentials, _ = google.auth.default()
+    auth_request = google_requests.Request()
+    credentials.refresh(auth_request)
+    client = storage.Client(project=settings.gcp_project_id, credentials=credentials)
+    blob = client.bucket(bucket).blob(object_name)
+    return blob.generate_signed_url(
+        version="v4",
+        expiration=timedelta(minutes=minutes),
+        method="GET",
+        service_account_email=settings.gcs_signing_service_account,
+        access_token=credentials.token,
+    )

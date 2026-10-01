@@ -1,7 +1,7 @@
 # La Nonna — platform architecture (GCP)
 
-**Document version:** 1.6  
-**Last updated:** 2026-09-29  
+**Document version:** 1.7  
+**Last updated:** 2026-09-30  
 **Location:** `docs/engineering/platform-architecture.md` (this repository)  
 **Status:** Target platform architecture for greenfield build
 
@@ -37,7 +37,7 @@
 8. **Region discipline** — primary **`us-central1`** (free-tier eligible for Run; co-locate SQL, GCS, Run, Pub/Sub).
 9. **Notify, don’t poll** — **FCM** for new content; batch/paginate API reads to stay within Run free tier.
 
-**Implemented on dev (2026):** separate **Cloud Run `api`** and **`worker`** services; GCS display bucket + Pub/Sub finalize → worker push; API JWT + signed display upload URL; Flutter dev auth screen.
+**Implemented on dev (2026):** separate **Cloud Run `api`** and **`worker`**; GCS display + thumbnails; Pub/Sub finalize → worker thumb + `photo_shared` activity; API JWT, signed upload/read URLs, baby-scoped CRUD for gallery, calendar, registry, and fun; SQL **`001`–`008`**; Flutter owner onboarding, home, and main shell tabs (gallery, calendar, registry, Family Fun). See [development.md](development.md) for route list and [building-the-app.md](building-the-app.md) for the prerequisite gate.
 
 **Deferred (initial years):**
 
@@ -140,7 +140,7 @@ Postgres is **never** exposed to the mobile client.
 
 ```
 HTTP handlers  →  auth middleware (Firebase JWT + optional App Check)
-                →  domain services (invites, babies, gallery, …)
+                →  domain services (home, gallery, calendar, registry, fun, invites, babies, …)
                 →  repositories (SQL)
                 →  adapters (GCS signing, Pub/Sub publish, EmailSender)
 ```
@@ -311,20 +311,30 @@ Isolates **storage + egress** if behavior drifts from §2.5 (SQL/Run/email held 
 - [x] Secret Manager: DB + Mailjet secret containers (values in SM)
 - [x] Cloud Run **api**: health, JWT, `app_users` profile, signed display upload URL
 - [x] Flutter: Auth login dev screen; call API with ID token
-- [ ] Flutter: **display encode** helper (resize, WebP/JPEG, max bytes)
-- [x] POC: signed upload → `display/` → Pub/Sub → worker (logs finalize); [ ] **worker thumb** generation
+- [ ] Flutter: **display encode** helper (resize, WebP/JPEG, max bytes) for gallery; onboarding/profile uses `display_photo_upload.dart` (signed PUT, no full encode pipeline yet)
+- [x] POC: signed upload → `display/` → Pub/Sub → worker finalize
+- [x] Worker **thumbnail** generation from `display/` (see `lanonna_worker/thumbnails.py`)
 
 ### Month 2 — Core product
 
-- [x] SQL migrations: `app_users` stub (`001_app_users.sql`); [ ] babies, memberships, invitations, photos, device_tokens
-- [ ] Domain services + repository layer; permission checks per baby
-- [ ] **EmailSender** + Mailjet adapter; invite templates in repo
-- [ ] Worker: thumb-from-display + `send_invite_email` handlers (**idempotent**)
+- [x] SQL migrations **`001`–`008`** (core domain, invitations, first-moment tables, avatars, `activity_events`, gallery/calendar social **`007`**, registry/fun social **`008`**)
+- [x] API **repositories** + **`domain/`** (home, gallery, calendar, registry, fun); membership + owner checks on baby routes
+- [x] **Mailjet** invite emails: API publishes `send_invite_email`; worker + `packages/email-templates`
+- [x] Flutter **owner onboarding** (carousel → auth → profile → baby → first moment → invites → shell home)
+- [x] Flutter **owner home** (expecting/born, announce arrival PATCH, `home-summary`, `/invite-family`); follower/co-owner invite onboarding
+- [x] Onboarding **display photo** signed PUT (`display_photo_upload.dart` + API signed URL headers)
+- [x] **Gallery + calendar** API and Flutter tabs (list/detail, squish, comments, RSVP; static calendar AI JSON)
+- [x] **Registry + fun** API and Flutter tabs (purchases, votes, name likes; static registry AI JSON)
+- [x] Signed **read** URLs for gallery thumbs/display (`mint_signed_read_url`)
+- [x] Worker **thumbnail** from `display/`; **`photo_shared`** `activity_events` when photo becomes ready
+- [x] Worker `send_invite_email` handler (Mailjet)
+- [x] Gallery list + detail with pagination params; detail returns **display** signed URL
+- [ ] `device_tokens` table + FCM registration
+- [ ] Worker thumb path hardened for gallery-scale volume (monitoring, backoff, dead-letter policy)
 - [ ] FCM token registration; **push on new photo** (reduce feed polling)
-- [ ] Feed API: pagination; detail endpoint returns **display** signed URL only
-- [ ] Flutter: **image disk cache** for thumb/display bytes
+- [ ] Flutter: **image disk cache** for thumb/display bytes (beyond default network image behavior)
 - [ ] Firebase Emulator Suite for local Auth/API dev
-- [ ] Closed beta: display encode + thumb feeds; stay within GCS/Mailjet free caps
+- [ ] Closed beta: consistent **display encode** on all gallery uploads; stay within GCS/Mailjet free caps
 
 ### Month 3 — Hardening
 
