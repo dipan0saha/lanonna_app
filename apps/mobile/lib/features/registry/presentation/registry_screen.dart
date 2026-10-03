@@ -9,7 +9,7 @@ import '../../../core/theme/la_nonna_theme.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../shell/presentation/shell_tab_layout.dart';
-import '../../onboarding/data/models/baby_summary.dart';
+import '../../../core/domain/baby_summary.dart';
 import '../data/models/registry_models.dart';
 import '../data/registry_repository.dart';
 import '../domain/registry_routes.dart';

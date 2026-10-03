@@ -1,5 +1,5 @@
 import '../../../core/api/api_client.dart';
-import '../../onboarding/data/models/baby_summary.dart';
+import '../../../core/domain/baby_summary.dart';
 import 'models/home_summary.dart';
 import 'selected_baby_store.dart';
 
@@ -29,23 +29,12 @@ class HomeRepository {
 
   Future<BabySummary> updateBaby(
     String babyId, {
-    String? lifecycleStatus,
-    String? actualBirthDate,
-  }) async {
-    final json = await _api.patchJson('/v1/babies/$babyId', body: {
-      if (lifecycleStatus != null) 'lifecycle_status': lifecycleStatus,
-      if (actualBirthDate != null) 'actual_birth_date': actualBirthDate,
-    });
-    return BabySummary.fromJson(json);
-  }
-
-  Future<BabySummary> updateBabyFields(
-    String babyId, {
     String? name,
     String? gender,
     String? expectedBirthDate,
     String? actualBirthDate,
     String? lifecycleStatus,
+    String? avatarUrl,
   }) async {
     final json = await _api.patchJson('/v1/babies/$babyId', body: {
       if (name != null) 'name': name,
@@ -53,6 +42,7 @@ class HomeRepository {
       if (expectedBirthDate != null) 'expected_birth_date': expectedBirthDate,
       if (actualBirthDate != null) 'actual_birth_date': actualBirthDate,
       if (lifecycleStatus != null) 'lifecycle_status': lifecycleStatus,
+      if (avatarUrl != null) 'avatar_url': avatarUrl,
     });
     return BabySummary.fromJson(json);
   }
@@ -82,4 +72,36 @@ class HomeRepository {
       return null;
     }
   }
+
+  Future<void> dismissSystemAnnouncement(String announcementId) async {
+    await _api.postJson(
+      '/v1/me/system-announcements/$announcementId/dismiss',
+      body: {},
+    );
+  }
+
+  Future<ActivityPage> fetchActivityPage(
+    String babyId, {
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    final json = await _api.getJson(
+      '/v1/babies/$babyId/activity-events?limit=$limit&offset=$offset',
+    );
+    final items = (json['items'] as List<dynamic>? ?? [])
+        .whereType<Map<String, dynamic>>()
+        .map(HomeActivityItem.fromJson)
+        .toList();
+    return ActivityPage(
+      items: items,
+      hasMore: json['has_more'] as bool? ?? false,
+    );
+  }
+}
+
+class ActivityPage {
+  ActivityPage({required this.items, required this.hasMore});
+
+  final List<HomeActivityItem> items;
+  final bool hasMore;
 }

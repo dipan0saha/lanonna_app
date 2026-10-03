@@ -13,13 +13,17 @@ from lanonna_api.config import settings
 def mint_display_upload_url(
     firebase_uid: str,
     content_type: str = "image/jpeg",
+    byte_length: int = 0,
     max_bytes: int = 2_097_152,
 ) -> dict[str, str | int]:
     """V4 signed PUT URL for the display bucket (Cloud Run / no local SA key)."""
     if content_type not in settings.display_allowed_content_types:
         raise ValueError(f"Unsupported content type: {content_type}")
+    if byte_length <= 0 or byte_length > max_bytes:
+        raise ValueError("Display asset exceeds maximum size.")
 
-    object_name = f"smoke/{firebase_uid}/{uuid.uuid4().hex}.jpg"
+    ext = "webp" if content_type == "image/webp" else "jpg"
+    object_name = f"smoke/{firebase_uid}/{uuid.uuid4().hex}.{ext}"
     return _sign_put(object_name, content_type, max_bytes)
 
 

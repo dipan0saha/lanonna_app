@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/features/home/data/models/home_summary.dart';
 import 'package:lanonna/features/home/presentation/follower_home_composer.dart';
-import 'package:lanonna/features/onboarding/data/models/baby_summary.dart';
+import 'package:lanonna/core/domain/baby_summary.dart';
 
 void main() {
   testWidgets('follower expecting shows notification footnote not announce', (tester) async {
@@ -23,6 +23,7 @@ void main() {
             baby: baby,
             summary: null,
             daysToDueDate: 14,
+            onRefresh: () {},
             onVoteInFun: () {},
             onViewGallery: () {},
           ),
@@ -36,7 +37,7 @@ void main() {
     expect(find.text('Vote in Fun'), findsOneWidget);
   });
 
-  testWidgets('follower expecting with summary shows next up', (tester) async {
+  testWidgets('follower expecting with summary shows upcoming events', (tester) async {
     const baby = BabySummary(
       id: 'b1',
       name: 'Parker',
@@ -50,10 +51,21 @@ void main() {
       voteCount: 5,
       recentActivity: const [],
       genderTotals: const GenderTotals(male: 3, female: 2),
-      nextUpEvent: const NextUpEvent(
-        id: 'e1',
-        title: 'Gender Reveal Party',
-        startsAt: '2026-10-02T18:00:00Z',
+      teasers: HomeTeasers(
+        recentPhotos: const [],
+        favoritePhotos: const [],
+        registryOpenCount: 0,
+        registryHighlights: const [],
+        recentPurchases: const [],
+        upcomingEvents: const [
+          NextUpEvent(
+            id: 'e1',
+            title: 'Gender Reveal Party',
+            startsAt: '2026-10-02T18:00:00Z',
+          ),
+        ],
+        rsvpReminders: const [],
+        notificationPreview: const [],
       ),
     );
 
@@ -66,6 +78,7 @@ void main() {
               baby: baby,
               summary: summary,
               daysToDueDate: 14,
+              onRefresh: () {},
               onVoteInFun: () {},
               onViewGallery: () {},
             ),
@@ -75,6 +88,6 @@ void main() {
     );
 
     expect(find.text('Gender Reveal Party'), findsOneWidget);
-    expect(find.textContaining('NEXT UP'), findsOneWidget);
+    expect(find.text('UPCOMING EVENTS'), findsOneWidget);
   });
 }

@@ -6,8 +6,14 @@ class GalleryRepository {
 
   final ApiClient _api;
 
-  Future<List<PhotoSummary>> listPhotos(String babyId) async {
-    final list = await _api.getJsonList('/v1/babies/$babyId/photos');
+  Future<List<PhotoSummary>> listPhotos(
+    String babyId, {
+    String sort = 'default',
+  }) async {
+    final list = await _api.getJsonList(
+      '/v1/babies/$babyId/photos',
+      queryParameters: sort == 'default' ? null : <String, String>{'sort': sort},
+    );
     return list
         .whereType<Map<String, dynamic>>()
         .map(PhotoSummary.fromJson)

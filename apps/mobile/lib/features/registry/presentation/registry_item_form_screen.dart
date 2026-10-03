@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
-import '../../onboarding/data/models/baby_summary.dart';
+import '../../../core/domain/baby_summary.dart';
 import '../data/registry_repository.dart';
 
 class RegistryItemFormPrefill {

@@ -1,7 +1,7 @@
 # La Nonna — platform architecture (GCP)
 
-**Document version:** 1.7  
-**Last updated:** 2026-09-30  
+**Document version:** 1.8  
+**Last updated:** 2026-10-01  
 **Location:** `docs/engineering/platform-architecture.md` (this repository)  
 **Status:** Target platform architecture for greenfield build
 
@@ -37,7 +37,7 @@
 8. **Region discipline** — primary **`us-central1`** (free-tier eligible for Run; co-locate SQL, GCS, Run, Pub/Sub).
 9. **Notify, don’t poll** — **FCM** for new content; batch/paginate API reads to stay within Run free tier.
 
-**Implemented on dev (2026):** separate **Cloud Run `api`** and **`worker`**; GCS display + thumbnails; Pub/Sub finalize → worker thumb + `photo_shared` activity; API JWT, signed upload/read URLs, baby-scoped CRUD for gallery, calendar, registry, and fun; SQL **`001`–`008`**; Flutter owner onboarding, home, and main shell tabs (gallery, calendar, registry, Family Fun). See [development.md](development.md) for route list and [building-the-app.md](building-the-app.md) for the prerequisite gate.
+**Implemented on dev (2026):** separate **Cloud Run `api`** and **`worker`**; GCS display + thumbnails; Pub/Sub finalize → worker thumb + `photo_shared` activity + **member notify** on photo ready; API JWT, signed upload/read URLs, baby-scoped CRUD for gallery, calendar, registry, and fun; SQL migrations through **`015`** ([migrations/README.md](../../infra/db/migrations/README.md)); Flutter owner/follower home (teasers incl. recent/favorite photos), gallery sub-routes, baby **avatar_url**, account (export/delete/notifications inbox), search, birth announcement; **FCM** device tokens + worker notification writers + weekly digest Scheduler (Pub/Sub). See [development.md](development.md) for route list and [building-the-app.md](building-the-app.md) for the prerequisite gate.
 
 **Deferred (initial years):**
 
@@ -114,7 +114,8 @@ flowchart TB
   RunWorker --> GCS
   RunWorker --> MJ
   RunWorker --> SM
-  Sched -->|"OIDC_internal"| RunAPI
+  Sched -->|"PubSub_or_OIDC"| PS
+  Sched -.->|"optional_OIDC"| RunAPI
   RunAPI --> Log
   RunWorker --> Log
   Mon --> Log
@@ -132,7 +133,7 @@ flowchart TB
 | **Photo view** | **Feed:** signed read URL for **thumb** only. **Detail:** signed URL for **display** asset. Flutter **disk cache** reduces repeat egress |
 | **Invite** | API creates invite row + token → publishes `send_invite_email` (or sends inline under low volume) → worker calls **Mailjet** with HTML from repo templates |
 | **Push** | API or worker sends FCM using device tokens stored in SQL |
-| **Cron** | **Cloud Scheduler** → internal Run route (OIDC) for cleanup, digests, token hygiene |
+| **Cron** | **Cloud Scheduler** → Pub/Sub (e.g. `weekly_notification_digest`) or OIDC **Run** routes for cleanup and digests |
 
 Postgres is **never** exposed to the mobile client.
 
@@ -305,7 +306,7 @@ Isolates **storage + egress** if behavior drifts from §2.5 (SQL/Run/email held 
 
 - [x] GCP project + **Blaze**; billing alerts; **`us-central1`** (`lanonna-dev`)
 - [x] Enable APIs: Run, SQL, Storage, Pub/Sub, Secret Manager, Artifact Registry, Cloud Build (+ Scheduler in TF)
-- [ ] Firebase: FCM, Crashlytics, Analytics, Remote Config in app; plan **App Check** (Auth enabled on dev)
+- [x] Firebase: **FCM** in app + worker; [ ] Crashlytics, Analytics, Remote Config; plan **App Check** enforcement on API (Auth enabled on dev)
 - [x] Cloud SQL: zonal Postgres; Run connects via Cloud SQL socket + proxy for laptops
 - [x] GCS buckets (`display`, `thumbnails`); display **CORS** (dev origins); uniform access
 - [x] Secret Manager: DB + Mailjet secret containers (values in SM)
@@ -329,9 +330,10 @@ Isolates **storage + egress** if behavior drifts from §2.5 (SQL/Run/email held 
 - [x] Worker **thumbnail** from `display/`; **`photo_shared`** `activity_events` when photo becomes ready
 - [x] Worker `send_invite_email` handler (Mailjet)
 - [x] Gallery list + detail with pagination params; detail returns **display** signed URL
-- [ ] `device_tokens` table + FCM registration
+- [x] SQL migrations **`009`–`015`** (birth announcement, engagement indexes, notifications inbox/prefs, export/delete, baby avatar, **device_tokens**, **system_announcements**)
+- [x] `device_tokens` + mobile FCM registration; API notify publishers; worker in-app + **realtime FCM**; **push on new photo** and social events (see [development.md](development.md))
+- [x] Weekly digest push job (Scheduler → Pub/Sub → worker)
 - [ ] Worker thumb path hardened for gallery-scale volume (monitoring, backoff, dead-letter policy)
-- [ ] FCM token registration; **push on new photo** (reduce feed polling)
 - [ ] Flutter: **image disk cache** for thumb/display bytes (beyond default network image behavior)
 - [ ] Firebase Emulator Suite for local Auth/API dev
 - [ ] Closed beta: consistent **display encode** on all gallery uploads; stay within GCS/Mailjet free caps
@@ -341,6 +343,7 @@ Isolates **storage + egress** if behavior drifts from §2.5 (SQL/Run/email held 
 - [ ] Enable **App Check** on API
 - [ ] Load test API + pool sizing; tune SQL if needed
 - [ ] **Restore drill** (PITR); document RTO/RPO
+- [x] Scheduler: weekly notification digest (dev)
 - [ ] Scheduler jobs (cleanup expired invites)
 - [ ] Forecast post-trial bill (section **5.1** default profile)
 

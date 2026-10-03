@@ -6,7 +6,8 @@ import '../../../core/auth/auth_repository.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../home/data/selected_baby_store.dart';
-import '../../onboarding/data/models/baby_summary.dart';
+import '../../../core/domain/baby_summary.dart';
+import '../../home/domain/app_routes.dart';
 import '../../onboarding/domain/onboarding_routes.dart';
 import '../data/account_repository.dart';
 import 'widgets/account_engagement_stat_row.dart';
@@ -44,6 +45,7 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Future<void> _signOut() async {
+    // Push token cleanup is handled by PushNotificationService auth listener.
     await context.read<AuthRepository>().signOut();
     if (mounted) context.go(OnboardingRoutes.ownerCarousel);
   }
@@ -161,15 +163,10 @@ class _AccountScreenState extends State<AccountScreen> {
                     child: Column(
                       children: [
                         ListTile(
-                          title: const Text('Notifications'),
+                          title: const Text('Settings'),
+                          subtitle: const Text('Notifications, profile, and help'),
                           trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Notification preferences coming soon'),
-                              ),
-                            );
-                          },
+                          onTap: () => context.push('/settings'),
                         ),
                         if (showOwnerPrefs)
                           ListTile(
@@ -185,9 +182,27 @@ class _AccountScreenState extends State<AccountScreen> {
                           ListTile(
                             title: const Text('Invite Family'),
                             trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
-                            onTap: () => context.push('/invite-family'),
+                            onTap: () => context.push(AppRoutes.inviteFamily),
+                          ),
+                        if (showOwnerPrefs)
+                          ListTile(
+                            title: const Text('Export baby data'),
+                            trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
+                            onTap: () => context.push('/account/export'),
                           ),
                       ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text('Account', style: context.textStyles.labelLarge),
+                  Card(
+                    child: ListTile(
+                      title: const Text(
+                        'Delete account',
+                        style: TextStyle(color: AppColors.error),
+                      ),
+                      trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
+                      onTap: () => context.push('/account/delete'),
                     ),
                   ),
                 ],

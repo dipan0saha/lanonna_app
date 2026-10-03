@@ -10,6 +10,7 @@ from PIL import Image
 
 from lanonna_worker.config import settings
 from lanonna_worker.db import mark_photo_ready
+from lanonna_worker.notifications import process_notify_fan_out
 
 logger = logging.getLogger("lanonna.worker")
 
@@ -58,18 +59,31 @@ def process_gcs_finalize(payload: dict[str, Any]) -> None:
 
     gen_int = int(generation) if generation is not None else None
     try:
-        updated = mark_photo_ready(
+        ready_row = mark_photo_ready(
             display_path=name,
             thumb_path=thumb_path,
             object_generation=gen_int,
             byte_length=len(data),
         )
-        if updated:
+        if ready_row:
             logger.info(
                 "photo_ready photo_id=%s thumb=%s bytes=%s",
                 photo_id,
                 thumb_path,
                 len(data),
+            )
+            process_notify_fan_out(
+                {
+                    "type": "notify_fan_out",
+                    "baby_profile_id": str(ready_row["baby_profile_id"]),
+                    "title": "New photo",
+                    "body": "A new photo was shared",
+                    "deep_link": f"/gallery/photo/{ready_row['id']}",
+                    "recipient_mode": "baby_members",
+                    "exclude_firebase_uid": ready_row["uploader_firebase_uid"],
+                    "firebase_uids": [],
+                    "notification_channel": "gallery",
+                }
             )
         else:
             logger.info("photo_ready skipped (idempotent) name=%s", name)

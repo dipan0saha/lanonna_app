@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../onboarding/data/models/baby_summary.dart';
+import '../../../core/domain/baby_summary.dart';
 import '../data/models/home_summary.dart';
-import 'widgets/home_activity_feed.dart';
+import '../domain/app_routes.dart';
+import 'widgets/home_birth_welcome_card.dart';
 import 'widgets/home_family_insight_gender_card.dart';
 import 'widgets/home_follower_quick_actions.dart';
 import 'widgets/home_insight_card.dart';
-import 'widgets/home_next_up_card.dart';
+import 'widgets/home_prd_sections.dart';
 import 'widgets/home_section_label.dart';
 import 'widgets/owner_expecting_hero_card.dart';
-import 'widgets/owner_welcome_banner.dart';
 
 class FollowerHomeComposer extends StatelessWidget {
   const FollowerHomeComposer({
@@ -18,6 +18,7 @@ class FollowerHomeComposer extends StatelessWidget {
     required this.baby,
     required this.summary,
     required this.daysToDueDate,
+    required this.onRefresh,
     required this.onVoteInFun,
     required this.onViewGallery,
   });
@@ -25,6 +26,7 @@ class FollowerHomeComposer extends StatelessWidget {
   final BabySummary baby;
   final HomeSummary? summary;
   final int? daysToDueDate;
+  final VoidCallback onRefresh;
   final VoidCallback onVoteInFun;
   final VoidCallback onViewGallery;
 
@@ -36,18 +38,8 @@ class FollowerHomeComposer extends StatelessWidget {
     final parsed = DateTime.tryParse(raw);
     if (parsed == null) return raw;
     const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
     return '${months[parsed.month - 1]} ${parsed.day}, ${parsed.year}';
   }
@@ -74,12 +66,10 @@ class FollowerHomeComposer extends StatelessWidget {
             onVoteInFun: onVoteInFun,
             onViewGallery: onViewGallery,
           ),
-          if (s?.nextUpEvent != null && s!.nextUpEvent!.title.isNotEmpty)
-            HomeNextUpCard(event: s.nextUpEvent!),
           if (s != null && s.showRichInsight)
             HomeFamilyInsightGenderCard(
               summary: s,
-              onViewAll: () => context.go('/gamification'),
+              onViewAll: () => context.go(AppRoutes.gamification),
             )
           else ...[
             const HomeSectionLabel('Family Insight'),
@@ -89,50 +79,34 @@ class FollowerHomeComposer extends StatelessWidget {
             ),
             const SizedBox(height: 18),
           ],
-          if (s != null && s.recentActivity.isNotEmpty)
-            HomeActivityFeed(items: s.recentActivity),
+          if (s != null)
+            HomePrdSections(
+              summary: s,
+              babyId: baby.id,
+              isOwner: false,
+              onRefresh: onRefresh,
+            ),
         ],
       );
     }
 
-    final activityLines =
-        s?.recentActivity.map((e) => e.summary).toList() ?? const <String>[];
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        OwnerWelcomeBanner(babyName: babyName),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: OutlinedButton(
-            onPressed: () => context.push('/baby/${baby.id}/announcement'),
-            child: const Text('View Announcement'),
-          ),
-        ),
-        const SizedBox(height: 8),
+        if (s?.birthWelcome != null)
+          HomeBirthWelcomeCard(welcome: s!.birthWelcome!, babyId: baby.id),
         const HomeSectionLabel('Quick Actions'),
         HomeFollowerQuickActions(
           onVoteInFun: onVoteInFun,
           onViewGallery: onViewGallery,
         ),
-        if (s != null && s.showRichInsight)
-          HomeFamilyInsightGenderCard(
-            summary: s,
-            onViewAll: () => context.go('/gamification'),
-          )
-        else ...[
-          const HomeSectionLabel('Family Insight'),
-          HomeInsightCard(
-            tinted: false,
-            message: activityLines.isEmpty
-                ? "Nothing yet. Once family starts commenting and squishing photos, you'll see it here."
-                : 'Latest updates',
-            activityLines: activityLines,
+        if (s != null)
+          HomePrdSections(
+            summary: s!,
+            babyId: baby.id,
+            isOwner: false,
+            onRefresh: onRefresh,
           ),
-          const SizedBox(height: 18),
-        ],
-        if (s != null && s.recentActivity.isNotEmpty)
-          HomeActivityFeed(items: s.recentActivity),
       ],
     );
   }

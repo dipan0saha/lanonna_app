@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/la_nonna_theme.dart';
+import '../../../core/widgets/prototype_subpage_scaffold.dart';
+import 'announcement_share.dart';
+import 'widgets/announcement_keepsake_card.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../data/announcement_repository.dart';
@@ -65,11 +67,6 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
     await _load();
   }
 
-  Color _cardTint(String? gender) {
-    if (gender == 'female') return AppColors.peachTint;
-    return AppColors.sageTint;
-  }
-
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -80,90 +77,43 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
       return const Scaffold(body: Center(child: Text('No announcement yet')));
     }
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Announcement'),
-        actions: [
-          if (_isOwner)
-            IconButton(
-              icon: const Icon(Icons.edit_outlined),
-              onPressed: () =>
-                  context.push('/baby/${widget.babyId}/announcement/create'),
-            ),
-        ],
-      ),
+    return PrototypeSubpageScaffold(
+      includeShellTopBar: true,
+      title: 'Announcement',
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.share_outlined, size: 20),
+          onPressed: () =>
+              AnnouncementShare.shareBabyAnnouncement(context, widget.babyId),
+        ),
+        if (_isOwner)
+          IconButton(
+            icon: const Icon(Icons.edit_outlined, size: 20),
+            onPressed: () =>
+                context.push('/baby/${widget.babyId}/announcement/create'),
+          ),
+      ],
       body: Column(
         children: [
           Expanded(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: _cardTint(d.gender),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.border),
+                AnnouncementKeepsakeCard(detail: d),
+                if (d.birthTime != null || d.weightText != null || d.lengthText != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Column(
+                      children: [
+                        if (d.birthTime != null)
+                          _StatRow(icon: Icons.schedule_outlined, label: d.birthTime!),
+                        if (d.weightText != null)
+                          _StatRow(icon: Icons.monitor_weight_outlined, label: d.weightText!),
+                        if (d.lengthText != null)
+                          _StatRow(icon: Icons.straighten, label: d.lengthText!),
+                      ],
+                    ),
                   ),
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    children: [
-                      if (d.photoDisplayUrl != null)
-                        Container(
-                          width: 120,
-                          height: 120,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppColors.primaryDark,
-                              width: 3,
-                            ),
-                            image: DecorationImage(
-                              image: NetworkImage(d.photoDisplayUrl!),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        )
-                      else
-                        CircleAvatar(
-                          radius: 48,
-                          backgroundColor: AppColors.surface,
-                          child: Icon(
-                            Icons.child_care,
-                            size: 40,
-                            color: AppColors.primaryDark,
-                          ),
-                        ),
-                      const SizedBox(height: 16),
-                      Text(
-                        d.firstName ?? 'Baby',
-                        style: context.textStyles.headlineMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                      if (d.lastName != null && d.lastName!.isNotEmpty)
-                        Text(
-                          d.lastName!.toUpperCase(),
-                          style: context.textStyles.titleSmall?.copyWith(
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      const SizedBox(height: 16),
-                      _StatRow(
-                        icon: Icons.calendar_today_outlined,
-                        label: d.birthDate ?? '—',
-                      ),
-                      if (d.birthTime != null)
-                        _StatRow(
-                          icon: Icons.schedule_outlined,
-                          label: d.birthTime!,
-                        ),
-                      if (d.weightText != null)
-                        _StatRow(icon: Icons.monitor_weight_outlined, label: d.weightText!),
-                      if (d.lengthText != null)
-                        _StatRow(icon: Icons.straighten, label: d.lengthText!),
-                    ],
-                  ),
-                ),
                 const SizedBox(height: 16),
                 Row(
                   children: [
@@ -183,7 +133,7 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
                 Text(
                   'COMMENTS',
                   style: context.textStyles.labelSmall?.copyWith(
-                    color: AppColors.muted,
+                    color: context.brand.shellIconMuted,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -226,7 +176,7 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
                     IconButton(
                       onPressed: _sendComment,
                       icon: const Icon(Icons.send),
-                      color: AppColors.primaryDark,
+                      color: context.colors.primary,
                     ),
                   ],
                 ),
@@ -252,7 +202,7 @@ class _StatRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 16, color: AppColors.muted),
+          Icon(icon, size: 16, color: context.brand.shellIconMuted),
           const SizedBox(width: 8),
           Text(label, style: context.textStyles.bodyMedium),
         ],

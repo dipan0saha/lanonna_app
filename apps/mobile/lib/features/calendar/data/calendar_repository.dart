@@ -100,4 +100,14 @@ class CalendarRepository extends ChangeNotifier {
       'body': body,
     });
   }
+
+  Future<void> deleteComment(
+    String babyId,
+    String eventId,
+    String commentId,
+  ) async {
+    await _api.deleteJson(
+      '/v1/babies/$babyId/events/$eventId/comments/$commentId',
+    );
+  }
 }

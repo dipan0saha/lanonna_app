@@ -285,6 +285,7 @@ def accept_invitation_by_token(
         "baby_profile_id": baby_profile_id,
         "role": invited_role,
         "baby_name": baby_name,
+        "inviter_firebase_uid": inv["inviter_firebase_uid"],
     }
 
 

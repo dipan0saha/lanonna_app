@@ -6,7 +6,16 @@ from typing import Any
 
 from lanonna_api.domain import assert_owner_membership
 from lanonna_api.domain.gallery import require_membership
+from lanonna_api.domain.notification_copy import actor_display_name
+from lanonna_api.domain.notifications import (
+    FanOutSpec,
+    NotificationChannel,
+    enqueue_fan_out,
+    enqueue_notify_user,
+)
 from lanonna_api.repositories.activity_events import insert_activity_event
+from lanonna_api.domain.media_urls import signed_display_url
+from lanonna_api.domain.users_display import author_display_name_from_row
 from lanonna_api.repositories.events import (
     create_event,
     delete_event,
@@ -15,24 +24,15 @@ from lanonna_api.repositories.events import (
     insert_event_comment,
     list_event_comments,
     list_events,
+    list_rsvps_for_event,
     rsvp_summary,
     soft_delete_event_comment,
     update_event,
     update_event_comment,
     upsert_rsvp,
 )
+from lanonna_api.repositories.photos import get_photo_for_baby
 from lanonna_api.repositories.users import upsert_app_user
-
-
-def _author_name(row: dict[str, Any]) -> str:
-    if row.get("author_display_name"):
-        return row["author_display_name"]
-    email = row.get("author_email") or ""
-    if email and "@" in email:
-        return email.split("@")[0]
-    return "Family member"
-
-
 def _parse_month(month: str) -> tuple[datetime, datetime]:
     year, mon = month.split("-")
     start = datetime(int(year), int(mon), 1, tzinfo=timezone.utc)
@@ -88,15 +88,31 @@ def get_event_detail(
     comments = list_event_comments(event_id)
     summary = rsvp_summary(event_id)
     caller = get_caller_rsvp(event_id, firebase_uid)
+    cover_photo_id = row.get("cover_photo_id")
+    cover_display_url = None
+    if cover_photo_id:
+        photo = get_photo_for_baby(baby_profile_id, cover_photo_id)
+        if photo and photo.get("status") == "ready":
+            cover_display_url = signed_display_url(photo.get("display_path"))
+    rsvps = list_rsvps_for_event(event_id)
     return {
         **_event_row_to_json(row),
+        "cover_photo_display_url": cover_display_url,
         "rsvp_summary": summary,
         "viewer_rsvp": caller,
+        "rsvp_attendees": [
+            {
+                "firebase_uid": r["firebase_uid"],
+                "status": r["status"],
+                "display_name": author_display_name_from_row(r),
+            }
+            for r in rsvps
+        ],
         "comments": [
             {
                 "id": str(c["id"]),
                 "body": c["body"],
-                "author_display_name": _author_name(c),
+                "author_display_name": author_display_name_from_row(c),
                 "author_firebase_uid": c["author_firebase_uid"],
                 "created_at": c["created_at"].isoformat(),
                 "is_mine": c["author_firebase_uid"] == firebase_uid,
@@ -138,6 +154,16 @@ def create_calendar_event(
         f"New event: {row['title']}",
         payload={"event_id": str(row["id"])},
     )
+    enqueue_fan_out(
+        FanOutSpec(
+            baby_profile_id=baby_profile_id,
+            title="New event",
+            body=f'"{row["title"]}" was added to the calendar',
+            deep_link=f"/calendar/event/{row['id']}",
+            exclude_firebase_uid=firebase_uid,
+            notification_channel=NotificationChannel.CALENDAR,
+        )
+    )
     return _event_row_to_json(row)
 
 
@@ -173,10 +199,22 @@ def set_rsvp(
     require_membership(firebase_uid, baby_profile_id)
     if status not in ("going", "maybe", "cant_go"):
         raise ValueError("Invalid RSVP status.")
-    if get_event(baby_profile_id, event_id) is None:
+    event = get_event(baby_profile_id, event_id)
+    if event is None:
         raise LookupError("Event not found.")
     upsert_app_user(firebase_uid, None)
     upsert_rsvp(event_id, firebase_uid, status)
+    creator = event.get("created_by_firebase_uid")
+    if creator and creator != firebase_uid:
+        actor = actor_display_name(firebase_uid)
+        enqueue_notify_user(
+            creator,
+            title="New RSVP",
+            body=f'{actor} responded "{status}" to {event["title"]}',
+            deep_link=f"/calendar/event/{event_id}",
+            baby_profile_id=baby_profile_id,
+            notification_channel=NotificationChannel.CALENDAR,
+        )
     return {"status": status}
 
 
@@ -187,12 +225,24 @@ def add_event_comment(
     body: str,
 ) -> dict[str, Any]:
     require_membership(firebase_uid, baby_profile_id)
-    if get_event(baby_profile_id, event_id) is None:
+    event = get_event(baby_profile_id, event_id)
+    if event is None:
         raise LookupError("Event not found.")
     if not body.strip():
         raise ValueError("Comment body required.")
     upsert_app_user(firebase_uid, None)
     c = insert_event_comment(event_id, firebase_uid, body)
+    creator = event.get("created_by_firebase_uid")
+    if creator and creator != firebase_uid:
+        actor = actor_display_name(firebase_uid)
+        enqueue_notify_user(
+            creator,
+            title="New comment",
+            body=f'{actor} commented on "{event["title"]}"',
+            deep_link=f"/calendar/event/{event_id}",
+            baby_profile_id=baby_profile_id,
+            notification_channel=NotificationChannel.COMMENTS,
+        )
     return {
         "id": str(c["id"]),
         "body": c["body"],

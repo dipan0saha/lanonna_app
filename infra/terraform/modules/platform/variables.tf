@@ -123,6 +123,7 @@ variable "secret_ids" {
     "db-postgres-root-password",
     "mailjet-api-key",
     "mailjet-api-secret",
+    "admin-api-key",
   ]
   description = "Secret Manager secret IDs (containers only; versions set outside TF or via apply on fresh env)."
 }

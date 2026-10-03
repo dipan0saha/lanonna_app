@@ -2,18 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../onboarding/data/models/baby_summary.dart';
+import '../../core/domain/baby_summary.dart';
 import 'data/home_repository.dart';
 import 'data/models/home_summary.dart';
 import 'data/selected_baby_store.dart';
 import 'domain/announce_arrival_input.dart';
+import 'domain/app_routes.dart';
 import '../calendar/domain/calendar_routes.dart';
 import '../registry/domain/registry_routes.dart';
 import 'presentation/follower_home_composer.dart';
 import 'presentation/owner_home_composer.dart';
 import 'presentation/sheets/announce_arrival_sheet.dart';
 import '../announcement/data/announcement_repository.dart';
+import '../onboarding/presentation/widgets/onboarding_buttons.dart';
 import '../shell/presentation/shell_tab_layout.dart';
+import '../../core/api/api_exception.dart';
+import '../../core/network/connectivity_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -27,11 +31,34 @@ class _HomeScreenState extends State<HomeScreen> {
   HomeSummary? _summary;
   String? _loadError;
   var _busy = false;
+  var _loadComplete = false;
+  SelectedBabyStore? _babyStore;
 
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final store = context.read<SelectedBabyStore>();
+    if (_babyStore != store) {
+      _babyStore?.removeListener(_onBabySelectionChanged);
+      _babyStore = store;
+      _babyStore!.addListener(_onBabySelectionChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    _babyStore?.removeListener(_onBabySelectionChanged);
+    super.dispose();
+  }
+
+  void _onBabySelectionChanged() {
+    if (mounted) _load();
   }
 
   Future<void> _load() async {
@@ -53,10 +80,26 @@ class _HomeScreenState extends State<HomeScreen> {
         _baby = baby;
         _summary = summary;
         _loadError = null;
+        _loadComplete = true;
       });
     } catch (e) {
-      setState(() => _loadError = e.toString());
+      final offline = !context.read<ConnectivityService>().isOnline;
+      setState(() {
+        if (offline && _baby != null) {
+          _loadError = null;
+        } else if (offline) {
+          _loadError = 'Connect to the internet to load your family.';
+        } else {
+          _loadError = _errorMessage(e);
+        }
+        _loadComplete = true;
+      });
     }
+  }
+
+  String _errorMessage(Object e) {
+    if (e is ApiException) return e.message;
+    return e.toString();
   }
 
   int? _daysToDueDate(BabySummary baby) {
@@ -118,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
         } catch (e) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Could not update baby: $e')),
+              SnackBar(content: Text('Could not update baby: ${_errorMessage(e)}')),
             );
           }
         } finally {
@@ -151,6 +194,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   baby: _baby!,
                   summary: _summary,
                   daysToDueDate: _daysToDueDate(_baby!),
+                  onRefresh: _load,
                   onAnnounceTap:
                       _baby!.lifecycleStatus == 'expecting' ? () => _onAnnounceArrival() : null,
                   onAddPhoto: () => context.go('/gallery'),
@@ -162,8 +206,27 @@ class _HomeScreenState extends State<HomeScreen> {
                   baby: _baby!,
                   summary: _summary,
                   daysToDueDate: _daysToDueDate(_baby!),
-                  onVoteInFun: () => context.go('/gamification'),
+                  onRefresh: _load,
+                  onVoteInFun: () => context.go(AppRoutes.gamification),
                   onViewGallery: () => context.go('/gallery'),
+                )
+              else if (_loadComplete)
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Add your first baby profile to get started.',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 16),
+                      OnboardingPrimaryButton(
+                        label: 'Add baby',
+                        onPressed: () => context.push('/baby/create'),
+                      ),
+                    ],
+                  ),
                 )
               else
                 const Padding(

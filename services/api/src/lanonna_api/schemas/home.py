@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -51,11 +52,28 @@ class GettingStartedSummary(BaseModel):
     tasks: list[GettingStartedTask]
 
 
+class HomeTeasersResponse(BaseModel):
+    recent_photos: list[dict[str, Any]] = []
+    favorite_photos: list[dict[str, Any]] = []
+    registry_open_count: int = 0
+    registry_highlights: list[dict[str, Any]] = []
+    recent_registry_purchases: list[dict[str, Any]] = []
+    upcoming_events: list[dict[str, Any]] = []
+    rsvp_reminders: list[dict[str, Any]] = []
+    notification_preview: list[dict[str, Any]] = []
+
+
 class HomeSummaryResponse(BaseModel):
     baby_profile_id: uuid.UUID
     lifecycle_status: str
     days_to_due: int | None
+    birth_welcome: dict[str, Any] | None = None
     family_insight: FamilyInsightSummary
     recent_activity: list[ActivityEventItem]
     next_up_event: NextUpEvent | None = None
     getting_started: GettingStartedSummary | None = None
+    system_announcements: list[dict[str, Any]] = []
+    new_followers: list[dict[str, Any]] | None = None
+    invite_status: list[dict[str, Any]] | None = None
+    storage_usage: dict[str, Any] | None = None
+    teasers: HomeTeasersResponse | None = None

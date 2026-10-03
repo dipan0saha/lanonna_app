@@ -1,6 +1,6 @@
 # La Nonna — mobile (Flutter)
 
-Flutter client: Firebase Auth, App Check, FCM, API client, **display image encode** before GCS upload, local image cache.
+Flutter client: Firebase Auth, FCM, App Check, display encode before upload, disk-cached signed image URLs, API client. See [pre-beta-qa.md](../../docs/engineering/pre-beta-qa.md).
 
 ```bash
 cd apps/mobile

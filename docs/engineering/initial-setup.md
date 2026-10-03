@@ -78,8 +78,10 @@ terraform plan
 
 | Service | Cloud Run name | URL |
 |---------|----------------|-----|
-| **API** (FastAPI) | `api` | `https://api-1008830071001.us-central1.run.app` |
-| **Worker** (Pub/Sub push) | `worker` | `https://worker-1008830071001.us-central1.run.app` |
+| **API** (FastAPI) | `api` | `gcloud run services describe api --region=us-central1 --format='value(status.url)'` |
+| **Worker** (Pub/Sub push) | `worker` | `gcloud run services describe worker --region=us-central1 --format='value(status.url)'` |
+
+After worker redeploy, align `worker_push_endpoint` in `infra/terraform/environments/dev/main.tf` if the hostname changed, then `terraform apply`.
 
 ### API endpoints
 
@@ -119,7 +121,9 @@ Scripts use **Cloud Build** to push images to `us-central1-docker.pkg.dev/lanonn
 ### Worker (dev Pub/Sub push)
 
 - Push subscription: **`photo-upload-finalized-push-dev`** on topic **`photo-upload-finalized`**
-- Handler: `POST /pubsub/push` — **`send_invite_email`** (Mailjet), **GCS finalize** → thumbnail + `photos.status = ready` + `photo_shared` activity event
+- Handler: `POST /pubsub/push` — **`send_invite_email`** (Mailjet), **`notify_fan_out` / `notify_user` / `weekly_notification_digest`** (in-app + FCM), **GCS finalize** → thumbnail + `photos.status = ready` + `photo_shared` + member notifications
+- Weekly digest: `./scripts/setup-weekly-digest-scheduler.sh` (Sunday 14:00 UTC → Pub/Sub `weekly_notification_digest` on worker topic)
+- **Mobile push:** `firebase_messaging` + token register on sign-in (`PUT /v1/me/device-tokens`). iOS: enable **Push Notifications** in Xcode. Worker SA: **`roles/firebasecloudmessaging.admin`** if FCM sends fail in dev.
 - **Push auth:** OIDC with `lanonna-worker`; Run invoker IAM via `./scripts/apply-dev-run-iam.sh` after deploy.
 
 Infra smoke (signed URL → GCS → Pub/Sub → worker):
@@ -133,7 +137,7 @@ export SMOKE_TEST_PASSWORD='…'   # Firebase test user
 
 ## Database migrations
 
-Schema lives in **`infra/db/migrations/`** (`001`–`008`). See [infra/db/migrations/README.md](../../infra/db/migrations/README.md) for each file (users, babies/photos, invitations, first-moment tables, avatars, home `activity_events`, gallery/calendar social, registry/fun social).
+Schema lives in **`infra/db/migrations/`** (`001`–`015`). See [infra/db/migrations/README.md](../../infra/db/migrations/README.md) (through `system_announcements` in `015`).
 
 From a laptop (with [Cloud SQL Auth Proxy](https://cloud.google.com/sql/docs/postgres/connect-auth-proxy)):
 
@@ -225,7 +229,8 @@ Switch back for interactive work: `gcloud config set account lanonnaapp@gmail.co
 | Email/Password Auth | Enabled — add users in console, or use dev smoke account `lanonna.dev.smoke@test.com` (password via `SMOKE_TEST_PASSWORD` / team store) |
 | Billing budgets ($50 / $150 / $300) | Created for `lanonna-dev` |
 | Mailjet secrets in Secret Manager | Versions set — **rotate** if keys were ever exposed |
-| FCM, Crashlytics, App Check | Enable when you build those features |
+| FCM | In use on dev (mobile + worker); Crashlytics | — |
+| App Check | Flutter `firebase_app_check` + API `X-Firebase-AppCheck` | Enable in Firebase Console; register **debug tokens** from emulator log; deploy API with `APP_CHECK_ENFORCE=true` |
 | Google / Apple sign-in | Enable in Firebase when product-ready |
 
 ---
@@ -234,7 +239,7 @@ Switch back for interactive work: `gcloud config set account lanonnaapp@gmail.co
 
 - Do not commit service account JSON, `terraform.tfvars` with secrets, or Firebase plist/json (gitignored).
 - Rotate `lanonna-automation` key if exposed; no broad automation SA in prod.
-- Terraform manages Secret Manager **IDs** only; **values** stay in Secret Manager.
+- Terraform manages Secret Manager **IDs** only; **values** stay in Secret Manager. Platform module `secret_ids` includes **`admin-api-key`** (API deploy: `ADMIN_API_KEY=admin-api-key:latest` in `services/api/scripts/deploy.sh`); add a secret **version** via `gcloud` after first apply if the container is empty.
 - Dev worker uses **OIDC push** (no `allUsers`); re-run `./scripts/apply-dev-run-iam.sh` after worker deploy. Harden further for prod (TF-managed Run IAM, no public API surface beyond `/health`).
 
 ---

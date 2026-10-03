@@ -6,12 +6,13 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_client.dart';
+import '../../../core/media/cached_signed_image.dart';
 import '../../../core/api/display_photo_upload.dart';
 import '../../gallery/data/gallery_repository.dart';
 import '../../gallery/data/models/photo_models.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
-import '../../onboarding/data/models/baby_summary.dart';
+import '../../../core/domain/baby_summary.dart';
 import '../data/calendar_repository.dart';
 
 class EventFormScreen extends StatefulWidget {
@@ -290,7 +291,13 @@ class _CoverThumb extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
       child: url != null
-          ? Image.network(url, width: 88, height: 88, fit: BoxFit.cover)
+          ? CachedSignedImage(
+              imageUrl: url,
+              cacheKey: 'thumb-${photo.id}',
+              width: 88,
+              height: 88,
+              fit: BoxFit.cover,
+            )
           : Container(
               width: 88,
               height: 88,

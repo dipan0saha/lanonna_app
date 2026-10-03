@@ -5,7 +5,10 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
+from lanonna_api.app_check import require_app_check
 from lanonna_api.auth import current_user
+from lanonna_api.domain.notification_copy import actor_display_name
+from lanonna_api.domain.notifications import enqueue_notify_user
 from lanonna_api.repositories.invitations import (
     accept_invitation_by_token,
     get_invitation_preview_by_token,
@@ -58,7 +61,11 @@ def invitation_preview(
     )
 
 
-@router.post("/accept", response_model=InvitationAcceptResponse)
+@router.post(
+    "/accept",
+    response_model=InvitationAcceptResponse,
+    dependencies=[Depends(require_app_check)],
+)
 def invitation_accept(
     body: InvitationAcceptRequest,
     user: dict[str, Any] = Depends(current_user),
@@ -75,6 +82,19 @@ def invitation_accept(
             invitee_email=result.get("invitee_email"),
             signed_in_email=result.get("signed_in_email"),
         )
+    if not result.get("already_member"):
+        inviter = result.get("inviter_firebase_uid")
+        baby_id = result.get("baby_profile_id")
+        if inviter and baby_id:
+            actor = actor_display_name(user["uid"])
+            baby_name = result.get("baby_name") or "your baby"
+            enqueue_notify_user(
+                inviter,
+                title="Invite accepted",
+                body=f"{actor} joined {baby_name}",
+                deep_link=f"/baby/{baby_id}/followers",
+                baby_profile_id=baby_id,
+            )
     return InvitationAcceptResponse(
         already_member=bool(result.get("already_member")),
         baby_profile_id=result.get("baby_profile_id"),

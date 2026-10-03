@@ -29,7 +29,7 @@ lanonna_app/
 | Module | Shell route | Notes |
 |--------|-------------|--------|
 | `home/` | `/home` | Owner expecting/born; `home-summary`; announce arrival |
-| `gallery/` | `/gallery` | Grid, detail, squish, comments; nested `/gallery/photo/:id` |
+| `gallery/` | `/gallery`, `/gallery/recent`, `/gallery/favorites` | Grid (`sort` via API), detail, squish, comments; `/gallery/photo/:id` |
 | `calendar/` | `/calendar` | Month + upcoming; event CRUD; static AI suggestions asset |
 | `registry/` | `/registry` | Needed/purchased, shipping, purchase claim; AI suggestions |
 | `fun/` | `/gamification` | Names + Predictions tabs (**Family Fun**) |
@@ -38,14 +38,14 @@ lanonna_app/
 | `shell/` | (sheet from tab `HomeTopBar`) | Baby switcher; **My Account** footer |
 | `onboarding/`, `invitations/` | Onboarding + deep links | Owner/follower/co-owner paths |
 
-Repositories are registered in `bootstrap.dart`; routes in `core/router/app_router.dart`. Static catalogs: `assets/calendar/event_suggestions.json`, `assets/registry/registry_suggestions.json`.
+Repositories are registered in `bootstrap.dart`; routes in `core/router/app_router.dart`. Legacy redirects: `/login` → onboarding login, `/role-selection` → owner carousel. Shared API models (e.g. `BabySummary`) live under `apps/mobile/lib/core/domain/`. Static catalogs: `assets/calendar/event_suggestions.json`, `assets/registry/registry_suggestions.json`.
 
 ### API layout (`services/api/src/lanonna_api/`)
 
 | Layer | Role |
 |-------|------|
 | `routers/` | HTTP handlers (`photos`, `events`, `registry`, `fun`, `babies`, …) |
-| `domain/` | Membership, permissions, activity side-effects (`gallery`, `calendar`, `registry`, `fun`, `home`) |
+| `domain/` | Membership, permissions, activity + notify hooks (`gallery`, `calendar`, `registry`, `fun`, `home`, `notifications`) |
 | `repositories/` | Parameterized SQL only |
 | `storage.py` | V4 signed PUT (upload) and GET (thumb/display read) |
 
@@ -100,19 +100,32 @@ Clears babies and related rows for that user and clears `owner_onboarding_comple
 | API | `api` | `services/api/scripts/deploy.sh` |
 | Worker | `worker` | `services/worker/scripts/deploy.sh` then `./scripts/apply-dev-run-iam.sh` |
 
-Dev API URL: `https://api-1008830071001.us-central1.run.app`
+Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps: [flavors/README.md](../../apps/mobile/flavors/README.md); `gcloud run services describe api --region=us-central1 --format='value(status.url)'`)
 
 | Method | Path | Auth |
 |--------|------|------|
 | GET | `/health` | Public |
 | GET | `/v1/me` | Firebase Bearer JWT; minimal auth smoke (`uid`, email). **Contract endpoint** — mobile uses `/v1/me/account` instead. |
 | GET | `/v1/me/account` | Firebase Bearer JWT; profile + babies + `engagement` stats; `storage_usage` when user owns a baby |
+| GET, PATCH | `/v1/me/notification-preferences` | Digest (`realtime`/`daily`/`weekly`), push + email digest toggles; per-channel `notify_*_enabled` (`gallery`, `calendar`, `registry`, `comments`) |
+| GET | `/v1/me/notifications` | In-app notification inbox |
+| GET | `/v1/me/notifications/unread-count` | Unread inbox count (shell bell dot) |
+| PATCH | `/v1/me/notifications/{id}/read` | Mark notification read |
+| PUT, DELETE | `/v1/me/device-tokens` | Register or remove FCM device token (`platform`: `ios` \| `android`) |
+| GET | `/v1/me/delete-account/eligibility` | Account deletion blockers (sole-owned babies) |
+| POST | `/v1/me/delete-account` | Delete Firebase user + anonymize SQL profile |
+| GET | `/v1/babies/{baby_profile_id}/search?q=` | Cross-feature search (member) |
+| POST | `/v1/babies/{baby_profile_id}/data-export` | Queue baby JSON export (owner) |
+| GET | `/v1/babies/{baby_profile_id}/data-export/latest` | Export job status + signed download URL |
 | GET, PATCH | `/v1/profile` | Firebase Bearer JWT; mobile **PATCH**es display name (onboarding + account edit). **GET** is contract/PRD — not called by the Flutter app today. |
 | GET | `/v1/onboarding/status` | Firebase Bearer JWT |
 | POST | `/v1/onboarding/owner/complete` | Firebase Bearer JWT |
 | GET, POST | `/v1/babies` | Firebase Bearer JWT |
-| PATCH | `/v1/babies/{baby_profile_id}` | Firebase Bearer JWT (owner); `lifecycle_status: born` records `baby_arrived` activity |
-| GET | `/v1/babies/{baby_profile_id}/home-summary` | Firebase Bearer JWT (member); family insight, next event, recent activity; getting started owner-only |
+| PATCH | `/v1/babies/{baby_profile_id}` | Firebase Bearer JWT (owner); optional `avatar_url`; `lifecycle_status: born` records `baby_arrived` activity |
+| GET | `/v1/babies/{baby_profile_id}/home-summary` | Firebase Bearer JWT (member); §6.2 blocks: `birth_welcome`, `system_announcements`, `teasers` (notifications, upcoming events, RSVP, photos, registry), owner `new_followers` / `invite_status` / `storage_usage`, `recent_activity` teaser |
+| GET | `/v1/babies/{baby_profile_id}/activity-events` | Paginated `activity_events` (`limit`, `offset`) |
+| POST | `/v1/me/system-announcements/{id}/dismiss` | Dismiss system banner |
+| GET/POST/PATCH/DELETE | `/v1/admin/system-announcements` | Ops CRUD (`X-Admin-Key` header; Cloud Run secret `admin-api-key` → env `ADMIN_API_KEY`) |
 | GET | `/v1/babies/{baby_profile_id}/members` | Firebase Bearer JWT (owner); members list |
 | GET | `/v1/babies/{baby_profile_id}/invitations` | Firebase Bearer JWT (owner); pending invites |
 | DELETE | `/v1/babies/{baby_profile_id}/invitations/{invitation_id}` | Firebase Bearer JWT (owner); revoke pending |
@@ -124,9 +137,9 @@ Dev API URL: `https://api-1008830071001.us-central1.run.app`
 | POST | `/v1/babies/{baby_profile_id}/invitations/batch` | Firebase Bearer JWT (owner); queues `send_invite_email` on Pub/Sub |
 | GET | `/v1/invitations/preview?token=` | Public (invite deep link) |
 | POST | `/v1/invitations/accept` | Firebase Bearer JWT; invitee email must match |
-| POST | `/v1/uploads/display/signed-url` | Firebase Bearer JWT (smoke / legacy path) |
+| POST | `/v1/uploads/display/signed-url` | JWT + App Check; `content_type`, `byte_length` (≤ 2 MB) for avatar/display uploads |
 | POST | `/v1/photos/init` | Firebase Bearer JWT (owner; gallery upload init) |
-| GET | `/v1/babies/{id}/photos` | JWT (member); `limit`/`offset`; followers see `ready` only |
+| GET | `/v1/babies/{id}/photos` | JWT (member); `limit`/`offset`; `sort=default\|recent\|favorites`; followers see `ready` only |
 | GET, PATCH, DELETE | `/v1/babies/{id}/photos/{photo_id}` | JWT (member read; owner mutate); signed thumb/display URLs |
 | POST | `/v1/babies/{id}/photos/{photo_id}/squish` | JWT (member); toggle squish |
 | POST, PATCH, DELETE | `/v1/babies/{id}/photos/{photo_id}/comments` | JWT (member) |
@@ -155,7 +168,30 @@ PYTHONPATH=src .venv/bin/pytest -q
 
 Covers gallery/calendar/registry/fun domain rules (`services/api/tests/`). CI runs the same suite on push/PR to `main`.
 
-**Invite emails (FR-INV-004):** batch create publishes `{"type":"send_invite_email","invitation_id","invite_token"}` to the `photo-upload-finalized` topic; the worker sends Mailjet HTML from `invite_v1` templates. Set worker env `MAILJET_*` and `INVITE_DEEP_LINK_BASE` (default `lanonna://app`). Local API can set `INVITE_EMAIL_PUBLISH_DISABLED=true` to skip Pub/Sub while testing accept/preview. Test deep link on Android: `adb shell am start -a android.intent.action.VIEW -d 'lanonna://app/invite-accept?token=TOKEN'`.
+**Invite emails (FR-INV-004 / FR-INV-007):** batch create publishes `{"type":"send_invite_email","invitation_id","invite_token"}` to the `photo-upload-finalized` topic; the worker sends Mailjet HTML from `invite_v1` templates. Set worker env `MAILJET_*` and `INVITE_DEEP_LINK_BASE` (default `lanonna://app`). Link shape: `lanonna://app/invite-accept?token=…` (+ `&role=owner` for co-owner). Flutter uses `app_links` to set GoRouter `initialLocation` on cold start and `go()` on warm opens (`core/deep_links/`). Local API can set `INVITE_EMAIL_PUBLISH_DISABLED=true` to skip Pub/Sub while testing accept/preview.
+
+**Pre-beta device QA:** [pre-beta-qa.md](pre-beta-qa.md) (App Check, encode, cache, push, deep links, invite cold start).
+
+**Cold-start invite QA (app must be killed first):**
+
+- Android: `adb shell am start -a android.intent.action.VIEW -d 'lanonna://app/invite-accept?token=TOKEN'`
+- iOS Simulator: `xcrun simctl openurl booted 'lanonna://app/invite-accept?token=TOKEN'`
+- Expect `/invite-accept` → preview API → follower or co-owner onboarding. Mid-flow kill + relaunch without link should resume via stored `pendingInviteToken` (`AppSession.redirectFor`).
+- Disable `DEV_AUTO_SIGN_IN_*` dart-defines when testing unsigned invite UX.
+
+**In-app + push notifications:** API `domain/notifications.py` publishes `notify_fan_out` or `notify_user` to the `photo-upload-finalized` topic; the worker handles the same types on `POST /pubsub/push` and inserts `notifications` rows. **Instant FCM** only when `push_notifications_enabled` and `notification_digest=realtime`. **`daily`** digest: in-app inbox only (no batch push). **`weekly`** digest: one summary push (Sunday 14:00 UTC) via Cloud Scheduler → Pub/Sub `{"type":"weekly_notification_digest"}` (`./scripts/setup-weekly-digest-scheduler.sh`; optional manual `POST /cron/weekly-notification-digest` on worker).
+
+| Trigger | Publisher | Audience |
+|---------|-----------|----------|
+| Photo ready | Worker after thumb | Baby members (excl. uploader) |
+| Photo squish / comment | API gallery domain | Photo uploader |
+| Calendar event created | API calendar | Baby members (excl. creator) |
+| RSVP | API calendar | Event creator |
+| Registry purchase claimed | API registry | Baby owners (excl. buyer) |
+| Baby arrived (announce) | API home PATCH | Baby members (excl. owner) |
+| Invite accepted | API accept | Inviter |
+
+API local dev: `NOTIFY_PUBLISH_DISABLED=true`. Mobile: `firebase_messaging`, `PushNotificationService` → `PUT`/`DELETE /v1/me/device-tokens` on auth; opens `deep_link` from FCM data. Worker SA: `roles/firebasecloudmessaging.admin` on dev if sends fail.
 
 **Invite onboarding QA (FR-ONB-011):**
 
@@ -168,7 +204,7 @@ Preview includes `lifecycle_status` and birth dates for invite subtitles and car
 
 ## Database
 
-Apply SQL files in order from `infra/db/migrations/` (`001`–`009`; see [migrations/README.md](../../infra/db/migrations/README.md)). Cloud SQL via Auth Proxy + `infra/db/apply_migrations.py` or `psql -f` per file. Use the venv under `infra/db/.venv` (`pip install psycopg`) or any environment with `psycopg` installed.
+Apply SQL files in order from `infra/db/migrations/` (`001`–`015`; see [migrations/README.md](../../infra/db/migrations/README.md)). Cloud SQL via Auth Proxy + `infra/db/apply_migrations.py` or `psql -f` per file. Use the venv under `infra/db/.venv` (`pip install psycopg`) or any environment with `psycopg` installed.
 
 | Script | Purpose |
 |--------|---------|

@@ -6,13 +6,19 @@ import '../../config/app_config.dart';
 import 'api_exception.dart';
 
 typedef IdTokenProvider = Future<String?> Function();
+typedef AppCheckTokenProvider = Future<String?> Function();
 
 class ApiClient {
-  ApiClient({required IdTokenProvider idTokenProvider, http.Client? httpClient})
-      : _idTokenProvider = idTokenProvider,
+  ApiClient({
+    required IdTokenProvider idTokenProvider,
+    AppCheckTokenProvider? appCheckTokenProvider,
+    http.Client? httpClient,
+  })  : _idTokenProvider = idTokenProvider,
+        _appCheckTokenProvider = appCheckTokenProvider,
         _http = httpClient ?? http.Client();
 
   final IdTokenProvider _idTokenProvider;
+  final AppCheckTokenProvider? _appCheckTokenProvider;
   final http.Client _http;
 
   Future<Map<String, dynamic>> getJson(String path) async {
@@ -25,8 +31,15 @@ class ApiClient {
     return _decodeObject(response);
   }
 
-  Future<List<dynamic>> getJsonList(String path) async {
-    final response = await _authorizedRequest('GET', path);
+  Future<List<dynamic>> getJsonList(
+    String path, {
+    Map<String, String>? queryParameters,
+  }) async {
+    final response = await _authorizedRequest(
+      'GET',
+      path,
+      queryParameters: queryParameters,
+    );
     return _decodeList(response);
   }
 
@@ -54,20 +67,15 @@ class ApiClient {
     return _decodeObject(response);
   }
 
-  Future<void> deleteJson(String path) async {
-    final response = await _authorizedRequest('DELETE', path);
+  Future<void> deleteJson(
+    String path, {
+    Map<String, dynamic>? body,
+  }) async {
+    final response = await _authorizedRequest('DELETE', path, body: body);
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return;
     }
     throw ApiException('Delete failed (${response.statusCode})');
-  }
-
-  Future<Map<String, dynamic>> postJsonPublic(
-    String path, {
-    Map<String, dynamic>? body,
-  }) async {
-    final response = await _publicRequest('POST', path, body: body);
-    return _decodeObject(response);
   }
 
   Future<http.Response> _publicRequest(
@@ -99,22 +107,34 @@ class ApiClient {
     String method,
     String path, {
     Map<String, dynamic>? body,
+    Map<String, String>? queryParameters,
   }) async {
     final token = await _idTokenProvider();
     if (token == null || token.isEmpty) {
       throw ApiException('Not signed in');
     }
-    final uri = Uri.parse('${AppConfig.apiBaseUrl}$path');
+    var uri = Uri.parse('${AppConfig.apiBaseUrl}$path');
+    if (queryParameters != null && queryParameters.isNotEmpty) {
+      uri = uri.replace(queryParameters: queryParameters);
+    }
     final headers = {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
     };
+    final appCheck = await _appCheckTokenProvider?.call();
+    if (appCheck != null && appCheck.isNotEmpty) {
+      headers['X-Firebase-AppCheck'] = appCheck;
+    }
     final response = await switch (method) {
       'GET' => _http.get(uri, headers: headers),
       'POST' => _http.post(uri, headers: headers, body: jsonEncode(body ?? {})),
       'PATCH' => _http.patch(uri, headers: headers, body: jsonEncode(body ?? {})),
       'PUT' => _http.put(uri, headers: headers, body: jsonEncode(body ?? {})),
-      'DELETE' => _http.delete(uri, headers: headers),
+      'DELETE' => _http.delete(
+          uri,
+          headers: headers,
+          body: body != null ? jsonEncode(body) : null,
+        ),
       _ => throw ApiException('Unsupported method $method'),
     };
     if (response.statusCode >= 200 && response.statusCode < 300) {

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import uuid
-from typing import Any
+from typing import Any, Literal
+
+PhotoListSort = Literal["default", "recent", "favorites"]
 
 from lanonna_api.db import get_connection
 
@@ -34,8 +36,23 @@ def list_photos_for_baby(
     ready_only: bool,
     limit: int = 50,
     offset: int = 0,
+    sort: PhotoListSort = "default",
 ) -> list[dict[str, Any]]:
     status_clause = "AND p.status = 'ready'" if ready_only else ""
+    recent_clause = (
+        "AND p.created_at >= now() - interval '30 days'" if sort == "recent" else ""
+    )
+    favorites_clause = (
+        """
+            AND (SELECT COUNT(*)::int FROM photo_squishes s WHERE s.photo_id = p.id) > 0
+        """
+        if sort == "favorites"
+        else ""
+    )
+    if sort == "favorites":
+        order_clause = "ORDER BY squish_count DESC, p.created_at DESC"
+    else:
+        order_clause = "ORDER BY p.created_at DESC"
     with get_connection() as conn:
         rows = conn.execute(
             f"""
@@ -51,7 +68,9 @@ def list_photos_for_baby(
             JOIN app_users u ON u.firebase_uid = p.uploader_firebase_uid
             WHERE p.baby_profile_id = %s
             {status_clause}
-            ORDER BY p.created_at DESC
+            {recent_clause}
+            {favorites_clause}
+            {order_clause}
             LIMIT %s OFFSET %s
             """,
             (baby_profile_id, limit, offset),

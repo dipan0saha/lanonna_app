@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/theme/la_nonna_theme.dart';
+import '../../../core/widgets/prototype_subpage_scaffold.dart';
+import '../../home/domain/app_routes.dart';
 import '../data/account_repository.dart';
 
 class FollowersScreen extends StatefulWidget {
@@ -37,35 +40,33 @@ class _FollowersScreenState extends State<FollowersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Manage Followers'),
-        actions: [
-          TextButton(
-            onPressed: () => context.push('/invite-family'),
-            child: const Text('Invite'),
-          ),
-        ],
-      ),
+    final count = _members.where((m) => m.role == 'follower').length;
+    return PrototypeSubpageScaffold(
+      includeShellTopBar: true,
+      title: 'Manage followers',
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                Text(
+                  '${count} follower${count == 1 ? '' : 's'}',
+                  style: context.textStyles.bodySmall,
+                ),
+                const SizedBox(height: 12),
                 if (_members.isEmpty && _invites.isEmpty)
                   const Text('No followers yet — invite family to join.'),
-                if (_members.isNotEmpty) ...[
-                  const Text('Members', style: TextStyle(fontWeight: FontWeight.bold)),
-                  for (final m in _members)
-                    ListTile(
+                for (final m in _members)
+                  Card(
+                    child: ListTile(
                       title: Text(m.displayName),
                       subtitle: Text(m.relationshipLabel ?? m.email ?? m.role),
                       trailing: Chip(label: Text(m.role)),
                     ),
-                ],
+                  ),
                 if (_invites.isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  const Text('Pending invites', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text('Pending invites', style: context.textStyles.labelLarge),
                   for (final inv in _invites)
                     ListTile(
                       title: Text(inv.email),
@@ -81,6 +82,13 @@ class _FollowersScreenState extends State<FollowersScreen> {
                       ),
                     ),
                 ],
+                const SizedBox(height: 16),
+                Center(
+                  child: TextButton(
+                    onPressed: () => context.push(AppRoutes.inviteFamily),
+                    child: const Text('+ Invite more people'),
+                  ),
+                ),
               ],
             ),
     );

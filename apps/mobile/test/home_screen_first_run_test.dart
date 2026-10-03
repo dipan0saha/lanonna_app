@@ -6,7 +6,7 @@ import 'package:lanonna/features/home/data/home_repository.dart';
 import 'package:lanonna/features/home/data/models/home_summary.dart';
 import 'package:lanonna/features/home/data/selected_baby_store.dart';
 import 'package:lanonna/features/home/home_screen.dart';
-import 'package:lanonna/features/onboarding/data/models/baby_summary.dart';
+import 'package:lanonna/core/domain/baby_summary.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -21,7 +21,7 @@ void main() {
       MultiProvider(
         providers: [
           Provider<HomeRepository>.value(value: repo),
-          Provider<SelectedBabyStore>.value(value: store),
+          ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
         ],
         child: MaterialApp(
           theme: AppTheme.light,
@@ -50,7 +50,7 @@ void main() {
       MultiProvider(
         providers: [
           Provider<HomeRepository>.value(value: repo),
-          Provider<SelectedBabyStore>.value(value: store),
+          ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
         ],
         child: MaterialApp(
           theme: AppTheme.light,
@@ -62,7 +62,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 
-    expect(find.text('RECENT ACTIVITY'), findsOneWidget);
+    expect(find.text('ACTIVITY RECAP'), findsOneWidget);
     expect(find.text('Invite'), findsNothing);
     expect(find.textContaining('is here!'), findsOneWidget);
   });
@@ -93,5 +93,26 @@ class _FakeHomeRepository extends HomeRepository {
   }
 
   @override
-  Future<HomeSummary?> fetchHomeSummary(String babyId) async => null;
+  Future<HomeSummary?> fetchHomeSummary(String babyId) async {
+    if (babyId == 'baby-2') {
+      return const HomeSummary(
+        lifecycleStatus: 'born',
+        nameSuggestionCount: 0,
+        voteCount: 0,
+        recentActivity: [
+          HomeActivityItem(
+            id: 'a1',
+            eventType: 'photo_shared',
+            summary: 'A new photo was shared',
+            createdAt: '2026-10-01T12:00:00Z',
+          ),
+        ],
+        birthWelcome: BirthWelcomeSummary(
+          babyName: 'Parker',
+          daysSinceBirth: 0,
+        ),
+      );
+    }
+    return null;
+  }
 }

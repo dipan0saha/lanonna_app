@@ -1,5 +1,5 @@
 import '../../../core/api/api_client.dart';
-import '../../onboarding/data/models/baby_summary.dart';
+import '../../../core/domain/baby_summary.dart';
 
 class UserEngagementStats {
   const UserEngagementStats({
@@ -57,10 +57,12 @@ class AccountPayload {
     required this.babies,
     required this.engagement,
     this.storageUsage,
+    this.avatarUrl,
   });
 
   final String? displayName;
   final String? email;
+  final String? avatarUrl;
   final List<BabySummary> babies;
   final UserEngagementStats engagement;
   final StorageUsage? storageUsage;
@@ -74,6 +76,7 @@ class AccountPayload {
     return AccountPayload(
       displayName: profile['display_name'] as String?,
       email: profile['email'] as String?,
+      avatarUrl: profile['avatar_url'] as String?,
       babies: babies
           .whereType<Map<String, dynamic>>()
           .map(BabySummary.fromJson)
@@ -132,6 +135,42 @@ class InvitationRow {
   }
 }
 
+class DataExportJob {
+  DataExportJob({
+    required this.id,
+    required this.status,
+    this.downloadUrl,
+    this.errorMessage,
+  });
+
+  final String id;
+  final String status;
+  final String? downloadUrl;
+  final String? errorMessage;
+
+  factory DataExportJob.fromJson(Map<String, dynamic> json) => DataExportJob(
+        id: json['id']?.toString() ?? '',
+        status: json['status'] as String? ?? 'pending',
+        downloadUrl: json['download_url'] as String?,
+        errorMessage: json['error_message'] as String?,
+      );
+}
+
+class DeleteAccountEligibility {
+  DeleteAccountEligibility({required this.allowed, required this.blockers});
+
+  final bool allowed;
+  final List<String> blockers;
+
+  factory DeleteAccountEligibility.fromJson(Map<String, dynamic> json) =>
+      DeleteAccountEligibility(
+        allowed: json['allowed'] as bool? ?? false,
+        blockers: (json['blockers'] as List<dynamic>? ?? [])
+            .map((e) => e.toString())
+            .toList(),
+      );
+}
+
 class AccountRepository {
   AccountRepository(this._api);
 
@@ -142,8 +181,14 @@ class AccountRepository {
     return AccountPayload.fromJson(json);
   }
 
-  Future<void> updateDisplayName(String displayName) async {
-    await _api.patchJson('/v1/profile', body: {'display_name': displayName});
+  Future<void> updateProfile({
+    required String displayName,
+    String? avatarUrl,
+  }) async {
+    await _api.patchJson('/v1/profile', body: {
+      'display_name': displayName,
+      if (avatarUrl != null) 'avatar_url': avatarUrl,
+    });
   }
 
   Future<List<MemberRow>> listMembers(String babyId) async {
@@ -161,5 +206,28 @@ class AccountRepository {
 
   Future<void> revokeInvitation(String babyId, String invitationId) async {
     await _api.deleteJson('/v1/babies/$babyId/invitations/$invitationId');
+  }
+
+  Future<DataExportJob> requestExport(String babyId) async {
+    final json = await _api.postJson('/v1/babies/$babyId/data-export', body: {});
+    return DataExportJob.fromJson(json);
+  }
+
+  Future<DataExportJob?> fetchLatestExport(String babyId) async {
+    try {
+      final json = await _api.getJson('/v1/babies/$babyId/data-export/latest');
+      return DataExportJob.fromJson(json);
+    } on Exception {
+      return null;
+    }
+  }
+
+  Future<DeleteAccountEligibility> deleteAccountEligibility() async {
+    final json = await _api.getJson('/v1/me/delete-account/eligibility');
+    return DeleteAccountEligibility.fromJson(json);
+  }
+
+  Future<void> deleteAccount() async {
+    await _api.postJson('/v1/me/delete-account', body: {'confirm': true});
   }
 }

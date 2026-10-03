@@ -26,4 +26,21 @@ def test_list_gallery_follower_ready_only():
         return_value=[],
     ) as list_mock:
         list_gallery("uid", baby_id)
-        list_mock.assert_called_once_with(baby_id, ready_only=True, limit=50, offset=0)
+        list_mock.assert_called_once_with(
+            baby_id, ready_only=True, limit=50, offset=0, sort="default"
+        )
+
+
+def test_list_gallery_passes_favorites_sort():
+    baby_id = uuid.uuid4()
+    with patch(
+        "lanonna_api.domain.gallery.get_baby_membership",
+        return_value={"role": "owner"},
+    ), patch(
+        "lanonna_api.domain.gallery.list_photos_for_baby",
+        return_value=[],
+    ) as list_mock:
+        list_gallery("uid", baby_id, sort="favorites")
+        list_mock.assert_called_once_with(
+            baby_id, ready_only=False, limit=50, offset=0, sort="favorites"
+        )

@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     invite_deep_link_base: str = "lanonna://app"  # INVITE_DEEP_LINK_BASE
     # When true, API logs invite publish instead of calling Pub/Sub (local dev).
     invite_email_publish_disabled: bool = False  # INVITE_EMAIL_PUBLISH_DISABLED
+    notify_publish_disabled: bool = False  # NOTIFY_PUBLISH_DISABLED
+
+    admin_api_key: str = ""  # ADMIN_API_KEY — ops CRUD for system announcements
+    app_check_enforce: bool = False  # APP_CHECK_ENFORCE — reject missing/invalid App Check
 
 
 settings = Settings()

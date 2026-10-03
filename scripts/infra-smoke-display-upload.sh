@@ -36,7 +36,7 @@ echo "2) Mint signed upload URL…"
 SIGN_JSON="$(curl -sS -X POST "${API_BASE}/v1/uploads/display/signed-url" \
   -H "Authorization: Bearer ${ID_TOKEN}" \
   -H 'Content-Type: application/json' \
-  -d '{"content_type":"image/jpeg"}')"
+  -d '{"content_type":"image/jpeg","byte_length":200}')"
 echo "${SIGN_JSON}" | python3 -m json.tool
 
 UPLOAD_URL="$(echo "${SIGN_JSON}" | python3 -c "import sys,json; print(json.load(sys.stdin)['upload_url'])")"

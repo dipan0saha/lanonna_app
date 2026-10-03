@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/media/cached_signed_image.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
-import '../../onboarding/data/models/baby_summary.dart';
+import '../../../core/domain/baby_summary.dart';
 import '../data/gallery_repository.dart';
 import '../data/models/photo_models.dart';
 
@@ -17,6 +19,29 @@ class PhotoDetailScreen extends StatefulWidget {
 
   @override
   State<PhotoDetailScreen> createState() => _PhotoDetailScreenState();
+}
+
+class _PhotoNavHint extends StatelessWidget {
+  const _PhotoNavHint({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black38,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          child: Icon(icon, color: Colors.white, size: 22),
+        ),
+      ),
+    );
+  }
 }
 
 class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
@@ -111,6 +136,29 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     await _load();
   }
 
+  Future<void> _deleteComment(PhotoComment comment) async {
+    final baby = _baby;
+    final detail = _detail;
+    if (baby == null || detail == null || !comment.isMine) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete comment?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await context.read<GalleryRepository>().deleteComment(
+      baby.id,
+      detail.id,
+      comment.id,
+    );
+    await _load();
+  }
+
   Future<void> _deletePhoto() async {
     final baby = _baby;
     final detail = _detail;
@@ -163,28 +211,26 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       );
     }
     final meta = _formatDate(detail.createdAt);
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Photo'),
-        actions: [
-          if (_photoIds.length > 1) ...[
-            IconButton(
-              onPressed: () => _goAdjacent(-1),
-              icon: const Icon(Icons.chevron_left),
-            ),
-            IconButton(
-              onPressed: () => _goAdjacent(1),
-              icon: const Icon(Icons.chevron_right),
-            ),
-          ],
-          if (_isOwner)
-            IconButton(
-              onPressed: _deletePhoto,
-              icon: const Icon(Icons.delete_outline, color: AppColors.error),
-            ),
+    return PrototypeSubpageScaffold(
+      includeShellTopBar: true,
+      title: 'Photo',
+      actions: [
+        if (_photoIds.length > 1) ...[
+          IconButton(
+            onPressed: () => _goAdjacent(-1),
+            icon: const Icon(Icons.chevron_left, size: 20),
+          ),
+          IconButton(
+            onPressed: () => _goAdjacent(1),
+            icon: const Icon(Icons.chevron_right, size: 20),
+          ),
         ],
-      ),
+        if (_isOwner)
+          IconButton(
+            onPressed: _deletePhoto,
+            icon: const Icon(Icons.delete_outline, color: AppColors.error, size: 20),
+          ),
+      ],
       body: Column(
         children: [
           Expanded(
@@ -194,14 +240,46 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                 children: [
                   AspectRatio(
                     aspectRatio: 1,
-                    child: detail.displayUrl != null
-                        ? Image.network(detail.displayUrl!, fit: BoxFit.cover)
-                        : ColoredBox(
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (detail.displayUrl != null)
+                          CachedSignedImage(
+                            imageUrl: detail.displayUrl,
+                            cacheKey: 'display-${widget.photoId}',
+                            fit: BoxFit.cover,
+                          )
+                        else
+                          ColoredBox(
                             color: Colors.grey.shade300,
-                            child: const Center(
-                              child: Text('Processing…'),
+                            child: const Center(child: Text('Processing…')),
+                          ),
+                        if (_photoIds.length > 1) ...[
+                          Positioned(
+                            top: 8,
+                            left: 0,
+                            right: 0,
+                            child: Center(
+                              child: _PhotoNavHint(
+                                icon: Icons.keyboard_arrow_up,
+                                onTap: () => _goAdjacent(-1),
+                              ),
                             ),
                           ),
+                          Positioned(
+                            bottom: 8,
+                            left: 0,
+                            right: 0,
+                            child: Center(
+                              child: _PhotoNavHint(
+                                icon: Icons.keyboard_arrow_down,
+                                onTap: () => _goAdjacent(1),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(16),
@@ -275,14 +353,26 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                         for (final c in detail.comments)
                           Padding(
                             padding: const EdgeInsets.only(top: 10),
-                            child: Column(
+                            child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  c.authorDisplayName,
-                                  style: styles.labelMedium,
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        c.authorDisplayName,
+                                        style: styles.labelMedium,
+                                      ),
+                                      Text(c.body, style: styles.bodyMedium),
+                                    ],
+                                  ),
                                 ),
-                                Text(c.body, style: styles.bodyMedium),
+                                if (c.isMine)
+                                  IconButton(
+                                    icon: const Icon(Icons.delete_outline, size: 18),
+                                    onPressed: () => _deleteComment(c),
+                                  ),
                               ],
                             ),
                           ),

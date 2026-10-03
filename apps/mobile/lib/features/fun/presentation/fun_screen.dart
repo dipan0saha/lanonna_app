@@ -7,7 +7,7 @@ import '../../../core/theme/la_nonna_theme.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../shell/presentation/shell_tab_layout.dart';
-import '../../onboarding/data/models/baby_summary.dart';
+import '../../../core/domain/baby_summary.dart';
 import '../../onboarding/presentation/widgets/onboarding_fields.dart';
 import 'names_tab.dart';
 import 'predictions_tab.dart';

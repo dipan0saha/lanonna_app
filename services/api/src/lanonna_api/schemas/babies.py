@@ -29,6 +29,7 @@ class BabyUpdateRequest(BaseModel):
     expected_birth_date: date | None = None
     actual_birth_date: date | None = None
     lifecycle_status: Literal["expecting", "born"] | None = None
+    avatar_url: str | None = Field(default=None, max_length=2048)
 
 
 class BabySummary(BaseModel):
@@ -40,6 +41,7 @@ class BabySummary(BaseModel):
     lifecycle_status: str
     role: Literal["owner", "follower"]
     relationship_label: str | None
+    avatar_url: str | None = None
 
 
 def baby_summary_from_row(row: dict[str, Any]) -> BabySummary:
@@ -52,4 +54,5 @@ def baby_summary_from_row(row: dict[str, Any]) -> BabySummary:
         lifecycle_status=row.get("lifecycle_status") or "expecting",
         role=row["role"],
         relationship_label=row.get("relationship_label"),
+        avatar_url=row.get("avatar_url"),
     )

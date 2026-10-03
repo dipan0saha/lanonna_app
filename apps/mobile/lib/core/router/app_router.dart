@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../features/calendar/domain/calendar_routes.dart';
 import '../../features/calendar/presentation/calendar_screen.dart';
+import '../../features/calendar/presentation/calendar_upcoming_screen.dart';
 import '../../features/calendar/presentation/event_ai_suggestions_screen.dart';
 import '../../features/calendar/presentation/event_detail_screen.dart';
 import '../../features/calendar/presentation/event_form_screen.dart';
@@ -13,6 +14,7 @@ import '../../features/gallery/presentation/gallery_screen.dart';
 import '../../features/gallery/presentation/photo_detail_screen.dart';
 import '../../features/home/domain/app_routes.dart';
 import '../../features/home/home_screen.dart';
+import '../../features/home/presentation/home_activity_screen.dart';
 import '../../features/invitations/presentation/batch_invite_screen.dart';
 import '../../features/onboarding/domain/onboarding_routes.dart';
 import '../../features/onboarding/presentation/app_session.dart';
@@ -33,7 +35,12 @@ import '../../features/onboarding/presentation/screens/follower/onboarding_follo
 import '../../features/onboarding/presentation/screens/shared/onboarding_wrong_email_screen.dart';
 import '../../features/onboarding/presentation/screens/owner_carousel_screen.dart';
 import '../../features/account/presentation/account_edit_screen.dart';
+import '../../features/account/presentation/baby_data_export_screen.dart';
+import '../../features/account/presentation/delete_account_screen.dart';
 import '../../features/account/presentation/account_screen.dart';
+import '../../features/settings/presentation/settings_screen.dart';
+import '../../features/account/presentation/notification_preferences_screen.dart';
+import '../../features/account/presentation/notifications_inbox_screen.dart';
 import '../../features/account/presentation/baby_create_screen.dart';
 import '../../features/account/presentation/baby_edit_screen.dart';
 import '../../features/account/presentation/followers_screen.dart';
@@ -43,16 +50,20 @@ import '../../features/registry/domain/registry_routes.dart';
 import '../../features/registry/presentation/registry_ai_suggestions_screen.dart';
 import '../../features/registry/presentation/registry_item_form_screen.dart';
 import '../../features/registry/presentation/registry_screen.dart';
+import '../../features/search/presentation/global_search_screen.dart';
 import '../../features/shell/main_shell_screen.dart';
 import '../auth/auth_repository.dart';
 import 'router_refresh.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
-GoRouter createAppRouter(RouterRefreshListenable refreshListenable) {
+GoRouter createAppRouter(
+  RouterRefreshListenable refreshListenable, {
+  String? initialLocation,
+}) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: OnboardingRoutes.ownerCarousel,
+    initialLocation: initialLocation ?? OnboardingRoutes.ownerCarousel,
     refreshListenable: refreshListenable,
     redirect: (context, state) {
       final auth = context.read<AuthRepository>();
@@ -148,6 +159,36 @@ GoRouter createAppRouter(RouterRefreshListenable refreshListenable) {
         builder: (context, state) => const AccountEditScreen(),
       ),
       GoRoute(
+        path: '/settings',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/account/notification-preferences',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const NotificationPreferencesScreen(),
+      ),
+      GoRoute(
+        path: '/account/export',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const BabyDataExportScreen(),
+      ),
+      GoRoute(
+        path: '/account/delete',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const DeleteAccountScreen(),
+      ),
+      GoRoute(
+        path: '/notifications/inbox',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const NotificationsInboxScreen(),
+      ),
+      GoRoute(
+        path: '/search',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const GlobalSearchScreen(),
+      ),
+      GoRoute(
         path: '/baby/create',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const BabyCreateScreen(),
@@ -185,6 +226,14 @@ GoRouter createAppRouter(RouterRefreshListenable refreshListenable) {
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const BatchInviteScreen(mode: BatchInviteMode.fromHome),
       ),
+      GoRoute(
+        path: '/home/activity',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final babyId = state.uri.queryParameters['babyId'] ?? '';
+          return HomeActivityScreen(babyId: babyId);
+        },
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
             MainShellScreen(navigationShell: navigationShell),
@@ -203,6 +252,16 @@ GoRouter createAppRouter(RouterRefreshListenable refreshListenable) {
                 path: GalleryRoutes.gallery,
                 builder: (context, state) => const GalleryScreen(),
                 routes: [
+                  GoRoute(
+                    path: 'recent',
+                    builder: (context, state) =>
+                        const GalleryScreen(mode: GalleryViewMode.recent),
+                  ),
+                  GoRoute(
+                    path: 'favorites',
+                    builder: (context, state) =>
+                        const GalleryScreen(mode: GalleryViewMode.favorites),
+                  ),
                   GoRoute(
                     path: 'photo/:photoId',
                     builder: (context, state) => PhotoDetailScreen(
@@ -251,6 +310,10 @@ GoRouter createAppRouter(RouterRefreshListenable refreshListenable) {
                     builder: (context, state) =>
                         const EventAiSuggestionsScreen(),
                   ),
+                  GoRoute(
+                    path: 'upcoming',
+                    builder: (context, state) => const CalendarUpcomingScreen(),
+                  ),
                 ],
               ),
             ],
@@ -297,7 +360,7 @@ GoRouter createAppRouter(RouterRefreshListenable refreshListenable) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/gamification',
+                path: AppRoutes.gamification,
                 builder: (context, state) => const FunScreen(),
               ),
             ],

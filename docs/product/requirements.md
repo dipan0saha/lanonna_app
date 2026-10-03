@@ -5,7 +5,7 @@
 | **Version** | 1.0 (draft) |
 | **Status** | Authoritative product spec for greenfield La Nonna (`lanonna_app`) |
 | **Audience** | Product, design, mobile and backend engineering |
-| **Last updated** | 2026-09-29 |
+| **Last updated** | 2026-10-01 |
 
 ## 1. Document control
 
@@ -226,7 +226,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-AUTH-001 | Email/password sign-up and sign-in | User can register and sign in; invalid credentials show clear error | Firebase Auth |
 | FR-AUTH-002 | Email verification in onboarding | Unverified users guided through verify step before Home | Firebase email verification |
 | FR-AUTH-003 | Session persistence | Returning users with valid session land on Home (or onboarding resume) | Firebase session + app router guards |
-| FR-AUTH-004 | Sign out | Sign out clears Firebase session and local push identity hooks | Clear FCM token association on server optional in v1 |
+| FR-AUTH-004 | Sign out | Sign out clears Firebase session and local push identity hooks | `DELETE /v1/me/device-tokens` on sign-out (`PushNotificationService`) |
 | FR-AUTH-005 | Unauthenticated guard | Cold launch without session shows sign-in (E2E-001) | GoRouter redirect |
 | FR-AUTH-006 | Google sign-in | User can sign in or sign up with Google (v1); links to same Firebase user model as email | Firebase Auth Google provider |
 
@@ -267,7 +267,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-BABY-003 | Auto-select new profile | After create, home context switches to new baby (E2E-005) | Client state |
 | FR-BABY-004 | Followers management | Screen lists members and pending invites | `/baby-profile/followers` |
 | FR-BABY-005 | Invite from profile | Navigate to invite screen from management | `/baby-profile/followers/invite` |
-| FR-BABY-006 | Profile photo | Baby avatar upload uses display media policy | Signed upload + URL on profile |
+| FR-BABY-006 | Profile photo | Baby avatar upload uses display media policy | `baby_profiles.avatar_url` (`013`); owner baby edit uses display signed PUT + `PATCH /v1/babies/{id}` |
 
 ### 7.5 Home hub — FR-HOME
 
@@ -285,10 +285,10 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 
 | ID | Requirement | Acceptance criteria | Implementation note |
 |----|-------------|---------------------|---------------------|
-| FR-GAL-001 | Upload photo | Owner picks image; optional caption; success feedback (E2E-007) | Client encode → `POST /photos/init` + signed PUT per [platform-architecture.md §2.4](../engineering/platform-architecture.md) (interim dev: `POST /v1/uploads/display/signed-url` until photo domain migration lands) |
+| FR-GAL-001 | Upload photo | Owner picks image; optional caption; success feedback (E2E-007) | `POST /v1/photos/init` + signed PUT to `display/` per [platform-architecture.md §2.4](../engineering/platform-architecture.md) |
 | FR-GAL-002 | Display asset policy | Long edge ~2048px; WebP preferred; max size enforced at init | Flutter encode; API rejects oversize |
 | FR-GAL-003 | Thumbnail ready | Feed shows thumb after worker processes finalize event | Pub/Sub worker → `thumbnails/` |
-| FR-GAL-004 | Gallery views | Recent and favorites routes | `/gallery/recent`, `/gallery/favorites` |
+| FR-GAL-004 | Gallery views | Recent and favorites routes | `/gallery/recent`, `/gallery/favorites`; list API `sort=recent\|favorites\|default`; home teasers link “View all” |
 | FR-GAL-005 | Photo detail | Fullscreen display asset; metadata and actions | `/gallery/photo/:id` |
 | FR-GAL-006 | Squish | Toggle like; count updates (E2E-008) | API `photo_squishes` |
 | FR-GAL-007 | Comments | Create, edit own, delete own on photo | API `photo_comments` |
@@ -334,10 +334,10 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 
 | ID | Requirement | Acceptance criteria | Implementation note |
 |----|-------------|---------------------|---------------------|
-| FR-NOTIF-001 | In-app inbox | Bell (or equivalent) opens full notification list; mark read; home shows preview of recent unread (§6.2 item 5) | `notifications` table |
-| FR-NOTIF-002 | Push delivery | New photo, RSVP, etc. respect user prefs | FCM from API/worker |
-| FR-NOTIF-003 | Deep link payload | Push opens correct `:id` route | FCM data + router |
-| FR-NOTIF-004 | Preferences | Per-channel toggles in settings (E2E-014 partial) | `notification_preferences` |
+| FR-NOTIF-001 | In-app inbox | Bell (or equivalent) opens full notification list; mark read; home shows preview of recent unread (§6.2 item 5) | `notifications` table; `GET/PATCH` inbox routes |
+| FR-NOTIF-002 | Push delivery | New photo, RSVP, etc. respect user prefs | Worker FCM when `push_notifications_enabled` and digest **`realtime`**; **`daily`** = inbox only; **`weekly`** = summary push (Scheduler) |
+| FR-NOTIF-003 | Deep link payload | Push opens correct `:id` route | FCM `data.deep_link` + `navigateAppDeepLink` |
+| FR-NOTIF-004 | Preferences | Per-channel toggles in settings (E2E-014 partial) | `GET/PATCH /v1/me/notification-preferences`; `notify_*_enabled` on `app_users` (`gallery`, `calendar`, `registry`, `comments`); worker gates inbox + FCM |
 
 ### 7.11 Profile and settings — FR-PROF, FR-SET
 
@@ -364,10 +364,10 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | Job | Requirement |
 |-----|-------------|
 | Invite email | Worker/API + Mailjet (FR-INV-004) |
-| Push notification | FCM send with preference checks (FR-NOTIF-002) |
+| Push notification | Pub/Sub `notify_fan_out` / `notify_user` → worker → SQL inbox + FCM (FR-NOTIF-002) |
 | Thumbnail generation | GCS finalize → Pub/Sub → worker thumb ~320px width |
 | Image metadata | Client EXIF/dimensions at encode; API may validate |
-| Notification digests | Cloud Scheduler → internal API for digests/batches |
+| Notification digests | **Weekly:** Cloud Scheduler → Pub/Sub `weekly_notification_digest` → worker summary FCM. **Daily:** in-app only (no scheduled push in v1). |
 
 ### 7.14 Invitation API operations
 
@@ -404,7 +404,8 @@ La Nonna stores domain data in **Cloud SQL**. Migrations live under `infra/db/`;
 | `name_suggestions` | Name ideas | Yes |
 | `name_suggestion_likes` | Likes on names | Yes |
 | `notifications` | In-app alerts | Yes |
-| `notification_preferences` | Channel toggles | Yes |
+| `notification_preferences` | Digest + push/email toggles on `app_users` | Yes |
+| `device_tokens` | FCM registration per device | Yes |
 | `activity_events` | Full-stream activity recap on home (chronological events) | Yes |
 | `app_versions` | Force-update config | Yes |
 | `system_announcements` | Dismissible home banners (content, schedule, targeting) | Yes |
@@ -441,7 +442,7 @@ Firebase Auth holds identity; link `user_id` to Firebase UID in SQL.
 - Display encode + worker thumbnails.
 - English UI copy via localization files.
 
-Engineering order aligns with [building-the-app.md](../engineering/building-the-app.md): SQL domain migrations → photo pipeline → Flutter shell and **owner onboarding** (done); next: home sections and gallery upload in-app.
+Engineering status aligns with [building-the-app.md](../engineering/building-the-app.md): §6.2 home hub (teasers, birth welcome, system announcements, registry highlights/purchases, activity paginated route, owner invite/followers/storage) is **implemented on dev**; remaining v1 polish: App Check and device QA for push.
 
 ### 10.2 Later
 
@@ -497,12 +498,13 @@ Engineering order aligns with [building-the-app.md](../engineering/building-the-
 
 ### Appendix B — Route inventory
 
+Aligned with `apps/mobile/lib/core/router/app_router.dart` and `features/onboarding/domain/onboarding_routes.dart` (2026-10).
+
 | Route name | Path | Screen |
 |-------------------------|------|--------|
 | home | `/home` | Home |
-| login | `/login` | Login |
-| signup | `/signup` | Signup |
-| roleSelection | `/role-selection` | Redirect → owner carousel |
+| login | `/login` | Legacy redirect → `/onboarding/login` |
+| roleSelection | `/role-selection` | Legacy redirect → `/onboarding/owner/carousel` |
 | onboardingOwnerCarousel | `/onboarding/owner/carousel` | Owner carousel |
 | onboardingSignup | `/onboarding/signup` | Onboarding signup |
 | onboardingLogin | `/onboarding/login` | Onboarding login |
@@ -510,7 +512,7 @@ Engineering order aligns with [building-the-app.md](../engineering/building-the-
 | onboardingCompleteProfile | `/onboarding/complete-profile` | Complete profile |
 | onboardingOwnerCreateBaby | `/onboarding/owner/create-baby` | Create baby |
 | onboardingOwnerFirstMoment | `/onboarding/owner/first-moment` | First moment |
-| onboardingOwnerInvite | `/onboarding/owner/invite` | Batch invite |
+| onboardingOwnerInvite | `/onboarding/owner/invite` | Batch invite (onboarding) |
 | onboardingFollowerInvite | `/onboarding/follower/invite` | Follower invite |
 | onboardingCoOwnerInvite | `/onboarding/coowner/invite` | Co-owner invite |
 | onboardingConfirmRelationship | `/onboarding/follower/confirm-relationship` | Relationship |
@@ -518,10 +520,19 @@ Engineering order aligns with [building-the-app.md](../engineering/building-the-
 | onboardingCoOwnerWelcome | `/onboarding/coowner/welcome` | Co-owner welcome |
 | onboardingWrongEmail | `/onboarding/wrong-email` | Wrong email |
 | inviteAccept | `/invite-accept` | Invite accept |
-| profile | `/profile` | Profile |
-| profileEdit | `/profile/edit` | Edit profile |
+| profile | `/profile` | Account hub (FR-PROF) |
+| profileEdit | `/account/edit` | Edit profile |
+| settings | `/settings` | Settings hub (notifications, profile edit, help mailto) |
+| notificationPreferences | `/account/notification-preferences` | Notification prefs (deep link / entry from settings) |
+| accountExport | `/account/export` | Baby data export |
+| accountDelete | `/account/delete` | Account delete |
+| notificationsInbox | `/notifications/inbox` | Notification inbox |
+| search | `/search` | Global search |
+| homeActivity | `/home/activity` | Paginated activity recap |
+| inviteFamily | `/invite-family` | Batch invite (from home/account) |
 | calendar | `/calendar` | Calendar |
 | calendarUpcoming | `/calendar/upcoming` | Upcoming events |
+| calendarAiSuggestions | `/calendar/ai-suggestions` | Static event suggestions |
 | calendarEvent | `/calendar/event/:id` | Event detail |
 | calendarEventCreate | `/calendar/event/create` | Create event |
 | calendarEventEdit | `/calendar/event/:id/edit` | Edit event |
@@ -530,18 +541,20 @@ Engineering order aligns with [building-the-app.md](../engineering/building-the-
 | galleryRecent | `/gallery/recent` | Recent |
 | galleryPhoto | `/gallery/photo/:id` | Photo detail |
 | gamification | `/gamification` | Fun / gamification |
-| settings | `/settings` | Settings |
-| babyProfile | `/baby-profile` | Baby profile |
-| babyProfileCreate | `/baby-profile/create` | Create baby |
-| babyProfileEdit | `/baby-profile/:id/edit` | Edit baby |
-| babyProfileFollowers | `/baby-profile/followers` | Followers |
-| babyProfileInvite | `/baby-profile/followers/invite` | Invite followers |
+| babyCreate | `/baby/create` | Create baby (post-onboarding) |
+| babyEdit | `/baby/:babyId/edit` | Edit baby |
+| babyFollowers | `/baby/:babyId/followers` | Followers management |
+| babyAnnouncement | `/baby/:babyId/announcement` | Birth announcement view |
+| babyAnnouncementCreate | `/baby/:babyId/announcement/create` | Create announcement |
 | registry | `/registry` | Registry |
-| registryItem | `/registry/item/:id` | Item detail |
+| registryAiSuggestions | `/registry/ai-suggestions` | Static registry suggestions |
+| registryItem | `/registry/item/:id` | Item detail (redirects to edit) |
 | registryItemCreate | `/registry/item/create` | Create item |
 | registryItemEdit | `/registry/item/:id/edit` | Edit item |
 
-Use static URL builder helpers (e.g. `galleryPhotoRoute(id)`) for navigation and push payloads.
+**Deep links:** API payloads may use `/account` or `/notifications`; the client normalizes these to `/profile` and `/notifications/inbox` (`deep_link_navigation.dart`).
+
+Use static URL builder helpers (e.g. `AppRoutes`, `GalleryRoutes`, `CalendarRoutes`) for navigation and push payloads.
 
 ### Appendix C — Entity checklist (one line each)
 
@@ -556,7 +569,7 @@ Use static URL builder helpers (e.g. `galleryPhotoRoute(id)`) for navigation and
 | `events` + RSVP/comments | Calendar |
 | `registry_items` + `registry_purchases` | Wishlist and claims |
 | `votes`, `name_suggestions`, `name_suggestion_likes` | Gamification |
-| `notifications`, `notification_preferences` | Alerts and prefs |
+| `notifications`, notification prefs on `app_users`, `device_tokens` | Alerts, digest settings, FCM |
 | `activity_events` | Activity recap |
 | `app_versions` | Minimum version enforcement |
 | `system_announcements`, `announcement_dismissals` | Home banners |

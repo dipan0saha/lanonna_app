@@ -1,3 +1,1 @@
-from lanonna_api.routers import babies, invitations, onboarding, profile
-
-__all__ = ["babies", "invitations", "onboarding", "profile"]
+"""HTTP route modules; import submodules directly (e.g. ``lanonna_api.routers.babies``)."""

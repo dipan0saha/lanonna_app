@@ -55,6 +55,26 @@ class RsvpSummary {
   }
 }
 
+class RsvpAttendee {
+  RsvpAttendee({
+    required this.firebaseUid,
+    required this.status,
+    required this.displayName,
+  });
+
+  final String firebaseUid;
+  final String status;
+  final String displayName;
+
+  factory RsvpAttendee.fromJson(Map<String, dynamic> json) {
+    return RsvpAttendee(
+      firebaseUid: json['firebase_uid'] as String? ?? '',
+      status: json['status'] as String? ?? '',
+      displayName: json['display_name'] as String? ?? 'Family member',
+    );
+  }
+}
+
 class EventComment {
   EventComment({
     required this.id,
@@ -89,13 +109,17 @@ class EventDetail extends CalendarEvent {
     super.location,
     super.videoCallUrl,
     super.coverPhotoId,
+    this.coverPhotoDisplayUrl,
     required this.rsvpSummary,
     this.viewerRsvp,
+    required this.rsvpAttendees,
     required this.comments,
   });
 
+  final String? coverPhotoDisplayUrl;
   final RsvpSummary rsvpSummary;
   final String? viewerRsvp;
+  final List<RsvpAttendee> rsvpAttendees;
   final List<EventComment> comments;
 
   factory EventDetail.fromJson(Map<String, dynamic> json) {
@@ -111,10 +135,15 @@ class EventDetail extends CalendarEvent {
       location: json['location'] as String?,
       videoCallUrl: json['video_call_url'] as String?,
       coverPhotoId: json['cover_photo_id'] as String?,
+      coverPhotoDisplayUrl: json['cover_photo_display_url'] as String?,
       rsvpSummary: RsvpSummary.fromJson(
         json['rsvp_summary'] as Map<String, dynamic>? ?? {},
       ),
       viewerRsvp: json['viewer_rsvp'] as String?,
+      rsvpAttendees: (json['rsvp_attendees'] as List<dynamic>? ?? [])
+          .whereType<Map<String, dynamic>>()
+          .map(RsvpAttendee.fromJson)
+          .toList(),
       comments: commentsRaw is List
           ? commentsRaw
               .whereType<Map<String, dynamic>>()

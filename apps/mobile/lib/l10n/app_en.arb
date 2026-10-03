@@ -1,0 +1,18 @@
+{
+  "@@locale": "en",
+  "settingsTitle": "Settings",
+  "settingsNotifications": "Notifications",
+  "settingsNotificationsSubtitle": "Digest, push, and channel preferences",
+  "settingsHelpSupport": "Help & support",
+  "settingsEditProfile": "Edit profile",
+  "notificationChannelGallery": "Gallery",
+  "notificationChannelGallerySubtitle": "New photos, squishes, and photo comments",
+  "notificationChannelCalendar": "Calendar",
+  "notificationChannelCalendarSubtitle": "New events and RSVPs",
+  "notificationChannelRegistry": "Registry",
+  "notificationChannelRegistrySubtitle": "Registry purchases and updates",
+  "notificationChannelComments": "Event comments",
+  "notificationChannelCommentsSubtitle": "Comments on calendar events",
+  "notificationPrefsSave": "Save",
+  "notificationPrefsSaving": "Saving…"
+}

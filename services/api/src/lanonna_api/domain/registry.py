@@ -5,6 +5,12 @@ from typing import Any
 
 from lanonna_api.domain import assert_owner_membership
 from lanonna_api.domain.gallery import require_membership
+from lanonna_api.domain.notification_copy import actor_display_name
+from lanonna_api.domain.notifications import (
+    FanOutSpec,
+    NotificationChannel,
+    enqueue_fan_out,
+)
 from lanonna_api.repositories.activity_events import insert_activity_event
 from lanonna_api.repositories.babies import get_baby_membership
 from lanonna_api.repositories.registry import (
@@ -159,6 +165,18 @@ def claim_purchase(
         "registry_purchased",
         f'Someone is buying "{item["name"]}"',
         {"registry_item_id": str(item_id)},
+    )
+    actor = actor_display_name(firebase_uid)
+    enqueue_fan_out(
+        FanOutSpec(
+            baby_profile_id=baby_profile_id,
+            title="Registry update",
+            body=f'{actor} is buying "{item["name"]}"',
+            deep_link="/registry",
+            recipient_mode="baby_owners",
+            exclude_firebase_uid=firebase_uid,
+            notification_channel=NotificationChannel.REGISTRY,
+        )
     )
     return {"status": "claimed"}
 

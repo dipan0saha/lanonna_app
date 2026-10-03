@@ -13,6 +13,8 @@ class OnboardingInviteRow extends StatelessWidget {
     this.showOwnerBadge = false,
     this.onRemove,
     this.onFieldChanged,
+    this.onEmailEditingComplete,
+    this.membershipHint,
   });
 
   final TextEditingController nameController;
@@ -22,6 +24,8 @@ class OnboardingInviteRow extends StatelessWidget {
   final bool showOwnerBadge;
   final VoidCallback? onRemove;
   final VoidCallback? onFieldChanged;
+  final VoidCallback? onEmailEditingComplete;
+  final String? membershipHint;
 
   @override
   Widget build(BuildContext context) {
@@ -70,12 +74,23 @@ class OnboardingInviteRow extends StatelessWidget {
             controller: emailController,
             keyboardType: TextInputType.emailAddress,
             onChanged: (_) => onFieldChanged?.call(),
+            onEditingComplete: onEmailEditingComplete,
             decoration: const InputDecoration(
               hintText: 'Email or phone',
               isDense: true,
               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             ),
           ),
+          if (membershipHint != null && membershipHint!.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              membershipHint!,
+              style: context.textStyles.bodySmall?.copyWith(
+                color: context.brand.ownerBadgeText,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
           DropdownButtonFormField<InviteRelationshipOption>(
             value: relationship,

@@ -48,6 +48,7 @@ def insert_activity_event(
 def list_recent_for_baby(
     baby_profile_id: uuid.UUID,
     limit: int = 10,
+    offset: int = 0,
 ) -> list[dict[str, Any]]:
     with get_connection() as conn:
         rows = conn.execute(
@@ -56,11 +57,24 @@ def list_recent_for_baby(
             FROM activity_events
             WHERE baby_profile_id = %s
             ORDER BY created_at DESC
-            LIMIT %s
+            LIMIT %s OFFSET %s
             """,
-            (baby_profile_id, limit),
+            (baby_profile_id, limit, offset),
         ).fetchall()
     return [dict(row) for row in rows]
+
+
+def count_activity_for_baby(baby_profile_id: uuid.UUID) -> int:
+    with get_connection() as conn:
+        row = conn.execute(
+            """
+            SELECT COUNT(*)::int AS n
+            FROM activity_events
+            WHERE baby_profile_id = %s
+            """,
+            (baby_profile_id,),
+        ).fetchone()
+    return int(row["n"]) if row else 0
 
 
 def count_name_suggestions(baby_profile_id: uuid.UUID) -> int:

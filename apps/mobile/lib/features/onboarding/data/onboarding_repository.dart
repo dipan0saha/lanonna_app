@@ -1,5 +1,5 @@
 import '../../../core/api/api_client.dart';
-import 'models/baby_summary.dart';
+import 'package:lanonna/core/domain/baby_summary.dart';
 import 'models/onboarding_status.dart';
 
 class OnboardingRepository {
@@ -14,10 +14,6 @@ class OnboardingRepository {
 
   Future<void> completeOwnerOnboarding() async {
     await _api.postJson('/v1/onboarding/owner/complete');
-  }
-
-  Future<void> updateDisplayName(String displayName) async {
-    await updateProfile(displayName: displayName);
   }
 
   Future<void> updateProfile({

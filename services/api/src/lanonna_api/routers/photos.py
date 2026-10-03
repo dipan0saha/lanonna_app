@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from pydantic import BaseModel, Field
@@ -64,11 +64,14 @@ def list_photos(
     baby_profile_id: uuid.UUID,
     limit: int = Query(default=50, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
+    sort: Literal["default", "recent", "favorites"] = Query(default="default"),
     user: dict[str, Any] = Depends(current_user),
 ) -> list[dict[str, Any]]:
     upsert_app_user(user["uid"], user.get("email"))
     try:
-        return gallery_domain.list_gallery(user["uid"], baby_profile_id, limit, offset)
+        return gallery_domain.list_gallery(
+            user["uid"], baby_profile_id, limit, offset, sort=sort
+        )
     except Exception as exc:
         raise map_domain_errors(exc) from exc
 

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../home/data/home_repository.dart';

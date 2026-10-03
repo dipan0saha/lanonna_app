@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/shell/presentation/shell_top_bar.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_metrics.dart';
 import '../theme/la_nonna_theme.dart';
@@ -13,12 +14,14 @@ class PrototypeSubpageScaffold extends StatelessWidget {
     required this.body,
     this.onBack,
     this.actions,
+    this.includeShellTopBar = false,
   });
 
   final String title;
   final Widget body;
   final VoidCallback? onBack;
   final List<Widget>? actions;
+  final bool includeShellTopBar;
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +31,7 @@ class PrototypeSubpageScaffold extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (includeShellTopBar) shellHomeTopBar(context),
             Padding(
               padding: EdgeInsets.fromLTRB(
                 4,

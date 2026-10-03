@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/media/cached_signed_image.dart';
 import '../../data/models/photo_models.dart';
 
 class GalleryPhotoGrid extends StatelessWidget {
@@ -34,7 +35,11 @@ class GalleryPhotoGrid extends StatelessWidget {
               fit: StackFit.expand,
               children: [
                 if (photo.thumbUrl != null)
-                  Image.network(photo.thumbUrl!, fit: BoxFit.cover)
+                  CachedSignedImage(
+                    imageUrl: photo.thumbUrl,
+                    cacheKey: 'thumb-${photo.id}',
+                    fit: BoxFit.cover,
+                  )
                 else
                   ColoredBox(
                     color: Colors.grey.shade200,

@@ -31,6 +31,52 @@ def update_shipping_address(baby_profile_id: uuid.UUID, address: str | None) -> 
         )
 
 
+def list_open_registry_highlights(
+    baby_profile_id: uuid.UUID,
+    limit: int = 3,
+) -> list[dict[str, Any]]:
+    with get_connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT i.id, i.name, i.priority
+            FROM registry_items i
+            LEFT JOIN registry_purchases p ON p.registry_item_id = i.id
+            WHERE i.baby_profile_id = %s AND p.id IS NULL
+            ORDER BY i.priority DESC, i.created_at DESC
+            LIMIT %s
+            """,
+            (baby_profile_id, limit),
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def list_recent_registry_purchases(
+    baby_profile_id: uuid.UUID,
+    since_days: int = 15,
+    limit: int = 5,
+) -> list[dict[str, Any]]:
+    with get_connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT
+                i.id AS item_id,
+                i.name AS item_name,
+                p.created_at AS purchased_at,
+                p.purchased_by_firebase_uid,
+                u.display_name AS purchaser_display_name
+            FROM registry_purchases p
+            JOIN registry_items i ON i.id = p.registry_item_id
+            LEFT JOIN app_users u ON u.firebase_uid = p.purchased_by_firebase_uid
+            WHERE i.baby_profile_id = %s
+              AND p.created_at >= now() - make_interval(days => %s)
+            ORDER BY p.created_at DESC
+            LIMIT %s
+            """,
+            (baby_profile_id, since_days, limit),
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
 def list_registry_items(baby_profile_id: uuid.UUID) -> list[dict[str, Any]]:
     with get_connection() as conn:
         rows = conn.execute(

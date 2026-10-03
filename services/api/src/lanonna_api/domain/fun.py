@@ -5,6 +5,7 @@ from datetime import date
 from typing import Any
 
 from lanonna_api.domain.gallery import require_membership
+from lanonna_api.domain.users_display import author_display_name_from_row
 from lanonna_api.repositories.activity_events import insert_activity_event
 from lanonna_api.repositories.babies import get_baby_membership
 from lanonna_api.repositories.fun import (
@@ -29,15 +30,6 @@ from lanonna_api.repositories.fun import (
 from lanonna_api.repositories.users import upsert_app_user
 
 
-def _author_name(row: dict[str, Any]) -> str:
-    if row.get("author_display_name"):
-        return row["author_display_name"]
-    email = row.get("author_email") or ""
-    if email and "@" in email:
-        return email.split("@")[0]
-    return "Family member"
-
-
 def list_names(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, Any]:
     require_membership(firebase_uid, baby_profile_id)
     liked = caller_liked_suggestion_ids(baby_profile_id, firebase_uid)
@@ -50,7 +42,7 @@ def list_names(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, Any]:
                 "suggested_name": row["suggested_name"],
                 "gender": row["gender"],
                 "like_count": row["like_count"],
-                "author_display_name": _author_name(row),
+                "author_display_name": author_display_name_from_row(row),
                 "is_mine": row["suggested_by_firebase_uid"] == firebase_uid,
                 "viewer_has_liked": user_has_like(sid, firebase_uid),
             }

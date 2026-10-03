@@ -31,11 +31,33 @@ def test_build_home_summary_includes_getting_started_and_next_event():
         patch("lanonna_api.domain.home.count_follower_memberships", return_value=0),
         patch("lanonna_api.domain.home.count_photos_for_baby", return_value=0),
         patch("lanonna_api.domain.home.count_events", return_value=0),
+        patch(
+            "lanonna_api.domain.home._build_home_teasers",
+            return_value={
+                "recent_photos": [],
+                "favorite_photos": [],
+                "registry_open_count": 0,
+                "registry_highlights": [],
+                "recent_registry_purchases": [],
+                "upcoming_events": [],
+                "rsvp_reminders": [],
+                "notification_preview": [],
+            },
+        ),
+        patch("lanonna_api.domain.home.list_active_for_user", return_value=[]),
+        patch("lanonna_api.domain.home.list_new_followers", return_value=[]),
+        patch("lanonna_api.domain.home.list_invitations_for_baby", return_value=[]),
+        patch("lanonna_api.domain.home.storage_usage_for_owner_babies", return_value=None),
+        patch("lanonna_api.domain.home._build_birth_welcome", return_value=None),
     ):
         data = build_home_summary("uid", baby_id)
 
     assert data["next_up_event"]["title"] == "Shower"
     assert data["getting_started"]["total"] == 5
+    profile_task = next(
+        t for t in data["getting_started"]["tasks"] if t["id"] == "baby_profile"
+    )
+    assert profile_task["deep_link"] == f"/baby/{baby_id}/edit"
     assert data["family_insight"]["top_name"]["suggested_name"] == "Milo"
     assert data["family_insight"]["gender_totals"]["male"] == 3
 
@@ -60,6 +82,21 @@ def test_build_home_summary_follower_omits_getting_started():
             "lanonna_api.domain.home.list_events",
             return_value=[{"id": uuid.uuid4(), "title": "Reveal", "starts_at": "2026-10-02T18:00:00Z", "location": None}],
         ),
+        patch(
+            "lanonna_api.domain.home._build_home_teasers",
+            return_value={
+                "recent_photos": [],
+                "favorite_photos": [],
+                "registry_open_count": 0,
+                "registry_highlights": [],
+                "recent_registry_purchases": [],
+                "upcoming_events": [],
+                "rsvp_reminders": [],
+                "notification_preview": [],
+            },
+        ),
+        patch("lanonna_api.domain.home.list_active_for_user", return_value=[]),
+        patch("lanonna_api.domain.home._build_birth_welcome", return_value=None),
     ):
         data = build_home_summary("uid", baby_id)
 

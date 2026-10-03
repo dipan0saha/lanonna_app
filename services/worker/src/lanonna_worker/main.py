@@ -8,7 +8,13 @@ from fastapi import FastAPI, Request, Response
 import uuid
 
 from lanonna_worker.config import settings
+from lanonna_worker.baby_data_export import run_baby_data_export
 from lanonna_worker.invite_email import send_invite_email
+from lanonna_worker.notifications import (
+    process_notify_fan_out,
+    process_notify_user,
+    process_weekly_notification_digest,
+)
 from lanonna_worker.thumbnails import process_gcs_finalize
 
 logging.basicConfig(level=logging.INFO)
@@ -20,6 +26,17 @@ app = FastAPI(title="La Nonna Worker", version="0.1.0")
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "environment": settings.environment}
+
+
+@app.post("/cron/weekly-notification-digest")
+async def cron_weekly_notification_digest() -> Response:
+    """Invoked by Cloud Scheduler (OIDC) to enqueue weekly digest pushes."""
+    try:
+        process_weekly_notification_digest()
+    except Exception:
+        logger.exception("cron_weekly_notification_digest_failed")
+        return Response(status_code=500)
+    return Response(status_code=204)
 
 
 @app.post("/pubsub/push")
@@ -44,6 +61,42 @@ async def pubsub_push(request: Request) -> Response:
             send_invite_email(uuid.UUID(str(invitation_id_raw)), str(invite_token))
         except Exception:
             logger.exception("send_invite_email_failed invitation_id=%s", invitation_id_raw)
+            return Response(status_code=500)
+        return Response(status_code=204)
+
+    if payload.get("type") == "notify_fan_out":
+        try:
+            process_notify_fan_out(payload)
+        except Exception:
+            logger.exception("notify_fan_out_failed")
+            return Response(status_code=500)
+        return Response(status_code=204)
+
+    if payload.get("type") == "notify_user":
+        try:
+            process_notify_user(payload)
+        except Exception:
+            logger.exception("notify_user_failed")
+            return Response(status_code=500)
+        return Response(status_code=204)
+
+    if payload.get("type") == "weekly_notification_digest":
+        try:
+            process_weekly_notification_digest()
+        except Exception:
+            logger.exception("weekly_notification_digest_failed")
+            return Response(status_code=500)
+        return Response(status_code=204)
+
+    if payload.get("type") == "baby_data_export":
+        job_id_raw = payload.get("job_id")
+        if not job_id_raw:
+            logger.warning("baby_data_export missing job_id message_id=%s", message.get("messageId"))
+            return Response(status_code=204)
+        try:
+            run_baby_data_export(uuid.UUID(str(job_id_raw)))
+        except Exception:
+            logger.exception("baby_data_export_failed job_id=%s", job_id_raw)
             return Response(status_code=500)
         return Response(status_code=204)
 

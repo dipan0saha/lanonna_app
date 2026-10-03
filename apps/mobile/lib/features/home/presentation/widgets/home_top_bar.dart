@@ -7,11 +7,15 @@ import '../../../../core/theme/la_nonna_theme.dart';
 class HomeTopBar extends StatelessWidget {
   const HomeTopBar({
     super.key,
+    this.centerTitle = 'La Nonna',
+    this.showUnreadDot = false,
     this.onSearchTap,
     this.onNotificationsTap,
     this.onProfileTap,
   });
 
+  final String centerTitle;
+  final bool showUnreadDot;
   final VoidCallback? onSearchTap;
   final VoidCallback? onNotificationsTap;
   final VoidCallback? onProfileTap;
@@ -39,9 +43,11 @@ class HomeTopBar extends StatelessWidget {
               onTap: onProfileTap,
               behavior: HitTestBehavior.opaque,
               child: Text(
-                'La Nonna',
+                centerTitle,
                 textAlign: TextAlign.center,
                 style: titleStyle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ),
@@ -57,18 +63,19 @@ class HomeTopBar extends StatelessWidget {
                 ),
                 tooltip: 'Notifications',
               ),
-              Positioned(
-                right: 10,
-                top: 10,
-                child: Container(
-                  width: 7,
-                  height: 7,
-                  decoration: const BoxDecoration(
-                    color: AppColors.secondaryDark,
-                    shape: BoxShape.circle,
+              if (showUnreadDot)
+                Positioned(
+                  right: 10,
+                  top: 10,
+                  child: Container(
+                    width: 7,
+                    height: 7,
+                    decoration: const BoxDecoration(
+                      color: AppColors.secondaryDark,
+                      shape: BoxShape.circle,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ],

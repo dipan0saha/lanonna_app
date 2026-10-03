@@ -48,8 +48,8 @@ def mark_photo_ready(
     thumb_path: str,
     object_generation: int | None,
     byte_length: int | None,
-) -> bool:
-    """Idempotent: returns False if this generation was already processed."""
+) -> dict[str, Any] | None:
+    """Idempotent: returns photo row dict when newly marked ready, else None."""
     with get_connection() as conn:
         if object_generation is not None:
             existing = conn.execute(
@@ -60,7 +60,7 @@ def mark_photo_ready(
                 (object_generation,),
             ).fetchone()
             if existing is not None:
-                return False
+                return None
 
         row = conn.execute(
             """
@@ -92,5 +92,5 @@ def mark_photo_ready(
                     Json({"photo_id": str(row["id"])}),
                 ),
             )
-            return True
-    return False
+            return dict(row)
+    return None

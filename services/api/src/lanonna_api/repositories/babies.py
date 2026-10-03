@@ -17,6 +17,7 @@ def list_babies_for_user(firebase_uid: str) -> list[dict[str, Any]]:
                 b.expected_birth_date,
                 b.actual_birth_date,
                 b.lifecycle_status,
+                b.avatar_url,
                 m.role,
                 m.relationship_label
             FROM baby_memberships m
@@ -106,7 +107,7 @@ def update_baby_for_owner(
               AND m.removed_at IS NULL
               AND b.deleted_at IS NULL
             RETURNING b.id, b.name, b.gender, b.expected_birth_date,
-                      b.actual_birth_date, b.lifecycle_status
+                      b.actual_birth_date, b.lifecycle_status, b.avatar_url
             """,
             values,
         ).fetchone()
@@ -127,7 +128,7 @@ def get_baby_for_owner(
             """
             SELECT
                 b.id, b.name, b.gender, b.expected_birth_date,
-                b.actual_birth_date, b.lifecycle_status,
+                b.actual_birth_date, b.lifecycle_status, b.avatar_url,
                 m.role, m.relationship_label
             FROM baby_profiles b
             JOIN baby_memberships m ON m.baby_profile_id = b.id
@@ -151,7 +152,7 @@ def get_baby_membership(
             """
             SELECT
                 b.id, b.name, b.gender, b.expected_birth_date,
-                b.actual_birth_date, b.lifecycle_status,
+                b.actual_birth_date, b.lifecycle_status, b.avatar_url,
                 m.role, m.relationship_label
             FROM baby_profiles b
             JOIN baby_memberships m ON m.baby_profile_id = b.id

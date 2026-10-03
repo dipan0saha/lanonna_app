@@ -35,3 +35,6 @@ CREATE TABLE IF NOT EXISTS announcement_comments (
 
 CREATE INDEX IF NOT EXISTS idx_announcement_comments_announcement
     ON announcement_comments(announcement_id, created_at DESC);
+
+INSERT INTO schema_migrations (version) VALUES ('009_birth_announcements')
+ON CONFLICT (version) DO NOTHING;

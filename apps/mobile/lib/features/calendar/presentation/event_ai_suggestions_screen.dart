@@ -6,7 +6,6 @@ import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../data/event_suggestions_catalog.dart';
 import '../domain/calendar_routes.dart';
-import 'event_form_screen.dart';
 
 class EventAiSuggestionsScreen extends StatefulWidget {
   const EventAiSuggestionsScreen({super.key});

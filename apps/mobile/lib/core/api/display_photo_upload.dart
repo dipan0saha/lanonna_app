@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+import '../media/display_encode.dart';
 import 'api_client.dart';
 
 class DisplayPhotoUpload {
@@ -15,18 +16,23 @@ class DisplayPhotoUpload {
     required File imageFile,
     String? contentType,
   }) async {
-    final resolvedType = contentType ?? _guessImageContentType(imageFile.path);
+    final encoded = encodeDisplayAsset(await imageFile.readAsBytes());
+    final resolvedType = contentType ?? encoded.contentType;
     final init = await _api.postJson('/v1/uploads/display/signed-url', body: {
       'content_type': resolvedType,
+      'byte_length': encoded.bytes.length,
     });
     final uploadUrl = init['upload_url'] as String;
     final bucket = init['bucket'] as String;
     final objectPath = init['object_path'] as String;
-    final body = await imageFile.readAsBytes();
     final response = await http.put(
       Uri.parse(uploadUrl),
-      headers: signedPutHeadersForInit(init, resolvedType, body.length),
-      body: body,
+      headers: signedPutHeadersForInit(
+        init,
+        resolvedType,
+        encoded.bytes.length,
+      ),
+      body: encoded.bytes,
     );
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception('Avatar upload failed (${response.statusCode})');
@@ -39,8 +45,9 @@ class DisplayPhotoUpload {
     required File imageFile,
     String? contentType,
   }) async {
-    final resolvedType = contentType ?? _guessImageContentType(imageFile.path);
-    final body = await imageFile.readAsBytes();
+    final encoded = encodeDisplayAsset(await imageFile.readAsBytes());
+    final resolvedType = contentType ?? encoded.contentType;
+    final body = encoded.bytes;
     final init = await _api.postJson('/v1/photos/init', body: {
       'baby_profile_id': babyProfileId,
       'content_type': resolvedType,
@@ -57,12 +64,6 @@ class DisplayPhotoUpload {
       throw Exception('Photo upload failed (${response.statusCode})');
     }
     return photoId;
-  }
-
-  static String _guessImageContentType(String path) {
-    final lower = path.toLowerCase();
-    if (lower.endsWith('.webp')) return 'image/webp';
-    return 'image/jpeg';
   }
 
   /// GCS V4 signed PUTs require every header that was included at sign time.
@@ -84,11 +85,10 @@ class DisplayPhotoUpload {
     final maxBytes = init['max_bytes'];
     headers.putIfAbsent(
       'x-goog-content-length-range',
-      () => maxBytes is int ? '0,$maxBytes' : '0,2097152',
+      () => maxBytes is int ? '0,$maxBytes' : '0,$displayMaxBytes',
     );
     headers['Content-Type'] = contentType;
-    // Signed range is 0..max_bytes; actual body must fit (init uses declared byte_length).
-    if (byteLength > 2097152) {
+    if (byteLength > displayMaxBytes) {
       throw Exception('Photo exceeds maximum size (2 MB).');
     }
     return headers;

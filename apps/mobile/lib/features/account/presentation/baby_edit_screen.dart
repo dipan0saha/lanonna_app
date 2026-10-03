@@ -1,13 +1,20 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/api/api_client.dart';
+import '../../../core/api/display_photo_upload.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../home/data/home_repository.dart';
-import '../../onboarding/data/models/baby_summary.dart';
+import '../../../core/domain/baby_summary.dart';
 import '../../onboarding/presentation/utils/onboarding_baby_helpers.dart';
+import '../../onboarding/presentation/widgets/onboarding_prototype_widgets.dart';
 
 class BabyEditScreen extends StatefulWidget {
   const BabyEditScreen({super.key, required this.babyId});
@@ -25,8 +32,12 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
   var _saving = false;
   String? _gender;
   DateTime? _date;
+  final _picker = ImagePicker();
+  String? _networkAvatarUrl;
+  XFile? _photoFile;
 
   bool get _isBorn => _baby?.lifecycleStatus == 'born';
+  bool get _isOwner => _baby?.role == 'owner';
 
   @override
   void initState() {
@@ -46,8 +57,16 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
       _name.text = baby?.name ?? '';
       _gender = baby?.gender;
       _date = parsed;
+      _networkAvatarUrl = baby?.avatarUrl;
       _loading = false;
     });
+  }
+
+  Future<void> _pickPhoto() async {
+    if (!_isOwner) return;
+    final file = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (file == null) return;
+    setState(() => _photoFile = file);
   }
 
   Future<void> _pickDate() async {
@@ -65,12 +84,19 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
     setState(() => _saving = true);
     try {
       final dateIso = _date != null ? formatApiDate(_date!) : null;
-      await context.read<HomeRepository>().updateBabyFields(
+      String? avatarUrl = _networkAvatarUrl;
+      if (_photoFile != null && !kIsWeb) {
+        avatarUrl = await DisplayPhotoUpload(context.read<ApiClient>()).uploadProfileAvatar(
+          imageFile: File(_photoFile!.path),
+        );
+      }
+      await context.read<HomeRepository>().updateBaby(
         widget.babyId,
         name: _name.text.trim(),
         gender: _gender,
         expectedBirthDate: !_isBorn ? dateIso : null,
         actualBirthDate: _isBorn ? dateIso : null,
+        avatarUrl: avatarUrl,
       );
       if (mounted) context.pop();
     } finally {
@@ -88,6 +114,20 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          if (_isOwner) ...[
+            Center(
+              child: PrototypePhotoUpload(
+                imageFile: _photoFile,
+                imageUrl: _photoFile == null ? _networkAvatarUrl : null,
+                onTap: _saving ? null : _pickPhoto,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Center(
+              child: Text('Tap to change photo', style: TextStyle(fontSize: 12)),
+            ),
+            const SizedBox(height: 16),
+          ],
           TextField(
             controller: _name,
             decoration: const InputDecoration(labelText: 'Baby name'),

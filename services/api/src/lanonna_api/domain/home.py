@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 from lanonna_api.db import get_connection
@@ -10,8 +10,11 @@ from lanonna_api.repositories.activity_events import (
     insert_activity_event,
     list_recent_for_baby,
 )
+from lanonna_api.domain.media_urls import signed_display_url, signed_thumb_url
 from lanonna_api.repositories.babies import get_baby_for_owner, get_baby_membership
-from lanonna_api.repositories.events import list_events
+from lanonna_api.repositories.events import get_caller_rsvp, list_events
+from lanonna_api.repositories.notifications import list_notifications_for_user
+from lanonna_api.repositories.photos import get_photo_for_baby, list_photos_for_baby
 from lanonna_api.repositories.fun import (
     birthdate_vote_histogram,
     count_gender_votes,
@@ -21,14 +24,219 @@ from lanonna_api.repositories.fun import (
 from lanonna_api.repositories.home_counts import (
     count_events,
     count_follower_memberships,
+    count_open_registry_items,
     count_photos_for_baby,
     count_registry_items,
     count_sent_invitations,
+    list_new_followers,
 )
+from lanonna_api.repositories.invitations import list_invitations_for_baby
+from lanonna_api.repositories.announcements import get_announcement
+from lanonna_api.repositories.registry import (
+    list_open_registry_highlights,
+    list_recent_registry_purchases,
+)
+from lanonna_api.repositories.system_announcements import list_active_for_user
+from lanonna_api.repositories.user_engagement import storage_usage_for_owner_babies
+from lanonna_api.domain.notifications import (
+    FanOutSpec,
+    NotificationChannel,
+    enqueue_fan_out,
+)
+_BIRTH_WELCOME_VISIBLE_DAYS = 7
 
 
 def _utc_today() -> date:
     return datetime.now(timezone.utc).date()
+
+
+# Allow calendar dates up to one day ahead of UTC for owners in timezones east of UTC.
+_BIRTH_DATE_UTC_SLACK_DAYS = 1
+
+
+def validate_actual_birth_date(actual_birth_date: date) -> None:
+    latest_allowed = _utc_today() + timedelta(days=_BIRTH_DATE_UTC_SLACK_DAYS)
+    if actual_birth_date > latest_allowed:
+        raise ValueError("Date of birth cannot be in the future.")
+
+
+def _display_url_for_photo(baby_profile_id: uuid.UUID, photo_id: uuid.UUID | None) -> str | None:
+    if photo_id is None:
+        return None
+    row = get_photo_for_baby(baby_profile_id, photo_id)
+    if row is None:
+        return None
+    return signed_display_url(row.get("display_path"))
+
+
+def _parse_date(value: Any) -> date | None:
+    if value is None:
+        return None
+    if isinstance(value, date):
+        return value
+    return date.fromisoformat(str(value))
+
+
+def _serialize_upcoming_event(ev: dict[str, Any]) -> dict[str, Any]:
+    starts = ev["starts_at"]
+    return {
+        "id": str(ev["id"]),
+        "title": ev["title"],
+        "starts_at": starts.isoformat() if hasattr(starts, "isoformat") else str(starts),
+        "location": ev.get("location"),
+    }
+
+
+def _build_birth_welcome(
+    baby: dict[str, Any],
+    baby_profile_id: uuid.UUID,
+    is_owner: bool,
+) -> dict[str, Any] | None:
+    if not is_owner or (baby.get("lifecycle_status") or "") != "born":
+        return None
+    birth = _parse_date(baby.get("actual_birth_date"))
+    if birth is None:
+        return None
+    days_since = (_utc_today() - birth).days
+    if days_since > _BIRTH_WELCOME_VISIBLE_DAYS:
+        return None
+    welcome_until = birth + timedelta(days=_BIRTH_WELCOME_VISIBLE_DAYS)
+    baby_name = baby.get("name") or "Baby"
+    ann = get_announcement(baby_profile_id)
+    announcement_preview = None
+    if ann:
+        photo_id = ann.get("photo_id")
+        announcement_preview = {
+            "announcement_id": str(ann["id"]),
+            "first_name": ann.get("first_name"),
+            "last_name": ann.get("last_name"),
+            "photo_display_url": _display_url_for_photo(baby_profile_id, photo_id),
+        }
+    return {
+        "baby_name": baby_name,
+        "days_since_birth": days_since,
+        "welcome_visible_until": welcome_until.isoformat(),
+        "announcement": announcement_preview,
+    }
+
+
+def list_activity_events(
+    firebase_uid: str,
+    baby_profile_id: uuid.UUID,
+    *,
+    limit: int = 20,
+    offset: int = 0,
+) -> dict[str, Any]:
+    if get_baby_membership(firebase_uid, baby_profile_id) is None:
+        raise PermissionError("Membership required for this baby profile.")
+    limit = min(max(limit, 1), 50)
+    offset = max(offset, 0)
+    rows = list_recent_for_baby(baby_profile_id, limit=limit, offset=offset)
+    return {
+        "items": [
+            {
+                "id": item["id"],
+                "event_type": item["event_type"],
+                "summary": item["summary"],
+                "created_at": item["created_at"].isoformat()
+                if hasattr(item["created_at"], "isoformat")
+                else str(item["created_at"]),
+            }
+            for item in rows
+        ],
+        "limit": limit,
+        "offset": offset,
+        "has_more": len(rows) == limit,
+    }
+
+
+def _build_home_teasers(
+    firebase_uid: str,
+    baby_profile_id: uuid.UUID,
+) -> dict[str, Any]:
+    photos = list_photos_for_baby(baby_profile_id, ready_only=True, limit=4)
+    recent_photos = [
+        {
+            "id": str(p["id"]),
+            "thumb_url": signed_thumb_url(p.get("thumb_path")),
+        }
+        for p in photos
+        if p.get("thumb_path")
+    ]
+    fav_rows = list_photos_for_baby(
+        baby_profile_id, ready_only=True, limit=4, sort="favorites"
+    )
+    favorite_photos = [
+        {
+            "id": str(p["id"]),
+            "thumb_url": signed_thumb_url(p.get("thumb_path")),
+            "squish_count": p.get("squish_count", 0),
+        }
+        for p in fav_rows
+        if p.get("thumb_path")
+    ]
+    rsvp_reminders: list[dict[str, Any]] = []
+    for ev in list_events(baby_profile_id, upcoming_only=True):
+        if get_caller_rsvp(ev["id"], firebase_uid) is not None:
+            continue
+        rsvp_reminders.append(
+            {
+                "id": str(ev["id"]),
+                "title": ev["title"],
+                "starts_at": ev["starts_at"].isoformat()
+                if hasattr(ev["starts_at"], "isoformat")
+                else str(ev["starts_at"]),
+            }
+        )
+        if len(rsvp_reminders) >= 3:
+            break
+    notifs = list_notifications_for_user(firebase_uid, limit=3, unread_only=True)
+    upcoming_events = [
+        _serialize_upcoming_event(ev)
+        for ev in list_events(baby_profile_id, upcoming_only=True)[:3]
+    ]
+    registry_highlights = [
+        {
+            "id": str(r["id"]),
+            "name": r["name"],
+            "priority": int(r.get("priority") or 0),
+        }
+        for r in list_open_registry_highlights(baby_profile_id, limit=3)
+    ]
+    recent_purchases = []
+    for row in list_recent_registry_purchases(baby_profile_id):
+        purchased_at = row.get("purchased_at")
+        recent_purchases.append(
+            {
+                "item_id": str(row["item_id"]),
+                "item_name": row["item_name"],
+                "purchaser_display_name": row.get("purchaser_display_name"),
+                "purchased_at": purchased_at.isoformat()
+                if hasattr(purchased_at, "isoformat")
+                else str(purchased_at),
+            }
+        )
+    return {
+        "recent_photos": recent_photos,
+        "favorite_photos": favorite_photos,
+        "registry_open_count": count_open_registry_items(baby_profile_id),
+        "registry_highlights": registry_highlights,
+        "recent_registry_purchases": recent_purchases,
+        "upcoming_events": upcoming_events,
+        "rsvp_reminders": rsvp_reminders,
+        "notification_preview": [
+            {
+                "id": str(n["id"]),
+                "title": n["title"],
+                "body": n["body"],
+                "deep_link": n.get("deep_link"),
+                "created_at": n["created_at"].isoformat()
+                if hasattr(n["created_at"], "isoformat")
+                else str(n["created_at"]),
+            }
+            for n in notifs
+        ],
+    }
 
 
 def announce_arrival(
@@ -37,8 +245,7 @@ def announce_arrival(
     actual_birth_date: date,
     extra_fields: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    if actual_birth_date > _utc_today():
-        raise ValueError("Date of birth cannot be in the future.")
+    validate_actual_birth_date(actual_birth_date)
 
     baby = get_baby_for_owner(firebase_uid, baby_profile_id)
     if baby is None:
@@ -96,6 +303,17 @@ def announce_arrival(
     result = dict(row)
     result["role"] = "owner"
     result["relationship_label"] = None
+    if record_arrival_event:
+        enqueue_fan_out(
+            FanOutSpec(
+                baby_profile_id=baby_profile_id,
+                title="Baby has arrived!",
+                body=f"{baby_name} has arrived — see the announcement",
+                deep_link=f"/baby/{baby_profile_id}/announcement",
+                exclude_firebase_uid=firebase_uid,
+                notification_channel=NotificationChannel.CALENDAR,
+            )
+        )
     return result
 
 
@@ -120,7 +338,7 @@ def build_home_summary(
 
     suggestion_count = count_name_suggestions(baby_profile_id)
     vote_count = count_gender_votes(baby_profile_id)
-    recent = list_recent_for_baby(baby_profile_id, limit=5)
+    recent = list_recent_for_baby(baby_profile_id, limit=10)
     totals = gender_vote_totals(baby_profile_id)
 
     top_name = None
@@ -167,7 +385,7 @@ def build_home_summary(
                 "id": "baby_profile",
                 "label": "Set up baby profile",
                 "done": has_profile,
-                "deep_link": "/baby/edit",
+                "deep_link": f"/baby/{baby_profile_id}/edit",
             },
             {
                 "id": "registry_item",
@@ -201,10 +419,51 @@ def build_home_summary(
             "tasks": tasks,
         }
 
+    role = baby.get("role") or "follower"
+    system_announcements = [
+        {
+            "id": str(a["id"]),
+            "title": a["title"],
+            "body": a["body"],
+            "cta_label": a.get("cta_label"),
+            "cta_deep_link": a.get("cta_deep_link"),
+        }
+        for a in list_active_for_user(firebase_uid, membership_role=role)
+    ]
+
+    new_followers = None
+    invite_status = None
+    storage_usage = None
+    if is_owner:
+        new_followers = [
+            {
+                "firebase_uid": row["firebase_uid"],
+                "display_name": row["display_name"],
+                "joined_at": row["joined_at"].isoformat()
+                if hasattr(row["joined_at"], "isoformat")
+                else str(row["joined_at"]),
+            }
+            for row in list_new_followers(baby_profile_id)
+        ]
+        invite_status = [
+            {
+                "id": str(inv["id"]),
+                "invitee_email": inv["invitee_email"],
+                "status": inv["status"],
+                "created_at": inv["created_at"].isoformat()
+                if hasattr(inv["created_at"], "isoformat")
+                else str(inv["created_at"]),
+            }
+            for inv in list_invitations_for_baby(baby_profile_id)
+            if inv.get("status") == "pending"
+        ][:5]
+        storage_usage = storage_usage_for_owner_babies(firebase_uid)
+
     return {
         "baby_profile_id": baby_profile_id,
         "lifecycle_status": lifecycle,
         "days_to_due": days_to_due,
+        "birth_welcome": _build_birth_welcome(baby, baby_profile_id, is_owner),
         "family_insight": {
             "name_suggestion_count": suggestion_count,
             "vote_count": vote_count,
@@ -214,6 +473,11 @@ def build_home_summary(
         },
         "next_up_event": next_up,
         "getting_started": getting_started,
+        "system_announcements": system_announcements,
+        "new_followers": new_followers,
+        "invite_status": invite_status,
+        "storage_usage": storage_usage,
+        "teasers": _build_home_teasers(firebase_uid, baby_profile_id),
         "recent_activity": [
             {
                 "id": item["id"],

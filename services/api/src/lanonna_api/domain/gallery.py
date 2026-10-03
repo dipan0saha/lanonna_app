@@ -3,10 +3,11 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from lanonna_api.config import settings
 from lanonna_api.domain import assert_owner_membership, create_pending_photo
+from lanonna_api.domain.media_urls import signed_display_url, signed_thumb_url
 from lanonna_api.repositories.babies import get_baby_membership
 from lanonna_api.repositories.photos import (
+    PhotoListSort,
     caller_squished,
     delete_photo,
     get_photo_for_baby,
@@ -19,6 +20,8 @@ from lanonna_api.repositories.photos import (
     update_photo_caption,
     update_photo_comment,
 )
+from lanonna_api.domain.notification_copy import actor_display_name
+from lanonna_api.domain.notifications import NotificationChannel, enqueue_notify_user
 from lanonna_api.repositories.users import upsert_app_user
 from lanonna_api.storage import mint_display_upload_for_object, mint_signed_read_url
 
@@ -30,18 +33,6 @@ def _display_name(row: dict[str, Any]) -> str:
     if email and "@" in email:
         return email.split("@")[0]
     return "Family member"
-
-
-def _thumb_url(thumb_path: str | None) -> str | None:
-    if not thumb_path:
-        return None
-    return mint_signed_read_url(settings.thumbnails_bucket, thumb_path)
-
-
-def _display_url(display_path: str | None) -> str | None:
-    if not display_path:
-        return None
-    return mint_signed_read_url(settings.display_bucket, display_path)
 
 
 def require_membership(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, Any]:
@@ -84,14 +75,19 @@ def list_gallery(
     baby_profile_id: uuid.UUID,
     limit: int = 50,
     offset: int = 0,
+    sort: str = "default",
 ) -> list[dict[str, Any]]:
     membership = require_membership(firebase_uid, baby_profile_id)
     ready_only = membership["role"] != "owner"
+    sort_param: PhotoListSort = (
+        sort if sort in ("default", "recent", "favorites") else "default"
+    )
     rows = list_photos_for_baby(
         baby_profile_id,
         ready_only=ready_only,
         limit=limit,
         offset=offset,
+        sort=sort_param,
     )
     out = []
     for row in rows:
@@ -101,7 +97,7 @@ def list_gallery(
                 "status": row["status"],
                 "caption": row.get("caption"),
                 "created_at": row["created_at"].isoformat(),
-                "thumb_url": _thumb_url(row.get("thumb_path")),
+                "thumb_url": signed_thumb_url(row.get("thumb_path")),
                 "squish_count": row["squish_count"],
                 "comment_count": row["comment_count"],
                 "uploader_display_name": _display_name(row),
@@ -128,8 +124,8 @@ def get_photo_detail(
         "status": row["status"],
         "caption": row.get("caption"),
         "created_at": row["created_at"].isoformat(),
-        "display_url": _display_url(row.get("display_path")),
-        "thumb_url": _thumb_url(row.get("thumb_path")),
+        "display_url": signed_display_url(row.get("display_path")),
+        "thumb_url": signed_thumb_url(row.get("thumb_path")),
         "uploader_display_name": _display_name(row),
         "squish_count": squish_count(photo_id),
         "viewer_has_squished": squished,
@@ -180,6 +176,17 @@ def squish_photo(
     if row is None or row["status"] != "ready":
         raise LookupError("Photo not found.")
     active = toggle_squish(photo_id, firebase_uid)
+    uploader = row["uploader_firebase_uid"]
+    if active and uploader != firebase_uid:
+        actor = actor_display_name(firebase_uid)
+        enqueue_notify_user(
+            uploader,
+            title="New squish",
+            body=f"{actor} squished your photo",
+            deep_link=f"/gallery/photo/{photo_id}",
+            baby_profile_id=baby_profile_id,
+            notification_channel=NotificationChannel.GALLERY,
+        )
     return {"squished": active}
 
 
@@ -197,6 +204,17 @@ def add_comment(
         raise ValueError("Comment body required.")
     upsert_app_user(firebase_uid, None)
     c = insert_photo_comment(photo_id, firebase_uid, body)
+    uploader = row["uploader_firebase_uid"]
+    if uploader != firebase_uid:
+        actor = actor_display_name(firebase_uid)
+        enqueue_notify_user(
+            uploader,
+            title="New comment",
+            body=f"{actor} commented on your photo",
+            deep_link=f"/gallery/photo/{photo_id}",
+            baby_profile_id=baby_profile_id,
+            notification_channel=NotificationChannel.GALLERY,
+        )
     return {
         "id": str(c["id"]),
         "body": c["body"],

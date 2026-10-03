@@ -11,7 +11,7 @@ import '../../home/data/home_repository.dart';
 import '../../home/data/models/home_summary.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../shell/presentation/shell_tab_layout.dart';
-import '../../onboarding/data/models/baby_summary.dart';
+import '../../../core/domain/baby_summary.dart';
 import '../data/gallery_repository.dart';
 import '../data/models/photo_models.dart';
 import '../domain/gallery_routes.dart';
@@ -20,8 +20,12 @@ import 'widgets/gallery_activity_section.dart';
 import 'widgets/gallery_empty_state.dart';
 import 'widgets/gallery_photo_grid.dart';
 
+enum GalleryViewMode { all, recent, favorites }
+
 class GalleryScreen extends StatefulWidget {
-  const GalleryScreen({super.key});
+  const GalleryScreen({super.key, this.mode = GalleryViewMode.all});
+
+  final GalleryViewMode mode;
 
   @override
   State<GalleryScreen> createState() => _GalleryScreenState();
@@ -34,6 +38,26 @@ class _GalleryScreenState extends State<GalleryScreen> {
   String? _error;
   var _loading = true;
   var _uploading = false;
+
+  bool get _isAllMode => widget.mode == GalleryViewMode.all;
+
+  String get _apiSort => switch (widget.mode) {
+        GalleryViewMode.all => 'default',
+        GalleryViewMode.recent => 'recent',
+        GalleryViewMode.favorites => 'favorites',
+      };
+
+  String get _pageTitle => switch (widget.mode) {
+        GalleryViewMode.all => 'Gallery',
+        GalleryViewMode.recent => 'Recent Photos',
+        GalleryViewMode.favorites => 'Favorites',
+      };
+
+  String get _sectionLabel => switch (widget.mode) {
+        GalleryViewMode.all => 'All Photos',
+        GalleryViewMode.recent => 'Last 30 days',
+        GalleryViewMode.favorites => 'Most squished',
+      };
 
   @override
   void initState() {
@@ -60,9 +84,9 @@ class _GalleryScreenState extends State<GalleryScreen> {
         });
         return;
       }
-      final photos = await galleryRepo.listPhotos(baby.id);
+      final photos = await galleryRepo.listPhotos(baby.id, sort: _apiSort);
       HomeSummary? summary;
-      if (baby.role == 'owner') {
+      if (baby.role == 'owner' && _isAllMode) {
         summary = await homeRepo.fetchHomeSummary(baby.id);
       }
       setState(() {
@@ -122,6 +146,31 @@ class _GalleryScreenState extends State<GalleryScreen> {
     }
   }
 
+  Widget _buildFilteredEmpty() {
+    final message = switch (widget.mode) {
+      GalleryViewMode.recent =>
+        'No photos in the last 30 days. Upload a new moment or browse the full gallery.',
+      GalleryViewMode.favorites =>
+        'No favorites yet. Squish photos you love and they will show up here.',
+      GalleryViewMode.all => '',
+    };
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: context.textStyles.bodyMedium?.copyWith(color: AppColors.muted),
+        ),
+      ),
+    );
+  }
+
+  bool get _showFab =>
+      _isOwner &&
+      _baby != null &&
+      (_isAllMode ? _photos.isNotEmpty : true);
+
   @override
   Widget build(BuildContext context) {
     final headline = context.textStyles.headlineSmall;
@@ -133,60 +182,63 @@ class _GalleryScreenState extends State<GalleryScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    AppMetrics.horizontalPadding,
-                    0,
-                    AppMetrics.horizontalPadding,
-                    10,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  AppMetrics.horizontalPadding,
+                  0,
+                  AppMetrics.horizontalPadding,
+                  10,
+                ),
+                child: Text(_pageTitle, style: headline),
+              ),
+            ),
+            if (_loading)
+              const SliverFillRemaining(
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_baby == null)
+              SliverFillRemaining(
+                child: Center(
+                  child: Text(
+                    'Create a baby profile to use Gallery.',
+                    style: context.textStyles.bodyMedium,
                   ),
-                  child: Text('Gallery', style: headline),
+                ),
+              )
+            else if (_error != null)
+              SliverFillRemaining(
+                child: Center(child: Text(_error!)),
+              )
+            else if (_photos.isEmpty)
+              SliverFillRemaining(
+                child: _isAllMode
+                    ? GalleryEmptyState(
+                        isOwner: _isOwner,
+                        onAddPhoto: _isOwner ? _onAddPhoto : null,
+                      )
+                    : _buildFilteredEmpty(),
+              )
+            else ...[
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Text(
+                    _sectionLabel,
+                    style: context.textStyles.labelLarge?.copyWith(
+                      color: AppColors.muted,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
                 ),
               ),
-              if (_loading)
-                const SliverFillRemaining(
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              else if (_baby == null)
-                SliverFillRemaining(
-                  child: Center(
-                    child: Text(
-                      'Create a baby profile to use Gallery.',
-                      style: context.textStyles.bodyMedium,
-                    ),
-                  ),
-                )
-              else if (_error != null)
-                SliverFillRemaining(
-                  child: Center(child: Text(_error!)),
-                )
-              else if (_photos.isEmpty)
-                SliverFillRemaining(
-                  child: GalleryEmptyState(
-                    isOwner: _isOwner,
-                    onAddPhoto: _isOwner ? _onAddPhoto : null,
-                  ),
-                )
-              else ...[
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                    child: Text(
-                      'All Photos',
-                      style: context.textStyles.labelLarge?.copyWith(
-                        color: AppColors.muted,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
+              SliverToBoxAdapter(
+                child: GalleryPhotoGrid(
+                  photos: _photos,
+                  onPhotoTap: (p) =>
+                      context.push(GalleryRoutes.photoDetail(p.id)),
                 ),
-                SliverToBoxAdapter(
-                  child: GalleryPhotoGrid(
-                    photos: _photos,
-                    onPhotoTap: (p) =>
-                        context.push(GalleryRoutes.photoDetail(p.id)),
-                  ),
-                ),
+              ),
+              if (_isAllMode) ...[
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -202,12 +254,13 @@ class _GalleryScreenState extends State<GalleryScreen> {
                 SliverToBoxAdapter(
                   child: GalleryActivitySection(items: _activity),
                 ),
-                const SliverToBoxAdapter(child: SizedBox(height: 96)),
               ],
+              const SliverToBoxAdapter(child: SizedBox(height: 96)),
             ],
-          ),
+          ],
         ),
-      floatingActionButton: _isOwner && _baby != null && _photos.isNotEmpty
+      ),
+      floatingActionButton: _showFab
           ? FloatingActionButton(
               key: const Key('upload_photo_fab'),
               onPressed: _uploading ? null : _onAddPhoto,

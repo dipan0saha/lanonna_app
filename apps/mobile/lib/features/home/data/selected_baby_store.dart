@@ -1,6 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class SelectedBabyStore {
+class SelectedBabyStore extends ChangeNotifier {
   SelectedBabyStore(this._prefs);
 
   final SharedPreferences _prefs;
@@ -10,5 +11,6 @@ class SelectedBabyStore {
 
   Future<void> setSelectedBabyId(String id) async {
     await _prefs.setString(_key, id);
+    notifyListeners();
   }
 }

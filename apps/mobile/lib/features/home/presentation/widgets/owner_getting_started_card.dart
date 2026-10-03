@@ -76,10 +76,12 @@ class OwnerGettingStartedCard extends StatelessWidget {
   }
 
   void _navigate(BuildContext context, String taskId, String? path) {
-    if (taskId == 'baby_profile') {
-      context.push('/baby/$babyId/edit');
+    if (path != null && path.isNotEmpty) {
+      context.push(path);
       return;
     }
-    if (path != null) context.push(path);
+    if (taskId == 'baby_profile') {
+      context.push('/baby/$babyId/edit');
+    }
   }
 }

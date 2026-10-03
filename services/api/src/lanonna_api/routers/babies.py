@@ -3,10 +3,11 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from lanonna_api.auth import current_user
-from lanonna_api.domain.home import announce_arrival, build_home_summary
+from lanonna_api.http_errors import map_domain_errors
+from lanonna_api.domain.home import announce_arrival, build_home_summary, list_activity_events
 from lanonna_api.repositories.babies import (
     create_baby_with_owner_membership,
     get_baby_for_owner,
@@ -52,10 +53,7 @@ def create_baby(
             body.lifecycle_status,
         )
     except RuntimeError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=str(exc),
-        ) from exc
+        raise map_domain_errors(exc) from exc
     return baby_summary_from_row(row)
 
 
@@ -77,6 +75,8 @@ def patch_baby(
         fields["actual_birth_date"] = body.actual_birth_date
     if body.lifecycle_status is not None:
         fields["lifecycle_status"] = body.lifecycle_status
+    if body.avatar_url is not None:
+        fields["avatar_url"] = body.avatar_url
 
     announcing = body.lifecycle_status == "born" and body.actual_birth_date is not None
     try:
@@ -90,10 +90,8 @@ def patch_baby(
             )
         else:
             row = update_baby_for_owner(user["uid"], baby_profile_id, fields)
-    except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
-    except PermissionError as exc:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    except (ValueError, PermissionError) as exc:
+        raise map_domain_errors(exc) from exc
 
     if row is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Baby not found")
@@ -109,8 +107,22 @@ def home_summary(
     try:
         data = build_home_summary(user["uid"], baby_profile_id)
     except PermissionError as exc:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+        raise map_domain_errors(exc) from exc
     return HomeSummaryResponse(**data)
+
+
+@router.get("/{baby_profile_id}/activity-events")
+def activity_events(
+    baby_profile_id: uuid.UUID,
+    user: dict[str, Any] = Depends(current_user),
+    limit: int = Query(default=20, ge=1, le=50),
+    offset: int = Query(default=0, ge=0),
+) -> dict[str, Any]:
+    upsert_app_user(user["uid"], user.get("email"))
+    try:
+        return list_activity_events(user["uid"], baby_profile_id, limit=limit, offset=offset)
+    except PermissionError as exc:
+        raise map_domain_errors(exc) from exc
 
 
 @router.post(
@@ -134,5 +146,5 @@ def first_moment_seed(
             [{"name": r.name, "gender": r.gender} for r in body.name_suggestions],
         )
     except PermissionError as exc:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+        raise map_domain_errors(exc) from exc
     return FirstMomentSeedResponse(**counts)

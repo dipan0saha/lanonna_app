@@ -16,6 +16,12 @@ Apply in **lexicographic order** (filename prefix):
 | `008_registry_fun_social.sql` | Registry purchases, votes, name likes, shipping address |
 | `009_birth_announcements.sql` | Birth announcement keepsake, squish, comments |
 | `010_user_engagement_indexes.sql` | Indexes for `/v1/me/account` engagement aggregates |
+| `011_notifications_and_prefs.sql` | `notifications` inbox + user notification preference columns |
+| `012_export_jobs_and_account_delete.sql` | `baby_data_export_jobs` + `app_users.deleted_at` |
+| `013_baby_avatar_url.sql` | `baby_profiles.avatar_url` (display upload URL) |
+| `014_device_tokens_and_digest.sql` | `device_tokens` (FCM) + `app_users.last_weekly_digest_at` |
+| `015_system_announcements.sql` | `system_announcements` + `announcement_dismissals` (home banners) |
+| `016_notification_channels.sql` | Per-channel notification toggles on `app_users` |
 
 ## Apply (dev)
 

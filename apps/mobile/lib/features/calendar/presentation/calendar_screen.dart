@@ -8,7 +8,7 @@ import '../../../core/theme/la_nonna_theme.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../shell/presentation/shell_tab_layout.dart';
-import '../../onboarding/data/models/baby_summary.dart';
+import '../../../core/domain/baby_summary.dart';
 import '../data/calendar_repository.dart';
 import '../data/models/calendar_models.dart';
 import '../domain/calendar_routes.dart';

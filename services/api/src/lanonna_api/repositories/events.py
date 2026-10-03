@@ -181,6 +181,25 @@ def get_caller_rsvp(event_id: uuid.UUID, firebase_uid: str) -> str | None:
     return row["status"] if row else None
 
 
+def list_rsvps_for_event(event_id: uuid.UUID) -> list[dict[str, Any]]:
+    with get_connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT
+                r.firebase_uid,
+                r.status,
+                u.display_name,
+                u.email
+            FROM event_rsvps r
+            JOIN app_users u ON u.firebase_uid = r.firebase_uid
+            WHERE r.event_id = %s
+            ORDER BY r.updated_at DESC
+            """,
+            (event_id,),
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
 def rsvp_summary(event_id: uuid.UUID) -> dict[str, int]:
     with get_connection() as conn:
         rows = conn.execute(
