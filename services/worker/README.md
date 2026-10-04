@@ -4,7 +4,7 @@ Pub/Sub push handler: **thumbnails** from `display/` objects, **Mailjet** invite
 
 Non-2xx responses on `/pubsub/push` cause Pub/Sub to retry; monitor `thumbnail_processing_failed` / `expire_pending_invitations_failed` logs and configure a dead-letter topic in Terraform when volume grows.
 
-**Layout:** `src/lanonna_worker/` — `main.py`, `thumbnails.py`, `notifications.py`, `invite_email.py`.
+**Layout:** `src/lanonna_worker/` — `main.py`, `thumbnails.py`, `notifications.py`, `invite_email.py`, `invite_cleanup.py`, `baby_data_export.py`, `db.py`, `config.py`.
 
 ## Deploy
 

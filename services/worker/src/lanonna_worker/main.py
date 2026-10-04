@@ -53,7 +53,7 @@ async def cron_weekly_notification_digest() -> Response:
 
 @app.post("/pubsub/push")
 async def pubsub_push(request: Request) -> Response:
-    """Pub/Sub push delivery stub (ack by returning 2xx)."""
+    """Pub/Sub push: thumbnails, invite email, notifications, exports, invite expiry."""
     body: dict[str, Any] = await request.json()
     message = body.get("message", {})
     raw = message.get("data", "")

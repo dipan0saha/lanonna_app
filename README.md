@@ -21,7 +21,7 @@ cd apps/mobile && flutter pub get && flutter run
 
 ## Status
 
-Monorepo scaffold in place; API and worker implementation not started.
+Active monorepo: Flutter client, FastAPI on Cloud Run, worker for Pub/Sub jobs, PostgreSQL migrations, and CI (API/worker tests, mobile analyze/test, email template sync). See [docs/engineering/development.md](docs/engineering/development.md).
 
 ## License
 
