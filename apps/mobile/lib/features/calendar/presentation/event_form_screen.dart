@@ -6,14 +6,30 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_client.dart';
+import '../../../core/input/app_text_input_kind.dart';
+import '../../../core/widgets/app_labeled_text_field.dart';
+import '../../../core/widgets/app_semantics.dart';
 import '../../../core/media/cached_signed_image.dart';
 import '../../../core/api/display_photo_upload.dart';
 import '../../gallery/data/gallery_repository.dart';
 import '../../gallery/data/models/photo_models.dart';
+import '../../home/data/home_refresh_signal.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../data/calendar_repository.dart';
+
+class EventFormPrefill {
+  EventFormPrefill({
+    required this.title,
+    required this.description,
+    this.catalogSuggestionId,
+  });
+
+  final String title;
+  final String description;
+  final String? catalogSuggestionId;
+}
 
 class EventFormScreen extends StatefulWidget {
   const EventFormScreen({
@@ -21,11 +37,13 @@ class EventFormScreen extends StatefulWidget {
     this.eventId,
     this.initialTitle,
     this.initialDescription,
+    this.initialCatalogSuggestionId,
   });
 
   final String? eventId;
   final String? initialTitle;
   final String? initialDescription;
+  final String? initialCatalogSuggestionId;
 
   bool get isEdit => eventId != null;
 
@@ -159,7 +177,23 @@ class _EventFormScreenState extends State<EventFormScreen> {
 
   Future<void> _save() async {
     final baby = _baby;
-    if (baby == null || _title.text.trim().isEmpty) return;
+    final title = AppTextInputPolicy.normalizeForSubmit(
+      AppTextInputKind.prose,
+      _title.text,
+    );
+    if (baby == null || title.isEmpty) return;
+    final description = AppTextInputPolicy.normalizeForSubmit(
+      AppTextInputKind.prose,
+      _description.text,
+    );
+    final location = AppTextInputPolicy.normalizeForSubmit(
+      AppTextInputKind.prose,
+      _location.text,
+    );
+    final videoCallUrl = AppTextInputPolicy.normalizeForSubmit(
+      AppTextInputKind.none,
+      _video.text,
+    );
     setState(() => _saving = true);
     try {
       final repo = context.read<CalendarRepository>();
@@ -168,29 +202,29 @@ class _EventFormScreenState extends State<EventFormScreen> {
         await repo.updateEvent(
           baby.id,
           widget.eventId!,
-          title: _title.text.trim(),
+          title: title,
           startsAt: startsAt,
-          description: _description.text.trim().isEmpty
-              ? null
-              : _description.text.trim(),
-          location: _location.text.trim().isEmpty ? null : _location.text.trim(),
-          videoCallUrl: _video.text.trim().isEmpty ? null : _video.text.trim(),
+          description: description.isEmpty ? null : description,
+          location: location.isEmpty ? null : location,
+          videoCallUrl: videoCallUrl.isEmpty ? null : videoCallUrl,
           coverPhotoId: _coverPhotoId,
         );
       } else {
         await repo.createEvent(
           baby.id,
-          title: _title.text.trim(),
+          title: title,
           startsAt: startsAt,
-          description: _description.text.trim().isEmpty
-              ? null
-              : _description.text.trim(),
-          location: _location.text.trim().isEmpty ? null : _location.text.trim(),
-          videoCallUrl: _video.text.trim().isEmpty ? null : _video.text.trim(),
+          description: description.isEmpty ? null : description,
+          location: location.isEmpty ? null : location,
+          videoCallUrl: videoCallUrl.isEmpty ? null : videoCallUrl,
           coverPhotoId: _coverPhotoId,
+          catalogSuggestionId: widget.initialCatalogSuggestionId,
         );
       }
-      if (mounted) context.pop();
+      if (mounted) {
+        context.read<HomeRefreshSignal>().notifyHomeShouldRefresh();
+        context.pop(!widget.isEdit);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -208,29 +242,37 @@ class _EventFormScreenState extends State<EventFormScreen> {
       appBar: AppBar(
         title: Text(widget.isEdit ? 'Edit event' : 'New event'),
         actions: [
-          TextButton(
-            onPressed: _saving ? null : _save,
-            child: _saving
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Save'),
+          AppSemantics.button(
+            'calendar_event_save',
+            TextButton(
+              onPressed: _saving ? null : _save,
+              child: _saving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Save'),
+            ),
+            label: 'Save',
           ),
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          TextField(
+          AppLabeledTextField(
+            semanticsId: 'calendar_event_title',
+            label: 'Title',
+            kind: AppTextInputKind.prose,
             controller: _title,
-            decoration: const InputDecoration(labelText: 'Title'),
           ),
-          TextField(
+          AppLabeledTextField(
+            label: 'Description',
+            kind: AppTextInputKind.prose,
             controller: _description,
-            decoration: const InputDecoration(labelText: 'Description'),
             maxLines: 3,
+            minLines: 3,
           ),
           ListTile(
             title: const Text('Date'),
@@ -258,13 +300,16 @@ class _EventFormScreenState extends State<EventFormScreen> {
               if (picked != null) setState(() => _time = picked);
             },
           ),
-          TextField(
+          AppLabeledTextField(
+            label: 'Location',
+            kind: AppTextInputKind.prose,
             controller: _location,
-            decoration: const InputDecoration(labelText: 'Location'),
           ),
-          TextField(
+          AppLabeledTextField(
+            label: 'Video call link',
+            kind: AppTextInputKind.none,
             controller: _video,
-            decoration: const InputDecoration(labelText: 'Video call link'),
+            keyboardType: TextInputType.url,
           ),
           ListTile(
             title: const Text('Cover photo'),

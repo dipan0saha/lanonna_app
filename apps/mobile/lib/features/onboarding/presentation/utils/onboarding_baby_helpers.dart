@@ -1,3 +1,4 @@
+import '../../../../core/input/app_text_input_kind.dart';
 import '../../domain/baby_gender.dart';
 import '../../domain/baby_lifecycle.dart';
 
@@ -74,9 +75,18 @@ String resolveOnboardingBabyName({
   String? girlName,
   String? bornName,
 }) {
-  final boy = boyName?.trim() ?? '';
-  final girl = girlName?.trim() ?? '';
-  final single = bornName?.trim() ?? '';
+  final boy = AppTextInputPolicy.normalizeForSubmit(
+    AppTextInputKind.personName,
+    boyName ?? '',
+  );
+  final girl = AppTextInputPolicy.normalizeForSubmit(
+    AppTextInputKind.personName,
+    girlName ?? '',
+  );
+  final single = AppTextInputPolicy.normalizeForSubmit(
+    AppTextInputKind.personName,
+    bornName ?? '',
+  );
 
   if (status == BabyLifecycle.born) {
     if (single.isNotEmpty) return single;

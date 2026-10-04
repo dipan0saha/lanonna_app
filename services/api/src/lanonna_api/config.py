@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     notify_publish_disabled: bool = False  # NOTIFY_PUBLISH_DISABLED
 
     admin_api_key: str = ""  # ADMIN_API_KEY — ops CRUD for system announcements
-    app_check_enforce: bool = False  # APP_CHECK_ENFORCE — reject missing/invalid App Check
+    app_check_enforce: bool = False  # APP_CHECK_ENFORCE — reject missing/invalid App Check (dev deploy: see deploy.sh TEMP note)
 
 
 settings = Settings()

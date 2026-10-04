@@ -59,7 +59,7 @@ The experience is **role-aware**: owners see edit controls and baby-scoped manag
 
 | Role | Capabilities |
 |------|----------------|
-| **Owner** | Full access to a baby profile they own: edit profile, calendar, registry, photos; manage followers and invitations; delete any registry purchase on their baby; see owner-only home sections (checklist, invite status, storage usage). |
+| **Owner** | Full access to a baby profile they own: edit profile, calendar, registry, photos; manage followers and invitations; mark registry items as purchased (closes item to further claims); delete any registry purchase on their baby; see owner-only home sections (checklist, invite status, storage usage). |
 | **Follower** | Read access to followed babies; squish and comment on photos; RSVP and comment on events; purchase/claim registry items (one purchase per item); submit predictions and name suggestions. |
 | **Co-owner** | Onboarded via invitation that grants **owner** membership and a relationship label (e.g. spouse); same capabilities as owner for that baby. |
 
@@ -76,7 +76,7 @@ La Nonna must enforce **permission rules in API domain services** before any rea
 
 - Membership role and `removed_at` / soft-delete flags gate access.
 - Followers cannot mutate owner-only resources (baby edit, event create, registry item create, etc.).
-- Registry: at most **one purchase row per registry item**; owners may delete any purchase on their baby.
+- Registry: at most **one purchase row per registry item**; owners may mark items as purchased and delete any purchase on their baby.
 - Invitations: preview without auth; accept only when authenticated user email matches invitee email.
 
 ---
@@ -236,7 +236,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 |----|-------------|---------------------|---------------------|
 | FR-ONB-001 | Owner carousel entry | New owners start at owner carousel when no session/onboarding complete | Fixed routes |
 | FR-ONB-002 | Onboarding signup/login variants | Query `path=owner\|follower\|coOwner` selects copy and next routes | Flutter onboarding module |
-| FR-ONB-003 | Complete profile | Display name and required fields saved to user profile | `GET/PUT /v1/profile` (extend beyond `app_users` as needed) |
+| FR-ONB-003 | Complete profile | Display name and required fields saved to user profile | `PATCH /v1/profile`; read via `GET /v1/me/account` |
 | FR-ONB-004 | Create baby (onboarding) | Owner creates first baby; optional names (default display **Baby**), gender, expecting/born dates | `POST /v1/babies` + membership owner |
 | FR-ONB-005 | First moment | Optional preset event/registry chips and name ideas; skippable | `POST /v1/babies/{id}/onboarding/first-moment` |
 | FR-ONB-006 | Batch email invite | Multiple invite rows; co-owner badges (Wife/Husband); skip row if email already member | API + `check membership by email` |
@@ -274,7 +274,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | ID | Requirement | Acceptance criteria | Implementation note |
 |----|-------------|---------------------|---------------------|
 | FR-HOME-001 | Section composition | All capabilities in §6.2–6.3 present as sections | Fixed Flutter layout |
-| FR-HOME-002 | Profile switch reload | Changing selected baby refreshes home content and title (E2E-004) | API calls scoped by `baby_id` |
+| FR-HOME-002 | Profile switch reload | Changing selected baby refreshes home content and title (E2E-004) | `HomeRepository.resolveSelectedBaby`; baby-scoped tabs (home, gallery, calendar, upcoming, export, batch invite) |
 | FR-HOME-003 | Pull to refresh | Home supports pull-to-refresh (E2E-021) | Client refresh |
 | FR-HOME-006 | Calendar/registry refresh | Calendar and Registry tabs support pull-to-refresh (E2E-021) | Client refresh |
 | FR-HOME-004 | Empty states | No baby profile shows CTA to create (E2E-020) | Empty state UI |
@@ -291,8 +291,8 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-GAL-004 | Gallery views | Recent and favorites routes | `/gallery/recent`, `/gallery/favorites`; list API `sort=recent\|favorites\|default`; home teasers link “View all” |
 | FR-GAL-005 | Photo detail | Fullscreen display asset; metadata and actions | `/gallery/photo/:id` |
 | FR-GAL-006 | Squish | Toggle like; count updates (E2E-008) | API `photo_squishes` |
-| FR-GAL-007 | Comments | Create, edit own, delete own on photo | API `photo_comments` |
-| FR-GAL-008 | Tags | Tag babies in photo where product allows | API `photo_tags` |
+| FR-GAL-007 | Comments | Create, edit own, delete own on photo | `photo_comments`; `POST` / `PATCH` / `DELETE` on `…/photos/{id}/comments` |
+| FR-GAL-008 | Tags | Owner tags other babies the user belongs to on a photo (metadata v1; no cross-feed) | `photo_baby_tags` + `PUT .../photos/{id}/tags` |
 | FR-GAL-009 | Pending visibility | Photos not visible to others until processing complete | SQL status + API filter |
 | FR-GAL-010 | Owner edit caption | Owner can edit photo caption from detail (E2E-008) | API update; follower read-only |
 
@@ -304,19 +304,22 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-CAL-002 | Create event | Owner creates event (E2E-009) | `/calendar/event/create` |
 | FR-CAL-003 | Event detail/edit | Detail by id; edit route for owner | `/calendar/event/:id`, `.../edit` |
 | FR-CAL-004 | RSVP | Follower/owner RSVP yes/no/maybe | `event_rsvps` |
-| FR-CAL-005 | Event comments | Thread on event detail | `event_comments` |
+| FR-CAL-005 | Event comments | Create, edit own, delete own on event detail | `event_comments`; `POST` / `PATCH` / `DELETE` on `…/events/{id}/comments` |
 | FR-CAL-006 | Upcoming list | View all upcoming from home teaser (E2E-018) | `/calendar/upcoming` |
+| FR-CAL-007 | AI event suggestions | Static catalog by expecting/age tabs; shared “AI Suggestions” UX with registry; hide rows already added (`catalog_suggestion_id` on event) | `/calendar/ai-suggestions`; `event_suggestions.json` |
 
 ### 7.8 Registry — FR-REG
 
 | ID | Requirement | Acceptance criteria | Implementation note |
 |----|-------------|---------------------|---------------------|
 | FR-REG-001 | Item CRUD | Owner creates/edits/deletes items (E2E-010) | API + routes |
-| FR-REG-002 | Purchase claim | Follower marks item purchased; only one purchase per item | Unique index on `registry_item_id` |
+| FR-REG-002 | Follower purchase claim | Follower marks item via in-app “I’ll buy this”; only one purchase per item | Unique index on `registry_item_id`; `POST .../purchase` |
 | FR-REG-003 | Owner undo purchase | Owner can delete any purchase to reset item | API delete |
 | FR-REG-004 | Registry list on tab | Full list on Registry screen | Registry tab primary content |
 | FR-REG-005 | Item detail/edit nav | Deep link and in-app nav (E2E-019) | `/registry/item/:id` |
 | FR-REG-006 | Edit purchased item | Owner cannot edit item fields after purchase; can open detail; owner may reset via purchase delete (FR-REG-003) | API + UI guard |
+| FR-REG-007 | Owner mark purchased | Owner/co-owner marks a needed item as purchased (e.g. gift bought off-app); item moves to Purchased; followers no longer see claim action; owner may undo (FR-REG-003) | Reuses `POST .../purchase`; Registry Needed UI |
+| FR-REG-008 | AI registry suggestions | Static catalog by expecting/age tabs; shared `AiSuggestionsScaffold` with calendar; hide rows already added (`catalog_suggestion_id` on item) | `/registry/ai-suggestions`; `registry_suggestions.json`; migration `017` |
 
 ### 7.9 Gamification — FR-GAM
 
@@ -324,7 +327,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 |----|-------------|---------------------|---------------------|
 | FR-GAM-001 | Gender prediction | Follower votes male/female; can change vote | `votes` vote_type gender |
 | FR-GAM-002 | Birthdate prediction | Follower picks date; can change | `votes` vote_type birthdate |
-| FR-GAM-003 | Anonymous predictions | Default anonymous; name hidden in feed when set | `is_anonymous` |
+| FR-GAM-003 | Identified predictions | Gender/birthdate votes attributed to the member; visible in who-voted lists | `votes.is_anonymous` legacy only; new votes stored identified |
 | FR-GAM-004 | Name suggestions | Submit suggestions with gender scope | `name_suggestions` |
 | FR-GAM-005 | Name likes | Like others’ suggestions | `name_suggestion_likes` |
 | FR-GAM-006 | Fun tab hub | Gamification screen hosts suggestions + predictions (E2E-011) | `/gamification` |
@@ -394,7 +397,7 @@ La Nonna stores domain data in **Cloud SQL**. Migrations live under `infra/db/`;
 | `photos` | Media metadata, paths, status | Yes |
 | `photo_squishes` | Likes | Yes |
 | `photo_comments` | Photo threads | Yes |
-| `photo_tags` | Baby tags on photos | Yes |
+| `photo_baby_tags` | Baby tags on photos (FR-GAL-008 v1) | Yes (`019`) |
 | `events` | Calendar events | Yes |
 | `event_rsvps` | RSVPs | Yes |
 | `event_comments` | Event threads | Yes |
@@ -427,7 +430,7 @@ Firebase Auth holds identity; link `user_id` to Firebase UID in SQL.
 | **NFR-PERF-001** | Feed and lists use thumbnail URLs; detail uses display asset. |
 | **NFR-OBS-001** | Structured logging and monitoring per platform architecture. |
 | **NFR-FORCE-001** | Minimum app version per platform from `app_versions`; **hard block** until update (FR-SET-004). |
-| **NFR-CI-001** | Maintain E2E scenario coverage (P0 first); device/integration CI for release confidence. |
+| **NFR-CI-001** | Maintain E2E scenario coverage (P0 first). **CI:** `flutter test` + API `pytest` on `main` ([`.github/workflows/ci.yml`](../../.github/workflows/ci.yml)). **Device:** Maestro flows + `integration_test/` (e.g. `home_summary_load_test.dart`) — manual or local; not in CI yet. |
 | **NFR-DATA-001** | Support export/deletion flows for compliance and account closure. |
 
 ---
@@ -532,7 +535,7 @@ Aligned with `apps/mobile/lib/core/router/app_router.dart` and `features/onboard
 | inviteFamily | `/invite-family` | Batch invite (from home/account) |
 | calendar | `/calendar` | Calendar |
 | calendarUpcoming | `/calendar/upcoming` | Upcoming events |
-| calendarAiSuggestions | `/calendar/ai-suggestions` | Static event suggestions |
+| calendarAiSuggestions | `/calendar/ai-suggestions` | AI Suggestions screen (stage/age tabs; static catalog) |
 | calendarEvent | `/calendar/event/:id` | Event detail |
 | calendarEventCreate | `/calendar/event/create` | Create event |
 | calendarEventEdit | `/calendar/event/:id/edit` | Edit event |
@@ -602,6 +605,10 @@ Full v1 scope and optional rows: see §8.
 | E2E-020 | P2 | FR-HOME-004 | |
 | E2E-021 | P2 | FR-HOME-003 | + calendar/registry refresh |
 | E2E-022 | P2 | §4.1 roles | Follower cannot owner-actions |
+| E2E-023 | P1 | FR-REG-007 | Owner mark purchased on needed item |
+| E2E-024 | P1 | FR-REG-008 | Registry AI suggestion add + hide-after-add |
+| E2E-025 | P1 | FR-CAL-007 | Calendar AI suggestion tabs + hide-after-add |
+| E2E-026 | P1 | FR-HOME-001 | Announce arrival (expecting → born) |
 
 ---
 

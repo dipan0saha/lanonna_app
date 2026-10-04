@@ -1,0 +1,11 @@
+appId: com.lanonna.lanonna
+---
+- runFlow: ../subflows/ensure_signed_in.yaml
+- tapOn:
+    id: shell_notifications
+- extendedWaitUntil:
+    visible:
+      id: notifications_inbox
+    timeout: 10000
+- assertVisible: "Notifications"
+- back

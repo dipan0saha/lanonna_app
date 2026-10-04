@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/theme/la_nonna_theme.dart';
+import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import 'announcement_share.dart';
 import 'widgets/announcement_keepsake_card.dart';
@@ -60,7 +62,10 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
   }
 
   Future<void> _sendComment() async {
-    final text = _comment.text.trim();
+    final text = AppTextInputPolicy.normalizeForSubmit(
+      AppTextInputKind.prose,
+      _comment.text,
+    );
     if (text.isEmpty) return;
     await context.read<AnnouncementRepository>().addComment(widget.babyId, text);
     _comment.clear();
@@ -163,7 +168,8 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
                 child: Row(
                   children: [
                     Expanded(
-                      child: TextField(
+                      child: AppTextField(
+                        kind: AppTextInputKind.prose,
                         controller: _comment,
                         decoration: const InputDecoration(
                           hintText: 'Add a comment…',

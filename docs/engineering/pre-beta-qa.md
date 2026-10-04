@@ -4,7 +4,8 @@ Manual device checks before widening beta. Run against **lanonna-dev** with `flu
 
 **Prerequisites**
 
-- Cloud Run `api` deployed with `APP_CHECK_ENFORCE=true` (see `services/api/scripts/deploy.sh`).
+- **App Check policy:** [`deploy.sh`](../../services/api/scripts/deploy.sh) defaults to **`APP_CHECK_ENFORCE=false`** on dev so sideloaded APKs work without registering every emulator token. The Flutter client still sends App Check when Firebase provides a token. Before wide beta, deploy with `APP_CHECK_ENFORCE=true ./services/api/scripts/deploy.sh` and register debug tokens (section 1 below). When enforce is off, the API accepts missing `X-Firebase-AppCheck` headers.
+- **Beta gate script:** `./scripts/run-beta-gate.sh` runs unit tests and optionally deploys API. After deploy, apply migration **`020_app_versions`** on dev SQL so `GET /v1/app/version` and force-update work.
 - Firebase **App Check** enabled for Android/iOS; **debug token** registered for your emulator (log line on app start: `Firebase App Check debug token …`).
 - Disable `DEV_AUTO_SIGN_IN_*` when testing unsigned invite UX.
 - Second test account or follower membership for push fan-out tests.
@@ -20,10 +21,11 @@ Manual device checks before widening beta. Run against **lanonna-dev** with `flu
 - [ ] Gallery upload a large camera photo; completes without “exceeds maximum size”.
 - [ ] Cloud SQL `photos.byte_length` (or GCS object size) ≤ 2 MB; feed shows thumb after worker processes.
 
-## 3. Image disk cache
+## 3. Image disk cache and signed URLs
 
 - [ ] Open gallery feed; scroll away and back — thumbs load from cache (no full-screen spinner on every revisit).
 - [ ] Photo detail display image similarly fast on second open.
+- [ ] After **15+ minutes** on home (or forced stale thumb), teaser thumbs recover after pull-to-refresh or automatic `onSignedUrlError` retry (900s signed URL TTL).
 
 ## 4. Push notifications (realtime)
 
@@ -49,27 +51,33 @@ adb shell am start -a android.intent.action.VIEW \
 - [ ] Lands on invite accept / preview flow.
 - [ ] Kill app; relaunch **without** link → stored `pendingInviteToken` resumes (see [development.md](development.md)).
 
-## 7. Regression smoke
+## 7. Gallery comments and baby tags
 
-- [ ] `flutter test` and API `pytest` green.
+Requires migration **`019`** on dev (`photo_baby_tags` — [migrations/README.md](../../infra/db/migrations/README.md)).
+
+- [ ] Photo detail: edit and delete **own** comment; cannot edit others’ comments.
+- [ ] Event detail: same for event comments.
+- [ ] Photo detail (owner, multi-baby account): “In this photo” chips tag/untag other babies you belong to; followers see read-only tag names when set.
+
+## 8. Regression smoke
+
+- [ ] `flutter test` and API `pytest` green (`services/api/.venv/bin/pytest -q`).
+- [ ] Optional: `flutter test integration_test/home_summary_load_test.dart` on emulator.
 - [ ] Owner onboarding + gallery + calendar still usable.
 
 Record date, device/emulator ID, and tester in your release notes when all boxes pass.
 
 ---
 
-## Run log (2026-10-03, agent)
+## Run log (template)
 
 | Step | Result | Notes |
 |------|--------|--------|
-| API deploy | Pass | `api-00029-vxl`; `APP_CHECK_ENFORCE=true`; URL `https://api-r27szgit5q-uc.a.run.app` |
-| App Check debug token | Pass | Registered via Firebase CLI 15.x: `firebase appcheck:debugtokens:create …` (emulator `emulator-5554`) |
-| App Check JWT | Pass | After registration, Flutter logs App Check JWT (no 403 exchange error) |
-| Public invite preview | Pass | `GET /v1/invitations/preview` returns 404 without App Check (expected for bad token) |
-| Protected route | Pass | `GET /v1/me` without auth → 401 |
-| Invite cold start (adb) | Partial | `adb shell am start -a VIEW -d 'lanonna://app/invite-accept?token=…'` launches app; full flow needs a **valid** pending invite token from email/Mailjet |
-| Push / encode / cache | Manual | Sign in on emulator, upload photo, second account push — complete locally using smoke user in [development.md](development.md) |
+| API deploy | | Revision from `gcloud run services describe api --region=us-central1`; URL from `flavors/dev.json` |
+| `APP_CHECK_ENFORCE` | | Dev default **false** in `deploy.sh`; set **true** + debug tokens before wide beta |
+| Migration `019` | | `apply_migrations.py` via Cloud SQL proxy |
+| App Check debug token | | Firebase Console or `firebase appcheck:debugtokens:create` |
+| Invite cold start (adb) | | Needs valid pending invite token |
+| Push / encode / cache / tags | Manual | Second member account for fan-out |
 
 **Emulator note:** If `INSTALL_FAILED_INSUFFICIENT_STORAGE`, run `adb shell pm trim-caches 500M` and reinstall APK.
-
-**CLI:** Upgrade Firebase tools (`npm i -g firebase-tools@latest`) so `appcheck:debugtokens:create` is available.

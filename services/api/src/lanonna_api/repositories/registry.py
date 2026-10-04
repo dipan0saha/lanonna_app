@@ -4,6 +4,9 @@ import uuid
 from typing import Any
 
 from lanonna_api.db import get_connection
+from lanonna_api.repositories.catalog_suggestions import (
+    catalog_suggestion_claimed_on_table,
+)
 
 
 def get_shipping_address(baby_profile_id: uuid.UUID) -> str | None:
@@ -83,6 +86,7 @@ def list_registry_items(baby_profile_id: uuid.UUID) -> list[dict[str, Any]]:
             """
             SELECT
                 i.id, i.name, i.description, i.product_url, i.priority,
+                i.catalog_suggestion_id,
                 i.created_at, i.created_by_firebase_uid,
                 p.id AS purchase_id,
                 p.purchased_by_firebase_uid,
@@ -109,6 +113,7 @@ def get_registry_item(
             """
             SELECT
                 i.id, i.name, i.description, i.product_url, i.priority,
+                i.catalog_suggestion_id,
                 i.baby_profile_id, i.created_by_firebase_uid,
                 p.id AS purchase_id,
                 p.purchased_by_firebase_uid,
@@ -122,6 +127,15 @@ def get_registry_item(
     return dict(row) if row else None
 
 
+def catalog_suggestion_claimed(
+    baby_profile_id: uuid.UUID,
+    catalog_suggestion_id: str,
+) -> bool:
+    return catalog_suggestion_claimed_on_table(
+        "registry_items", baby_profile_id, catalog_suggestion_id
+    )
+
+
 def create_registry_item(
     baby_profile_id: uuid.UUID,
     created_by_firebase_uid: str,
@@ -130,6 +144,7 @@ def create_registry_item(
     description: str | None,
     product_url: str | None,
     priority: int,
+    catalog_suggestion_id: str | None = None,
 ) -> dict[str, Any]:
     item_id = uuid.uuid4()
     with get_connection() as conn:
@@ -137,10 +152,11 @@ def create_registry_item(
             """
             INSERT INTO registry_items (
                 id, baby_profile_id, created_by_firebase_uid,
-                name, description, product_url, priority
+                name, description, product_url, priority, catalog_suggestion_id
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-            RETURNING id, name, description, product_url, priority, created_at
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id, name, description, product_url, priority,
+                catalog_suggestion_id, created_at
             """,
             (
                 item_id,
@@ -150,6 +166,7 @@ def create_registry_item(
                 description,
                 product_url,
                 priority,
+                catalog_suggestion_id,
             ),
         ).fetchone()
     if row is None:

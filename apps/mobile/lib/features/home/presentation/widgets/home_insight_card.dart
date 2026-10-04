@@ -74,7 +74,7 @@ class HomeInsightCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   child: Text(
                     actionLabel!,
-                    style: text.labelMedium,
+                    style: text.labelLarge,
                   ),
                 ),
               ),

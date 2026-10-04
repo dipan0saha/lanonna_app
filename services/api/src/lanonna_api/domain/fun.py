@@ -22,7 +22,6 @@ from lanonna_api.repositories.fun import (
     list_name_suggestions,
     remove_like,
     remove_likes_for_user_gender,
-    set_vote_anonymous,
     upsert_birthdate_vote,
     upsert_gender_vote,
     user_has_like,
@@ -140,7 +139,6 @@ def get_predictions(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, 
             {
                 "gender": v["gender_value"],
                 "display_name": name,
-                "is_anonymous": v.get("is_anonymous", True),
             }
         )
     hist = birthdate_vote_histogram(baby_profile_id)
@@ -152,7 +150,6 @@ def get_predictions(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, 
         else (
             str(caller.get("birthdate")) if caller.get("birthdate") else None
         ),
-        "is_anonymous": caller.get("is_anonymous", True),
         "gender_voters": voters,
         "birthdate_histogram": [
             {
@@ -170,13 +167,12 @@ def set_gender_vote(
     firebase_uid: str,
     baby_profile_id: uuid.UUID,
     gender_value: str,
-    is_anonymous: bool = True,
 ) -> dict[str, Any]:
     require_membership(firebase_uid, baby_profile_id)
     if gender_value not in ("male", "female"):
         raise ValueError("Invalid gender vote.")
     upsert_app_user(firebase_uid, None)
-    upsert_gender_vote(baby_profile_id, firebase_uid, gender_value, is_anonymous)
+    upsert_gender_vote(baby_profile_id, firebase_uid, gender_value, False)
     insert_activity_event(
         baby_profile_id,
         firebase_uid,
@@ -191,21 +187,8 @@ def set_birthdate_vote(
     firebase_uid: str,
     baby_profile_id: uuid.UUID,
     predicted_birth_date: date,
-    is_anonymous: bool = True,
 ) -> dict[str, Any]:
     require_membership(firebase_uid, baby_profile_id)
     upsert_app_user(firebase_uid, None)
-    upsert_birthdate_vote(
-        baby_profile_id, firebase_uid, predicted_birth_date, is_anonymous
-    )
+    upsert_birthdate_vote(baby_profile_id, firebase_uid, predicted_birth_date, False)
     return {"date": predicted_birth_date.isoformat()}
-
-
-def patch_anonymous(
-    firebase_uid: str,
-    baby_profile_id: uuid.UUID,
-    is_anonymous: bool,
-) -> dict[str, Any]:
-    require_membership(firebase_uid, baby_profile_id)
-    set_vote_anonymous(baby_profile_id, firebase_uid, is_anonymous)
-    return {"is_anonymous": is_anonymous}

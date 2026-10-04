@@ -1,0 +1,18 @@
+appId: com.lanonna.lanonna
+---
+# Requires primary baby in expecting lifecycle (Maestro seed data).
+- runFlow: ../subflows/ensure_signed_in.yaml
+- runFlow: ../subflows/ensure_primary_baby.yaml
+- tapOn: ".*Tab 1 of 5.*"
+- extendedWaitUntil:
+    visible: "Announce Arrival"
+    timeout: 15000
+- tapOn: "Announce Arrival"
+- extendedWaitUntil:
+    visible: "Announce arrival"
+    timeout: 10000
+- tapOn: "Confirm"
+- extendedWaitUntil:
+    notVisible: "Announce Arrival"
+    timeout: 30000
+- assertVisible: ".*ACTIVITY RECAP.*"

@@ -33,33 +33,17 @@ class FunRepository {
     return PredictionsPayload.fromJson(json);
   }
 
-  Future<void> setGenderVote(
-    String babyId,
-    String gender, {
-    required bool isAnonymous,
-  }) async {
+  Future<void> setGenderVote(String babyId, String gender) async {
     await _api.putJson('/v1/babies/$babyId/fun/predictions/gender', body: {
       'gender': gender,
-      'is_anonymous': isAnonymous,
     });
   }
 
-  Future<void> setBirthdateVote(
-    String babyId,
-    DateTime date, {
-    required bool isAnonymous,
-  }) async {
+  Future<void> setBirthdateVote(String babyId, DateTime date) async {
     final iso =
         '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
     await _api.putJson('/v1/babies/$babyId/fun/predictions/birthdate', body: {
       'predicted_birth_date': iso,
-      'is_anonymous': isAnonymous,
-    });
-  }
-
-  Future<void> setPredictionsAnonymous(String babyId, bool isAnonymous) async {
-    await _api.patchJson('/v1/babies/$babyId/fun/predictions/anonymous', body: {
-      'is_anonymous': isAnonymous,
     });
   }
 }

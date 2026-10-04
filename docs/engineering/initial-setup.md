@@ -90,7 +90,7 @@ The live surface is larger than the bootstrap routes below. **Authoritative list
 | Method | Path | Auth |
 |--------|------|------|
 | GET | `/health` | Public |
-| GET | `/v1/me`, GET/PATCH `/v1/profile` | Firebase ID token (`Authorization: Bearer …`) |
+| GET | `/v1/me/account`, PATCH `/v1/profile` | Firebase ID token (`Authorization: Bearer …`) |
 | GET, POST, PATCH | `/v1/babies`, `…/home-summary`, onboarding, invitations | JWT + membership / owner rules |
 | POST | `/v1/photos/init` | JWT (owner upload init → signed PUT to `display/`) |
 | GET/PATCH/DELETE | `/v1/babies/{id}/photos…`, `…/events…`, `…/registry…`, `…/fun…` | JWT (see development.md) |
@@ -137,7 +137,7 @@ export SMOKE_TEST_PASSWORD='…'   # Firebase test user
 
 ## Database migrations
 
-Schema lives in **`infra/db/migrations/`** (`001`–`015`). See [infra/db/migrations/README.md](../../infra/db/migrations/README.md) (through `system_announcements` in `015`).
+Schema lives in **`infra/db/migrations/`** (`001`–`019`). See [infra/db/migrations/README.md](../../infra/db/migrations/README.md) (latest: `photo_baby_tags` in `019`).
 
 From a laptop (with [Cloud SQL Auth Proxy](https://cloud.google.com/sql/docs/postgres/connect-auth-proxy)):
 
@@ -163,7 +163,7 @@ Secrets: **`db-lanonna-app-password`**, **`database-url`**, **`db-postgres-root-
 - **Firebase project:** `lanonna-dev` (Email/Password Auth enabled)
 - **Config files (gitignored, local):** `apps/mobile/android/app/google-services.json`, `apps/mobile/ios/Runner/GoogleService-Info.plist`
 - **Checked in:** `apps/mobile/lib/firebase_options.dart` (or regenerate with `flutterfire configure` after `gem install xcodeproj`)
-- **Dev flavor:** `apps/mobile/flavors/dev.json` — API base URL + `APP_ENV=dev`
+- **Dev flavor:** `apps/mobile/flavors/dev.json` — canonical **`API_BASE_URL`** (keep scripts/README in sync: [flavors/README.md](../../apps/mobile/flavors/README.md), `./scripts/verify-dev-prerequisites.sh`) + `APP_ENV=dev`
 
 ```bash
 cd apps/mobile
@@ -230,7 +230,7 @@ Switch back for interactive work: `gcloud config set account lanonnaapp@gmail.co
 | Billing budgets ($50 / $150 / $300) | Created for `lanonna-dev` |
 | Mailjet secrets in Secret Manager | Versions set — **rotate** if keys were ever exposed |
 | FCM | In use on dev (mobile + worker); Crashlytics | — |
-| App Check | Flutter `firebase_app_check` + API `X-Firebase-AppCheck` | Enable in Firebase Console; register **debug tokens** from emulator log; deploy API with `APP_CHECK_ENFORCE=true` |
+| App Check | Flutter `firebase_app_check` + API `X-Firebase-AppCheck` | Firebase Console + emulator **debug tokens**; dev deploy defaults **`APP_CHECK_ENFORCE=false`** (`deploy.sh`); set **`true`** before wide beta ([pre-beta-qa.md](pre-beta-qa.md)) |
 | Google / Apple sign-in | Enable in Firebase when product-ready |
 
 ---

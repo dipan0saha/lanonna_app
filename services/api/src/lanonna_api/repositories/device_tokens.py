@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Any
-
 from lanonna_api.db import get_connection
 
 
@@ -30,17 +28,3 @@ def delete_device_token(firebase_uid: str, fcm_token: str) -> bool:
             (firebase_uid, fcm_token),
         )
     return cur.rowcount > 0
-
-
-def list_device_tokens(firebase_uid: str) -> list[dict[str, Any]]:
-    with get_connection() as conn:
-        rows = conn.execute(
-            """
-            SELECT fcm_token, platform, updated_at
-            FROM device_tokens
-            WHERE firebase_uid = %s
-            ORDER BY updated_at DESC
-            """,
-            (firebase_uid,),
-        ).fetchall()
-    return [dict(r) for r in rows]

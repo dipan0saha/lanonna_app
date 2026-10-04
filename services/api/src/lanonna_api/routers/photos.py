@@ -18,6 +18,7 @@ class PhotoInitRequest(BaseModel):
     baby_profile_id: uuid.UUID
     content_type: str = Field(default="image/jpeg")
     byte_length: int = Field(gt=0)
+    caption: str | None = Field(default=None, max_length=2000)
 
 
 class CaptionPatch(BaseModel):
@@ -28,17 +29,29 @@ class CommentBody(BaseModel):
     body: str = Field(min_length=1)
 
 
+class CommentPatch(BaseModel):
+    body: str = Field(min_length=1)
+
+
+class PhotoTagsBody(BaseModel):
+    tagged_baby_profile_ids: list[uuid.UUID] = Field(default_factory=list)
+
+
 @router.post("/v1/photos/init")
 def photos_init(
     body: PhotoInitRequest,
     user: dict[str, Any] = Depends(current_user),
 ) -> dict[str, Any]:
     try:
+        caption = body.caption.strip() if body.caption else None
+        if caption == "":
+            caption = None
         result = gallery_domain.init_photo_upload(
             user,
             body.baby_profile_id,
             body.content_type,
             body.byte_length,
+            caption=caption,
         )
         return {
             "photo_id": result["photo_id"],
@@ -128,6 +141,40 @@ def squish(
         raise map_domain_errors(exc) from exc
 
 
+@baby_photos_router.patch("/{photo_id}/comments/{comment_id}")
+def patch_comment(
+    baby_profile_id: uuid.UUID,
+    photo_id: uuid.UUID,
+    comment_id: uuid.UUID,
+    body: CommentPatch,
+    user: dict[str, Any] = Depends(current_user),
+) -> dict[str, Any]:
+    try:
+        return gallery_domain.edit_comment(
+            user["uid"], baby_profile_id, photo_id, comment_id, body.body
+        )
+    except Exception as exc:
+        raise map_domain_errors(exc) from exc
+
+
+@baby_photos_router.put("/{photo_id}/tags")
+def put_photo_tags(
+    baby_profile_id: uuid.UUID,
+    photo_id: uuid.UUID,
+    body: PhotoTagsBody,
+    user: dict[str, Any] = Depends(current_user),
+) -> dict[str, Any]:
+    try:
+        return gallery_domain.set_photo_baby_tags(
+            user["uid"],
+            baby_profile_id,
+            photo_id,
+            body.tagged_baby_profile_ids,
+        )
+    except Exception as exc:
+        raise map_domain_errors(exc) from exc
+
+
 @baby_photos_router.post("/{photo_id}/comments")
 def create_comment(
     baby_profile_id: uuid.UUID,
@@ -138,22 +185,6 @@ def create_comment(
     try:
         return gallery_domain.add_comment(
             user["uid"], baby_profile_id, photo_id, body.body
-        )
-    except Exception as exc:
-        raise map_domain_errors(exc) from exc
-
-
-@baby_photos_router.patch("/{photo_id}/comments/{comment_id}")
-def patch_comment(
-    baby_profile_id: uuid.UUID,
-    photo_id: uuid.UUID,
-    comment_id: uuid.UUID,
-    body: CommentBody,
-    user: dict[str, Any] = Depends(current_user),
-) -> dict[str, Any]:
-    try:
-        return gallery_domain.edit_comment(
-            user["uid"], baby_profile_id, photo_id, comment_id, body.body
         )
     except Exception as exc:
         raise map_domain_errors(exc) from exc

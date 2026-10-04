@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/widgets/app_semantics.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/domain/baby_summary.dart';
@@ -57,11 +58,9 @@ class _PredictionsTabState extends State<PredictionsTab> {
   }
 
   Future<void> _voteGender(String gender) async {
-    final anonymous = _payload?.isAnonymous ?? true;
     await context.read<FunRepository>().setGenderVote(
       widget.baby.id,
       gender,
-      isAnonymous: anonymous,
     );
     await _load();
   }
@@ -77,11 +76,9 @@ class _PredictionsTabState extends State<PredictionsTab> {
       }
       return;
     }
-    final anonymous = _payload?.isAnonymous ?? true;
     await context.read<FunRepository>().setBirthdateVote(
       widget.baby.id,
       date,
-      isAnonymous: anonymous,
     );
     if (!mounted) return;
     await _load();
@@ -97,21 +94,9 @@ class _PredictionsTabState extends State<PredictionsTab> {
       lastDate: DateTime(2035),
     );
     if (picked == null || !mounted) return;
-    final anonymous = _payload?.isAnonymous ?? true;
     final repo = context.read<FunRepository>();
-    await repo.setBirthdateVote(
-      widget.baby.id,
-      picked,
-      isAnonymous: anonymous,
-    );
+    await repo.setBirthdateVote(widget.baby.id, picked);
     if (!mounted) return;
-    await _load();
-  }
-
-  Future<void> _setAnonymous(bool value) async {
-    await context
-        .read<FunRepository>()
-        .setPredictionsAnonymous(widget.baby.id, value);
     await _load();
   }
 
@@ -163,17 +148,6 @@ class _PredictionsTabState extends State<PredictionsTab> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Vote anonymously'),
-            subtitle: Text(
-              'When on, your name is hidden in voter lists.',
-              style: context.textStyles.bodySmall?.copyWith(color: AppColors.muted),
-            ),
-            value: p?.isAnonymous ?? true,
-            onChanged: _setAnonymous,
-          ),
-          const SizedBox(height: 8),
           Row(
             children: [
               Text('Boy or Girl?', style: context.textStyles.labelLarge),
@@ -191,6 +165,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
                   () => _voteGender('male'),
                   boyPct,
                   p?.maleVotes ?? 0,
+                  semanticsId: 'fun_vote_boy',
                 ),
               ),
               const SizedBox(width: 10),
@@ -201,6 +176,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
                   () => _voteGender('female'),
                   100 - boyPct,
                   p?.femaleVotes ?? 0,
+                  semanticsId: 'fun_vote_girl',
                 ),
               ),
             ],
@@ -347,9 +323,10 @@ class _PredictionsTabState extends State<PredictionsTab> {
     bool selected,
     VoidCallback onTap,
     int pct,
-    int count,
-  ) {
-    return InkWell(
+    int count, {
+    String? semanticsId,
+  }) {
+    final child = InkWell(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(14),
@@ -369,6 +346,10 @@ class _PredictionsTabState extends State<PredictionsTab> {
         ),
       ),
     );
+    if (semanticsId != null) {
+      return AppSemantics.button(semanticsId, child, label: label);
+    }
+    return child;
   }
 }
 

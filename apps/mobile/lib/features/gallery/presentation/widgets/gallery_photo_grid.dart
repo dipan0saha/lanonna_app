@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/media/cached_signed_image.dart';
+import '../../../../core/widgets/app_semantics.dart';
 import '../../data/models/photo_models.dart';
 
 class GalleryPhotoGrid extends StatelessWidget {
@@ -8,10 +9,12 @@ class GalleryPhotoGrid extends StatelessWidget {
     super.key,
     required this.photos,
     required this.onPhotoTap,
+    this.onSignedUrlError,
   });
 
   final List<PhotoSummary> photos;
   final void Function(PhotoSummary photo) onPhotoTap;
+  final VoidCallback? onSignedUrlError;
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +30,7 @@ class GalleryPhotoGrid extends StatelessWidget {
       itemCount: photos.length,
       itemBuilder: (context, index) {
         final photo = photos[index];
-        return GestureDetector(
+        final tile = GestureDetector(
           onTap: () => onPhotoTap(photo),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(10),
@@ -39,6 +42,7 @@ class GalleryPhotoGrid extends StatelessWidget {
                     imageUrl: photo.thumbUrl,
                     cacheKey: 'thumb-${photo.id}',
                     fit: BoxFit.cover,
+                    onSignedUrlError: onSignedUrlError,
                   )
                 else
                   ColoredBox(
@@ -58,6 +62,10 @@ class GalleryPhotoGrid extends StatelessWidget {
             ),
           ),
         );
+        if (index == 0) {
+          return AppSemantics.button('gallery_photo_first', tile);
+        }
+        return tile;
       },
     );
   }

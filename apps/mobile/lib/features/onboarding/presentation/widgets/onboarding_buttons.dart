@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/widgets/app_semantics.dart';
+
 class OnboardingPrimaryButton extends StatelessWidget {
   const OnboardingPrimaryButton({
     super.key,
@@ -7,31 +9,36 @@ class OnboardingPrimaryButton extends StatelessWidget {
     required this.onPressed,
     this.isLoading = false,
     this.buttonKey,
+    this.semanticsId,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final bool isLoading;
   final Key? buttonKey;
+  final String? semanticsId;
 
   @override
   Widget build(BuildContext context) {
+    final button = ElevatedButton(
+      key: buttonKey,
+      onPressed: isLoading ? null : onPressed,
+      child: isLoading
+          ? SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Theme.of(context).colorScheme.onPrimary,
+              ),
+            )
+          : Text(label),
+    );
     return SizedBox(
       width: double.infinity,
-      child: ElevatedButton(
-        key: buttonKey,
-        onPressed: isLoading ? null : onPressed,
-        child: isLoading
-            ? SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Theme.of(context).colorScheme.onPrimary,
-                ),
-              )
-            : Text(label),
-      ),
+      child: semanticsId == null
+          ? button
+          : AppSemantics.button(semanticsId!, button, label: label),
     );
   }
 }

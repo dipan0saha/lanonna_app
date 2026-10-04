@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import uuid
-from typing import Any
 
 from lanonna_api.db import get_connection
 
@@ -39,35 +38,6 @@ def count_unread_notifications(firebase_uid: str) -> int:
             (firebase_uid,),
         ).fetchone()
     return int(row["n"]) if row else 0
-
-
-def insert_notification(
-    firebase_uid: str,
-    title: str,
-    body: str,
-    *,
-    baby_profile_id: uuid.UUID | None = None,
-    deep_link: str | None = None,
-) -> uuid.UUID:
-    notification_id = uuid.uuid4()
-    with get_connection() as conn:
-        conn.execute(
-            """
-            INSERT INTO notifications (
-                id, firebase_uid, baby_profile_id, title, body, deep_link
-            )
-            VALUES (%s, %s, %s, %s, %s, %s)
-            """,
-            (
-                notification_id,
-                firebase_uid,
-                baby_profile_id,
-                title,
-                body,
-                deep_link,
-            ),
-        )
-    return notification_id
 
 
 def mark_notification_read(notification_id: uuid.UUID, firebase_uid: str) -> bool:

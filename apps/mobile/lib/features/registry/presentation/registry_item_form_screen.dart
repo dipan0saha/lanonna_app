@@ -2,16 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/input/app_text_input_kind.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_metrics.dart';
+import '../../../core/theme/la_nonna_theme.dart';
+import '../../../core/widgets/app_labeled_text_field.dart';
+import '../../../core/widgets/app_semantics.dart';
+import '../../home/data/home_refresh_signal.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../data/registry_repository.dart';
 
 class RegistryItemFormPrefill {
-  RegistryItemFormPrefill({required this.name, this.description});
+  RegistryItemFormPrefill({
+    required this.name,
+    this.description,
+    this.catalogSuggestionId,
+  });
 
   final String name;
   final String? description;
+  final String? catalogSuggestionId;
 }
 
 class RegistryItemFormScreen extends StatefulWidget {
@@ -20,11 +32,13 @@ class RegistryItemFormScreen extends StatefulWidget {
     this.itemId,
     this.initialName,
     this.initialDescription,
+    this.initialCatalogSuggestionId,
   });
 
   final String? itemId;
   final String? initialName;
   final String? initialDescription;
+  final String? initialCatalogSuggestionId;
 
   bool get isEdit => itemId != null;
 
@@ -48,6 +62,14 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
     _loadBaby();
   }
 
+  @override
+  void dispose() {
+    _name.dispose();
+    _desc.dispose();
+    _link.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadBaby() async {
     final homeRepo = context.read<HomeRepository>();
     final store = context.read<SelectedBabyStore>();
@@ -68,7 +90,19 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
 
   Future<void> _save() async {
     final baby = _baby;
-    if (baby == null || _name.text.trim().isEmpty) return;
+    final name = AppTextInputPolicy.normalizeForSubmit(
+      AppTextInputKind.prose,
+      _name.text,
+    );
+    if (baby == null || name.isEmpty) return;
+    final description = AppTextInputPolicy.normalizeForSubmit(
+      AppTextInputKind.prose,
+      _desc.text,
+    );
+    final productUrl = AppTextInputPolicy.normalizeForSubmit(
+      AppTextInputKind.none,
+      _link.text,
+    );
     setState(() => _saving = true);
     try {
       final repo = context.read<RegistryRepository>();
@@ -76,21 +110,25 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
         await repo.updateItem(
           baby.id,
           widget.itemId!,
-          name: _name.text.trim(),
-          description: _desc.text.trim().isEmpty ? null : _desc.text.trim(),
-          productUrl: _link.text.trim().isEmpty ? null : _link.text.trim(),
+          name: name,
+          description: description.isEmpty ? null : description,
+          productUrl: productUrl.isEmpty ? null : productUrl,
           priority: _priority,
         );
       } else {
         await repo.createItem(
           baby.id,
-          name: _name.text.trim(),
-          description: _desc.text.trim().isEmpty ? null : _desc.text.trim(),
-          productUrl: _link.text.trim().isEmpty ? null : _link.text.trim(),
+          name: name,
+          description: description.isEmpty ? null : description,
+          productUrl: productUrl.isEmpty ? null : productUrl,
           priority: _priority,
+          catalogSuggestionId: widget.initialCatalogSuggestionId,
         );
       }
-      if (mounted) context.pop();
+      if (mounted) {
+        context.read<HomeRefreshSignal>().notifyHomeShouldRefresh();
+        context.pop(!widget.isEdit);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -106,11 +144,19 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
     final baby = _baby;
     if (baby == null || !widget.isEdit) return;
     await context.read<RegistryRepository>().deleteItem(baby.id, widget.itemId!);
-    if (mounted) context.pop();
+    if (mounted) {
+      context.read<HomeRefreshSignal>().notifyHomeShouldRefresh();
+      context.pop();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final mutedCaption = context.textStyles.bodySmall?.copyWith(
+      fontSize: 10.5,
+      color: AppColors.muted,
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.isEdit ? 'Edit Registry Item' : 'Add Registry Item'),
@@ -118,34 +164,77 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          TextField(
+          AppLabeledTextField(
+            semanticsId: 'registry_item_name',
+            label: 'Item Name',
+            hint: 'e.g. Crib & Mattress',
+            kind: AppTextInputKind.prose,
             controller: _name,
-            decoration: const InputDecoration(labelText: 'Item Name'),
           ),
-          TextField(
+          AppLabeledTextField(
+            label: 'Description (optional)',
+            hint: 'Standard size, GREENGUARD Gold certified…',
+            kind: AppTextInputKind.prose,
             controller: _desc,
-            decoration: const InputDecoration(labelText: 'Description (optional)'),
             maxLines: 3,
+            minLines: 3,
           ),
-          TextField(
+          AppLabeledTextField(
+            label: 'Link (optional)',
+            hint: 'Paste a link to the item',
+            kind: AppTextInputKind.none,
             controller: _link,
-            decoration: const InputDecoration(labelText: 'Link (optional)'),
+            keyboardType: TextInputType.url,
           ),
-          Text('Priority: $_priority'),
-          Slider(
-            value: _priority.toDouble(),
-            min: 1,
-            max: 5,
-            divisions: 4,
-            label: '$_priority',
-            onChanged: (v) => setState(() => _priority = v.round()),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Priority', style: context.fieldLabelStyle),
+                    Text(
+                      '$_priority',
+                      style: context.textStyles.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Slider(
+                  value: _priority.toDouble(),
+                  min: 1,
+                  max: 5,
+                  divisions: 4,
+                  label: '$_priority',
+                  activeColor: AppColors.primaryDark,
+                  onChanged: (v) => setState(() => _priority = v.round()),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Nice to have', style: mutedCaption),
+                    Text('Really need this', style: mutedCaption),
+                  ],
+                ),
+              ],
+            ),
           ),
-          FilledButton(
-            onPressed: _saving ? null : _save,
-            child: Text(widget.isEdit ? 'Save Changes' : 'Add Item'),
+          AppSemantics.button(
+            'registry_item_save',
+            FilledButton(
+              onPressed: _saving ? null : _save,
+              child: Text(widget.isEdit ? 'Save Changes' : 'Add Item'),
+            ),
+            label: 'Add Item',
           ),
           if (widget.isEdit) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppMetrics.formFieldSpacing - 4),
             OutlinedButton(
               onPressed: _delete,
               style: OutlinedButton.styleFrom(foregroundColor: Colors.red),

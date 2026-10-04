@@ -5,7 +5,11 @@ from typing import Any
 
 from lanonna_api.domain import assert_owner_membership, create_pending_photo
 from lanonna_api.domain.media_urls import signed_display_url, signed_thumb_url
-from lanonna_api.repositories.babies import get_baby_membership
+from lanonna_api.repositories.babies import get_baby_membership, list_babies_for_user
+from lanonna_api.repositories.photo_tags import (
+    list_tagged_babies_for_photo,
+    replace_photo_baby_tags,
+)
 from lanonna_api.repositories.photos import (
     PhotoListSort,
     caller_squished,
@@ -48,6 +52,7 @@ def init_photo_upload(
     content_type: str,
     byte_length: int,
     max_bytes: int = 2_097_152,
+    caption: str | None = None,
 ) -> dict[str, Any]:
     if byte_length > max_bytes:
         raise ValueError("Display asset exceeds maximum size.")
@@ -58,6 +63,7 @@ def init_photo_upload(
         user["uid"],
         content_type,
         byte_length,
+        caption,
     )
     signed = mint_display_upload_for_object(
         photo["display_path"],
@@ -119,6 +125,7 @@ def get_photo_detail(
         raise PermissionError("Photo not available.")
     comments = list_photo_comments(photo_id)
     squished = caller_squished(photo_id, firebase_uid)
+    tagged = list_tagged_babies_for_photo(photo_id)
     return {
         "id": str(row["id"]),
         "status": row["status"],
@@ -129,6 +136,9 @@ def get_photo_detail(
         "uploader_display_name": _display_name(row),
         "squish_count": squish_count(photo_id),
         "viewer_has_squished": squished,
+        "tagged_babies": [
+            {"id": str(t["id"]), "name": t["name"]} for t in tagged
+        ],
         "comments": [
             {
                 "id": str(c["id"]),
@@ -213,29 +223,13 @@ def add_comment(
             body=f"{actor} commented on your photo",
             deep_link=f"/gallery/photo/{photo_id}",
             baby_profile_id=baby_profile_id,
-            notification_channel=NotificationChannel.GALLERY,
+            notification_channel=NotificationChannel.COMMENTS,
         )
     return {
         "id": str(c["id"]),
         "body": c["body"],
         "created_at": c["created_at"].isoformat(),
     }
-
-
-def edit_comment(
-    firebase_uid: str,
-    baby_profile_id: uuid.UUID,
-    photo_id: uuid.UUID,
-    comment_id: uuid.UUID,
-    body: str,
-) -> dict[str, Any]:
-    require_membership(firebase_uid, baby_profile_id)
-    if not body.strip():
-        raise ValueError("Comment body required.")
-    row = update_photo_comment(photo_id, comment_id, firebase_uid, body)
-    if row is None:
-        raise LookupError("Comment not found.")
-    return {"id": str(row["id"]), "body": row["body"]}
 
 
 def delete_comment(
@@ -247,3 +241,57 @@ def delete_comment(
     require_membership(firebase_uid, baby_profile_id)
     if not soft_delete_photo_comment(photo_id, comment_id, firebase_uid):
         raise LookupError("Comment not found.")
+
+
+def edit_comment(
+    firebase_uid: str,
+    baby_profile_id: uuid.UUID,
+    photo_id: uuid.UUID,
+    comment_id: uuid.UUID,
+    body: str,
+) -> dict[str, Any]:
+    require_membership(firebase_uid, baby_profile_id)
+    row = get_photo_for_baby(baby_profile_id, photo_id)
+    if row is None or row["status"] != "ready":
+        raise LookupError("Photo not found.")
+    if not body.strip():
+        raise ValueError("Comment body required.")
+    updated = update_photo_comment(photo_id, comment_id, firebase_uid, body)
+    if updated is None:
+        raise LookupError("Comment not found.")
+    return {
+        "id": str(updated["id"]),
+        "body": updated["body"],
+        "updated_at": updated["updated_at"].isoformat(),
+    }
+
+
+def set_photo_baby_tags(
+    firebase_uid: str,
+    baby_profile_id: uuid.UUID,
+    photo_id: uuid.UUID,
+    tagged_baby_profile_ids: list[uuid.UUID],
+) -> dict[str, Any]:
+    assert_owner_membership(firebase_uid, baby_profile_id)
+    row = get_photo_for_baby(baby_profile_id, photo_id)
+    if row is None:
+        raise LookupError("Photo not found.")
+    user_baby_ids = {
+        uuid.UUID(str(b["id"])) for b in list_babies_for_user(firebase_uid)
+    }
+    unique_ids: list[uuid.UUID] = []
+    seen: set[uuid.UUID] = set()
+    for baby_id in tagged_baby_profile_ids:
+        if baby_id not in user_baby_ids:
+            raise PermissionError("Cannot tag that baby.")
+        if baby_id in seen:
+            continue
+        seen.add(baby_id)
+        unique_ids.append(baby_id)
+    replace_photo_baby_tags(photo_id, unique_ids)
+    tagged = list_tagged_babies_for_photo(photo_id)
+    return {
+        "tagged_babies": [
+            {"id": str(t["id"]), "name": t["name"]} for t in tagged
+        ],
+    }

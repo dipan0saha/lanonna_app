@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_semantics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 
 class AccountProfileCard extends StatelessWidget {
@@ -52,13 +53,17 @@ class AccountProfileCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: OutlinedButton(
-                    onPressed: onLogOut,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.error,
-                      side: const BorderSide(color: AppColors.error),
+                  child: AppSemantics.button(
+                    'account_sign_out',
+                    OutlinedButton(
+                      onPressed: onLogOut,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.error,
+                        side: const BorderSide(color: AppColors.error),
+                      ),
+                      child: const Text('Log Out'),
                     ),
-                    child: const Text('Log Out'),
+                    label: 'Log Out',
                   ),
                 ),
               ],

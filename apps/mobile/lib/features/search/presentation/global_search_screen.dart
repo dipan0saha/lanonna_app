@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/app_text_field.dart';
+import '../../../core/widgets/app_semantics.dart';
 import '../../../core/media/cached_signed_image.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../calendar/domain/calendar_routes.dart';
@@ -68,15 +71,19 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     final results = _results;
     return Scaffold(
       appBar: AppBar(
-        title: TextField(
-          controller: _controller,
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'Search photos, events, registry…',
-            border: InputBorder.none,
+        title: AppSemantics.textField(
+          'search_field',
+          AppTextField(
+            kind: AppTextInputKind.none,
+            controller: _controller,
+            autofocus: true,
+            decoration: const InputDecoration(
+              hintText: 'Search photos, events, registry…',
+              border: InputBorder.none,
+            ),
+            onChanged: (v) => _runSearch(v),
+            onSubmitted: _runSearch,
           ),
-          onChanged: (v) => _runSearch(v),
-          onSubmitted: _runSearch,
         ),
       ),
       body: _babyId == null
@@ -108,6 +115,11 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                                           width: 44,
                                           height: 44,
                                           fit: BoxFit.cover,
+                                          onSignedUrlError: () {
+                                            if (_controller.text.trim().isNotEmpty) {
+                                              _runSearch(_controller.text);
+                                            }
+                                          },
                                         )
                                       : const Icon(Icons.photo_outlined),
                                   title: Text(p.caption ?? 'Photo'),

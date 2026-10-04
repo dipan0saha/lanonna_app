@@ -1,0 +1,21 @@
+appId: com.lanonna.lanonna
+---
+- runFlow: ../subflows/ensure_signed_in.yaml
+- tapOn: ".*Tab 2 of 5.*"
+- extendedWaitUntil:
+    visible: ".*Tab 2 of 5.*"
+    timeout: 10000
+- tapOn: ".*Tab 3 of 5.*"
+- extendedWaitUntil:
+    visible: ".*Tab 3 of 5.*"
+    timeout: 10000
+- tapOn: ".*Tab 4 of 5.*"
+- extendedWaitUntil:
+    visible: ".*Tab 4 of 5.*"
+    timeout: 10000
+- tapOn: ".*Tab 5 of 5.*"
+- extendedWaitUntil:
+    visible: ".*Tab 5 of 5.*"
+    timeout: 10000
+- tapOn: ".*Tab 1 of 5.*"
+- assertVisible: ".*Tab 1 of 5.*"

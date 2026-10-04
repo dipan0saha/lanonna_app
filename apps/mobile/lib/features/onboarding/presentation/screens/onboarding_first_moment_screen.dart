@@ -7,7 +7,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/api/api_client.dart';
-import '../../../../core/api/display_photo_upload.dart';
+import '../../../../core/input/app_text_input_kind.dart';
+import '../../../gallery/presentation/upload/run_gallery_photo_upload.dart';
 import '../../../../core/constants/first_moment_presets.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/create_baby_draft.dart';
@@ -115,7 +116,10 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
   }
 
   void _addNameIdea() {
-    final name = _nameInputController.text.trim();
+    final name = AppTextInputPolicy.normalizeForSubmit(
+      AppTextInputKind.personName,
+      _nameInputController.text,
+    );
     if (name.isEmpty) return;
     setState(() {
       _nameDrafts.add({'name': name, 'gender': _nameGender});
@@ -165,9 +169,11 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
       if (_photoFile != null &&
           _lifecycle == BabyLifecycle.born &&
           !kIsWeb) {
-        await DisplayPhotoUpload(api).uploadGalleryPhoto(
+        await runGalleryPhotoUpload(
+          context: context,
           babyProfileId: babyId,
           imageFile: File(_photoFile!.path),
+          api: api,
         );
       }
 
@@ -229,8 +235,8 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
     final registry = isExpecting
         ? FirstMomentPresets.expectingRegistry
         : FirstMomentPresets.bornRegistry;
-    final eventSubtitle = isExpecting ? 'AI-suggested for this stage' : 'AI-suggested for newborns';
-    final registrySubtitle = isExpecting ? 'AI-suggested for this stage' : 'AI-suggested for newborns';
+    const eventSubtitle = 'AI-suggested by stage and age';
+    const registrySubtitle = 'AI-suggested by stage and age';
 
     return OnboardingScaffold(
       pinBottomCta: false,
@@ -337,6 +343,7 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
           ],
           const SizedBox(height: 20),
           OnboardingPrimaryButton(
+            semanticsId: 'onboarding_first_moment_continue',
             label: 'Continue',
             isLoading: _busy,
             onPressed: _busy ? null : () => _advance(seed: true),

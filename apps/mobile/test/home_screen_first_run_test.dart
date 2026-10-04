@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
+import 'package:lanonna/features/home/data/home_refresh_signal.dart';
 import 'package:lanonna/features/home/data/home_repository.dart';
+import 'package:lanonna/features/home/data/home_summary_result.dart';
 import 'package:lanonna/features/home/data/models/home_summary.dart';
 import 'package:lanonna/features/home/data/selected_baby_store.dart';
 import 'package:lanonna/features/home/home_screen.dart';
@@ -22,6 +24,9 @@ void main() {
         providers: [
           Provider<HomeRepository>.value(value: repo),
           ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
+          ChangeNotifierProvider<HomeRefreshSignal>(
+            create: (_) => HomeRefreshSignal(),
+          ),
         ],
         child: MaterialApp(
           theme: AppTheme.light,
@@ -51,6 +56,9 @@ void main() {
         providers: [
           Provider<HomeRepository>.value(value: repo),
           ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
+          ChangeNotifierProvider<HomeRefreshSignal>(
+            create: (_) => HomeRefreshSignal(),
+          ),
         ],
         child: MaterialApp(
           theme: AppTheme.light,
@@ -93,9 +101,9 @@ class _FakeHomeRepository extends HomeRepository {
   }
 
   @override
-  Future<HomeSummary?> fetchHomeSummary(String babyId) async {
+  Future<HomeSummaryResult> fetchHomeSummary(String babyId) async {
     if (babyId == 'baby-2') {
-      return const HomeSummary(
+      return HomeSummaryLoaded(const HomeSummary(
         lifecycleStatus: 'born',
         nameSuggestionCount: 0,
         voteCount: 0,
@@ -111,8 +119,16 @@ class _FakeHomeRepository extends HomeRepository {
           babyName: 'Parker',
           daysSinceBirth: 0,
         ),
-      );
+      ));
     }
-    return null;
+    return HomeSummaryLoaded(
+      HomeSummary(
+        lifecycleStatus: 'expecting',
+        nameSuggestionCount: 0,
+        voteCount: 0,
+        recentActivity: const [],
+        daysToDue: 33,
+      ),
+    );
   }
 }

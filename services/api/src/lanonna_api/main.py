@@ -2,6 +2,8 @@ import logging
 from typing import Any
 
 from fastapi import Depends, FastAPI, HTTPException, status
+from lanonna_api.middleware.rate_limit import RateLimitMiddleware
+from lanonna_api.middleware.request_context import RequestContextMiddleware
 from pydantic import BaseModel, Field
 
 from lanonna_api.app_check import require_app_check
@@ -10,6 +12,7 @@ from lanonna_api.config import settings
 from lanonna_api.routers import (
     admin_system_announcements,
     announcements,
+    app_config,
     babies,
     data_export,
     events,
@@ -28,6 +31,8 @@ from lanonna_api.storage import mint_display_upload_url
 logger = logging.getLogger("lanonna.api")
 
 app = FastAPI(title="La Nonna API", version="0.1.0")
+app.add_middleware(RateLimitMiddleware)
+app.add_middleware(RequestContextMiddleware)
 
 _app_check_deps = [Depends(require_app_check)]
 
@@ -37,6 +42,7 @@ app.include_router(onboarding.router, dependencies=_app_check_deps)
 app.include_router(babies.router, dependencies=_app_check_deps)
 app.include_router(invitations.router, dependencies=_app_check_deps)
 app.include_router(invitation_accept.router)
+app.include_router(app_config.router)
 app.include_router(photos.router, dependencies=_app_check_deps)
 app.include_router(photos.baby_photos_router, dependencies=_app_check_deps)
 app.include_router(events.router, dependencies=_app_check_deps)
@@ -51,15 +57,6 @@ app.include_router(admin_system_announcements.router)
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "environment": settings.environment}
-
-
-@app.get("/v1/me", dependencies=_app_check_deps)
-def me(user: dict[str, Any] = Depends(current_user)) -> dict[str, Any]:
-    return {
-        "uid": user["uid"],
-        "email": user.get("email"),
-        "email_verified": user.get("email_verified", False),
-    }
 
 
 class DisplayUploadSignRequest(BaseModel):

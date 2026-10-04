@@ -8,6 +8,7 @@ class CalendarEvent {
     this.location,
     this.videoCallUrl,
     this.coverPhotoId,
+    this.catalogSuggestionId,
   });
 
   final String id;
@@ -18,6 +19,7 @@ class CalendarEvent {
   final String? location;
   final String? videoCallUrl;
   final String? coverPhotoId;
+  final String? catalogSuggestionId;
 
   factory CalendarEvent.fromJson(Map<String, dynamic> json) {
     return CalendarEvent(
@@ -31,6 +33,7 @@ class CalendarEvent {
       location: json['location'] as String?,
       videoCallUrl: json['video_call_url'] as String?,
       coverPhotoId: json['cover_photo_id'] as String?,
+      catalogSuggestionId: json['catalog_suggestion_id'] as String?,
     );
   }
 }

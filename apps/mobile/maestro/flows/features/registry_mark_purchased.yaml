@@ -1,0 +1,22 @@
+appId: com.lanonna.lanonna
+---
+- runFlow: ../subflows/ensure_signed_in.yaml
+- runFlow: ../subflows/ensure_primary_baby.yaml
+- tapOn: ".*Tab 4 of 5.*"
+- extendedWaitUntil:
+    visible: "Registry"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: registry_mark_purchased
+    direction: DOWN
+    timeout: 45000
+- tapOn:
+    id: registry_mark_purchased
+- extendedWaitUntil:
+    visible: "Mark as purchased?"
+    timeout: 10000
+- tapOn: "Mark as purchased"
+- extendedWaitUntil:
+    visible: "Purchased"
+    timeout: 20000

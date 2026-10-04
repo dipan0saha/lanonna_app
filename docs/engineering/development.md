@@ -17,7 +17,7 @@ lanonna_app/
 │   ├── terraform/           # GCP platform (dev/prod)
 │   └── gcp/                 # Resource inventory (SETUP.md)
 ├── docs/                    # product/ + engineering/ documentation
-└── .github/workflows/       # CI (Flutter + Python compile)
+└── .github/workflows/       # CI: Flutter analyze/test, API pytest, worker compileall
 ```
 
 **Deploy model:** `api` and `worker` ship as **two Cloud Run services** — see [platform-architecture.md](platform-architecture.md).
@@ -29,8 +29,8 @@ lanonna_app/
 | Module | Shell route | Notes |
 |--------|-------------|--------|
 | `home/` | `/home` | Owner expecting/born; `home-summary`; announce arrival |
-| `gallery/` | `/gallery`, `/gallery/recent`, `/gallery/favorites` | Grid (`sort` via API), detail, squish, comments; `/gallery/photo/:id` |
-| `calendar/` | `/calendar` | Month + upcoming; event CRUD; static AI suggestions asset |
+| `gallery/` | `/gallery`, `/gallery/recent`, `/gallery/favorites` | Grid (`sort` via API), detail, squish, comments (create/edit/delete), owner baby tags (“In this photo”); `/gallery/photo/:id`; owner all-mode shows `home-summary` activity with retry banner on failure |
+| `calendar/` | `/calendar` | Month + upcoming; event CRUD; static AI suggestions (`AiSuggestionsScaffold` + asset) |
 | `registry/` | `/registry` | Needed/purchased, shipping, purchase claim; AI suggestions |
 | `fun/` | `/gamification` | Names + Predictions tabs (**Family Fun**) |
 | `account/` | `/profile`, `/account/edit`, `/baby/create`, `/baby/:id/edit`, `/baby/:id/followers` | Profile card, baby list, add/edit baby |
@@ -38,7 +38,7 @@ lanonna_app/
 | `shell/` | (sheet from tab `HomeTopBar`) | Baby switcher; **My Account** footer |
 | `onboarding/`, `invitations/` | Onboarding + deep links | Owner/follower/co-owner paths |
 
-Repositories are registered in `bootstrap.dart`; routes in `core/router/app_router.dart`. Legacy redirects: `/login` → onboarding login, `/role-selection` → owner carousel. Shared API models (e.g. `BabySummary`) live under `apps/mobile/lib/core/domain/`. Static catalogs: `assets/calendar/event_suggestions.json`, `assets/registry/registry_suggestions.json`.
+Repositories are registered in `bootstrap.dart`; routes in `core/router/app_router.dart`. Legacy redirects: `/login` → onboarding login, `/role-selection` → owner carousel. Shared API models (e.g. `BabySummary`) live under `apps/mobile/lib/core/domain/`. **Selected baby:** `HomeRepository.resolveSelectedBaby(SelectedBabyStore)` — use for baby-scoped loads (not raw `selectedBabyId` alone). Static catalogs: `assets/calendar/event_suggestions.json`, `assets/registry/registry_suggestions.json`.
 
 ### API layout (`services/api/src/lanonna_api/`)
 
@@ -64,6 +64,25 @@ flutter run --dart-define-from-file=flavors/dev.json
 ```
 
 `google-services.json` / `GoogleService-Info.plist` are local (gitignored). Dev flavor: `apps/mobile/flavors/dev.json`. iOS: minimum **15.0**, run `cd ios && pod install` once.
+
+### Text input capitalization
+
+User-facing text fields should use [`AppTextField`](../../apps/mobile/lib/core/widgets/app_text_field.dart) (or [`OnboardingTextField`](../../apps/mobile/lib/features/onboarding/presentation/widgets/onboarding_fields.dart) with `AppTextInputKind`) instead of raw `TextField` + `TextCapitalization`. Policy lives in [`app_text_input_kind.dart`](../../apps/mobile/lib/core/input/app_text_input_kind.dart): `personName` (title-case per word), `prose` (sentence-case), `none` (email, password, URLs, search). On submit, call `AppTextInputPolicy.normalizeForSubmit(kind, text)` before persisting to the API.
+
+### Automated tests
+
+| Layer | Command | CI (`main`) |
+|-------|---------|-------------|
+| Mobile unit/widget | `cd apps/mobile && flutter test` | Yes |
+| Mobile integration | `flutter test integration_test/home_summary_load_test.dart` (device/emulator) | No — run locally before release |
+| Maestro (Android) | `./maestro/scripts/run-maestro-smoke.sh` after proxy + deploy | No — see [maestro/README.md](../../apps/mobile/maestro/README.md) |
+| API | `PYTHONPATH=services/api/src services/api/.venv/bin/pytest -q services/api/tests` | Yes |
+
+**Signed read URLs** expire after **900s** ([`storage.py`](../../services/api/src/lanonna_api/storage.py)). `CachedSignedImage` accepts optional `onSignedUrlError` (one callback per widget mount) so parents can refresh API data (home teasers, photo detail).
+
+### Maestro E2E (Android)
+
+Black-box UI tests under `apps/mobile/maestro/`. Use semantics ids (`nav_home`, `auth_sign_in`, …) via `AppSemantics` in `lib/core/widgets/app_semantics.dart`. Copy `maestro/local.env.example` → `maestro/local.env` with the dev smoke password (`lanonna.dev.smoke@test.com`). Start Cloud SQL Auth Proxy (port **5433**), then `./maestro/scripts/run-maestro.sh` (provisions the smoke user in SQL, build/install, App Check prep, all flows). See [maestro/README.md](../../apps/mobile/maestro/README.md).
 
 ### Theming (single source of truth)
 
@@ -104,9 +123,8 @@ Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps:
 
 | Method | Path | Auth |
 |--------|------|------|
-| GET | `/health` | Public |
-| GET | `/v1/me` | Firebase Bearer JWT; minimal auth smoke (`uid`, email). **Contract endpoint** — mobile uses `/v1/me/account` instead. |
-| GET | `/v1/me/account` | Firebase Bearer JWT; profile + babies + `engagement` stats; `storage_usage` when user owns a baby |
+| GET | `/health` | Public liveness (`status`, `environment`) |
+| GET | `/v1/me/account` | Firebase Bearer JWT; profile + babies + `engagement` stats; `storage_usage` when user owns a baby. Auth smoke: unauthenticated request → 401. |
 | GET, PATCH | `/v1/me/notification-preferences` | Digest (`realtime`/`daily`/`weekly`), push + email digest toggles; per-channel `notify_*_enabled` (`gallery`, `calendar`, `registry`, `comments`) |
 | GET | `/v1/me/notifications` | In-app notification inbox |
 | GET | `/v1/me/notifications/unread-count` | Unread inbox count (shell bell dot) |
@@ -117,7 +135,7 @@ Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps:
 | GET | `/v1/babies/{baby_profile_id}/search?q=` | Cross-feature search (member) |
 | POST | `/v1/babies/{baby_profile_id}/data-export` | Queue baby JSON export (owner) |
 | GET | `/v1/babies/{baby_profile_id}/data-export/latest` | Export job status + signed download URL |
-| GET, PATCH | `/v1/profile` | Firebase Bearer JWT; mobile **PATCH**es display name (onboarding + account edit). **GET** is contract/PRD — not called by the Flutter app today. |
+| PATCH | `/v1/profile` | Firebase Bearer JWT; mobile updates display name (onboarding + account edit). Read profile via `GET /v1/me/account`. |
 | GET | `/v1/onboarding/status` | Firebase Bearer JWT |
 | POST | `/v1/onboarding/owner/complete` | Firebase Bearer JWT |
 | GET, POST | `/v1/babies` | Firebase Bearer JWT |
@@ -138,15 +156,16 @@ Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps:
 | GET | `/v1/invitations/preview?token=` | Public (invite deep link) |
 | POST | `/v1/invitations/accept` | Firebase Bearer JWT; invitee email must match |
 | POST | `/v1/uploads/display/signed-url` | JWT + App Check; `content_type`, `byte_length` (≤ 2 MB) for avatar/display uploads |
-| POST | `/v1/photos/init` | Firebase Bearer JWT (owner; gallery upload init) |
+| POST | `/v1/photos/init` | Firebase Bearer JWT (owner; gallery upload init); optional `caption` (max 2000) |
 | GET | `/v1/babies/{id}/photos` | JWT (member); `limit`/`offset`; `sort=default\|recent\|favorites`; followers see `ready` only |
-| GET, PATCH, DELETE | `/v1/babies/{id}/photos/{photo_id}` | JWT (member read; owner mutate); signed thumb/display URLs |
+| GET, PATCH, DELETE | `/v1/babies/{id}/photos/{photo_id}` | JWT (member read; owner mutate); signed thumb/display URLs; GET includes `tagged_babies` |
 | POST | `/v1/babies/{id}/photos/{photo_id}/squish` | JWT (member); toggle squish |
-| POST, PATCH, DELETE | `/v1/babies/{id}/photos/{photo_id}/comments` | JWT (member) |
+| POST, PATCH, DELETE | `/v1/babies/{id}/photos/{photo_id}/comments` | JWT (member; PATCH author-only) |
+| PUT | `/v1/babies/{id}/photos/{photo_id}/tags` | JWT (owner); body `tagged_baby_profile_ids` |
 | GET, POST | `/v1/babies/{id}/events` | JWT (member read; owner create); query `month=YYYY-MM`, `upcoming=true` |
 | GET, PATCH, DELETE | `/v1/babies/{id}/events/{event_id}` | JWT |
 | PUT | `/v1/babies/{id}/events/{event_id}/rsvp` | JWT (member); body `{status}` |
-| POST, PATCH, DELETE | `/v1/babies/{id}/events/{event_id}/comments` | JWT (member) |
+| POST, PATCH, DELETE | `/v1/babies/{id}/events/{event_id}/comments` | JWT (member; PATCH author-only) |
 | GET, POST | `/v1/babies/{id}/registry/items` | JWT (member read; owner create) |
 | GET, PATCH, DELETE | `/v1/babies/{id}/registry/items/{item_id}` | JWT; no PATCH when purchased |
 | POST, DELETE | `/v1/babies/{id}/registry/items/{item_id}/purchase` | JWT (claim / undo) |
@@ -155,7 +174,6 @@ Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps:
 | POST | `/v1/babies/{id}/fun/names/{id}/like` | JWT; one like per gender column |
 | GET | `/v1/babies/{id}/fun/predictions` | JWT |
 | PUT | `/v1/babies/{id}/fun/predictions/gender`, `.../birthdate` | JWT |
-| PATCH | `/v1/babies/{id}/fun/predictions/anonymous` | JWT |
 
 Local API env: `services/api/.env.example`. DB password and Mailjet keys live in **Secret Manager**.
 
@@ -204,7 +222,7 @@ Preview includes `lifecycle_status` and birth dates for invite subtitles and car
 
 ## Database
 
-Apply SQL files in order from `infra/db/migrations/` (`001`–`015`; see [migrations/README.md](../../infra/db/migrations/README.md)). Cloud SQL via Auth Proxy + `infra/db/apply_migrations.py` or `psql -f` per file. Use the venv under `infra/db/.venv` (`pip install psycopg`) or any environment with `psycopg` installed.
+Apply SQL files in order from `infra/db/migrations/` (`001`–`019`; see [migrations/README.md](../../infra/db/migrations/README.md)). Cloud SQL Auth Proxy may use port **5432** or **5433** — set `DB_PORT` consistently in scripts (Maestro uses **5433**). Cloud SQL via Auth Proxy + `infra/db/apply_migrations.py` or `psql -f` per file. Use the venv under `infra/db/.venv` (`pip install psycopg`) or any environment with `psycopg` installed.
 
 | Script | Purpose |
 |--------|---------|

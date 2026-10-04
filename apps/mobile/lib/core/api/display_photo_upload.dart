@@ -44,15 +44,21 @@ class DisplayPhotoUpload {
     required String babyProfileId,
     required File imageFile,
     String? contentType,
+    String? caption,
   }) async {
     final encoded = encodeDisplayAsset(await imageFile.readAsBytes());
     final resolvedType = contentType ?? encoded.contentType;
     final body = encoded.bytes;
-    final init = await _api.postJson('/v1/photos/init', body: {
+    final trimmedCaption = caption?.trim();
+    final initBody = <String, dynamic>{
       'baby_profile_id': babyProfileId,
       'content_type': resolvedType,
       'byte_length': body.length,
-    });
+    };
+    if (trimmedCaption != null && trimmedCaption.isNotEmpty) {
+      initBody['caption'] = trimmedCaption;
+    }
+    final init = await _api.postJson('/v1/photos/init', body: initBody);
     final photoId = init['photo_id'] as String;
     final uploadUrl = init['upload_url'] as String;
     final response = await http.put(

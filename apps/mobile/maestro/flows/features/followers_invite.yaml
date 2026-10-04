@@ -1,0 +1,18 @@
+appId: com.lanonna.lanonna
+---
+- runFlow: ../subflows/ensure_signed_in.yaml
+- runFlow: ../subflows/ensure_primary_baby.yaml
+- runFlow: ../subflows/open_account.yaml
+- scrollUntilVisible:
+    element: ".*Manage Followers.*"
+    direction: DOWN
+    timeout: 45000
+- tapOn:
+    id: account_manage_followers
+- extendedWaitUntil:
+    visible:
+      id: followers_screen
+    timeout: 20000
+- assertVisible: "Pending invites"
+- tapOn:
+    id: followers_invite_more

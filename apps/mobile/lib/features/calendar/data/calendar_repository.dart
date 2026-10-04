@@ -41,6 +41,7 @@ class CalendarRepository extends ChangeNotifier {
     String? location,
     String? videoCallUrl,
     String? coverPhotoId,
+    String? catalogSuggestionId,
   }) async {
     final json = await _api.postJson('/v1/babies/$babyId/events', body: {
       'title': title,
@@ -50,6 +51,8 @@ class CalendarRepository extends ChangeNotifier {
       if (location != null) 'location': location,
       if (videoCallUrl != null) 'video_call_url': videoCallUrl,
       if (coverPhotoId != null) 'cover_photo_id': coverPhotoId,
+      if (catalogSuggestionId != null)
+        'catalog_suggestion_id': catalogSuggestionId,
     });
     final event = CalendarEvent.fromJson(json);
     _markEventsChanged();
@@ -108,6 +111,18 @@ class CalendarRepository extends ChangeNotifier {
   ) async {
     await _api.deleteJson(
       '/v1/babies/$babyId/events/$eventId/comments/$commentId',
+    );
+  }
+
+  Future<void> updateComment(
+    String babyId,
+    String eventId,
+    String commentId,
+    String body,
+  ) async {
+    await _api.patchJson(
+      '/v1/babies/$babyId/events/$eventId/comments/$commentId',
+      body: {'body': body},
     );
   }
 }

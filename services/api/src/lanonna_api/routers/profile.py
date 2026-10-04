@@ -46,12 +46,6 @@ def get_account(user: dict[str, Any] = Depends(current_user)) -> dict[str, Any]:
     }
 
 
-@router.get("/profile", response_model=ProfileResponse)
-def get_profile(user: dict[str, Any] = Depends(current_user)) -> ProfileResponse:
-    row = upsert_app_user(user["uid"], user.get("email"))
-    return _to_profile_response(row)
-
-
 @router.patch("/profile", response_model=ProfileResponse)
 def patch_profile(
     body: ProfileUpdateRequest,

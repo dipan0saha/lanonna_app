@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/widgets/app_semantics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../home/domain/app_routes.dart';
@@ -41,7 +42,9 @@ class _FollowersScreenState extends State<FollowersScreen> {
   @override
   Widget build(BuildContext context) {
     final count = _members.where((m) => m.role == 'follower').length;
-    return PrototypeSubpageScaffold(
+    return AppSemantics.container(
+      'followers_screen',
+      PrototypeSubpageScaffold(
       includeShellTopBar: true,
       title: 'Manage followers',
       body: _loading
@@ -84,13 +87,17 @@ class _FollowersScreenState extends State<FollowersScreen> {
                 ],
                 const SizedBox(height: 16),
                 Center(
-                  child: TextButton(
-                    onPressed: () => context.push(AppRoutes.inviteFamily),
-                    child: const Text('+ Invite more people'),
+                  child: AppSemantics.button(
+                    'followers_invite_more',
+                    TextButton(
+                      onPressed: () => context.push(AppRoutes.inviteFamily),
+                      child: const Text('+ Invite more people'),
+                    ),
                   ),
                 ),
               ],
             ),
+    ),
     );
   }
 }

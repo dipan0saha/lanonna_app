@@ -1,20 +1,26 @@
 {
+  "expecting": [
+    {"id": "crib_mattress", "name": "Crib & Mattress", "description": "Safe sleep setup before baby arrives"},
+    {"id": "diaper_stockpile", "name": "Diapers (newborn)", "description": "Stock up for the first weeks at home"},
+    {"id": "nursery_monitor", "name": "Baby Monitor", "description": "Audio or video for peace of mind"},
+    {"id": "car_seat_infant", "name": "Infant Car Seat", "description": "Hospital discharge requirement"}
+  ],
   "newborn": [
-    {"name": "Swaddle Blankets (set of 3)", "description": "Muslin cotton, breathable"},
-    {"name": "Diaper Pail", "description": "Odor-sealing, easy one-hand use"},
-    {"name": "Bottle Sterilizer", "description": "Steam, fits most bottle brands"},
-    {"name": "Baby Bathtub", "description": "Newborn-to-toddler, non-slip"}
+    {"id": "swaddle_blankets", "name": "Swaddle Blankets (set of 3)", "description": "Muslin cotton, breathable"},
+    {"id": "diaper_pail", "name": "Diaper Pail", "description": "Odor-sealing, easy one-hand use"},
+    {"id": "bottle_sterilizer", "name": "Bottle Sterilizer", "description": "Steam, fits most bottle brands"},
+    {"id": "baby_bathtub", "name": "Baby Bathtub", "description": "Newborn-to-toddler, non-slip"}
   ],
   "3to6": [
-    {"name": "High Chair", "description": "For when solids start around 6 months"},
-    {"name": "Teething Toys", "description": "Safe chew toys for sore gums"},
-    {"name": "Baby Carrier", "description": "Hands-free for errands & naps"},
-    {"name": "Baby-Proofing Starter Kit", "description": "Outlet covers & corner guards"}
+    {"id": "high_chair", "name": "High Chair", "description": "For when solids start around 6 months"},
+    {"id": "teething_toys", "name": "Teething Toys", "description": "Safe chew toys for sore gums"},
+    {"id": "baby_carrier", "name": "Baby Carrier", "description": "Hands-free for errands & naps"},
+    {"id": "baby_proofing_starter_kit", "name": "Baby-Proofing Starter Kit", "description": "Outlet covers & corner guards"}
   ],
   "6to12": [
-    {"name": "Convertible Car Seat", "description": "Grows with your toddler"},
-    {"name": "Toddler Utensils & Plates", "description": "Suction base, easy grip"},
-    {"name": "Stair Gate", "description": "For a newly-mobile crawler"},
-    {"name": "First Walking Shoes", "description": "Soft-sole, flexible fit"}
+    {"id": "convertible_car_seat", "name": "Convertible Car Seat", "description": "Grows with your toddler"},
+    {"id": "toddler_utensils_plates", "name": "Toddler Utensils & Plates", "description": "Suction base, easy grip"},
+    {"id": "stair_gate", "name": "Stair Gate", "description": "For a newly-mobile crawler"},
+    {"id": "first_walking_shoes", "name": "First Walking Shoes", "description": "Soft-sole, flexible fit"}
   ]
 }

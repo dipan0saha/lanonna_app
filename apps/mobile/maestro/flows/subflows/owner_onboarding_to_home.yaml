@@ -1,0 +1,40 @@
+appId: com.lanonna.lanonna
+---
+- runFlow:
+    when:
+      visible: "Complete your profile"
+    commands:
+      - tapOn: "Full name"
+      - inputText: "Maestro Smoke"
+      - hideKeyboard
+      - tapOn:
+          id: onboarding_complete_profile_continue
+      - extendedWaitUntil:
+          visible: "Create your baby's profile"
+          timeout: 30000
+- runFlow:
+    when:
+      visible: "Create your baby's profile"
+    commands:
+      - tapOn: "Boy's name (optional)"
+      - inputText: "Maestro Baby"
+      - hideKeyboard
+      - tapOn:
+          id: onboarding_create_baby_continue
+      - extendedWaitUntil:
+          visible: "Add your first moment"
+          timeout: 30000
+- runFlow:
+    when:
+      visible: "Add your first moment"
+    commands:
+      - tapOn:
+          id: onboarding_first_moment_continue
+      - extendedWaitUntil:
+          visible: "Skip for now"
+          timeout: 30000
+- runFlow:
+    when:
+      visible: "Skip for now"
+    commands:
+      - tapOn: "Skip for now"

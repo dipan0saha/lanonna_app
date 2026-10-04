@@ -1,0 +1,36 @@
+appId: com.lanonna.lanonna
+---
+- runFlow: ../subflows/ensure_signed_in.yaml
+- tapOn:
+    id: shell_baby_switcher
+- extendedWaitUntil:
+    visible: "Switch baby"
+    timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: "baby_switcher_${SECOND_BABY_SWITCHER_ID}"
+    timeout: 20000
+- tapOn:
+    id: "baby_switcher_${SECOND_BABY_SWITCHER_ID}"
+- extendedWaitUntil:
+    visible:
+      id: shell_baby_title
+    timeout: 15000
+- assertVisible: "Maestro Baby Two"
+- tapOn: ".*Tab 2 of 5.*"
+- extendedWaitUntil:
+    visible: "Maestro Baby Two"
+    timeout: 15000
+- tapOn: ".*Tab 3 of 5.*"
+- extendedWaitUntil:
+    visible: "Maestro Baby Two"
+    timeout: 15000
+- tapOn: ".*Tab 1 of 5.*"
+- tapOn:
+    id: shell_baby_switcher
+- tapOn:
+    id: "baby_switcher_${PRIMARY_BABY_SWITCHER_ID}"
+- extendedWaitUntil:
+    notVisible: "Switch baby"
+    timeout: 10000
+- assertNotVisible: "Maestro Baby Two"

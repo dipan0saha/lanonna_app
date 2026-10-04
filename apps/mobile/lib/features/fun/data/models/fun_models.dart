@@ -62,7 +62,6 @@ class PredictionsPayload {
     required this.femaleVotes,
     this.viewerGenderVote,
     this.viewerBirthdateVote,
-    required this.isAnonymous,
     required this.birthdateHistogram,
     required this.genderVoters,
   });
@@ -71,7 +70,6 @@ class PredictionsPayload {
   final int femaleVotes;
   final String? viewerGenderVote;
   final String? viewerBirthdateVote;
-  final bool isAnonymous;
   final List<BirthdateVoteCount> birthdateHistogram;
   final List<GenderVoterRow> genderVoters;
 
@@ -84,7 +82,6 @@ class PredictionsPayload {
       femaleVotes: totals['female'] as int? ?? 0,
       viewerGenderVote: json['viewer_gender_vote'] as String?,
       viewerBirthdateVote: json['viewer_birthdate_vote'] as String?,
-      isAnonymous: json['is_anonymous'] as bool? ?? true,
       birthdateHistogram: hist
           .whereType<Map<String, dynamic>>()
           .map(BirthdateVoteCount.fromJson)
@@ -115,18 +112,15 @@ class GenderVoterRow {
   GenderVoterRow({
     required this.gender,
     required this.displayName,
-    required this.isAnonymous,
   });
 
   final String gender;
   final String displayName;
-  final bool isAnonymous;
 
   factory GenderVoterRow.fromJson(Map<String, dynamic> json) {
     return GenderVoterRow(
       gender: json['gender'] as String? ?? '',
       displayName: json['display_name'] as String? ?? 'Anonymous',
-      isAnonymous: json['is_anonymous'] as bool? ?? true,
     );
   }
 }

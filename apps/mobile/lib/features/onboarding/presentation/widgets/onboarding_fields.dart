@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/input/app_text_input_kind.dart';
+import '../../../../core/widgets/app_semantics.dart';
 import '../../../../core/theme/app_brand_theme.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
+import 'onboarding_typography.dart';
 
 class OnboardingTextField extends StatelessWidget {
   const OnboardingTextField({
@@ -18,7 +21,8 @@ class OnboardingTextField extends StatelessWidget {
     this.onFieldSubmitted,
     this.textInputAction,
     this.fieldKey,
-    this.textCapitalization = TextCapitalization.none,
+    this.semanticsId,
+    this.kind = AppTextInputKind.none,
   });
 
   final TextEditingController? controller;
@@ -32,7 +36,8 @@ class OnboardingTextField extends StatelessWidget {
   final ValueChanged<String>? onFieldSubmitted;
   final TextInputAction? textInputAction;
   final Key? fieldKey;
-  final TextCapitalization textCapitalization;
+  final String? semanticsId;
+  final AppTextInputKind kind;
 
   @override
   Widget build(BuildContext context) {
@@ -41,30 +46,28 @@ class OnboardingTextField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (label != null) ...[
-          Text(
-            label!,
-            style: theme.textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: theme.colorScheme.onSurface,
-            ),
-          ),
+          OnboardingFieldLabel(label!),
           const SizedBox(height: 8),
         ],
-        TextFormField(
-          key: fieldKey,
-          controller: controller,
-          obscureText: obscureText,
-          keyboardType: keyboardType,
-          readOnly: readOnly,
-          onChanged: onChanged,
-          validator: validator,
-          onFieldSubmitted: onFieldSubmitted,
-          textInputAction: textInputAction,
-          textCapitalization: textCapitalization,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurface,
+        _maybeSemanticsField(
+          semanticsId: semanticsId,
+          child: TextFormField(
+            key: fieldKey,
+            controller: controller,
+            obscureText: obscureText,
+            keyboardType: keyboardType,
+            readOnly: readOnly,
+            onChanged: onChanged,
+            validator: validator,
+            onFieldSubmitted: onFieldSubmitted,
+            textInputAction: textInputAction,
+            textCapitalization: AppTextInputPolicy.capitalization(kind),
+            inputFormatters: AppTextInputPolicy.formatters(kind),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface,
+            ),
+            decoration: InputDecoration(hintText: hint),
           ),
-          decoration: InputDecoration(hintText: hint),
         ),
       ],
     );
@@ -80,6 +83,7 @@ class OnboardingPasswordField extends StatefulWidget {
     this.validator,
     this.onFieldSubmitted,
     this.fieldKey,
+    this.semanticsId,
   });
 
   final TextEditingController controller;
@@ -88,6 +92,7 @@ class OnboardingPasswordField extends StatefulWidget {
   final FormFieldValidator<String>? validator;
   final ValueChanged<String>? onFieldSubmitted;
   final Key? fieldKey;
+  final String? semanticsId;
 
   @override
   State<OnboardingPasswordField> createState() => _OnboardingPasswordFieldState();
@@ -98,33 +103,29 @@ class _OnboardingPasswordFieldState extends State<OnboardingPasswordField> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          widget.label,
-          style: theme.textTheme.labelMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: theme.colorScheme.onSurface,
-          ),
-        ),
+        OnboardingFieldLabel(widget.label),
         const SizedBox(height: 8),
-        TextFormField(
-          key: widget.fieldKey,
-          controller: widget.controller,
-          obscureText: _obscure,
-          validator: widget.validator,
-          onFieldSubmitted: widget.onFieldSubmitted,
-          textInputAction: TextInputAction.done,
-          decoration: InputDecoration(
-            hintText: widget.hint,
-            suffixIcon: IconButton(
-              icon: Icon(
-                _obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                color: AppColors.muted,
+        _maybeSemanticsField(
+          semanticsId: widget.semanticsId,
+          child: TextFormField(
+            key: widget.fieldKey,
+            controller: widget.controller,
+            obscureText: _obscure,
+            validator: widget.validator,
+            onFieldSubmitted: widget.onFieldSubmitted,
+            textInputAction: TextInputAction.done,
+            decoration: InputDecoration(
+              hintText: widget.hint,
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                  color: AppColors.muted,
+                ),
+                onPressed: () => setState(() => _obscure = !_obscure),
               ),
-              onPressed: () => setState(() => _obscure = !_obscure),
             ),
           ),
         ),
@@ -479,4 +480,9 @@ class OnboardingPillSelect extends StatelessWidget {
       }),
     );
   }
+}
+
+Widget _maybeSemanticsField({String? semanticsId, required Widget child}) {
+  if (semanticsId == null) return child;
+  return AppSemantics.textField(semanticsId, child);
 }

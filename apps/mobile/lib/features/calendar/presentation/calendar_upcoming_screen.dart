@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../data/calendar_repository.dart';
 import '../data/models/calendar_models.dart';
@@ -26,13 +27,15 @@ class _CalendarUpcomingScreenState extends State<CalendarUpcomingScreen> {
   }
 
   Future<void> _load() async {
-    final babyId = context.read<SelectedBabyStore>().selectedBabyId;
-    if (babyId == null) {
+    final homeRepo = context.read<HomeRepository>();
+    final store = context.read<SelectedBabyStore>();
+    final baby = await homeRepo.resolveSelectedBaby(store);
+    if (baby == null) {
       setState(() => _loading = false);
       return;
     }
     final events = await context.read<CalendarRepository>().listEvents(
-      babyId,
+      baby.id,
       upcoming: true,
     );
     setState(() {

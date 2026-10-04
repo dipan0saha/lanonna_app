@@ -1,5 +1,18 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/la_nonna_theme.dart';
+
+class OnboardingFieldLabel extends StatelessWidget {
+  const OnboardingFieldLabel(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(text, style: context.fieldLabelStyle);
+  }
+}
+
 class OnboardingHeadline extends StatelessWidget {
   const OnboardingHeadline(
     this.text, {

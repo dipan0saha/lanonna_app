@@ -3,7 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/domain/baby_summary.dart';
+import 'data/home_refresh_signal.dart';
 import 'data/home_repository.dart';
+import 'data/home_summary_result.dart';
 import 'data/models/home_summary.dart';
 import 'data/selected_baby_store.dart';
 import 'domain/announce_arrival_input.dart';
@@ -18,6 +20,7 @@ import '../onboarding/presentation/widgets/onboarding_buttons.dart';
 import '../shell/presentation/shell_tab_layout.dart';
 import '../../core/api/api_exception.dart';
 import '../../core/network/connectivity_service.dart';
+import '../../core/widgets/app_semantics.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -30,9 +33,11 @@ class _HomeScreenState extends State<HomeScreen> {
   BabySummary? _baby;
   HomeSummary? _summary;
   String? _loadError;
+  String? _summaryError;
   var _busy = false;
   var _loadComplete = false;
   SelectedBabyStore? _babyStore;
+  HomeRefreshSignal? _homeRefresh;
 
   @override
   void initState() {
@@ -49,12 +54,23 @@ class _HomeScreenState extends State<HomeScreen> {
       _babyStore = store;
       _babyStore!.addListener(_onBabySelectionChanged);
     }
+    final refresh = context.read<HomeRefreshSignal>();
+    if (_homeRefresh != refresh) {
+      _homeRefresh?.removeListener(_onHomeRefreshRequested);
+      _homeRefresh = refresh;
+      _homeRefresh!.addListener(_onHomeRefreshRequested);
+    }
   }
 
   @override
   void dispose() {
     _babyStore?.removeListener(_onBabySelectionChanged);
+    _homeRefresh?.removeListener(_onHomeRefreshRequested);
     super.dispose();
+  }
+
+  void _onHomeRefreshRequested() {
+    if (mounted) _load();
   }
 
   void _onBabySelectionChanged() {
@@ -65,20 +81,22 @@ class _HomeScreenState extends State<HomeScreen> {
     final repository = context.read<HomeRepository>();
     final store = context.read<SelectedBabyStore>();
     try {
-      final babies = await repository.listBabies();
-      final selectedId = store.selectedBabyId;
-      BabySummary? baby;
-      if (selectedId != null) {
-        baby = babies.where((b) => b.id == selectedId).firstOrNull;
-      }
-      baby ??= babies.isNotEmpty ? babies.first : null;
+      final baby = await repository.resolveSelectedBaby(store);
       HomeSummary? summary;
+      String? summaryError;
       if (baby != null) {
-        summary = await repository.fetchHomeSummary(baby.id);
+        final result = await repository.fetchHomeSummary(baby.id);
+        switch (result) {
+          case HomeSummaryLoaded loaded:
+            summary = loaded.summary;
+          case HomeSummaryFailed failed:
+            summaryError = _errorMessage(failed.error);
+        }
       }
       setState(() {
         _baby = baby;
         _summary = summary;
+        _summaryError = summaryError;
         _loadError = null;
         _loadComplete = true;
       });
@@ -176,9 +194,11 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: ShellTabLayout(
         onRefresh: _load,
-        body: ListView(
-          key: const Key('home_section_list'),
-          physics: const AlwaysScrollableScrollPhysics(),
+        body: AppSemantics.container(
+          'home_section_list',
+          ListView(
+            key: const Key('home_section_list'),
+            physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.only(bottom: 24),
           children: [
             if (_loadError != null)
@@ -189,6 +209,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: TextStyle(color: Theme.of(context).colorScheme.error),
                   ),
                 ),
+            if (_summaryError != null && _baby != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: MaterialBanner(
+                  content: Text(_summaryError!),
+                  actions: [
+                    TextButton(onPressed: _load, child: const Text('Retry')),
+                  ],
+                ),
+              ),
               if (_baby != null && _isOwner)
                 OwnerHomeComposer(
                   baby: _baby!,
@@ -234,6 +264,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Center(child: CircularProgressIndicator()),
                 ),
           ],
+          ),
         ),
       ),
     );

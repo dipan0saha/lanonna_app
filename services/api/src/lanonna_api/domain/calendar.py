@@ -5,18 +5,20 @@ from datetime import datetime, timezone
 from typing import Any
 
 from lanonna_api.domain import assert_owner_membership
+from lanonna_api.domain.catalog_suggestion_ids import normalize_catalog_suggestion_id
 from lanonna_api.domain.gallery import require_membership
 from lanonna_api.domain.notification_copy import actor_display_name
 from lanonna_api.domain.notifications import (
     FanOutSpec,
     NotificationChannel,
-    enqueue_fan_out,
     enqueue_notify_user,
+    safe_enqueue_fan_out,
 )
 from lanonna_api.repositories.activity_events import insert_activity_event
 from lanonna_api.domain.media_urls import signed_display_url
 from lanonna_api.domain.users_display import author_display_name_from_row
 from lanonna_api.repositories.events import (
+    catalog_suggestion_claimed,
     create_event,
     delete_event,
     get_caller_rsvp,
@@ -33,6 +35,8 @@ from lanonna_api.repositories.events import (
 )
 from lanonna_api.repositories.photos import get_photo_for_baby
 from lanonna_api.repositories.users import upsert_app_user
+
+
 def _parse_month(month: str) -> tuple[datetime, datetime]:
     year, mon = month.split("-")
     start = datetime(int(year), int(mon), 1, tzinfo=timezone.utc)
@@ -53,6 +57,7 @@ def _event_row_to_json(row: dict[str, Any]) -> dict[str, Any]:
         "location": row.get("location"),
         "video_call_url": row.get("video_call_url"),
         "cover_photo_id": str(row["cover_photo_id"]) if row.get("cover_photo_id") else None,
+        "catalog_suggestion_id": row.get("catalog_suggestion_id"),
     }
 
 
@@ -133,8 +138,12 @@ def create_calendar_event(
     location: str | None,
     video_call_url: str | None,
     cover_photo_id: uuid.UUID | None,
+    catalog_suggestion_id: str | None = None,
 ) -> dict[str, Any]:
     assert_owner_membership(firebase_uid, baby_profile_id)
+    catalog_id = normalize_catalog_suggestion_id(catalog_suggestion_id)
+    if catalog_id and catalog_suggestion_claimed(baby_profile_id, catalog_id):
+        raise ValueError("This suggestion is already on the calendar.")
     upsert_app_user(firebase_uid, None)
     row = create_event(
         baby_profile_id,
@@ -146,6 +155,7 @@ def create_calendar_event(
         location=location,
         video_call_url=video_call_url,
         cover_photo_id=cover_photo_id,
+        catalog_suggestion_id=catalog_id,
     )
     insert_activity_event(
         baby_profile_id,
@@ -154,7 +164,7 @@ def create_calendar_event(
         f"New event: {row['title']}",
         payload={"event_id": str(row["id"])},
     )
-    enqueue_fan_out(
+    safe_enqueue_fan_out(
         FanOutSpec(
             baby_profile_id=baby_profile_id,
             title="New event",
@@ -250,22 +260,6 @@ def add_event_comment(
     }
 
 
-def edit_event_comment(
-    firebase_uid: str,
-    baby_profile_id: uuid.UUID,
-    event_id: uuid.UUID,
-    comment_id: uuid.UUID,
-    body: str,
-) -> dict[str, Any]:
-    require_membership(firebase_uid, baby_profile_id)
-    if not body.strip():
-        raise ValueError("Comment body required.")
-    row = update_event_comment(event_id, comment_id, firebase_uid, body)
-    if row is None:
-        raise LookupError("Comment not found.")
-    return {"id": str(row["id"]), "body": row["body"]}
-
-
 def delete_event_comment(
     firebase_uid: str,
     baby_profile_id: uuid.UUID,
@@ -275,3 +269,26 @@ def delete_event_comment(
     require_membership(firebase_uid, baby_profile_id)
     if not soft_delete_event_comment(event_id, comment_id, firebase_uid):
         raise LookupError("Comment not found.")
+
+
+def edit_event_comment(
+    firebase_uid: str,
+    baby_profile_id: uuid.UUID,
+    event_id: uuid.UUID,
+    comment_id: uuid.UUID,
+    body: str,
+) -> dict[str, Any]:
+    require_membership(firebase_uid, baby_profile_id)
+    event = get_event(baby_profile_id, event_id)
+    if event is None:
+        raise LookupError("Event not found.")
+    if not body.strip():
+        raise ValueError("Comment body required.")
+    updated = update_event_comment(event_id, comment_id, firebase_uid, body)
+    if updated is None:
+        raise LookupError("Comment not found.")
+    return {
+        "id": str(updated["id"]),
+        "body": updated["body"],
+        "updated_at": updated["updated_at"].isoformat(),
+    }

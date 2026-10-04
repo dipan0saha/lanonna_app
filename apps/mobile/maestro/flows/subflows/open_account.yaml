@@ -1,0 +1,11 @@
+appId: com.lanonna.lanonna
+---
+- tapOn:
+    id: shell_baby_switcher
+- extendedWaitUntil:
+    visible: "My Account"
+    timeout: 10000
+- tapOn: "My Account"
+- extendedWaitUntil:
+    visible: "My Account"
+    timeout: 15000

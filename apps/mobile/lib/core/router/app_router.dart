@@ -286,6 +286,7 @@ GoRouter createAppRouter(
                         return EventFormScreen(
                           initialTitle: prefill.title,
                           initialDescription: prefill.description,
+                          initialCatalogSuggestionId: prefill.catalogSuggestionId,
                         );
                       }
                       return const EventFormScreen();
@@ -332,6 +333,7 @@ GoRouter createAppRouter(
                         return RegistryItemFormScreen(
                           initialName: prefill.name,
                           initialDescription: prefill.description,
+                          initialCatalogSuggestionId: prefill.catalogSuggestionId,
                         );
                       }
                       return const RegistryItemFormScreen();

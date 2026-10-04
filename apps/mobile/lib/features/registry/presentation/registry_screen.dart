@@ -3,11 +3,15 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/auth/auth_repository.dart';
+import '../../../core/input/app_text_input_kind.dart';
+import '../../../core/widgets/app_text_field.dart';
+import '../../../core/widgets/app_semantics.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
+import '../../home/presentation/baby_context_reload.dart';
 import '../../shell/presentation/shell_tab_layout.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../data/models/registry_models.dart';
@@ -23,7 +27,7 @@ class RegistryScreen extends StatefulWidget {
   State<RegistryScreen> createState() => _RegistryScreenState();
 }
 
-class _RegistryScreenState extends State<RegistryScreen> {
+class _RegistryScreenState extends State<RegistryScreen> with BabyContextReload {
   BabySummary? _baby;
   List<RegistryItem> _items = [];
   String? _shippingAddress;
@@ -34,6 +38,21 @@ class _RegistryScreenState extends State<RegistryScreen> {
     super.initState();
     _load();
   }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    registerBabyContextListeners();
+  }
+
+  @override
+  void dispose() {
+    disposeBabyContextListeners();
+    super.dispose();
+  }
+
+  @override
+  void onBabyContextReload() => _load();
 
   Future<void> _load() async {
     setState(() => _loading = true);
@@ -78,7 +97,8 @@ class _RegistryScreenState extends State<RegistryScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Shipping address'),
-        content: TextField(
+        content: AppTextField(
+          kind: AppTextInputKind.prose,
           controller: controller,
           maxLines: 4,
           decoration: const InputDecoration(hintText: 'Address for gifts'),
@@ -90,9 +110,13 @@ class _RegistryScreenState extends State<RegistryScreen> {
       ),
     );
     if (saved != true) return;
+    final address = AppTextInputPolicy.normalizeForSubmit(
+      AppTextInputKind.prose,
+      controller.text,
+    );
     await context.read<RegistryRepository>().updateShippingAddress(
       baby.id,
-      controller.text.trim().isEmpty ? null : controller.text.trim(),
+      address.isEmpty ? null : address,
     );
     await _load();
   }
@@ -100,6 +124,28 @@ class _RegistryScreenState extends State<RegistryScreen> {
   Future<void> _claim(RegistryItem item) async {
     final baby = _baby;
     if (baby == null) return;
+    if (_isOwner) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Mark as purchased?'),
+          content: const Text(
+            'Family will see this item as taken so no one buys it again.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Mark as purchased'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+    }
     await context.read<RegistryRepository>().claimPurchase(baby.id, item.id);
     await _load();
   }
@@ -222,7 +268,7 @@ class _RegistryScreenState extends State<RegistryScreen> {
                                       item: item,
                                       isOwner: _isOwner,
                                       currentUid: uid,
-                                      onBuy: () => _claim(item),
+                                      onClaim: () => _claim(item),
                                       onEdit: () => context.push(
                                         RegistryRoutes.itemEdit(item.id),
                                       ),
@@ -274,9 +320,12 @@ class _RegistryScreenState extends State<RegistryScreen> {
           ),
         ),
       floatingActionButton: _isOwner && _baby != null && _items.isNotEmpty
-          ? FloatingActionButton(
-              onPressed: () => context.push(RegistryRoutes.createItem),
-              child: const Icon(Icons.add),
+          ? AppSemantics.button(
+              'registry_create_fab',
+              FloatingActionButton(
+                onPressed: () => context.push(RegistryRoutes.createItem),
+                child: const Icon(Icons.add),
+              ),
             )
           : null,
     );
@@ -307,7 +356,7 @@ class _AiBanner extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Not sure where to start? See AI-suggested items by age range.',
+                  'Not sure where to start? See AI-suggested items by stage and age.',
                   style: context.textStyles.bodyMedium,
                 ),
               ),

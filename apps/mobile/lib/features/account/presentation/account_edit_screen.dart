@@ -7,6 +7,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_client.dart';
+import '../../../core/input/app_text_input_kind.dart';
+import '../../../core/widgets/app_labeled_text_field.dart';
 import '../../../core/api/display_photo_upload.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../onboarding/presentation/widgets/onboarding_prototype_widgets.dart';
@@ -22,8 +24,8 @@ class AccountEditScreen extends StatefulWidget {
 class _AccountEditScreenState extends State<AccountEditScreen> {
   final _firstName = TextEditingController();
   final _lastName = TextEditingController();
+  final _email = TextEditingController();
   final _picker = ImagePicker();
-  String? _email;
   String? _networkAvatarUrl;
   XFile? _photoFile;
   var _saving = false;
@@ -38,6 +40,7 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
   void dispose() {
     _firstName.dispose();
     _lastName.dispose();
+    _email.dispose();
     super.dispose();
   }
 
@@ -51,7 +54,7 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
     } else {
       _firstName.text = name;
     }
-    _email = account.email;
+    _email.text = account.email ?? '';
     _networkAvatarUrl = account.avatarUrl;
     setState(() {});
   }
@@ -65,8 +68,15 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
   Future<void> _save() async {
     setState(() => _saving = true);
     try {
-      final displayName =
-          '${_firstName.text.trim()} ${_lastName.text.trim()}'.trim();
+      final first = AppTextInputPolicy.normalizeForSubmit(
+        AppTextInputKind.personName,
+        _firstName.text,
+      );
+      final last = AppTextInputPolicy.normalizeForSubmit(
+        AppTextInputKind.personName,
+        _lastName.text,
+      );
+      final displayName = '$first $last'.trim();
       String? avatarUrl = _networkAvatarUrl;
       if (_photoFile != null && !kIsWeb) {
         avatarUrl = await DisplayPhotoUpload(context.read<ApiClient>()).uploadProfileAvatar(
@@ -104,22 +114,21 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
               child: Text('Tap to change photo', style: TextStyle(fontSize: 12)),
             ),
             const SizedBox(height: 16),
-            TextField(
+            AppLabeledTextField(
+              label: 'First name',
+              kind: AppTextInputKind.personName,
               controller: _firstName,
-              decoration: const InputDecoration(labelText: 'First name'),
             ),
-            const SizedBox(height: 12),
-            TextField(
+            AppLabeledTextField(
+              label: 'Last name',
+              kind: AppTextInputKind.personName,
               controller: _lastName,
-              decoration: const InputDecoration(labelText: 'Last name'),
             ),
-            const SizedBox(height: 12),
-            TextField(
+            AppLabeledTextField(
+              label: 'Email',
+              kind: AppTextInputKind.none,
+              controller: _email,
               enabled: false,
-              decoration: InputDecoration(
-                labelText: 'Email',
-                hintText: _email,
-              ),
             ),
             const SizedBox(height: 20),
             FilledButton(

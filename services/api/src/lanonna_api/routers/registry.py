@@ -22,6 +22,7 @@ class ItemCreate(BaseModel):
     description: str | None = None
     product_url: str | None = None
     priority: int = Field(default=3, ge=1, le=5)
+    catalog_suggestion_id: str | None = Field(default=None, max_length=64)
 
 
 class ItemUpdate(BaseModel):
@@ -61,6 +62,7 @@ def create_item(
             description=body.description,
             product_url=body.product_url,
             priority=body.priority,
+            catalog_suggestion_id=body.catalog_suggestion_id,
         )
     except Exception as exc:
         raise map_domain_errors(exc) from exc

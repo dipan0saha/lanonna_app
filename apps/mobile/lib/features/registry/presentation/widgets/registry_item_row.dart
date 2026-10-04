@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
+import '../../../../core/widgets/app_semantics.dart';
 import '../../data/models/registry_models.dart';
 
 class RegistryNeededRow extends StatelessWidget {
@@ -10,7 +11,7 @@ class RegistryNeededRow extends StatelessWidget {
     required this.item,
     required this.isOwner,
     required this.currentUid,
-    this.onBuy,
+    this.onClaim,
     this.onEdit,
     this.onDelete,
   });
@@ -18,7 +19,7 @@ class RegistryNeededRow extends StatelessWidget {
   final RegistryItem item;
   final bool isOwner;
   final String? currentUid;
-  final VoidCallback? onBuy;
+  final VoidCallback? onClaim;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
@@ -50,8 +51,20 @@ class RegistryNeededRow extends StatelessWidget {
               ],
             ),
           ),
-          if (!isOwner && onBuy != null)
-            TextButton(onPressed: onBuy, child: const Text("I'll buy this")),
+          if (onClaim != null)
+            isOwner
+                ? AppSemantics.button(
+                    'registry_mark_purchased',
+                    TextButton(
+                      onPressed: onClaim,
+                      child: const Text('Mark as purchased'),
+                    ),
+                    label: 'Mark as purchased',
+                  )
+                : TextButton(
+                    onPressed: onClaim,
+                    child: const Text("I'll buy this"),
+                  ),
           if (isOwner) ...[
             IconButton(onPressed: onEdit, icon: const Icon(Icons.edit_outlined, size: 18)),
             IconButton(

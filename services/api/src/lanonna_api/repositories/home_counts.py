@@ -11,7 +11,7 @@ def count_photos_for_baby(baby_profile_id: uuid.UUID) -> int:
             """
             SELECT COUNT(*)::int AS count
             FROM photos
-            WHERE baby_profile_id = %s AND deleted_at IS NULL
+            WHERE baby_profile_id = %s
             """,
             (baby_profile_id,),
         ).fetchone()

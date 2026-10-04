@@ -31,6 +31,7 @@ class RegistryItem {
     required this.priority,
     required this.isPurchased,
     this.purchase,
+    this.catalogSuggestionId,
   });
 
   final String id;
@@ -40,6 +41,7 @@ class RegistryItem {
   final int priority;
   final bool isPurchased;
   final RegistryPurchaseInfo? purchase;
+  final String? catalogSuggestionId;
 
   factory RegistryItem.fromJson(Map<String, dynamic> json) {
     final purchaseJson = json['purchase'] as Map<String, dynamic>?;
@@ -49,6 +51,7 @@ class RegistryItem {
       description: json['description'] as String?,
       productUrl: json['product_url'] as String?,
       priority: json['priority'] as int? ?? 3,
+      catalogSuggestionId: json['catalog_suggestion_id'] as String?,
       isPurchased: json['is_purchased'] as bool? ?? false,
       purchase: purchaseJson != null
           ? RegistryPurchaseInfo.fromJson(purchaseJson)

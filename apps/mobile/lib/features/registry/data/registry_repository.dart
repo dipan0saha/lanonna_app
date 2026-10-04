@@ -20,12 +20,15 @@ class RegistryRepository {
     String? description,
     String? productUrl,
     required int priority,
+    String? catalogSuggestionId,
   }) async {
     final json = await _api.postJson('/v1/babies/$babyId/registry/items', body: {
       'name': name,
       if (description != null) 'description': description,
       if (productUrl != null) 'product_url': productUrl,
       'priority': priority,
+      if (catalogSuggestionId != null)
+        'catalog_suggestion_id': catalogSuggestionId,
     });
     return RegistryItem.fromJson(json);
   }

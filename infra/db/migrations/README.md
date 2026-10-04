@@ -22,6 +22,10 @@ Apply in **lexicographic order** (filename prefix):
 | `014_device_tokens_and_digest.sql` | `device_tokens` (FCM) + `app_users.last_weekly_digest_at` |
 | `015_system_announcements.sql` | `system_announcements` + `announcement_dismissals` (home banners) |
 | `016_notification_channels.sql` | Per-channel notification toggles on `app_users` |
+| `017_registry_catalog_suggestion_id.sql` | `registry_items.catalog_suggestion_id` (AI suggestion dedupe) |
+| `018_events_catalog_suggestion_id.sql` | `events.catalog_suggestion_id` (calendar AI suggestion dedupe) |
+| `019_photo_baby_tags.sql` | `photo_baby_tags` (FR-GAL-008 baby tags on photos) |
+| `020_app_versions.sql` | `app_versions` minimum client version per platform (FR-SET-004) |
 
 ## Apply (dev)
 
@@ -36,7 +40,7 @@ cd infra/db
 DB_PASSWORD="$PGPASSWORD" python apply_migrations.py
 ```
 
-`apply_migrations.py` runs every `*.sql` in this folder in lexicographic order (DDL is idempotent on dev; re-runs replay all files). A future improvement is to skip versions already recorded in `schema_migrations`.
+`apply_migrations.py` runs every `*.sql` in lexicographic order and **skips** files whose version stem is already in `schema_migrations` (DDL in files remains idempotent for manual re-run).
 
 **Manual:** `psql -h 127.0.0.1 -U lanonna_app -d lanonna -f infra/db/migrations/00N_….sql` for each file in order.
 

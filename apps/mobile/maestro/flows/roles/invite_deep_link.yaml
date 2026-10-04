@@ -1,0 +1,14 @@
+appId: com.lanonna.lanonna
+---
+# Prerequisite: run-maestro-full.sh opens the invite deep link via adb before this flow.
+- extendedWaitUntil:
+    visible: ".*invite.*|Accept|Welcome"
+    timeout: 45000
+    optional: true
+- runFlow:
+    when:
+      visible: "Welcome back"
+    file: ../subflows/sign_in_form_as.yaml
+- extendedWaitUntil:
+    visible: ".*Tab 1 of 5.*|Complete your profile|Confirm"
+    timeout: 60000

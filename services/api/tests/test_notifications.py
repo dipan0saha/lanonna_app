@@ -6,6 +6,7 @@ from lanonna_api.domain.notifications import (
     NotificationChannel,
     enqueue_fan_out,
     enqueue_notify_user,
+    safe_enqueue_fan_out,
 )
 
 
@@ -46,4 +47,20 @@ def test_enqueue_notify_user_publishes():
             deep_link="/gallery",
             baby_profile_id=None,
             notification_channel=None,
+        )
+
+
+def test_safe_enqueue_fan_out_swallows_pubsub_errors():
+    baby_id = uuid.uuid4()
+    with patch(
+        "lanonna_api.domain.notifications.publish_notify_fan_out",
+        side_effect=RuntimeError("pubsub unavailable"),
+    ):
+        safe_enqueue_fan_out(
+            FanOutSpec(
+                baby_profile_id=baby_id,
+                title="T",
+                body="B",
+                deep_link="/home",
+            )
         )

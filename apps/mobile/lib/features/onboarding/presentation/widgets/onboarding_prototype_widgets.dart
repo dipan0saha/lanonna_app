@@ -4,10 +4,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/input/app_text_input_kind.dart';
+import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../domain/baby_gender.dart';
 import 'onboarding_fields.dart';
+import 'onboarding_typography.dart';
 
 /// Organic shape art from the HTML prototype (`.icon-blob`).
 class OnboardingIconBlob extends StatelessWidget {
@@ -287,9 +290,9 @@ class PrototypeInlineNameAdd extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: TextField(
+          child: AppTextField(
+            kind: AppTextInputKind.personName,
             controller: controller,
-            textCapitalization: TextCapitalization.words,
             decoration: InputDecoration(hintText: hint),
             onSubmitted: (_) => onAdd(),
           ),
@@ -381,10 +384,7 @@ class PrototypeDateField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
-        ),
+        OnboardingFieldLabel(label),
         const SizedBox(height: 8),
         GestureDetector(
           onTap: onTap,

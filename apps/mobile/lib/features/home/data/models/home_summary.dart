@@ -1,3 +1,5 @@
+import '../../../../core/json/json_readers.dart';
+
 class HomeActivityItem {
   const HomeActivityItem({
     required this.id,
@@ -30,8 +32,8 @@ class GenderTotals {
   factory GenderTotals.fromJson(Map<String, dynamic>? json) {
     if (json == null) return const GenderTotals(male: 0, female: 0);
     return GenderTotals(
-      male: json['male'] as int? ?? 0,
-      female: json['female'] as int? ?? 0,
+      male: readInt(json['male']),
+      female: readInt(json['female']),
     );
   }
 }
@@ -46,7 +48,7 @@ class TopNameInsight {
     if (json == null) return const TopNameInsight(suggestedName: '', likeCount: 0);
     return TopNameInsight(
       suggestedName: json['suggested_name'] as String? ?? '',
-      likeCount: json['like_count'] as int? ?? 0,
+      likeCount: readInt(json['like_count']),
     );
   }
 }
@@ -117,8 +119,8 @@ class GettingStartedSummary {
     }
     final tasks = json['tasks'] as List<dynamic>? ?? [];
     return GettingStartedSummary(
-      completedCount: json['completed_count'] as int? ?? 0,
-      total: json['total'] as int? ?? 0,
+      completedCount: readInt(json['completed_count']),
+      total: readInt(json['total']),
       tasks: tasks
           .whereType<Map<String, dynamic>>()
           .map(GettingStartedTask.fromJson)
@@ -199,7 +201,7 @@ class HomeRegistryHighlight {
     return HomeRegistryHighlight(
       id: json['id']?.toString() ?? '',
       name: json['name'] as String? ?? '',
-      priority: json['priority'] as int? ?? 0,
+      priority: readInt(json['priority']),
     );
   }
 }
@@ -270,7 +272,7 @@ class HomeTeasers {
           .whereType<Map<String, dynamic>>()
           .map(HomeTeaserPhoto.fromJson)
           .toList(),
-      registryOpenCount: json['registry_open_count'] as int? ?? 0,
+      registryOpenCount: readInt(json['registry_open_count']),
       registryHighlights: (json['registry_highlights'] as List<dynamic>? ?? [])
           .whereType<Map<String, dynamic>>()
           .map(HomeRegistryHighlight.fromJson)
@@ -315,7 +317,7 @@ class BirthWelcomeSummary {
     final ann = json['announcement'] as Map<String, dynamic>?;
     return BirthWelcomeSummary(
       babyName: json['baby_name'] as String? ?? '',
-      daysSinceBirth: json['days_since_birth'] as int? ?? 0,
+      daysSinceBirth: readInt(json['days_since_birth']),
       welcomeVisibleUntil: json['welcome_visible_until'] as String?,
       photoDisplayUrl: ann?['photo_display_url'] as String?,
       announcementId: ann?['announcement_id']?.toString(),
@@ -404,8 +406,8 @@ class HomeStorageUsage {
   factory HomeStorageUsage.fromJson(Map<String, dynamic>? json) {
     if (json == null) return const HomeStorageUsage(usedBytes: 0, quotaBytes: 1);
     return HomeStorageUsage(
-      usedBytes: json['used_bytes'] as int? ?? 0,
-      quotaBytes: json['quota_bytes'] as int? ?? 1,
+      usedBytes: readInt(json['used_bytes']),
+      quotaBytes: readInt(json['quota_bytes'], defaultValue: 1),
     );
   }
 }
@@ -457,9 +459,11 @@ class HomeSummary {
     final invites = json['invite_status'] as List<dynamic>? ?? [];
     return HomeSummary(
       lifecycleStatus: json['lifecycle_status'] as String? ?? 'expecting',
-      daysToDue: json['days_to_due'] as int?,
-      nameSuggestionCount: insight['name_suggestion_count'] as int? ?? 0,
-      voteCount: insight['vote_count'] as int? ?? 0,
+      daysToDue: json['days_to_due'] == null
+          ? null
+          : readInt(json['days_to_due']),
+      nameSuggestionCount: readInt(insight['name_suggestion_count']),
+      voteCount: readInt(insight['vote_count']),
       genderTotals: GenderTotals.fromJson(
         insight['gender_totals'] as Map<String, dynamic>?,
       ),

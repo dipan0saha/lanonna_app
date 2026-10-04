@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/api/api_client.dart';
+import '../../../../core/input/app_text_input_kind.dart';
 import '../../../../core/api/display_photo_upload.dart';
 import '../../../../core/validation/form_validators.dart';
 import '../../data/onboarding_form_drafts.dart';
@@ -136,7 +137,10 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
         );
       }
       await context.read<OnboardingRepository>().updateProfile(
-            displayName: _nameController.text.trim(),
+            displayName: AppTextInputPolicy.normalizeForSubmit(
+              AppTextInputKind.personName,
+              _nameController.text,
+            ),
             avatarUrl: avatarUrl,
           );
       await context.read<AppSession>().refreshFromApi();
@@ -196,7 +200,7 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
             controller: _nameController,
             label: 'Full name',
             hint: 'Your name',
-            textCapitalization: TextCapitalization.words,
+            kind: AppTextInputKind.personName,
             onChanged: (_) => _persistDraft(),
           ),
           const SizedBox(height: 8),
@@ -214,6 +218,7 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
           ),
           const SizedBox(height: 12),
           OnboardingPrimaryButton(
+            semanticsId: 'onboarding_complete_profile_continue',
             label: 'Continue',
             isLoading: _busy,
             onPressed: _busy ? null : _continue,

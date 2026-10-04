@@ -8,6 +8,12 @@ extension LaNonnaTheme on BuildContext {
 
   TextTheme get textStyles => Theme.of(this).textTheme;
 
+  /// Label above text fields (onboarding and inputs); PRD §5.1 Inter semibold on surface.
+  TextStyle get fieldLabelStyle => textStyles.labelMedium!.copyWith(
+        fontWeight: FontWeight.w600,
+        color: colors.onSurface,
+      );
+
   ColorScheme get colors => Theme.of(this).colorScheme;
 
   AppBrandTheme get brand =>

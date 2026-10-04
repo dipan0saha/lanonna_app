@@ -12,9 +12,14 @@ import 'home_section_label.dart';
 import 'home_upcoming_events_section.dart';
 
 class HomeTeasersSection extends StatelessWidget {
-  const HomeTeasersSection({super.key, required this.teasers});
+  const HomeTeasersSection({
+    super.key,
+    required this.teasers,
+    this.onSignedUrlError,
+  });
 
   final HomeTeasers teasers;
+  final VoidCallback? onSignedUrlError;
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +83,7 @@ class HomeTeasersSection extends StatelessWidget {
           ),
         ),
       );
-      children.add(_photoRow(teasers.recentPhotos, AppColors.sageTint));
+      children.add(_photoRow(teasers.recentPhotos, AppColors.sageTint, onSignedUrlError: onSignedUrlError));
     }
 
     if (teasers.favoritePhotos.isNotEmpty) {
@@ -96,7 +101,12 @@ class HomeTeasersSection extends StatelessWidget {
           ),
         ),
       );
-      children.add(_photoRow(teasers.favoritePhotos, AppColors.peachTint, favorites: true));
+      children.add(_photoRow(
+        teasers.favoritePhotos,
+        AppColors.peachTint,
+        favorites: true,
+        onSignedUrlError: onSignedUrlError,
+      ));
     }
 
     if (teasers.registryOpenCount > 0 && teasers.registryHighlights.isEmpty) {
@@ -118,7 +128,12 @@ class HomeTeasersSection extends StatelessWidget {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children);
   }
 
-  Widget _photoRow(List<HomeTeaserPhoto> photos, Color fallback, {bool favorites = false}) {
+  Widget _photoRow(
+    List<HomeTeaserPhoto> photos,
+    Color fallback, {
+    bool favorites = false,
+    VoidCallback? onSignedUrlError,
+  }) {
     return Column(
       children: [
         SizedBox(
@@ -143,6 +158,7 @@ class HomeTeasersSection extends StatelessWidget {
                           width: 88,
                           height: 88,
                           fit: BoxFit.cover,
+                          onSignedUrlError: onSignedUrlError,
                         )
                       : Container(
                           width: 88,

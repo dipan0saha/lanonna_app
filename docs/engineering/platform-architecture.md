@@ -37,7 +37,7 @@
 8. **Region discipline** — primary **`us-central1`** (free-tier eligible for Run; co-locate SQL, GCS, Run, Pub/Sub).
 9. **Notify, don’t poll** — **FCM** for new content; batch/paginate API reads to stay within Run free tier.
 
-**Implemented on dev (2026):** separate **Cloud Run `api`** and **`worker`**; GCS display + thumbnails; Pub/Sub finalize → worker thumb + `photo_shared` activity + **member notify** on photo ready; API JWT, signed upload/read URLs, baby-scoped CRUD for gallery, calendar, registry, and fun; SQL migrations through **`015`** ([migrations/README.md](../../infra/db/migrations/README.md)); Flutter owner/follower home (teasers incl. recent/favorite photos), gallery sub-routes, baby **avatar_url**, account (export/delete/notifications inbox), search, birth announcement; **FCM** device tokens + worker notification writers + weekly digest Scheduler (Pub/Sub). See [development.md](development.md) for route list and [building-the-app.md](building-the-app.md) for the prerequisite gate.
+**Implemented on dev (2026):** separate **Cloud Run `api`** and **`worker`**; GCS display + thumbnails; Pub/Sub finalize → worker thumb + `photo_shared` activity + **member notify** on photo ready; API JWT, signed upload/read URLs, baby-scoped CRUD for gallery (comments PATCH, photo baby tags), calendar, registry, and fun; SQL migrations through **`019`** ([migrations/README.md](../../infra/db/migrations/README.md)); Flutter owner/follower home (teasers incl. recent/favorite photos), gallery sub-routes, baby **avatar_url**, account (export/delete/notifications inbox), search, birth announcement; **FCM** device tokens + worker notification writers + weekly digest Scheduler (Pub/Sub). See [development.md](development.md) for route list and [building-the-app.md](building-the-app.md) for the prerequisite gate.
 
 **Deferred (initial years):**
 
@@ -130,7 +130,7 @@ flowchart TB
 | **Read/write data** | API verifies JWT → loads user + membership → domain rule → SQL transaction |
 | **Photo upload** | Client **encodes display asset** (see §2.5) → `POST /photos/init` → API returns **v4 signed PUT** + `photo_id` → PUT to **`display/`** prefix only |
 | **Feed thumb** | GCS finalize → **Pub/Sub** → worker reads **display** object → writes **`thumbnails/`** + marks photo **ready** (**idempotent** on `object_generation`) |
-| **Photo view** | **Feed:** signed read URL for **thumb** only. **Detail:** signed URL for **display** asset. Flutter **disk cache** reduces repeat egress |
+| **Photo view** | **Feed:** signed read URL for **thumb** only. **Detail:** signed URL for **display** asset. Read URLs TTL **900s** ([`storage.py`](../../services/api/src/lanonna_api/storage.py)); Flutter **disk cache** + optional refresh on image error after TTL |
 | **Invite** | API creates invite row + token → publishes `send_invite_email` (or sends inline under low volume) → worker calls **Mailjet** with HTML from repo templates |
 | **Push** | API or worker sends FCM using device tokens stored in SQL |
 | **Cron** | **Cloud Scheduler** → Pub/Sub (e.g. `weekly_notification_digest`) or OIDC **Run** routes for cleanup and digests |
@@ -312,7 +312,7 @@ Isolates **storage + egress** if behavior drifts from §2.5 (SQL/Run/email held 
 - [x] Secret Manager: DB + Mailjet secret containers (values in SM)
 - [x] Cloud Run **api**: health, JWT, `app_users` profile, signed display upload URL
 - [x] Flutter: Auth login dev screen; call API with ID token
-- [ ] Flutter: **display encode** helper (resize, WebP/JPEG, max bytes) for gallery; onboarding/profile uses `display_photo_upload.dart` (signed PUT, no full encode pipeline yet)
+- [x] Flutter: **display encode** helper (resize, WebP/JPEG, max bytes) for gallery; onboarding/profile uses `display_photo_upload.dart` (signed PUT)
 - [x] POC: signed upload → `display/` → Pub/Sub → worker finalize
 - [x] Worker **thumbnail** generation from `display/` (see `lanonna_worker/thumbnails.py`)
 
@@ -330,11 +330,11 @@ Isolates **storage + egress** if behavior drifts from §2.5 (SQL/Run/email held 
 - [x] Worker **thumbnail** from `display/`; **`photo_shared`** `activity_events` when photo becomes ready
 - [x] Worker `send_invite_email` handler (Mailjet)
 - [x] Gallery list + detail with pagination params; detail returns **display** signed URL
-- [x] SQL migrations **`009`–`015`** (birth announcement, engagement indexes, notifications inbox/prefs, export/delete, baby avatar, **device_tokens**, **system_announcements**)
+- [x] SQL migrations **`009`–`019`** (birth announcement through **photo_baby_tags**; see `infra/db/migrations/README.md`)
 - [x] `device_tokens` + mobile FCM registration; API notify publishers; worker in-app + **realtime FCM**; **push on new photo** and social events (see [development.md](development.md))
 - [x] Weekly digest push job (Scheduler → Pub/Sub → worker)
 - [ ] Worker thumb path hardened for gallery-scale volume (monitoring, backoff, dead-letter policy)
-- [ ] Flutter: **image disk cache** for thumb/display bytes (beyond default network image behavior)
+- [x] Flutter: **image disk cache** for thumb/display bytes (`CachedSignedImage`)
 - [ ] Firebase Emulator Suite for local Auth/API dev
 - [ ] Closed beta: consistent **display encode** on all gallery uploads; stay within GCS/Mailjet free caps
 
@@ -344,7 +344,7 @@ Isolates **storage + egress** if behavior drifts from §2.5 (SQL/Run/email held 
 - [ ] Load test API + pool sizing; tune SQL if needed
 - [ ] **Restore drill** (PITR); document RTO/RPO
 - [x] Scheduler: weekly notification digest (dev)
-- [ ] Scheduler jobs (cleanup expired invites)
+- [x] Scheduler jobs (cleanup expired invites) — `setup-expired-invites-scheduler.sh` + worker `expire_pending_invitations`
 - [ ] Forecast post-trial bill (section **5.1** default profile)
 
 ---
@@ -355,7 +355,7 @@ Isolates **storage + egress** if behavior drifts from §2.5 (SQL/Run/email held 
 
 - [ ] Cloud SQL: automated backups + PITR; least-privilege DB user for Run
 - [ ] IAM: separate service accounts for **api** vs **worker**; minimal roles (SQL client, GCS object admin scoped per bucket, Pub/Sub publisher/subscriber)
-- [ ] Request/correlation ID in logs; alert on Run 5xx rate and SQL disk
+- [x] Request/correlation ID in API logs (`X-Request-Id` middleware); [ ] alert on Run 5xx rate and SQL disk
 - [ ] Documented restore tested once
 - [ ] Mailjet (or successor): SPF/DKIM/DMARC on sending domain
 
@@ -368,7 +368,7 @@ Isolates **storage + egress** if behavior drifts from §2.5 (SQL/Run/email held 
 - [ ] Every mutating route requires valid Firebase ID token; reject expired or wrong-audience tokens
 - [ ] **App Check** enforced on API before public beta (Debug provider only in dev builds)
 - [ ] Authorization in domain layer: baby membership + role on every photo, invite, and profile action
-- [ ] Rate limits on invite and photo-init endpoints (per user / per baby)
+- [x] Rate limits on invite batch and photo-init endpoints (per-IP sliding window middleware)
 - [ ] Scheduler and internal admin routes: **OIDC** only; no public `allUsers` invoke on Run
 
 **Data and media**

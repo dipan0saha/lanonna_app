@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/la_nonna_theme.dart';
+import '../../../core/widgets/app_semantics.dart';
+import '../../home/data/home_refresh_signal.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../../core/domain/baby_summary.dart';
@@ -40,6 +42,7 @@ class _BabySwitcherSheetBody extends StatefulWidget {
 
 class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
   List<BabySummary> _babies = [];
+  String? _highlightedId;
   var _loading = true;
 
   @override
@@ -50,9 +53,13 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
 
   Future<void> _load() async {
     try {
-      final babies = await context.read<HomeRepository>().listBabies();
+      final homeRepo = context.read<HomeRepository>();
+      final store = context.read<SelectedBabyStore>();
+      final babies = await homeRepo.listBabies();
+      final resolved = await homeRepo.resolveSelectedBaby(store);
       setState(() {
         _babies = babies;
+        _highlightedId = resolved?.id;
         _loading = false;
       });
     } catch (_) {
@@ -63,6 +70,7 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
   Future<void> _select(BabySummary baby) async {
     await context.read<SelectedBabyStore>().setSelectedBabyId(baby.id);
     if (mounted) {
+      context.read<HomeRefreshSignal>().notifyBabyContextChanged();
       Navigator.of(context).pop();
       context.go('/home');
     }
@@ -70,7 +78,7 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
 
   @override
   Widget build(BuildContext context) {
-    final selectedId = context.read<SelectedBabyStore>().selectedBabyId;
+    final selectedId = _highlightedId;
     final styles = context.textStyles;
 
     return Padding(
@@ -99,7 +107,9 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
                 shrinkWrap: true,
                 children: [
                   for (final baby in _babies)
-                    ListTile(
+                    AppSemantics.button(
+                      'baby_switcher_${baby.id.replaceAll('-', '_')}',
+                      ListTile(
                       leading: CircleAvatar(
                         backgroundColor: AppColors.sageTint,
                         child: Text(
@@ -136,6 +146,7 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
                         ],
                       ),
                       onTap: () => _select(baby),
+                    ),
                     ),
                 ],
               ),

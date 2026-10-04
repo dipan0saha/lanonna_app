@@ -4,14 +4,17 @@ import uuid
 from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
-from lanonna_api.db import get_connection
 from lanonna_api.repositories.activity_events import (
     count_name_suggestions,
     insert_activity_event,
     list_recent_for_baby,
 )
 from lanonna_api.domain.media_urls import signed_display_url, signed_thumb_url
-from lanonna_api.repositories.babies import get_baby_for_owner, get_baby_membership
+from lanonna_api.repositories.babies import (
+    get_baby_for_owner,
+    get_baby_membership,
+    update_baby_for_owner,
+)
 from lanonna_api.repositories.events import get_caller_rsvp, list_events
 from lanonna_api.repositories.notifications import list_notifications_for_user
 from lanonna_api.repositories.photos import get_photo_for_baby, list_photos_for_baby
@@ -41,7 +44,7 @@ from lanonna_api.repositories.user_engagement import storage_usage_for_owner_bab
 from lanonna_api.domain.notifications import (
     FanOutSpec,
     NotificationChannel,
-    enqueue_fan_out,
+    safe_enqueue_fan_out,
 )
 _BIRTH_WELCOME_VISIBLE_DAYS = 7
 
@@ -262,49 +265,24 @@ def announce_arrival(
             if value is not None and key not in ("lifecycle_status", "actual_birth_date"):
                 fields[key] = value
 
-    with get_connection() as conn:
-        set_parts = []
-        values: list[Any] = []
-        for key, value in fields.items():
-            set_parts.append(f"{key} = %s")
-            values.append(value)
-        set_parts.append("updated_at = now()")
-        values.extend([baby_profile_id, firebase_uid])
+    row = update_baby_for_owner(firebase_uid, baby_profile_id, fields)
+    if row is None:
+        raise PermissionError("Owner access required for this baby profile.")
 
-        row = conn.execute(
-            f"""
-            UPDATE baby_profiles b
-            SET {", ".join(set_parts)}
-            FROM baby_memberships m
-            WHERE b.id = m.baby_profile_id
-              AND b.id = %s
-              AND m.firebase_uid = %s
-              AND m.role = 'owner'
-              AND m.removed_at IS NULL
-              AND b.deleted_at IS NULL
-            RETURNING b.id, b.name, b.gender, b.expected_birth_date,
-                      b.actual_birth_date, b.lifecycle_status
-            """,
-            values,
-        ).fetchone()
-        if row is None:
-            raise PermissionError("Owner access required for this baby profile.")
-
-        if record_arrival_event:
-            insert_activity_event(
-                baby_profile_id,
-                firebase_uid,
-                "baby_arrived",
-                f"{baby_name} has arrived!",
-                {"actual_birth_date": actual_birth_date.isoformat()},
-                conn=conn,
-            )
+    if record_arrival_event:
+        insert_activity_event(
+            baby_profile_id,
+            firebase_uid,
+            "baby_arrived",
+            f"{baby_name} has arrived!",
+            {"actual_birth_date": actual_birth_date.isoformat()},
+        )
 
     result = dict(row)
     result["role"] = "owner"
     result["relationship_label"] = None
     if record_arrival_event:
-        enqueue_fan_out(
+        safe_enqueue_fan_out(
             FanOutSpec(
                 baby_profile_id=baby_profile_id,
                 title="Baby has arrived!",

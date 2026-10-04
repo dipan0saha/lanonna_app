@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/api/api_error_message.dart';
 import '../../../core/auth/auth_repository.dart';
+import '../../../core/widgets/app_semantics.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/la_nonna_theme.dart';
+import '../../home/data/home_refresh_signal.dart';
+import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../../home/domain/app_routes.dart';
@@ -23,6 +27,7 @@ class AccountScreen extends StatefulWidget {
 
 class _AccountScreenState extends State<AccountScreen> {
   AccountPayload? _payload;
+  String? _loadError;
   var _loading = true;
 
   @override
@@ -32,15 +37,21 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _loadError = null;
+    });
     try {
       final payload = await context.read<AccountRepository>().fetchAccount();
       setState(() {
         _payload = payload;
         _loading = false;
       });
-    } catch (_) {
-      setState(() => _loading = false);
+    } catch (e) {
+      setState(() {
+        _loadError = apiErrorMessage(e);
+        _loading = false;
+      });
     }
   }
 
@@ -78,7 +89,24 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Future<void> _openBaby(BabySummary baby) async {
     await context.read<SelectedBabyStore>().setSelectedBabyId(baby.id);
-    if (mounted) context.go('/home');
+    if (mounted) {
+      context.read<HomeRefreshSignal>().notifyBabyContextChanged();
+      context.go('/home');
+    }
+  }
+
+  Future<void> _openManageFollowers() async {
+    final owner = await context.read<HomeRepository>().resolveOwnerBaby(
+      context.read<SelectedBabyStore>(),
+    );
+    if (!mounted) return;
+    if (owner == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No baby profile you own yet.')),
+      );
+      return;
+    }
+    context.push('/baby/${owner.id}/followers');
   }
 
   @override
@@ -94,6 +122,20 @@ class _AccountScreenState extends State<AccountScreen> {
       appBar: AppBar(title: const Text('My Account')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
+          : _loadError != null
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(_loadError!, textAlign: TextAlign.center),
+                    const SizedBox(height: 12),
+                    FilledButton(onPressed: _load, child: const Text('Retry')),
+                  ],
+                ),
+              ),
+            )
           : RefreshIndicator(
               onRefresh: _load,
               child: ListView(
@@ -169,14 +211,13 @@ class _AccountScreenState extends State<AccountScreen> {
                           onTap: () => context.push('/settings'),
                         ),
                         if (showOwnerPrefs)
-                          ListTile(
-                            title: const Text('Manage Followers'),
-                            trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
-                            onTap: () {
-                              final id = context.read<SelectedBabyStore>().selectedBabyId ??
-                                  payload?.babies.where((b) => b.role == 'owner').firstOrNull?.id;
-                              if (id != null) context.push('/baby/$id/followers');
-                            },
+                          AppSemantics.button(
+                            'account_manage_followers',
+                            ListTile(
+                              title: const Text('Manage Followers'),
+                              trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
+                              onTap: _openManageFollowers,
+                            ),
                           ),
                         if (showOwnerPrefs)
                           ListTile(

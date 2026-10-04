@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/input/app_text_input_kind.dart';
+import '../../../core/widgets/app_labeled_text_field.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
-import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
+import '../../onboarding/data/onboarding_repository.dart';
 import '../../onboarding/domain/baby_lifecycle.dart';
 import '../../onboarding/presentation/utils/onboarding_baby_helpers.dart';
 
@@ -34,10 +36,14 @@ class _BabyCreateScreenState extends State<BabyCreateScreen> {
   }
 
   Future<void> _save() async {
-    if (_name.text.trim().isEmpty) return;
+    final name = AppTextInputPolicy.normalizeForSubmit(
+      AppTextInputKind.personName,
+      _name.text,
+    );
+    if (name.isEmpty) return;
     setState(() => _saving = true);
     try {
-      final repo = context.read<HomeRepository>();
+      final repo = context.read<OnboardingRepository>();
       final expected = _lifecycle == BabyLifecycle.expecting && _date != null
           ? formatApiDate(_date!)
           : null;
@@ -45,7 +51,7 @@ class _BabyCreateScreenState extends State<BabyCreateScreen> {
           ? formatApiDate(_date!)
           : null;
       final baby = await repo.createBaby(
-        name: _name.text.trim(),
+        name: name,
         gender: _gender,
         lifecycleStatus: _lifecycle.apiValue,
         expectedBirthDate: expected,
@@ -65,12 +71,11 @@ class _BabyCreateScreenState extends State<BabyCreateScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          TextField(
+          AppLabeledTextField(
+            label: 'Baby name',
+            kind: AppTextInputKind.personName,
             controller: _name,
-            decoration: const InputDecoration(labelText: 'Baby name'),
-            textCapitalization: TextCapitalization.words,
           ),
-          const SizedBox(height: 12),
           Text('Status', style: context.textStyles.labelLarge),
           SegmentedButton<BabyLifecycle>(
             segments: const [

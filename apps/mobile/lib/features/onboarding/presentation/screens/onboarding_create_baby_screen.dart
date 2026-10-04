@@ -7,7 +7,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/api/api_client.dart';
-import '../../../../core/api/display_photo_upload.dart';
+import '../../../../core/input/app_text_input_kind.dart';
+import '../../../gallery/presentation/upload/run_gallery_photo_upload.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../home/data/selected_baby_store.dart';
 import '../../data/create_baby_draft.dart';
@@ -220,9 +221,11 @@ class _OnboardingCreateBabyScreenState extends State<OnboardingCreateBabyScreen>
 
       if (_selectedImage != null && !kIsWeb) {
         try {
-          await DisplayPhotoUpload(api).uploadGalleryPhoto(
+          await runGalleryPhotoUpload(
+            context: context,
             babyProfileId: baby.id,
             imageFile: File(_selectedImage!.path),
+            api: api,
           );
         } catch (e) {
           if (mounted) {
@@ -255,7 +258,7 @@ class _OnboardingCreateBabyScreenState extends State<OnboardingCreateBabyScreen>
               controller: _boyNameController,
               label: "Boy's name (optional)",
               hint: 'e.g. Liam',
-              textCapitalization: TextCapitalization.words,
+              kind: AppTextInputKind.personName,
               fieldKey: const Key('onboarding_baby_name'),
               onChanged: (_) => _syncDraft(),
             ),
@@ -264,7 +267,7 @@ class _OnboardingCreateBabyScreenState extends State<OnboardingCreateBabyScreen>
               controller: _girlNameController,
               label: "Girl's name (optional)",
               hint: 'e.g. Olivia',
-              textCapitalization: TextCapitalization.words,
+              kind: AppTextInputKind.personName,
               onChanged: (_) => _syncDraft(),
             ),
           ],
@@ -274,7 +277,7 @@ class _OnboardingCreateBabyScreenState extends State<OnboardingCreateBabyScreen>
           controller: _boyNameController,
           label: "Boy's name (optional)",
           hint: 'e.g. Liam',
-          textCapitalization: TextCapitalization.words,
+          kind: AppTextInputKind.personName,
           fieldKey: const Key('onboarding_baby_name'),
           onChanged: (_) => _syncDraft(),
         );
@@ -283,7 +286,7 @@ class _OnboardingCreateBabyScreenState extends State<OnboardingCreateBabyScreen>
           controller: _girlNameController,
           label: "Girl's name (optional)",
           hint: 'e.g. Olivia',
-          textCapitalization: TextCapitalization.words,
+          kind: AppTextInputKind.personName,
           fieldKey: const Key('onboarding_baby_name'),
           onChanged: (_) => _syncDraft(),
         );
@@ -341,12 +344,7 @@ class _OnboardingCreateBabyScreenState extends State<OnboardingCreateBabyScreen>
             onTap: _busy ? () {} : _pickDate,
           ),
           const SizedBox(height: 18),
-          Text(
-            'Gender',
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
+          const OnboardingFieldLabel('Gender'),
           const SizedBox(height: 8),
           OnboardingPillSelect(
             options: genderOptions,
@@ -370,6 +368,7 @@ class _OnboardingCreateBabyScreenState extends State<OnboardingCreateBabyScreen>
           _buildPhotoPicker(),
           const SizedBox(height: 20),
           OnboardingPrimaryButton(
+            semanticsId: 'onboarding_create_baby_continue',
             label: 'Continue',
             isLoading: _busy,
             onPressed: _busy ? null : _continue,

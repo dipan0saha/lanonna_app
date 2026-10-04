@@ -15,6 +15,7 @@ from lanonna_worker.notifications import (
     process_notify_user,
     process_weekly_notification_digest,
 )
+from lanonna_worker.invite_cleanup import expire_stale_pending_invitations
 from lanonna_worker.thumbnails import process_gcs_finalize
 
 logging.basicConfig(level=logging.INFO)
@@ -26,6 +27,17 @@ app = FastAPI(title="La Nonna Worker", version="0.1.0")
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "environment": settings.environment}
+
+
+@app.post("/cron/expire-pending-invitations")
+async def cron_expire_pending_invitations() -> Response:
+    """Cloud Scheduler (OIDC): mark expired pending invitations."""
+    try:
+        expire_stale_pending_invitations()
+    except Exception:
+        logger.exception("cron_expire_pending_invitations_failed")
+        return Response(status_code=500)
+    return Response(status_code=204)
 
 
 @app.post("/cron/weekly-notification-digest")
@@ -77,6 +89,17 @@ async def pubsub_push(request: Request) -> Response:
             process_notify_user(payload)
         except Exception:
             logger.exception("notify_user_failed")
+            return Response(status_code=500)
+        return Response(status_code=204)
+
+    if payload.get("type") == "expire_pending_invitations":
+        try:
+            expire_stale_pending_invitations()
+        except Exception:
+            logger.exception(
+                "expire_pending_invitations_failed message_id=%s",
+                message.get("messageId"),
+            )
             return Response(status_code=500)
         return Response(status_code=204)
 

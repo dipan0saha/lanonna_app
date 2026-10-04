@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/input/app_text_input_kind.dart';
+import '../../../core/widgets/app_text_field.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/domain/baby_summary.dart';
@@ -51,7 +53,10 @@ class _NamesTabState extends State<NamesTab> {
   }
 
   Future<void> _submit() async {
-    final text = _input.text.trim();
+    final text = AppTextInputPolicy.normalizeForSubmit(
+      AppTextInputKind.personName,
+      _input.text,
+    );
     if (text.isEmpty) return;
     await context.read<FunRepository>().suggestName(
       widget.baby.id,
@@ -133,7 +138,8 @@ class _NamesTabState extends State<NamesTab> {
         padding: const EdgeInsets.all(14),
         child: Column(
           children: [
-            TextField(
+            AppTextField(
+              kind: AppTextInputKind.personName,
               controller: _input,
               decoration: const InputDecoration(hintText: 'Suggest a name…'),
             ),

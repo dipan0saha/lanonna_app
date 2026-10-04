@@ -5,6 +5,9 @@ from datetime import datetime
 from typing import Any
 
 from lanonna_api.db import get_connection
+from lanonna_api.repositories.catalog_suggestions import (
+    catalog_suggestion_claimed_on_table,
+)
 
 
 def list_events(
@@ -32,6 +35,7 @@ def list_events(
             SELECT
                 e.id, e.title, e.description, e.starts_at, e.ends_at,
                 e.location, e.video_call_url, e.cover_photo_id,
+                e.catalog_suggestion_id,
                 e.created_by_firebase_uid, e.created_at
             FROM events e
             WHERE {where}
@@ -49,6 +53,7 @@ def get_event(baby_profile_id: uuid.UUID, event_id: uuid.UUID) -> dict[str, Any]
             SELECT
                 e.id, e.title, e.description, e.starts_at, e.ends_at,
                 e.location, e.video_call_url, e.cover_photo_id,
+                e.catalog_suggestion_id,
                 e.created_by_firebase_uid, e.created_at, e.updated_at
             FROM events e
             WHERE e.id = %s AND e.baby_profile_id = %s
@@ -56,6 +61,15 @@ def get_event(baby_profile_id: uuid.UUID, event_id: uuid.UUID) -> dict[str, Any]
             (event_id, baby_profile_id),
         ).fetchone()
     return dict(row) if row else None
+
+
+def catalog_suggestion_claimed(
+    baby_profile_id: uuid.UUID,
+    catalog_suggestion_id: str,
+) -> bool:
+    return catalog_suggestion_claimed_on_table(
+        "events", baby_profile_id, catalog_suggestion_id
+    )
 
 
 def create_event(
@@ -69,6 +83,7 @@ def create_event(
     location: str | None,
     video_call_url: str | None,
     cover_photo_id: uuid.UUID | None,
+    catalog_suggestion_id: str | None = None,
 ) -> dict[str, Any]:
     event_id = uuid.uuid4()
     with get_connection() as conn:
@@ -77,11 +92,12 @@ def create_event(
             INSERT INTO events (
                 id, baby_profile_id, created_by_firebase_uid,
                 title, starts_at, ends_at, description, location,
-                video_call_url, cover_photo_id
+                video_call_url, cover_photo_id, catalog_suggestion_id
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id, title, starts_at, ends_at, description, location,
-                      video_call_url, cover_photo_id, created_at
+                      video_call_url, cover_photo_id, catalog_suggestion_id,
+                      created_at
             """,
             (
                 event_id,
@@ -94,6 +110,7 @@ def create_event(
                 location,
                 video_call_url,
                 cover_photo_id,
+                catalog_suggestion_id,
             ),
         ).fetchone()
     if row is None:

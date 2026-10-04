@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../account/data/notifications_repository.dart';
+import '../../home/data/home_refresh_signal.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../home/presentation/widgets/home_top_bar.dart';
@@ -22,6 +23,8 @@ class _ShellTopBarLoader extends StatefulWidget {
 class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
   String _centerTitle = 'La Nonna';
   var _unreadCount = 0;
+  SelectedBabyStore? _babyStore;
+  HomeRefreshSignal? _babyRefresh;
 
   @override
   void initState() {
@@ -29,15 +32,39 @@ class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
     _refresh();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final store = context.read<SelectedBabyStore>();
+    if (_babyStore != store) {
+      _babyStore?.removeListener(_onBabyContextChanged);
+      _babyStore = store;
+      _babyStore!.addListener(_onBabyContextChanged);
+    }
+    final refresh = context.read<HomeRefreshSignal>();
+    if (_babyRefresh != refresh) {
+      _babyRefresh?.removeListener(_onBabyContextChanged);
+      _babyRefresh = refresh;
+      _babyRefresh!.addListener(_onBabyContextChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    _babyStore?.removeListener(_onBabyContextChanged);
+    _babyRefresh?.removeListener(_onBabyContextChanged);
+    super.dispose();
+  }
+
+  void _onBabyContextChanged() {
+    if (mounted) _refresh();
+  }
+
   Future<void> _refresh() async {
     try {
       final store = context.read<SelectedBabyStore>();
-      final babies = await context.read<HomeRepository>().listBabies();
-      final selectedId = store.selectedBabyId;
-      final baby = selectedId != null
-          ? babies.where((b) => b.id == selectedId).firstOrNull
-          : null;
-      final resolved = baby ?? (babies.isNotEmpty ? babies.first : null);
+      final resolved =
+          await context.read<HomeRepository>().resolveSelectedBaby(store);
       final unread = await context.read<NotificationsRepository>().unreadCount();
       if (mounted) {
         setState(() {

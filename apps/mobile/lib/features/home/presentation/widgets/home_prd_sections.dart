@@ -30,7 +30,11 @@ class HomePrdSections extends StatelessWidget {
           items: summary.systemAnnouncements,
           onDismissed: onRefresh,
         ),
-        if (teasers != null) HomeTeasersSection(teasers: teasers),
+        if (teasers != null)
+          HomeTeasersSection(
+            teasers: teasers,
+            onSignedUrlError: onRefresh,
+          ),
         if (teasers != null) ...[
           HomeRegistryHighlightsList(items: teasers.registryHighlights),
           HomeRecentPurchasesSection(

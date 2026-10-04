@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/router/deep_link_navigation.dart';
+import '../../../core/widgets/app_semantics.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../data/notifications_repository.dart';
 
@@ -32,10 +33,12 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return PrototypeSubpageScaffold(
-      includeShellTopBar: true,
-      title: 'Notifications',
-      body: _loading
+    return AppSemantics.container(
+      'notifications_inbox',
+      PrototypeSubpageScaffold(
+        includeShellTopBar: true,
+        title: 'Notifications',
+        body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _items.isEmpty
               ? const Center(child: Text('No notifications yet'))
@@ -66,6 +69,7 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
                     },
                   ),
                 ),
+      ),
     );
   }
 }

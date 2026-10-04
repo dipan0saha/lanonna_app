@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
@@ -21,6 +22,7 @@ import 'core/router/deep_link_navigation.dart';
 import 'features/onboarding/domain/onboarding_routes.dart';
 import 'core/router/router_refresh.dart';
 import 'core/theme/app_theme.dart';
+import 'core/version/app_version_gate.dart';
 import 'core/widgets/app_offline_wrapper.dart';
 import 'firebase_options.dart';
 
@@ -43,6 +45,11 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  const maestroSemantics =
+      kDebugMode || bool.fromEnvironment('MAESTRO_SEMANTICS');
+  if (maestroSemantics) {
+    SemanticsBinding.instance.ensureSemantics();
+  }
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await activateFirebaseAppCheck();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
@@ -129,8 +136,10 @@ class _LaNonnaAppState extends State<LaNonnaApp> {
       ],
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: _router,
-      builder: (context, child) => AppOfflineWrapper(
-        child: child ?? const SizedBox.shrink(),
+      builder: (context, child) => AppVersionGate(
+        child: AppOfflineWrapper(
+          child: child ?? const SizedBox.shrink(),
+        ),
       ),
     );
   }

@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../core/auth/auth_repository.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/validation/form_validators.dart';
+import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../onboarding/data/onboarding_form_drafts.dart';
 import '../../invitations/data/invitations_repository.dart';
@@ -93,11 +94,14 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
     );
   }
 
-  String? _resolveBabyId() {
+  Future<String?> _resolveBabyId() async {
     if (_isOnboarding) {
       return context.read<OnboardingCoordinator>().createdBabyId;
     }
-    return context.read<SelectedBabyStore>().selectedBabyId;
+    final baby = await context.read<HomeRepository>().resolveOwnerBaby(
+      context.read<SelectedBabyStore>(),
+    );
+    return baby?.id;
   }
 
   @override
@@ -139,7 +143,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
   }
 
   Future<void> _checkMembershipForRow(int index) async {
-    final babyId = _resolveBabyId();
+    final babyId = await _resolveBabyId();
     final email = _rows[index].emailController.text.trim();
     if (babyId == null || email.isEmpty || validateEmail(email) != null) {
       setState(() => _rows[index].membershipHint = null);
@@ -166,7 +170,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
   }
 
   Future<void> _finish({required bool sendInvites}) async {
-    final babyId = _resolveBabyId();
+    final babyId = await _resolveBabyId();
     if (babyId == null) {
       setState(() => _error = 'Baby profile missing.');
       return;

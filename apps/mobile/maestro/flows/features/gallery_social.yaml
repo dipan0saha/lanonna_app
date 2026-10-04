@@ -1,0 +1,30 @@
+appId: com.lanonna.lanonna
+---
+- runFlow: ../subflows/ensure_signed_in.yaml
+- runFlow: ../subflows/ensure_primary_baby.yaml
+- tapOn: ".*Tab 2 of 5.*"
+- tapOn:
+    id: gallery_photo_first
+- extendedWaitUntil:
+    visible:
+      id: gallery_photo_squish
+    timeout: 15000
+- tapOn:
+    id: gallery_photo_squish
+- scrollUntilVisible:
+    element: "COMMENTS"
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: gallery_photo_comment
+- inputText: "Maestro comment"
+- hideKeyboard
+- tapOn:
+    id: gallery_comment_send
+- scrollUntilVisible:
+    element:
+      id: gallery_comment_latest
+    direction: DOWN
+    timeout: 60000
+- assertVisible:
+    id: gallery_comment_latest

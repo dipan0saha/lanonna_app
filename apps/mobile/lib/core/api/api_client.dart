@@ -8,6 +8,26 @@ import 'api_exception.dart';
 typedef IdTokenProvider = Future<String?> Function();
 typedef AppCheckTokenProvider = Future<String?> Function();
 
+String formatApiErrorDetail(Object? detail) {
+  if (detail == null) return '';
+  if (detail is String) return detail;
+  if (detail is List) {
+    final parts = <String>[];
+    for (final entry in detail) {
+      if (entry is Map) {
+        final msg = entry['msg'];
+        if (msg != null) {
+          parts.add(msg.toString());
+          continue;
+        }
+      }
+      parts.add(entry.toString());
+    }
+    if (parts.isNotEmpty) return parts.join('; ');
+  }
+  return detail.toString();
+}
+
 class ApiClient {
   ApiClient({
     required IdTokenProvider idTokenProvider,
@@ -97,7 +117,8 @@ class ApiClient {
     try {
       final decoded = jsonDecode(response.body);
       if (decoded is Map && decoded['detail'] != null) {
-        message = decoded['detail'].toString();
+        final formatted = formatApiErrorDetail(decoded['detail']);
+        if (formatted.isNotEmpty) message = formatted;
       }
     } catch (_) {}
     throw ApiException(message, statusCode: response.statusCode);
@@ -144,7 +165,8 @@ class ApiClient {
     try {
       final decoded = jsonDecode(response.body);
       if (decoded is Map && decoded['detail'] != null) {
-        message = decoded['detail'].toString();
+        final formatted = formatApiErrorDetail(decoded['detail']);
+        if (formatted.isNotEmpty) message = formatted;
       }
     } catch (_) {}
     throw ApiException(message, statusCode: response.statusCode);

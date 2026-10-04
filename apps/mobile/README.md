@@ -8,7 +8,7 @@ flutter pub get
 flutter run --dart-define-from-file=flavors/dev.json
 ```
 
-Dev API default: `https://api-1008830071001.us-central1.run.app` (override in `flavors/dev.json`).
+Dev API default: `https://api-r27szgit5q-uc.a.run.app` (override in `flavors/dev.json`).
 
 **Package:** `lanonna` · **Bundle ID:** `com.lanonna.lanonna`
 

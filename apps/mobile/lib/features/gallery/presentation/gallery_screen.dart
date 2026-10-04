@@ -3,11 +3,16 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_client.dart';
-import '../../../core/api/display_photo_upload.dart';
+import '../../../core/api/api_exception.dart';
+import '../../../core/widgets/app_semantics.dart';
+import 'upload/run_gallery_photo_upload.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
+import '../../home/data/home_refresh_signal.dart';
 import '../../home/data/home_repository.dart';
+import '../../home/presentation/baby_context_reload.dart';
+import '../../home/data/home_summary_result.dart';
 import '../../home/data/models/home_summary.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../shell/presentation/shell_tab_layout.dart';
@@ -31,11 +36,12 @@ class GalleryScreen extends StatefulWidget {
   State<GalleryScreen> createState() => _GalleryScreenState();
 }
 
-class _GalleryScreenState extends State<GalleryScreen> {
+class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
   BabySummary? _baby;
   List<PhotoSummary> _photos = [];
   List<HomeActivityItem> _activity = [];
   String? _error;
+  String? _summaryError;
   var _loading = true;
   var _uploading = false;
 
@@ -65,10 +71,26 @@ class _GalleryScreenState extends State<GalleryScreen> {
     _load();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    registerBabyContextListeners();
+  }
+
+  @override
+  void dispose() {
+    disposeBabyContextListeners();
+    super.dispose();
+  }
+
+  @override
+  void onBabyContextReload() => _load();
+
   Future<void> _load() async {
     setState(() {
       _loading = true;
       _error = null;
+      _summaryError = null;
     });
     try {
       final homeRepo = context.read<HomeRepository>();
@@ -85,14 +107,22 @@ class _GalleryScreenState extends State<GalleryScreen> {
         return;
       }
       final photos = await galleryRepo.listPhotos(baby.id, sort: _apiSort);
-      HomeSummary? summary;
+      List<HomeActivityItem> activity = [];
+      String? summaryError;
       if (baby.role == 'owner' && _isAllMode) {
-        summary = await homeRepo.fetchHomeSummary(baby.id);
+        final result = await homeRepo.fetchHomeSummary(baby.id);
+        switch (result) {
+          case HomeSummaryLoaded loaded:
+            activity = loaded.summary.recentActivity;
+          case HomeSummaryFailed failed:
+            summaryError = _summaryErrorMessage(failed.error);
+        }
       }
       setState(() {
         _baby = baby;
         _photos = photos;
-        _activity = summary?.recentActivity ?? [];
+        _activity = activity;
+        _summaryError = summaryError;
         _loading = false;
       });
     } catch (e) {
@@ -105,6 +135,11 @@ class _GalleryScreenState extends State<GalleryScreen> {
 
   bool get _isOwner => _baby?.role == 'owner';
 
+  String _summaryErrorMessage(Object e) {
+    if (e is ApiException) return e.message;
+    return e.toString();
+  }
+
   Future<void> _onAddPhoto() async {
     final baby = _baby;
     if (baby == null || !_isOwner || _uploading) return;
@@ -112,13 +147,15 @@ class _GalleryScreenState extends State<GalleryScreen> {
     if (file == null) return;
     setState(() => _uploading = true);
     try {
-      final upload = DisplayPhotoUpload(context.read<ApiClient>());
-      await upload.uploadGalleryPhoto(
+      await runGalleryPhotoUpload(
+        context: context,
         babyProfileId: baby.id,
         imageFile: file,
+        api: context.read<ApiClient>(),
       );
       await _pollUntilReady(baby.id);
       if (mounted) {
+        context.read<HomeRefreshSignal>().notifyHomeShouldRefresh();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Photo uploaded')),
         );
@@ -219,6 +256,15 @@ class _GalleryScreenState extends State<GalleryScreen> {
                     : _buildFilteredEmpty(),
               )
             else ...[
+              if (_summaryError != null)
+                SliverToBoxAdapter(
+                  child: MaterialBanner(
+                    content: Text(_summaryError!),
+                    actions: [
+                      TextButton(onPressed: _load, child: const Text('Retry')),
+                    ],
+                  ),
+                ),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -236,6 +282,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                   photos: _photos,
                   onPhotoTap: (p) =>
                       context.push(GalleryRoutes.photoDetail(p.id)),
+                  onSignedUrlError: _load,
                 ),
               ),
               if (_isAllMode) ...[
@@ -261,16 +308,19 @@ class _GalleryScreenState extends State<GalleryScreen> {
         ),
       ),
       floatingActionButton: _showFab
-          ? FloatingActionButton(
-              key: const Key('upload_photo_fab'),
-              onPressed: _uploading ? null : _onAddPhoto,
-              child: _uploading
-                  ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.add),
+          ? AppSemantics.button(
+              'gallery_upload_fab',
+              FloatingActionButton(
+                key: const Key('upload_photo_fab'),
+                onPressed: _uploading ? null : _onAddPhoto,
+                child: _uploading
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.add),
+              ),
             )
           : null,
     );

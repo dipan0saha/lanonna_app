@@ -1,0 +1,4 @@
+appId: com.lanonna.lanonna
+---
+# Same path as shell flows: carousel → email sign-in → home (provisioned smoke user).
+- runFlow: ../subflows/ensure_signed_in.yaml

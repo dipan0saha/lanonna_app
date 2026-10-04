@@ -1,0 +1,18 @@
+appId: com.lanonna.lanonna
+---
+- runFlow: ../subflows/ensure_signed_in.yaml
+- runFlow: ../subflows/ensure_primary_baby.yaml
+- tapOn: ".*Tab 5 of 5.*"
+- extendedWaitUntil:
+    visible:
+      id: fun_hub
+    timeout: 15000
+- tapOn: "Predictions"
+- extendedWaitUntil:
+    visible: "Boy or Girl?"
+    timeout: 10000
+- tapOn:
+    id: fun_vote_boy
+- extendedWaitUntil:
+    visible: "Your vote: Boy"
+    timeout: 15000

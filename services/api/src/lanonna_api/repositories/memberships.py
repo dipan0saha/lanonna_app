@@ -26,3 +26,20 @@ def list_baby_members(baby_profile_id: uuid.UUID) -> list[dict[str, Any]]:
             (baby_profile_id,),
         ).fetchall()
     return [dict(r) for r in rows]
+
+
+def assert_owner_membership(firebase_uid: str, baby_profile_id: uuid.UUID) -> None:
+    with get_connection() as conn:
+        row = conn.execute(
+            """
+            SELECT 1
+            FROM baby_memberships
+            WHERE baby_profile_id = %s
+              AND firebase_uid = %s
+              AND role = 'owner'
+              AND removed_at IS NULL
+            """,
+            (baby_profile_id, firebase_uid),
+        ).fetchone()
+    if row is None:
+        raise PermissionError("Owner membership required for this baby profile.")

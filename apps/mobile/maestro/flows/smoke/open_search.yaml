@@ -1,0 +1,11 @@
+appId: com.lanonna.lanonna
+---
+- runFlow: ../subflows/ensure_signed_in.yaml
+- tapOn:
+    id: shell_search
+- extendedWaitUntil:
+    visible:
+      id: search_field
+    timeout: 10000
+- assertVisible: "Search photos, events, registry…"
+- back

@@ -23,6 +23,7 @@ class EventCreate(BaseModel):
     location: str | None = None
     video_call_url: str | None = None
     cover_photo_id: uuid.UUID | None = None
+    catalog_suggestion_id: str | None = Field(default=None, max_length=64)
 
 
 class EventUpdate(BaseModel):
@@ -76,6 +77,7 @@ def create_event_route(
             location=body.location,
             video_call_url=body.video_call_url,
             cover_photo_id=body.cover_photo_id,
+            catalog_suggestion_id=body.catalog_suggestion_id,
         )
     except Exception as exc:
         raise map_domain_errors(exc) from exc
@@ -137,6 +139,26 @@ def rsvp_route(
         raise map_domain_errors(exc) from exc
 
 
+class CommentPatch(BaseModel):
+    body: str = Field(min_length=1)
+
+
+@router.patch("/{event_id}/comments/{comment_id}")
+def patch_event_comment(
+    baby_profile_id: uuid.UUID,
+    event_id: uuid.UUID,
+    comment_id: uuid.UUID,
+    body: CommentPatch,
+    user: dict[str, Any] = Depends(current_user),
+) -> dict[str, Any]:
+    try:
+        return calendar_domain.edit_event_comment(
+            user["uid"], baby_profile_id, event_id, comment_id, body.body
+        )
+    except Exception as exc:
+        raise map_domain_errors(exc) from exc
+
+
 @router.post("/{event_id}/comments")
 def create_event_comment(
     baby_profile_id: uuid.UUID,
@@ -147,22 +169,6 @@ def create_event_comment(
     try:
         return calendar_domain.add_event_comment(
             user["uid"], baby_profile_id, event_id, body.body
-        )
-    except Exception as exc:
-        raise map_domain_errors(exc) from exc
-
-
-@router.patch("/{event_id}/comments/{comment_id}")
-def patch_event_comment(
-    baby_profile_id: uuid.UUID,
-    event_id: uuid.UUID,
-    comment_id: uuid.UUID,
-    body: CommentBody,
-    user: dict[str, Any] = Depends(current_user),
-) -> dict[str, Any]:
-    try:
-        return calendar_domain.edit_event_comment(
-            user["uid"], baby_profile_id, event_id, comment_id, body.body
         )
     except Exception as exc:
         raise map_domain_errors(exc) from exc

@@ -61,4 +61,33 @@ class GalleryRepository {
       '/v1/babies/$babyId/photos/$photoId/comments/$commentId',
     );
   }
+
+  Future<void> updateComment(
+    String babyId,
+    String photoId,
+    String commentId,
+    String body,
+  ) async {
+    await _api.patchJson(
+      '/v1/babies/$babyId/photos/$photoId/comments/$commentId',
+      body: {'body': body},
+    );
+  }
+
+  Future<List<PhotoTaggedBaby>> setPhotoTags(
+    String babyId,
+    String photoId,
+    List<String> taggedBabyProfileIds,
+  ) async {
+    final json = await _api.putJson(
+      '/v1/babies/$babyId/photos/$photoId/tags',
+      body: {'tagged_baby_profile_ids': taggedBabyProfileIds},
+    );
+    final tagged = json['tagged_babies'];
+    if (tagged is! List) return [];
+    return tagged
+        .whereType<Map<String, dynamic>>()
+        .map(PhotoTaggedBaby.fromJson)
+        .toList();
+  }
 }

@@ -78,10 +78,7 @@ class _QuickActionTile extends StatelessWidget {
               Text(
                 label,
                 textAlign: TextAlign.center,
-                style: context.textStyles.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
+                style: context.fieldLabelStyle,
               ),
             ],
           ),

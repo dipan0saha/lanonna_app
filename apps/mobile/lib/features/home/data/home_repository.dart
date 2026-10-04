@@ -1,5 +1,7 @@
 import '../../../core/api/api_client.dart';
+import '../../../core/api/api_exception.dart';
 import '../../../core/domain/baby_summary.dart';
+import 'home_summary_result.dart';
 import 'models/home_summary.dart';
 import 'selected_baby_store.dart';
 
@@ -17,6 +19,7 @@ class HomeRepository {
   }
 
   /// Selected baby from [store], or first baby when none selected / id stale.
+  /// Persists the resolved id when the stored selection was missing or invalid.
   Future<BabySummary?> resolveSelectedBaby(SelectedBabyStore store) async {
     final babies = await listBabies();
     if (babies.isEmpty) return null;
@@ -24,7 +27,23 @@ class HomeRepository {
     final match = selectedId != null
         ? babies.where((b) => b.id == selectedId).firstOrNull
         : null;
-    return match ?? babies.first;
+    final resolved = match ?? babies.first;
+    if (selectedId != resolved.id) {
+      await store.setSelectedBabyId(resolved.id);
+    }
+    return resolved;
+  }
+
+  /// Owner baby for owner-only flows: selected baby when owner, else first owned baby.
+  Future<BabySummary?> resolveOwnerBaby(SelectedBabyStore store) async {
+    final babies = await listBabies();
+    final owners = babies.where((b) => b.role == 'owner').toList();
+    if (owners.isEmpty) return null;
+    final selectedId = store.selectedBabyId;
+    final selectedOwner = selectedId != null
+        ? owners.where((b) => b.id == selectedId).firstOrNull
+        : null;
+    return selectedOwner ?? owners.first;
   }
 
   Future<BabySummary> updateBaby(
@@ -47,29 +66,16 @@ class HomeRepository {
     return BabySummary.fromJson(json);
   }
 
-  Future<BabySummary> createBaby({
-    required String name,
-    String? gender,
-    String? expectedBirthDate,
-    String? actualBirthDate,
-    String lifecycleStatus = 'expecting',
-  }) async {
-    final json = await _api.postJson('/v1/babies', body: {
-      'name': name,
-      if (gender != null) 'gender': gender,
-      if (expectedBirthDate != null) 'expected_birth_date': expectedBirthDate,
-      if (actualBirthDate != null) 'actual_birth_date': actualBirthDate,
-      'lifecycle_status': lifecycleStatus,
-    });
-    return BabySummary.fromJson(json);
-  }
-
-  Future<HomeSummary?> fetchHomeSummary(String babyId) async {
+  Future<HomeSummaryResult> fetchHomeSummary(String babyId) async {
     try {
       final json = await _api.getJson('/v1/babies/$babyId/home-summary');
-      return HomeSummary.fromJson(json);
-    } catch (_) {
-      return null;
+      return HomeSummaryLoaded(HomeSummary.fromJson(json));
+    } on ApiException catch (e) {
+      return HomeSummaryFailed(e);
+    } catch (e) {
+      return HomeSummaryFailed(
+        ApiException('Could not read home summary: $e'),
+      );
     }
   }
 

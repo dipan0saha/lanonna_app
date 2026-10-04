@@ -1,0 +1,13 @@
+appId: com.lanonna.lanonna
+---
+# Domain seeds (events, registry, gallery) are on the primary baby profile from fixtures.
+- tapOn:
+    id: shell_baby_switcher
+- extendedWaitUntil:
+    visible: "Switch baby"
+    timeout: 15000
+- tapOn:
+    id: "baby_switcher_${PRIMARY_BABY_SWITCHER_ID}"
+- extendedWaitUntil:
+    notVisible: "Switch baby"
+    timeout: 10000

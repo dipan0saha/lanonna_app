@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/widgets/app_semantics.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
+import '../../home/presentation/baby_context_reload.dart';
 import '../../shell/presentation/shell_tab_layout.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../data/calendar_repository.dart';
@@ -21,7 +23,7 @@ class CalendarScreen extends StatefulWidget {
   State<CalendarScreen> createState() => _CalendarScreenState();
 }
 
-class _CalendarScreenState extends State<CalendarScreen> {
+class _CalendarScreenState extends State<CalendarScreen> with BabyContextReload {
   BabySummary? _baby;
   DateTime _visibleMonth = DateTime(DateTime.now().year, DateTime.now().month);
   List<CalendarEvent> _monthEvents = [];
@@ -36,10 +38,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    registerBabyContextListeners();
+  }
+
+  @override
   void dispose() {
+    disposeBabyContextListeners();
     context.read<CalendarRepository>().removeListener(_onEventsChanged);
     super.dispose();
   }
+
+  @override
+  void onBabyContextReload() => _load();
 
   void _onEventsChanged() => _load();
 
@@ -174,7 +186,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
-                                  'Not sure where to start? See AI-suggested events for this stage.',
+                                  'Not sure where to start? See AI-suggested events by stage and age.',
                                   style: styles.bodyMedium,
                                 ),
                               ),
@@ -241,9 +253,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
           ),
         ),
       floatingActionButton: _isOwner && _baby != null
-          ? FloatingActionButton(
-              onPressed: () => context.push(CalendarRoutes.createEvent),
-              child: const Icon(Icons.add),
+          ? AppSemantics.button(
+              'calendar_create_fab',
+              FloatingActionButton(
+                onPressed: () => context.push(CalendarRoutes.createEvent),
+                child: const Icon(Icons.add),
+              ),
             )
           : null,
     );

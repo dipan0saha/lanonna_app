@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
+import '../../../../core/widgets/app_semantics.dart';
 
 class HomeTopBar extends StatelessWidget {
   const HomeTopBar({
@@ -33,35 +34,47 @@ class HomeTopBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          IconButton(
-            onPressed: onSearchTap,
-            icon: const Icon(Icons.search, size: 20, color: AppColors.muted),
-            tooltip: 'Search',
+          AppSemantics.button(
+            'shell_search',
+            IconButton(
+              onPressed: onSearchTap,
+              icon: const Icon(Icons.search, size: 20, color: AppColors.muted),
+              tooltip: 'Search',
+            ),
           ),
           Expanded(
-            child: GestureDetector(
-              onTap: onProfileTap,
-              behavior: HitTestBehavior.opaque,
-              child: Text(
-                centerTitle,
-                textAlign: TextAlign.center,
-                style: titleStyle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+            child: AppSemantics.button(
+              'shell_baby_switcher',
+              GestureDetector(
+                onTap: onProfileTap,
+                behavior: HitTestBehavior.opaque,
+                child: AppSemantics.container(
+                  'shell_baby_title',
+                  Text(
+                    centerTitle,
+                    textAlign: TextAlign.center,
+                    style: titleStyle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ),
             ),
           ),
           Stack(
             clipBehavior: Clip.none,
             children: [
-              IconButton(
-                onPressed: onNotificationsTap,
-                icon: Icon(
-                  Icons.notifications_outlined,
-                  size: 20,
-                  color: context.brand.shellIconMuted,
+              AppSemantics.button(
+                'shell_notifications',
+                IconButton(
+                  onPressed: onNotificationsTap,
+                  icon: Icon(
+                    Icons.notifications_outlined,
+                    size: 20,
+                    color: context.brand.shellIconMuted,
+                  ),
+                  tooltip: 'Notifications',
                 ),
-                tooltip: 'Notifications',
               ),
               if (showUnreadDot)
                 Positioned(

@@ -5,6 +5,12 @@ abstract final class AppMetrics {
   /// Home hero / welcome cards (prototype shell).
   static const double homeHeroRadius = 20;
   static const double fieldRadius = 12;
+  /// Gap between field label and input (prototype `.field-label`).
+  static const double fieldLabelGap = 6;
+  /// Vertical space between stacked form fields (prototype `.field` margin).
+  static const double formFieldSpacing = 16;
+  static const double fieldContentPaddingHorizontal = 16;
+  static const double fieldContentPaddingVertical = 13;
   static const double buttonRadius = 999;
   static const double buttonMinHeight = 52;
   static const double buttonHorizontalPadding = 24;

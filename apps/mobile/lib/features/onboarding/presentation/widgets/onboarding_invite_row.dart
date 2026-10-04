@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../../core/input/app_text_input_kind.dart';
+import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../models/invite_relationship_option.dart';
@@ -59,9 +61,9 @@ class OnboardingInviteRow extends StatelessWidget {
                 constraints: const BoxConstraints(),
               ),
             ),
-          TextField(
+          AppTextField(
+            kind: AppTextInputKind.personName,
             controller: nameController,
-            textCapitalization: TextCapitalization.words,
             onChanged: (_) => onFieldChanged?.call(),
             decoration: const InputDecoration(
               hintText: 'Name',
@@ -70,7 +72,8 @@ class OnboardingInviteRow extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          TextField(
+          AppTextField(
+            kind: AppTextInputKind.none,
             controller: emailController,
             keyboardType: TextInputType.emailAddress,
             onChanged: (_) => onFieldChanged?.call(),

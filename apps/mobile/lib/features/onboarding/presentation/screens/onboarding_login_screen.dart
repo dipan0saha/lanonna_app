@@ -161,6 +161,7 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
               children: [
                 OnboardingTextField(
                   fieldKey: const Key('onboarding_login_email'),
+                  semanticsId: 'auth_login_email',
                   controller: _emailController,
                   label: 'Email',
                   hint: 'you@email.com',
@@ -171,6 +172,7 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
                 const SizedBox(height: 16),
                 OnboardingPasswordField(
                   fieldKey: const Key('onboarding_login_password'),
+                  semanticsId: 'auth_login_password',
                   controller: _passwordController,
                   label: 'Password',
                   hint: 'Enter your password',
@@ -179,6 +181,7 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
                 const SizedBox(height: 20),
                 OnboardingPrimaryButton(
                   buttonKey: const Key('sign_in_button'),
+                  semanticsId: 'auth_sign_in',
                   label: 'Sign in',
                   isLoading: _busy,
                   onPressed: _busy ? null : _signInEmail,

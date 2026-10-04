@@ -9,7 +9,7 @@ from lanonna_api.app_check import require_app_check
 class _FakeRequest:
     def __init__(self, headers: dict[str, str]) -> None:
         self.headers = headers
-        self.url = type("U", (), {"path": "/v1/me"})()
+        self.url = type("U", (), {"path": "/v1/me/account"})()
 
 
 def test_require_app_check_allows_missing_when_not_enforced():

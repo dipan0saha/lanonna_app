@@ -3,7 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/api/api_error_message.dart';
+import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/media/cached_signed_image.dart';
+import '../../../core/widgets/app_text_field.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
@@ -62,8 +65,18 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       });
     } catch (e) {
       if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(apiErrorMessage(e))),
+      );
       returnToCalendar(context);
     }
+  }
+
+  void _showApiError(Object e) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(apiErrorMessage(e))),
+    );
   }
 
   bool get _isOwner => _baby?.role == 'owner';
@@ -120,25 +133,79 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   Future<void> _setRsvp(String status) async {
     final baby = _baby;
     if (baby == null) return;
-    await context.read<CalendarRepository>().setRsvp(
-      baby.id,
-      widget.eventId,
-      status,
-    );
-    await _load();
+    try {
+      await context.read<CalendarRepository>().setRsvp(
+        baby.id,
+        widget.eventId,
+        status,
+      );
+      await _load();
+    } catch (e) {
+      _showApiError(e);
+    }
   }
 
   Future<void> _addComment() async {
-    final text = _commentController.text.trim();
+    final text = AppTextInputPolicy.normalizeForSubmit(
+      AppTextInputKind.prose,
+      _commentController.text,
+    );
     final baby = _baby;
     if (baby == null || text.isEmpty) return;
-    await context.read<CalendarRepository>().addComment(
-      baby.id,
-      widget.eventId,
-      text,
+    try {
+      await context.read<CalendarRepository>().addComment(
+        baby.id,
+        widget.eventId,
+        text,
+      );
+      _commentController.clear();
+      await _load();
+    } catch (e) {
+      _showApiError(e);
+    }
+  }
+
+  Future<void> _editComment(EventComment comment) async {
+    final baby = _baby;
+    if (baby == null || !comment.isMine) return;
+    final controller = TextEditingController(text: comment.body);
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Edit comment'),
+        content: AppTextField(
+          kind: AppTextInputKind.prose,
+          controller: controller,
+          maxLines: 4,
+          decoration: const InputDecoration(hintText: 'Comment'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Save')),
+        ],
+      ),
     );
-    _commentController.clear();
-    await _load();
+    if (saved != true) {
+      controller.dispose();
+      return;
+    }
+    final text = AppTextInputPolicy.normalizeForSubmit(
+      AppTextInputKind.prose,
+      controller.text,
+    );
+    controller.dispose();
+    if (text.isEmpty) return;
+    try {
+      await context.read<CalendarRepository>().updateComment(
+        baby.id,
+        widget.eventId,
+        comment.id,
+        text,
+      );
+      await _load();
+    } catch (e) {
+      _showApiError(e);
+    }
   }
 
   Future<void> _deleteComment(EventComment comment) async {
@@ -155,12 +222,16 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       ),
     );
     if (ok != true) return;
-    await context.read<CalendarRepository>().deleteComment(
-      baby.id,
-      widget.eventId,
-      comment.id,
-    );
-    await _load();
+    try {
+      await context.read<CalendarRepository>().deleteComment(
+        baby.id,
+        widget.eventId,
+        comment.id,
+      );
+      await _load();
+    } catch (e) {
+      _showApiError(e);
+    }
   }
 
   Future<void> _deleteEvent() async {
@@ -329,9 +400,18 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     title: Text(c.authorDisplayName),
                     subtitle: Text(c.body),
                     trailing: c.isMine
-                        ? IconButton(
-                            icon: const Icon(Icons.delete_outline, size: 20),
-                            onPressed: () => _deleteComment(c),
+                        ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit_outlined, size: 20),
+                                onPressed: () => _editComment(c),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline, size: 20),
+                                onPressed: () => _deleteComment(c),
+                              ),
+                            ],
                           )
                         : null,
                   ),
@@ -344,7 +424,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               child: Row(
                 children: [
                   Expanded(
-                    child: TextField(
+                    child: AppTextField(
+                      kind: AppTextInputKind.prose,
                       controller: _commentController,
                       decoration: const InputDecoration(hintText: 'Add a comment…'),
                       onSubmitted: (_) => _addComment(),

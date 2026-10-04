@@ -252,22 +252,6 @@ def upsert_birthdate_vote(
     return dict(row)
 
 
-def set_vote_anonymous(
-    baby_profile_id: uuid.UUID,
-    firebase_uid: str,
-    is_anonymous: bool,
-) -> None:
-    with get_connection() as conn:
-        conn.execute(
-            """
-            UPDATE votes
-            SET is_anonymous = %s, updated_at = now()
-            WHERE baby_profile_id = %s AND firebase_uid = %s
-            """,
-            (is_anonymous, baby_profile_id, firebase_uid),
-        )
-
-
 def get_caller_votes(
     baby_profile_id: uuid.UUID,
     firebase_uid: str,

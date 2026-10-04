@@ -1,0 +1,18 @@
+appId: com.lanonna.lanonna
+---
+- runFlow: ../subflows/ensure_signed_in.yaml
+- runFlow: ../subflows/ensure_primary_baby.yaml
+- tapOn: ".*Tab 3 of 5.*"
+- extendedWaitUntil:
+    visible: "Upcoming"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      text: ".*Maestro Test Event.*"
+    direction: DOWN
+    timeout: 45000
+- tapOn: ".*Maestro Test Event.*"
+- extendedWaitUntil:
+    visible: ".*Maestro Test Event.*"
+    timeout: 10000
+- back

@@ -2,7 +2,7 @@
 # Smoke: signed URL (API) → PUT to GCS display bucket → Pub/Sub → worker logs.
 set -euo pipefail
 
-API_BASE="${API_BASE_URL:-https://api-1008830071001.us-central1.run.app}"
+API_BASE="${API_BASE_URL:-https://api-r27szgit5q-uc.a.run.app}"
 PROJECT="${GCP_PROJECT_ID:-lanonna-dev}"
 FIREBASE_API_KEY="${FIREBASE_API_KEY:-}"
 TEST_EMAIL="${SMOKE_TEST_EMAIL:-lanonna.dev.smoke@test.com}"

@@ -7,6 +7,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_client.dart';
+import '../../../core/input/app_text_input_kind.dart';
+import '../../../core/widgets/app_labeled_text_field.dart';
 import '../../../core/api/display_photo_upload.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/la_nonna_theme.dart';
@@ -106,7 +108,23 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
   }
 
   Future<void> _save() async {
-    if (_first.text.trim().isEmpty) return;
+    final firstName = AppTextInputPolicy.normalizeForSubmit(
+      AppTextInputKind.personName,
+      _first.text,
+    );
+    if (firstName.isEmpty) return;
+    final lastName = AppTextInputPolicy.normalizeForSubmit(
+      AppTextInputKind.personName,
+      _last.text,
+    );
+    final weightText = AppTextInputPolicy.normalizeForSubmit(
+      AppTextInputKind.prose,
+      _weight.text,
+    );
+    final lengthText = AppTextInputPolicy.normalizeForSubmit(
+      AppTextInputKind.prose,
+      _length.text,
+    );
     setState(() => _saving = true);
     try {
       String? photoId;
@@ -119,13 +137,13 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
       }
       await context.read<AnnouncementRepository>().save(
         widget.babyId,
-        firstName: _first.text.trim(),
-        lastName: _last.text.trim().isEmpty ? null : _last.text.trim(),
+        firstName: firstName,
+        lastName: lastName.isEmpty ? null : lastName,
         gender: _gender,
         birthDate: _formatBirthDate(),
         birthTime: _formatBirthTime(),
-        weightText: _weight.text.trim().isEmpty ? null : _weight.text.trim(),
-        lengthText: _length.text.trim().isEmpty ? null : _length.text.trim(),
+        weightText: weightText.isEmpty ? null : weightText,
+        lengthText: lengthText.isEmpty ? null : lengthText,
         photoId: photoId,
       );
       if (mounted) context.go('/baby/${widget.babyId}/announcement');
@@ -179,18 +197,17 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          TextField(
+          AppLabeledTextField(
             key: const Key('announcement_first_name'),
+            label: 'First name',
+            kind: AppTextInputKind.personName,
             controller: _first,
-            decoration: const InputDecoration(labelText: 'First name'),
-            textCapitalization: TextCapitalization.words,
           ),
-          TextField(
+          AppLabeledTextField(
+            label: 'Last name',
+            kind: AppTextInputKind.personName,
             controller: _last,
-            decoration: const InputDecoration(labelText: 'Last name'),
-            textCapitalization: TextCapitalization.words,
           ),
-          const SizedBox(height: 8),
           Text('Gender', style: context.textStyles.labelLarge),
           Row(
             children: [
@@ -212,13 +229,16 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
             trailing: const Icon(Icons.schedule_outlined, size: 20),
             onTap: _pickTime,
           ),
-          TextField(
+          AppLabeledTextField(
+            label: 'Weight',
+            kind: AppTextInputKind.prose,
             controller: _weight,
-            decoration: const InputDecoration(labelText: 'Weight'),
           ),
-          TextField(
+          AppLabeledTextField(
+            label: 'Length',
+            kind: AppTextInputKind.prose,
             controller: _length,
-            decoration: const InputDecoration(labelText: 'Length'),
+            spacingAfter: 0,
           ),
           const SizedBox(height: 20),
           FilledButton(

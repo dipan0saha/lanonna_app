@@ -17,6 +17,7 @@ import 'features/fun/data/fun_repository.dart';
 import 'features/gallery/data/gallery_repository.dart';
 import 'features/registry/data/registry_repository.dart';
 import 'features/search/data/search_repository.dart';
+import 'features/home/data/home_refresh_signal.dart';
 import 'features/home/data/home_repository.dart';
 import 'features/home/data/selected_baby_store.dart';
 import 'features/invitations/data/invitations_repository.dart';
@@ -69,6 +70,7 @@ Future<Widget> bootstrapLaNonnaApp() async {
     coordinator: coordinator,
   );
   final selectedBabyStore = SelectedBabyStore(prefs);
+  final homeRefreshSignal = HomeRefreshSignal();
   final connectivityService = ConnectivityService();
   await connectivityService.init();
   final routerRefresh = RouterRefreshListenable(
@@ -101,6 +103,7 @@ Future<Widget> bootstrapLaNonnaApp() async {
       Provider<InvitationsRepository>.value(value: invitationsRepository),
       Provider<SearchRepository>.value(value: searchRepository),
       ChangeNotifierProvider<SelectedBabyStore>.value(value: selectedBabyStore),
+      ChangeNotifierProvider<HomeRefreshSignal>.value(value: homeRefreshSignal),
       ChangeNotifierProvider<ConnectivityService>.value(
         value: connectivityService,
       ),

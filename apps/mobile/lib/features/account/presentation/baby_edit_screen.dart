@@ -7,6 +7,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_client.dart';
+import '../../../core/input/app_text_input_kind.dart';
+import '../../../core/widgets/app_labeled_text_field.dart';
 import '../../../core/api/display_photo_upload.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/la_nonna_theme.dart';
@@ -80,7 +82,11 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
   }
 
   Future<void> _save() async {
-    if (_name.text.trim().isEmpty) return;
+    final name = AppTextInputPolicy.normalizeForSubmit(
+      AppTextInputKind.personName,
+      _name.text,
+    );
+    if (name.isEmpty) return;
     setState(() => _saving = true);
     try {
       final dateIso = _date != null ? formatApiDate(_date!) : null;
@@ -92,7 +98,7 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
       }
       await context.read<HomeRepository>().updateBaby(
         widget.babyId,
-        name: _name.text.trim(),
+        name: name,
         gender: _gender,
         expectedBirthDate: !_isBorn ? dateIso : null,
         actualBirthDate: _isBorn ? dateIso : null,
@@ -128,12 +134,11 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
             ),
             const SizedBox(height: 16),
           ],
-          TextField(
+          AppLabeledTextField(
+            label: 'Baby name',
+            kind: AppTextInputKind.personName,
             controller: _name,
-            decoration: const InputDecoration(labelText: 'Baby name'),
-            textCapitalization: TextCapitalization.words,
           ),
-          const SizedBox(height: 12),
           Text('Gender', style: context.textStyles.labelLarge),
           Row(
             children: [

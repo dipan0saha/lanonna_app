@@ -79,9 +79,13 @@ class PushNotificationService {
   Future<void> unregisterOnSignOut() => _unregisterCurrentToken();
 
   Future<void> _registerCurrentToken() async {
-    final token = await FirebaseMessaging.instance.getToken();
-    if (token == null || token.isEmpty) return;
-    await _registerToken(token);
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token == null || token.isEmpty) return;
+      await _registerToken(token);
+    } catch (_) {
+      // App Check / network may block token registration on dev emulators.
+    }
   }
 
   Future<void> _registerToken(String token) async {
@@ -90,11 +94,15 @@ class PushNotificationService {
       return;
     }
     final platform = Platform.isIOS ? 'ios' : 'android';
-    await _notificationsRepo.registerDeviceToken(
-      fcmToken: token,
-      platform: platform,
-    );
-    _lastRegisteredToken = token;
+    try {
+      await _notificationsRepo.registerDeviceToken(
+        fcmToken: token,
+        platform: platform,
+      );
+      _lastRegisteredToken = token;
+    } catch (_) {
+      // Non-fatal for cold start (e.g. App Check not configured on emulator).
+    }
   }
 
   Future<void> _unregisterCurrentToken() async {

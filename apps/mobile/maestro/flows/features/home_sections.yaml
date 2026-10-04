@@ -1,0 +1,6 @@
+appId: com.lanonna.lanonna
+---
+- runFlow: ../subflows/ensure_signed_in.yaml
+- assertVisible:
+    id: home_section_list
+- assertVisible: "Maestro Baby"

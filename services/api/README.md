@@ -2,13 +2,9 @@
 
 Cloud Run service **`api`** in `lanonna-dev`.
 
-## Endpoints (dev)
+**Canonical route list:** [docs/engineering/development.md](../../docs/engineering/development.md).
 
-| Method | Path | Auth |
-|--------|------|------|
-| GET | `/health` | Public |
-| GET | `/v1/me` | Firebase Bearer JWT |
-| GET | `/v1/profile` | Firebase Bearer JWT (upserts `app_users` in Cloud SQL) |
+**Layout:** `src/lanonna_api/` — `routers/`, `domain/`, `repositories/`.
 
 ## Deploy
 
@@ -26,6 +22,12 @@ Uses **Cloud Build** by default (`USE_LOCAL_DOCKER=1` if you have Docker).
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 export ENVIRONMENT=dev GCP_PROJECT_ID=lanonna-dev
-# Optional DB via Cloud SQL proxy + DB_PASSWORD
+# Optional DB via Cloud SQL proxy + DB_PASSWORD (see .env.example)
 uvicorn lanonna_api.main:app --reload --app-dir src
+```
+
+## Tests
+
+```bash
+PYTHONPATH=src pytest -q
 ```

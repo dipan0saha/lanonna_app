@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../config/app_config.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/app_semantics.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -33,11 +34,14 @@ class SettingsScreen extends StatelessWidget {
       title: l10n.settingsTitle,
       body: ListView(
         children: [
-          ListTile(
-            title: Text(l10n.settingsNotifications),
-            subtitle: Text(l10n.settingsNotificationsSubtitle),
-            trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
-            onTap: () => context.push('/account/notification-preferences'),
+          AppSemantics.button(
+            'settings_notifications',
+            ListTile(
+              title: Text(l10n.settingsNotifications),
+              subtitle: Text(l10n.settingsNotificationsSubtitle),
+              trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
+              onTap: () => context.push('/account/notification-preferences'),
+            ),
           ),
           ListTile(
             title: Text(l10n.settingsEditProfile),

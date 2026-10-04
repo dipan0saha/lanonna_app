@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/widgets/app_semantics.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
+import '../../home/presentation/baby_context_reload.dart';
 import '../../shell/presentation/shell_tab_layout.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../../onboarding/presentation/widgets/onboarding_fields.dart';
@@ -19,7 +21,7 @@ class FunScreen extends StatefulWidget {
   State<FunScreen> createState() => _FunScreenState();
 }
 
-class _FunScreenState extends State<FunScreen> {
+class _FunScreenState extends State<FunScreen> with BabyContextReload {
   var _segment = 0;
   BabySummary? _baby;
   var _loading = true;
@@ -29,6 +31,21 @@ class _FunScreenState extends State<FunScreen> {
     super.initState();
     _loadBaby();
   }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    registerBabyContextListeners();
+  }
+
+  @override
+  void dispose() {
+    disposeBabyContextListeners();
+    super.dispose();
+  }
+
+  @override
+  void onBabyContextReload() => _loadBaby();
 
   Future<void> _loadBaby() async {
     final homeRepo = context.read<HomeRepository>();
@@ -42,7 +59,9 @@ class _FunScreenState extends State<FunScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppSemantics.container(
+      'fun_hub',
+      Scaffold(
       key: const Key('gamification_screen'),
       backgroundColor: AppColors.background,
       body: ShellTabLayout(
@@ -82,6 +101,7 @@ class _FunScreenState extends State<FunScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 }

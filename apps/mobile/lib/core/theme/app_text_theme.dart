@@ -55,6 +55,11 @@ abstract final class AppTextTheme {
         height: 1.5,
         color: AppColors.textPrimary,
       ),
+      // Label roles (PRD §5.1):
+      // - labelLarge: CTA on sage (filled primary buttons)
+      // - labelMedium: on-surface emphasis (meta, counts, form labels via fieldLabelStyle)
+      // - labelSmall: muted section caps / helper
+      // Labels on filled accents use labelLarge or onPrimary — not labelMedium.
       labelLarge: GoogleFonts.inter(
         fontSize: 15,
         fontWeight: FontWeight.w600,
@@ -63,7 +68,7 @@ abstract final class AppTextTheme {
       labelMedium: GoogleFonts.inter(
         fontSize: 12,
         fontWeight: FontWeight.w700,
-        color: Colors.white,
+        color: AppColors.textPrimary,
       ),
       labelSmall: GoogleFonts.inter(
         fontSize: 11,

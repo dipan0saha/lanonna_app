@@ -25,16 +25,10 @@ class NameCreate(BaseModel):
 
 class GenderVoteBody(BaseModel):
     gender: str = Field(pattern="^(male|female)$")
-    is_anonymous: bool = True
 
 
 class BirthdateVoteBody(BaseModel):
     predicted_birth_date: date
-    is_anonymous: bool = True
-
-
-class AnonymousPatch(BaseModel):
-    is_anonymous: bool
 
 
 @router.get("/names")
@@ -113,7 +107,6 @@ def put_gender_vote(
             user["uid"],
             baby_profile_id,
             body.gender,
-            body.is_anonymous,
         )
     except Exception as exc:
         raise map_domain_errors(exc) from exc
@@ -130,21 +123,6 @@ def put_birthdate_vote(
             user["uid"],
             baby_profile_id,
             body.predicted_birth_date,
-            body.is_anonymous,
-        )
-    except Exception as exc:
-        raise map_domain_errors(exc) from exc
-
-
-@router.patch("/predictions/anonymous")
-def patch_anonymous(
-    baby_profile_id: uuid.UUID,
-    body: AnonymousPatch,
-    user: dict[str, Any] = Depends(current_user),
-) -> dict[str, Any]:
-    try:
-        return fun_domain.patch_anonymous(
-            user["uid"], baby_profile_id, body.is_anonymous
         )
     except Exception as exc:
         raise map_domain_errors(exc) from exc

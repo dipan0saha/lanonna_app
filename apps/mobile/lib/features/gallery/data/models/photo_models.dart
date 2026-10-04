@@ -34,6 +34,20 @@ class PhotoSummary {
   }
 }
 
+class PhotoTaggedBaby {
+  PhotoTaggedBaby({required this.id, required this.name});
+
+  final String id;
+  final String name;
+
+  factory PhotoTaggedBaby.fromJson(Map<String, dynamic> json) {
+    return PhotoTaggedBaby(
+      id: json['id'] as String,
+      name: json['name'] as String? ?? 'Baby',
+    );
+  }
+}
+
 class PhotoComment {
   PhotoComment({
     required this.id,
@@ -73,6 +87,7 @@ class PhotoDetail {
     required this.squishCount,
     required this.viewerHasSquished,
     required this.comments,
+    required this.taggedBabies,
   });
 
   final String id;
@@ -85,9 +100,11 @@ class PhotoDetail {
   final int squishCount;
   final bool viewerHasSquished;
   final List<PhotoComment> comments;
+  final List<PhotoTaggedBaby> taggedBabies;
 
   factory PhotoDetail.fromJson(Map<String, dynamic> json) {
     final commentsRaw = json['comments'];
+    final taggedRaw = json['tagged_babies'];
     return PhotoDetail(
       id: json['id'] as String,
       status: json['status'] as String? ?? 'ready',
@@ -103,6 +120,12 @@ class PhotoDetail {
           ? commentsRaw
               .whereType<Map<String, dynamic>>()
               .map(PhotoComment.fromJson)
+              .toList()
+          : [],
+      taggedBabies: taggedRaw is List
+          ? taggedRaw
+              .whereType<Map<String, dynamic>>()
+              .map(PhotoTaggedBaby.fromJson)
               .toList()
           : [],
     );

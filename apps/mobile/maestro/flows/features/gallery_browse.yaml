@@ -1,0 +1,16 @@
+appId: com.lanonna.lanonna
+---
+- runFlow: ../subflows/ensure_signed_in.yaml
+- runFlow: ../subflows/ensure_primary_baby.yaml
+- tapOn: ".*Tab 2 of 5.*"
+- extendedWaitUntil:
+    visible:
+      id: gallery_photo_first
+    timeout: 20000
+- tapOn:
+    id: gallery_photo_first
+- extendedWaitUntil:
+    visible:
+      id: gallery_photo_squish
+    timeout: 15000
+- back

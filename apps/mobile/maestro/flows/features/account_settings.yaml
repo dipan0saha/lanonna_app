@@ -1,0 +1,51 @@
+appId: com.lanonna.lanonna
+---
+- runFlow: ../subflows/ensure_signed_in.yaml
+- runFlow: ../subflows/ensure_primary_baby.yaml
+- runFlow: ../subflows/open_account.yaml
+- scrollUntilVisible:
+    element: ".*Settings.*"
+    direction: DOWN
+    timeout: 45000
+- tapOn: ".*Settings.*"
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 10000
+- tapOn:
+    id: settings_notifications
+- extendedWaitUntil:
+    visible: "Notification preferences"
+    timeout: 15000
+    optional: true
+- extendedWaitUntil:
+    visible: "Notifications"
+    timeout: 15000
+    optional: true
+- back
+- back
+- extendedWaitUntil:
+    visible: "My Account"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: account_sign_out
+    direction: UP
+    timeout: 30000
+- tapOn:
+    id: account_sign_out
+- extendedWaitUntil:
+    notVisible: ".*Tab 1 of 5.*"
+    timeout: 45000
+- extendedWaitUntil:
+    visible: "I already have an account"
+    timeout: 15000
+    optional: true
+- extendedWaitUntil:
+    visible: "Welcome back"
+    timeout: 5000
+    optional: true
+- extendedWaitUntil:
+    visible: "Skip"
+    timeout: 5000
+    optional: true
+- assertNotVisible: ".*Tab 1 of 5.*"

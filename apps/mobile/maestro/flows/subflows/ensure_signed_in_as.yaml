@@ -1,0 +1,40 @@
+appId: com.lanonna.lanonna
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: ".*Tab 1 of 5.*"
+    timeout: 45000
+    optional: true
+- extendedWaitUntil:
+    visible: "I already have an account"
+    timeout: 30000
+    optional: true
+- extendedWaitUntil:
+    visible: "Welcome back"
+    timeout: 15000
+    optional: true
+- runFlow:
+    when:
+      visible: "I already have an account"
+    commands:
+      - tapOn: "I already have an account"
+      - extendedWaitUntil:
+          visible: "Welcome back"
+          timeout: 20000
+- runFlow:
+    when:
+      visible: "Welcome back"
+    file: sign_in_form_as.yaml
+- extendedWaitUntil:
+    notVisible: "Welcome back"
+    timeout: 45000
+    optional: true
+- runFlow:
+    when:
+      notVisible: ".*Tab 1 of 5.*"
+    file: owner_onboarding_to_home.yaml
+- extendedWaitUntil:
+    visible: ".*Tab 1 of 5.*"
+    timeout: 45000
+- assertVisible: ".*Tab 1 of 5.*"

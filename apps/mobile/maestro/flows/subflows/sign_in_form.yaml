@@ -1,0 +1,13 @@
+appId: com.lanonna.lanonna
+---
+- tapOn:
+    id: auth_login_email
+- eraseText
+- inputText: ${SMOKE_TEST_EMAIL}
+- tapOn:
+    id: auth_login_password
+- eraseText
+- inputText: ${SMOKE_TEST_PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: auth_sign_in

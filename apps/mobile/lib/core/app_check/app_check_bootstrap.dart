@@ -1,23 +1,29 @@
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter/foundation.dart';
 
-/// Activates App Check (debug providers in debug builds).
+bool _useDebugAppCheckProvider() =>
+    kDebugMode || bool.fromEnvironment('MAESTRO_SEMANTICS');
+
+/// Activates App Check (debug providers in debug / Maestro builds).
 Future<void> activateFirebaseAppCheck() async {
+  final debugProvider = _useDebugAppCheckProvider();
   await FirebaseAppCheck.instance.activate(
     androidProvider:
-        kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
-    appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
+        debugProvider ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+    appleProvider:
+        debugProvider ? AppleProvider.debug : AppleProvider.appAttest,
   );
-  if (kDebugMode) {
+  if (debugProvider) {
     try {
       final token = await FirebaseAppCheck.instance.getToken();
       if (token != null) {
-        debugPrint(
+        // `print` so Maestro release builds still emit the token in logcat.
+        print(
           'Firebase App Check debug token (register in Firebase Console → App Check): $token',
         );
       }
     } catch (e) {
-      debugPrint('App Check token not ready yet: $e');
+      print('App Check token not ready yet: $e');
     }
   }
 }

@@ -1,0 +1,27 @@
+appId: com.lanonna.lanonna
+---
+# Exercises owner create-event form; seeded event visibility is covered in calendar_upcoming.yaml.
+- runFlow: ../subflows/ensure_signed_in.yaml
+- runFlow: ../subflows/ensure_primary_baby.yaml
+- tapOn: ".*Tab 3 of 5.*"
+- extendedWaitUntil:
+    visible:
+      id: calendar_create_fab
+    timeout: 15000
+- tapOn:
+    id: calendar_create_fab
+- extendedWaitUntil:
+    visible: "New event"
+    timeout: 10000
+- tapOn:
+    id: calendar_event_title
+- inputText: "Maestro Calendar Event"
+- hideKeyboard
+- tapOn:
+    id: calendar_event_save
+- extendedWaitUntil:
+    notVisible: "New event"
+    timeout: 20000
+- assertVisible:
+    id: calendar_create_fab
+- assertVisible: "Upcoming"

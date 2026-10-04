@@ -1,0 +1,42 @@
+appId: com.lanonna.lanonna
+---
+- runFlow: ../subflows/ensure_signed_in.yaml
+- runFlow: ../subflows/ensure_primary_baby.yaml
+- tapOn: ".*Tab 4 of 5.*"
+- extendedWaitUntil:
+    visible: "Registry"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      text: ".*Maestro Test Gift.*"
+    direction: DOWN
+    timeout: 45000
+- tapOn:
+    id: registry_create_fab
+- extendedWaitUntil:
+    visible: "Add Registry Item"
+    timeout: 10000
+- tapOn:
+    id: registry_item_name
+- inputText: "Maestro New Gift"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: registry_item_save
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: registry_item_save
+- extendedWaitUntil:
+    notVisible: "Add Registry Item"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      text: ".*Maestro New Gift.*"
+    direction: DOWN
+    timeout: 45000
+- tapOn: ".*Maestro New Gift.*"
+- extendedWaitUntil:
+    visible: ".*Maestro New Gift.*"
+    timeout: 10000
+- back

@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/api/api_error_message.dart';
+import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/media/cached_signed_image.dart';
+import '../../../core/widgets/app_text_field.dart';
+import '../../../core/widgets/app_semantics.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../../core/theme/la_nonna_theme.dart';
@@ -50,6 +54,10 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
   List<String> _photoIds = [];
   var _loading = true;
   var _editingCaption = false;
+  var _signedUrlRetried = false;
+  var _savingTags = false;
+  List<BabySummary> _memberBabies = [];
+  Set<String> _taggedBabyIds = {};
   final _captionController = TextEditingController();
   final _commentController = TextEditingController();
 
@@ -80,17 +88,22 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       final photos = await galleryRepo.listPhotos(baby.id);
       final detail = await galleryRepo.fetchPhoto(baby.id, widget.photoId);
       _captionController.text = detail.caption ?? '';
+      final memberBabies = baby.role == 'owner'
+          ? await homeRepo.listBabies()
+          : <BabySummary>[];
       setState(() {
         _baby = baby;
         _detail = detail;
         _photoIds = photos.map((p) => p.id).toList();
+        _memberBabies = memberBabies;
+        _taggedBabyIds = detail.taggedBabies.map((t) => t.id).toSet();
         _loading = false;
       });
     } catch (e) {
       setState(() => _loading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not load photo: $e')),
+          SnackBar(content: Text(apiErrorMessage(e))),
         );
       }
     }
@@ -98,42 +111,139 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
 
   bool get _isOwner => _baby?.role == 'owner';
 
+  void _showApiError(Object e) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(apiErrorMessage(e))),
+    );
+  }
+
   Future<void> _saveCaption() async {
     final baby = _baby;
     final detail = _detail;
     if (baby == null || detail == null) return;
-    await context.read<GalleryRepository>().updateCaption(
-      baby.id,
-      detail.id,
-      _captionController.text.trim().isEmpty
-          ? null
-          : _captionController.text.trim(),
+    final caption = AppTextInputPolicy.normalizeForSubmit(
+      AppTextInputKind.prose,
+      _captionController.text,
     );
-    setState(() => _editingCaption = false);
-    await _load();
+    try {
+      await context.read<GalleryRepository>().updateCaption(
+        baby.id,
+        detail.id,
+        caption.isEmpty ? null : caption,
+      );
+      setState(() => _editingCaption = false);
+      await _load();
+    } catch (e) {
+      _showApiError(e);
+    }
   }
 
   Future<void> _toggleSquish() async {
     final baby = _baby;
     final detail = _detail;
     if (baby == null || detail == null) return;
-    await context.read<GalleryRepository>().toggleSquish(baby.id, detail.id);
-    await _load();
+    try {
+      await context.read<GalleryRepository>().toggleSquish(baby.id, detail.id);
+      await _load();
+    } catch (e) {
+      _showApiError(e);
+    }
   }
 
   Future<void> _addComment() async {
-    final text = _commentController.text.trim();
+    final text = AppTextInputPolicy.normalizeForSubmit(
+      AppTextInputKind.prose,
+      _commentController.text,
+    );
     if (text.isEmpty) return;
     final baby = _baby;
     final detail = _detail;
     if (baby == null || detail == null) return;
-    await context.read<GalleryRepository>().addComment(
-      baby.id,
-      detail.id,
-      text,
+    try {
+      await context.read<GalleryRepository>().addComment(
+        baby.id,
+        detail.id,
+        text,
+      );
+      _commentController.clear();
+      await _load();
+    } catch (e) {
+      _showApiError(e);
+    }
+  }
+
+  Future<void> _editComment(PhotoComment comment) async {
+    final baby = _baby;
+    final detail = _detail;
+    if (baby == null || detail == null || !comment.isMine) return;
+    final controller = TextEditingController(text: comment.body);
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Edit comment'),
+        content: AppTextField(
+          kind: AppTextInputKind.prose,
+          controller: controller,
+          maxLines: 4,
+          decoration: const InputDecoration(hintText: 'Comment'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Save')),
+        ],
+      ),
     );
-    _commentController.clear();
-    await _load();
+    if (saved != true) {
+      controller.dispose();
+      return;
+    }
+    final text = AppTextInputPolicy.normalizeForSubmit(
+      AppTextInputKind.prose,
+      controller.text,
+    );
+    controller.dispose();
+    if (text.isEmpty) return;
+    try {
+      await context.read<GalleryRepository>().updateComment(
+        baby.id,
+        detail.id,
+        comment.id,
+        text,
+      );
+      await _load();
+    } catch (e) {
+      _showApiError(e);
+    }
+  }
+
+  Future<void> _savePhotoTags() async {
+    final baby = _baby;
+    final detail = _detail;
+    if (baby == null || detail == null || !_isOwner || _savingTags) return;
+    setState(() => _savingTags = true);
+    try {
+      final tagged = await context.read<GalleryRepository>().setPhotoTags(
+        baby.id,
+        detail.id,
+        _taggedBabyIds.toList(),
+      );
+      if (mounted) {
+        setState(() {
+          _taggedBabyIds = tagged.map((t) => t.id).toSet();
+        });
+      }
+    } catch (e) {
+      _showApiError(e);
+    } finally {
+      if (mounted) setState(() => _savingTags = false);
+    }
+  }
+
+  void _onDisplayUrlError() {
+    if (_signedUrlRetried) return;
+    _signedUrlRetried = true;
+    _load();
   }
 
   Future<void> _deleteComment(PhotoComment comment) async {
@@ -151,12 +261,16 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       ),
     );
     if (ok != true) return;
-    await context.read<GalleryRepository>().deleteComment(
-      baby.id,
-      detail.id,
-      comment.id,
-    );
-    await _load();
+    try {
+      await context.read<GalleryRepository>().deleteComment(
+        baby.id,
+        detail.id,
+        comment.id,
+      );
+      await _load();
+    } catch (e) {
+      _showApiError(e);
+    }
   }
 
   Future<void> _deletePhoto() async {
@@ -183,8 +297,12 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       ),
     );
     if (ok != true) return;
-    await context.read<GalleryRepository>().deletePhoto(baby.id, detail.id);
-    if (mounted) context.pop();
+    try {
+      await context.read<GalleryRepository>().deletePhoto(baby.id, detail.id);
+      if (mounted) context.pop();
+    } catch (e) {
+      _showApiError(e);
+    }
   }
 
   void _goAdjacent(int delta) {
@@ -211,6 +329,8 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       );
     }
     final meta = _formatDate(detail.createdAt);
+    final baby = _baby;
+    final currentBabyId = baby?.id;
     return PrototypeSubpageScaffold(
       includeShellTopBar: true,
       title: 'Photo',
@@ -248,6 +368,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                             imageUrl: detail.displayUrl,
                             cacheKey: 'display-${widget.photoId}',
                             fit: BoxFit.cover,
+                            onSignedUrlError: _onDisplayUrlError,
                           )
                         else
                           ColoredBox(
@@ -290,7 +411,8 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                           Row(
                             children: [
                               Expanded(
-                                child: TextField(
+                                child: AppTextField(
+                                  kind: AppTextInputKind.prose,
                                   controller: _captionController,
                                   decoration: const InputDecoration(
                                     hintText: 'Add a caption…',
@@ -329,19 +451,63 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            OutlinedButton.icon(
-                              onPressed: _toggleSquish,
-                              icon: Icon(
-                                detail.viewerHasSquished
-                                    ? Icons.favorite
-                                    : Icons.favorite_border,
+                            AppSemantics.button(
+                              'gallery_photo_squish',
+                              OutlinedButton.icon(
+                                onPressed: _toggleSquish,
+                                icon: Icon(
+                                  detail.viewerHasSquished
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
+                                ),
+                                label: Text('${detail.squishCount} squishes'),
                               ),
-                              label: Text('${detail.squishCount} squishes'),
                             ),
                             const SizedBox(width: 8),
                             Text('${detail.comments.length} comments'),
                           ],
                         ),
+                        if (_isOwner &&
+                            currentBabyId != null &&
+                            _memberBabies.any((b) => b.id != currentBabyId)) ...[
+                          const SizedBox(height: 16),
+                          Text(
+                            'IN THIS PHOTO',
+                            style: styles.labelSmall?.copyWith(
+                              color: AppColors.muted,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: [
+                              for (final b in _memberBabies)
+                                if (b.id != currentBabyId)
+                                  FilterChip(
+                                    label: Text(b.name),
+                                    selected: _taggedBabyIds.contains(b.id),
+                                    onSelected: (selected) {
+                                      setState(() {
+                                        if (selected) {
+                                          _taggedBabyIds.add(b.id);
+                                        } else {
+                                          _taggedBabyIds.remove(b.id);
+                                        }
+                                      });
+                                      _savePhotoTags();
+                                    },
+                                  ),
+                            ],
+                          ),
+                        ] else if (detail.taggedBabies.isNotEmpty) ...[
+                          const SizedBox(height: 16),
+                          Text(
+                            'In this photo: ${detail.taggedBabies.map((t) => t.name).join(', ')}',
+                            style: styles.bodySmall?.copyWith(color: AppColors.muted),
+                          ),
+                        ],
                         const SizedBox(height: 16),
                         Text(
                           'COMMENTS',
@@ -350,7 +516,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        for (final c in detail.comments)
+                        for (var i = 0; i < detail.comments.length; i++)
                           Padding(
                             padding: const EdgeInsets.only(top: 10),
                             child: Row(
@@ -361,17 +527,39 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        c.authorDisplayName,
+                                        detail.comments[i].authorDisplayName,
                                         style: styles.labelMedium,
                                       ),
-                                      Text(c.body, style: styles.bodyMedium),
+                                      if (i == detail.comments.length - 1)
+                                        AppSemantics.button(
+                                          'gallery_comment_latest',
+                                          Text(
+                                            detail.comments[i].body,
+                                            style: styles.bodyMedium,
+                                          ),
+                                          label: detail.comments[i].body,
+                                        )
+                                      else
+                                        Text(
+                                          detail.comments[i].body,
+                                          style: styles.bodyMedium,
+                                        ),
                                     ],
                                   ),
                                 ),
-                                if (c.isMine)
-                                  IconButton(
-                                    icon: const Icon(Icons.delete_outline, size: 18),
-                                    onPressed: () => _deleteComment(c),
+                                if (detail.comments[i].isMine)
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.edit_outlined, size: 18),
+                                        onPressed: () => _editComment(detail.comments[i]),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete_outline, size: 18),
+                                        onPressed: () => _deleteComment(detail.comments[i]),
+                                      ),
+                                    ],
                                   ),
                               ],
                             ),
@@ -389,17 +577,25 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
               child: Row(
                 children: [
                   Expanded(
-                    child: TextField(
-                      controller: _commentController,
-                      decoration: const InputDecoration(
-                        hintText: 'Add a comment…',
+                    child: AppSemantics.textField(
+                      'gallery_photo_comment',
+                      AppTextField(
+                        kind: AppTextInputKind.prose,
+                        controller: _commentController,
+                        decoration: const InputDecoration(
+                          hintText: 'Add a comment…',
+                        ),
+                        onSubmitted: (_) => _addComment(),
                       ),
-                      onSubmitted: (_) => _addComment(),
                     ),
                   ),
-                  IconButton(
-                    onPressed: _addComment,
-                    icon: const Icon(Icons.send),
+                  AppSemantics.button(
+                    'gallery_comment_send',
+                    IconButton(
+                      onPressed: _addComment,
+                      icon: const Icon(Icons.send),
+                    ),
+                    label: 'Send comment',
                   ),
                 ],
               ),

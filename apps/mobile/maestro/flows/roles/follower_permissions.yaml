@@ -1,0 +1,13 @@
+appId: com.lanonna.lanonna
+---
+- runFlow: ../subflows/ensure_signed_in_as.yaml
+- tapOn: ".*Tab 2 of 5.*"
+- extendedWaitUntil:
+    notVisible:
+      id: gallery_upload_fab
+    timeout: 10000
+- tapOn: ".*Tab 3 of 5.*"
+- extendedWaitUntil:
+    notVisible:
+      id: calendar_create_fab
+    timeout: 10000

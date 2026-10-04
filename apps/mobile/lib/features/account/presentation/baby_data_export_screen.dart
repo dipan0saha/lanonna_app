@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/api/api_error_message.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
+import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../data/account_repository.dart';
 
@@ -26,7 +28,10 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
   }
 
   Future<void> _refresh() async {
-    final babyId = context.read<SelectedBabyStore>().selectedBabyId;
+    final baby = await context.read<HomeRepository>().resolveOwnerBaby(
+      context.read<SelectedBabyStore>(),
+    );
+    final babyId = baby?.id;
     if (babyId == null) {
       setState(() {
         _loading = false;
@@ -38,20 +43,34 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
     try {
       final job = await context.read<AccountRepository>().fetchLatestExport(babyId);
       if (mounted) setState(() => _job = job);
-    } catch (_) {
-      if (mounted) setState(() => _job = null);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _job = null);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(apiErrorMessage(e))),
+        );
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
   Future<void> _requestExport() async {
-    final babyId = context.read<SelectedBabyStore>().selectedBabyId;
+    final baby = await context.read<HomeRepository>().resolveOwnerBaby(
+      context.read<SelectedBabyStore>(),
+    );
+    final babyId = baby?.id;
     if (babyId == null) return;
     setState(() => _requesting = true);
     try {
       final job = await context.read<AccountRepository>().requestExport(babyId);
       if (mounted) setState(() => _job = job);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(apiErrorMessage(e))),
+        );
+      }
     } finally {
       if (mounted) setState(() => _requesting = false);
     }

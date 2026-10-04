@@ -26,6 +26,10 @@ abstract final class AppTheme {
     );
 
     final textTheme = AppTextTheme.build();
+    final fieldLabelStyle = textTheme.labelMedium!.copyWith(
+      fontWeight: FontWeight.w600,
+      color: colorScheme.onSurface,
+    );
 
     return ThemeData(
       useMaterial3: true,
@@ -71,6 +75,14 @@ abstract final class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surface,
+        labelStyle: fieldLabelStyle,
+        floatingLabelStyle: fieldLabelStyle,
+        floatingLabelBehavior: FloatingLabelBehavior.never,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppMetrics.fieldContentPaddingHorizontal,
+          vertical: AppMetrics.fieldContentPaddingVertical,
+        ),
+        hintStyle: textTheme.bodyMedium!.copyWith(color: AppColors.muted),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppMetrics.fieldRadius),
           borderSide: const BorderSide(color: AppColors.border),

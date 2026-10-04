@@ -3,23 +3,27 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 
 class EventSuggestion {
-  EventSuggestion({required this.title, required this.description});
+  EventSuggestion({
+    required this.id,
+    required this.title,
+    required this.description,
+  });
 
+  final String id;
   final String title;
   final String description;
 }
 
-class EventSuggestionsCatalog {
+abstract final class EventSuggestionsCatalog {
   static Map<String, List<EventSuggestion>>? _cache;
 
-  static Future<List<EventSuggestion>> forLifecycle(String lifecycleStatus) async {
+  static Future<List<EventSuggestion>> forTab(String key) async {
     _cache ??= await _load();
-    final key = _stageKey(lifecycleStatus);
-    return _cache![key] ?? _cache!['expecting'] ?? [];
+    return _cache![key] ?? [];
   }
 
-  static String _stageKey(String lifecycle) {
-    switch (lifecycle) {
+  static String defaultTabForLifecycle(String? lifecycleStatus) {
+    switch (lifecycleStatus) {
       case 'born':
       case 'newborn':
         return 'newborn';
@@ -40,6 +44,7 @@ class EventSuggestionsCatalog {
           .whereType<Map<String, dynamic>>()
           .map(
             (m) => EventSuggestion(
+              id: m['id'] as String,
               title: m['title'] as String,
               description: m['description'] as String? ?? '',
             ),

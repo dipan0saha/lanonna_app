@@ -4,16 +4,18 @@ import uuid
 from typing import Any
 
 from lanonna_api.domain import assert_owner_membership
+from lanonna_api.domain.catalog_suggestion_ids import normalize_catalog_suggestion_id
 from lanonna_api.domain.gallery import require_membership
 from lanonna_api.domain.notification_copy import actor_display_name
 from lanonna_api.domain.notifications import (
     FanOutSpec,
     NotificationChannel,
-    enqueue_fan_out,
+    safe_enqueue_fan_out,
 )
 from lanonna_api.repositories.activity_events import insert_activity_event
 from lanonna_api.repositories.babies import get_baby_membership
 from lanonna_api.repositories.registry import (
+    catalog_suggestion_claimed,
     create_purchase,
     create_registry_item,
     delete_purchase,
@@ -55,6 +57,7 @@ def _item_json(row: dict[str, Any]) -> dict[str, Any]:
         "description": row.get("description"),
         "product_url": row.get("product_url"),
         "priority": row["priority"],
+        "catalog_suggestion_id": row.get("catalog_suggestion_id"),
         "is_purchased": purchased,
         "purchase": purchase,
     }
@@ -85,11 +88,15 @@ def create_item(
     description: str | None,
     product_url: str | None,
     priority: int,
+    catalog_suggestion_id: str | None = None,
 ) -> dict[str, Any]:
     assert_owner_membership(firebase_uid, baby_profile_id)
     if not name.strip():
         raise ValueError("Item name is required.")
     priority = max(1, min(5, priority))
+    catalog_id = normalize_catalog_suggestion_id(catalog_suggestion_id)
+    if catalog_id and catalog_suggestion_claimed(baby_profile_id, catalog_id):
+        raise ValueError("This suggestion is already on the registry.")
     upsert_app_user(firebase_uid, None)
     row = create_registry_item(
         baby_profile_id,
@@ -98,6 +105,7 @@ def create_item(
         description=description,
         product_url=product_url,
         priority=priority,
+        catalog_suggestion_id=catalog_id,
     )
     insert_activity_event(
         baby_profile_id,
@@ -112,6 +120,7 @@ def create_item(
         "description": row.get("description"),
         "product_url": row.get("product_url"),
         "priority": row["priority"],
+        "catalog_suggestion_id": row.get("catalog_suggestion_id"),
         "is_purchased": False,
         "purchase": None,
     }
@@ -150,6 +159,10 @@ def claim_purchase(
     item_id: uuid.UUID,
 ) -> dict[str, Any]:
     require_membership(firebase_uid, baby_profile_id)
+    membership = get_baby_membership(firebase_uid, baby_profile_id)
+    if membership is None:
+        raise PermissionError("Membership required.")
+    is_owner = membership["role"] == "owner"
     item = get_registry_item(baby_profile_id, item_id)
     if item is None:
         raise LookupError("Registry item not found.")
@@ -159,25 +172,39 @@ def claim_purchase(
         raise PermissionError("This item is already purchased.")
     upsert_app_user(firebase_uid, None)
     create_purchase(item_id, firebase_uid)
-    insert_activity_event(
-        baby_profile_id,
-        firebase_uid,
-        "registry_purchased",
-        f'Someone is buying "{item["name"]}"',
-        {"registry_item_id": str(item_id)},
-    )
-    actor = actor_display_name(firebase_uid)
-    enqueue_fan_out(
-        FanOutSpec(
+    item_name = item["name"]
+    if is_owner:
+        activity_text = f'Marked "{item_name}" as purchased'
+        actor = actor_display_name(firebase_uid)
+        fan_out = FanOutSpec(
             baby_profile_id=baby_profile_id,
             title="Registry update",
-            body=f'{actor} is buying "{item["name"]}"',
+            body=f'{actor} marked "{item_name}" as purchased',
+            deep_link="/registry",
+            recipient_mode="baby_members",
+            exclude_firebase_uid=firebase_uid,
+            notification_channel=NotificationChannel.REGISTRY,
+        )
+    else:
+        activity_text = f'Someone is buying "{item_name}"'
+        actor = actor_display_name(firebase_uid)
+        fan_out = FanOutSpec(
+            baby_profile_id=baby_profile_id,
+            title="Registry update",
+            body=f'{actor} is buying "{item_name}"',
             deep_link="/registry",
             recipient_mode="baby_owners",
             exclude_firebase_uid=firebase_uid,
             notification_channel=NotificationChannel.REGISTRY,
         )
+    insert_activity_event(
+        baby_profile_id,
+        firebase_uid,
+        "registry_purchased",
+        activity_text,
+        {"registry_item_id": str(item_id)},
     )
+    safe_enqueue_fan_out(fan_out)
     return {"status": "claimed"}
 
 
