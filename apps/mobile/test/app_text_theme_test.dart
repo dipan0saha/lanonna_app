@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/theme/app_colors.dart';
+import 'package:lanonna/core/theme/app_text_theme.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/core/theme/la_nonna_theme.dart';
 
@@ -25,5 +26,12 @@ void main() {
     expect(labelMediumColor, AppColors.textPrimary);
     expect(fieldLabel.fontWeight, FontWeight.w600);
     expect(fieldLabel.color, AppColors.textPrimary);
+  });
+
+  test('fieldInput uses regular weight for typed text', () {
+    final theme = AppTextTheme.build();
+    final input = AppTextTheme.fieldInput(theme);
+    expect(input.fontWeight, FontWeight.w400);
+    expect(input.color, AppColors.textPrimary);
   });
 }

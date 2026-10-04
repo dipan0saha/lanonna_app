@@ -110,6 +110,8 @@ Product UI tokens live under `apps/mobile/lib/core/theme/` (see also PRD §5.1):
 
 `MaterialApp` uses `theme: AppTheme.light` in `main.dart`. **New screens:** import `core/theme/theme.dart`, use `context.textStyles`, `context.brand`, `context.colors`, and `AppMetrics` — do not add inline `GoogleFonts` or one-off hex in features. Shared widgets (`OnboardingHeadline`, `OnboardingPrimaryButton`, home shell) already use this layer.
 
+**Text fields:** Typed input uses `AppTextTheme.fieldInput` (Inter **regular**, w400). Use [`AppTextField`](../../apps/mobile/lib/core/widgets/app_text_field.dart), [`AppLabeledTextField`](../../apps/mobile/lib/core/widgets/app_labeled_text_field.dart), or [`AppTextFormField`](../../apps/mobile/lib/core/widgets/app_text_form_field.dart) — not raw `TextField` / `TextFormField` (theme `bodyLarge` is bold).
+
 ### Reset dev test data (babies + onboarding)
 
 Cloud SQL Auth Proxy + `DB_PASSWORD` (see [migrations/README.md](../../infra/db/migrations/README.md)):

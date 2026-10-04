@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_brand_theme.dart';
+import 'app_text_theme.dart';
 
 /// Access the single app theme from any widget under [MaterialApp].
 extension LaNonnaTheme on BuildContext {
@@ -13,6 +14,9 @@ extension LaNonnaTheme on BuildContext {
         fontWeight: FontWeight.w600,
         color: colors.onSurface,
       );
+
+  /// Typed text inside bordered fields (regular weight).
+  TextStyle get fieldInputStyle => AppTextTheme.fieldInput(textStyles);
 
   ColorScheme get colors => Theme.of(this).colorScheme;
 

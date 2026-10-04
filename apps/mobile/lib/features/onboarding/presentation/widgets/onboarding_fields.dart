@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/input/app_text_input_kind.dart';
 import '../../../../core/widgets/app_semantics.dart';
+import '../../../../core/widgets/app_text_form_field.dart';
 import '../../../../core/theme/app_brand_theme.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
@@ -41,7 +42,6 @@ class OnboardingTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -51,8 +51,9 @@ class OnboardingTextField extends StatelessWidget {
         ],
         _maybeSemanticsField(
           semanticsId: semanticsId,
-          child: TextFormField(
+          child: AppTextFormField(
             key: fieldKey,
+            kind: kind,
             controller: controller,
             obscureText: obscureText,
             keyboardType: keyboardType,
@@ -61,11 +62,6 @@ class OnboardingTextField extends StatelessWidget {
             validator: validator,
             onFieldSubmitted: onFieldSubmitted,
             textInputAction: textInputAction,
-            textCapitalization: AppTextInputPolicy.capitalization(kind),
-            inputFormatters: AppTextInputPolicy.formatters(kind),
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface,
-            ),
             decoration: InputDecoration(hintText: hint),
           ),
         ),
@@ -110,7 +106,7 @@ class _OnboardingPasswordFieldState extends State<OnboardingPasswordField> {
         const SizedBox(height: 8),
         _maybeSemanticsField(
           semanticsId: widget.semanticsId,
-          child: TextFormField(
+          child: AppTextFormField(
             key: widget.fieldKey,
             controller: widget.controller,
             obscureText: _obscure,

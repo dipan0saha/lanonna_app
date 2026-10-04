@@ -80,10 +80,12 @@ abstract final class AppTextTheme {
   }
 
   /// Typed user input inside bordered fields (not labels or hints).
-  static TextStyle fieldInput(TextTheme textTheme) {
-    return textTheme.bodyMedium!.copyWith(
-      color: AppColors.textPrimary,
+  static TextStyle fieldInput(TextTheme _) {
+    return GoogleFonts.inter(
+      fontSize: 15,
       fontWeight: FontWeight.w400,
+      color: AppColors.textPrimary,
+      height: 1.45,
     );
   }
 }
