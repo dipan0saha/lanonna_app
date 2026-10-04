@@ -15,6 +15,16 @@ Notes from real device/emulator QA (including account delete [#388](https://gith
 
 **Do not use** Maestro smoke credentials (`lanonna.dev.smoke@test.com`) for destructive flows (account delete).
 
+### Full-feature validation pair (owner + follower)
+
+From repo root (Cloud SQL proxy on **5433**, `SMOKE_TEST_PASSWORD` in `apps/mobile/maestro/local.env`):
+
+```bash
+./scripts/provision_qa_validation_accounts.sh
+```
+
+Creates **`lanonna.dev.qa.owner@test.com`** (Sarah QA, baby **Parker** + second baby **Jordan**) and **`lanonna.dev.qa.follower@test.com`** (Alex QA, follower on Parker). Seeds calendar event + RSVP, registry needed + purchased item, Fun name options + follower gender vote, event comment; **no fake SQL gallery rows** — run `scripts/seed_qa_gallery_photo.sh` for real GCS uploads (640×480 samples + follower comment). Override emails with `QA_OWNER_EMAIL` / `QA_FOLLOWER_EMAIL`. Ids land in `apps/mobile/maestro/.qa-fixtures.env`. Use these for manual QA; keep Maestro smoke users for automation only.
+
 ---
 
 ## Recommended ways to test on emulator

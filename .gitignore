@@ -54,6 +54,7 @@ terraform.rc
 # Maestro local credentials
 apps/mobile/maestro/local.env
 apps/mobile/maestro/.fixtures.env
+apps/mobile/maestro/.qa-fixtures.env
 
 # Test / coverage
 **/coverage/

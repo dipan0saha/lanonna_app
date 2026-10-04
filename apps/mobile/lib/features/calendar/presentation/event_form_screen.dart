@@ -32,11 +32,13 @@ class EventFormPrefill {
     required this.title,
     required this.description,
     this.catalogSuggestionId,
+    this.initialDate,
   });
 
   final String title;
   final String description;
   final String? catalogSuggestionId;
+  final DateTime? initialDate;
 }
 
 class EventFormScreen extends StatefulWidget {
@@ -46,12 +48,14 @@ class EventFormScreen extends StatefulWidget {
     this.initialTitle,
     this.initialDescription,
     this.initialCatalogSuggestionId,
+    this.initialDate,
   });
 
   final String? eventId;
   final String? initialTitle;
   final String? initialDescription;
   final String? initialCatalogSuggestionId;
+  final DateTime? initialDate;
 
   bool get isEdit => eventId != null;
 
@@ -76,6 +80,13 @@ class _EventFormScreenState extends State<EventFormScreen> {
     super.initState();
     _title.text = widget.initialTitle ?? '';
     _description.text = widget.initialDescription ?? '';
+    if (widget.initialDate != null) {
+      _date = DateTime(
+        widget.initialDate!.year,
+        widget.initialDate!.month,
+        widget.initialDate!.day,
+      );
+    }
     _init();
   }
 

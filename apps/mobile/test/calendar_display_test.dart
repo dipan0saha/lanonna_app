@@ -14,6 +14,16 @@ void main() {
     expect(eventOnLocalMonthDay(utc, DateTime(2026, 10, 1)), isTrue);
   });
 
+  test('eventOnLocalCalendarDay matches local date', () {
+    final utc = DateTime.utc(2026, 10, 15, 12, 0);
+    final local = eventLocalStart(utc);
+    expect(eventOnLocalCalendarDay(utc, local), isTrue);
+    expect(
+      eventOnLocalCalendarDay(utc, local.subtract(const Duration(days: 1))),
+      isFalse,
+    );
+  });
+
   test('eventLocalDayOfMonth returns local day', () {
     final utc = DateTime.utc(2026, 3, 1, 3, 0);
     expect(eventLocalDayOfMonth(utc), eventLocalStart(utc).day);

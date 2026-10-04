@@ -8,6 +8,13 @@ bool eventOnLocalMonthDay(DateTime startsAt, DateTime visibleMonth) {
 
 int eventLocalDayOfMonth(DateTime startsAt) => eventLocalStart(startsAt).day;
 
+bool eventOnLocalCalendarDay(DateTime startsAt, DateTime day) {
+  final local = eventLocalStart(startsAt);
+  return local.year == day.year &&
+      local.month == day.month &&
+      local.day == day.day;
+}
+
 bool isEventStartInPast(DateTime startsAtLocal) {
   return startsAtLocal.isBefore(DateTime.now());
 }

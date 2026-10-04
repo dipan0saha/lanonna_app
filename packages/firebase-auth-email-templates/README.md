@@ -24,7 +24,7 @@ GCP_PROJECT_ID=lanonna-dev bash scripts/sync-firebase-auth-templates.sh apply
 
 CI runs `check` only (validates files; does not call Google APIs).
 
-If `apply` returns `EMAIL_TEMPLATE_UPDATE_NOT_ALLOWED`, paste `verify_email.html` / subject into [Firebase Console → Authentication → Templates → Email address verification](https://console.firebase.google.com/project/lanonna-dev/authentication/emails) (some projects block API template writes).
+If `apply` returns `EMAIL_TEMPLATE_UPDATE_NOT_ALLOWED`, try [Firebase Console → Templates](https://console.firebase.google.com/project/lanonna-dev/authentication/emails). If Console **Save** also fails, **TODO (deferred):** file Firebase Support — see [`scripts/firebase-auth-template-support-request.md`](../../scripts/firebase-auth-template-support-request.md) ([#390](https://github.com/dipan0saha/nonna_app/issues/390)).
 
 ## Console
 

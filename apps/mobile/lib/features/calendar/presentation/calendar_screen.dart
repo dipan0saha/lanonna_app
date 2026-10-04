@@ -15,6 +15,7 @@ import '../data/calendar_repository.dart';
 import '../data/models/calendar_models.dart';
 import '../domain/calendar_routes.dart';
 import 'calendar_display.dart';
+import 'event_form_screen.dart';
 import 'widgets/event_date_chip.dart';
 
 class CalendarScreen extends StatefulWidget {
@@ -99,10 +100,55 @@ class _CalendarScreenState extends State<CalendarScreen> with BabyContextReload 
     }
   }
 
-  Future<void> _openCreateEvent() async {
-    final created = await context.push<bool>(CalendarRoutes.createEvent);
+  Future<void> _openCreateEvent({DateTime? onDate}) async {
+    final created = await context.push<bool>(
+      CalendarRoutes.createEvent,
+      extra: onDate != null
+          ? EventFormPrefill(
+              title: '',
+              description: '',
+              initialDate: onDate,
+            )
+          : null,
+    );
     if (created == true && mounted) {
       await _load();
+    }
+  }
+
+  void _onMonthDayTap(int day) {
+    final tapped = DateTime(_visibleMonth.year, _visibleMonth.month, day);
+    final onDay = _monthEvents
+        .where((e) => eventOnLocalCalendarDay(e.startsAt, tapped))
+        .toList();
+    if (onDay.length == 1) {
+      context.push(CalendarRoutes.eventDetail(onDay.first.id));
+      return;
+    }
+    if (onDay.length > 1) {
+      showModalBottomSheet<void>(
+        context: context,
+        builder: (context) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final event in onDay)
+                ListTile(
+                  title: Text(event.title),
+                  subtitle: Text(_formatDateTime(event.startsAt)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.push(CalendarRoutes.eventDetail(event.id));
+                  },
+                ),
+            ],
+          ),
+        ),
+      );
+      return;
+    }
+    if (_isOwner) {
+      _openCreateEvent(onDate: tapped);
     }
   }
 
@@ -195,6 +241,7 @@ class _CalendarScreenState extends State<CalendarScreen> with BabyContextReload 
                             _MonthGrid(
                               month: _visibleMonth,
                               daysWithEvents: daysWithEvents,
+                              onDayTap: _onMonthDayTap,
                             ),
                           ],
                         ),
@@ -291,7 +338,7 @@ class _CalendarScreenState extends State<CalendarScreen> with BabyContextReload 
           ? AppSemantics.button(
               'calendar_create_fab',
               FloatingActionButton(
-                onPressed: _openCreateEvent,
+                onPressed: () => _openCreateEvent(),
                 child: const Icon(Icons.add),
               ),
             )
@@ -317,46 +364,78 @@ class _MonthGrid extends StatelessWidget {
   const _MonthGrid({
     required this.month,
     required this.daysWithEvents,
+    required this.onDayTap,
   });
 
   final DateTime month;
   final Set<int> daysWithEvents;
+  final ValueChanged<int> onDayTap;
 
   @override
   Widget build(BuildContext context) {
+    final styles = context.textStyles;
+    final now = DateTime.now();
     final first = DateTime(month.year, month.month, 1);
     final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
     final startWeekday = first.weekday % 7;
     final cells = <Widget>[
       for (final label in ['S', 'M', 'T', 'W', 'T', 'F', 'S'])
-        Center(child: Text(label, style: context.textStyles.labelSmall)),
+        Center(child: Text(label, style: styles.labelSmall)),
     ];
     for (var i = 0; i < startWeekday; i++) {
       cells.add(const SizedBox());
     }
     for (var day = 1; day <= daysInMonth; day++) {
       final hasEvent = daysWithEvents.contains(day);
+      final isToday = now.year == month.year &&
+          now.month == month.month &&
+          now.day == day;
       cells.add(
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('$day'),
-            if (hasEvent)
-              Container(
-                width: 6,
-                height: 6,
-                decoration: const BoxDecoration(
-                  color: AppColors.primaryDark,
-                  shape: BoxShape.circle,
-                ),
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => onDayTap(day),
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              decoration: BoxDecoration(
+                color: isToday ? AppColors.primary : null,
+                borderRadius: BorderRadius.circular(10),
               ),
-          ],
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '$day',
+                    style: styles.labelSmall?.copyWith(
+                      fontWeight: isToday ? FontWeight.w800 : null,
+                      color: isToday
+                          ? AppColors.primaryButtonForeground
+                          : AppColors.textPrimary,
+                    ),
+                  ),
+                  if (hasEvent)
+                    Container(
+                      width: 6,
+                      height: 6,
+                      margin: const EdgeInsets.only(top: 2),
+                      decoration: BoxDecoration(
+                        color: isToday
+                            ? AppColors.primaryButtonForeground
+                            : AppColors.primaryDark,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
         ),
       );
     }
     return GridView.count(
       crossAxisCount: 7,
       shrinkWrap: true,
+      primary: false,
       physics: const NeverScrollableScrollPhysics(),
       children: cells,
     );

@@ -1,25 +1,9 @@
 import 'package:flutter/material.dart';
 
-class AiSuggestionTab {
-  const AiSuggestionTab({required this.key, required this.label});
+import 'ai_suggestion_list_card.dart';
 
-  final String key;
-  final String label;
-}
-
-class AiSuggestionListItem {
-  const AiSuggestionListItem({
-    required this.title,
-    required this.description,
-    required this.onAdd,
-    this.semanticsIdentifier,
-  });
-
-  final String title;
-  final String description;
-  final VoidCallback onAdd;
-  final String? semanticsIdentifier;
-}
+export 'ai_suggestion_list_card.dart'
+    show AiSuggestionListItem, AiSuggestionTab;
 
 class AiSuggestionsScaffold extends StatelessWidget {
   const AiSuggestionsScaffold({
@@ -87,28 +71,12 @@ class AiSuggestionsScaffold extends StatelessWidget {
                               ),
                             ],
                           )
-                        : ListView.builder(
+                        : ListView(
                             physics: const AlwaysScrollableScrollPhysics(),
-                            itemCount: items.length,
-                            itemBuilder: (context, index) {
-                              final item = items[index];
-                              final addButton = TextButton(
-                                onPressed: item.onAdd,
-                                child: const Text('+ Add'),
-                              );
-                              final trailing = item.semanticsIdentifier != null
-                                  ? Semantics(
-                                      identifier: item.semanticsIdentifier,
-                                      button: true,
-                                      child: addButton,
-                                    )
-                                  : addButton;
-                              return ListTile(
-                                title: Text(item.title),
-                                subtitle: Text(item.description),
-                                trailing: trailing,
-                              );
-                            },
+                            children: [
+                              AiSuggestionListCard(items: items),
+                              const SizedBox(height: 24),
+                            ],
                           ),
                   ),
           ),

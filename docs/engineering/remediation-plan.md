@@ -54,6 +54,7 @@ Remediation is split into **phases 0–7** (code phases 0–6, then **Phase 7** 
 
 ### P3 — Hygiene
 
+- **TODO (deferred):** Firebase Support — apply auth **email verification** HTML + subject on `lanonna-dev` ([#390](https://github.com/dipan0saha/nonna_app/issues/390) / FR-AUTH-002). CLI + Console blocked (`EMAIL_TEMPLATE_UPDATE_NOT_ALLOWED`). Runbook: `scripts/firebase-auth-template-support-request.md`.
 - Flutter `use_build_context_synchronously`, theme hex in onboarding/invitations.
 - Email-templates README vs sync script template list.
 - Worker `invite_email.py` duplicates DB connect vs `db.py`.

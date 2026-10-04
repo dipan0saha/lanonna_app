@@ -7,6 +7,7 @@ Subcommands:
   follower     — follower user + membership on owner's primary baby
   dual_baby    — second baby on owner (baby switcher tests)
   seeds        — event, registry_item, photo_ready, pending_invite on primary baby
+  qa           — dedicated QA owner/follower + enrichment for manual feature validation
 
 Env:
   SMOKE_TEST_EMAIL / SMOKE_TEST_PASSWORD — owner
@@ -98,6 +99,19 @@ def _ensure_firebase_user(email: str, password: str) -> str:
             email_verified=True,
         )
         return user.uid
+
+
+def _sync_firebase_password(email: str, password: str) -> None:
+    """Always align Firebase password with env (sign-in may succeed with an old password)."""
+    try:
+        import firebase_admin
+        from firebase_admin import auth as firebase_auth
+    except ImportError:
+        return
+    if not firebase_admin._apps:
+        firebase_admin.initialize_app(options={"projectId": "lanonna-dev"})
+    user = firebase_auth.get_user_by_email(email)
+    firebase_auth.update_user(user.uid, password=password, email_verified=True)
 
 
 def _ensure_firebase_email_verified(uid: str) -> None:
@@ -299,10 +313,29 @@ def provision_dual_baby(conn: psycopg.Connection, owner_uid: str) -> uuid.UUID:
     return baby_id
 
 
+def cleanup_baby_gallery(conn: psycopg.Connection, baby_id: uuid.UUID) -> int:
+    """Remove all gallery rows for a baby (QA re-seed; cascades comments/squishes/tags)."""
+    rows = conn.execute(
+        """
+        DELETE FROM photos
+        WHERE baby_profile_id = %s
+        RETURNING id
+        """,
+        (baby_id,),
+    ).fetchall()
+    conn.commit()
+    count = len(rows)
+    if count:
+        print(f"Removed {count} gallery photo row(s) for baby {baby_id}.")
+    return count
+
+
 def provision_domain_seeds(
     conn: psycopg.Connection,
     owner_uid: str,
     baby_id: uuid.UUID,
+    *,
+    include_sql_photo: bool = True,
 ) -> dict[str, str]:
     out: dict[str, str] = {"baby_profile_id": str(baby_id)}
 
@@ -358,34 +391,34 @@ def provision_domain_seeds(
         print("Seeded registry item.")
     out["registry_item_id"] = str(registry_id)
 
-    # Ready photo (paths for signed URL layer; object may be absent in GCS)
-    photo_row = conn.execute(
-        """
-        SELECT id FROM photos
-        WHERE baby_profile_id = %s AND caption = 'Maestro E2E Photo'
-        LIMIT 1
-        """,
-        (baby_id,),
-    ).fetchone()
-    if photo_row:
-        photo_id = photo_row["id"]
-    else:
-        photo_id = uuid.uuid4()
-        display_path = f"display/maestro/{photo_id}.jpg"
-        thumb_path = f"thumbnails/maestro/{photo_id}.jpg"
-        conn.execute(
+    if include_sql_photo:
+        photo_row = conn.execute(
             """
-            INSERT INTO photos (
-                id, baby_profile_id, uploader_firebase_uid,
-                status, display_path, thumb_path,
-                content_type, byte_length, caption
-            )
-            VALUES (%s, %s, %s, 'ready', %s, %s, 'image/jpeg', 1024, 'Maestro E2E Photo')
+            SELECT id FROM photos
+            WHERE baby_profile_id = %s AND caption = 'Maestro E2E Photo'
+            LIMIT 1
             """,
-            (photo_id, baby_id, owner_uid, display_path, thumb_path),
-        )
-        print("Seeded ready photo.")
-    out["photo_id"] = str(photo_id)
+            (baby_id,),
+        ).fetchone()
+        if photo_row:
+            photo_id = photo_row["id"]
+        else:
+            photo_id = uuid.uuid4()
+            display_path = f"display/maestro/{photo_id}.jpg"
+            thumb_path = f"thumbnails/maestro/{photo_id}.jpg"
+            conn.execute(
+                """
+                INSERT INTO photos (
+                    id, baby_profile_id, uploader_firebase_uid,
+                    status, display_path, thumb_path,
+                    content_type, byte_length, caption
+                )
+                VALUES (%s, %s, %s, 'ready', %s, %s, 'image/jpeg', 1024, 'Maestro E2E Photo')
+                """,
+                (photo_id, baby_id, owner_uid, display_path, thumb_path),
+            )
+            print("Seeded ready photo.")
+        out["photo_id"] = str(photo_id)
 
     # Pending invite for follower email (new token each seeds run if missing)
     follower_email = os.environ.get(
@@ -427,6 +460,173 @@ def provision_domain_seeds(
 
     conn.commit()
     return out
+
+
+def provision_qa_enrichment(
+    conn: psycopg.Connection,
+    owner_uid: str,
+    follower_uid: str | None,
+    baby_id: uuid.UUID,
+    event_id: uuid.UUID,
+    registry_needed_id: uuid.UUID,
+) -> None:
+    """Extra SQL fixtures for manual feature validation (non-Maestro QA accounts)."""
+    due = datetime.now(timezone.utc).date() + timedelta(days=120)
+    conn.execute(
+        """
+        UPDATE baby_profiles
+        SET name = 'Parker',
+            gender = 'male',
+            expected_birth_date = %s,
+            lifecycle_status = 'expecting',
+            registry_shipping_address = '123 QA Lane, Austin, TX 78701',
+            updated_at = now()
+        WHERE id = %s
+        """,
+        (due, baby_id),
+    )
+    conn.execute(
+        """
+        UPDATE app_users
+        SET display_name = 'Sarah QA', updated_at = now()
+        WHERE firebase_uid = %s
+        """,
+        (owner_uid,),
+    )
+    if follower_uid:
+        conn.execute(
+            """
+            UPDATE app_users
+            SET display_name = 'Alex QA', updated_at = now()
+            WHERE firebase_uid = %s
+            """,
+            (follower_uid,),
+        )
+
+    for gender, name in (("male", "James"), ("female", "Emma")):
+        row = conn.execute(
+            """
+            SELECT id FROM name_suggestions
+            WHERE baby_profile_id = %s AND suggested_name = %s
+            LIMIT 1
+            """,
+            (baby_id, name),
+        ).fetchone()
+        if not row:
+            conn.execute(
+                """
+                INSERT INTO name_suggestions (
+                    id, baby_profile_id, suggested_by_firebase_uid,
+                    suggested_name, gender
+                )
+                VALUES (%s, %s, %s, %s, %s)
+                """,
+                (uuid.uuid4(), baby_id, owner_uid, name, gender),
+            )
+
+    purchased_row = conn.execute(
+        """
+        SELECT id FROM registry_items
+        WHERE baby_profile_id = %s AND name = 'QA Purchased Stroller'
+        LIMIT 1
+        """,
+        (baby_id,),
+    ).fetchone()
+    if purchased_row:
+        purchased_id = purchased_row["id"]
+    else:
+        purchased_id = uuid.uuid4()
+        conn.execute(
+            """
+            INSERT INTO registry_items (
+                id, baby_profile_id, created_by_firebase_uid,
+                name, description, priority
+            )
+            VALUES (%s, %s, %s, %s, %s, %s)
+            """,
+            (
+                purchased_id,
+                baby_id,
+                owner_uid,
+                "QA Purchased Stroller",
+                "Already claimed for registry Purchased tab",
+                4,
+            ),
+        )
+    if follower_uid:
+        conn.execute(
+            """
+            INSERT INTO registry_purchases (id, registry_item_id, purchased_by_firebase_uid)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (registry_item_id) DO NOTHING
+            """,
+            (uuid.uuid4(), purchased_id, follower_uid),
+        )
+        conn.execute(
+            """
+            INSERT INTO event_rsvps (event_id, firebase_uid, status)
+            VALUES (%s, %s, 'going')
+            ON CONFLICT (event_id, firebase_uid) DO UPDATE
+              SET status = EXCLUDED.status, updated_at = now()
+            """,
+            (event_id, follower_uid),
+        )
+        conn.execute(
+            """
+            INSERT INTO votes (
+                id, baby_profile_id, firebase_uid, vote_type,
+                gender_value, is_anonymous
+            )
+            VALUES (%s, %s, %s, 'gender', 'male', false)
+            ON CONFLICT (baby_profile_id, firebase_uid, vote_type) DO UPDATE
+              SET gender_value = EXCLUDED.gender_value, updated_at = now()
+            """,
+            (uuid.uuid4(), baby_id, follower_uid),
+        )
+
+    conn.execute(
+        """
+        UPDATE registry_items
+        SET description = 'Still needed — follower can claim'
+        WHERE id = %s
+        """,
+        (registry_needed_id,),
+    )
+
+    event_comment = conn.execute(
+        """
+        SELECT id FROM event_comments
+        WHERE event_id = %s AND body = 'QA event comment'
+        LIMIT 1
+        """,
+        (event_id,),
+    ).fetchone()
+    if not event_comment:
+        conn.execute(
+            """
+            INSERT INTO event_comments (
+                id, event_id, author_firebase_uid, body
+            )
+            VALUES (%s, %s, %s, %s)
+            """,
+            (uuid.uuid4(), event_id, owner_uid, "QA event comment"),
+        )
+
+    conn.execute(
+        """
+        UPDATE baby_profiles
+        SET name = 'Jordan', updated_at = now()
+        WHERE id IN (
+            SELECT b.id FROM baby_profiles b
+            JOIN baby_memberships m ON m.baby_profile_id = b.id
+            WHERE m.firebase_uid = %s AND m.role = 'owner'
+              AND b.name = 'Maestro Baby Two' AND b.deleted_at IS NULL
+        )
+        """,
+        (owner_uid,),
+    )
+    conn.commit()
+    print("QA enrichment applied (profile, fun, registry, RSVP, comments).")
 
 
 def _firebase_user(email: str, password: str) -> tuple[str, str]:
@@ -573,9 +773,76 @@ def cmd_all(_: argparse.Namespace) -> None:
     print("Maestro fixtures (all) complete.")
 
 
+def cmd_qa(_: argparse.Namespace) -> None:
+    """Dedicated owner + follower accounts for manual feature validation."""
+    owner_email = os.environ.get(
+        "QA_OWNER_EMAIL", "lanonna.dev.qa.owner@test.com"
+    )
+    follower_email = os.environ.get(
+        "QA_FOLLOWER_EMAIL", "lanonna.dev.qa.follower@test.com"
+    )
+    password = os.environ.get("QA_TEST_PASSWORD") or os.environ.get(
+        "SMOKE_TEST_PASSWORD"
+    )
+    if not password:
+        raise SystemExit("Set QA_TEST_PASSWORD or SMOKE_TEST_PASSWORD.")
+
+    owner_uid = _ensure_firebase_user(owner_email, password)
+    _ensure_firebase_email_verified(owner_uid)
+    follower_uid = _ensure_firebase_user(follower_email, password)
+    _ensure_firebase_email_verified(follower_uid)
+    _sync_firebase_password(owner_email, password)
+    _sync_firebase_password(follower_email, password)
+
+    with connect() as conn:
+        baby_id = provision_owner(conn, owner_uid, owner_email)
+        second_baby_id = provision_dual_baby(conn, owner_uid)
+        provision_follower(
+            conn, follower_uid, follower_email, owner_uid, baby_id
+        )
+        cleanup_baby_gallery(conn, baby_id)
+        out = provision_domain_seeds(
+            conn, owner_uid, baby_id, include_sql_photo=False
+        )
+        provision_qa_enrichment(
+            conn,
+            owner_uid,
+            follower_uid,
+            baby_id,
+            uuid.UUID(out["event_id"]),
+            uuid.UUID(out["registry_item_id"]),
+        )
+        out["second_baby_profile_id"] = str(second_baby_id)
+        out["qa_owner_email"] = owner_email
+        out["qa_follower_email"] = follower_email
+    _write_out(out)
+    print("QA validation accounts ready.")
+    print(f"  Owner:    {owner_email}")
+    print(f"  Follower: {follower_email}")
+    print("  Primary baby: Parker (expecting); second baby: Jordan (switcher).")
+    print("  Gallery: run scripts/seed_qa_gallery_photo.sh after provision.")
+
+
+def cmd_qa_cleanup_gallery(_: argparse.Namespace) -> None:
+    baby_id_raw = os.environ.get("QA_BABY_PROFILE_ID")
+    if not baby_id_raw:
+        raise SystemExit("Set QA_BABY_PROFILE_ID (from maestro/.qa-fixtures.env).")
+    baby_id = uuid.UUID(baby_id_raw)
+    with connect() as conn:
+        cleanup_baby_gallery(conn, baby_id)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Provision Maestro E2E SQL fixtures")
     sub = parser.add_subparsers(dest="cmd", required=True)
+    sub.add_parser(
+        "qa",
+        help="QA owner + follower with enriched fixtures (manual validation)",
+    )
+    sub.add_parser(
+        "qa_cleanup_gallery",
+        help="Delete all photos for QA baby (QA_BABY_PROFILE_ID)",
+    )
     sub.add_parser("all", help="Owner + dual baby + follower + domain seeds")
     sub.add_parser("owner", help="Owner smoke user only")
     sub.add_parser("follower", help="Owner + follower membership")
@@ -587,6 +854,8 @@ def main() -> None:
     )
     args = parser.parse_args()
     handlers = {
+        "qa_cleanup_gallery": cmd_qa_cleanup_gallery,
+        "qa": cmd_qa,
         "all": cmd_all,
         "owner": cmd_owner,
         "follower": cmd_follower,

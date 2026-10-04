@@ -298,6 +298,7 @@ GoRouter createAppRouter(
                           initialTitle: prefill.title,
                           initialDescription: prefill.description,
                           initialCatalogSuggestionId: prefill.catalogSuggestionId,
+                          initialDate: prefill.initialDate,
                         );
                       }
                       return const EventFormScreen();
