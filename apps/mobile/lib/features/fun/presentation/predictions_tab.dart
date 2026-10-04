@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/vote_count_pill.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../data/fun_repository.dart';
@@ -154,7 +155,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
             children: [
               Text('Boy or Girl?', style: context.textStyles.labelLarge),
               const Spacer(),
-              if (total > 0) Chip(label: Text('$total VOTES')),
+              if (total > 0) VoteCountPill(total: total),
             ],
           ),
           const SizedBox(height: 8),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
+import 'package:lanonna/core/widgets/gallery_social_glyphs.dart';
 import 'package:lanonna/features/gallery/data/models/photo_models.dart';
 import 'package:lanonna/features/gallery/presentation/widgets/gallery_photo_grid.dart';
 
@@ -31,7 +32,7 @@ void main() {
 
     expect(find.text('3'), findsOneWidget);
     expect(find.text('2'), findsOneWidget);
-    expect(find.byIcon(Icons.back_hand_outlined), findsOneWidget);
-    expect(find.byIcon(Icons.chat_bubble_outline), findsOneWidget);
+    expect(find.byType(GalleryCommentGlyph), findsOneWidget);
+    expect(find.byType(GallerySquishGlyph), findsOneWidget);
   });
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/media/cached_signed_image.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/gallery_social_glyphs.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../../../core/widgets/app_semantics.dart';
 import '../../data/models/photo_models.dart';
@@ -35,7 +36,7 @@ class GalleryPhotoGrid extends StatelessWidget {
         final tile = GestureDetector(
           onTap: () => onPhotoTap(photo),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -53,24 +54,22 @@ class GalleryPhotoGrid extends StatelessWidget {
                     ),
                   ),
                 if (photo.status != 'pending') ...[
-                  if (photo.commentCount > 0)
-                    Positioned(
-                      left: 4,
-                      bottom: 4,
-                      child: _GalleryTileBadge(
-                        icon: Icons.chat_bubble_outline,
-                        count: photo.commentCount,
-                      ),
+                  Positioned(
+                    left: 5,
+                    bottom: 5,
+                    child: _GalleryTileBadge(
+                      glyph: const GalleryCommentGlyph(),
+                      count: photo.commentCount,
                     ),
-                  if (photo.squishCount > 0)
-                    Positioned(
-                      right: 4,
-                      bottom: 4,
-                      child: _GalleryTileBadge(
-                        icon: Icons.back_hand_outlined,
-                        count: photo.squishCount,
-                      ),
+                  ),
+                  Positioned(
+                    right: 5,
+                    bottom: 5,
+                    child: _GalleryTileBadge(
+                      glyph: const GallerySquishGlyph(),
+                      count: photo.squishCount,
                     ),
+                  ),
                 ],
               ],
             ),
@@ -86,30 +85,31 @@ class GalleryPhotoGrid extends StatelessWidget {
 }
 
 class _GalleryTileBadge extends StatelessWidget {
-  const _GalleryTileBadge({required this.icon, required this.count});
+  const _GalleryTileBadge({required this.glyph, required this.count});
 
-  final IconData icon;
+  final Widget glyph;
   final int count;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(6),
+        color: Colors.black.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 11, color: Colors.white),
-          const SizedBox(width: 2),
+          glyph,
+          const SizedBox(width: 3),
           Text(
             '$count',
             style: const TextStyle(
               color: Colors.white,
               fontSize: 10,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
+              height: 1,
             ),
           ),
         ],
