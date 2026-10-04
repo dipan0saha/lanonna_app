@@ -17,6 +17,7 @@ class OnboardingInviteRow extends StatelessWidget {
     this.onFieldChanged,
     this.onEmailEditingComplete,
     this.membershipHint,
+    this.relationshipOptions = kInviteRelationshipOptions,
   });
 
   final TextEditingController nameController;
@@ -28,6 +29,7 @@ class OnboardingInviteRow extends StatelessWidget {
   final VoidCallback? onFieldChanged;
   final VoidCallback? onEmailEditingComplete;
   final String? membershipHint;
+  final List<InviteRelationshipOption> relationshipOptions;
 
   @override
   Widget build(BuildContext context) {
@@ -101,7 +103,7 @@ class OnboardingInviteRow extends StatelessWidget {
             decoration: const InputDecoration(
               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             ),
-            items: kInviteRelationshipOptions
+            items: relationshipOptions
                 .map(
                   (o) => DropdownMenuItem(
                     value: o,

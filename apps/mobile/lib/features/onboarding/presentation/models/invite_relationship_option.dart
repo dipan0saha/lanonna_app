@@ -10,17 +10,7 @@ class InviteRelationshipOption {
   final bool grantsCoOwner;
 }
 
-const List<InviteRelationshipOption> kInviteRelationshipOptions = [
-  InviteRelationshipOption(
-    pickerLabel: 'Wife',
-    membershipLabel: 'Mother',
-    grantsCoOwner: true,
-  ),
-  InviteRelationshipOption(
-    pickerLabel: 'Husband',
-    membershipLabel: 'Father',
-    grantsCoOwner: true,
-  ),
+const List<InviteRelationshipOption> _followerRelationshipOptions = [
   InviteRelationshipOption(
     pickerLabel: 'Grandma',
     membershipLabel: 'Grandma',
@@ -58,9 +48,42 @@ const List<InviteRelationshipOption> kInviteRelationshipOptions = [
   ),
 ];
 
+/// Owner onboarding batch invite (S07): co-owner via Wife/Husband picker labels.
+const List<InviteRelationshipOption> kInviteRelationshipOptions = [
+  InviteRelationshipOption(
+    pickerLabel: 'Wife',
+    membershipLabel: 'Mother',
+    grantsCoOwner: true,
+  ),
+  InviteRelationshipOption(
+    pickerLabel: 'Husband',
+    membershipLabel: 'Father',
+    grantsCoOwner: true,
+  ),
+  ..._followerRelationshipOptions,
+];
+
+/// Post-onboarding batch invite (`/invite-family`); co-owner via Mother/Father labels.
+const List<InviteRelationshipOption> kAppBatchInviteRelationshipOptions = [
+  InviteRelationshipOption(
+    pickerLabel: 'Mother',
+    membershipLabel: 'Mother',
+    grantsCoOwner: true,
+  ),
+  InviteRelationshipOption(
+    pickerLabel: 'Father',
+    membershipLabel: 'Father',
+    grantsCoOwner: true,
+  ),
+  ..._followerRelationshipOptions,
+];
+
 InviteRelationshipOption inviteRelationshipByPickerLabel(String label) {
-  return kInviteRelationshipOptions.firstWhere(
-    (o) => o.pickerLabel == label,
-    orElse: () => kInviteRelationshipOptions[2],
-  );
+  for (final option in kInviteRelationshipOptions) {
+    if (option.pickerLabel == label) return option;
+  }
+  for (final option in kAppBatchInviteRelationshipOptions) {
+    if (option.pickerLabel == label) return option;
+  }
+  return kInviteRelationshipOptions[2];
 }

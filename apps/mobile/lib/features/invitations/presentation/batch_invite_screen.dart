@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/auth/auth_repository.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_metrics.dart';
 import '../../../core/validation/form_validators.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
@@ -27,12 +28,13 @@ enum BatchInviteMode { onboarding, fromHome }
 
 class _InviteRowState {
   _InviteRowState({
+    required List<InviteRelationshipOption> relationshipOptions,
     String name = '',
     String email = '',
     InviteRelationshipOption? relationship,
   })  : nameController = TextEditingController(text: name),
         emailController = TextEditingController(text: email),
-        relationship = relationship ?? kInviteRelationshipOptions[2];
+        relationship = relationship ?? relationshipOptions[2];
 
   final TextEditingController nameController;
   final TextEditingController emailController;
@@ -52,7 +54,12 @@ class _InviteRowState {
         relationshipPickerLabel: relationship.pickerLabel,
       );
 
-  static _InviteRowState fromDraft(InviteRowDraft draft) => _InviteRowState(
+  static _InviteRowState fromDraft(
+    InviteRowDraft draft,
+    List<InviteRelationshipOption> relationshipOptions,
+  ) =>
+      _InviteRowState(
+        relationshipOptions: relationshipOptions,
         name: draft.name,
         email: draft.email,
         relationship: inviteRelationshipByPickerLabel(draft.relationshipPickerLabel),
@@ -69,7 +76,8 @@ class BatchInviteScreen extends StatefulWidget {
 }
 
 class _BatchInviteScreenState extends State<BatchInviteScreen> {
-  final _rows = <_InviteRowState>[_InviteRowState()];
+  late final List<InviteRelationshipOption> _relationshipOptions;
+  final _rows = <_InviteRowState>[];
   var _synced = false;
   var _busy = false;
   String? _error;
@@ -77,10 +85,15 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
   bool get _isOnboarding => widget.mode == BatchInviteMode.onboarding;
 
   @override
+  void initState() {
+    super.initState();
+    _relationshipOptions =
+        _isOnboarding ? kInviteRelationshipOptions : kAppBatchInviteRelationshipOptions;
+    _rows.add(_InviteRowState(relationshipOptions: _relationshipOptions));
+  }
+
+  @override
   void dispose() {
-    if (_isOnboarding) {
-      _persistDraft();
-    }
     for (final row in _rows) {
       row.dispose();
     }
@@ -88,10 +101,10 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
   }
 
   Future<void> _persistDraft() async {
-    if (!_isOnboarding) return;
+    if (!_isOnboarding || !mounted) return;
     await context.read<OnboardingCoordinator>().saveBatchInviteDraft(
-      BatchInviteDraft(rows: _rows.map((r) => r.toDraft()).toList()),
-    );
+          BatchInviteDraft(rows: _rows.map((r) => r.toDraft()).toList()),
+        );
   }
 
   Future<String?> _resolveBabyId() async {
@@ -99,8 +112,8 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
       return context.read<OnboardingCoordinator>().createdBabyId;
     }
     final baby = await context.read<HomeRepository>().resolveOwnerBaby(
-      context.read<SelectedBabyStore>(),
-    );
+          context.read<SelectedBabyStore>(),
+        );
     return baby?.id;
   }
 
@@ -119,9 +132,13 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
         }
         _rows
           ..clear()
-          ..addAll(draft.rows.map(_InviteRowState.fromDraft));
+          ..addAll(
+            draft.rows.map(
+              (d) => _InviteRowState.fromDraft(d, _relationshipOptions),
+            ),
+          );
         if (_rows.isEmpty) {
-          _rows.add(_InviteRowState());
+          _rows.add(_InviteRowState(relationshipOptions: _relationshipOptions));
         }
         setState(() {});
       }
@@ -129,7 +146,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
   }
 
   void _addRow() {
-    setState(() => _rows.add(_InviteRowState()));
+    setState(() => _rows.add(_InviteRowState(relationshipOptions: _relationshipOptions)));
     _persistDraft();
   }
 
@@ -151,9 +168,9 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
     }
     try {
       final result = await context.read<InvitationsRepository>().checkMembership(
-        babyId,
-        email,
-      );
+            babyId,
+            email,
+          );
       if (!mounted) return;
       setState(() {
         if (result.isMember) {
@@ -169,6 +186,47 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
     }
   }
 
+  List<Map<String, dynamic>> _collectInvitesToSend() {
+    final invites = <Map<String, dynamic>>[];
+    for (final row in _rows) {
+      final email = row.emailController.text.trim();
+      if (email.isEmpty) continue;
+      if (validateEmail(email) != null) continue;
+      if (row.membershipHint == 'Already on the family') continue;
+      if (row.membershipHint == 'Invitation already pending') continue;
+      invites.add({
+        'email': email,
+        'role': row.showOwnerBadge ? 'owner' : 'follower',
+        'relationship_label': row.relationship.membershipLabel,
+      });
+    }
+    return invites;
+  }
+
+  String? _validateBeforeSend() {
+    var sawEmail = false;
+    var sawInvalid = false;
+    for (final row in _rows) {
+      final email = row.emailController.text.trim();
+      if (email.isEmpty) continue;
+      sawEmail = true;
+      if (validateEmail(email) != null) {
+        sawInvalid = true;
+        continue;
+      }
+      if (row.membershipHint == 'Already on the family') continue;
+      if (row.membershipHint == 'Invitation already pending') continue;
+      return null;
+    }
+    if (!sawEmail) {
+      return 'Add at least one email address to send invites.';
+    }
+    if (sawInvalid) {
+      return 'Enter a valid email for each invite row.';
+    }
+    return 'No new invites to send for the emails entered.';
+  }
+
   Future<void> _finish({required bool sendInvites}) async {
     final babyId = await _resolveBabyId();
     if (babyId == null) {
@@ -182,21 +240,13 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
     try {
       await _persistDraft();
       if (sendInvites) {
-        final invites = <Map<String, dynamic>>[];
-        for (final row in _rows) {
-          final email = row.emailController.text.trim();
-          if (email.isEmpty) continue;
-          if (validateEmail(email) != null) continue;
-          if (row.membershipHint == 'Already on the family') continue;
-          invites.add({
-            'email': email,
-            'role': row.showOwnerBadge ? 'owner' : 'follower',
-            'relationship_label': row.relationship.membershipLabel,
-          });
+        final validationError = _validateBeforeSend();
+        final invites = _collectInvitesToSend();
+        if (invites.isEmpty) {
+          setState(() => _error = validationError ?? 'No invites to send.');
+          return;
         }
-        if (invites.isNotEmpty) {
-          await context.read<OnboardingRepository>().sendBatchInvites(babyId, invites);
-        }
+        await context.read<OnboardingRepository>().sendBatchInvites(babyId, invites);
       }
       if (_isOnboarding) {
         await context.read<AuthRepository>().refreshSessionClaims();
@@ -213,73 +263,119 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
     }
   }
 
-  Widget _inviteBody() {
+  Widget _coOwnerHintBanner() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.sageTint,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        _isOnboarding
+            ? 'Selecting Wife or Husband makes that person a co-owner with the same edit access as you.'
+            : '💡 Selecting "Mother" or "Father" makes that person a co-owner of this baby profile, with the same edit access as you.',
+        style: const TextStyle(fontSize: 12, height: 1.5, color: Color(0xFF3a5a2e)),
+      ),
+    );
+  }
+
+  Widget _inviteRows() {
     return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const SizedBox(height: 10),
-          if (!_isOnboarding)
-            Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.sageTint,
-                borderRadius: BorderRadius.circular(12),
-              ),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var i = 0; i < _rows.length; i++)
+          OnboardingInviteRow(
+            nameController: _rows[i].nameController,
+            emailController: _rows[i].emailController,
+            relationship: _rows[i].relationship,
+            relationshipOptions: _relationshipOptions,
+            showOwnerBadge: _rows[i].showOwnerBadge,
+            membershipHint: _rows[i].membershipHint,
+            onRelationshipChanged: (v) {
+              setState(() => _rows[i].relationship = v);
+              _persistDraft();
+            },
+            onRemove: _rows.length > 1 ? () => _removeRow(i) : null,
+            onFieldChanged: _persistDraft,
+            onEmailEditingComplete: () => _checkMembershipForRow(i),
+          ),
+        PrototypeAddAnotherButton(
+          onTap: _busy ? () {} : _addRow,
+          label: _isOnboarding ? 'Add another' : 'Add another person',
+        ),
+        OnboardingPrimaryButton(
+          semanticsId: _isOnboarding ? null : 'batch_invite_send',
+          label: 'Send Invites',
+          isLoading: _busy,
+          onPressed: _busy ? null : () => _finish(sendInvites: true),
+        ),
+        if (_isOnboarding)
+          Center(
+            child: GestureDetector(
+              onTap: _busy ? null : () => _finish(sendInvites: false),
               child: const Text(
-                'Selecting Mother or Father makes that person a co-owner with the same edit access as you.',
-                style: TextStyle(fontSize: 12, color: Color(0xFF3a5a2e)),
-              ),
-            ),
-          const OnboardingHeadline(
-            'Invite family & friends',
-            key: Key('onboarding_invite_title'),
-          ),
-          const SizedBox(height: 8),
-          const OnboardingSupportText(
-            'Add the people you want to share this with. You can always invite more later.',
-          ),
-          const SizedBox(height: 18),
-          for (var i = 0; i < _rows.length; i++)
-            OnboardingInviteRow(
-              nameController: _rows[i].nameController,
-              emailController: _rows[i].emailController,
-              relationship: _rows[i].relationship,
-              showOwnerBadge: _rows[i].showOwnerBadge,
-              membershipHint: _rows[i].membershipHint,
-              onRelationshipChanged: (v) {
-                setState(() => _rows[i].relationship = v);
-                _persistDraft();
-              },
-              onRemove: _rows.length > 1 ? () => _removeRow(i) : null,
-              onFieldChanged: _persistDraft,
-              onEmailEditingComplete: () => _checkMembershipForRow(i),
-            ),
-          PrototypeAddAnotherButton(onTap: _busy ? () {} : _addRow),
-          OnboardingPrimaryButton(
-            label: 'Send Invites',
-            isLoading: _busy,
-            onPressed: _busy ? null : () => _finish(sendInvites: true),
-          ),
-          if (_isOnboarding)
-            Center(
-              child: GestureDetector(
-                onTap: _busy ? null : () => _finish(sendInvites: false),
-                child: const Text(
-                  'Skip for now',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primaryDark,
-                  ),
+                'Skip for now',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primaryDark,
                 ),
               ),
-            )
-          else
-            const SizedBox(height: 8),
-          if (_error != null)
-            Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-          const SizedBox(height: 20),
+            ),
+          )
+        else
+          const SizedBox(height: 8),
+        if (_error != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Text(
+              _error!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  Widget _onboardingBody() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 10),
+        const OnboardingHeadline(
+          'Invite family & friends',
+          key: Key('onboarding_invite_title'),
+        ),
+        const SizedBox(height: 8),
+        const OnboardingSupportText(
+          'Add the people you want to share this with. You can always invite more later.',
+        ),
+        const SizedBox(height: 18),
+        _inviteRows(),
+      ],
+    );
+  }
+
+  Widget _fromHomeBody() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppMetrics.horizontalPadding,
+        8,
+        AppMetrics.horizontalPadding,
+        0,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const OnboardingSupportText(
+            "We'll send each person a private link. It expires in 7 days.",
+          ),
+          const SizedBox(height: 12),
+          _coOwnerHintBanner(),
+          _inviteRows(),
         ],
+      ),
     );
   }
 
@@ -295,13 +391,12 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
           route: OnboardingRoutes.ownerFirstMoment,
           persist: _persistDraft,
         ),
-        body: _inviteBody(),
+        body: SingleChildScrollView(child: _onboardingBody()),
       );
     }
     return PrototypeSubpageScaffold(
-      includeShellTopBar: true,
-      title: 'Invite family',
-      body: SingleChildScrollView(child: _inviteBody()),
+      title: 'Invite Family & Friends',
+      body: SingleChildScrollView(child: _fromHomeBody()),
     );
   }
 }

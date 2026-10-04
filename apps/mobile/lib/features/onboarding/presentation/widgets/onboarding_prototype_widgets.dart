@@ -322,9 +322,14 @@ class PrototypeInlineNameAdd extends StatelessWidget {
 }
 
 class PrototypeAddAnotherButton extends StatelessWidget {
-  const PrototypeAddAnotherButton({super.key, required this.onTap});
+  const PrototypeAddAnotherButton({
+    super.key,
+    required this.onTap,
+    this.label = 'Add another',
+  });
 
   final VoidCallback onTap;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
@@ -339,7 +344,7 @@ class PrototypeAddAnotherButton extends StatelessWidget {
           border: Border.all(color: const Color(0xFFCFCFD1), width: 1.5, style: BorderStyle.solid),
         ),
         child: Text(
-          '+ Add another',
+          '+ $label',
           textAlign: TextAlign.center,
           style: context.textStyles.bodyMedium?.copyWith(
             fontWeight: FontWeight.w600,

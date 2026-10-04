@@ -141,6 +141,18 @@ Manual on emulator (`flutter run` **without** `DEV_AUTO_SIGN_IN_*`):
 
 ---
 
+## Batch invite from home (#401 / FR-INV-008)
+
+Owner signed in on emulator (no auto-login):
+
+1. **My Account** → **Invite family & friends** (or Home invite action / Manage followers → **+ Invite more people**).
+2. Expect **one** top row: back + **Invite Family & Friends** (no baby-name home bar stacked above).
+3. Intro inset matches form (`AppMetrics.horizontalPadding`); private link expires in **7 days**; sage 💡 hint for **Mother/Father** co-owner.
+4. Relationship dropdown shows **Mother/Father** (not Wife/Husband); co-owner row badge when selected.
+5. Send with a valid email → returns to previous screen; pending invite visible under followers when applicable.
+
+---
+
 ## Email verification (FR-AUTH-002 / #390)
 
 1. Apply templates to dev: `bash scripts/sync-firebase-auth-templates.sh apply` (from repo root).
