@@ -25,6 +25,7 @@ String? normalizeAppDeepLinkPath(String? deepLink) {
     '/notifications/',
     '/search',
     '/invite-family',
+    '/invite-accept',
   ];
   final ok = allowedPrefixes.any((p) => path == p || path.startsWith(p));
   if (!ok) return null;

@@ -30,5 +30,12 @@ void main() {
     test('allows /settings', () {
       expect(normalizeAppDeepLinkPath('/settings'), '/settings');
     });
+
+    test('allows invite accept for FCM and inbox deep links', () {
+      expect(
+        normalizeAppDeepLinkPath('/invite-accept?token=abc'),
+        '/invite-accept?token=abc',
+      );
+    });
   });
 }

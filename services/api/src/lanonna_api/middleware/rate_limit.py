@@ -9,6 +9,8 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
 # Per-IP sliding window for sensitive routes (invite batch + photo init).
+# In-process only: each Cloud Run instance has its own bucket (effective limit scales
+# with instance count). See docs/engineering/development.md § API rate limiting.
 _LIMITED_PREFIXES = (
     "/v1/photos/init",
     "/v1/babies/",

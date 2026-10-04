@@ -120,6 +120,14 @@ DB_PASSWORD="$PGPASSWORD" DB_PORT=5433 python clear_dev_test_data.py \\
 
 Clears babies and related rows for that user and clears `owner_onboarding_completed_at` so you can run owner onboarding again. Use `--dry-run` first; `--verbose` lists GCS `display/` paths (objects are not deleted from GCS).
 
+## API rate limiting
+
+Sensitive routes (`POST /v1/photos/init`, `POST …/invitations/batch`) use an **in-process** per-IP sliding window in `middleware/rate_limit.py` (30 requests / 60s per path per instance). Cloud Run scales horizontally, so the **effective** cap is roughly `30 × instance count` until you add a shared limiter (e.g. Cloud Armor, Redis/Memorystore) at the edge. No shared limiter is deployed in v1; document and monitor before wide public beta.
+
+## Firebase JWT audiences
+
+API verifies Firebase ID tokens with `firebase_admin.auth.verify_id_token`, then checks the token `aud` claim against `Settings.firebase_audience_allowlist()` (`GCP_PROJECT_ID` when `FIREBASE_AUDIENCES` is unset). Sideloaded dev APKs and emulators using the same Firebase project are unaffected. Misconfigured `FIREBASE_AUDIENCES` causes 401 for all real clients.
+
 ## API and worker
 
 | Service | Cloud Run name | Deploy |

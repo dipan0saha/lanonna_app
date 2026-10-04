@@ -164,14 +164,16 @@ Code complete; rollout steps are in [Phase 7 — Deploy & ship](#phase-7--deploy
 
 ## Phase 5 — Beta hardening
 
-| Item | Action |
-|------|--------|
-| App Check | `APP_CHECK_ENFORCE=true` on staging; mobile retry + user-visible error; [pre-beta-qa.md](pre-beta-qa.md) §1 |
-| Rate limiting | Document per-instance limit; Cloud Armor / Redis when scaling |
-| JWT audiences | Wire or remove `firebase_audiences` |
-| 500 sanitization | Generic client message; log + `request_id` |
-| FCM deep links | Add `/invite-accept` to allowlist |
-| Maestro | Register omitted flows in `run-maestro-full.sh` (`announce_arrival`, `registry_mark_purchased`, `registry_ai_suggestion_add`) |
+**Status: partial (2026-10-04)** — App Check **enforce** deferred while sideload/emulator testing (`APP_CHECK_ENFORCE=false` on dev).
+
+| Item | Action | Status |
+|------|--------|--------|
+| App Check | `APP_CHECK_ENFORCE=true` on staging; mobile retry + user-visible error; [pre-beta-qa.md](pre-beta-qa.md) §1 | **Deferred** (sideload beta) |
+| Rate limiting | Document per-instance limit; Cloud Armor / Redis when scaling | Done (docs only) |
+| JWT audiences | Wire or remove `firebase_audiences` | Done |
+| 500 sanitization | Generic client message; log + `request_id` | Done |
+| FCM deep links | Add `/invite-accept` to allowlist | Done |
+| Maestro | Register omitted flows in `run-maestro-full.sh` (`announce_arrival`, `registry_mark_purchased`, `registry_ai_suggestion_add`) | Done |
 
 After Phase 3 lands, use [Phase 7](#phase-7--deploy--ship-to-dev--beta) for the full deploy sequence (migration → worker → API → mobile).
 
@@ -384,3 +386,12 @@ API + mobile correctness; deploy API before wide testing of invite accept (4xx c
 - [x] `domain/name_suggestions.py` — shared name/gender normalization for fun + first-moment seed
 - [x] Routers `invitations`, `invitation_accept`, `onboarding`, babies first-moment → domain
 - [x] `test_invitations_domain.py`, `test_onboarding_domain.py`; notification channel parity assertion
+
+### Phase 5 — partial 2026-10-04
+
+- [x] JWT `aud` check via `firebase_audience_allowlist()` (`test_auth_audience.py`)
+- [x] 500 sanitization in `map_domain_errors` + global handler (`test_http_errors.py`)
+- [x] FCM/inbox `/invite-accept` in `normalizeAppDeepLinkPath`
+- [x] Maestro full suite: announce arrival, registry purchased, registry AI add
+- [x] Rate limit per-instance documented in [development.md](development.md)
+- [ ] App Check enforce + mobile hardening (when leaving sideload-only testing)

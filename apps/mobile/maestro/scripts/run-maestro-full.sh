@@ -40,6 +40,9 @@ FLOWS=(
   maestro/flows/features/gallery_upload.yaml
   maestro/flows/features/followers_invite.yaml
   maestro/flows/features/account_settings.yaml
+  maestro/flows/features/announce_arrival.yaml
+  maestro/flows/features/registry_mark_purchased.yaml
+  maestro/flows/features/registry_ai_suggestion_add.yaml
 )
 
 "${ROOT}/maestro/scripts/run-maestro-flows-sequential.sh" "${FLOWS[@]}"

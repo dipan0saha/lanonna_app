@@ -21,15 +21,33 @@ def _ensure_firebase() -> None:
     _app_initialized = True
 
 
+def _token_audience(claims: dict[str, Any]) -> str | None:
+    aud = claims.get("aud")
+    if isinstance(aud, str) and aud:
+        return aud
+    if isinstance(aud, list) and aud:
+        first = aud[0]
+        return str(first) if first else None
+    return None
+
+
 def verify_firebase_token(id_token: str) -> dict[str, Any]:
     _ensure_firebase()
     try:
-        return firebase_auth.verify_id_token(id_token)
+        claims = firebase_auth.verify_id_token(id_token)
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired Firebase ID token",
         ) from None
+    allowed = settings.firebase_audience_allowlist()
+    token_aud = _token_audience(claims)
+    if token_aud is None or token_aud not in allowed:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired Firebase ID token",
+        )
+    return claims
 
 
 async def current_user(

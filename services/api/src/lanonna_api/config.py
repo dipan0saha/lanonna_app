@@ -6,8 +6,14 @@ class Settings(BaseSettings):
 
     environment: str = "dev"  # env: ENVIRONMENT
     gcp_project_id: str = "lanonna-dev"
-    # Comma-separated; empty = accept default Firebase project only.
+    # Comma-separated Firebase ID token `aud` values; empty = [gcp_project_id] only.
     firebase_audiences: str = ""
+
+    def firebase_audience_allowlist(self) -> frozenset[str]:
+        raw = self.firebase_audiences.strip()
+        if not raw:
+            return frozenset({self.gcp_project_id})
+        return frozenset(part.strip() for part in raw.split(",") if part.strip())
 
     cloud_sql_connection_name: str = ""  # CLOUD_SQL_CONNECTION_NAME
     db_host: str = "127.0.0.1"

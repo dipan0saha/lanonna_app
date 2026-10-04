@@ -2,7 +2,8 @@ import logging
 import uuid
 from typing import Any, Literal, Self
 
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi.responses import JSONResponse
 from lanonna_api.middleware.rate_limit import RateLimitMiddleware
 from lanonna_api.middleware.request_context import RequestContextMiddleware
 from pydantic import BaseModel, Field, model_validator
@@ -27,6 +28,7 @@ from lanonna_api.routers import (
     registry,
     search,
 )
+from lanonna_api.http_errors import internal_error_detail
 from lanonna_api.repositories.babies import get_baby_for_owner
 from lanonna_api.storage import mint_baby_avatar_upload_url, mint_user_avatar_upload_url
 
@@ -35,6 +37,30 @@ logger = logging.getLogger("lanonna.api")
 app = FastAPI(title="La Nonna API", version="0.1.0")
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(RequestContextMiddleware)
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    if isinstance(exc, HTTPException):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail},
+            headers=exc.headers,
+        )
+    request_id = getattr(request.state, "request_id", None)
+    logger.exception(
+        "unhandled_request request_id=%s path=%s",
+        request_id,
+        request.url.path,
+    )
+    headers = {}
+    if request_id:
+        headers["X-Request-Id"] = request_id
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"detail": internal_error_detail()},
+        headers=headers,
+    )
 
 _app_check_deps = [Depends(require_app_check)]
 
