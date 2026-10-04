@@ -223,7 +223,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | ID | Requirement | Acceptance criteria | Implementation note |
 |----|-------------|---------------------|---------------------|
 | FR-AUTH-001 | Email/password sign-up and sign-in | User can register and sign in; invalid credentials show clear error | Firebase Auth |
-| FR-AUTH-002 | Email verification in onboarding | Unverified users guided through verify step before Home | Firebase email verification |
+| FR-AUTH-002 | Email verification in onboarding | After email/password sign-up, user receives a **La Nonna–branded** Firebase verification email with a tappable **Verify my email** CTA (`%LINK%`); unverified users stay on the verify screen until `emailVerified` or they tap Continue after verifying in mail; app handles `https://{project}.firebaseapp.com/__/auth/action` links in-app when installed (ActionCodeSettings + platform link config); resend and rate-limit errors show clear copy | Versioned templates in `packages/firebase-auth-email-templates` + `scripts/sync-firebase-auth-templates.sh`; mobile `AuthRepository.sendEmailVerification()`; custom auth **sender domain** (SPF/DKIM) deferred |
 | FR-AUTH-003 | Session persistence | Returning users with valid session land on Home (or onboarding resume) | Firebase session + app router guards |
 | FR-AUTH-004 | Sign out | Sign out clears Firebase session and local push identity hooks | `DELETE /v1/me/device-tokens` on sign-out (`PushNotificationService`) |
 | FR-AUTH-005 | Unauthenticated guard | Cold launch without session shows sign-in (E2E-001) | GoRouter redirect |
@@ -235,15 +235,17 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 |----|-------------|---------------------|---------------------|
 | FR-ONB-001 | Owner carousel entry | New owners start at owner carousel when no session/onboarding complete | Fixed routes |
 | FR-ONB-002 | Onboarding signup/login variants | Query `path=owner\|follower\|coOwner` selects copy and next routes | Flutter onboarding module |
-| FR-ONB-003 | Complete profile | Display name and required fields saved to user profile | `PATCH /v1/profile`; read via `GET /v1/me/account` |
-| FR-ONB-004 | Create baby (onboarding) | Owner creates first baby; optional names (default display **Baby**), gender, expecting/born dates | `POST /v1/babies` + membership owner |
+| FR-ONB-003 | Complete profile (S04) | After signup/email verify: photo; first + last name; optional phone, user DOB, country (ISO), postal code; **owner path**: Mother/Father relationship (required client-side); terms unchecked by default with in-app WebView links to sample legal HTML; `profile_complete` when name + `terms_accepted_at` | `PATCH /v1/profile`; mock: [`Complete_Your_Profile_Screen_1.html`](../prototype/Complete_Your_Profile_Screen_1.html) |
+| FR-ONB-004 | Create baby (onboarding) | Owner creates first baby; optional names (default display **Baby**), gender, expecting/born dates; **`relationship_label`** from complete profile applied to owner membership | `POST /v1/babies` + membership owner |
 | FR-ONB-005 | First moment | Optional preset event/registry chips and name ideas; skippable | `POST /v1/babies/{id}/onboarding/first-moment` |
 | FR-ONB-006 | Batch email invite | Multiple invite rows; co-owner badges (Wife/Husband); skip row if email already member | API + `check membership by email` |
 | FR-ONB-007 | Follower relationship confirm | Follower **views** owner-set relationship label (S09) before carousel; not editable by invitee | Invite preview `relationship_label` |
 | FR-ONB-008 | Coordinator resume | Kill app mid-onboarding → resume same step | Local persistence of path/step |
 | FR-ONB-009 | Deprecated role selection | `/role-selection` redirects to owner carousel | Router redirect |
-| FR-ONB-010 | Owner UI prototype parity | Owner onboarding screens (S01–S07) and first-run Home (S11–S12) match `docs/prototype/La_Nonna_Onboarding_Prototype.html` for layout/copy; onboarding **login** mirrors signup stack (OAuth → divider → email; “Welcome back”); Facebook omitted; phone invites deferred (email-only) | Flutter onboarding + home modules |
+| FR-ONB-010 | Owner UI prototype parity | Owner onboarding S04 matches `Complete_Your_Profile_Screen_1.html`; other owner steps (S01–S07) and first-run Home (S11–S12) align with onboarding prototype where not superseded; login mirrors signup stack; Facebook omitted | Flutter onboarding + home modules |
 | FR-ONB-011 | Follower/co-owner invite onboarding | Follower S08–S10 + follower first-run Home; co-owner S08 + welcome; wrong-email screen; accept after complete profile; prototype copy (Facebook omitted) | `/invite-accept` bootstrap, invite path coordinator |
+| FR-ONB-012 | User profile demographics | Optional phone, user birth date, country (ISO 3166-1 alpha-2), postal code on `app_users`; readable/editable on account | Migration `022`; `GET /v1/me/account` profile |
+| FR-ONB-013 | Terms acceptance | Checkbox default off; Continue requires check; `terms_accepted_at` stored; Terms/Privacy open in-app WebView (sample legal assets) | `PATCH /v1/profile` `accept_terms: true` |
 
 ### 7.3 Invitations — FR-INV
 
@@ -346,7 +348,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | ID | Requirement | Acceptance criteria | Implementation note |
 |----|-------------|---------------------|---------------------|
 | FR-PROF-001 | View profile | User sees display name, avatar, stats | `/profile` from shell menu |
-| FR-PROF-002 | Edit profile | Update display name, avatar | `/profile/edit` |
+| FR-PROF-002 | Edit profile | Update display name, avatar, optional demographics (phone, DOB, country, postal) | `/account/edit` |
 | FR-PROF-003 | Storage usage | Owner sees media allocation meter (used vs quota across owned babies) | `/profile`; `GET /v1/me/account` → `storage_usage` |
 | FR-SET-001 | Settings screen | Notification prefs, help/support entry | `/settings` |
 | FR-SET-002 | Language | **English only**; copy in ARB/localization files (no hardcoded UI strings). No Spanish or other locales in product scope. | `app_en.arb` |
@@ -389,7 +391,7 @@ La Nonna stores domain data in **Cloud SQL**. Migrations live under `infra/db/`;
 
 | Entity | Purpose | v1 |
 |--------|---------|-----|
-| `profiles` / app user profile | User display name, avatar, biometric flag | Yes |
+| `profiles` / app user profile | User display name, avatar, phone, user birth date, country, postal code, terms acceptance, biometric flag | Yes |
 | `user_stats` | Gamification aggregates | Yes |
 | `baby_profiles` | Baby metadata, dates, gender, birth stats | Yes |
 | `baby_memberships` | RBAC owner/follower + relationship | Yes |
@@ -470,6 +472,7 @@ Engineering status aligns with [building-the-app.md](../engineering/building-the
 | Social auth | Email/password + **Google** (FR-AUTH-006); Apple later |
 | Fun tab label | Bottom nav and UI copy use **“Fun”** (route `/gamification`) |
 | Activity recap | **Full stream** of `activity_events` on home (FR-HOME-007) |
+| Complete profile (S04, #391) | Legal: in-app **WebView** + bundled sample HTML (`/legal/terms`, `/legal/privacy`). Country: ISO 3166-1 alpha-2 stored; UI shows full country name list. Phone: any string with max-length validation only. Follower/co-owner: same demographics + terms; **no** relationship pills. Owner: Mother/Father required client-side → `baby_memberships.relationship_label` on create baby. **`profile_complete`:** non-empty `display_name` **and** `terms_accepted_at` (relationship not in API gate). |
 
 ---
 
@@ -496,6 +499,7 @@ Engineering status aligns with [building-the-app.md](../engineering/building-the
 | New followers | Home §13 | Last 30 days; owner |
 | Invite status | Home §14 | Pending invites; revoke |
 | Storage usage | My Account (`/profile`) | Owner storage meter; FR-PROF-003 |
+| Complete profile (onboarding S04) | Onboarding `/onboarding/complete-profile` | Demographics + terms; owner Mother/Father → baby membership label (FR-ONB-003) |
 | Registry list | Registry tab body | Full wishlist |
 | Name suggestions | Fun tab | List + add flow |
 | Prediction votes | Fun tab | Gender + birthdate votes |
@@ -513,7 +517,9 @@ Aligned with `apps/mobile/lib/core/router/app_router.dart` and `features/onboard
 | onboardingSignup | `/onboarding/signup` | Onboarding signup |
 | onboardingLogin | `/onboarding/login` | Onboarding login |
 | onboardingEmailVerify | `/onboarding/email-verify` | Email verify |
-| onboardingCompleteProfile | `/onboarding/complete-profile` | Complete profile |
+| onboardingCompleteProfile | `/onboarding/complete-profile` | Complete profile (S04) |
+| legalTerms | `/legal/terms` | Terms of Service (WebView, bundled HTML) |
+| legalPrivacy | `/legal/privacy` | Privacy Policy (WebView, bundled HTML) |
 | onboardingOwnerCreateBaby | `/onboarding/owner/create-baby` | Create baby |
 | onboardingOwnerFirstMoment | `/onboarding/owner/first-moment` | First moment |
 | onboardingOwnerInvite | `/onboarding/owner/invite` | Batch invite (onboarding) |

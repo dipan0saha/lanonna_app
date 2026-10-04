@@ -6,6 +6,8 @@ import 'package:provider/provider.dart';
 import 'core/api/api_client.dart';
 import 'core/app_check/app_check_bootstrap.dart';
 import 'core/deep_links/app_link_bootstrap.dart';
+import 'core/deep_links/auth_action_app_link.dart';
+import 'core/deep_links/invite_app_link.dart';
 import 'core/auth/auth_repository.dart';
 import 'core/network/connectivity_service.dart';
 import 'core/router/router_refresh.dart';
@@ -83,7 +85,18 @@ Future<Widget> bootstrapLaNonnaApp() async {
     await session.refreshFromApi();
   }
 
-  final initialInviteLocation = await readColdStartInviteLocation();
+  final coldStartUri = await readColdStartAppLinkUri();
+  final initialInviteLocation = coldStartUri != null
+      ? inviteAppLinkToRouterLocation(coldStartUri)
+      : null;
+  final Uri? initialEmailVerifyUri;
+  if (coldStartUri != null &&
+      initialInviteLocation == null &&
+      parseEmailVerifyActionLink(coldStartUri) != null) {
+    initialEmailVerifyUri = coldStartUri;
+  } else {
+    initialEmailVerifyUri = null;
+  }
 
   return MultiProvider(
     providers: [
@@ -113,6 +126,7 @@ Future<Widget> bootstrapLaNonnaApp() async {
     child: LaNonnaApp(
       routerRefresh: routerRefresh,
       initialInviteLocation: initialInviteLocation,
+      initialEmailVerifyUri: initialEmailVerifyUri,
     ),
   );
 }

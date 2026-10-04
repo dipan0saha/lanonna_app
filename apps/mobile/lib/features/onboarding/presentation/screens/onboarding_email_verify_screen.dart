@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/auth/auth_email_verification.dart';
 import '../../../../core/auth/auth_repository.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/onboarding_routes.dart';
@@ -41,6 +43,7 @@ class _OnboardingEmailVerifyScreenState extends State<OnboardingEmailVerifyScree
 
   Future<void> _checkVerified({bool silent = false}) async {
     if (!mounted) return;
+    final l10n = AppLocalizations.of(context)!;
     final authRepo = context.read<AuthRepository>();
     await authRepo.reloadUser();
     final user = authRepo.currentUser;
@@ -53,21 +56,25 @@ class _OnboardingEmailVerifyScreenState extends State<OnboardingEmailVerifyScree
       return;
     }
     if (!silent && mounted) {
-      setState(() => _message = 'Not verified yet — open the link in your inbox, then tap Continue.');
+      setState(() => _message = l10n.emailVerifyContinuePending);
     }
   }
 
   Future<void> _resend() async {
+    final l10n = AppLocalizations.of(context)!;
     try {
-      await FirebaseAuth.instance.currentUser?.sendEmailVerification();
-      setState(() => _message = 'Verification email sent.');
-    } catch (e) {
-      setState(() => _message = e.toString());
+      await context.read<AuthRepository>().sendEmailVerification();
+      setState(() => _message = l10n.emailVerifySent);
+    } on FirebaseAuthException catch (e) {
+      setState(() => _message = userFacingAuthError(e));
+    } catch (_) {
+      setState(() => _message = 'Could not send verification email. Please try again.');
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final email = FirebaseAuth.instance.currentUser?.email ?? 'your email';
     final isLikelyUndeliverable =
         email.endsWith('@test.com') || email.contains('.smoke@');
@@ -91,11 +98,15 @@ class _OnboardingEmailVerifyScreenState extends State<OnboardingEmailVerifyScree
             ),
           ),
           const SizedBox(height: 22),
-          const OnboardingHeadline('Check your email', textAlign: TextAlign.center),
+          OnboardingHeadline(l10n.emailVerifyHeadline, textAlign: TextAlign.center),
           const SizedBox(height: 12),
           OnboardingSupportText(
-            'We sent a verification link to $email. Click it to activate your account. '
-            'This screen only applies to email/password sign-ups; Google accounts skip straight past it.',
+            l10n.emailVerifyBody(email),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          OnboardingSupportText(
+            l10n.emailVerifyOAuthNote,
             textAlign: TextAlign.center,
           ),
           if (isLikelyUndeliverable) ...[
@@ -120,9 +131,9 @@ class _OnboardingEmailVerifyScreenState extends State<OnboardingEmailVerifyScree
           Center(
             child: GestureDetector(
               onTap: _resend,
-              child: const Text(
-                'Resend email',
-                style: TextStyle(
+              child: Text(
+                l10n.emailVerifyResend,
+                style: const TextStyle(
                   color: AppColors.primaryDark,
                   fontWeight: FontWeight.w700,
                 ),

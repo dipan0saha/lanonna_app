@@ -69,4 +69,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteAccountDeleting => 'Deleting…';
+
+  @override
+  String get emailVerifyHeadline => 'Check your email';
+
+  @override
+  String emailVerifyBody(String email) {
+    return 'We sent a message to $email with a Verify my email button. Tap it to activate your account. If you do not see it, check spam or junk.';
+  }
+
+  @override
+  String get emailVerifyOAuthNote => 'Google sign-up skips this step.';
+
+  @override
+  String get emailVerifyContinuePending =>
+      'Not verified yet — open the newest email and tap Verify my email, then try Continue.';
+
+  @override
+  String get emailVerifySent => 'Verification email sent.';
+
+  @override
+  String get emailVerifyResend => 'Resend email';
 }

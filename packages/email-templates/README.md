@@ -3,7 +3,7 @@
 Product transactional mail (invites, reminders) — rendered by the worker and sent via **Mailjet**.
 
 - Keep templates in this folder (HTML + plain-text parts).
-- Auth lifecycle mail (verification, password reset) stays on **Firebase Auth**, not Mailjet.
+- Auth lifecycle mail (verification, password reset) stays on **Firebase Auth**, not Mailjet — templates live in [`packages/firebase-auth-email-templates`](../firebase-auth-email-templates) and are applied with `scripts/sync-firebase-auth-templates.sh`.
 
 Naming: `invite_v1.html`, `invite_v1.txt` (and future templates added to `scripts/sync-email-templates.sh`).
 

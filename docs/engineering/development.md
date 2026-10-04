@@ -152,10 +152,10 @@ Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps:
 | GET | `/v1/babies/{baby_profile_id}/search?q=` | Cross-feature search (member) |
 | POST | `/v1/babies/{baby_profile_id}/data-export` | Queue baby JSON export (owner) |
 | GET | `/v1/babies/{baby_profile_id}/data-export/latest` | Export job status + signed download URL |
-| PATCH | `/v1/profile` | Firebase Bearer JWT; mobile updates display name (onboarding + account edit). Read profile via `GET /v1/me/account`. |
+| PATCH | `/v1/profile` | Firebase Bearer JWT; `display_name`, optional `avatar_url`, `phone`, `birth_date`, `country_code`, `postal_code`, `accept_terms` (sets `terms_accepted_at`). Read profile via `GET /v1/me/account`. |
 | GET | `/v1/onboarding/status` | Firebase Bearer JWT |
 | POST | `/v1/onboarding/owner/complete` | Firebase Bearer JWT |
-| GET, POST | `/v1/babies` | Firebase Bearer JWT |
+| GET, POST | `/v1/babies` | Firebase Bearer JWT; create accepts optional `relationship_label` on owner membership |
 | PATCH | `/v1/babies/{baby_profile_id}` | Firebase Bearer JWT (owner); optional `avatar_url`; `lifecycle_status: born` records `baby_arrived` activity |
 | GET | `/v1/babies/{baby_profile_id}/home-summary` | Firebase Bearer JWT (member); §6.2 blocks: `birth_welcome`, `system_announcements`, `teasers` (notifications, upcoming events, RSVP, photos, registry), owner `new_followers` / `invite_status`, `recent_activity` teaser |
 | GET | `/v1/babies/{baby_profile_id}/activity-events` | Paginated `activity_events` (`limit`, `offset`) |
@@ -202,6 +202,8 @@ PYTHONPATH=src .venv/bin/pytest -q
 ```
 
 Covers gallery/calendar/registry/fun domain rules (`services/api/tests/`). CI runs the same suite on push/PR to `main`.
+
+**Auth verification email (FR-AUTH-002):** Firebase sends verify-mail from templates in `packages/firebase-auth-email-templates` (apply: `bash scripts/sync-firebase-auth-templates.sh apply` with `GCP_PROJECT_ID=lanonna-dev`). Mobile uses `ActionCodeSettings` (`handleCodeInApp`, continue URL `https://{project}.firebaseapp.com/`) and handles `https://lanonna-dev.firebaseapp.com/__/auth/action?mode=verifyEmail&oobCode=…` via `core/deep_links/auth_action_app_link.dart` + Android/iOS link config. Custom sender domain (SPF/DKIM) is deferred.
 
 **Invite emails (FR-INV-004 / FR-INV-007):** batch create publishes `{"type":"send_invite_email","invitation_id","invite_token"}` to the `photo-upload-finalized` topic; the worker sends Mailjet HTML from `invite_v1` templates. Set worker env `MAILJET_*` and `INVITE_DEEP_LINK_BASE` (default `lanonna://app`). Link shape: `lanonna://app/invite-accept?token=…` (+ `&role=owner` for co-owner). Flutter uses `app_links` to set GoRouter `initialLocation` on cold start and `go()` on warm opens (`core/deep_links/`). Local API can set `INVITE_EMAIL_PUBLISH_DISABLED=true` to skip Pub/Sub while testing accept/preview.
 

@@ -131,6 +131,25 @@ If the app shows **“Could not delete Firebase user”** (API 503):
 
 ---
 
+## Email verification (FR-AUTH-002 / #390)
+
+1. Apply templates to dev: `bash scripts/sync-firebase-auth-templates.sh apply` (from repo root).
+2. Fresh email/password sign-up on emulator (no `DEV_AUTO_SIGN_IN_*`).
+3. Inbox: subject **Confirm your email for La Nonna**, body has **Verify my email** button (not copy/paste-only).
+4. Tap link: app opens (Android) or browser verifies then **Continue** on verify screen works.
+5. **Resend email** after ~60s if testing rate-limit copy.
+
+Simulate auth action link on Android:
+
+```bash
+adb shell am start -a android.intent.action.VIEW \
+  -d 'https://lanonna-dev.firebaseapp.com/__/auth/action?mode=verifyEmail&oobCode=TEST'
+```
+
+(Use a real `oobCode` from a test email for a successful apply.)
+
+---
+
 ## Cleaning up disposable test data
 
 **Email patterns used in QA:** `lanonna.del.*@gmail.com`, `lanonna.delete.test.*@gmail.com`.

@@ -16,7 +16,12 @@ import 'core/app_check/app_check_bootstrap.dart';
 import 'core/notifications/push_notification_service.dart';
 import 'features/account/data/notifications_repository.dart';
 import 'core/auth/auth_repository.dart';
+import 'core/auth/email_verify_link_result.dart';
 import 'core/deep_links/app_link_bootstrap.dart';
+import 'core/deep_links/auth_action_app_link.dart';
+import 'core/deep_links/invite_app_link.dart';
+import 'features/onboarding/domain/onboarding_step.dart';
+import 'features/onboarding/presentation/onboarding_coordinator.dart';
 import 'core/router/app_router.dart';
 import 'core/router/deep_link_navigation.dart';
 import 'features/onboarding/domain/onboarding_routes.dart';
@@ -63,10 +68,12 @@ class LaNonnaApp extends StatefulWidget {
     super.key,
     required this.routerRefresh,
     this.initialInviteLocation,
+    this.initialEmailVerifyUri,
   });
 
   final RouterRefreshListenable routerRefresh;
   final String? initialInviteLocation;
+  final Uri? initialEmailVerifyUri;
 
   @override
   State<LaNonnaApp> createState() => _LaNonnaAppState();
@@ -79,16 +86,28 @@ class _LaNonnaAppState extends State<LaNonnaApp> {
   );
   PushNotificationService? _pushService;
   var _pushStarted = false;
-  StreamSubscription<String>? _inviteLinkSub;
+  StreamSubscription<Uri>? _appLinkSub;
 
   @override
   void initState() {
     super.initState();
-    _inviteLinkSub = watchInviteAppLinks().listen(_onInviteAppLink);
+    _appLinkSub = watchAppLinkUris().listen(_onAppLinkUri);
+    final initialVerify = widget.initialEmailVerifyUri;
+    if (initialVerify != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _handleEmailVerificationLink(initialVerify);
+      });
+    }
   }
 
-  void _onInviteAppLink(String location) {
+  void _onAppLinkUri(Uri uri) {
     if (!mounted) return;
+    if (parseEmailVerifyActionLink(uri) != null) {
+      _handleEmailVerificationLink(uri);
+      return;
+    }
+    final location = inviteAppLinkToRouterLocation(uri);
+    if (location == null) return;
     final current = _router.routerDelegate.currentConfiguration.uri;
     if (current.path == OnboardingRoutes.inviteAccept &&
         current.queryParameters['token'] ==
@@ -98,9 +117,49 @@ class _LaNonnaAppState extends State<LaNonnaApp> {
     _router.go(location);
   }
 
+  Future<void> _handleEmailVerificationLink(Uri uri) async {
+    if (!mounted) return;
+    final authRepo = context.read<AuthRepository>();
+    final result = await authRepo.applyEmailVerificationLink(uri);
+    if (!mounted) return;
+
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    switch (result.outcome) {
+      case EmailVerifyLinkOutcome.success:
+      case EmailVerifyLinkOutcome.alreadyVerified:
+        await authRepo.refreshSessionClaims();
+        final coordinator = context.read<OnboardingCoordinator>();
+        await coordinator.setStep(OnboardingStep.completeProfile);
+        if (!mounted) return;
+        _router.go(OnboardingRoutes.completeProfile);
+        if (result.message != null) {
+          messenger?.showSnackBar(SnackBar(content: Text(result.message!)));
+        }
+      case EmailVerifyLinkOutcome.noSignedInUser:
+        _router.go(OnboardingRoutes.login);
+        messenger?.showSnackBar(
+          SnackBar(
+            content: Text(
+              result.message ??
+                  'Email verified. Sign in with the same address to continue.',
+            ),
+          ),
+        );
+      case EmailVerifyLinkOutcome.invalidOrExpired:
+      case EmailVerifyLinkOutcome.wrongMode:
+        messenger?.showSnackBar(
+          SnackBar(
+            content: Text(
+              result.message ?? 'Could not verify your email from this link.',
+            ),
+          ),
+        );
+    }
+  }
+
   @override
   void dispose() {
-    _inviteLinkSub?.cancel();
+    _appLinkSub?.cancel();
     _pushService?.dispose();
     super.dispose();
   }

@@ -41,6 +41,13 @@ jobs:
       - uses: actions/checkout@v4
       - run: bash scripts/sync-email-templates.sh check
 
+  firebase-auth-email-templates:
+    name: Firebase auth email templates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/sync-firebase-auth-templates.sh check
+
   worker:
     name: Python worker (services/worker)
     runs-on: ubuntu-latest

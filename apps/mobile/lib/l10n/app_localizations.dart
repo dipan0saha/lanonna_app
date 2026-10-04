@@ -207,6 +207,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Deleting…'**
   String get deleteAccountDeleting;
+
+  /// No description provided for @emailVerifyHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your email'**
+  String get emailVerifyHeadline;
+
+  /// No description provided for @emailVerifyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We sent a message to {email} with a Verify my email button. Tap it to activate your account. If you do not see it, check spam or junk.'**
+  String emailVerifyBody(String email);
+
+  /// No description provided for @emailVerifyOAuthNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Google sign-up skips this step.'**
+  String get emailVerifyOAuthNote;
+
+  /// No description provided for @emailVerifyContinuePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Not verified yet — open the newest email and tap Verify my email, then try Continue.'**
+  String get emailVerifyContinuePending;
+
+  /// No description provided for @emailVerifySent.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification email sent.'**
+  String get emailVerifySent;
+
+  /// No description provided for @emailVerifyResend.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend email'**
+  String get emailVerifyResend;
 }
 
 class _AppLocalizationsDelegate

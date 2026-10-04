@@ -2,6 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../config/google_sign_in_config.dart';
+import 'auth_email_verification.dart';
+import 'email_verify_link_result.dart';
 
 class AuthRepository {
   AuthRepository({FirebaseAuth? firebaseAuth, GoogleSignIn? googleSignIn})
@@ -36,7 +38,15 @@ class AuthRepository {
 
   Future<void> signUpWithEmail(String email, String password) async {
     await _auth.createUserWithEmailAndPassword(email: email.trim(), password: password);
-    await _auth.currentUser?.sendEmailVerification();
+    await sendEmailVerification();
+  }
+
+  Future<void> sendEmailVerification() async {
+    await sendEmailVerificationToUser(_auth.currentUser);
+  }
+
+  Future<EmailVerifyLinkResult> applyEmailVerificationLink(Uri uri) {
+    return applyEmailVerificationLinkFromUri(_auth, uri);
   }
 
   Future<void> signInWithGoogle() async {
