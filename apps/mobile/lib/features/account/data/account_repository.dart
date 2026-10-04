@@ -58,11 +58,19 @@ class AccountPayload {
     required this.engagement,
     this.storageUsage,
     this.avatarUrl,
+    this.phone,
+    this.birthDate,
+    this.countryCode,
+    this.postalCode,
   });
 
   final String? displayName;
   final String? email;
   final String? avatarUrl;
+  final String? phone;
+  final String? birthDate;
+  final String? countryCode;
+  final String? postalCode;
   final List<BabySummary> babies;
   final UserEngagementStats engagement;
   final StorageUsage? storageUsage;
@@ -77,6 +85,10 @@ class AccountPayload {
       displayName: profile['display_name'] as String?,
       email: profile['email'] as String?,
       avatarUrl: profile['avatar_url'] as String?,
+      phone: profile['phone'] as String?,
+      birthDate: profile['birth_date'] as String?,
+      countryCode: profile['country_code'] as String?,
+      postalCode: profile['postal_code'] as String?,
       babies: babies
           .whereType<Map<String, dynamic>>()
           .map(BabySummary.fromJson)
@@ -169,10 +181,18 @@ class AccountRepository {
   Future<void> updateProfile({
     required String displayName,
     String? avatarUrl,
+    String? phone,
+    String? birthDate,
+    String? countryCode,
+    String? postalCode,
   }) async {
     await _api.patchJson('/v1/profile', body: {
       'display_name': displayName,
       if (avatarUrl != null) 'avatar_url': avatarUrl,
+      if (phone != null && phone.isNotEmpty) 'phone': phone,
+      if (birthDate != null && birthDate.isNotEmpty) 'birth_date': birthDate,
+      if (countryCode != null && countryCode.isNotEmpty) 'country_code': countryCode,
+      if (postalCode != null && postalCode.isNotEmpty) 'postal_code': postalCode,
     });
   }
 

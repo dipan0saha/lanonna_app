@@ -131,6 +131,16 @@ If the app shows **“Could not delete Firebase user”** (API 503):
 
 ---
 
+## Create-baby profile photo vs gallery (#394)
+
+Manual on emulator (`flutter run` **without** `DEV_AUTO_SIGN_IN_*`):
+
+1. Owner onboarding → **Create your baby's profile** → add profile photo.
+2. Leave **Also share this photo in the gallery** unchecked → Continue → finish or skip first moment → **Gallery** tab: expect empty (no auto-upload).
+3. Repeat with a fresh account (or second run): check **Also share…** → expect one gallery photo after upload; baby avatar still on profile / edit baby.
+
+---
+
 ## Email verification (FR-AUTH-002 / #390)
 
 1. Apply templates to dev: `bash scripts/sync-firebase-auth-templates.sh apply` (from repo root).

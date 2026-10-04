@@ -236,7 +236,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-ONB-001 | Owner carousel entry | New owners start at owner carousel when no session/onboarding complete | Fixed routes |
 | FR-ONB-002 | Onboarding signup/login variants | Query `path=owner\|follower\|coOwner` selects copy and next routes | Flutter onboarding module |
 | FR-ONB-003 | Complete profile (S04) | After signup/email verify: photo; first + last name; optional phone, user DOB, country (ISO), postal code; **owner path**: Mother/Father relationship (required client-side); terms unchecked by default with in-app WebView links to sample legal HTML; `profile_complete` when name + `terms_accepted_at` | `PATCH /v1/profile`; mock: [`Complete_Your_Profile_Screen_1.html`](../prototype/Complete_Your_Profile_Screen_1.html) |
-| FR-ONB-004 | Create baby (onboarding) | Owner creates first baby; optional names (default display **Baby**), gender, expecting/born dates; **`relationship_label`** from complete profile applied to owner membership | `POST /v1/babies` + membership owner |
+| FR-ONB-004 | Create baby (onboarding) | Owner creates first baby; optional names (default display **Baby**), gender, expecting/born dates; optional **profile photo** sets `baby_profiles.avatar_url` (display avatar upload + `PATCH /v1/babies/{id}`); **does not** add a gallery photo unless user opts in on create-baby screen; **`relationship_label`** from complete profile applied to owner membership | `POST /v1/babies` + membership owner; mobile onboarding create-baby |
 | FR-ONB-005 | First moment | Optional preset event/registry chips and name ideas; skippable | `POST /v1/babies/{id}/onboarding/first-moment` |
 | FR-ONB-006 | Batch email invite | Multiple invite rows; co-owner badges (Wife/Husband); skip row if email already member | API + `check membership by email` |
 | FR-ONB-007 | Follower relationship confirm | Follower **views** owner-set relationship label (S09) before carousel; not editable by invitee | Invite preview `relationship_label` |
@@ -268,7 +268,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-BABY-003 | Auto-select new profile | After create, home context switches to new baby (E2E-005) | Client state |
 | FR-BABY-004 | Followers management | Screen lists members and pending invites | `/baby-profile/followers` |
 | FR-BABY-005 | Invite from profile | Navigate to invite screen from management | `/baby-profile/followers/invite` |
-| FR-BABY-006 | Profile photo | Baby avatar upload uses display media policy | `baby_profiles.avatar_url` (`013`); owner baby edit uses display signed PUT + `PATCH /v1/babies/{id}` |
+| FR-BABY-006 | Profile photo | Baby avatar upload uses display media policy | `baby_profiles.avatar_url` (`013`); owner baby edit and onboarding create-baby use display signed PUT + `PATCH /v1/babies/{id}`; gallery upload is separate (opt-in on create-baby, #394) |
 
 ### 7.5 Home hub — FR-HOME
 
@@ -473,6 +473,7 @@ Engineering status aligns with [building-the-app.md](../engineering/building-the
 | Fun tab label | Bottom nav and UI copy use **“Fun”** (route `/gamification`) |
 | Activity recap | **Full stream** of `activity_events` on home (FR-HOME-007) |
 | Complete profile (S04, #391) | Legal: in-app **WebView** + bundled sample HTML (`/legal/terms`, `/legal/privacy`). Country: ISO 3166-1 alpha-2 stored; UI shows full country name list. Phone: any string with max-length validation only. Follower/co-owner: same demographics + terms; **no** relationship pills. Owner: Mother/Father required client-side → `baby_memberships.relationship_label` on create baby. **`profile_complete`:** non-empty `display_name` **and** `terms_accepted_at` (relationship not in API gate). |
+| Create baby profile photo (#394) | Onboarding create-baby optional photo is a **profile** avatar only by default; checkbox **Also share this photo in the gallery** (default off) runs gallery upload (`/v1/photos/init`). First-moment born photo upload remains gallery-only. | Mobile `OnboardingCreateBabyScreen` |
 
 ---
 

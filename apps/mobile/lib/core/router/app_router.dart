@@ -21,6 +21,7 @@ import '../../features/onboarding/presentation/app_session.dart';
 import '../../features/onboarding/presentation/onboarding_coordinator.dart';
 import '../../features/onboarding/presentation/screens/onboarding_batch_invite_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_complete_profile_screen.dart';
+import '../../features/legal/presentation/legal_document_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_create_baby_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_email_verify_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_first_moment_screen.dart';
@@ -104,6 +105,16 @@ GoRouter createAppRouter(
       GoRoute(
         path: OnboardingRoutes.completeProfile,
         builder: (context, state) => const OnboardingCompleteProfileScreen(),
+      ),
+      GoRoute(
+        path: '/legal/terms',
+        builder: (context, state) =>
+            const LegalDocumentScreen(kind: LegalDocumentKind.terms),
+      ),
+      GoRoute(
+        path: '/legal/privacy',
+        builder: (context, state) =>
+            const LegalDocumentScreen(kind: LegalDocumentKind.privacy),
       ),
       GoRoute(
         path: OnboardingRoutes.ownerCreateBaby,

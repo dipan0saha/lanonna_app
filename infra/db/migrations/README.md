@@ -27,6 +27,7 @@ Apply in **lexicographic order** (filename prefix):
 | `019_photo_baby_tags.sql` | `photo_baby_tags` (FR-GAL-008 baby tags on photos) |
 | `020_app_versions.sql` | `app_versions` minimum client version per platform (FR-SET-004) |
 | `021_worker_idempotency.sql` | Worker delivery dedupe, photo-ready notify log, `invitations.email_sent_at` |
+| `022_user_profile_demographics.sql` | `app_users` phone, birth_date, country_code, postal_code, terms_accepted_at |
 
 ## Apply (dev)
 

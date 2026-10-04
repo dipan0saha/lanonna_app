@@ -15,6 +15,7 @@ class BabyCreateRequest(BaseModel):
     expected_birth_date: date | None = None
     actual_birth_date: date | None = None
     lifecycle_status: Literal["expecting", "born"] = "expecting"
+    relationship_label: str | None = Field(default=None, max_length=80)
 
     @field_validator("name")
     @classmethod

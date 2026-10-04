@@ -7,9 +7,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/api/api_client.dart';
+import '../../../../core/api/display_photo_upload.dart';
 import '../../../../core/input/app_text_input_kind.dart';
-import '../../../gallery/presentation/upload/run_gallery_photo_upload.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../gallery/presentation/upload/run_gallery_photo_upload.dart';
+import '../../../home/data/home_repository.dart';
 import '../../../home/data/selected_baby_store.dart';
 import '../../data/create_baby_draft.dart';
 import '../../data/onboarding_repository.dart';
@@ -50,6 +52,7 @@ class _OnboardingCreateBabyScreenState extends State<OnboardingCreateBabyScreen>
   var _genderPill = _genderUnsure;
   DateTime? _selectedDate;
   XFile? _selectedImage;
+  var _sharePhotoToGallery = false;
   String? _error;
 
   BabyGender get _selectedGender => babyGenderFromPill(_genderPill);
@@ -62,13 +65,13 @@ class _OnboardingCreateBabyScreenState extends State<OnboardingCreateBabyScreen>
 
   @override
   void dispose() {
-    _syncDraft();
     _boyNameController.dispose();
     _girlNameController.dispose();
     super.dispose();
   }
 
   Future<void> _syncDraft() async {
+    if (!mounted) return;
     final coordinator = context.read<OnboardingCoordinator>();
     await coordinator.saveCreateBabyDraft(
       CreateBabyDraft(
@@ -78,6 +81,7 @@ class _OnboardingCreateBabyScreenState extends State<OnboardingCreateBabyScreen>
         boyName: _boyNameController.text,
         girlName: _girlNameController.text,
         photoPath: _selectedImage?.path,
+        sharePhotoToGallery: _sharePhotoToGallery,
       ),
     );
   }
@@ -110,6 +114,7 @@ class _OnboardingCreateBabyScreenState extends State<OnboardingCreateBabyScreen>
         if (draft.photoPath != null) {
           _selectedImage = XFile(draft.photoPath!);
         }
+        _sharePhotoToGallery = draft.sharePhotoToGallery;
         setState(() {});
       }
     });
@@ -161,6 +166,7 @@ class _OnboardingCreateBabyScreenState extends State<OnboardingCreateBabyScreen>
     if (file == null) return;
     setState(() {
       _selectedImage = file;
+      _sharePhotoToGallery = false;
       _syncDraft();
     });
   }
@@ -217,21 +223,47 @@ class _OnboardingCreateBabyScreenState extends State<OnboardingCreateBabyScreen>
         lifecycleStatus: _babyStatus.apiValue,
         expectedBirthDate: expected,
         actualBirthDate: actual,
+        relationshipLabel:
+            context.read<OnboardingCoordinator>().completeProfileDraft?.relationshipLabel,
       );
 
       if (_selectedImage != null && !kIsWeb) {
+        final imageFile = File(_selectedImage!.path);
+        var avatarSaved = false;
         try {
-          await runGalleryPhotoUpload(
-            context: context,
+          final avatarUrl = await DisplayPhotoUpload(api).uploadBabyAvatar(
             babyProfileId: baby.id,
-            imageFile: File(_selectedImage!.path),
-            api: api,
+            imageFile: imageFile,
           );
+          await context.read<HomeRepository>().updateBaby(
+            baby.id,
+            avatarUrl: avatarUrl,
+          );
+          avatarSaved = true;
         } catch (e) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Baby created; photo upload failed: $e')),
+              SnackBar(content: Text('Baby created; profile photo failed: $e')),
             );
+          }
+        }
+        if (_sharePhotoToGallery) {
+          try {
+            await runGalleryPhotoUpload(
+              context: context,
+              babyProfileId: baby.id,
+              imageFile: imageFile,
+              api: api,
+            );
+          } catch (e) {
+            if (mounted) {
+              final prefix = avatarSaved
+                  ? 'Profile photo saved; gallery upload failed'
+                  : 'Baby created; gallery upload failed';
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('$prefix: $e')),
+              );
+            }
           }
         }
       }
@@ -294,12 +326,46 @@ class _OnboardingCreateBabyScreenState extends State<OnboardingCreateBabyScreen>
   }
 
   Widget _buildPhotoPicker() {
-    return Center(
-      child: PrototypePhotoUpload(
-        imageFile: _selectedImage,
-        onTap: _busy ? null : _pickPhoto,
-        label: _selectedImage != null ? 'Change photo' : 'Add a photo',
-      ),
+    final text = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const OnboardingFieldLabel('Profile photo (optional)'),
+        const SizedBox(height: 8),
+        Center(
+          child: PrototypePhotoUpload(
+            imageFile: _selectedImage,
+            onTap: _busy ? null : _pickPhoto,
+            label: _selectedImage != null ? 'Change profile photo' : 'Add profile photo',
+            showLabel: false,
+          ),
+        ),
+        if (_selectedImage != null) ...[
+          const SizedBox(height: 4),
+          Semantics(
+            identifier: 'onboarding_create_baby_share_gallery',
+            child: CheckboxListTile(
+              value: _sharePhotoToGallery,
+              onChanged: _busy
+                  ? null
+                  : (v) {
+                      setState(() => _sharePhotoToGallery = v ?? false);
+                      _syncDraft();
+                    },
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              title: Text(
+                'Also share this photo in the gallery',
+                style: text.bodyMedium,
+              ),
+              subtitle: Text(
+                'Off by default. Followers only see gallery photos you choose to share.',
+                style: text.bodySmall?.copyWith(color: AppColors.muted),
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 

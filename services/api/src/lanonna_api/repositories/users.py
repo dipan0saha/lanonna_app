@@ -4,23 +4,28 @@ from typing import Any
 
 from lanonna_api.db import get_connection
 
+_PROFILE_COLUMNS = """
+    firebase_uid, email, display_name, avatar_url,
+    phone, birth_date, country_code, postal_code, terms_accepted_at,
+    owner_onboarding_completed_at,
+    notification_digest, push_notifications_enabled,
+    email_digest_enabled,
+    notify_gallery_enabled, notify_calendar_enabled,
+    notify_registry_enabled, notify_comments_enabled,
+    created_at, updated_at
+"""
+
 
 def upsert_app_user(firebase_uid: str, email: str | None) -> dict[str, Any]:
     with get_connection() as conn:
         row = conn.execute(
-            """
+            f"""
             INSERT INTO app_users (firebase_uid, email)
             VALUES (%s, %s)
             ON CONFLICT (firebase_uid) DO UPDATE
               SET email = EXCLUDED.email,
                   updated_at = now()
-            RETURNING firebase_uid, email, display_name, avatar_url,
-                      owner_onboarding_completed_at,
-                      notification_digest, push_notifications_enabled,
-                      email_digest_enabled,
-                      notify_gallery_enabled, notify_calendar_enabled,
-                      notify_registry_enabled, notify_comments_enabled,
-                      created_at, updated_at
+            RETURNING {_PROFILE_COLUMNS}
             """,
             (firebase_uid, email),
         ).fetchone()
@@ -32,25 +37,44 @@ def upsert_app_user(firebase_uid: str, email: str | None) -> dict[str, Any]:
 def update_profile(
     firebase_uid: str,
     display_name: str,
+    *,
     avatar_url: str | None = None,
+    phone: str | None = None,
+    birth_date=None,
+    country_code: str | None = None,
+    postal_code: str | None = None,
+    accept_terms: bool | None = None,
 ) -> dict[str, Any]:
+    terms_clause = ""
+    if accept_terms is True:
+        terms_clause = ", terms_accepted_at = COALESCE(terms_accepted_at, now())"
+    elif accept_terms is False:
+        raise ValueError("Terms acceptance cannot be revoked.")
+
     with get_connection() as conn:
         row = conn.execute(
-            """
+            f"""
             UPDATE app_users
             SET display_name = %s,
                 avatar_url = COALESCE(%s, avatar_url),
+                phone = %s,
+                birth_date = %s,
+                country_code = %s,
+                postal_code = %s,
                 updated_at = now()
+                {terms_clause}
             WHERE firebase_uid = %s
-            RETURNING firebase_uid, email, display_name, avatar_url,
-                      owner_onboarding_completed_at,
-                      notification_digest, push_notifications_enabled,
-                      email_digest_enabled,
-                      notify_gallery_enabled, notify_calendar_enabled,
-                      notify_registry_enabled, notify_comments_enabled,
-                      created_at, updated_at
+            RETURNING {_PROFILE_COLUMNS}
             """,
-            (display_name.strip(), avatar_url, firebase_uid),
+            (
+                display_name.strip(),
+                avatar_url,
+                phone,
+                birth_date,
+                country_code,
+                postal_code,
+                firebase_uid,
+            ),
         ).fetchone()
     if row is None:
         raise RuntimeError("update_profile returned no row")
@@ -79,14 +103,8 @@ def complete_owner_onboarding(firebase_uid: str) -> dict[str, Any]:
 def get_app_user(firebase_uid: str) -> dict[str, Any] | None:
     with get_connection() as conn:
         row = conn.execute(
-            """
-            SELECT firebase_uid, email, display_name, avatar_url,
-                   owner_onboarding_completed_at,
-                   notification_digest, push_notifications_enabled,
-                   email_digest_enabled,
-                   notify_gallery_enabled, notify_calendar_enabled,
-                   notify_registry_enabled, notify_comments_enabled,
-                   created_at, updated_at
+            f"""
+            SELECT {_PROFILE_COLUMNS}
             FROM app_users
             WHERE firebase_uid = %s
             """,
@@ -173,7 +191,7 @@ def update_notification_preferences(
     )
     with get_connection() as conn:
         row = conn.execute(
-            """
+            f"""
             UPDATE app_users
             SET notification_digest = %s,
                 push_notifications_enabled = %s,
@@ -184,13 +202,7 @@ def update_notification_preferences(
                 notify_comments_enabled = %s,
                 updated_at = now()
             WHERE firebase_uid = %s
-            RETURNING firebase_uid, email, display_name, avatar_url,
-                      owner_onboarding_completed_at,
-                      notification_digest, push_notifications_enabled,
-                      email_digest_enabled,
-                      notify_gallery_enabled, notify_calendar_enabled,
-                      notify_registry_enabled, notify_comments_enabled,
-                      created_at, updated_at
+            RETURNING {_PROFILE_COLUMNS}
             """,
             (
                 digest,

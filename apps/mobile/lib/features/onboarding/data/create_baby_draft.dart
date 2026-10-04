@@ -6,6 +6,7 @@ class CreateBabyDraft {
     this.boyName = '',
     this.girlName = '',
     this.photoPath,
+    this.sharePhotoToGallery = false,
   });
 
   final String lifecycle;
@@ -14,6 +15,7 @@ class CreateBabyDraft {
   final String boyName;
   final String girlName;
   final String? photoPath;
+  final bool sharePhotoToGallery;
 
   Map<String, dynamic> toJson() => {
         'lifecycle': lifecycle,
@@ -22,6 +24,7 @@ class CreateBabyDraft {
         'boyName': boyName,
         'girlName': girlName,
         if (photoPath != null) 'photoPath': photoPath,
+        if (sharePhotoToGallery) 'sharePhotoToGallery': sharePhotoToGallery,
       };
 
   static CreateBabyDraft fromJson(Map<String, dynamic> json) {
@@ -32,6 +35,7 @@ class CreateBabyDraft {
       boyName: json['boyName'] as String? ?? '',
       girlName: json['girlName'] as String? ?? '',
       photoPath: json['photoPath'] as String?,
+      sharePhotoToGallery: json['sharePhotoToGallery'] as bool? ?? false,
     );
   }
 }

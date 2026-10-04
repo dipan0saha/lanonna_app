@@ -19,10 +19,20 @@ class OnboardingRepository {
   Future<void> updateProfile({
     required String displayName,
     String? avatarUrl,
+    String? phone,
+    String? birthDate,
+    String? countryCode,
+    String? postalCode,
+    bool acceptTerms = false,
   }) async {
     await _api.patchJson('/v1/profile', body: {
       'display_name': displayName,
       if (avatarUrl != null && avatarUrl.isNotEmpty) 'avatar_url': avatarUrl,
+      if (phone != null && phone.isNotEmpty) 'phone': phone,
+      if (birthDate != null && birthDate.isNotEmpty) 'birth_date': birthDate,
+      if (countryCode != null && countryCode.isNotEmpty) 'country_code': countryCode,
+      if (postalCode != null && postalCode.isNotEmpty) 'postal_code': postalCode,
+      'accept_terms': acceptTerms,
     });
   }
 
@@ -32,6 +42,7 @@ class OnboardingRepository {
     String? expectedBirthDate,
     String? actualBirthDate,
     String lifecycleStatus = 'expecting',
+    String? relationshipLabel,
   }) async {
     final json = await _api.postJson('/v1/babies', body: {
       'name': name,
@@ -39,6 +50,8 @@ class OnboardingRepository {
       if (expectedBirthDate != null) 'expected_birth_date': expectedBirthDate,
       if (actualBirthDate != null) 'actual_birth_date': actualBirthDate,
       'lifecycle_status': lifecycleStatus,
+      if (relationshipLabel != null && relationshipLabel.isNotEmpty)
+        'relationship_label': relationshipLabel,
     });
     return BabySummary.fromJson(json);
   }

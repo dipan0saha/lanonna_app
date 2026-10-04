@@ -52,6 +52,7 @@ def create_baby(
             body.expected_birth_date,
             body.actual_birth_date,
             body.lifecycle_status,
+            body.relationship_label,
         )
     except RuntimeError as exc:
         raise map_domain_errors(exc) from exc

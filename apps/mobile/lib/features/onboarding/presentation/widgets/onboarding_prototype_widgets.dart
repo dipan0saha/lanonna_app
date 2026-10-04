@@ -55,6 +55,7 @@ class PrototypePhotoUpload extends StatelessWidget {
     this.onSignedUrlError,
     this.label = 'Add a photo',
     this.size = 88,
+    this.showLabel = true,
   });
 
   final XFile? imageFile;
@@ -63,6 +64,7 @@ class PrototypePhotoUpload extends StatelessWidget {
   final VoidCallback? onSignedUrlError;
   final String label;
   final double size;
+  final bool showLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -82,11 +84,13 @@ class PrototypePhotoUpload extends StatelessWidget {
             child: _buildAvatarContent(size),
           ),
         ),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          style: context.textStyles.bodyMedium?.copyWith(fontSize: 12),
-        ),
+        if (showLabel) ...[
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: context.textStyles.bodyMedium?.copyWith(fontSize: 12),
+          ),
+        ],
       ],
     );
   }

@@ -39,6 +39,7 @@ def create_baby_with_owner_membership(
     expected_birth_date,
     actual_birth_date,
     lifecycle_status: str,
+    relationship_label: str | None = None,
 ) -> dict[str, Any]:
     baby_id = uuid.uuid4()
     with get_connection() as conn:
@@ -64,17 +65,17 @@ def create_baby_with_owner_membership(
         conn.execute(
             """
             INSERT INTO baby_memberships (
-                baby_profile_id, firebase_uid, role
+                baby_profile_id, firebase_uid, role, relationship_label
             )
-            VALUES (%s, %s, 'owner')
+            VALUES (%s, %s, 'owner', %s)
             """,
-            (baby_id, firebase_uid),
+            (baby_id, firebase_uid, relationship_label),
         )
     if baby is None:
         raise RuntimeError("create_baby returned no row")
     result = dict(baby)
     result["role"] = "owner"
-    result["relationship_label"] = None
+    result["relationship_label"] = relationship_label
     return result
 
 

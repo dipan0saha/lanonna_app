@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_client.dart';
+import '../../../core/data/iso_countries.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/widgets/app_labeled_text_field.dart';
 import '../../../core/api/display_photo_upload.dart';
@@ -25,15 +26,26 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
   final _firstName = TextEditingController();
   final _lastName = TextEditingController();
   final _email = TextEditingController();
+  final _phone = TextEditingController();
+  final _postal = TextEditingController();
   final _picker = ImagePicker();
   String? _networkAvatarUrl;
   XFile? _photoFile;
+  DateTime? _birthDate;
+  String? _countryCode;
+  List<IsoCountry> _countries = const [];
   var _saving = false;
 
   @override
   void initState() {
     super.initState();
+    _loadCountries();
     _load();
+  }
+
+  Future<void> _loadCountries() async {
+    final list = await IsoCountries.load();
+    if (mounted) setState(() => _countries = list);
   }
 
   @override
@@ -41,6 +53,8 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
     _firstName.dispose();
     _lastName.dispose();
     _email.dispose();
+    _phone.dispose();
+    _postal.dispose();
     super.dispose();
   }
 
@@ -55,6 +69,12 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
       _firstName.text = name;
     }
     _email.text = account.email ?? '';
+    _phone.text = account.phone ?? '';
+    _postal.text = account.postalCode ?? '';
+    _countryCode = account.countryCode;
+    if (account.birthDate != null && account.birthDate!.isNotEmpty) {
+      _birthDate = DateTime.tryParse(account.birthDate!);
+    }
     _networkAvatarUrl = account.avatarUrl;
     setState(() {});
   }
@@ -63,6 +83,24 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
     final file = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
     if (file == null) return;
     setState(() => _photoFile = file);
+  }
+
+  Future<void> _pickBirthDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _birthDate ?? DateTime(now.year - 30),
+      firstDate: DateTime(1900),
+      lastDate: now,
+    );
+    if (picked == null) return;
+    setState(() => _birthDate = picked);
+  }
+
+  String? _birthDateApi() {
+    if (_birthDate == null) return null;
+    final d = _birthDate!;
+    return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
   }
 
   Future<void> _save() async {
@@ -84,9 +122,13 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
         );
       }
       await context.read<AccountRepository>().updateProfile(
-        displayName: displayName.isEmpty ? 'Account' : displayName,
-        avatarUrl: avatarUrl,
-      );
+            displayName: displayName.isEmpty ? 'Account' : displayName,
+            avatarUrl: avatarUrl,
+            phone: _phone.text.trim(),
+            birthDate: _birthDateApi(),
+            countryCode: _countryCode,
+            postalCode: _postal.text.trim(),
+          );
       if (mounted) context.pop();
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -130,6 +172,33 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
               kind: AppTextInputKind.none,
               controller: _email,
               enabled: false,
+            ),
+            AppLabeledTextField(
+              label: 'Phone number (optional)',
+              controller: _phone,
+              keyboardType: TextInputType.phone,
+            ),
+            const SizedBox(height: 8),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Date of birth (optional)'),
+              subtitle: Text(_birthDateApi() ?? 'Select a date'),
+              trailing: const Icon(Icons.calendar_today_outlined),
+              onTap: _saving ? null : _pickBirthDate,
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              value: _countryCode,
+              decoration: const InputDecoration(labelText: 'Country (optional)'),
+              items: [
+                for (final c in _countries)
+                  DropdownMenuItem(value: c.code, child: Text(c.name)),
+              ],
+              onChanged: _saving ? null : (v) => setState(() => _countryCode = v),
+            ),
+            AppLabeledTextField(
+              label: 'Zip / Postal code (optional)',
+              controller: _postal,
             ),
             const SizedBox(height: 20),
             FilledButton(

@@ -21,11 +21,18 @@ router = APIRouter(prefix="/v1", tags=["profile"])
 
 
 def _to_profile_response(row: dict[str, Any]) -> ProfileResponse:
+    birth = row.get("birth_date")
+    terms = row.get("terms_accepted_at")
     return ProfileResponse(
         firebase_uid=row["firebase_uid"],
         email=row.get("email"),
         display_name=row.get("display_name"),
         avatar_url=signed_avatar_url(row.get("avatar_url")),
+        phone=row.get("phone"),
+        birth_date=birth,
+        country_code=row.get("country_code"),
+        postal_code=row.get("postal_code"),
+        terms_accepted_at=terms,
         owner_onboarding_completed=row.get("owner_onboarding_completed_at") is not None,
         created_at=row["created_at"].isoformat(),
         updated_at=row["updated_at"].isoformat(),
@@ -67,7 +74,17 @@ def patch_profile(
             user["uid"],
             body.display_name,
             avatar_url=avatar_stored if body.avatar_url is not None else None,
+            phone=body.phone,
+            birth_date=body.birth_date,
+            country_code=body.country_code,
+            postal_code=body.postal_code,
+            accept_terms=body.accept_terms,
         )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
     except RuntimeError as exc:
         raise map_domain_errors(exc) from exc
     return _to_profile_response(row)

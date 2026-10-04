@@ -1,27 +1,64 @@
 class CompleteProfileDraft {
   const CompleteProfileDraft({
-    this.fullName = '',
-    this.termsAccepted = true,
+    this.firstName = '',
+    this.lastName = '',
+    this.phone = '',
+    this.birthDateIso,
+    this.countryCode,
+    this.postalCode = '',
+    this.relationshipLabel,
+    this.termsAccepted = false,
     this.photoPath,
     this.networkPhotoUrl,
   });
 
-  final String fullName;
+  final String firstName;
+  final String lastName;
+  final String phone;
+  final String? birthDateIso;
+  final String? countryCode;
+  final String postalCode;
+  final String? relationshipLabel;
   final bool termsAccepted;
   final String? photoPath;
   final String? networkPhotoUrl;
 
+  /// Legacy single-field name (migrated on read).
+  String get fullName => '$firstName $lastName'.trim();
+
   Map<String, dynamic> toJson() => {
-        'fullName': fullName,
+        'firstName': firstName,
+        'lastName': lastName,
+        'phone': phone,
+        if (birthDateIso != null) 'birthDateIso': birthDateIso,
+        if (countryCode != null) 'countryCode': countryCode,
+        'postalCode': postalCode,
+        if (relationshipLabel != null) 'relationshipLabel': relationshipLabel,
         'termsAccepted': termsAccepted,
         if (photoPath != null) 'photoPath': photoPath,
         if (networkPhotoUrl != null) 'networkPhotoUrl': networkPhotoUrl,
       };
 
   static CompleteProfileDraft fromJson(Map<String, dynamic> json) {
+    var first = json['firstName'] as String? ?? '';
+    var last = json['lastName'] as String? ?? '';
+    final legacy = json['fullName'] as String? ?? '';
+    if (first.isEmpty && legacy.isNotEmpty) {
+      final parts = legacy.trim().split(RegExp(r'\s+'));
+      first = parts.first;
+      if (parts.length > 1) {
+        last = parts.sublist(1).join(' ');
+      }
+    }
     return CompleteProfileDraft(
-      fullName: json['fullName'] as String? ?? '',
-      termsAccepted: json['termsAccepted'] as bool? ?? true,
+      firstName: first,
+      lastName: last,
+      phone: json['phone'] as String? ?? '',
+      birthDateIso: json['birthDateIso'] as String?,
+      countryCode: json['countryCode'] as String?,
+      postalCode: json['postalCode'] as String? ?? '',
+      relationshipLabel: json['relationshipLabel'] as String?,
+      termsAccepted: json['termsAccepted'] as bool? ?? false,
       photoPath: json['photoPath'] as String?,
       networkPhotoUrl: json['networkPhotoUrl'] as String?,
     );
