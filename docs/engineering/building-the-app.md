@@ -40,7 +40,7 @@ Follow [platform-architecture.md](platform-architecture.md) Month 1–2:
 3. **Done:** **Registry** + **Fun** — social API (`008`), Flutter tabs, purchase/votes/likes; static AI suggestion JSON (calendar + registry)
 4. **Done:** app shell + **owner onboarding** (carousel → auth → profile → baby → first moment → invites → home)
 5. **Done (owner home):** modular home UI, announce arrival (PATCH), `/invite-family`, `GET …/home-summary` + `activity_events` (API + gallery/calendar/registry/fun mutations where applicable)
-6. **Done:** follower home (`home-summary` for members, `FollowerHomeComposer`), account engagement stats + storage on `GET /v1/me/account`
+6. **Done:** follower home (`home-summary` for members, `FollowerHomeComposer`); owner storage meter on My Account only (`GET /v1/me/account`, not home-summary)
 7. **Done (account):** notification prefs + inbox UI, global search, baby data export, account delete
 8. **Done (notifications):** Pub/Sub notify writers (photo ready, squish, comment, event, RSVP, registry claim, baby arrived, invite accepted); FCM for `notification_digest=realtime`; weekly digest push via `./scripts/setup-weekly-digest-scheduler.sh` (Pub/Sub on worker topic)
 9. **Done (home §6.2):** PRD home sections via extended `home-summary`, `/calendar/upcoming`, `/home/activity`, migration `015` + admin system announcements API

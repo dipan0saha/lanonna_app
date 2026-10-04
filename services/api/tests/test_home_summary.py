@@ -47,11 +47,11 @@ def test_build_home_summary_includes_getting_started_and_next_event():
         patch("lanonna_api.domain.home.list_active_for_user", return_value=[]),
         patch("lanonna_api.domain.home.list_new_followers", return_value=[]),
         patch("lanonna_api.domain.home.list_invitations_for_baby", return_value=[]),
-        patch("lanonna_api.domain.home.storage_usage_for_owner_babies", return_value=None),
         patch("lanonna_api.domain.home._build_birth_welcome", return_value=None),
     ):
         data = build_home_summary("uid", baby_id)
 
+    assert "storage_usage" not in data
     assert data["next_up_event"]["title"] == "Shower"
     assert data["getting_started"]["total"] == 5
     profile_task = next(

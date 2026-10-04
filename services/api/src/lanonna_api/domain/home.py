@@ -40,7 +40,6 @@ from lanonna_api.repositories.registry import (
     list_recent_registry_purchases,
 )
 from lanonna_api.repositories.system_announcements import list_active_for_user
-from lanonna_api.repositories.user_engagement import storage_usage_for_owner_babies
 from lanonna_api.domain.notifications import (
     FanOutSpec,
     NotificationChannel,
@@ -411,7 +410,6 @@ def build_home_summary(
 
     new_followers = None
     invite_status = None
-    storage_usage = None
     if is_owner:
         new_followers = [
             {
@@ -435,7 +433,6 @@ def build_home_summary(
             for inv in list_invitations_for_baby(baby_profile_id)
             if inv.get("status") == "pending"
         ][:5]
-        storage_usage = storage_usage_for_owner_babies(firebase_uid)
 
     return {
         "baby_profile_id": baby_profile_id,
@@ -454,7 +451,6 @@ def build_home_summary(
         "system_announcements": system_announcements,
         "new_followers": new_followers,
         "invite_status": invite_status,
-        "storage_usage": storage_usage,
         "teasers": _build_home_teasers(firebase_uid, baby_profile_id),
         "recent_activity": [
             {

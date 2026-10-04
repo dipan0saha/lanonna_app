@@ -157,7 +157,7 @@ Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps:
 | POST | `/v1/onboarding/owner/complete` | Firebase Bearer JWT |
 | GET, POST | `/v1/babies` | Firebase Bearer JWT |
 | PATCH | `/v1/babies/{baby_profile_id}` | Firebase Bearer JWT (owner); optional `avatar_url`; `lifecycle_status: born` records `baby_arrived` activity |
-| GET | `/v1/babies/{baby_profile_id}/home-summary` | Firebase Bearer JWT (member); §6.2 blocks: `birth_welcome`, `system_announcements`, `teasers` (notifications, upcoming events, RSVP, photos, registry), owner `new_followers` / `invite_status` / `storage_usage`, `recent_activity` teaser |
+| GET | `/v1/babies/{baby_profile_id}/home-summary` | Firebase Bearer JWT (member); §6.2 blocks: `birth_welcome`, `system_announcements`, `teasers` (notifications, upcoming events, RSVP, photos, registry), owner `new_followers` / `invite_status`, `recent_activity` teaser |
 | GET | `/v1/babies/{baby_profile_id}/activity-events` | Paginated `activity_events` (`limit`, `offset`) |
 | POST | `/v1/me/system-announcements/{id}/dismiss` | Dismiss system banner |
 | GET/POST/PATCH/DELETE | `/v1/admin/system-announcements` | Ops CRUD (`X-Admin-Key` header; Cloud Run secret `admin-api-key` → env `ADMIN_API_KEY`) |

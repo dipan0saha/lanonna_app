@@ -8,7 +8,6 @@ import '../../../account/data/account_repository.dart';
 import '../../../registry/domain/registry_routes.dart';
 import '../../data/models/home_summary.dart';
 import 'home_section_label.dart';
-import 'home_storage_usage_card.dart';
 
 class HomeNewFollowersSection extends StatelessWidget {
   const HomeNewFollowersSection({
@@ -163,20 +162,6 @@ class HomeRecentPurchasesSection extends StatelessWidget {
         ),
         const SizedBox(height: 12),
       ],
-    );
-  }
-}
-
-class HomeStorageSection extends StatelessWidget {
-  const HomeStorageSection({super.key, required this.usage});
-
-  final HomeStorageUsage usage;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: AppMetrics.horizontalPadding),
-      child: HomeStorageUsageCard(usage: usage),
     );
   }
 }

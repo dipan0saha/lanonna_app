@@ -394,24 +394,6 @@ class HomeInviteStatusRow {
   }
 }
 
-class HomeStorageUsage {
-  const HomeStorageUsage({required this.usedBytes, required this.quotaBytes});
-
-  final int usedBytes;
-  final int quotaBytes;
-
-  double get usedFraction =>
-      quotaBytes > 0 ? (usedBytes / quotaBytes).clamp(0.0, 1.0) : 0;
-
-  factory HomeStorageUsage.fromJson(Map<String, dynamic>? json) {
-    if (json == null) return const HomeStorageUsage(usedBytes: 0, quotaBytes: 1);
-    return HomeStorageUsage(
-      usedBytes: readInt(json['used_bytes']),
-      quotaBytes: readInt(json['quota_bytes'], defaultValue: 1),
-    );
-  }
-}
-
 class HomeSummary {
   const HomeSummary({
     required this.lifecycleStatus,
@@ -429,7 +411,6 @@ class HomeSummary {
     this.systemAnnouncements = const [],
     this.newFollowers = const [],
     this.inviteStatus = const [],
-    this.storageUsage,
   });
 
   final String lifecycleStatus;
@@ -446,7 +427,6 @@ class HomeSummary {
   final List<SystemAnnouncementItem> systemAnnouncements;
   final List<HomeNewFollower> newFollowers;
   final List<HomeInviteStatusRow> inviteStatus;
-  final HomeStorageUsage? storageUsage;
   final List<HomeActivityItem> recentActivity;
 
   bool get showRichInsight => voteCount > 0 || nameSuggestionCount > 0;
@@ -495,9 +475,6 @@ class HomeSummary {
           .whereType<Map<String, dynamic>>()
           .map(HomeInviteStatusRow.fromJson)
           .toList(),
-      storageUsage: json['storage_usage'] != null
-          ? HomeStorageUsage.fromJson(json['storage_usage'] as Map<String, dynamic>)
-          : null,
       recentActivity: activity
           .whereType<Map<String, dynamic>>()
           .map(HomeActivityItem.fromJson)

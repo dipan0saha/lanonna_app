@@ -59,7 +59,7 @@ The experience is **role-aware**: owners see edit controls and baby-scoped manag
 
 | Role | Capabilities |
 |------|----------------|
-| **Owner** | Full access to a baby profile they own: edit profile, calendar, registry, photos; manage followers and invitations; mark registry items as purchased (closes item to further claims); delete any registry purchase on their baby; see owner-only home sections (checklist, invite status, storage usage). |
+| **Owner** | Full access to a baby profile they own: edit profile, calendar, registry, photos; manage followers and invitations; mark registry items as purchased (closes item to further claims); delete any registry purchase on their baby; see owner-only home sections (checklist, invite status). |
 | **Follower** | Read access to followed babies; squish and comment on photos; RSVP and comment on events; purchase/claim registry items (one purchase per item); submit predictions and name suggestions. |
 | **Co-owner** | Onboarded via invitation that grants **owner** membership and a relationship label (e.g. spouse); same capabilities as owner for that baby. |
 
@@ -189,11 +189,10 @@ Recommended vertical order (adjust in design wireframes without dropping capabil
 12. **Activity recap** — **full stream** of recent `activity_events` (chronological audit-style feed), not a weekly rollup.
 13. **New followers** — joined in last 30 days; owner only.
 14. **Invite status** — pending email invites; revoke; owner only.
-15. **Storage usage** — media allocation meter; owner only.
 
 ### 6.3 Home sections (follower context)
 
-Same components where applicable, with **aggregated or read-only** data across followed babies. Omit owner-only sections (checklist, invite status, storage usage). Editing controls hidden.
+Same components where applicable, with **aggregated or read-only** data across followed babies. Omit owner-only sections (checklist, invite status). Editing controls hidden.
 
 ### 6.4 Feature screens (full flows)
 
@@ -348,6 +347,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 |----|-------------|---------------------|---------------------|
 | FR-PROF-001 | View profile | User sees display name, avatar, stats | `/profile` from shell menu |
 | FR-PROF-002 | Edit profile | Update display name, avatar | `/profile/edit` |
+| FR-PROF-003 | Storage usage | Owner sees media allocation meter (used vs quota across owned babies) | `/profile`; `GET /v1/me/account` → `storage_usage` |
 | FR-SET-001 | Settings screen | Notification prefs, help/support entry | `/settings` |
 | FR-SET-002 | Language | **English only**; copy in ARB/localization files (no hardcoded UI strings). No Spanish or other locales in product scope. | `app_en.arb` |
 | FR-SET-003 | No dark mode picker | Theme remains light only | Product decision (light-only brand) |
@@ -446,7 +446,7 @@ Firebase Auth holds identity; link `user_id` to Firebase UID in SQL.
 - Display encode + worker thumbnails.
 - English UI copy via localization files.
 
-Engineering status aligns with [building-the-app.md](../engineering/building-the-app.md): §6.2 home hub (teasers, birth welcome, system announcements, registry highlights/purchases, activity paginated route, owner invite/followers/storage) is **implemented on dev**; remaining v1 polish: App Check and device QA for push.
+Engineering status aligns with [building-the-app.md](../engineering/building-the-app.md): §6.2 home hub (teasers, birth welcome, system announcements, registry highlights/purchases, activity paginated route, owner invite/followers) is **implemented on dev**; owner storage meter on My Account (`GET /v1/me/account`); remaining v1 polish: App Check and device QA for push.
 
 ### 10.2 Later
 
@@ -495,7 +495,7 @@ Engineering status aligns with [building-the-app.md](../engineering/building-the
 | Activity recap | Home §12 | Full-stream `activity_events` |
 | New followers | Home §13 | Last 30 days; owner |
 | Invite status | Home §14 | Pending invites; revoke |
-| Storage usage | Home §15 | Owner storage meter |
+| Storage usage | My Account (`/profile`) | Owner storage meter; FR-PROF-003 |
 | Registry list | Registry tab body | Full wishlist |
 | Name suggestions | Fun tab | List + add flow |
 | Prediction votes | Fun tab | Gender + birthdate votes |

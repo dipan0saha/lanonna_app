@@ -5,7 +5,7 @@ import 'home_activity_feed.dart';
 import 'home_owner_sections.dart';
 import 'home_system_announcements_section.dart';
 import 'home_teasers_section.dart';
-/// PRD §6.2 sections #4–#15 (after hero/checklist blocks in composers).
+/// PRD §6.2 sections #4–#14 (after hero/checklist blocks in composers).
 class HomePrdSections extends StatelessWidget {
   const HomePrdSections({
     super.key,
@@ -57,8 +57,6 @@ class HomePrdSections extends StatelessWidget {
             babyId: babyId,
             onChanged: onRefresh,
           ),
-          if (summary.storageUsage != null)
-            HomeStorageSection(usage: summary.storageUsage!),
         ],
       ],
     );

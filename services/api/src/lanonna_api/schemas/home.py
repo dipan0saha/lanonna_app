@@ -75,5 +75,4 @@ class HomeSummaryResponse(BaseModel):
     system_announcements: list[dict[str, Any]] = []
     new_followers: list[dict[str, Any]] | None = None
     invite_status: list[dict[str, Any]] | None = None
-    storage_usage: dict[str, Any] | None = None
     teasers: HomeTeasersResponse | None = None
