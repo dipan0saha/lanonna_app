@@ -8,6 +8,8 @@ from lanonna_api.domain.avatar_urls import signed_avatar_url
 
 from pydantic import BaseModel, Field, field_validator
 
+from lanonna_api.schemas.first_moment import NameSuggestionRow
+
 
 class BabyCreateRequest(BaseModel):
     name: str = Field(min_length=1, max_length=120)
@@ -16,6 +18,10 @@ class BabyCreateRequest(BaseModel):
     actual_birth_date: date | None = None
     lifecycle_status: Literal["expecting", "born"] = "expecting"
     relationship_label: str | None = Field(default=None, max_length=80)
+    profile_name_suggestions: list[NameSuggestionRow] = Field(
+        default_factory=list,
+        max_length=5,
+    )
 
     @field_validator("name")
     @classmethod

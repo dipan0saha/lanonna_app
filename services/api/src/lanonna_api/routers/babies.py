@@ -15,7 +15,7 @@ from lanonna_api.repositories.babies import (
     list_babies_for_user,
     update_baby_for_owner,
 )
-from lanonna_api.domain.onboarding import seed_first_moment
+from lanonna_api.domain.onboarding import seed_expecting_profile_name_suggestions, seed_first_moment
 from lanonna_api.repositories.users import upsert_app_user
 from lanonna_api.schemas.babies import (
     BabyCreateRequest,
@@ -44,6 +44,11 @@ def create_baby(
     user: dict[str, Any] = Depends(current_user),
 ) -> BabySummary:
     upsert_app_user(user["uid"], user.get("email"))
+    if body.profile_name_suggestions and body.lifecycle_status != "expecting":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="profile_name_suggestions are only allowed for expecting babies.",
+        )
     try:
         row = create_baby_with_owner_membership(
             user["uid"],
@@ -56,6 +61,13 @@ def create_baby(
         )
     except RuntimeError as exc:
         raise map_domain_errors(exc) from exc
+    if body.profile_name_suggestions:
+        seed_expecting_profile_name_suggestions(
+            user["uid"],
+            row["id"],
+            [{"name": r.name, "gender": r.gender} for r in body.profile_name_suggestions],
+            baby=row,
+        )
     return baby_summary_from_row(row)
 
 

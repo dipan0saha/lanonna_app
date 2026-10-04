@@ -217,6 +217,13 @@ class _OnboardingCreateBabyScreenState extends State<OnboardingCreateBabyScreen>
           ? formatApiDate(_selectedDate!)
           : null;
 
+      final profileNameSuggestions = expectingProfileNameSuggestionsForFun(
+        status: _babyStatus,
+        gender: _selectedGender,
+        boyName: _boyNameController.text,
+        girlName: _girlNameController.text,
+      );
+
       final baby = await repository.createBaby(
         name: name,
         gender: _selectedGender.apiValue,
@@ -225,6 +232,7 @@ class _OnboardingCreateBabyScreenState extends State<OnboardingCreateBabyScreen>
         actualBirthDate: actual,
         relationshipLabel:
             context.read<OnboardingCoordinator>().completeProfileDraft?.relationshipLabel,
+        profileNameSuggestions: profileNameSuggestions,
       );
 
       if (_selectedImage != null && !kIsWeb) {

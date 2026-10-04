@@ -10,6 +10,7 @@ from lanonna_api.domain.name_suggestions import (
 )
 from lanonna_api.domain.onboarding import (
     complete_owner_onboarding_for_user,
+    seed_expecting_profile_name_suggestions,
     seed_first_moment,
 )
 
@@ -33,6 +34,39 @@ def test_complete_owner_onboarding_requires_email_verified():
     ):
         with pytest.raises(ValueError, match="Verify your email"):
             complete_owner_onboarding_for_user("uid", email_verified=False)
+
+
+def test_seed_expecting_profile_name_suggestions_dedupes_and_skips_born():
+    baby_id = uuid.uuid4()
+    with patch(
+        "lanonna_api.domain.onboarding.insert_seed_name_suggestion",
+    ) as names:
+        created = seed_expecting_profile_name_suggestions(
+            "owner",
+            baby_id,
+            [
+                {"name": "Liam", "gender": "male"},
+                {"name": "liam", "gender": "female"},
+                {"name": "  ", "gender": "male"},
+            ],
+            baby={"lifecycle_status": "expecting"},
+        )
+    assert created == 1
+    names.assert_called_once()
+
+    with patch(
+        "lanonna_api.domain.onboarding.insert_seed_name_suggestion",
+    ) as names_born:
+        assert (
+            seed_expecting_profile_name_suggestions(
+                "owner",
+                baby_id,
+                [{"name": "Mia", "gender": "female"}],
+                baby={"lifecycle_status": "born"},
+            )
+            == 0
+        )
+    names_born.assert_not_called()
 
 
 def test_seed_first_moment_skips_blank_names():

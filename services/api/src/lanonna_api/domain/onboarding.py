@@ -39,6 +39,33 @@ def _anchor_date(baby: dict[str, Any]) -> date:
     return date.today() + timedelta(days=90)
 
 
+def seed_expecting_profile_name_suggestions(
+    firebase_uid: str,
+    baby_profile_id: uuid.UUID,
+    name_suggestions: list[dict[str, str]],
+    *,
+    baby: dict[str, Any] | None = None,
+) -> int:
+    """Insert Fun name votes from expecting baby profile name fields (deduped by name)."""
+    profile = baby if baby is not None else require_owner_baby(firebase_uid, baby_profile_id)
+    if (profile.get("lifecycle_status") or "expecting") != "expecting":
+        return 0
+    seen: set[str] = set()
+    created = 0
+    for row in name_suggestions:
+        name = normalize_suggested_name(row.get("name") or "")
+        if not name:
+            continue
+        key = name.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        gender = normalize_gender_for_first_moment_seed(row.get("gender") or "unknown")
+        insert_seed_name_suggestion(baby_profile_id, firebase_uid, name, gender)
+        created += 1
+    return created
+
+
 def onboarding_status_for_user(
     firebase_uid: str,
     *,
@@ -109,13 +136,12 @@ def seed_first_moment(
         insert_seed_registry_item(baby_profile_id, firebase_uid, preset.label)
         registry_created += 1
 
-    for row in name_suggestions:
-        name = normalize_suggested_name(row.get("name") or "")
-        if not name:
-            continue
-        gender = normalize_gender_for_first_moment_seed(row.get("gender") or "unknown")
-        insert_seed_name_suggestion(baby_profile_id, firebase_uid, name, gender)
-        names_created += 1
+    names_created += seed_expecting_profile_name_suggestions(
+        firebase_uid,
+        baby_profile_id,
+        name_suggestions,
+        baby=baby,
+    )
 
     return {
         "events_created": events_created,

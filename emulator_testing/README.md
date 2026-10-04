@@ -131,6 +131,15 @@ If the app shows **“Could not delete Firebase user”** (API 503):
 
 ---
 
+## Expecting baby names → Fun (#400)
+
+After **API deploy** with `profile_name_suggestions` on `POST /v1/babies`:
+
+1. Owner onboarding → **Create your baby's profile** → **Expecting** → enter boy and/or girl optional names → Continue.
+2. Skip or finish first moment → open **Fun** → **Names** tab: entered names appear as vote options (deduped if identical).
+
+---
+
 ## Create-baby profile photo vs gallery (#394)
 
 Manual on emulator (`flutter run` **without** `DEV_AUTO_SIGN_IN_*`):
@@ -147,7 +156,7 @@ Owner signed in on emulator (no auto-login):
 
 1. **My Account** → **Invite family & friends** (or Home invite action / Manage followers → **+ Invite more people**).
 2. Expect **one** top row: back + **Invite Family & Friends** (no baby-name home bar stacked above).
-3. Intro inset matches form (`AppMetrics.horizontalPadding`); private link expires in **7 days**; sage 💡 hint for **Mother/Father** co-owner.
+3. Intro: private link expires in **7 days**; sage hint for **Mother/Father** co-owner.
 4. Relationship dropdown shows **Mother/Father** (not Wife/Husband); co-owner row badge when selected.
 5. Send with a valid email → returns to previous screen; pending invite visible under followers when applicable.
 

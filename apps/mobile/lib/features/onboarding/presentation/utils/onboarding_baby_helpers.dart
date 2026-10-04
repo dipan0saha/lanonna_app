@@ -68,6 +68,42 @@ DateTime onboardingBornDatePickerInitial(DateTime? selected, DateTime now) {
 bool onboardingShowsUnsureGenderPill(BabyLifecycle status) =>
     status == BabyLifecycle.expecting;
 
+/// Fun name suggestions from expecting create-baby optional name fields (#400).
+List<Map<String, String>> expectingProfileNameSuggestionsForFun({
+  required BabyLifecycle status,
+  required BabyGender gender,
+  required String boyName,
+  required String girlName,
+}) {
+  if (status != BabyLifecycle.expecting) return const [];
+
+  final seen = <String>{};
+  final out = <Map<String, String>>[];
+
+  void add(String raw, String genderApi) {
+    final normalized = AppTextInputPolicy.normalizeForSubmit(
+      AppTextInputKind.personName,
+      raw,
+    );
+    if (normalized.isEmpty) return;
+    final key = normalized.toLowerCase();
+    if (seen.contains(key)) return;
+    seen.add(key);
+    out.add({'name': normalized, 'gender': genderApi});
+  }
+
+  switch (onboardingBabyNameFieldsMode(status: status, gender: gender)) {
+    case OnboardingBabyNameFieldsMode.expectingBoth:
+      add(boyName, 'male');
+      add(girlName, 'female');
+    case OnboardingBabyNameFieldsMode.bornSingleBoy:
+      add(boyName, 'male');
+    case OnboardingBabyNameFieldsMode.bornSingleGirl:
+      add(girlName, 'female');
+  }
+  return out;
+}
+
 String resolveOnboardingBabyName({
   required BabyLifecycle status,
   required BabyGender gender,

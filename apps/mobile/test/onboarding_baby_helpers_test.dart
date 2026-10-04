@@ -29,6 +29,42 @@ void main() {
     );
   });
 
+  test('expectingProfileNameSuggestionsForFun maps boy and girl fields', () {
+    final suggestions = expectingProfileNameSuggestionsForFun(
+      status: BabyLifecycle.expecting,
+      gender: BabyGender.unknown,
+      boyName: 'Liam',
+      girlName: 'Olivia',
+    );
+    expect(suggestions, [
+      {'name': 'Liam', 'gender': 'male'},
+      {'name': 'Olivia', 'gender': 'female'},
+    ]);
+  });
+
+  test('expectingProfileNameSuggestionsForFun dedupes same name', () {
+    final suggestions = expectingProfileNameSuggestionsForFun(
+      status: BabyLifecycle.expecting,
+      gender: BabyGender.unknown,
+      boyName: 'Sky',
+      girlName: 'sky',
+    );
+    expect(suggestions.length, 1);
+    expect(suggestions.first['name'], 'Sky');
+  });
+
+  test('expectingProfileNameSuggestionsForFun empty when born', () {
+    expect(
+      expectingProfileNameSuggestionsForFun(
+        status: BabyLifecycle.born,
+        gender: BabyGender.male,
+        boyName: 'Leo',
+        girlName: '',
+      ),
+      isEmpty,
+    );
+  });
+
   test('resolveOnboardingBabyName prefers boy name', () {
     expect(
       resolveOnboardingBabyName(

@@ -43,6 +43,7 @@ class OnboardingRepository {
     String? actualBirthDate,
     String lifecycleStatus = 'expecting',
     String? relationshipLabel,
+    List<Map<String, String>> profileNameSuggestions = const [],
   }) async {
     final json = await _api.postJson('/v1/babies', body: {
       'name': name,
@@ -52,6 +53,10 @@ class OnboardingRepository {
       'lifecycle_status': lifecycleStatus,
       if (relationshipLabel != null && relationshipLabel.isNotEmpty)
         'relationship_label': relationshipLabel,
+      if (profileNameSuggestions.isNotEmpty)
+        'profile_name_suggestions': profileNameSuggestions
+            .map((r) => {'name': r['name'], 'gender': r['gender'] ?? 'unknown'})
+            .toList(),
     });
     return BabySummary.fromJson(json);
   }

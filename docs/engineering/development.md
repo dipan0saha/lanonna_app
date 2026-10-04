@@ -155,7 +155,7 @@ Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps:
 | PATCH | `/v1/profile` | Firebase Bearer JWT; `display_name`, optional `avatar_url`, `phone`, `birth_date`, `country_code`, `postal_code`, `accept_terms` (sets `terms_accepted_at`). Read profile via `GET /v1/me/account`. |
 | GET | `/v1/onboarding/status` | Firebase Bearer JWT |
 | POST | `/v1/onboarding/owner/complete` | Firebase Bearer JWT |
-| GET, POST | `/v1/babies` | Firebase Bearer JWT; create accepts optional `relationship_label` on owner membership |
+| GET, POST | `/v1/babies` | Firebase Bearer JWT; create accepts optional `relationship_label`; **expecting** create may include `profile_name_suggestions` (`name` + `gender`) to seed Fun (#400) |
 | PATCH | `/v1/babies/{baby_profile_id}` | Firebase Bearer JWT (owner); optional `avatar_url`; `lifecycle_status: born` records `baby_arrived` activity |
 | GET | `/v1/babies/{baby_profile_id}/home-summary` | Firebase Bearer JWT (member); §6.2 blocks: `birth_welcome`, `system_announcements`, `teasers` (notifications, upcoming events, RSVP, photos, registry), owner `new_followers` / `invite_status`, `recent_activity` teaser |
 | GET | `/v1/babies/{baby_profile_id}/activity-events` | Paginated `activity_events` (`limit`, `offset`) |
