@@ -11,19 +11,45 @@ class DisplayPhotoUpload {
 
   final ApiClient _api;
 
-  /// Uploads a profile avatar to the display bucket; returns a stable HTTPS URL.
+  /// Uploads a user profile avatar; returns the GCS object path to persist as `avatar_url`.
   Future<String> uploadProfileAvatar({
     required File imageFile,
     String? contentType,
   }) async {
+    return _uploadAvatar(
+      imageFile: imageFile,
+      contentType: contentType,
+    );
+  }
+
+  /// Uploads a baby profile avatar; returns the GCS object path to persist as `avatar_url`.
+  Future<String> uploadBabyAvatar({
+    required String babyProfileId,
+    required File imageFile,
+    String? contentType,
+  }) async {
+    return _uploadAvatar(
+      imageFile: imageFile,
+      contentType: contentType,
+      babyProfileId: babyProfileId,
+    );
+  }
+
+  Future<String> _uploadAvatar({
+    required File imageFile,
+    String? contentType,
+    String? babyProfileId,
+  }) async {
     final encoded = encodeDisplayAsset(await imageFile.readAsBytes());
     final resolvedType = contentType ?? encoded.contentType;
-    final init = await _api.postJson('/v1/uploads/display/signed-url', body: {
+    final initBody = <String, dynamic>{
       'content_type': resolvedType,
       'byte_length': encoded.bytes.length,
-    });
+      'scope': babyProfileId != null ? 'baby' : 'user',
+      if (babyProfileId != null) 'baby_profile_id': babyProfileId,
+    };
+    final init = await _api.postJson('/v1/uploads/display/signed-url', body: initBody);
     final uploadUrl = init['upload_url'] as String;
-    final bucket = init['bucket'] as String;
     final objectPath = init['object_path'] as String;
     final response = await http.put(
       Uri.parse(uploadUrl),
@@ -37,7 +63,7 @@ class DisplayPhotoUpload {
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception('Avatar upload failed (${response.statusCode})');
     }
-    return 'https://storage.googleapis.com/$bucket/$objectPath';
+    return objectPath;
   }
 
   Future<String> uploadGalleryPhoto({

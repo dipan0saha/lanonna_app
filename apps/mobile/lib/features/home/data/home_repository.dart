@@ -34,6 +34,12 @@ class HomeRepository {
     return resolved;
   }
 
+  /// Baby membership for a specific profile id (route/deep-link scoped loads).
+  Future<BabySummary?> babyById(String babyId) async {
+    final babies = await listBabies();
+    return babies.where((b) => b.id == babyId).firstOrNull;
+  }
+
   /// Owner baby for owner-only flows: selected baby when owner, else first owned baby.
   Future<BabySummary?> resolveOwnerBaby(SelectedBabyStore store) async {
     final babies = await listBabies();

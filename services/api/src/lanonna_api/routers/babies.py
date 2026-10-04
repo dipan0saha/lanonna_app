@@ -6,6 +6,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from lanonna_api.auth import current_user
+from lanonna_api.domain.avatar_urls import normalize_avatar_for_storage
 from lanonna_api.http_errors import map_domain_errors
 from lanonna_api.domain.home import announce_arrival, build_home_summary, list_activity_events
 from lanonna_api.repositories.babies import (
@@ -76,7 +77,13 @@ def patch_baby(
     if body.lifecycle_status is not None:
         fields["lifecycle_status"] = body.lifecycle_status
     if body.avatar_url is not None:
-        fields["avatar_url"] = body.avatar_url
+        try:
+            fields["avatar_url"] = normalize_avatar_for_storage(body.avatar_url)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(exc),
+            ) from exc
 
     announcing = body.lifecycle_status == "born" and body.actual_birth_date is not None
     try:

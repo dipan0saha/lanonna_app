@@ -26,6 +26,7 @@ Apply in **lexicographic order** (filename prefix):
 | `018_events_catalog_suggestion_id.sql` | `events.catalog_suggestion_id` (calendar AI suggestion dedupe) |
 | `019_photo_baby_tags.sql` | `photo_baby_tags` (FR-GAL-008 baby tags on photos) |
 | `020_app_versions.sql` | `app_versions` minimum client version per platform (FR-SET-004) |
+| `021_worker_idempotency.sql` | Worker delivery dedupe, photo-ready notify log, `invitations.email_sent_at` |
 
 ## Apply (dev)
 

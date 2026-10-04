@@ -3,6 +3,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from lanonna_api.auth import current_user
+from lanonna_api.domain.avatar_urls import normalize_avatar_for_storage, signed_avatar_url
 from lanonna_api.http_errors import map_domain_errors
 from lanonna_api.domain.account import build_account_extensions
 from lanonna_api.domain.account_delete import delete_account, delete_account_eligibility
@@ -24,7 +25,7 @@ def _to_profile_response(row: dict[str, Any]) -> ProfileResponse:
         firebase_uid=row["firebase_uid"],
         email=row.get("email"),
         display_name=row.get("display_name"),
-        avatar_url=row.get("avatar_url"),
+        avatar_url=signed_avatar_url(row.get("avatar_url")),
         owner_onboarding_completed=row.get("owner_onboarding_completed_at") is not None,
         created_at=row["created_at"].isoformat(),
         updated_at=row["updated_at"].isoformat(),
@@ -52,11 +53,20 @@ def patch_profile(
     user: dict[str, Any] = Depends(current_user),
 ) -> ProfileResponse:
     upsert_app_user(user["uid"], user.get("email"))
+    avatar_stored: str | None = None
+    if body.avatar_url is not None:
+        try:
+            avatar_stored = normalize_avatar_for_storage(body.avatar_url)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(exc),
+            ) from exc
     try:
         row = update_profile(
             user["uid"],
             body.display_name,
-            avatar_url=body.avatar_url,
+            avatar_url=avatar_stored if body.avatar_url is not None else None,
         )
     except RuntimeError as exc:
         raise map_domain_errors(exc) from exc
@@ -146,5 +156,7 @@ def post_delete_account(
     try:
         delete_account(user["uid"])
     except PermissionError as exc:
+        raise map_domain_errors(exc) from exc
+    except RuntimeError as exc:
         raise map_domain_errors(exc) from exc
     return {"status": "deleted"}

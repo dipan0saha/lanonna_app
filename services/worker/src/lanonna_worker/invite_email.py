@@ -7,36 +7,13 @@ from pathlib import Path
 from urllib.parse import quote
 
 import httpx
-import psycopg
-from psycopg.rows import dict_row
 
 from lanonna_worker.config import settings
+from lanonna_worker.db import get_connection
 
 logger = logging.getLogger("lanonna.worker.invite_email")
 
 _TEMPLATE_DIR = Path(__file__).resolve().parents[2] / "email_templates"
-
-
-def _connection() -> psycopg.Connection:
-    if not settings.db_password:
-        raise RuntimeError("Database is not configured (missing DB_PASSWORD).")
-    if settings.cloud_sql_connection_name:
-        host = f"/cloudsql/{settings.cloud_sql_connection_name}"
-        return psycopg.connect(
-            host=host,
-            user=settings.db_user,
-            dbname=settings.db_name,
-            password=settings.db_password,
-            row_factory=dict_row,
-        )
-    return psycopg.connect(
-        host=settings.db_host,
-        port=settings.db_port,
-        user=settings.db_user,
-        dbname=settings.db_name,
-        password=settings.db_password,
-        row_factory=dict_row,
-    )
 
 
 def _load_template(name: str) -> str:
@@ -58,7 +35,7 @@ def build_invite_url(invite_token: str, invited_role: str) -> str:
 
 
 def _fetch_email_context(invitation_id: uuid.UUID) -> dict | None:
-    with _connection() as conn:
+    with get_connection() as conn:
         row = conn.execute(
             """
             SELECT
@@ -73,6 +50,7 @@ def _fetch_email_context(invitation_id: uuid.UUID) -> dict | None:
             JOIN app_users u ON u.firebase_uid = i.inviter_firebase_uid
             WHERE i.id = %s
               AND i.status = 'pending'
+              AND i.email_sent_at IS NULL
             LIMIT 1
             """,
             (invitation_id,),
@@ -159,5 +137,24 @@ def send_invite_email(invitation_id: uuid.UUID, invite_token: str) -> None:
             response.text[:500],
         )
         raise RuntimeError(f"Mailjet send failed ({response.status_code})")
+
+    with get_connection() as conn:
+        updated = conn.execute(
+            """
+            UPDATE invitations
+            SET email_sent_at = now(), updated_at = now()
+            WHERE id = %s
+              AND email_sent_at IS NULL
+              AND status = 'pending'
+            RETURNING id
+            """,
+            (invitation_id,),
+        ).fetchone()
+    if updated is None:
+        logger.info(
+            "invite_email_skip_already_sent invitation_id=%s",
+            invitation_id,
+        )
+        return
 
     logger.info("invite_email_sent invitation_id=%s", invitation_id)

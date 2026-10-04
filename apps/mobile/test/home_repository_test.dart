@@ -45,6 +45,14 @@ void main() {
     expect(baby?.id, 'baby-b');
   });
 
+  test('babyById returns membership for route baby id', () async {
+    final repo = HomeRepository(_BabiesApi());
+    final baby = await repo.babyById('baby-b');
+    expect(baby?.id, 'baby-b');
+    expect(baby?.role, 'owner');
+    expect(await repo.babyById('missing'), isNull);
+  });
+
   test('resolveOwnerBaby skips follower-only selection', () async {
     SharedPreferences.setMockInitialValues({'selected_baby_id': 'baby-f'});
     final store = SelectedBabyStore(await SharedPreferences.getInstance());

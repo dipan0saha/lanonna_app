@@ -107,6 +107,7 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
                 imageFile: _photoFile,
                 imageUrl: _photoFile == null ? _networkAvatarUrl : null,
                 onTap: _saving ? null : _pickPhoto,
+                onSignedUrlError: _load,
               ),
             ),
             const SizedBox(height: 8),

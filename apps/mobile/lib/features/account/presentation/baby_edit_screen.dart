@@ -92,7 +92,8 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
       final dateIso = _date != null ? formatApiDate(_date!) : null;
       String? avatarUrl = _networkAvatarUrl;
       if (_photoFile != null && !kIsWeb) {
-        avatarUrl = await DisplayPhotoUpload(context.read<ApiClient>()).uploadProfileAvatar(
+        avatarUrl = await DisplayPhotoUpload(context.read<ApiClient>()).uploadBabyAvatar(
+          babyProfileId: widget.babyId,
           imageFile: File(_photoFile!.path),
         );
       }
@@ -126,6 +127,7 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
                 imageFile: _photoFile,
                 imageUrl: _photoFile == null ? _networkAvatarUrl : null,
                 onTap: _saving ? null : _pickPhoto,
+                onSignedUrlError: _load,
               ),
             ),
             const SizedBox(height: 8),

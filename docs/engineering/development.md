@@ -38,7 +38,7 @@ lanonna_app/
 | `shell/` | (sheet from tab `HomeTopBar`) | Baby switcher; **My Account** footer |
 | `onboarding/`, `invitations/` | Onboarding + deep links | Owner/follower/co-owner paths |
 
-Repositories are registered in `bootstrap.dart`; routes in `core/router/app_router.dart`. Legacy redirects: `/login` → onboarding login, `/role-selection` → owner carousel. Shared API models (e.g. `BabySummary`) live under `apps/mobile/lib/core/domain/`. **Selected baby:** `HomeRepository.resolveSelectedBaby(SelectedBabyStore)` — use for baby-scoped loads (not raw `selectedBabyId` alone). Static catalogs: `assets/calendar/event_suggestions.json`, `assets/registry/registry_suggestions.json`.
+Repositories are registered in `bootstrap.dart`; routes in `core/router/app_router.dart`. Legacy redirects: `/login` → onboarding login, `/role-selection` → owner carousel. Shared API models (e.g. `BabySummary`) live under `apps/mobile/lib/core/domain/`. **Selected baby:** `HomeRepository.resolveSelectedBaby(SelectedBabyStore)` — use for baby-scoped loads (not raw `selectedBabyId` alone). **Route-scoped baby:** `HomeRepository.babyById(id)` for deep links and screens keyed by `babyId` in the URL. Static catalogs: `assets/calendar/event_suggestions.json`, `assets/registry/registry_suggestions.json`.
 
 ### API layout (`services/api/src/lanonna_api/`)
 
@@ -82,7 +82,15 @@ User-facing text fields should use [`AppTextField`](../../apps/mobile/lib/core/w
 
 ### Maestro E2E (Android)
 
-Black-box UI tests under `apps/mobile/maestro/`. Use semantics ids (`nav_home`, `auth_sign_in`, …) via `AppSemantics` in `lib/core/widgets/app_semantics.dart`. Copy `maestro/local.env.example` → `maestro/local.env` with the dev smoke password (`lanonna.dev.smoke@test.com`). Start Cloud SQL Auth Proxy (port **5433**), then `./maestro/scripts/run-maestro.sh` (provisions the smoke user in SQL, build/install, App Check prep, all flows). See [maestro/README.md](../../apps/mobile/maestro/README.md).
+Black-box UI tests under `apps/mobile/maestro/`. Use semantics ids (`nav_home`, `auth_sign_in`, …) via `AppSemantics` in `lib/core/widgets/app_semantics.dart`. Copy `maestro/local.env.example` → `maestro/local.env` with the dev smoke password (`lanonna.dev.smoke@test.com`). Start Cloud SQL Auth Proxy (port **5433** recommended when **5432** is in use; set `DB_PORT` consistently). Scripts:
+
+| Script | Scope |
+|--------|--------|
+| `./maestro/scripts/run-maestro.sh` | **Smoke** (default): provision smoke user, build/install, App Check prep, four `flows/smoke/*` flows |
+| `./maestro/scripts/run-maestro-smoke.sh` | Same as above (explicit) |
+| `./maestro/scripts/run-maestro-full.sh` | Smoke + feature + follower + invite deep link + fresh onboarding (final gate) |
+
+See [maestro/README.md](../../apps/mobile/maestro/README.md).
 
 ### Theming (single source of truth)
 
@@ -124,6 +132,7 @@ Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps:
 | Method | Path | Auth |
 |--------|------|------|
 | GET | `/health` | Public liveness (`status`, `environment`) |
+| GET | `/v1/app/version?platform=` | Public force-update config (`android` \| `ios`); `minimum_version`, `store_url` (migration `020_app_versions`; no JWT / App Check) |
 | GET | `/v1/me/account` | Firebase Bearer JWT; profile + babies + `engagement` stats; `storage_usage` when user owns a baby. Auth smoke: unauthenticated request → 401. |
 | GET, PATCH | `/v1/me/notification-preferences` | Digest (`realtime`/`daily`/`weekly`), push + email digest toggles; per-channel `notify_*_enabled` (`gallery`, `calendar`, `registry`, `comments`) |
 | GET | `/v1/me/notifications` | In-app notification inbox |
@@ -154,8 +163,8 @@ Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps:
 | GET | `/v1/babies/{baby_profile_id}/membership-check?email=` | Firebase Bearer JWT (owner) |
 | POST | `/v1/babies/{baby_profile_id}/invitations/batch` | Firebase Bearer JWT (owner); queues `send_invite_email` on Pub/Sub |
 | GET | `/v1/invitations/preview?token=` | Public (invite deep link) |
-| POST | `/v1/invitations/accept` | Firebase Bearer JWT; invitee email must match |
-| POST | `/v1/uploads/display/signed-url` | JWT + App Check; `content_type`, `byte_length` (≤ 2 MB) for avatar/display uploads |
+| POST | `/v1/invitations/accept` | Firebase Bearer JWT + App Check; invitee email must match. Errors: **404** `not_found`, **410** `expired`, **403** `email_mismatch` (detail includes emails), **409** `max_owners` — JSON `detail.error` (mobile maps to `InvitationAcceptResult`) |
+| POST | `/v1/uploads/display/signed-url` | JWT + App Check; avatar upload init: `content_type`, `byte_length` (≤ 2 MB), `scope` (`user` \| `baby`), optional `baby_profile_id` when `scope=baby`. Returns signed PUT + `object_path` under `avatars/`; persist path as `avatar_url`. Reads mint signed GET URLs on account/baby responses (900s TTL). Legacy `smoke/` paths still supported. |
 | POST | `/v1/photos/init` | Firebase Bearer JWT (owner; gallery upload init); optional `caption` (max 2000) |
 | GET | `/v1/babies/{id}/photos` | JWT (member); `limit`/`offset`; `sort=default\|recent\|favorites`; followers see `ready` only |
 | GET, PATCH, DELETE | `/v1/babies/{id}/photos/{photo_id}` | JWT (member read; owner mutate); signed thumb/display URLs; GET includes `tagged_babies` |
@@ -222,7 +231,7 @@ Preview includes `lifecycle_status` and birth dates for invite subtitles and car
 
 ## Database
 
-Apply SQL files in order from `infra/db/migrations/` (`001`–`019`; see [migrations/README.md](../../infra/db/migrations/README.md)). Cloud SQL Auth Proxy may use port **5432** or **5433** — set `DB_PORT` consistently in scripts (Maestro uses **5433**). Cloud SQL via Auth Proxy + `infra/db/apply_migrations.py` or `psql -f` per file. Use the venv under `infra/db/.venv` (`pip install psycopg`) or any environment with `psycopg` installed.
+Apply SQL files in order from `infra/db/migrations/` (`001`–`021`; see [migrations/README.md](../../infra/db/migrations/README.md)). Cloud SQL Auth Proxy may use port **5432** or **5433** — set `DB_PORT` consistently (`apply_migrations.py` defaults to **5432**; Maestro, `clear_dev_test_data.py`, and `verify-dev-migrations.sh` default to **5433**). Cloud SQL via Auth Proxy + `infra/db/apply_migrations.py` or `psql -f` per file. Use the venv under `infra/db/.venv` (`pip install psycopg`) or any environment with `psycopg` installed.
 
 | Script | Purpose |
 |--------|---------|
@@ -233,6 +242,7 @@ Set `DB_HOST`, `DB_PORT` (e.g. `5433` if 5432 is in use), `DB_PASSWORD`, and `DB
 
 ## Related reading
 
+- [remediation-plan.md](remediation-plan.md) — codebase gap remediation (phased)
 - [building-the-app.md](building-the-app.md) — prerequisite gate
 - [initial-setup.md](initial-setup.md) — Terraform, deploy, secrets
 - [platform-architecture.md](platform-architecture.md) — media flow, costs, playbook

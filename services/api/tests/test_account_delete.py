@@ -1,6 +1,12 @@
 from unittest.mock import patch
 
-from lanonna_api.domain.account_delete import delete_account_eligibility
+import pytest
+from firebase_admin import auth as firebase_auth
+
+from lanonna_api.domain.account_delete import (
+    delete_account,
+    delete_account_eligibility,
+)
 
 
 def test_eligibility_allowed_when_no_sole_owned_babies():
@@ -11,3 +17,61 @@ def test_eligibility_allowed_when_no_sole_owned_babies():
         result = delete_account_eligibility("uid")
     assert result["allowed"] is True
     assert result["blockers"] == []
+
+
+def test_delete_account_firebase_before_sql():
+    with (
+        patch(
+            "lanonna_api.domain.account_delete.list_sole_owned_baby_ids",
+            return_value=[],
+        ),
+        patch("lanonna_api.domain.account_delete.firebase_admin._apps", [object()]),
+        patch(
+            "lanonna_api.domain.account_delete.firebase_auth.delete_user",
+        ) as delete_user,
+        patch(
+            "lanonna_api.domain.account_delete.soft_delete_account_rows",
+        ) as soft_delete,
+    ):
+        delete_account("uid-1")
+    delete_user.assert_called_once_with("uid-1")
+    soft_delete.assert_called_once_with("uid-1")
+
+
+def test_delete_account_firebase_failure_does_not_soft_delete():
+    with (
+        patch(
+            "lanonna_api.domain.account_delete.list_sole_owned_baby_ids",
+            return_value=[],
+        ),
+        patch("lanonna_api.domain.account_delete.firebase_admin._apps", [object()]),
+        patch(
+            "lanonna_api.domain.account_delete.firebase_auth.delete_user",
+            side_effect=RuntimeError("firebase down"),
+        ),
+        patch(
+            "lanonna_api.domain.account_delete.soft_delete_account_rows",
+        ) as soft_delete,
+    ):
+        with pytest.raises(RuntimeError, match="Could not delete Firebase user"):
+            delete_account("uid-2")
+    soft_delete.assert_not_called()
+
+
+def test_delete_account_continues_when_firebase_user_missing():
+    with (
+        patch(
+            "lanonna_api.domain.account_delete.list_sole_owned_baby_ids",
+            return_value=[],
+        ),
+        patch("lanonna_api.domain.account_delete.firebase_admin._apps", [object()]),
+        patch(
+            "lanonna_api.domain.account_delete.firebase_auth.delete_user",
+            side_effect=firebase_auth.UserNotFoundError("missing"),
+        ),
+        patch(
+            "lanonna_api.domain.account_delete.soft_delete_account_rows",
+        ) as soft_delete,
+    ):
+        delete_account("uid-3")
+    soft_delete.assert_called_once_with("uid-3")

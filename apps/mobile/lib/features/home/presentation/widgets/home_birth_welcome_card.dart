@@ -11,10 +11,12 @@ class HomeBirthWelcomeCard extends StatelessWidget {
     super.key,
     required this.welcome,
     required this.babyId,
+    this.onSignedUrlError,
   });
 
   final BirthWelcomeSummary welcome;
   final String babyId;
+  final VoidCallback? onSignedUrlError;
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +50,7 @@ class HomeBirthWelcomeCard extends StatelessWidget {
                 height: 120,
                 width: double.infinity,
                 fit: BoxFit.cover,
+                onSignedUrlError: onSignedUrlError,
               ),
             ),
           if (welcome.photoDisplayUrl != null) const SizedBox(height: 12),

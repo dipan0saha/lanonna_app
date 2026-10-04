@@ -113,15 +113,7 @@ class ApiClient {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return response;
     }
-    String message = 'Request failed (${response.statusCode})';
-    try {
-      final decoded = jsonDecode(response.body);
-      if (decoded is Map && decoded['detail'] != null) {
-        final formatted = formatApiErrorDetail(decoded['detail']);
-        if (formatted.isNotEmpty) message = formatted;
-      }
-    } catch (_) {}
-    throw ApiException(message, statusCode: response.statusCode);
+    throw _apiExceptionFromResponse(response);
   }
 
   Future<http.Response> _authorizedRequest(
@@ -161,15 +153,32 @@ class ApiClient {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return response;
     }
-    String message = 'Request failed (${response.statusCode})';
+    throw _apiExceptionFromResponse(response);
+  }
+
+  ApiException _apiExceptionFromResponse(http.Response response) {
+    var message = 'Request failed (${response.statusCode})';
+    Map<String, dynamic>? detail;
     try {
       final decoded = jsonDecode(response.body);
       if (decoded is Map && decoded['detail'] != null) {
-        final formatted = formatApiErrorDetail(decoded['detail']);
-        if (formatted.isNotEmpty) message = formatted;
+        final raw = decoded['detail'];
+        if (raw is Map) {
+          detail = Map<String, dynamic>.from(raw);
+          final code = detail['error'];
+          if (code is String && code.isNotEmpty) {
+            message = code;
+          } else {
+            final formatted = formatApiErrorDetail(raw);
+            if (formatted.isNotEmpty) message = formatted;
+          }
+        } else {
+          final formatted = formatApiErrorDetail(raw);
+          if (formatted.isNotEmpty) message = formatted;
+        }
       }
     } catch (_) {}
-    throw ApiException(message, statusCode: response.statusCode);
+    return ApiException(message, statusCode: response.statusCode, detail: detail);
   }
 
   Map<String, dynamic> _decodeObject(http.Response response) {

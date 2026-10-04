@@ -9,7 +9,6 @@ import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import 'announcement_share.dart';
 import 'widgets/announcement_keepsake_card.dart';
 import '../../home/data/home_repository.dart';
-import '../../home/data/selected_baby_store.dart';
 import '../data/announcement_repository.dart';
 
 class AnnouncementCardScreen extends StatefulWidget {
@@ -42,13 +41,12 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
   Future<void> _load() async {
     setState(() => _loading = true);
     final homeRepo = context.read<HomeRepository>();
-    final store = context.read<SelectedBabyStore>();
-    final baby = await homeRepo.resolveSelectedBaby(store);
+    final routeBaby = await homeRepo.babyById(widget.babyId);
     final detail =
         await context.read<AnnouncementRepository>().fetch(widget.babyId);
     setState(() {
       _detail = detail;
-      _isOwner = baby?.role == 'owner' && baby?.id == widget.babyId;
+      _isOwner = routeBaby?.role == 'owner';
       _loading = false;
     });
     if (detail == null && mounted) {
@@ -104,7 +102,10 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               children: [
-                AnnouncementKeepsakeCard(detail: d),
+                AnnouncementKeepsakeCard(
+                  detail: d,
+                  onSignedUrlError: _load,
+                ),
                 if (d.birthTime != null || d.weightText != null || d.lengthText != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),

@@ -25,8 +25,13 @@ def delete_account(firebase_uid: str) -> None:
             "Transfer or remove owned baby profiles before deleting your account."
         )
 
-    soft_delete_account_rows(firebase_uid)
-
     if not firebase_admin._apps:
         firebase_admin.initialize_app()
-    firebase_auth.delete_user(firebase_uid)
+    try:
+        firebase_auth.delete_user(firebase_uid)
+    except firebase_auth.UserNotFoundError:
+        pass
+    except Exception as exc:
+        raise RuntimeError("Could not delete Firebase user") from exc
+
+    soft_delete_account_rows(firebase_uid)

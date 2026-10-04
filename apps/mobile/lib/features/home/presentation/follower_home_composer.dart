@@ -94,7 +94,11 @@ class FollowerHomeComposer extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (s?.birthWelcome != null)
-          HomeBirthWelcomeCard(welcome: s!.birthWelcome!, babyId: baby.id),
+          HomeBirthWelcomeCard(
+            welcome: s!.birthWelcome!,
+            babyId: baby.id,
+            onSignedUrlError: onRefresh,
+          ),
         const HomeSectionLabel('Quick Actions'),
         HomeFollowerQuickActions(
           onVoteInFun: onVoteInFun,

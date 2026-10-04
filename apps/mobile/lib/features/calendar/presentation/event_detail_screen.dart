@@ -45,6 +45,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     super.dispose();
   }
 
+  void _onCoverUrlError() {
+    _load();
+  }
+
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
@@ -324,6 +328,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       height: 180,
                       width: double.infinity,
                       fit: BoxFit.cover,
+                      onSignedUrlError: _onCoverUrlError,
                     ),
                   ),
                 ],

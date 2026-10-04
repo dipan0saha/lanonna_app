@@ -4,6 +4,8 @@ import uuid
 from datetime import date
 from typing import Any, Literal
 
+from lanonna_api.domain.avatar_urls import signed_avatar_url
+
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -54,5 +56,5 @@ def baby_summary_from_row(row: dict[str, Any]) -> BabySummary:
         lifecycle_status=row.get("lifecycle_status") or "expecting",
         role=row["role"],
         relationship_label=row.get("relationship_label"),
-        avatar_url=row.get("avatar_url"),
+        avatar_url=signed_avatar_url(row.get("avatar_url")),
     )

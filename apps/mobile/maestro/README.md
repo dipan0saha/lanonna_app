@@ -39,10 +39,13 @@ chmod +x maestro/scripts/*.sh
 # Build debug APK (dev flavor) and install
 ./maestro/scripts/build-install.sh
 
-# Full suite (provision → build/install → App Check prep → all flows)
+# Smoke suite (default entry: provision → build/install → App Check prep → four smoke flows)
 ./maestro/scripts/run-maestro.sh
 
-# Sign-in flow only (same App Check prep, then `auth_sign_in.yaml`)
+# Full regression gate (smoke + features + follower + invite deep link + fresh onboarding)
+./maestro/scripts/run-maestro-full.sh
+
+# Sign-in flow only (same App Check prep, then `flows/smoke/auth_sign_in.yaml`)
 ./maestro/scripts/run-auth-sign-in.sh
 ```
 
@@ -91,12 +94,16 @@ flutter test integration_test/home_summary_load_test.dart -d emulator-5554 \
 
 ## Flows (`maestro test maestro/flows/…`)
 
+**Smoke** (`flows/smoke/` — run via `run-maestro.sh` / `run-maestro-smoke.sh`):
+
 | Flow | Purpose |
 |------|---------|
-| `flows/auth_sign_in.yaml` | `clearState` → sign in → home |
-| `flows/shell_navigation.yaml` | All five bottom tabs via `nav_*` ids |
-| `flows/open_search.yaml` | `shell_search` → `search_field` |
-| `flows/open_notifications.yaml` | `shell_notifications` → inbox |
+| `flows/smoke/auth_sign_in.yaml` | `clearState` → sign in → home |
+| `flows/smoke/shell_navigation.yaml` | All five bottom tabs via `nav_*` ids |
+| `flows/smoke/open_search.yaml` | `shell_search` → `search_field` |
+| `flows/smoke/open_notifications.yaml` | `shell_notifications` → inbox |
+
+**Features** (`flows/features/`), **roles** (`flows/roles/`), and **onboarding** (`flows/onboarding/`) are included in `run-maestro-full.sh` (see script `FLOWS` array). Additional YAML files may exist on disk before they are added to the full suite — see [remediation-plan.md](../../../docs/engineering/remediation-plan.md) Phase 5.
 
 Subflows live under `flows/subflows/`.
 

@@ -56,6 +56,7 @@ async def pubsub_push(request: Request) -> Response:
     """Pub/Sub push: thumbnails, invite email, notifications, exports, invite expiry."""
     body: dict[str, Any] = await request.json()
     message = body.get("message", {})
+    pubsub_message_id = message.get("messageId")
     raw = message.get("data", "")
     payload: dict[str, Any] = {}
     if raw:
@@ -78,7 +79,7 @@ async def pubsub_push(request: Request) -> Response:
 
     if payload.get("type") == "notify_fan_out":
         try:
-            process_notify_fan_out(payload)
+            process_notify_fan_out(payload, pubsub_message_id=pubsub_message_id)
         except Exception:
             logger.exception("notify_fan_out_failed")
             return Response(status_code=500)
@@ -86,7 +87,7 @@ async def pubsub_push(request: Request) -> Response:
 
     if payload.get("type") == "notify_user":
         try:
-            process_notify_user(payload)
+            process_notify_user(payload, pubsub_message_id=pubsub_message_id)
         except Exception:
             logger.exception("notify_user_failed")
             return Response(status_code=500)
@@ -105,7 +106,7 @@ async def pubsub_push(request: Request) -> Response:
 
     if payload.get("type") == "weekly_notification_digest":
         try:
-            process_weekly_notification_digest()
+            process_weekly_notification_digest(pubsub_message_id=pubsub_message_id)
         except Exception:
             logger.exception("weekly_notification_digest_failed")
             return Response(status_code=500)

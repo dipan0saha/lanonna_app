@@ -8,6 +8,7 @@ import firebase_admin
 from firebase_admin import messaging
 
 from lanonna_worker.db import get_connection
+from lanonna_worker.idempotency import resolve_delivery_key, try_claim_delivery
 
 logger = logging.getLogger("lanonna.worker.notifications")
 
@@ -188,7 +189,11 @@ def _send_fcm(
             _delete_fcm_token(conn, tokens[idx])
 
 
-def process_notify_fan_out(payload: dict[str, Any]) -> None:
+def process_notify_fan_out(
+    payload: dict[str, Any],
+    *,
+    pubsub_message_id: str | None = None,
+) -> None:
     baby_id = uuid.UUID(str(payload["baby_profile_id"]))
     title = str(payload["title"])
     body = str(payload["body"])
@@ -197,8 +202,12 @@ def process_notify_fan_out(payload: dict[str, Any]) -> None:
     exclude = payload.get("exclude_firebase_uid")
     explicit_uids = [str(u) for u in payload.get("firebase_uids") or []]
     channel = payload.get("notification_channel")
+    delivery_key = resolve_delivery_key(payload, pubsub_message_id=pubsub_message_id)
 
     with get_connection() as conn:
+        if delivery_key and not try_claim_delivery(conn, delivery_key):
+            logger.info("notify_fan_out_skip_duplicate key=%s", delivery_key)
+            return
         uids = _resolve_recipient_uids(
             conn,
             baby_profile_id=baby_id,
@@ -227,7 +236,11 @@ def process_notify_fan_out(payload: dict[str, Any]) -> None:
             )
 
 
-def process_notify_user(payload: dict[str, Any]) -> None:
+def process_notify_user(
+    payload: dict[str, Any],
+    *,
+    pubsub_message_id: str | None = None,
+) -> None:
     uid = str(payload["firebase_uid"])
     title = str(payload["title"])
     body = str(payload["body"])
@@ -235,8 +248,12 @@ def process_notify_user(payload: dict[str, Any]) -> None:
     baby_raw = payload.get("baby_profile_id")
     baby_id = uuid.UUID(str(baby_raw)) if baby_raw else None
     channel = payload.get("notification_channel")
+    delivery_key = resolve_delivery_key(payload, pubsub_message_id=pubsub_message_id)
 
     with get_connection() as conn:
+        if delivery_key and not try_claim_delivery(conn, delivery_key):
+            logger.info("notify_user_skip_duplicate key=%s", delivery_key)
+            return
         if not _user_channel_enabled(conn, uid, channel):
             return
         nid = _insert_notification(
@@ -257,8 +274,16 @@ def process_notify_user(payload: dict[str, Any]) -> None:
         )
 
 
-def process_weekly_notification_digest() -> None:
+def process_weekly_notification_digest(
+    *,
+    pubsub_message_id: str | None = None,
+) -> None:
     with get_connection() as conn:
+        if pubsub_message_id and not try_claim_delivery(
+            conn, f"pubsub:{pubsub_message_id}"
+        ):
+            logger.info("weekly_digest_skip_duplicate message_id=%s", pubsub_message_id)
+            return
         rows = conn.execute(
             """
             SELECT firebase_uid
@@ -266,6 +291,10 @@ def process_weekly_notification_digest() -> None:
             WHERE deleted_at IS NULL
               AND push_notifications_enabled = true
               AND notification_digest = 'weekly'
+              AND (
+                last_weekly_digest_at IS NULL
+                OR last_weekly_digest_at < now() - interval '7 days'
+              )
             """
         ).fetchall()
 

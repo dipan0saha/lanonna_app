@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/media/cached_signed_image.dart';
 import '../../../../core/input/app_text_input_kind.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -51,6 +52,7 @@ class PrototypePhotoUpload extends StatelessWidget {
     this.imageFile,
     this.imageUrl,
     this.onTap,
+    this.onSignedUrlError,
     this.label = 'Add a photo',
     this.size = 88,
   });
@@ -58,6 +60,7 @@ class PrototypePhotoUpload extends StatelessWidget {
   final XFile? imageFile;
   final String? imageUrl;
   final VoidCallback? onTap;
+  final VoidCallback? onSignedUrlError;
   final String label;
   final double size;
 
@@ -102,24 +105,13 @@ class PrototypePhotoUpload extends StatelessWidget {
     final url = imageUrl?.trim();
     if (url != null && url.isNotEmpty) {
       return ClipOval(
-        child: Image.network(
-          url,
+        child: CachedSignedImage(
+          imageUrl: url,
+          cacheKey: 'avatar-preview-$url',
           width: size,
           height: size,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => const Icon(
-            Icons.photo_camera_outlined,
-            size: 26,
-            color: AppColors.muted,
-          ),
-          loadingBuilder: (context, child, progress) {
-            if (progress == null) return child;
-            return const SizedBox(
-              width: 26,
-              height: 26,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            );
-          },
+          onSignedUrlError: onSignedUrlError,
         ),
       );
     }

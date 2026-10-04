@@ -1,10 +1,11 @@
 import logging
-from typing import Any
+import uuid
+from typing import Any, Literal, Self
 
 from fastapi import Depends, FastAPI, HTTPException, status
 from lanonna_api.middleware.rate_limit import RateLimitMiddleware
 from lanonna_api.middleware.request_context import RequestContextMiddleware
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from lanonna_api.app_check import require_app_check
 from lanonna_api.auth import current_user
@@ -26,7 +27,8 @@ from lanonna_api.routers import (
     registry,
     search,
 )
-from lanonna_api.storage import mint_display_upload_url
+from lanonna_api.repositories.babies import get_baby_for_owner
+from lanonna_api.storage import mint_baby_avatar_upload_url, mint_user_avatar_upload_url
 
 logger = logging.getLogger("lanonna.api")
 
@@ -62,6 +64,16 @@ def health() -> dict[str, str]:
 class DisplayUploadSignRequest(BaseModel):
     content_type: str = Field(default="image/jpeg")
     byte_length: int = Field(gt=0, le=2_097_152)
+    scope: Literal["user", "baby"] = "user"
+    baby_profile_id: uuid.UUID | None = None
+
+    @model_validator(mode="after")
+    def validate_scope(self) -> Self:
+        if self.scope == "baby" and self.baby_profile_id is None:
+            raise ValueError("baby_profile_id is required when scope is baby")
+        if self.scope == "user" and self.baby_profile_id is not None:
+            raise ValueError("baby_profile_id must be omitted when scope is user")
+        return self
 
 
 class DisplayUploadSignResponse(BaseModel):
@@ -84,13 +96,26 @@ def sign_display_upload(
     user: dict[str, Any] = Depends(current_user),
 ) -> DisplayUploadSignResponse:
     try:
-        return DisplayUploadSignResponse(
-            **mint_display_upload_url(
+        if body.scope == "baby":
+            baby_id = body.baby_profile_id
+            assert baby_id is not None
+            if get_baby_for_owner(user["uid"], baby_id) is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Baby not found",
+                )
+            signed = mint_baby_avatar_upload_url(
+                baby_id,
+                content_type=body.content_type,
+                byte_length=body.byte_length,
+            )
+        else:
+            signed = mint_user_avatar_upload_url(
                 user["uid"],
                 content_type=body.content_type,
                 byte_length=body.byte_length,
             )
-        )
+        return DisplayUploadSignResponse(**signed)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     except Exception as exc:

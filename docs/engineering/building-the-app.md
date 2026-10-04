@@ -35,7 +35,7 @@ export SMOKE_TEST_PASSWORD='…'
 
 Follow [platform-architecture.md](platform-architecture.md) Month 1–2:
 
-1. SQL migrations: keep dev current per [migrations/README.md](../../infra/db/migrations/README.md) (through `019`)
+1. SQL migrations: keep dev current per [migrations/README.md](../../infra/db/migrations/README.md) (through `020`)
 2. **Done:** **Gallery** + **Calendar** — social API (`007`), Flutter tabs, signed read URLs, squish/RSVP/comments; worker `photo_shared` on thumb ready
 3. **Done:** **Registry** + **Fun** — social API (`008`), Flutter tabs, purchase/votes/likes; static AI suggestion JSON (calendar + registry)
 4. **Done:** app shell + **owner onboarding** (carousel → auth → profile → baby → first moment → invites → home)

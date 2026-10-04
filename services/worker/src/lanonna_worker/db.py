@@ -94,3 +94,19 @@ def mark_photo_ready(
             )
             return dict(row)
     return None
+
+
+def get_ready_photo_by_display_path(display_path: str) -> dict[str, Any] | None:
+    """Ready photo row for display path (used when mark_photo_ready is idempotent)."""
+    with get_connection() as conn:
+        row = conn.execute(
+            """
+            SELECT id, baby_profile_id, uploader_firebase_uid, display_object_generation
+            FROM photos
+            WHERE display_path = %s
+              AND status = 'ready'
+            LIMIT 1
+            """,
+            (display_path,),
+        ).fetchone()
+    return dict(row) if row else None

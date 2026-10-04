@@ -35,13 +35,24 @@ def run_baby_data_export(job_id: uuid.UUID) -> None:
         if job is None:
             logger.warning("export_job_not_found job_id=%s", job_id)
             return
-        if job["status"] not in ("pending", "running"):
+        if job["status"] in ("ready", "failed"):
+            logger.info("export_job_skip_status job_id=%s status=%s", job_id, job["status"])
             return
-        conn.execute(
-            "UPDATE baby_data_export_jobs SET status = 'running' WHERE id = %s",
+        claimed = conn.execute(
+            """
+            UPDATE baby_data_export_jobs
+            SET status = 'running'
+            WHERE id = %s
+              AND status = 'pending'
+            RETURNING baby_profile_id
+            """,
             (job_id,),
-        )
-        baby_id = job["baby_profile_id"]
+        ).fetchone()
+        if claimed is None:
+            if job["status"] == "running":
+                logger.info("export_job_already_running job_id=%s", job_id)
+            return
+        baby_id = claimed["baby_profile_id"]
 
         baby = conn.execute(
             "SELECT * FROM baby_profiles WHERE id = %s",

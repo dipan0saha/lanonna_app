@@ -1,4 +1,5 @@
 import '../../../core/api/api_client.dart';
+import '../../../core/api/api_exception.dart';
 import 'models/invitation_accept_result.dart';
 import 'models/invitation_preview.dart';
 
@@ -40,9 +41,17 @@ class InvitationsRepository {
   }
 
   Future<InvitationAcceptResult> accept(String token) async {
-    final json = await _api.postJson('/v1/invitations/accept', body: {
-      'token': token.trim(),
-    });
-    return InvitationAcceptResult.fromJson(json);
+    try {
+      final json = await _api.postJson('/v1/invitations/accept', body: {
+        'token': token.trim(),
+      });
+      return InvitationAcceptResult.fromJson(json);
+    } on ApiException catch (e) {
+      final detail = e.detail;
+      if (detail != null && detail['error'] != null) {
+        return InvitationAcceptResult.fromJson(detail);
+      }
+      rethrow;
+    }
   }
 }

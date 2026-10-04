@@ -80,3 +80,30 @@ def enqueue_notify_user(
             notification_channel.value if notification_channel else None
         ),
     )
+
+
+def safe_enqueue_notify_user(
+    firebase_uid: str,
+    *,
+    title: str,
+    body: str,
+    deep_link: str,
+    baby_profile_id: uuid.UUID | None = None,
+    notification_channel: NotificationChannel | None = None,
+) -> None:
+    """Publish notify_user without failing the HTTP request after DB commit."""
+    try:
+        enqueue_notify_user(
+            firebase_uid,
+            title=title,
+            body=body,
+            deep_link=deep_link,
+            baby_profile_id=baby_profile_id,
+            notification_channel=notification_channel,
+        )
+    except Exception:
+        logger.exception(
+            "notify_user_enqueue_failed firebase_uid=%s deep_link=%s",
+            firebase_uid,
+            deep_link,
+        )

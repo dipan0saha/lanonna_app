@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import timedelta
+from uuid import UUID
 
 import google.auth
 from google.auth.transport import requests as google_requests
@@ -10,21 +11,53 @@ from google.cloud import storage
 from lanonna_api.config import settings
 
 
-def mint_display_upload_url(
+def mint_user_avatar_upload_url(
     firebase_uid: str,
     content_type: str = "image/jpeg",
     byte_length: int = 0,
     max_bytes: int = 2_097_152,
 ) -> dict[str, str | int]:
-    """V4 signed PUT URL for the display bucket (Cloud Run / no local SA key)."""
+    """V4 signed PUT for a user profile avatar in the display bucket."""
     if content_type not in settings.display_allowed_content_types:
         raise ValueError(f"Unsupported content type: {content_type}")
     if byte_length <= 0 or byte_length > max_bytes:
         raise ValueError("Display asset exceeds maximum size.")
 
     ext = "webp" if content_type == "image/webp" else "jpg"
-    object_name = f"smoke/{firebase_uid}/{uuid.uuid4().hex}.{ext}"
+    object_name = f"avatars/users/{firebase_uid}/{uuid.uuid4().hex}.{ext}"
     return _sign_put(object_name, content_type, max_bytes)
+
+
+def mint_baby_avatar_upload_url(
+    baby_profile_id: UUID,
+    content_type: str = "image/jpeg",
+    byte_length: int = 0,
+    max_bytes: int = 2_097_152,
+) -> dict[str, str | int]:
+    """V4 signed PUT for a baby profile avatar in the display bucket."""
+    if content_type not in settings.display_allowed_content_types:
+        raise ValueError(f"Unsupported content type: {content_type}")
+    if byte_length <= 0 or byte_length > max_bytes:
+        raise ValueError("Display asset exceeds maximum size.")
+
+    ext = "webp" if content_type == "image/webp" else "jpg"
+    object_name = f"avatars/babies/{baby_profile_id}/{uuid.uuid4().hex}.{ext}"
+    return _sign_put(object_name, content_type, max_bytes)
+
+
+def mint_display_upload_url(
+    firebase_uid: str,
+    content_type: str = "image/jpeg",
+    byte_length: int = 0,
+    max_bytes: int = 2_097_152,
+) -> dict[str, str | int]:
+    """User avatar upload (legacy entry point for /v1/uploads/display/signed-url)."""
+    return mint_user_avatar_upload_url(
+        firebase_uid,
+        content_type=content_type,
+        byte_length=byte_length,
+        max_bytes=max_bytes,
+    )
 
 
 def mint_display_upload_for_object(

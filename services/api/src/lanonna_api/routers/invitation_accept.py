@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from lanonna_api.app_check import require_app_check
 from lanonna_api.auth import current_user
 from lanonna_api.domain.notification_copy import actor_display_name
-from lanonna_api.domain.notifications import enqueue_notify_user
+from lanonna_api.domain.notifications import safe_enqueue_notify_user
 from lanonna_api.repositories.invitations import (
     accept_invitation_by_token,
     get_invitation_preview_by_token,
@@ -21,6 +21,25 @@ from lanonna_api.schemas.invitations import (
 )
 
 router = APIRouter(prefix="/v1/invitations", tags=["invitations"])
+
+_ACCEPT_ERROR_STATUS: dict[str, int] = {
+    "not_found": status.HTTP_404_NOT_FOUND,
+    "expired": status.HTTP_410_GONE,
+    "email_mismatch": status.HTTP_403_FORBIDDEN,
+    "max_owners": status.HTTP_409_CONFLICT,
+}
+
+
+def _raise_invitation_accept_error(result: dict[str, Any]) -> None:
+    code = result["error"]
+    detail: dict[str, Any] = {"error": code}
+    if code == "email_mismatch":
+        detail["invitee_email"] = result.get("invitee_email")
+        detail["signed_in_email"] = result.get("signed_in_email")
+    raise HTTPException(
+        status_code=_ACCEPT_ERROR_STATUS.get(code, status.HTTP_400_BAD_REQUEST),
+        detail=detail,
+    )
 
 
 def _format_expires(expires_at: datetime | None) -> str | None:
@@ -77,18 +96,14 @@ def invitation_accept(
         user.get("email"),
     )
     if "error" in result:
-        return InvitationAcceptResponse(
-            error=result["error"],
-            invitee_email=result.get("invitee_email"),
-            signed_in_email=result.get("signed_in_email"),
-        )
+        _raise_invitation_accept_error(result)
     if not result.get("already_member"):
         inviter = result.get("inviter_firebase_uid")
         baby_id = result.get("baby_profile_id")
         if inviter and baby_id:
             actor = actor_display_name(user["uid"])
             baby_name = result.get("baby_name") or "your baby"
-            enqueue_notify_user(
+            safe_enqueue_notify_user(
                 inviter,
                 title="Invite accepted",
                 body=f"{actor} joined {baby_name}",

@@ -6,9 +6,14 @@ import '../../../../core/theme/la_nonna_theme.dart';
 import '../../data/announcement_repository.dart';
 
 class AnnouncementKeepsakeCard extends StatelessWidget {
-  const AnnouncementKeepsakeCard({super.key, required this.detail});
+  const AnnouncementKeepsakeCard({
+    super.key,
+    required this.detail,
+    this.onSignedUrlError,
+  });
 
   final AnnouncementDetail detail;
+  final VoidCallback? onSignedUrlError;
 
   Color _cardTint(String? gender) {
     if (gender == 'female') return AppColors.peachTint;
@@ -45,6 +50,7 @@ class AnnouncementKeepsakeCard extends StatelessWidget {
                 width: 100,
                 height: 100,
                 fit: BoxFit.cover,
+                onSignedUrlError: onSignedUrlError,
               ),
             )
           else
