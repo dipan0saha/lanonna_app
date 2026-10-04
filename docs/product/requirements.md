@@ -303,12 +303,12 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | ID | Requirement | Acceptance criteria | Implementation note |
 |----|-------------|---------------------|---------------------|
 | FR-CAL-001 | Event list/calendar views | Month/list UI on Calendar tab | Flutter |
-| FR-CAL-002 | Create event | Owner creates event (E2E-009) | `/calendar/event/create` |
+| FR-CAL-002 | Create event | Owner creates event (E2E-009); after save, event appears on Calendar **Upcoming** when `starts_at` is in the future and on month grid by **local** date; nested create routes refresh list on return (`#398`) | `/calendar/event/create` |
 | FR-CAL-003 | Event detail/edit | Detail by id; edit route for owner | `/calendar/event/:id`, `.../edit` |
 | FR-CAL-004 | RSVP | Follower/owner RSVP yes/no/maybe | `event_rsvps` |
 | FR-CAL-005 | Event comments | Create, edit own, delete own on event detail | `event_comments`; `POST` / `PATCH` / `DELETE` on `…/events/{id}/comments` |
 | FR-CAL-006 | Upcoming list | View all upcoming from home teaser (E2E-018) | `/calendar/upcoming` |
-| FR-CAL-007 | AI event suggestions | Static catalog by expecting/age tabs; shared “AI Suggestions” UX with registry; hide rows already added (`catalog_suggestion_id` on event) | `/calendar/ai-suggestions`; `event_suggestions.json` |
+| FR-CAL-007 | AI event suggestions | Static catalog by expecting/age tabs; shared “AI Suggestions” UX with registry; hide rows already added (`catalog_suggestion_id` on event); after add, snackbar **View calendar** returns to tab with new event visible (`#398`) | `/calendar/ai-suggestions`; `event_suggestions.json` |
 
 ### 7.8 Registry — FR-REG
 
@@ -317,7 +317,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-REG-001 | Item CRUD | Owner creates/edits/deletes items (E2E-010) | API + routes |
 | FR-REG-002 | Follower purchase claim | Follower marks item via in-app “I’ll buy this”; only one purchase per item | Unique index on `registry_item_id`; `POST .../purchase` |
 | FR-REG-003 | Owner undo purchase | Owner can delete any purchase to reset item | API delete |
-| FR-REG-004 | Registry list on tab | Full list on Registry screen | Registry tab primary content |
+| FR-REG-004 | Registry list on tab | Full list on Registry screen; **Needed** rows show item name/description at full card width with purchase/edit/delete actions on a separate row (#399) | Registry tab primary content |
 | FR-REG-005 | Item detail/edit nav | Deep link and in-app nav (E2E-019) | `/registry/item/:id` |
 | FR-REG-006 | Edit purchased item | Owner cannot edit item fields after purchase; can open detail; owner may reset via purchase delete (FR-REG-003) | API + UI guard |
 | FR-REG-007 | Owner mark purchased | Owner/co-owner marks a needed item as purchased (e.g. gift bought off-app); item moves to Purchased; followers no longer see claim action; owner may undo (FR-REG-003) | Reuses `POST .../purchase`; Registry Needed UI |
@@ -474,8 +474,10 @@ Engineering status aligns with [building-the-app.md](../engineering/building-the
 | Fun tab label | Bottom nav and UI copy use **“Fun”** (route `/gamification`) |
 | Activity recap | **Full stream** of `activity_events` on home (FR-HOME-007) |
 | Complete profile (S04, #391) | Legal: in-app **WebView** + bundled sample HTML (`/legal/terms`, `/legal/privacy`). Country: ISO 3166-1 alpha-2 stored; UI shows full country name list. Phone: any string with max-length validation only. Follower/co-owner: same demographics + terms; **no** relationship pills. Owner: Mother/Father required client-side → `baby_memberships.relationship_label` on create baby. **`profile_complete`:** non-empty `display_name` **and** `terms_accepted_at` (relationship not in API gate). |
+| Calendar event visibility (#398) | `starts_at` stored UTC; UI shows local date/time. After create, Calendar tab reloads (FAB `push` result + `CalendarRepository` listeners). Past start: month grid only, not Upcoming. | Mobile calendar module |
 | Create baby profile photo (#394) | Onboarding create-baby optional photo is a **profile** avatar only by default; checkbox **Also share this photo in the gallery** (default off) runs gallery upload (`/v1/photos/init`). First-moment born photo upload remains gallery-only. | Mobile `OnboardingCreateBabyScreen` |
 | Expecting baby names → Fun (#400) | Boy/girl optional names on create-baby (expecting only) become Fun vote options; deduped by name; born lifecycle ignores `profile_name_suggestions`. | `POST /v1/babies` `profile_name_suggestions`; mobile `expectingProfileNameSuggestionsForFun` |
+| Registry Needed row layout (#399) | Owner Needed items: full-width title/description; **Mark as purchased** + edit/delete on second row (avoids crushed text column). | `RegistryNeededRow` |
 
 ---
 

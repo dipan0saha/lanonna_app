@@ -131,6 +131,12 @@ If the app shows **“Could not delete Firebase user”** (API 503):
 
 ---
 
+## Registry Needed row layout (#399)
+
+Owner **Registry** tab → **Needed**: item title and description should use the full card width; **Mark as purchased**, edit, and delete sit on a **second row** (right-aligned), not beside a narrow text column.
+
+---
+
 ## Expecting baby names → Fun (#400)
 
 After **API deploy** with `profile_name_suggestions` on `POST /v1/babies`:
@@ -159,6 +165,17 @@ Owner signed in on emulator (no auto-login):
 3. Intro: private link expires in **7 days**; sage hint for **Mother/Father** co-owner.
 4. Relationship dropdown shows **Mother/Father** (not Wife/Husband); co-owner row badge when selected.
 5. Send with a valid email → returns to previous screen; pending invite visible under followers when applicable.
+
+---
+
+## Calendar event create (#398 / FR-CAL-002)
+
+Owner signed in on emulator (no auto-login):
+
+1. **Calendar** tab → FAB **+** → title e.g. `Test Event 398` → date **today**, time **~1 hour ahead** → **Save**.
+2. Confirm event title under **Upcoming** and dot on today in the month grid.
+3. **AI suggestions** card → add a suggestion → **Save** → snackbar **View calendar** → confirm event in **Upcoming**; suggestion hidden on AI list.
+4. **Edge:** create with **yesterday** date → not in Upcoming; may still appear on month grid for that day.
 
 ---
 
