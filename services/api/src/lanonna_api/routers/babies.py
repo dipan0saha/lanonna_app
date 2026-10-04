@@ -15,7 +15,7 @@ from lanonna_api.repositories.babies import (
     list_babies_for_user,
     update_baby_for_owner,
 )
-from lanonna_api.repositories.first_moment import seed_first_moment
+from lanonna_api.domain.onboarding import seed_first_moment
 from lanonna_api.repositories.users import upsert_app_user
 from lanonna_api.schemas.babies import (
     BabyCreateRequest,
@@ -142,8 +142,6 @@ def first_moment_seed(
     user: dict[str, Any] = Depends(current_user),
 ) -> FirstMomentSeedResponse:
     upsert_app_user(user["uid"], user.get("email"))
-    if get_baby_for_owner(user["uid"], baby_profile_id) is None:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Owner access required")
     try:
         counts = seed_first_moment(
             user["uid"],

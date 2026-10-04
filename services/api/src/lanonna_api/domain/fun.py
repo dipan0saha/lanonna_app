@@ -5,6 +5,10 @@ from datetime import date
 from typing import Any
 
 from lanonna_api.domain.gallery import require_membership
+from lanonna_api.domain.name_suggestions import (
+    normalize_gender_for_fun,
+    normalize_suggested_name,
+)
 from lanonna_api.domain.users_display import author_display_name_from_row
 from lanonna_api.repositories.activity_events import insert_activity_event
 from lanonna_api.repositories.babies import get_baby_membership
@@ -62,9 +66,9 @@ def suggest_name(
     gender: str,
 ) -> dict[str, Any]:
     require_membership(firebase_uid, baby_profile_id)
-    if gender not in ("male", "female"):
-        raise ValueError("Gender must be male or female.")
-    if not suggested_name.strip():
+    gender = normalize_gender_for_fun(gender)
+    suggested_name = normalize_suggested_name(suggested_name)
+    if not suggested_name:
         raise ValueError("Name is required.")
     membership = get_baby_membership(firebase_uid, baby_profile_id)
     if membership and membership["role"] != "owner":

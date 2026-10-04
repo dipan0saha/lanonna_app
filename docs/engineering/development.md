@@ -45,7 +45,7 @@ Repositories are registered in `bootstrap.dart`; routes in `core/router/app_rout
 | Layer | Role |
 |-------|------|
 | `routers/` | HTTP handlers (`photos`, `events`, `registry`, `fun`, `babies`, …) |
-| `domain/` | Membership, permissions, activity + notify hooks (`gallery`, `calendar`, `registry`, `fun`, `home`, `notifications`) |
+| `domain/` | Membership, permissions, activity + notify hooks (`gallery`, `calendar`, `registry`, `fun`, `home`, `notifications`, `invitations`, `onboarding`, `membership`, `name_suggestions`) |
 | `repositories/` | Parameterized SQL only |
 | `storage.py` | V4 signed PUT (upload) and GET (thumb/display read) |
 

@@ -6,7 +6,7 @@ from typing import Any
 
 from lanonna_api.config import settings
 from lanonna_api.domain.gallery import require_membership
-from lanonna_api.domain.registry import assert_owner_membership
+from lanonna_api.domain.membership import assert_owner_membership
 from lanonna_api.repositories.photos import get_photo_for_baby
 from lanonna_api.repositories.announcements import (
     add_comment,

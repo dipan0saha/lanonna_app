@@ -149,6 +149,8 @@ Code complete; rollout steps are in [Phase 7 — Deploy & ship](#phase-7--deploy
 
 ## Phase 4 — Layering cleanup (incremental)
 
+**Status: complete (2026-10-04).**
+
 1. `domain/invitations.py` — preview, accept, batch, revoke.
 2. `domain/onboarding.py` + first-moment; share fun name limits.
 3. Move `assert_owner_membership` to domain.
@@ -373,3 +375,12 @@ API + mobile correctness; deploy API before wide testing of invite accept (4xx c
 - [x] `lanonna_worker/idempotency.py` + delivery / photo-ready claims
 - [x] Notifications, invite email, weekly digest, export job claim, thumbnail notify path
 - [x] `services/worker/tests/test_idempotency.py`
+
+### Phase 4 — completed 2026-10-04
+
+- [x] `domain/membership.py` — `assert_owner_membership`, `require_owner_baby`; repo `owner_membership_exists`
+- [x] `domain/invitations.py` — owner list/revoke/batch, preview/accept (+ post-accept notify)
+- [x] `domain/onboarding.py` — status, owner complete, `seed_first_moment`; thin `repositories/first_moment.py`
+- [x] `domain/name_suggestions.py` — shared name/gender normalization for fun + first-moment seed
+- [x] Routers `invitations`, `invitation_accept`, `onboarding`, babies first-moment → domain
+- [x] `test_invitations_domain.py`, `test_onboarding_domain.py`; notification channel parity assertion

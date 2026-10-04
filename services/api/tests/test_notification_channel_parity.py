@@ -34,3 +34,4 @@ def test_notification_channel_enum_matches_worker_columns():
     assert set(worker_map.keys()) == api_values
     for channel in NotificationChannel:
         assert worker_map[channel.value].startswith("notify_")
+        assert worker_map[channel.value] == f"notify_{channel.value}_enabled"
