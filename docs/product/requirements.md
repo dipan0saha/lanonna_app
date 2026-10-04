@@ -352,6 +352,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-SET-002 | Language | **English only**; copy in ARB/localization files (no hardcoded UI strings). No Spanish or other locales in product scope. | `app_en.arb` |
 | FR-SET-003 | No dark mode picker | Theme remains light only | Product decision (light-only brand) |
 | FR-SET-004 | Minimum app version | Below minimum: **hard block** — full-screen prompt; only action is open store / update | Reads `app_versions`; no dismiss |
+| FR-SET-005 | Delete account | User confirms on `/account/delete`; account is permanently deleted (Firebase user removed, SQL profile anonymized). **Sole-owned** baby profiles are soft-deleted with the account (all memberships on those babies removed; pending invites revoked). **Co-owned** baby profiles remain; deleting user’s owner membership is removed and remaining owner(s) retain full ownership. No manual “transfer ownership” step. Confirmation copy: “This permanently deletes your La Nonna account. Any Baby Profiles solely owned by your account will also be deleted. Baby Profiles with a co owner will not be deleted; ownership will transfer fully to the co owner.” | `POST /v1/me/delete-account`; NFR-DATA-001 |
 
 ### 7.12 Deep linking — FR-DEEP
 

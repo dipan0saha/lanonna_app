@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import uuid
 from typing import Any
 
 import firebase_admin
@@ -13,17 +12,11 @@ from lanonna_api.repositories.account_delete import (
 
 
 def delete_account_eligibility(firebase_uid: str) -> dict[str, Any]:
-    sole = list_sole_owned_baby_ids(firebase_uid)
-    blockers = [f"sole_owner_of_baby:{baby_id}" for baby_id in sole]
-    return {"allowed": len(blockers) == 0, "blockers": blockers}
+    return {"allowed": True, "blockers": []}
 
 
 def delete_account(firebase_uid: str) -> None:
-    eligibility = delete_account_eligibility(firebase_uid)
-    if not eligibility["allowed"]:
-        raise PermissionError(
-            "Transfer or remove owned baby profiles before deleting your account."
-        )
+    sole_owned = list_sole_owned_baby_ids(firebase_uid)
 
     if not firebase_admin._apps:
         firebase_admin.initialize_app()
@@ -34,4 +27,4 @@ def delete_account(firebase_uid: str) -> None:
     except Exception as exc:
         raise RuntimeError("Could not delete Firebase user") from exc
 
-    soft_delete_account_rows(firebase_uid)
+    soft_delete_account_rows(firebase_uid, sole_owned)

@@ -59,7 +59,14 @@ Requires migration **`019`** on dev (`photo_baby_tags` — [migrations/README.md
 - [ ] Event detail: same for event comments.
 - [ ] Photo detail (owner, multi-baby account): “In this photo” chips tag/untag other babies you belong to; followers see read-only tag names when set.
 
-## 8. Regression smoke
+## 8. Account delete (FR-SET-005)
+
+Use a **throwaway** Firebase account (not Maestro smoke user).
+
+- [ ] Sole owner of at least one baby: Profile → Delete account shows FR-SET-005 confirmation copy; **Delete my account** is enabled; confirm → signed out to onboarding; baby no longer listed for any member.
+- [ ] Co-owner on a baby: deleting one owner leaves baby visible to the other owner (ownership unchanged aside from removed co-owner).
+
+## 9. Regression smoke
 
 - [ ] `flutter test` and API `pytest` green (`services/api/.venv/bin/pytest -q`).
 - [ ] Optional: `flutter test integration_test/home_summary_load_test.dart` on emulator.

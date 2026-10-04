@@ -1,3 +1,4 @@
+import uuid
 from unittest.mock import patch
 
 import pytest
@@ -9,10 +10,11 @@ from lanonna_api.domain.account_delete import (
 )
 
 
-def test_eligibility_allowed_when_no_sole_owned_babies():
+def test_eligibility_allowed_even_with_sole_owned_babies():
+    baby_id = uuid.uuid4()
     with patch(
         "lanonna_api.domain.account_delete.list_sole_owned_baby_ids",
-        return_value=[],
+        return_value=[baby_id],
     ):
         result = delete_account_eligibility("uid")
     assert result["allowed"] is True
@@ -35,7 +37,26 @@ def test_delete_account_firebase_before_sql():
     ):
         delete_account("uid-1")
     delete_user.assert_called_once_with("uid-1")
-    soft_delete.assert_called_once_with("uid-1")
+    soft_delete.assert_called_once_with("uid-1", [])
+
+
+def test_delete_account_passes_sole_owned_babies_to_sql():
+    baby_id = uuid.uuid4()
+    with (
+        patch(
+            "lanonna_api.domain.account_delete.list_sole_owned_baby_ids",
+            return_value=[baby_id],
+        ),
+        patch("lanonna_api.domain.account_delete.firebase_admin._apps", [object()]),
+        patch(
+            "lanonna_api.domain.account_delete.firebase_auth.delete_user",
+        ),
+        patch(
+            "lanonna_api.domain.account_delete.soft_delete_account_rows",
+        ) as soft_delete,
+    ):
+        delete_account("uid-sole")
+    soft_delete.assert_called_once_with("uid-sole", [baby_id])
 
 
 def test_delete_account_firebase_failure_does_not_soft_delete():
@@ -74,4 +95,4 @@ def test_delete_account_continues_when_firebase_user_missing():
         ) as soft_delete,
     ):
         delete_account("uid-3")
-    soft_delete.assert_called_once_with("uid-3")
+    soft_delete.assert_called_once_with("uid-3", [])

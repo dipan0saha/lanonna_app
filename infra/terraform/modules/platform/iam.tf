@@ -45,6 +45,13 @@ resource "google_project_iam_member" "runtime_secret_accessor" {
   member  = "serviceAccount:${each.value}"
 }
 
+# Account delete (FR-SET-005): Firebase Admin delete_user on Cloud Run API.
+resource "google_project_iam_member" "api_firebase_auth_admin" {
+  project = var.project_id
+  role    = "roles/firebaseauth.admin"
+  member  = "serviceAccount:${google_service_account.api.email}"
+}
+
 resource "google_storage_bucket_iam_member" "runtime_display_admin" {
   for_each = local.runtime_sas
 

@@ -29,7 +29,11 @@ def list_sole_owned_baby_ids(firebase_uid: str) -> list[uuid.UUID]:
     return [row["id"] for row in rows]
 
 
-def soft_delete_account_rows(firebase_uid: str) -> None:
+def soft_delete_account_rows(
+    firebase_uid: str,
+    sole_owned_baby_ids: list[uuid.UUID] | None = None,
+) -> None:
+    sole_owned = sole_owned_baby_ids or []
     with get_connection() as conn:
         conn.execute(
             """
@@ -39,6 +43,31 @@ def soft_delete_account_rows(firebase_uid: str) -> None:
             """,
             (firebase_uid,),
         )
+        if sole_owned:
+            conn.execute(
+                """
+                UPDATE invitations
+                SET status = 'revoked', updated_at = now()
+                WHERE baby_profile_id = ANY(%s::uuid[]) AND status = 'pending'
+                """,
+                (sole_owned,),
+            )
+            conn.execute(
+                """
+                UPDATE baby_memberships
+                SET removed_at = now(), updated_at = now()
+                WHERE baby_profile_id = ANY(%s::uuid[]) AND removed_at IS NULL
+                """,
+                (sole_owned,),
+            )
+            conn.execute(
+                """
+                UPDATE baby_profiles
+                SET deleted_at = now(), updated_at = now()
+                WHERE id = ANY(%s::uuid[]) AND deleted_at IS NULL
+                """,
+                (sole_owned,),
+            )
         conn.execute(
             """
             UPDATE baby_memberships

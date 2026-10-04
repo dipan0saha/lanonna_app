@@ -147,8 +147,8 @@ Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps:
 | GET | `/v1/me/notifications/unread-count` | Unread inbox count (shell bell dot) |
 | PATCH | `/v1/me/notifications/{id}/read` | Mark notification read |
 | PUT, DELETE | `/v1/me/device-tokens` | Register or remove FCM device token (`platform`: `ios` \| `android`) |
-| GET | `/v1/me/delete-account/eligibility` | Account deletion blockers (sole-owned babies) |
-| POST | `/v1/me/delete-account` | Delete Firebase user + anonymize SQL profile |
+| GET | `/v1/me/delete-account/eligibility` | Account deletion preflight (`allowed: true`; no blockers) |
+| POST | `/v1/me/delete-account` | Delete Firebase user; soft-delete sole-owned baby profiles; remove user memberships; anonymize SQL profile |
 | GET | `/v1/babies/{baby_profile_id}/search?q=` | Cross-feature search (member) |
 | POST | `/v1/babies/{baby_profile_id}/data-export` | Queue baby JSON export (owner) |
 | GET | `/v1/babies/{baby_profile_id}/data-export/latest` | Export job status + signed download URL |

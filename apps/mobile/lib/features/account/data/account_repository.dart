@@ -156,21 +156,6 @@ class DataExportJob {
       );
 }
 
-class DeleteAccountEligibility {
-  DeleteAccountEligibility({required this.allowed, required this.blockers});
-
-  final bool allowed;
-  final List<String> blockers;
-
-  factory DeleteAccountEligibility.fromJson(Map<String, dynamic> json) =>
-      DeleteAccountEligibility(
-        allowed: json['allowed'] as bool? ?? false,
-        blockers: (json['blockers'] as List<dynamic>? ?? [])
-            .map((e) => e.toString())
-            .toList(),
-      );
-}
-
 class AccountRepository {
   AccountRepository(this._api);
 
@@ -220,11 +205,6 @@ class AccountRepository {
     } on Exception {
       return null;
     }
-  }
-
-  Future<DeleteAccountEligibility> deleteAccountEligibility() async {
-    final json = await _api.getJson('/v1/me/delete-account/eligibility');
-    return DeleteAccountEligibility.fromJson(json);
   }
 
   Future<void> deleteAccount() async {

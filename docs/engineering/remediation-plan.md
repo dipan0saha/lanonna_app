@@ -249,7 +249,7 @@ Always **worker before or with API** when both change; re-apply Run IAM after wo
 - [ ] Account edit + baby edit: upload avatar → persists; image loads after navigate away/back (signed URL refresh).
 - [ ] Invite accept: wrong email → 403 UX; valid accept → home/onboarding (API 4xx contract).
 - [ ] Gallery / home teasers: stale thumb recovery after ~15 min or `onSignedUrlError` (Phase 1).
-- [ ] Account delete: blocked when sole owner; success removes Firebase + SQL (Phase 1).
+- [ ] Account delete: sole-owned babies soft-deleted with account; co-owned babies retained; success removes Firebase + SQL (FR-SET-005).
 
 ### 7.7 Project documentation sync
 

@@ -56,4 +56,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationPrefsSaving => 'Saving…';
+
+  @override
+  String get deleteAccountTitle => 'Delete account';
+
+  @override
+  String get deleteAccountBody =>
+      'This permanently deletes your La Nonna account. Any Baby Profiles solely owned by your account will also be deleted. Baby Profiles with a co owner will not be deleted; ownership will transfer fully to the co owner.';
+
+  @override
+  String get deleteAccountButton => 'Delete my account';
+
+  @override
+  String get deleteAccountDeleting => 'Deleting…';
 }

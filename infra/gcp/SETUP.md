@@ -38,6 +38,8 @@ Resource inventory for Path B. **Deploy, endpoints, smoke tests, and runbooks:**
 
 `lanonna-api` has **self** `roles/iam.serviceAccountTokenCreator` on dev for V4 signed URLs (manual IAM; codify in Terraform later).
 
+`lanonna-api` needs **`roles/firebaseauth.admin`** so `POST /v1/me/delete-account` can remove the Firebase user (Terraform: `api_firebase_auth_admin` in `modules/platform/iam.tf`).
+
 ### Automation key (local only)
 
 ```text

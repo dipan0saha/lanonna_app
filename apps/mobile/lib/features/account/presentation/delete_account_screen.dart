@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/auth/auth_repository.dart';
@@ -17,23 +18,7 @@ class DeleteAccountScreen extends StatefulWidget {
 }
 
 class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
-  DeleteAccountEligibility? _eligibility;
-  var _loading = true;
   var _deleting = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    final e = await context.read<AccountRepository>().deleteAccountEligibility();
-    setState(() {
-      _eligibility = e;
-      _loading = false;
-    });
-  }
 
   Future<void> _delete() async {
     setState(() => _deleting = true);
@@ -54,44 +39,31 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final e = _eligibility;
+    final l10n = AppLocalizations.of(context)!;
     return PrototypeSubpageScaffold(
       includeShellTopBar: true,
-      title: 'Delete account',
+      title: l10n.deleteAccountTitle,
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: _loading || e == null
-            ? const Center(child: CircularProgressIndicator())
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'This permanently deletes your La Nonna account and signs you out.',
-                    style: context.textStyles.bodyMedium,
-                  ),
-                  if (!e.allowed) ...[
-                    const SizedBox(height: 16),
-                    Text(
-                      'Before you can delete your account:',
-                      style: context.textStyles.labelLarge,
-                    ),
-                    const SizedBox(height: 8),
-                    for (final b in e.blockers)
-                      Text(
-                        '• Transfer or remove sole-owned baby profile (${b.replaceFirst('sole_owner_of_baby:', '')})',
-                        style: context.textStyles.bodySmall,
-                      ),
-                  ],
-                  const SizedBox(height: 24),
-                  FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.error,
-                    ),
-                    onPressed: e.allowed && !_deleting ? _delete : null,
-                    child: Text(_deleting ? 'Deleting…' : 'Delete my account'),
-                  ),
-                ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              l10n.deleteAccountBody,
+              style: context.textStyles.bodyMedium,
+            ),
+            const SizedBox(height: 24),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.error,
               ),
+              onPressed: _deleting ? null : _delete,
+              child: Text(
+                _deleting ? l10n.deleteAccountDeleting : l10n.deleteAccountButton,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
