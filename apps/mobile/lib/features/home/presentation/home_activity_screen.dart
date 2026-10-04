@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
+import '../../../core/widgets/activity/activity_feed_card.dart';
 import '../data/home_repository.dart';
 import '../data/models/home_summary.dart';
-import 'widgets/home_activity_feed.dart';
 
 class HomeActivityScreen extends StatefulWidget {
   const HomeActivityScreen({super.key, required this.babyId});
@@ -72,12 +72,9 @@ class _HomeActivityScreenState extends State<HomeActivityScreen> {
               ),
             )
           : ListView(
+              padding: const EdgeInsets.only(top: 8, bottom: 24),
               children: [
-                HomeActivityFeed(
-                  items: _items,
-                  babyId: widget.babyId,
-                  showViewAll: false,
-                ),
+                ActivityFeedCard(items: _items),
                 if (_hasMore)
                   Center(
                     child: TextButton(

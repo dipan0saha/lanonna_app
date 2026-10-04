@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_client.dart';
-import '../../../core/api/api_exception.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_semantics.dart';
 import 'upload/run_gallery_photo_upload.dart';
@@ -13,8 +12,8 @@ import '../../../core/theme/la_nonna_theme.dart';
 import '../../home/data/home_refresh_signal.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/presentation/baby_context_reload.dart';
-import '../../home/data/home_summary_result.dart';
 import '../../home/data/models/home_summary.dart';
+import '../../../core/widgets/activity/activity_feed_card.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../shell/presentation/shell_tab_layout.dart';
 import '../../../core/domain/baby_summary.dart';
@@ -22,7 +21,6 @@ import '../data/gallery_repository.dart';
 import '../data/models/photo_models.dart';
 import '../domain/gallery_routes.dart';
 import 'sheets/photo_source_sheet.dart';
-import 'widgets/gallery_activity_section.dart';
 import 'widgets/gallery_empty_state.dart';
 import 'widgets/gallery_photo_grid.dart';
 
@@ -42,7 +40,6 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
   List<PhotoSummary> _photos = [];
   List<HomeActivityItem> _activity = [];
   String? _error;
-  String? _summaryError;
   var _loading = true;
   var _uploading = false;
 
@@ -91,7 +88,6 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
     setState(() {
       _loading = true;
       _error = null;
-      _summaryError = null;
     });
     try {
       final homeRepo = context.read<HomeRepository>();
@@ -107,23 +103,23 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
         });
         return;
       }
-      final photos = await galleryRepo.listPhotos(baby.id, sort: _apiSort);
-      List<HomeActivityItem> activity = [];
-      String? summaryError;
-      if (baby.role == 'owner' && _isAllMode) {
-        final result = await homeRepo.fetchHomeSummary(baby.id);
-        switch (result) {
-          case HomeSummaryLoaded loaded:
-            activity = loaded.summary.recentActivity;
-          case HomeSummaryFailed failed:
-            summaryError = _summaryErrorMessage(failed.error);
-        }
-      }
+      final photosFuture = galleryRepo.listPhotos(baby.id, sort: _apiSort);
+      final activityFuture = _isAllMode
+          ? homeRepo.fetchActivityPage(
+              baby.id,
+              limit: 20,
+              scope: 'gallery',
+            )
+          : Future.value(null);
+      final photos = await photosFuture;
+      final activityPage = await activityFuture;
+      final activity = activityPage == null
+          ? <HomeActivityItem>[]
+          : activityPage.items.take(6).toList();
       setState(() {
         _baby = baby;
         _photos = photos;
         _activity = activity;
-        _summaryError = summaryError;
         _loading = false;
       });
     } catch (e) {
@@ -135,11 +131,6 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
   }
 
   bool get _isOwner => _baby?.role == 'owner';
-
-  String _summaryErrorMessage(Object e) {
-    if (e is ApiException) return e.message;
-    return e.toString();
-  }
 
   Future<void> _onAddPhoto() async {
     final baby = _baby;
@@ -253,15 +244,6 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
                     : _buildFilteredEmpty(),
               )
             else ...[
-              if (_summaryError != null)
-                SliverToBoxAdapter(
-                  child: MaterialBanner(
-                    content: Text(_summaryError!),
-                    actions: [
-                      TextButton(onPressed: _load, child: const Text('Retry')),
-                    ],
-                  ),
-                ),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -296,7 +278,10 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
                   ),
                 ),
                 SliverToBoxAdapter(
-                  child: GalleryActivitySection(items: _activity),
+                  child: ActivityFeedCard(
+                    items: _activity,
+                    showEmptyState: true,
+                  ),
                 ),
               ],
               const SliverToBoxAdapter(child: SizedBox(height: 96)),

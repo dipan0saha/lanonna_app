@@ -327,7 +327,7 @@ Isolates **storage + egress** if behavior drifts from §2.5 (SQL/Run/email held 
 - [x] **Gallery + calendar** API and Flutter tabs (list/detail, squish, comments, RSVP; static calendar AI JSON)
 - [x] **Registry + fun** API and Flutter tabs (purchases, votes, name likes; static registry AI JSON)
 - [x] Signed **read** URLs for gallery thumbs/display (`mint_signed_read_url`)
-- [x] Worker **thumbnail** from `display/`; **`photo_shared`** `activity_events` when photo becomes ready
+- [x] Worker **thumbnail** from `display/`; **`photo_shared`** `activity_events` when photo becomes ready (named summary); API **`photo_squish`** / **`photo_comment`** on gallery social actions
 - [x] Worker `send_invite_email` handler (Mailjet)
 - [x] Gallery list + detail with pagination params; detail returns **display** signed URL
 - [x] SQL migrations **`009`–`020`** (birth announcement through **photo_baby_tags** and **app_versions** force-update; see `infra/db/migrations/README.md`)

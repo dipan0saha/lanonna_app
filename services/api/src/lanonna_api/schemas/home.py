@@ -30,6 +30,8 @@ class ActivityEventItem(BaseModel):
     event_type: str
     summary: str
     created_at: str
+    actor_display_name: str | None = None
+    photo_id: uuid.UUID | None = None
 
 
 class NextUpEvent(BaseModel):

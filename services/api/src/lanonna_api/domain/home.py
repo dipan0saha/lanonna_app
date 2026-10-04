@@ -2,8 +2,12 @@ from __future__ import annotations
 
 import uuid
 from datetime import date, datetime, timedelta, timezone
-from typing import Any
+from typing import Any, Literal
 
+from lanonna_api.domain.activity_copy import (
+    GALLERY_ACTIVITY_EVENT_TYPES,
+    serialize_activity_item,
+)
 from lanonna_api.repositories.activity_events import (
     count_name_suggestions,
     insert_activity_event,
@@ -128,24 +132,21 @@ def list_activity_events(
     *,
     limit: int = 20,
     offset: int = 0,
+    scope: Literal["all", "gallery"] = "all",
 ) -> dict[str, Any]:
     if get_baby_membership(firebase_uid, baby_profile_id) is None:
         raise PermissionError("Membership required for this baby profile.")
     limit = min(max(limit, 1), 50)
     offset = max(offset, 0)
-    rows = list_recent_for_baby(baby_profile_id, limit=limit, offset=offset)
+    event_types = tuple(GALLERY_ACTIVITY_EVENT_TYPES) if scope == "gallery" else None
+    rows = list_recent_for_baby(
+        baby_profile_id,
+        limit=limit,
+        offset=offset,
+        event_types=event_types,
+    )
     return {
-        "items": [
-            {
-                "id": item["id"],
-                "event_type": item["event_type"],
-                "summary": item["summary"],
-                "created_at": item["created_at"].isoformat()
-                if hasattr(item["created_at"], "isoformat")
-                else str(item["created_at"]),
-            }
-            for item in rows
-        ],
+        "items": [serialize_activity_item(item) for item in rows],
         "limit": limit,
         "offset": offset,
         "has_more": len(rows) == limit,
@@ -452,15 +453,5 @@ def build_home_summary(
         "new_followers": new_followers,
         "invite_status": invite_status,
         "teasers": _build_home_teasers(firebase_uid, baby_profile_id),
-        "recent_activity": [
-            {
-                "id": item["id"],
-                "event_type": item["event_type"],
-                "summary": item["summary"],
-                "created_at": item["created_at"].isoformat()
-                if hasattr(item["created_at"], "isoformat")
-                else str(item["created_at"]),
-            }
-            for item in recent
-        ],
+        "recent_activity": [serialize_activity_item(item) for item in recent],
     }

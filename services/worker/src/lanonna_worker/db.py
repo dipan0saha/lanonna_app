@@ -72,23 +72,47 @@ def mark_photo_ready(
                 updated_at = now()
             WHERE display_path = %s
               AND status = 'pending'
-            RETURNING id, baby_profile_id, uploader_firebase_uid
+            RETURNING id, baby_profile_id, uploader_firebase_uid, caption
             """,
             (thumb_path, object_generation, byte_length, display_path),
         ).fetchone()
         if row is not None:
+            actor_row = conn.execute(
+                """
+                SELECT COALESCE(
+                    NULLIF(TRIM(display_name), ''),
+                    split_part(email, '@', 1),
+                    'Someone'
+                ) AS actor_name
+                FROM app_users
+                WHERE firebase_uid = %s
+                """,
+                (row["uploader_firebase_uid"],),
+            ).fetchone()
+            actor = (
+                actor_row["actor_name"]
+                if actor_row and actor_row.get("actor_name")
+                else "Someone"
+            )
+            caption = (row.get("caption") or "").strip()
+            if caption:
+                label = caption if len(caption) <= 60 else f"{caption[:59].rstrip()}…"
+                summary = f'{actor} added "{label}"'
+            else:
+                summary = f"{actor} shared a photo"
             conn.execute(
                 """
                 INSERT INTO activity_events (
                     id, baby_profile_id, actor_firebase_uid,
                     event_type, summary, payload
                 )
-                VALUES (%s, %s, %s, 'photo_shared', 'A new photo was shared', %s)
+                VALUES (%s, %s, %s, 'photo_shared', %s, %s)
                 """,
                 (
                     uuid.uuid4(),
                     row["baby_profile_id"],
                     row["uploader_firebase_uid"],
+                    summary,
                     Json({"photo_id": str(row["id"])}),
                 ),
             )

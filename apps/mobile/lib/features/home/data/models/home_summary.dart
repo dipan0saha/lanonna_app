@@ -6,12 +6,16 @@ class HomeActivityItem {
     required this.eventType,
     required this.summary,
     required this.createdAt,
+    this.actorDisplayName,
+    this.photoId,
   });
 
   final String id;
   final String eventType;
   final String summary;
   final String createdAt;
+  final String? actorDisplayName;
+  final String? photoId;
 
   factory HomeActivityItem.fromJson(Map<String, dynamic> json) {
     return HomeActivityItem(
@@ -19,6 +23,8 @@ class HomeActivityItem {
       eventType: json['event_type'] as String? ?? '',
       summary: json['summary'] as String? ?? '',
       createdAt: json['created_at'] as String? ?? '',
+      actorDisplayName: json['actor_display_name'] as String?,
+      photoId: json['photo_id']?.toString(),
     );
   }
 }

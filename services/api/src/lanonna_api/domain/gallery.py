@@ -24,8 +24,15 @@ from lanonna_api.repositories.photos import (
     update_photo_caption,
     update_photo_comment,
 )
+from lanonna_api.domain.activity_copy import (
+    EVENT_PHOTO_COMMENT,
+    EVENT_PHOTO_SQUISH,
+    photo_comment_summary,
+    photo_squish_summary,
+)
 from lanonna_api.domain.notification_copy import actor_display_name
 from lanonna_api.domain.notifications import NotificationChannel, enqueue_notify_user
+from lanonna_api.repositories.activity_events import insert_activity_event
 from lanonna_api.repositories.users import upsert_app_user
 from lanonna_api.storage import mint_display_upload_for_object, mint_signed_read_url
 
@@ -186,6 +193,15 @@ def squish_photo(
     if row is None or row["status"] != "ready":
         raise LookupError("Photo not found.")
     active = toggle_squish(photo_id, firebase_uid)
+    if active:
+        actor = actor_display_name(firebase_uid)
+        insert_activity_event(
+            baby_profile_id,
+            firebase_uid,
+            EVENT_PHOTO_SQUISH,
+            photo_squish_summary(actor, row.get("caption")),
+            {"photo_id": str(photo_id)},
+        )
     uploader = row["uploader_firebase_uid"]
     if active and uploader != firebase_uid:
         actor = actor_display_name(firebase_uid)
@@ -214,6 +230,14 @@ def add_comment(
         raise ValueError("Comment body required.")
     upsert_app_user(firebase_uid, None)
     c = insert_photo_comment(photo_id, firebase_uid, body)
+    actor = actor_display_name(firebase_uid)
+    insert_activity_event(
+        baby_profile_id,
+        firebase_uid,
+        EVENT_PHOTO_COMMENT,
+        photo_comment_summary(actor, row.get("caption")),
+        {"photo_id": str(photo_id), "comment_id": str(c["id"])},
+    )
     uploader = row["uploader_firebase_uid"]
     if uploader != firebase_uid:
         actor = actor_display_name(firebase_uid)

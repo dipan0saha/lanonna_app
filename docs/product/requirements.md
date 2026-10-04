@@ -281,7 +281,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-HOME-006 | Calendar/registry refresh | Calendar and Registry tabs support pull-to-refresh (E2E-021) | Client refresh |
 | FR-HOME-004 | Empty states | No baby profile shows CTA to create (E2E-020) | Empty state UI |
 | FR-HOME-005 | Hide rules | Welcome/countdown/checklist follow §6.2 visibility rules | Client + API fields |
-| FR-HOME-007 | Activity recap | Home shows full-stream activity feed from `activity_events` (paginated) | API list by baby/membership |
+| FR-HOME-007 | Activity recap | Home teaser and `/home/activity` use the same **activity row** UI as Gallery (icon, summary, timestamp); full stream from `activity_events` (paginated, all event types) | `ActivityFeedCard`; `GET …/activity-events` |
 
 ### 7.6 Gallery — FR-GAL
 
@@ -297,6 +297,8 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-GAL-008 | Tags | Owner tags other babies the user belongs to on a photo (metadata v1; no cross-feed) | `photo_baby_tags` + `PUT .../photos/{id}/tags` |
 | FR-GAL-009 | Pending visibility | Photos not visible to others until processing complete | SQL status + API filter |
 | FR-GAL-010 | Owner edit caption | Owner can edit photo caption from detail (E2E-008) | API update; follower read-only |
+| FR-GAL-011 | Gallery recent activity | On **Gallery** (all photos), section shows up to **6** gallery-scoped activity rows (`photo_squish`, `photo_comment`): prototype row UI (icon, summary, timestamp below, dividers); empty card copy when none; all members | `GET …/activity-events?scope=gallery`; `ActivityFeedCard` |
+| FR-GAL-012 | Grid social badges | Photo tiles show comment and squish count chips when &gt; 0 | `GalleryPhotoGrid`; list API counts |
 
 ### 7.7 Calendar — FR-CAL
 

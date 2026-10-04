@@ -52,6 +52,26 @@ class GalleryPhotoGrid extends StatelessWidget {
                       style: TextStyle(color: Colors.white, fontSize: 10),
                     ),
                   ),
+                if (photo.status != 'pending') ...[
+                  if (photo.commentCount > 0)
+                    Positioned(
+                      left: 4,
+                      bottom: 4,
+                      child: _GalleryTileBadge(
+                        icon: Icons.chat_bubble_outline,
+                        count: photo.commentCount,
+                      ),
+                    ),
+                  if (photo.squishCount > 0)
+                    Positioned(
+                      right: 4,
+                      bottom: 4,
+                      child: _GalleryTileBadge(
+                        icon: Icons.back_hand_outlined,
+                        count: photo.squishCount,
+                      ),
+                    ),
+                ],
               ],
             ),
           ),
@@ -61,6 +81,39 @@ class GalleryPhotoGrid extends StatelessWidget {
         }
         return tile;
       },
+    );
+  }
+}
+
+class _GalleryTileBadge extends StatelessWidget {
+  const _GalleryTileBadge({required this.icon, required this.count});
+
+  final IconData icon;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: Colors.white),
+          const SizedBox(width: 2),
+          Text(
+            '$count',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

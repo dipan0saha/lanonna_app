@@ -96,9 +96,10 @@ class HomeRepository {
     String babyId, {
     int limit = 20,
     int offset = 0,
+    String scope = 'all',
   }) async {
     final json = await _api.getJson(
-      '/v1/babies/$babyId/activity-events?limit=$limit&offset=$offset',
+      '/v1/babies/$babyId/activity-events?limit=$limit&offset=$offset&scope=$scope',
     );
     final items = (json['items'] as List<dynamic>? ?? [])
         .whereType<Map<String, dynamic>>()

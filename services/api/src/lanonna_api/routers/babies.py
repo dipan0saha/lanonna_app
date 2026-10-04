@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
@@ -137,10 +137,17 @@ def activity_events(
     user: dict[str, Any] = Depends(current_user),
     limit: int = Query(default=20, ge=1, le=50),
     offset: int = Query(default=0, ge=0),
+    scope: Literal["all", "gallery"] = Query(default="all"),
 ) -> dict[str, Any]:
     upsert_app_user(user["uid"], user.get("email"))
     try:
-        return list_activity_events(user["uid"], baby_profile_id, limit=limit, offset=offset)
+        return list_activity_events(
+            user["uid"],
+            baby_profile_id,
+            limit=limit,
+            offset=offset,
+            scope=scope,
+        )
     except PermissionError as exc:
         raise map_domain_errors(exc) from exc
 

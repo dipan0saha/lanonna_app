@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from collections.abc import Sequence
 from typing import Any
 
 from psycopg.types.json import Json
@@ -49,18 +50,54 @@ def list_recent_for_baby(
     baby_profile_id: uuid.UUID,
     limit: int = 10,
     offset: int = 0,
+    event_types: Sequence[str] | None = None,
 ) -> list[dict[str, Any]]:
     with get_connection() as conn:
-        rows = conn.execute(
-            """
-            SELECT id, event_type, summary, created_at
-            FROM activity_events
-            WHERE baby_profile_id = %s
-            ORDER BY created_at DESC
-            LIMIT %s OFFSET %s
-            """,
-            (baby_profile_id, limit, offset),
-        ).fetchall()
+        if event_types:
+            rows = conn.execute(
+                """
+                SELECT
+                    e.id,
+                    e.event_type,
+                    e.summary,
+                    e.created_at,
+                    e.payload,
+                    e.actor_firebase_uid,
+                    COALESCE(
+                        NULLIF(TRIM(u.display_name), ''),
+                        split_part(u.email, '@', 1)
+                    ) AS actor_display_name
+                FROM activity_events e
+                LEFT JOIN app_users u ON u.firebase_uid = e.actor_firebase_uid
+                WHERE e.baby_profile_id = %s
+                  AND e.event_type = ANY(%s)
+                ORDER BY e.created_at DESC
+                LIMIT %s OFFSET %s
+                """,
+                (baby_profile_id, list(event_types), limit, offset),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                """
+                SELECT
+                    e.id,
+                    e.event_type,
+                    e.summary,
+                    e.created_at,
+                    e.payload,
+                    e.actor_firebase_uid,
+                    COALESCE(
+                        NULLIF(TRIM(u.display_name), ''),
+                        split_part(u.email, '@', 1)
+                    ) AS actor_display_name
+                FROM activity_events e
+                LEFT JOIN app_users u ON u.firebase_uid = e.actor_firebase_uid
+                WHERE e.baby_profile_id = %s
+                ORDER BY e.created_at DESC
+                LIMIT %s OFFSET %s
+                """,
+                (baby_profile_id, limit, offset),
+            ).fetchall()
     return [dict(row) for row in rows]
 
 
