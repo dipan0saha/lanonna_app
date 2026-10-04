@@ -16,8 +16,11 @@ HTML + subject lines for **Firebase Authentication** lifecycle mail (email verif
 From repo root (requires `gcloud` auth with permission to update Identity Platform config):
 
 ```bash
+bash scripts/configure-firebase-auth-email-project.sh
 GCP_PROJECT_ID=lanonna-dev bash scripts/sync-firebase-auth-templates.sh apply
 ```
+
+`configure-firebase-auth-email-project.sh` sets the **ADC quota project** (required for Identity Toolkit API) and **Firebase/GCP display name** to **La Nonna** (`%APP_NAME%` in default subject).
 
 CI runs `check` only (validates files; does not call Google APIs).
 

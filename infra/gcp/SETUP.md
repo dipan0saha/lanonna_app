@@ -59,8 +59,9 @@ Prefer **`lanonnaapp@gmail.com`** for Cloud Build / `deploy.sh` (automation SA o
 | Item | Notes |
 |------|--------|
 | Firebase Blaze, Email/Password Auth | Done on `lanonna-dev` |
-| Auth verify email templates | Source: `packages/firebase-auth-email-templates`; apply `bash scripts/sync-firebase-auth-templates.sh apply` |
-| GCP **public-facing name** | Set to **La Nonna** (Console → project settings) so `%APP_NAME%` in auth mail is on-brand |
+| Auth verify email templates | `bash scripts/configure-firebase-auth-email-project.sh` then `bash scripts/sync-firebase-auth-templates.sh apply` |
+| GCP / Firebase display name | **La Nonna** via configure script (`%APP_NAME%` in default subject) |
+| Template API blocked | If `EMAIL_TEMPLATE_UPDATE_NOT_ALLOWED`, see `scripts/firebase-auth-template-support-request.md` |
 | iOS Associated Domains | `applinks:lanonna-dev.firebaseapp.com` in `Runner.entitlements` (+ Apple Developer capability when shipping to device) |
 | Billing budgets ($50 / $150 / $300) | Created |
 | Mailjet | Secret versions set — rotate if keys were ever exposed |
