@@ -274,11 +274,11 @@ _Use after a remediation release is on dev (or beta)._
 
 - [x] Migrations applied (version: **021_worker_idempotency**, 2026-10-04)
 - [x] Worker revision deployed + `apply-dev-run-iam.sh` (**worker-00009-pth**)
-- [x] API revision deployed; `dev.json` URL verified (**api-00037-cmw**, `https://api-r27szgit5q-uc.a.run.app`)
-- [ ] Mobile build tested against dev API
-- [ ] Maestro smoke (and full gate if beta)
-- [ ] pre-beta-qa sections relevant to this release
-- [ ] **7.7** Project docs reviewed/updated (list files touched: _____)
+- [x] API revision deployed; `dev.json` URL verified (**api-00038-cgz**, `https://api-r27szgit5q-uc.a.run.app`, commit **fb76599**, 2026-10-04)
+- [x] Mobile release APK built against dev API + installed on emulator (sideload)
+- [ ] Maestro smoke (and full gate if beta) — not run this release
+- [ ] pre-beta-qa full checklist — partial (App Check enforce deferred)
+- [x] **7.7** Docs: `development.md`, `remediation-plan.md` (Phases 4–5 + Phase 7 log); no migration/README change (no new SQL)
 
 ---
 
