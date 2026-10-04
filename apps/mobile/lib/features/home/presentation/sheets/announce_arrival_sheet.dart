@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../domain/announce_arrival_input.dart';
@@ -62,8 +63,9 @@ Future<void> showAnnounceArrivalSheet(
                   label: 'Confirm',
                   onPressed: () async {
                     if (!birthDateValidForAnnounce(selected)) {
-                      ScaffoldMessenger.of(ctx).showSnackBar(
-                        const SnackBar(content: Text('Date of birth cannot be in the future.')),
+                      AppSnackBar.showAlert(
+                        ctx,
+                        'Date of birth cannot be in the future.',
                       );
                       return;
                     }

@@ -415,3 +415,60 @@ class PrototypeDateField extends StatelessWidget {
     );
   }
 }
+
+class PrototypeTimeField extends StatelessWidget {
+  const PrototypeTimeField({
+    super.key,
+    required this.label,
+    required this.time,
+    required this.placeholder,
+    required this.onTap,
+  });
+
+  final String label;
+  final TimeOfDay? time;
+  final String placeholder;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final display = time == null ? placeholder : time!.format(context);
+    final brand = context.brand;
+    final fieldText = context.textStyles.bodyMedium?.copyWith(
+      fontSize: 14,
+      color: time == null ? brand.fieldPlaceholder : AppColors.textPrimary,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        OnboardingFieldLabel(label),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border, width: 1.5),
+              color: const Color(0xFFFCFCFD),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(display, style: fieldText),
+                ),
+                Icon(
+                  Icons.schedule_outlined,
+                  size: 18,
+                  color: brand.fieldPlaceholder,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

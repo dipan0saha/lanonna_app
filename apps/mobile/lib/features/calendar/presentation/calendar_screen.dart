@@ -14,6 +14,7 @@ import '../../../core/domain/baby_summary.dart';
 import '../data/calendar_repository.dart';
 import '../data/models/calendar_models.dart';
 import '../domain/calendar_routes.dart';
+import 'calendar_display.dart';
 import 'widgets/event_date_chip.dart';
 
 class CalendarScreen extends StatefulWidget {
@@ -29,11 +30,14 @@ class _CalendarScreenState extends State<CalendarScreen> with BabyContextReload 
   List<CalendarEvent> _monthEvents = [];
   List<CalendarEvent> _upcoming = [];
   var _loading = true;
+  String? _loadError;
+  CalendarRepository? _calendarRepo;
 
   @override
   void initState() {
     super.initState();
-    context.read<CalendarRepository>().addListener(_onEventsChanged);
+    _calendarRepo = context.read<CalendarRepository>();
+    _calendarRepo!.addListener(_onEventsChanged);
     _load();
   }
 
@@ -46,7 +50,7 @@ class _CalendarScreenState extends State<CalendarScreen> with BabyContextReload 
   @override
   void dispose() {
     disposeBabyContextListeners();
-    context.read<CalendarRepository>().removeListener(_onEventsChanged);
+    _calendarRepo?.removeListener(_onEventsChanged);
     super.dispose();
   }
 
@@ -59,29 +63,46 @@ class _CalendarScreenState extends State<CalendarScreen> with BabyContextReload 
       '${d.year}-${d.month.toString().padLeft(2, '0')}';
 
   Future<void> _load() async {
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _loadError = null;
+    });
     try {
       final homeRepo = context.read<HomeRepository>();
       final calRepo = context.read<CalendarRepository>();
       final store = context.read<SelectedBabyStore>();
       final baby = await homeRepo.resolveSelectedBaby(store);
+      if (!mounted) return;
       if (baby == null) {
         setState(() {
           _baby = null;
+          _monthEvents = [];
+          _upcoming = [];
           _loading = false;
         });
         return;
       }
       final month = await calRepo.listEvents(baby.id, month: _monthKey(_visibleMonth));
       final upcoming = await calRepo.listEvents(baby.id, upcoming: true);
+      if (!mounted) return;
       setState(() {
         _baby = baby;
         _monthEvents = month;
         _upcoming = upcoming;
         _loading = false;
       });
-    } catch (_) {
-      setState(() => _loading = false);
+    } catch (e) {
+      setState(() {
+        _loading = false;
+        _loadError = 'Could not load calendar. Pull down to retry.';
+      });
+    }
+  }
+
+  Future<void> _openCreateEvent() async {
+    final created = await context.push<bool>(CalendarRoutes.createEvent);
+    if (created == true && mounted) {
+      await _load();
     }
   }
 
@@ -96,9 +117,8 @@ class _CalendarScreenState extends State<CalendarScreen> with BabyContextReload 
 
   Set<int> _eventDays() {
     return _monthEvents
-        .map((e) => DateTime(e.startsAt.year, e.startsAt.month, e.startsAt.day))
-        .where((d) => d.year == _visibleMonth.year && d.month == _visibleMonth.month)
-        .map((d) => d.day)
+        .where((e) => eventOnLocalMonthDay(e.startsAt, _visibleMonth))
+        .map((e) => eventLocalDayOfMonth(e.startsAt))
         .toSet();
   }
 
@@ -133,6 +153,21 @@ class _CalendarScreenState extends State<CalendarScreen> with BabyContextReload 
               else if (_baby == null)
                 const SliverFillRemaining(
                   child: Center(child: Text('No baby profile yet.')),
+                )
+              else if (_loadError != null)
+                SliverFillRemaining(
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        _loadError!,
+                        textAlign: TextAlign.center,
+                        style: styles.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                    ),
+                  ),
                 )
               else ...[
                 SliverToBoxAdapter(
@@ -256,7 +291,7 @@ class _CalendarScreenState extends State<CalendarScreen> with BabyContextReload 
           ? AppSemantics.button(
               'calendar_create_fab',
               FloatingActionButton(
-                onPressed: () => context.push(CalendarRoutes.createEvent),
+                onPressed: _openCreateEvent,
                 child: const Icon(Icons.add),
               ),
             )
@@ -273,7 +308,8 @@ class _CalendarScreenState extends State<CalendarScreen> with BabyContextReload 
   }
 
   String _formatDateTime(DateTime dt) {
-    return '${_monthName(dt.month)} ${dt.day}, ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}';
+    final local = eventLocalStart(dt);
+    return '${_monthName(local.month)} ${local.day}, ${local.hour}:${local.minute.toString().padLeft(2, '0')}';
   }
 }
 

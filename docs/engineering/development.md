@@ -69,6 +69,8 @@ flutter run --dart-define-from-file=flavors/dev.json
 
 User-facing text fields should use [`AppTextField`](../../apps/mobile/lib/core/widgets/app_text_field.dart) (or [`OnboardingTextField`](../../apps/mobile/lib/features/onboarding/presentation/widgets/onboarding_fields.dart) with `AppTextInputKind`) instead of raw `TextField` + `TextCapitalization`. Policy lives in [`app_text_input_kind.dart`](../../apps/mobile/lib/core/input/app_text_input_kind.dart): `personName` (title-case per word), `prose` (sentence-case), `none` (email, password, URLs, search). On submit, call `AppTextInputPolicy.normalizeForSubmit(kind, text)` before persisting to the API.
 
+Transient feedback uses [`AppSnackBar`](../../apps/mobile/lib/core/widgets/app_snackbar.dart): `showInfo` (1s acknowledgments) and `showAlert` (4s validation/errors). Do not call `ScaffoldMessenger.showSnackBar` directly.
+
 ### Automated tests
 
 | Layer | Command | CI (`main`) |
@@ -179,7 +181,7 @@ Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps:
 | POST | `/v1/babies/{id}/photos/{photo_id}/squish` | JWT (member); toggle squish |
 | POST, PATCH, DELETE | `/v1/babies/{id}/photos/{photo_id}/comments` | JWT (member; PATCH author-only) |
 | PUT | `/v1/babies/{id}/photos/{photo_id}/tags` | JWT (owner); body `tagged_baby_profile_ids` |
-| GET, POST | `/v1/babies/{id}/events` | JWT (member read; owner create); query `month=YYYY-MM`, `upcoming=true` |
+| GET, POST | `/v1/babies/{id}/events` | JWT (member read; owner create); query `month=YYYY-MM`, `upcoming=true`. Mobile stores `starts_at` as UTC; calendar UI displays local time and reloads lists after create via `CalendarRepository` + FAB `push` result (`#398`). |
 | GET, PATCH, DELETE | `/v1/babies/{id}/events/{event_id}` | JWT |
 | PUT | `/v1/babies/{id}/events/{event_id}/rsvp` | JWT (member); body `{status}` |
 | POST, PATCH, DELETE | `/v1/babies/{id}/events/{event_id}/comments` | JWT (member; PATCH author-only) |

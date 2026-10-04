@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../config/app_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_semantics.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -19,8 +20,9 @@ class SettingsScreen extends StatelessWidget {
     );
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not open email to ${AppConfig.supportEmail}')),
+        AppSnackBar.showAlert(
+          context,
+          'Could not open email to ${AppConfig.supportEmail}',
         );
       }
     }

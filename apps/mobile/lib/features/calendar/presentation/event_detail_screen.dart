@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/media/cached_signed_image.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_text_field.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -69,18 +70,14 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(apiErrorMessage(e))),
-      );
+      AppSnackBar.showAlert(context, apiErrorMessage(e));
       returnToCalendar(context);
     }
   }
 
   void _showApiError(Object e) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(apiErrorMessage(e))),
-    );
+    AppSnackBar.showAlert(context, apiErrorMessage(e));
   }
 
   bool get _isOwner => _baby?.role == 'owner';

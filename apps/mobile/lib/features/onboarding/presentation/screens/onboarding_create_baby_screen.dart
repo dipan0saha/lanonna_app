@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/api/api_client.dart';
 import '../../../../core/api/display_photo_upload.dart';
 import '../../../../core/input/app_text_input_kind.dart';
+import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../gallery/presentation/upload/run_gallery_photo_upload.dart';
 import '../../../home/data/home_repository.dart';
@@ -177,17 +178,13 @@ class _OnboardingCreateBabyScreenState extends State<OnboardingCreateBabyScreen>
     if (_babyStatus == BabyLifecycle.born &&
         _selectedDate != null &&
         onboardingBirthDateIsInFuture(_selectedDate!)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Date of birth cannot be in the future.')),
-      );
+      AppSnackBar.showAlert(context, 'Date of birth cannot be in the future.');
       return;
     }
     if (_babyStatus == BabyLifecycle.expecting &&
         _selectedDate != null &&
         onboardingDueDateIsBeforeToday(_selectedDate!)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Expected due date cannot be in the past.')),
-      );
+      AppSnackBar.showAlert(context, 'Expected due date cannot be in the past.');
       return;
     }
 
@@ -250,8 +247,9 @@ class _OnboardingCreateBabyScreenState extends State<OnboardingCreateBabyScreen>
           avatarSaved = true;
         } catch (e) {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Baby created; profile photo failed: $e')),
+            AppSnackBar.showAlert(
+              context,
+              'Baby created; profile photo failed: $e',
             );
           }
         }
@@ -268,9 +266,7 @@ class _OnboardingCreateBabyScreenState extends State<OnboardingCreateBabyScreen>
               final prefix = avatarSaved
                   ? 'Profile photo saved; gallery upload failed'
                   : 'Baby created; gallery upload failed';
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('$prefix: $e')),
-              );
+              AppSnackBar.showAlert(context, '$prefix: $e');
             }
           }
         }

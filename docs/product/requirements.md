@@ -308,7 +308,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-CAL-004 | RSVP | Follower/owner RSVP yes/no/maybe | `event_rsvps` |
 | FR-CAL-005 | Event comments | Create, edit own, delete own on event detail | `event_comments`; `POST` / `PATCH` / `DELETE` on `…/events/{id}/comments` |
 | FR-CAL-006 | Upcoming list | View all upcoming from home teaser (E2E-018) | `/calendar/upcoming` |
-| FR-CAL-007 | AI event suggestions | Static catalog by expecting/age tabs; shared “AI Suggestions” UX with registry; hide rows already added (`catalog_suggestion_id` on event); after add, snackbar **View calendar** returns to tab with new event visible (`#398`) | `/calendar/ai-suggestions`; `event_suggestions.json` |
+| FR-CAL-007 | AI event suggestions | Static catalog by expecting/age tabs; shared “AI Suggestions” UX with registry; hide rows already added (`catalog_suggestion_id` on event); after add, brief info snackbar confirms save (`#398`) | `/calendar/ai-suggestions`; `event_suggestions.json` |
 
 ### 7.8 Registry — FR-REG
 

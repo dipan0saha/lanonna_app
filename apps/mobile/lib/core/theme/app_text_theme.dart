@@ -78,4 +78,12 @@ abstract final class AppTextTheme {
       ),
     );
   }
+
+  /// Typed user input inside bordered fields (not labels or hints).
+  static TextStyle fieldInput(TextTheme textTheme) {
+    return textTheme.bodyMedium!.copyWith(
+      color: AppColors.textPrimary,
+      fontWeight: FontWeight.w400,
+    );
+  }
 }

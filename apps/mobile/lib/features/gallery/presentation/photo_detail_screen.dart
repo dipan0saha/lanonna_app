@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/media/cached_signed_image.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/theme/app_colors.dart';
@@ -102,9 +103,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     } catch (e) {
       setState(() => _loading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(apiErrorMessage(e))),
-        );
+        AppSnackBar.showAlert(context, apiErrorMessage(e));
       }
     }
   }
@@ -113,9 +112,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
 
   void _showApiError(Object e) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(apiErrorMessage(e))),
-    );
+    AppSnackBar.showAlert(context, apiErrorMessage(e));
   }
 
   Future<void> _saveCaption() async {

@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/api/api_error_message.dart';
 import '../../../core/theme/la_nonna_theme.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
@@ -46,9 +47,7 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _job = null);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(apiErrorMessage(e))),
-        );
+        AppSnackBar.showAlert(context, apiErrorMessage(e));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -67,9 +66,7 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
       if (mounted) setState(() => _job = job);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(apiErrorMessage(e))),
-        );
+        AppSnackBar.showAlert(context, apiErrorMessage(e));
       }
     } finally {
       if (mounted) setState(() => _requesting = false);

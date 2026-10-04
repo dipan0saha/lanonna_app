@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
 import '../../../core/auth/auth_repository.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/la_nonna_theme.dart';
@@ -101,9 +102,7 @@ class _AccountScreenState extends State<AccountScreen> {
     );
     if (!mounted) return;
     if (owner == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No baby profile you own yet.')),
-      );
+      AppSnackBar.showAlert(context, 'No baby profile you own yet.');
       return;
     }
     context.push('/baby/${owner.id}/followers');

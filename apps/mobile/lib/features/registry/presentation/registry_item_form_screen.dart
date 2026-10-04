@@ -6,6 +6,7 @@ import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_labeled_text_field.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../home/data/home_refresh_signal.dart';
@@ -131,9 +132,7 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Save failed: $e')),
-        );
+        AppSnackBar.showAlert(context, 'Save failed: $e');
       }
     } finally {
       if (mounted) setState(() => _saving = false);

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../../core/auth/auth_repository.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/la_nonna_theme.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../onboarding/domain/onboarding_routes.dart';
 import '../data/account_repository.dart';
@@ -28,9 +29,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
       if (mounted) context.go(OnboardingRoutes.ownerCarousel);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$e')),
-        );
+        AppSnackBar.showAlert(context, '$e');
       }
     } finally {
       if (mounted) setState(() => _deleting = false);

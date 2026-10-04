@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/domain/baby_summary.dart';
+import '../../core/widgets/app_snackbar.dart';
 import 'data/home_refresh_signal.dart';
 import 'data/home_repository.dart';
 import 'data/home_summary_result.dart';
@@ -178,8 +179,9 @@ class _HomeScreenState extends State<HomeScreen> {
           }
         } catch (e) {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Could not update baby: ${_errorMessage(e)}')),
+            AppSnackBar.showAlert(
+              context,
+              'Could not update baby: ${_errorMessage(e)}',
             );
           }
         } finally {

@@ -7,17 +7,25 @@ import 'package:provider/provider.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/input/app_text_input_kind.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_metrics.dart';
+import '../../../core/theme/la_nonna_theme.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_labeled_text_field.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/media/cached_signed_image.dart';
 import '../../../core/api/display_photo_upload.dart';
+import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../gallery/data/gallery_repository.dart';
 import '../../gallery/data/models/photo_models.dart';
 import '../../home/data/home_refresh_signal.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../../core/domain/baby_summary.dart';
+import '../../onboarding/presentation/widgets/onboarding_prototype_widgets.dart';
 import '../data/calendar_repository.dart';
+import 'calendar_display.dart';
+import 'widgets/event_form_widgets.dart';
 
 class EventFormPrefill {
   EventFormPrefill({
@@ -60,6 +68,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
   TimeOfDay _time = TimeOfDay.now();
   BabySummary? _baby;
   String? _coverPhotoId;
+  String? _coverPhotoPreviewUrl;
   var _saving = false;
 
   @override
@@ -68,6 +77,15 @@ class _EventFormScreenState extends State<EventFormScreen> {
     _title.text = widget.initialTitle ?? '';
     _description.text = widget.initialDescription ?? '';
     _init();
+  }
+
+  @override
+  void dispose() {
+    _title.dispose();
+    _description.dispose();
+    _location.dispose();
+    _video.dispose();
+    super.dispose();
   }
 
   Future<void> _init() async {
@@ -79,7 +97,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
     final homeRepo = context.read<HomeRepository>();
     final store = context.read<SelectedBabyStore>();
     final baby = await homeRepo.resolveSelectedBaby(store);
-    setState(() => _baby = baby);
+    if (mounted) setState(() => _baby = baby);
   }
 
   Future<void> _loadEvent() async {
@@ -93,23 +111,42 @@ class _EventFormScreenState extends State<EventFormScreen> {
     _location.text = detail.location ?? '';
     _video.text = detail.videoCallUrl ?? '';
     _date = DateTime(
-      detail.startsAt.year,
-      detail.startsAt.month,
-      detail.startsAt.day,
+      detail.startsAt.toLocal().year,
+      detail.startsAt.toLocal().month,
+      detail.startsAt.toLocal().day,
     );
     _time = TimeOfDay(
-      hour: detail.startsAt.hour,
-      minute: detail.startsAt.minute,
+      hour: detail.startsAt.toLocal().hour,
+      minute: detail.startsAt.toLocal().minute,
     );
     _coverPhotoId = detail.coverPhotoId;
-    setState(() {});
+    _coverPhotoPreviewUrl = detail.coverPhotoDisplayUrl;
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _date,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2035),
+    );
+    if (picked != null) setState(() => _date = picked);
+  }
+
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _time,
+    );
+    if (picked != null) setState(() => _time = picked);
   }
 
   Future<void> _pickCoverPhoto() async {
     final baby = _baby;
     if (baby == null) return;
     final photos = await context.read<GalleryRepository>().listPhotos(baby.id);
-    final picked = await showModalBottomSheet<String?>(
+    final picked = await showModalBottomSheet<({String? id, String? thumbUrl})?>(
       context: context,
       builder: (context) => SafeArea(
         child: Column(
@@ -132,13 +169,13 @@ class _EventFormScreenState extends State<EventFormScreen> {
                   babyProfileId: baby.id,
                   imageFile: File(file.path),
                 );
-                Navigator.pop(context, id);
+                Navigator.pop(context, (id: id, thumbUrl: null));
               },
             ),
             ListTile(
               leading: const Icon(Icons.clear),
               title: const Text('No cover photo'),
-              onTap: () => Navigator.pop(context, ''),
+              onTap: () => Navigator.pop(context, (id: '', thumbUrl: null)),
             ),
             if (photos.isNotEmpty)
               SizedBox(
@@ -150,7 +187,10 @@ class _EventFormScreenState extends State<EventFormScreen> {
                       Padding(
                         padding: const EdgeInsets.all(8),
                         child: InkWell(
-                          onTap: () => Navigator.pop(context, p.id),
+                          onTap: () => Navigator.pop(
+                            context,
+                            (id: p.id, thumbUrl: p.thumbUrl),
+                          ),
                           child: _CoverThumb(photo: p),
                         ),
                       ),
@@ -162,7 +202,15 @@ class _EventFormScreenState extends State<EventFormScreen> {
       ),
     );
     if (picked == null) return;
-    setState(() => _coverPhotoId = picked.isEmpty ? null : picked);
+    setState(() {
+      if (picked.id == null || picked.id!.isEmpty) {
+        _coverPhotoId = null;
+        _coverPhotoPreviewUrl = null;
+      } else {
+        _coverPhotoId = picked.id;
+        _coverPhotoPreviewUrl = picked.thumbUrl;
+      }
+    });
   }
 
   DateTime _startsAtLocal() {
@@ -181,7 +229,14 @@ class _EventFormScreenState extends State<EventFormScreen> {
       AppTextInputKind.prose,
       _title.text,
     );
-    if (baby == null || title.isEmpty) return;
+    if (baby == null) {
+      AppSnackBar.showAlert(context, 'Baby profile is still loading. Try again.');
+      return;
+    }
+    if (title.isEmpty) {
+      AppSnackBar.showAlert(context, 'Enter an event title to continue.');
+      return;
+    }
     final description = AppTextInputPolicy.normalizeForSubmit(
       AppTextInputKind.prose,
       _description.text,
@@ -223,13 +278,15 @@ class _EventFormScreenState extends State<EventFormScreen> {
       }
       if (mounted) {
         context.read<HomeRefreshSignal>().notifyHomeShouldRefresh();
-        context.pop(!widget.isEdit);
+        if (widget.isEdit) {
+          context.pop();
+        } else {
+          context.pop(true);
+        }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Save failed: $e')),
-        );
+        AppSnackBar.showAlert(context, 'Save failed: $e');
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -238,86 +295,85 @@ class _EventFormScreenState extends State<EventFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.isEdit ? 'Edit event' : 'New event'),
-        actions: [
-          AppSemantics.button(
-            'calendar_event_save',
-            TextButton(
-              onPressed: _saving ? null : _save,
-              child: _saving
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Save'),
-            ),
-            label: 'Save',
-          ),
-        ],
-      ),
+    final startsAtLocal = _startsAtLocal();
+    final pastStart = !widget.isEdit && isEventStartInPast(startsAtLocal);
+    final canSave = _baby != null && !_saving;
+    final saveLabel = widget.isEdit ? 'Save Changes' : 'Save Event';
+
+    return PrototypeSubpageScaffold(
+      title: widget.isEdit ? 'Edit Event' : 'New Event',
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(
+          AppMetrics.horizontalPadding,
+          0,
+          AppMetrics.horizontalPadding,
+          96,
+        ),
         children: [
           AppLabeledTextField(
             semanticsId: 'calendar_event_title',
-            label: 'Title',
+            label: 'Event Title',
+            hint: 'e.g. Gender Reveal Party',
             kind: AppTextInputKind.prose,
             controller: _title,
           ),
           AppLabeledTextField(
-            label: 'Description',
+            label: 'Description (optional)',
+            hint: 'Add a short description…',
             kind: AppTextInputKind.prose,
             controller: _description,
-            maxLines: 3,
+            maxLines: 5,
             minLines: 3,
           ),
-          ListTile(
-            title: const Text('Date'),
-            subtitle: Text(
-              '${_date.year}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')}',
+          PrototypeDateField(
+            label: 'Date',
+            value: _date,
+            placeholder: 'Select a date',
+            onTap: _pickDate,
+          ),
+          const SizedBox(height: AppMetrics.formFieldSpacing),
+          PrototypeTimeField(
+            label: 'Time (optional)',
+            time: _time,
+            placeholder: 'Select a time',
+            onTap: _pickTime,
+          ),
+          if (pastStart)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppMetrics.formFieldSpacing),
+              child: Text(
+                'This time is in the past. The event will show on the month view but not in Upcoming.',
+                style: context.textStyles.bodySmall?.copyWith(
+                  color: AppColors.muted,
+                ),
+              ),
             ),
-            onTap: () async {
-              final picked = await showDatePicker(
-                context: context,
-                initialDate: _date,
-                firstDate: DateTime(2020),
-                lastDate: DateTime(2035),
-              );
-              if (picked != null) setState(() => _date = picked);
-            },
-          ),
-          ListTile(
-            title: const Text('Time'),
-            subtitle: Text(_time.format(context)),
-            onTap: () async {
-              final picked = await showTimePicker(
-                context: context,
-                initialTime: _time,
-              );
-              if (picked != null) setState(() => _time = picked);
-            },
-          ),
           AppLabeledTextField(
-            label: 'Location',
+            label: 'Location (optional)',
+            hint: "e.g. Grandma Sue's backyard",
             kind: AppTextInputKind.prose,
             controller: _location,
           ),
           AppLabeledTextField(
-            label: 'Video call link',
+            label: 'Video call link (optional)',
+            hint: 'Paste a Zoom / FaceTime link',
             kind: AppTextInputKind.none,
             controller: _video,
             keyboardType: TextInputType.url,
           ),
-          ListTile(
-            title: const Text('Cover photo'),
-            subtitle: Text(
-              _coverPhotoId == null ? 'None' : 'Photo selected',
+          PrototypeEventCoverUpload(
+            onTap: _baby == null ? null : _pickCoverPhoto,
+            previewImageUrl: _coverPhotoPreviewUrl,
+            cacheKey: _coverPhotoId != null ? 'event-cover-$_coverPhotoId' : null,
+          ),
+          const SizedBox(height: 8),
+          AppSemantics.button(
+            'calendar_event_save',
+            FilledButton(
+              onPressed: canSave ? _save : null,
+              child: Text(_saving ? 'Saving…' : saveLabel),
             ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: _pickCoverPhoto,
+            label: saveLabel,
           ),
         ],
       ),

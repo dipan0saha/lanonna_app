@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/la_nonna_theme.dart';
@@ -70,8 +71,9 @@ class _PredictionsTabState extends State<PredictionsTab> {
     final date = _pendingGuess ?? _parseDueDate();
     if (date == null) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tap a date on the calendar to lock your guess')),
+        AppSnackBar.showAlert(
+          context,
+          'Tap a date on the calendar to lock your guess',
         );
       }
       return;

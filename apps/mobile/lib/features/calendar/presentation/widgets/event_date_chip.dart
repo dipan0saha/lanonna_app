@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
+import '../calendar_display.dart';
 
 /// Prototype-style month/day chip for upcoming event rows.
 class EventDateChip extends StatelessWidget {
@@ -17,6 +18,7 @@ class EventDateChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final styles = context.textStyles;
+    final local = eventLocalStart(startsAt);
     return Container(
       width: 48,
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -29,7 +31,7 @@ class EventDateChip extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            _months[startsAt.month - 1],
+            _months[local.month - 1],
             style: styles.labelSmall?.copyWith(
               color: AppColors.primaryDark,
               fontWeight: FontWeight.w700,
@@ -37,7 +39,7 @@ class EventDateChip extends StatelessWidget {
             ),
           ),
           Text(
-            '${startsAt.day}',
+            '${local.day}',
             style: styles.titleMedium?.copyWith(
               color: AppColors.textPrimary,
               fontWeight: FontWeight.w700,

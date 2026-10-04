@@ -11,7 +11,7 @@ appId: com.lanonna.lanonna
 - tapOn:
     id: calendar_create_fab
 - extendedWaitUntil:
-    visible: "New event"
+    visible: "New Event"
     timeout: 10000
 - tapOn:
     id: calendar_event_title
@@ -20,7 +20,10 @@ appId: com.lanonna.lanonna
 - tapOn:
     id: calendar_event_save
 - extendedWaitUntil:
-    notVisible: "New event"
+    notVisible: "New Event"
+    timeout: 20000
+- extendedWaitUntil:
+    visible: "Maestro Calendar Event"
     timeout: 20000
 - assertVisible:
     id: calendar_create_fab

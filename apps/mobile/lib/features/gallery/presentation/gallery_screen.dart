@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exception.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_semantics.dart';
 import 'upload/run_gallery_photo_upload.dart';
 import '../../../core/theme/app_colors.dart';
@@ -156,16 +157,12 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
       await _pollUntilReady(baby.id);
       if (mounted) {
         context.read<HomeRefreshSignal>().notifyHomeShouldRefresh();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Photo uploaded')),
-        );
+        AppSnackBar.showInfo(context, 'Photo uploaded');
       }
       await _load();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Upload failed: $e')),
-        );
+        AppSnackBar.showAlert(context, 'Upload failed: $e');
       }
     } finally {
       if (mounted) setState(() => _uploading = false);

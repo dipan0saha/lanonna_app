@@ -28,6 +28,7 @@ import 'features/onboarding/domain/onboarding_routes.dart';
 import 'core/router/router_refresh.dart';
 import 'core/theme/app_theme.dart';
 import 'core/version/app_version_gate.dart';
+import 'core/widgets/app_snackbar.dart';
 import 'core/widgets/app_offline_wrapper.dart';
 import 'firebase_options.dart';
 
@@ -133,26 +134,20 @@ class _LaNonnaAppState extends State<LaNonnaApp> {
         if (!mounted) return;
         _router.go(OnboardingRoutes.completeProfile);
         if (result.message != null) {
-          messenger?.showSnackBar(SnackBar(content: Text(result.message!)));
+          AppSnackBar.showInfoWithMessenger(messenger, result.message!);
         }
       case EmailVerifyLinkOutcome.noSignedInUser:
         _router.go(OnboardingRoutes.login);
-        messenger?.showSnackBar(
-          SnackBar(
-            content: Text(
-              result.message ??
-                  'Email verified. Sign in with the same address to continue.',
-            ),
-          ),
+        AppSnackBar.showAlertWithMessenger(
+          messenger,
+          result.message ??
+              'Email verified. Sign in with the same address to continue.',
         );
       case EmailVerifyLinkOutcome.invalidOrExpired:
       case EmailVerifyLinkOutcome.wrongMode:
-        messenger?.showSnackBar(
-          SnackBar(
-            content: Text(
-              result.message ?? 'Could not verify your email from this link.',
-            ),
-          ),
+        AppSnackBar.showAlertWithMessenger(
+          messenger,
+          result.message ?? 'Could not verify your email from this link.',
         );
     }
   }

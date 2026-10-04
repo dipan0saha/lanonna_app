@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../input/app_text_input_kind.dart';
+import '../theme/app_text_theme.dart';
 
 /// Text field with app-wide capitalization policy applied.
 class AppTextField extends StatelessWidget {
@@ -58,6 +59,9 @@ class AppTextField extends StatelessWidget {
       if (inputFormatters != null) ...inputFormatters!,
     ];
 
+    final theme = Theme.of(context);
+    final fieldStyle = style ?? AppTextTheme.fieldInput(theme.textTheme);
+
     return TextField(
       controller: controller,
       focusNode: focusNode,
@@ -73,7 +77,7 @@ class AppTextField extends StatelessWidget {
       onChanged: onChanged,
       onSubmitted: onSubmitted,
       onEditingComplete: onEditingComplete,
-      style: style,
+      style: fieldStyle,
       textAlign: textAlign,
       autofocus: autofocus,
       textCapitalization: AppTextInputPolicy.capitalization(kind),

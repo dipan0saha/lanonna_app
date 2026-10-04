@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_exception.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/ai_suggestions_scaffold.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
@@ -83,8 +84,9 @@ class _RegistryAiSuggestionsScreenState extends State<RegistryAiSuggestionsScree
     } catch (e) {
       if (mounted) {
         setState(() => _loading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not load suggestions: ${_errorMessage(e)}')),
+        AppSnackBar.showAlert(
+          context,
+          'Could not load suggestions: ${_errorMessage(e)}',
         );
       }
     }
