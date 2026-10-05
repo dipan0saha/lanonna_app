@@ -5,7 +5,7 @@ import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/widgets/vote_count_pill.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../data/models/home_summary.dart';
-import 'home_section_label.dart';
+import 'home_section_header.dart';
 
 class HomeFamilyInsightGenderCard extends StatelessWidget {
   const HomeFamilyInsightGenderCard({
@@ -28,15 +28,11 @@ class HomeFamilyInsightGenderCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppMetrics.horizontalPadding),
-          child: Row(
-            children: [
-              const Expanded(child: HomeSectionLabel('Family Insight')),
-              if (onViewAll != null)
-                TextButton(onPressed: onViewAll, child: const Text('View all')),
-            ],
-          ),
+        HomeSectionHeader(
+          title: 'Family Insight',
+          action: onViewAll != null
+              ? TextButton(onPressed: onViewAll, child: const Text('View all'))
+              : null,
         ),
         Container(
           margin: EdgeInsets.symmetric(horizontal: AppMetrics.horizontalPadding),

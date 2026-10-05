@@ -8,7 +8,7 @@ import 'widgets/home_birth_welcome_card.dart';
 import 'widgets/home_family_insight_gender_card.dart';
 import 'widgets/home_insight_card.dart';
 import 'widgets/home_prd_sections.dart';
-import 'widgets/home_section_label.dart';
+import 'widgets/home_section_header.dart';
 import 'widgets/owner_expecting_hero_card.dart';
 import 'widgets/owner_getting_started_card.dart';
 import 'widgets/owner_quick_actions_row.dart';
@@ -66,7 +66,7 @@ class OwnerHomeComposer extends StatelessWidget {
               onViewAll: () => context.go(AppRoutes.gamification),
             )
           else ...[
-            const HomeSectionLabel('Family Insight'),
+            const HomeSectionHeader(title: 'Family Insight'),
             HomeInsightCard(
               message:
                   'No votes yet. Invite family so they can guess names, gender, and the big day.',

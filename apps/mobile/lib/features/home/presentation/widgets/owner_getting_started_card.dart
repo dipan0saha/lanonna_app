@@ -5,7 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../data/models/home_summary.dart';
-import 'home_section_label.dart';
+import 'home_section_header.dart';
 
 class OwnerGettingStartedCard extends StatelessWidget {
   const OwnerGettingStartedCard({
@@ -25,9 +25,14 @@ class OwnerGettingStartedCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        HomeSectionLabel(
-          'Getting Started',
-          trailing: '${summary.completedCount} / ${summary.total}',
+        HomeSectionHeader(
+          title: 'Getting Started',
+          action: Text(
+            '${summary.completedCount} / ${summary.total}',
+            style: context.textStyles.labelSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
         Container(
           margin: EdgeInsets.symmetric(horizontal: AppMetrics.horizontalPadding),

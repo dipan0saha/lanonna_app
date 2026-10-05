@@ -7,7 +7,7 @@ import '../../../../core/theme/app_metrics.dart';
 import '../../../account/data/account_repository.dart';
 import '../../../registry/domain/registry_routes.dart';
 import '../../data/models/home_summary.dart';
-import 'home_section_label.dart';
+import 'home_section_header.dart';
 
 class HomeNewFollowersSection extends StatelessWidget {
   const HomeNewFollowersSection({
@@ -25,7 +25,7 @@ class HomeNewFollowersSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const HomeSectionLabel('New Followers'),
+        const HomeSectionHeader(title: 'New Followers'),
         Card(
           margin: EdgeInsets.symmetric(horizontal: AppMetrics.horizontalPadding),
           child: Column(
@@ -66,7 +66,7 @@ class HomeInviteStatusSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const HomeSectionLabel('Invite Status'),
+        const HomeSectionHeader(title: 'Invite Status'),
         Card(
           margin: EdgeInsets.symmetric(horizontal: AppMetrics.horizontalPadding),
           child: Column(
@@ -105,7 +105,7 @@ class HomeRegistryHighlightsList extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const HomeSectionLabel('Registry Highlights'),
+        const HomeSectionHeader(title: 'Registry Highlights'),
         Card(
           margin: EdgeInsets.symmetric(horizontal: AppMetrics.horizontalPadding),
           child: Column(
@@ -144,7 +144,7 @@ class HomeRecentPurchasesSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const HomeSectionLabel('Recent Registry Purchases'),
+        const HomeSectionHeader(title: 'Recent Registry Purchases'),
         Card(
           margin: EdgeInsets.symmetric(horizontal: AppMetrics.horizontalPadding),
           child: Column(

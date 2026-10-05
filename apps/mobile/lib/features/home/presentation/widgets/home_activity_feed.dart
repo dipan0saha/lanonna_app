@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/widgets/activity/activity_feed_card.dart';
 import '../../data/models/home_summary.dart';
 import '../../domain/app_routes.dart';
-import 'home_section_label.dart';
+import 'home_section_header.dart';
 
 class HomeActivityFeed extends StatelessWidget {
   const HomeActivityFeed({
@@ -27,24 +28,20 @@ class HomeActivityFeed extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (showSectionHeader)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              children: [
-                const Expanded(child: HomeSectionLabel('Activity Recap')),
-                if (showViewAll)
-                  TextButton(
+          HomeSectionHeader(
+            title: 'Activity Recap',
+            action: showViewAll
+                ? TextButton(
                     onPressed: () => context.push(
                       AppRoutes.homeActivity(babyId),
                     ),
                     child: const Text('View all'),
-                  ),
-              ],
-            ),
+                  )
+                : null,
           ),
         ActivityFeedCard(
           items: items,
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: EdgeInsets.symmetric(horizontal: AppMetrics.horizontalPadding),
         ),
         const SizedBox(height: 18),
       ],

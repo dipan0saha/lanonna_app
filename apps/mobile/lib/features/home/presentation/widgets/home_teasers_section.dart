@@ -8,7 +8,7 @@ import '../../../../core/router/deep_link_navigation.dart';
 import '../../../calendar/domain/calendar_routes.dart';
 import '../../../gallery/domain/gallery_routes.dart';
 import '../../data/models/home_summary.dart';
-import 'home_section_label.dart';
+import 'home_section_header.dart';
 import 'home_upcoming_events_section.dart';
 
 class HomeTeasersSection extends StatelessWidget {
@@ -26,7 +26,7 @@ class HomeTeasersSection extends StatelessWidget {
     final children = <Widget>[];
 
     if (teasers.notificationPreview.isNotEmpty) {
-      children.add(const HomeSectionLabel('Notifications'));
+      children.add(const HomeSectionHeader(title: 'Notifications'));
       children.add(
         _CardList(
           items: teasers.notificationPreview
@@ -52,7 +52,7 @@ class HomeTeasersSection extends StatelessWidget {
     }
 
     if (teasers.rsvpReminders.isNotEmpty) {
-      children.add(const HomeSectionLabel('RSVP Reminders'));
+      children.add(const HomeSectionHeader(title: 'RSVP Reminders'));
       children.add(
         _CardList(
           items: teasers.rsvpReminders
@@ -70,16 +70,11 @@ class HomeTeasersSection extends StatelessWidget {
 
     if (teasers.recentPhotos.isNotEmpty) {
       children.add(
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppMetrics.horizontalPadding),
-          child: Row(
-            children: [
-              const Expanded(child: HomeSectionLabel('Recent Photos')),
-              TextButton(
-                onPressed: () => context.go(GalleryRoutes.recent),
-                child: const Text('View all'),
-              ),
-            ],
+        HomeSectionHeader(
+          title: 'Recent Photos',
+          action: TextButton(
+            onPressed: () => context.go(GalleryRoutes.recent),
+            child: const Text('View all'),
           ),
         ),
       );
@@ -88,16 +83,11 @@ class HomeTeasersSection extends StatelessWidget {
 
     if (teasers.favoritePhotos.isNotEmpty) {
       children.add(
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppMetrics.horizontalPadding),
-          child: Row(
-            children: [
-              const Expanded(child: HomeSectionLabel('Gallery Favorites')),
-              TextButton(
-                onPressed: () => context.go(GalleryRoutes.favorites),
-                child: const Text('View all'),
-              ),
-            ],
+        HomeSectionHeader(
+          title: 'Gallery Favorites',
+          action: TextButton(
+            onPressed: () => context.go(GalleryRoutes.favorites),
+            child: const Text('View all'),
           ),
         ),
       );
@@ -110,7 +100,7 @@ class HomeTeasersSection extends StatelessWidget {
     }
 
     if (teasers.registryOpenCount > 0 && teasers.registryHighlights.isEmpty) {
-      children.add(const HomeSectionLabel('Registry Highlights'));
+      children.add(const HomeSectionHeader(title: 'Registry Highlights'));
       children.add(
         _CardList(
           items: [

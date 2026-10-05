@@ -6,7 +6,7 @@ import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../../calendar/domain/calendar_routes.dart';
 import '../../data/models/home_summary.dart';
-import 'home_section_label.dart';
+import 'home_section_header.dart';
 
 class HomeUpcomingEventsSection extends StatelessWidget {
   const HomeUpcomingEventsSection({super.key, required this.events});
@@ -21,16 +21,11 @@ class HomeUpcomingEventsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppMetrics.horizontalPadding),
-          child: Row(
-            children: [
-              const Expanded(child: HomeSectionLabel('Upcoming Events')),
-              TextButton(
-                onPressed: () => context.push(CalendarRoutes.upcoming),
-                child: const Text('View all'),
-              ),
-            ],
+        HomeSectionHeader(
+          title: 'Upcoming Events',
+          action: TextButton(
+            onPressed: () => context.push(CalendarRoutes.upcoming),
+            child: const Text('View all'),
           ),
         ),
         ...events.map((event) {

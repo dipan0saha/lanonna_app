@@ -9,7 +9,7 @@ import 'widgets/home_family_insight_gender_card.dart';
 import 'widgets/home_follower_quick_actions.dart';
 import 'widgets/home_insight_card.dart';
 import 'widgets/home_prd_sections.dart';
-import 'widgets/home_section_label.dart';
+import 'widgets/home_section_header.dart';
 import 'widgets/owner_expecting_hero_card.dart';
 
 class FollowerHomeComposer extends StatelessWidget {
@@ -61,7 +61,7 @@ class FollowerHomeComposer extends StatelessWidget {
             followerFootnote:
                 "You'll be notified the moment $babyName arrives.",
           ),
-          const HomeSectionLabel('Quick Actions'),
+          const HomeSectionHeader(title: 'Quick Actions'),
           HomeFollowerQuickActions(
             onVoteInFun: onVoteInFun,
             onViewGallery: onViewGallery,
@@ -72,7 +72,7 @@ class FollowerHomeComposer extends StatelessWidget {
               onViewAll: () => context.go(AppRoutes.gamification),
             )
           else ...[
-            const HomeSectionLabel('Family Insight'),
+            const HomeSectionHeader(title: 'Family Insight'),
             const HomeInsightCard(
               message:
                   'No family votes yet. Check back once everyone starts playing along in Fun.',
@@ -99,7 +99,7 @@ class FollowerHomeComposer extends StatelessWidget {
             babyId: baby.id,
             onSignedUrlError: onRefresh,
           ),
-        const HomeSectionLabel('Quick Actions'),
+        const HomeSectionHeader(title: 'Quick Actions'),
         HomeFollowerQuickActions(
           onVoteInFun: onVoteInFun,
           onViewGallery: onViewGallery,

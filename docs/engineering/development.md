@@ -112,6 +112,8 @@ Product UI tokens live under `apps/mobile/lib/core/theme/` (see also PRD §5.1):
 
 **Shell vs subpage chrome (FR-SHELL-001):** Bottom-tab screens wrap content in `ShellTabLayout` (home top bar: baby switcher, search, notifications). Drill-downs, settings/account stack routes, and forms such as calendar/registry edit use `PrototypeSubpageScaffold` (back + centered title only). Do not stack `shellHomeTopBar` on subpages.
 
+**Home section headers:** Use `HomeSectionHeader` for block titles on the home scroll (single `AppMetrics.horizontalPadding`; optional trailing `action`). Do not wrap it in extra horizontal `Padding`.
+
 **Text fields:** Typed input uses `AppTextTheme.fieldInput` (Inter **regular**, w400). Use [`AppTextField`](../../apps/mobile/lib/core/widgets/app_text_field.dart), [`AppLabeledTextField`](../../apps/mobile/lib/core/widgets/app_labeled_text_field.dart), or [`AppTextFormField`](../../apps/mobile/lib/core/widgets/app_text_form_field.dart) — not raw `TextField` / `TextFormField` (theme `bodyLarge` is bold).
 
 ### Reset dev test data (babies + onboarding)

@@ -3,11 +3,19 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 
-class HomeSectionLabel extends StatelessWidget {
-  const HomeSectionLabel(this.text, {super.key, this.trailing});
+/// Home scroll section title row (uppercase label + optional trailing action).
+///
+/// Applies [AppMetrics.horizontalPadding] once. Do not wrap in extra horizontal
+/// [Padding] at call sites.
+class HomeSectionHeader extends StatelessWidget {
+  const HomeSectionHeader({
+    super.key,
+    required this.title,
+    this.action,
+  });
 
-  final String text;
-  final String? trailing;
+  final String title;
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
@@ -19,20 +27,15 @@ class HomeSectionLabel extends StatelessWidget {
         10,
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             child: Text(
-              text.toUpperCase(),
+              title.toUpperCase(),
               style: context.textStyles.labelSmall,
             ),
           ),
-          if (trailing != null)
-            Text(
-              trailing!,
-              style: context.textStyles.labelSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+          if (action != null) action!,
         ],
       ),
     );
