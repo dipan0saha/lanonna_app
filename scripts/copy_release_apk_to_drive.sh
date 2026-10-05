@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copy built release APK to Google Drive (lanonna_app.apk + versioned copy).
+# Copy built release APK to Google Drive (overwrites lanonna_app.apk).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -11,15 +11,8 @@ if [[ ! -f "${APK}" ]]; then
   exit 1
 fi
 
-VERSION="$(grep '^version:' "${ROOT}/apps/mobile/pubspec.yaml" | awk '{print $2}')"
-HASH="$(git -C "${ROOT}" rev-parse --short HEAD 2>/dev/null || echo local)"
-DATE="$(date +%Y%m%d)"
-VERSIONED="lanonna-dev-${VERSION}-${HASH}-${DATE}.apk"
-
 mkdir -p "${DRIVE_DIR}"
 cp -f "${APK}" "${DRIVE_DIR}/lanonna_app.apk"
-cp -f "${APK}" "${DRIVE_DIR}/${VERSIONED}"
 echo "Shipped to:"
 echo "  ${DRIVE_DIR}/lanonna_app.apk"
-echo "  ${DRIVE_DIR}/${VERSIONED}"
 ls -lh "${DRIVE_DIR}/lanonna_app.apk"
