@@ -8,7 +8,7 @@ import psycopg
 from psycopg.rows import dict_row
 from psycopg.types.json import Json
 
-from lanonna_activity_copy import photo_shared_summary
+from lanonna_activity_copy import EVENT_PHOTO_SHARED, photo_shared_summary
 from lanonna_worker.config import settings
 
 
@@ -103,12 +103,13 @@ def mark_photo_ready(
                     id, baby_profile_id, actor_firebase_uid,
                     event_type, summary, payload
                 )
-                VALUES (%s, %s, %s, 'photo_shared', %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s)
                 """,
                 (
                     uuid.uuid4(),
                     row["baby_profile_id"],
                     row["uploader_firebase_uid"],
+                    EVENT_PHOTO_SHARED,
                     summary,
                     Json({"photo_id": str(row["id"])}),
                 ),

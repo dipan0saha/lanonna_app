@@ -8,8 +8,8 @@ String? normalizeAppDeepLinkPath(String? deepLink) {
   if (!path.startsWith('/')) {
     path = '/$path';
   }
-  if (path == '/account' || path.startsWith('/account/')) {
-    path = path.replaceFirst('/account', '/profile');
+  if (path == '/account') {
+    path = '/profile';
   } else if (path == '/notifications') {
     path = '/notifications/inbox';
   }
@@ -20,6 +20,7 @@ String? normalizeAppDeepLinkPath(String? deepLink) {
     '/registry',
     '/gamification',
     '/profile',
+    '/account/',
     '/settings',
     '/baby/',
     '/notifications/',

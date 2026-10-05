@@ -52,11 +52,11 @@ def test_mark_photo_ready_inserts_photo_shared_activity():
     assert row["id"] == photo_id
     assert len(inserts) == 1
     sql_text, params = inserts[0]
-    assert "photo_shared" in sql_text
-    payload = params[4]
+    assert params[3] == "photo_shared"
+    assert "Alex" in params[4]
+    payload = params[5]
     photo_id_value = payload.obj if hasattr(payload, "obj") else payload
     assert photo_id_value["photo_id"] == str(photo_id)
-    assert "Alex" in params[3]
 
 
 def test_mark_photo_ready_idempotent_generation():

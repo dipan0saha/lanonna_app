@@ -3,9 +3,13 @@ import 'package:lanonna/core/router/deep_link_navigation.dart';
 
 void main() {
   group('normalizeAppDeepLinkPath', () {
-    test('maps /account to /profile', () {
+    test('maps /account hub to /profile', () {
       expect(normalizeAppDeepLinkPath('/account'), '/profile');
-      expect(normalizeAppDeepLinkPath('/account/edit'), '/profile/edit');
+    });
+
+    test('keeps /account subpaths for registered routes', () {
+      expect(normalizeAppDeepLinkPath('/account/edit'), '/account/edit');
+      expect(normalizeAppDeepLinkPath('/account/export'), '/account/export');
     });
 
     test('maps bare /notifications to inbox', () {

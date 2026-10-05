@@ -58,7 +58,6 @@ def _publish_worker_payload(payload: dict) -> None:
     if settings.notify_publish_disabled and payload.get("type") in (
         "notify_fan_out",
         "notify_user",
-        "weekly_notification_digest",
     ):
         logger.info(
             "notify_publish_skipped type=%s (NOTIFY_PUBLISH_DISABLED)",

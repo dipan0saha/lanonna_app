@@ -44,9 +44,4 @@ gcloud run deploy "${SERVICE}" \
 WORKER_URL="$(gcloud run services describe "${SERVICE}" --region="${REGION}" --format='value(status.url)')"
 echo "Worker URL: ${WORKER_URL}"
 
-# Pub/Sub push + Run invoker IAM: managed in Terraform (see infra/terraform).
-if [[ "${CONFIGURE_PUBSUB_IN_DEPLOY:-0}" == "1" ]]; then
-  echo "CONFIGURE_PUBSUB_IN_DEPLOY=1 is deprecated; use Terraform worker_push subscription."
-fi
-
 echo "Deploy complete. Update Terraform worker_push_endpoint if this URL changed."

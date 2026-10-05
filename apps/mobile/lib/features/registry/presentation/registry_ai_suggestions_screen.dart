@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
-import '../../../core/api/api_exception.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/ai_suggestions_scaffold.dart';
 import '../../home/data/home_repository.dart';
@@ -57,11 +56,6 @@ class _RegistryAiSuggestionsScreenState extends State<RegistryAiSuggestionsScree
     await _load();
   }
 
-  String _errorMessage(Object e) {
-    if (e is ApiException) return e.message;
-    return apiErrorMessage(e);
-  }
-
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
@@ -87,7 +81,7 @@ class _RegistryAiSuggestionsScreenState extends State<RegistryAiSuggestionsScree
         setState(() => _loading = false);
         AppSnackBar.showAlert(
           context,
-          'Could not load suggestions: ${_errorMessage(e)}',
+          'Could not load suggestions: ${apiErrorMessage(e)}',
         );
       }
     }

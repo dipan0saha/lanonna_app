@@ -5,20 +5,16 @@ from typing import Any
 
 from lanonna_activity_copy import (
     EVENT_PHOTO_COMMENT,
-    EVENT_PHOTO_SHARED,
     EVENT_PHOTO_SQUISH,
     GALLERY_ACTIVITY_EVENT_TYPES,
     photo_comment_summary,
-    photo_shared_summary,
     photo_squish_summary,
 )
 
 __all__ = [
-    "EVENT_PHOTO_SHARED",
     "EVENT_PHOTO_SQUISH",
     "EVENT_PHOTO_COMMENT",
     "GALLERY_ACTIVITY_EVENT_TYPES",
-    "photo_shared_summary",
     "photo_squish_summary",
     "photo_comment_summary",
     "photo_id_from_payload",

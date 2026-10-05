@@ -18,7 +18,6 @@ import '../../features/home/presentation/home_activity_screen.dart';
 import '../../features/invitations/presentation/batch_invite_screen.dart';
 import '../../features/onboarding/domain/onboarding_routes.dart';
 import '../../features/onboarding/presentation/app_session.dart';
-import '../../features/onboarding/presentation/onboarding_coordinator.dart';
 import '../../features/onboarding/presentation/screens/onboarding_batch_invite_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_complete_profile_screen.dart';
 import '../../features/legal/presentation/legal_document_screen.dart';
@@ -69,7 +68,6 @@ GoRouter createAppRouter(
     redirect: (context, state) {
       final auth = context.read<AuthRepository>();
       final session = context.read<AppSession>();
-      context.read<OnboardingCoordinator>();
       final user = auth.currentUser;
       return session.redirectFor(
         isSignedIn: user != null,

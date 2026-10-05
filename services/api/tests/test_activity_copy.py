@@ -1,21 +1,41 @@
+import uuid
+from datetime import datetime, timezone
+
 from lanonna_api.domain.activity_copy import (
-    photo_comment_summary,
-    photo_shared_summary,
-    photo_squish_summary,
+    actor_name_from_row,
+    photo_id_from_payload,
+    serialize_activity_item,
 )
 
 
-def test_photo_shared_summary_with_caption():
-    assert photo_shared_summary("Sarah", "Bump update") == 'Sarah added "Bump update"'
+def test_photo_id_from_payload_valid():
+    pid = uuid.uuid4()
+    assert photo_id_from_payload({"photo_id": str(pid)}) == pid
 
 
-def test_photo_shared_summary_without_caption():
-    assert photo_shared_summary("Sarah", None) == "Sarah shared a photo"
+def test_photo_id_from_payload_invalid():
+    assert photo_id_from_payload({"photo_id": "not-a-uuid"}) is None
+    assert photo_id_from_payload(None) is None
 
 
-def test_photo_squish_summary():
-    assert "squished" in photo_squish_summary("Sue", "Nursery")
+def test_actor_name_from_row():
+    assert actor_name_from_row({"actor_display_name": "  Pat  "}) == "Pat"
+    assert actor_name_from_row({"actor_display_name": "   "}) is None
 
 
-def test_photo_comment_summary():
-    assert "commented on" in photo_comment_summary("Carol", "Ultrasound")
+def test_serialize_activity_item():
+    photo_id = uuid.uuid4()
+    created = datetime(2026, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+    row = {
+        "id": uuid.uuid4(),
+        "event_type": "photo_squish",
+        "summary": "Sam squished",
+        "created_at": created,
+        "actor_display_name": "Sam",
+        "payload": {"photo_id": str(photo_id)},
+    }
+    item = serialize_activity_item(row)
+    assert item["event_type"] == "photo_squish"
+    assert item["actor_display_name"] == "Sam"
+    assert item["photo_id"] == str(photo_id)
+    assert item["created_at"] == created.isoformat()

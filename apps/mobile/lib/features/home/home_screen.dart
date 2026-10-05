@@ -91,7 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
           case HomeSummaryLoaded loaded:
             summary = loaded.summary;
           case HomeSummaryFailed failed:
-            summaryError = _errorMessage(failed.error);
+            summaryError = apiErrorMessage(failed.error);
         }
       }
       setState(() {
@@ -109,14 +109,12 @@ class _HomeScreenState extends State<HomeScreen> {
         } else if (offline) {
           _loadError = 'Connect to the internet to load your family.';
         } else {
-          _loadError = _errorMessage(e);
+          _loadError = apiErrorMessage(e);
         }
         _loadComplete = true;
       });
     }
   }
-
-  String _errorMessage(Object e) => apiErrorMessage(e);
 
   int? _daysToDueDate(BabySummary baby) {
     final fromSummary = _summary?.daysToDue;
@@ -178,7 +176,7 @@ class _HomeScreenState extends State<HomeScreen> {
           if (mounted) {
             AppSnackBar.showAlert(
               context,
-              'Could not update baby: ${_errorMessage(e)}',
+              'Could not update baby: ${apiErrorMessage(e)}',
             );
           }
         } finally {
