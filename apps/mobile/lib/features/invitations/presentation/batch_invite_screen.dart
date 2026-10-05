@@ -324,14 +324,21 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
           onPressed: _busy ? null : () => _finish(sendInvites: true),
         ),
         if (_isOnboarding)
-          Center(
-            child: GestureDetector(
-              onTap: _busy ? null : () => _finish(sendInvites: false),
-              child: const Text(
-                'Skip for now',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primaryDark,
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: Center(
+              child: GestureDetector(
+                onTap: _busy ? null : () => _finish(sendInvites: false),
+                behavior: HitTestBehavior.opaque,
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                  child: Text(
+                    'Skip for now',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primaryDark,
+                    ),
+                  ),
                 ),
               ),
             ),

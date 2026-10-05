@@ -4,6 +4,7 @@ import 'package:lanonna/features/onboarding/data/models/onboarding_status.dart';
 import 'package:lanonna/features/onboarding/data/onboarding_repository.dart';
 import 'package:lanonna/features/onboarding/data/onboarding_storage.dart';
 import 'package:lanonna/features/onboarding/domain/onboarding_path.dart';
+import 'package:lanonna/features/legal/domain/legal_routes.dart';
 import 'package:lanonna/features/onboarding/domain/onboarding_routes.dart';
 import 'package:lanonna/features/onboarding/domain/onboarding_step.dart';
 import 'package:lanonna/features/onboarding/presentation/app_session.dart';
@@ -126,6 +127,35 @@ void main() {
       ),
     );
     expect(f.session.canAccessMainApp, isTrue);
+  });
+
+  test('legal routes allowed while profile incomplete', () async {
+    final f = await _fixtures();
+    f.session.debugSetStatus(
+      const OnboardingStatus(
+        emailVerified: true,
+        profileComplete: false,
+        hasOwnerBaby: false,
+        hasBabyMembership: false,
+        ownerOnboardingCompleted: false,
+      ),
+    );
+    expect(
+      f.session.redirectFor(
+        isSignedIn: true,
+        emailVerified: true,
+        location: LegalRoutes.terms,
+      ),
+      isNull,
+    );
+    expect(
+      f.session.redirectFor(
+        isSignedIn: true,
+        emailVerified: true,
+        location: LegalRoutes.privacy,
+      ),
+      isNull,
+    );
   });
 
   test('follower invite path with incomplete profile redirects to complete profile', () async {

@@ -70,6 +70,63 @@ class OnboardingTextField extends StatelessWidget {
   }
 }
 
+/// Terms checkbox with tappable legal links (not inside [CheckboxListTile] title).
+class OnboardingTermsAgreementCheckbox extends StatelessWidget {
+  const OnboardingTermsAgreementCheckbox({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    required this.onTermsTap,
+    required this.onPrivacyTap,
+  });
+
+  final bool value;
+  final ValueChanged<bool?>? onChanged;
+  final VoidCallback onTermsTap;
+  final VoidCallback onPrivacyTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = context.textStyles.bodySmall?.copyWith(color: AppColors.muted);
+    final link = context.textStyles.bodySmall?.copyWith(
+      color: AppColors.primaryDark,
+      fontWeight: FontWeight.w600,
+    );
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Checkbox(
+          value: value,
+          onChanged: onChanged,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: VisualDensity.compact,
+        ),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text('I agree to the ', style: muted),
+                GestureDetector(
+                  onTap: onTermsTap,
+                  child: Text('Terms of Service', style: link),
+                ),
+                Text(' and ', style: muted),
+                GestureDetector(
+                  onTap: onPrivacyTap,
+                  child: Text('Privacy Policy', style: link),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class OnboardingPasswordField extends StatefulWidget {
   const OnboardingPasswordField({
     super.key,

@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/data/iso_countries.dart';
 import '../../../core/input/app_text_input_kind.dart';
+import '../../../core/widgets/app_country_dropdown_field.dart';
 import '../../../core/widgets/app_labeled_text_field.dart';
 import '../../../core/api/display_photo_upload.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
@@ -186,14 +187,12 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
               onTap: _saving ? null : _pickBirthDate,
             ),
             const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
+            AppCountryDropdownField(
+              countries: _countries,
               value: _countryCode,
+              enabled: !_saving,
               decoration: const InputDecoration(labelText: 'Country (optional)'),
-              items: [
-                for (final c in _countries)
-                  DropdownMenuItem(value: c.code, child: Text(c.name)),
-              ],
-              onChanged: _saving ? null : (v) => setState(() => _countryCode = v),
+              onChanged: (v) => setState(() => _countryCode = v),
             ),
             AppLabeledTextField(
               label: 'Zip / Postal code (optional)',

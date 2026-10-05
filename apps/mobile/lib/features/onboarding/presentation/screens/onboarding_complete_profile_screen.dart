@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -16,7 +15,9 @@ import '../../../../core/input/app_text_input_kind.dart';
 import '../../../../core/api/display_photo_upload.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
+import '../../../../core/widgets/app_country_dropdown_field.dart';
 import '../../../../core/validation/form_validators.dart';
+import '../../../legal/domain/legal_routes.dart';
 import '../../data/onboarding_form_drafts.dart';
 import '../../data/onboarding_repository.dart';
 import '../../domain/onboarding_path.dart';
@@ -369,23 +370,14 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
             const SizedBox(height: 16),
             OnboardingFieldLabel('Country (optional)'),
             const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
+            AppCountryDropdownField(
+              countries: _countries,
               value: _countryCode,
-              isExpanded: true,
-              decoration: const InputDecoration(hintText: 'Select a country'),
-              items: [
-                for (final c in _countries)
-                  DropdownMenuItem(
-                    value: c.code,
-                    child: Text(c.name, overflow: TextOverflow.ellipsis),
-                  ),
-              ],
-              onChanged: _busy
-                  ? null
-                  : (code) {
-                      setState(() => _countryCode = code);
-                      _persistDraft();
-                    },
+              enabled: !_busy,
+              onChanged: (code) {
+                setState(() => _countryCode = code);
+                _persistDraft();
+              },
             ),
             const SizedBox(height: 12),
             OnboardingTextField(
@@ -395,7 +387,7 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
               onChanged: (_) => _persistDraft(),
             ),
             const SizedBox(height: 8),
-            CheckboxListTile(
+            OnboardingTermsAgreementCheckbox(
               value: _acceptedTerms,
               onChanged: _busy
                   ? null
@@ -403,35 +395,8 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
                       setState(() => _acceptedTerms = v ?? false);
                       _persistDraft();
                     },
-              title: RichText(
-                text: TextSpan(
-                  style: text.bodySmall?.copyWith(color: AppColors.muted),
-                  children: [
-                    const TextSpan(text: 'I agree to the '),
-                    TextSpan(
-                      text: 'Terms of Service',
-                      style: text.bodySmall?.copyWith(
-                        color: AppColors.primaryDark,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = () => context.push('/legal/terms'),
-                    ),
-                    const TextSpan(text: ' and '),
-                    TextSpan(
-                      text: 'Privacy Policy',
-                      style: text.bodySmall?.copyWith(
-                        color: AppColors.primaryDark,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = () => context.push('/legal/privacy'),
-                    ),
-                  ],
-                ),
-              ),
-              controlAffinity: ListTileControlAffinity.leading,
-              contentPadding: EdgeInsets.zero,
+              onTermsTap: () => context.push(LegalRoutes.terms),
+              onPrivacyTap: () => context.push(LegalRoutes.privacy),
             ),
             const SizedBox(height: 12),
             OnboardingPrimaryButton(

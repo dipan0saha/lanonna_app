@@ -4,6 +4,7 @@ import '../data/models/onboarding_status.dart';
 import '../data/onboarding_repository.dart';
 import '../data/onboarding_storage.dart';
 import '../domain/onboarding_path.dart';
+import '../../legal/domain/legal_routes.dart';
 import '../domain/onboarding_routes.dart';
 import '../domain/onboarding_step.dart';
 import 'onboarding_coordinator.dart';
@@ -101,6 +102,10 @@ class AppSession extends ChangeNotifier {
     }
     if (path == '/login') {
       return OnboardingRoutes.login;
+    }
+
+    if (LegalRoutes.paths.contains(path)) {
+      return null;
     }
 
     if (!isSignedIn) {
