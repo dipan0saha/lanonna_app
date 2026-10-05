@@ -16,6 +16,7 @@ import '../../home/data/selected_baby_store.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../data/gallery_repository.dart';
 import '../data/models/photo_models.dart';
+import '../domain/gallery_routes.dart';
 
 class PhotoDetailScreen extends StatefulWidget {
   const PhotoDetailScreen({super.key, required this.photoId});
@@ -24,29 +25,6 @@ class PhotoDetailScreen extends StatefulWidget {
 
   @override
   State<PhotoDetailScreen> createState() => _PhotoDetailScreenState();
-}
-
-class _PhotoNavHint extends StatelessWidget {
-  const _PhotoNavHint({required this.icon, required this.onTap});
-
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.black38,
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          child: Icon(icon, color: Colors.white, size: 22),
-        ),
-      ),
-    );
-  }
 }
 
 class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
@@ -66,6 +44,17 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void didUpdateWidget(covariant PhotoDetailScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.photoId != widget.photoId) {
+      _editingCaption = false;
+      _signedUrlRetried = false;
+      _commentController.clear();
+      _load();
+    }
   }
 
   @override
@@ -307,7 +296,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     if (idx < 0) return;
     final next = idx + delta;
     if (next < 0 || next >= _photoIds.length) return;
-    context.replace('/gallery/photo/${_photoIds[next]}');
+    context.replace(GalleryRoutes.photoDetail(_photoIds[next]));
   }
 
   @override
@@ -371,30 +360,6 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                             color: Colors.grey.shade300,
                             child: const Center(child: Text('Processing…')),
                           ),
-                        if (_photoIds.length > 1) ...[
-                          Positioned(
-                            top: 8,
-                            left: 0,
-                            right: 0,
-                            child: Center(
-                              child: _PhotoNavHint(
-                                icon: Icons.keyboard_arrow_up,
-                                onTap: () => _goAdjacent(-1),
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            bottom: 8,
-                            left: 0,
-                            right: 0,
-                            child: Center(
-                              child: _PhotoNavHint(
-                                icon: Icons.keyboard_arrow_down,
-                                onTap: () => _goAdjacent(1),
-                              ),
-                            ),
-                          ),
-                        ],
                       ],
                     ),
                   ),
