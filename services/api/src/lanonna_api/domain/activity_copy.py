@@ -3,39 +3,28 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-EVENT_PHOTO_SHARED = "photo_shared"
-EVENT_PHOTO_SQUISH = "photo_squish"
-EVENT_PHOTO_COMMENT = "photo_comment"
-
-GALLERY_ACTIVITY_EVENT_TYPES: frozenset[str] = frozenset(
-    {EVENT_PHOTO_SQUISH, EVENT_PHOTO_COMMENT}
+from lanonna_activity_copy import (
+    EVENT_PHOTO_COMMENT,
+    EVENT_PHOTO_SHARED,
+    EVENT_PHOTO_SQUISH,
+    GALLERY_ACTIVITY_EVENT_TYPES,
+    photo_comment_summary,
+    photo_shared_summary,
+    photo_squish_summary,
 )
 
-
-def _truncate_caption(caption: str | None, max_len: int = 60) -> str:
-    text = (caption or "").strip()
-    if not text:
-        return "a photo"
-    if len(text) <= max_len:
-        return text
-    return f"{text[: max_len - 1].rstrip()}…"
-
-
-def photo_shared_summary(actor: str, caption: str | None) -> str:
-    label = _truncate_caption(caption)
-    if caption and caption.strip():
-        return f'{actor} added "{label}"'
-    return f"{actor} shared a photo"
-
-
-def photo_squish_summary(actor: str, caption: str | None) -> str:
-    label = _truncate_caption(caption)
-    return f'{actor} squished "{label}"'
-
-
-def photo_comment_summary(actor: str, caption: str | None) -> str:
-    label = _truncate_caption(caption)
-    return f'{actor} commented on "{label}"'
+__all__ = [
+    "EVENT_PHOTO_SHARED",
+    "EVENT_PHOTO_SQUISH",
+    "EVENT_PHOTO_COMMENT",
+    "GALLERY_ACTIVITY_EVENT_TYPES",
+    "photo_shared_summary",
+    "photo_squish_summary",
+    "photo_comment_summary",
+    "photo_id_from_payload",
+    "actor_name_from_row",
+    "serialize_activity_item",
+]
 
 
 def photo_id_from_payload(payload: Any) -> uuid.UUID | None:

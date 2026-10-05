@@ -236,7 +236,9 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
             const SizedBox(height: AppMetrics.formFieldSpacing - 4),
             OutlinedButton(
               onPressed: _delete,
-              style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error,
+              ),
               child: const Text('Delete Item'),
             ),
           ],

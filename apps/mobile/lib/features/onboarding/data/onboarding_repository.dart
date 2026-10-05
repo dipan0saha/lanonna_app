@@ -1,5 +1,6 @@
 import '../../../core/api/api_client.dart';
 import 'package:lanonna/core/domain/baby_summary.dart';
+import '../../invitations/data/batch_invite_result.dart';
 import 'models/onboarding_status.dart';
 
 class OnboardingRepository {
@@ -61,13 +62,14 @@ class OnboardingRepository {
     return BabySummary.fromJson(json);
   }
 
-  Future<void> sendBatchInvites(
+  Future<BatchInviteResponse> sendBatchInvites(
     String babyId,
     List<Map<String, dynamic>> invites,
   ) async {
-    await _api.postJson('/v1/babies/$babyId/invitations/batch', body: {
+    final json = await _api.postJson('/v1/babies/$babyId/invitations/batch', body: {
       'invites': invites,
     });
+    return BatchInviteResponse.fromJson(json);
   }
 
   Future<void> seedFirstMoment(

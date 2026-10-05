@@ -27,7 +27,8 @@ class Settings(BaseSettings):
     display_allowed_content_types: tuple[str, ...] = ("image/jpeg", "image/webp")
     gcs_signing_service_account: str = "lanonna-api@lanonna-dev.iam.gserviceaccount.com"
 
-    pubsub_topic_upload: str = "photo-upload-finalized"  # PUBSUB_TOPIC_UPLOAD
+    pubsub_topic_upload: str = "photo-upload-finalized"  # PUBSUB_TOPIC_UPLOAD (GCS finalize only)
+    pubsub_topic_commands: str = "lanonna-async-commands"  # PUBSUB_TOPIC_COMMANDS
     # Deep link base for invite emails (no trailing slash), e.g. lanonna://app
     invite_deep_link_base: str = "lanonna://app"  # INVITE_DEEP_LINK_BASE
     # When true, API logs invite publish instead of calling Pub/Sub (local dev).

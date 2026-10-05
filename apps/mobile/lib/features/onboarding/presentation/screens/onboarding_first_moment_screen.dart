@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/api/api_client.dart';
+import '../../../../core/api/api_error_message.dart';
 import '../../../../core/input/app_text_input_kind.dart';
 import '../../../gallery/presentation/upload/run_gallery_photo_upload.dart';
 import '../../../../core/constants/first_moment_presets.dart';
@@ -180,7 +181,7 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
       await context.read<OnboardingCoordinator>().setStep(OnboardingStep.batchInvite);
       if (mounted) context.go(OnboardingRoutes.ownerInvite);
     } catch (e) {
-      setState(() => _error = e.toString());
+      setState(() => _error = apiErrorMessage(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

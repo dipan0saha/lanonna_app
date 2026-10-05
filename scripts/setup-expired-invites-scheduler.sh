@@ -5,7 +5,7 @@ set -euo pipefail
 PROJECT_ID="${GCP_PROJECT_ID:-lanonna-dev}"
 REGION="${GCP_REGION:-us-central1}"
 JOB_NAME="${EXPIRE_INVITES_JOB_NAME:-expire-pending-invitations}"
-TOPIC="${WORKER_PUBSUB_TOPIC:-photo-upload-finalized}"
+TOPIC="${WORKER_PUBSUB_TOPIC:-lanonna-async-commands}"
 MESSAGE_BODY='{"type":"expire_pending_invitations"}'
 
 gcloud config set project "${PROJECT_ID}"

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/api/api_error_message.dart';
 import '../../../core/auth/auth_repository.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
@@ -20,6 +21,7 @@ import '../../onboarding/presentation/utils/onboarding_back_navigation.dart';
 import '../../onboarding/presentation/widgets/onboarding_buttons.dart';
 import '../../onboarding/presentation/widgets/onboarding_invite_row.dart';
 import '../../onboarding/presentation/widgets/onboarding_prototype_widgets.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../onboarding/presentation/widgets/onboarding_scaffold.dart';
 import '../../onboarding/presentation/widgets/onboarding_typography.dart';
@@ -246,7 +248,18 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
           setState(() => _error = validationError ?? 'No invites to send.');
           return;
         }
-        await context.read<OnboardingRepository>().sendBatchInvites(babyId, invites);
+        final response = await context
+            .read<OnboardingRepository>()
+            .sendBatchInvites(babyId, invites);
+        if (mounted && response.emailQueueFailedCount > 0) {
+          final n = response.emailQueueFailedCount;
+          AppSnackBar.showAlert(
+            context,
+            n == 1
+                ? 'One invite was saved but the email could not be sent. Check Manage followers.'
+                : '$n invites were saved but emails could not be sent. Check Manage followers.',
+          );
+        }
       }
       if (_isOnboarding) {
         await context.read<AuthRepository>().refreshSessionClaims();
@@ -257,7 +270,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
         context.pop();
       }
     } catch (e) {
-      setState(() => _error = e.toString());
+      setState(() => _error = apiErrorMessage(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

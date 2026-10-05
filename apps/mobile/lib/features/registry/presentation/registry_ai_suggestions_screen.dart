@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/api/api_error_message.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/ai_suggestions_scaffold.dart';
@@ -58,7 +59,7 @@ class _RegistryAiSuggestionsScreenState extends State<RegistryAiSuggestionsScree
 
   String _errorMessage(Object e) {
     if (e is ApiException) return e.message;
-    return e.toString();
+    return apiErrorMessage(e);
   }
 
   Future<void> _load() async {

@@ -9,16 +9,21 @@ IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/lanonna/${SERVICE}:$(git -C "$(dir
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 API_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+REPO_ROOT="$(cd "${API_DIR}/../.." && pwd)"
 
 gcloud config set project "${PROJECT_ID}"
 
 # Prefer Cloud Build (no local Docker required). Set USE_LOCAL_DOCKER=1 to build locally.
 if [[ "${USE_LOCAL_DOCKER:-0}" == "1" ]] && command -v docker >/dev/null; then
   gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
-  docker build --platform linux/amd64 -t "${IMAGE}" "${API_DIR}"
+  docker build --platform linux/amd64 -t "${IMAGE}" -f "${API_DIR}/Dockerfile" "${REPO_ROOT}"
   docker push "${IMAGE}"
 else
-  gcloud builds submit "${API_DIR}" --tag "${IMAGE}" --project "${PROJECT_ID}" --quiet
+  gcloud builds submit "${REPO_ROOT}" \
+    --config="${API_DIR}/cloudbuild.yaml" \
+    --substitutions="_AR_IMAGE=${IMAGE}" \
+    --project "${PROJECT_ID}" \
+    --quiet
 fi
 
 SQL_INSTANCE="${SQL_INSTANCE_NAME:-lanonna-db}"
@@ -36,7 +41,7 @@ gcloud run deploy "${SERVICE}" \
   --allow-unauthenticated \
   --add-cloudsql-instances="${CONN}" \
   --set-secrets="DB_PASSWORD=db-lanonna-app-password:latest,ADMIN_API_KEY=admin-api-key:latest" \
-  --set-env-vars="ENVIRONMENT=dev,GCP_PROJECT_ID=${PROJECT_ID},CLOUD_SQL_CONNECTION_NAME=${CONN},DB_USER=lanonna_app,DB_NAME=lanonna,GCS_SIGNING_SERVICE_ACCOUNT=lanonna-api@${PROJECT_ID}.iam.gserviceaccount.com,DISPLAY_BUCKET=${PROJECT_ID}-display,APP_CHECK_ENFORCE=${APP_CHECK_ENFORCE}" \
+  --set-env-vars="ENVIRONMENT=dev,GCP_PROJECT_ID=${PROJECT_ID},CLOUD_SQL_CONNECTION_NAME=${CONN},DB_USER=lanonna_app,DB_NAME=lanonna,GCS_SIGNING_SERVICE_ACCOUNT=lanonna-api@${PROJECT_ID}.iam.gserviceaccount.com,DISPLAY_BUCKET=${PROJECT_ID}-display,PUBSUB_TOPIC_COMMANDS=lanonna-async-commands,APP_CHECK_ENFORCE=${APP_CHECK_ENFORCE}" \
   --min-instances=0 \
   --max-instances=10 \
   --memory=512Mi \

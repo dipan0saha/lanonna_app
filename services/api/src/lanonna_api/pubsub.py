@@ -20,6 +20,16 @@ def _publisher_client() -> pubsub_v1.PublisherClient:
     return _publisher
 
 
+def _publish_commands_payload(payload: dict) -> None:
+    topic_path = _publisher_client().topic_path(
+        settings.gcp_project_id,
+        settings.pubsub_topic_commands,
+    )
+    data = json.dumps(payload).encode("utf-8")
+    future = _publisher_client().publish(topic_path, data)
+    future.result(timeout=30)
+
+
 def publish_send_invite_email(invitation_id: uuid.UUID, invite_token: str) -> None:
     payload = {
         "type": "send_invite_email",
@@ -33,13 +43,7 @@ def publish_send_invite_email(invitation_id: uuid.UUID, invite_token: str) -> No
         )
         return
 
-    topic_path = _publisher_client().topic_path(
-        settings.gcp_project_id,
-        settings.pubsub_topic_upload,
-    )
-    data = json.dumps(payload).encode("utf-8")
-    future = _publisher_client().publish(topic_path, data)
-    future.result(timeout=30)
+    _publish_commands_payload(payload)
 
 
 def publish_baby_data_export(job_id: uuid.UUID) -> None:
@@ -47,13 +51,7 @@ def publish_baby_data_export(job_id: uuid.UUID) -> None:
         "type": "baby_data_export",
         "job_id": str(job_id),
     }
-    topic_path = _publisher_client().topic_path(
-        settings.gcp_project_id,
-        settings.pubsub_topic_upload,
-    )
-    data = json.dumps(payload).encode("utf-8")
-    future = _publisher_client().publish(topic_path, data)
-    future.result(timeout=30)
+    _publish_commands_payload(payload)
 
 
 def _publish_worker_payload(payload: dict) -> None:
@@ -67,13 +65,7 @@ def _publish_worker_payload(payload: dict) -> None:
             payload.get("type"),
         )
         return
-    topic_path = _publisher_client().topic_path(
-        settings.gcp_project_id,
-        settings.pubsub_topic_upload,
-    )
-    data = json.dumps(payload).encode("utf-8")
-    future = _publisher_client().publish(topic_path, data)
-    future.result(timeout=30)
+    _publish_commands_payload(payload)
 
 
 def publish_notify_fan_out(

@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/api/api_client.dart';
+import '../../../../core/api/api_error_message.dart';
 import '../../../../core/api/display_photo_upload.dart';
 import '../../../../core/input/app_text_input_kind.dart';
 import '../../../../core/widgets/app_snackbar.dart';
@@ -279,7 +280,7 @@ class _OnboardingCreateBabyScreenState extends State<OnboardingCreateBabyScreen>
       await session.refreshFromApi();
       if (mounted) context.go(OnboardingRoutes.ownerFirstMoment);
     } catch (e) {
-      setState(() => _error = e.toString());
+      setState(() => _error = apiErrorMessage(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

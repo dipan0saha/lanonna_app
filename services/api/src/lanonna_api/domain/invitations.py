@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Any
@@ -19,6 +20,12 @@ from lanonna_api.repositories.invitations import (
 )
 from lanonna_api.repositories.memberships import list_baby_members
 
+logger = logging.getLogger("lanonna.api.invitations")
+
+EMAIL_QUEUE_FAILED_MESSAGE = (
+    "Invitation saved; email could not be queued. "
+    "Try again from Manage followers, or revoke and re-invite."
+)
 
 def list_members_for_owner(
     firebase_uid: str,
@@ -111,10 +118,21 @@ def batch_invite(
         )
         try:
             publish_send_invite_email(created["id"], created["invite_token"])
-        except Exception as exc:
-            raise RuntimeError(
-                f"Invitation saved but email could not be queued: {exc}"
-            ) from exc
+        except Exception:
+            logger.exception(
+                "invite_email_enqueue_failed invitation_id=%s email=%s",
+                created["id"],
+                email,
+            )
+            results.append(
+                {
+                    "email": email,
+                    "status": "email_queue_failed",
+                    "message": EMAIL_QUEUE_FAILED_MESSAGE,
+                    "invitation_id": created["id"],
+                }
+            )
+            continue
         results.append(
             {
                 "email": email,

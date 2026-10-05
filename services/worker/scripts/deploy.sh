@@ -8,15 +8,20 @@ IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/lanonna/${SERVICE}:$(git -C "$(dir
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 WORKER_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+REPO_ROOT="$(cd "${WORKER_DIR}/../.." && pwd)"
 
 gcloud config set project "${PROJECT_ID}"
 
 if [[ "${USE_LOCAL_DOCKER:-0}" == "1" ]] && command -v docker >/dev/null; then
   gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
-  docker build --platform linux/amd64 -t "${IMAGE}" "${WORKER_DIR}"
+  docker build --platform linux/amd64 -t "${IMAGE}" -f "${WORKER_DIR}/Dockerfile" "${REPO_ROOT}"
   docker push "${IMAGE}"
 else
-  gcloud builds submit "${WORKER_DIR}" --tag "${IMAGE}" --project "${PROJECT_ID}" --quiet
+  gcloud builds submit "${REPO_ROOT}" \
+    --config="${WORKER_DIR}/cloudbuild.yaml" \
+    --substitutions="_AR_IMAGE=${IMAGE}" \
+    --project "${PROJECT_ID}" \
+    --quiet
 fi
 
 SQL_INSTANCE="${SQL_INSTANCE_NAME:-lanonna-db}"

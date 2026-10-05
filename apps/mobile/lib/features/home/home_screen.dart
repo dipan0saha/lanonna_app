@@ -19,7 +19,7 @@ import 'presentation/sheets/announce_arrival_sheet.dart';
 import '../announcement/data/announcement_repository.dart';
 import '../onboarding/presentation/widgets/onboarding_buttons.dart';
 import '../shell/presentation/shell_tab_layout.dart';
-import '../../core/api/api_exception.dart';
+import '../../../core/api/api_error_message.dart';
 import '../../core/network/connectivity_service.dart';
 import '../../core/widgets/app_semantics.dart';
 
@@ -116,10 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  String _errorMessage(Object e) {
-    if (e is ApiException) return e.message;
-    return e.toString();
-  }
+  String _errorMessage(Object e) => apiErrorMessage(e);
 
   int? _daysToDueDate(BabySummary baby) {
     final fromSummary = _summary?.daysToDue;

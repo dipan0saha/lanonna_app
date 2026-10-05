@@ -10,6 +10,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/api/api_client.dart';
+import '../../../../core/api/api_error_message.dart';
 import '../../../../core/data/iso_countries.dart';
 import '../../../../core/input/app_text_input_kind.dart';
 import '../../../../core/api/display_photo_upload.dart';
@@ -235,7 +236,7 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
       if (!mounted) return;
       await navigateAfterCompleteProfile(context);
     } catch (e) {
-      setState(() => _error = e.toString());
+      setState(() => _error = apiErrorMessage(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

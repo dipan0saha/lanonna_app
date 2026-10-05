@@ -34,6 +34,12 @@ variable "pubsub_topic_upload" {
   default = "photo-upload-finalized"
 }
 
+variable "pubsub_topic_commands" {
+  type        = string
+  default     = "lanonna-async-commands"
+  description = "API and Scheduler async job messages (invite email, notify, export, cron payloads)."
+}
+
 variable "pubsub_subscription_worker" {
   type    = string
   default = "photo-upload-finalized-worker"
@@ -48,6 +54,11 @@ variable "enable_worker_push_subscription" {
 variable "worker_push_subscription_name" {
   type    = string
   default = "photo-upload-finalized-push-dev"
+}
+
+variable "worker_push_commands_subscription_name" {
+  type    = string
+  default = "lanonna-async-commands-push-dev"
 }
 
 variable "worker_push_endpoint" {

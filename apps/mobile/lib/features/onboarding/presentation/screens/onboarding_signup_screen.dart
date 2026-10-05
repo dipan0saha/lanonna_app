@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/api/api_error_message.dart';
 import '../../../../core/auth/auth_repository.dart';
 import '../../../../core/validation/form_validators.dart';
 import '../../data/onboarding_form_drafts.dart';
@@ -105,7 +106,7 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
       if (!mounted) return;
       await navigateAfterOnboardingAuth(context, isSignUp: true, usedOAuth: true);
     } catch (e) {
-      setState(() => _error = e.toString());
+      setState(() => _error = apiErrorMessage(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

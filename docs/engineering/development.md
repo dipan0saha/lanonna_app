@@ -29,7 +29,7 @@ lanonna_app/
 | Module | Shell route | Notes |
 |--------|-------------|--------|
 | `home/` | `/home` | Owner expecting/born; `home-summary`; announce arrival |
-| `gallery/` | `/gallery`, `/gallery/recent`, `/gallery/favorites` | Grid (`sort` via API) with comment/squish badges; detail, squish, comments (create/edit/delete), owner baby tags (“In this photo”); `/gallery/photo/:id`; all-mode **Recent Activity** from `GET …/activity-events?scope=gallery` (squish/comment events; prototype row UI) |
+| `gallery/` | `/gallery`, `/gallery/recent`, `/gallery/favorites` | Grid with comment/squish badges when count **> 0** (FR-GAL-012); detail, squish, comments (create/edit/delete), owner baby tags (“In this photo”); `/gallery/photo/:id`; all-mode **Recent Activity** from `GET …/activity-events?scope=gallery` (squish/comment events; prototype row UI) |
 | `calendar/` | `/calendar` | Month + upcoming; event CRUD; static AI suggestions (`AiSuggestionsScaffold` + asset) |
 | `registry/` | `/registry` | Needed/purchased, shipping, purchase claim; AI suggestions |
 | `fun/` | `/gamification` | Names + Predictions tabs (**Family Fun**) |
@@ -151,7 +151,7 @@ Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps:
 | GET | `/v1/me/notifications/unread-count` | Unread inbox count (shell bell dot) |
 | PATCH | `/v1/me/notifications/{id}/read` | Mark notification read |
 | PUT, DELETE | `/v1/me/device-tokens` | Register or remove FCM device token (`platform`: `ios` \| `android`) |
-| GET | `/v1/me/delete-account/eligibility` | Account deletion preflight (`allowed: true`; no blockers) |
+| GET | `/v1/me/delete-account/eligibility` | Account deletion preflight (`allowed: true` in v1; mobile calls before delete) |
 | POST | `/v1/me/delete-account` | Delete Firebase user; soft-delete sole-owned baby profiles; remove user memberships; anonymize SQL profile |
 | GET | `/v1/babies/{baby_profile_id}/search?q=` | Cross-feature search (member) |
 | POST | `/v1/babies/{baby_profile_id}/data-export` | Queue baby JSON export (owner) |
@@ -209,7 +209,7 @@ Covers gallery/calendar/registry/fun domain rules (`services/api/tests/`). CI ru
 
 **Auth verification email (FR-AUTH-002):** Firebase sends verify-mail from templates in `packages/firebase-auth-email-templates` (apply: `bash scripts/sync-firebase-auth-templates.sh apply` with `GCP_PROJECT_ID=lanonna-dev`). Mobile uses `ActionCodeSettings` (`handleCodeInApp`, continue URL `https://{project}.firebaseapp.com/`) and handles `https://lanonna-dev.firebaseapp.com/__/auth/action?mode=verifyEmail&oobCode=…` via `core/deep_links/auth_action_app_link.dart` + Android/iOS link config. Custom sender domain (SPF/DKIM) is deferred.
 
-**Invite emails (FR-INV-004 / FR-INV-007):** batch create publishes `{"type":"send_invite_email","invitation_id","invite_token"}` to the `photo-upload-finalized` topic; the worker sends Mailjet HTML from `invite_v1` templates. Set worker env `MAILJET_*` and `INVITE_DEEP_LINK_BASE` (default `lanonna://app`). Link shape: `lanonna://app/invite-accept?token=…` (+ `&role=owner` for co-owner). Flutter uses `app_links` to set GoRouter `initialLocation` on cold start and `go()` on warm opens (`core/deep_links/`). Local API can set `INVITE_EMAIL_PUBLISH_DISABLED=true` to skip Pub/Sub while testing accept/preview.
+**Invite emails (FR-INV-004 / FR-INV-007):** batch create publishes `{"type":"send_invite_email",…}` to **`lanonna-async-commands`**; per-row **`email_queue_failed`** if Pub/Sub queue fails after the invite row is saved. Worker sends Mailjet HTML from `invite_v1` templates. Set worker env `MAILJET_*` and `INVITE_DEEP_LINK_BASE` (default `lanonna://app`). Link shape: `lanonna://app/invite-accept?token=…` (+ `&role=owner` for co-owner). Flutter uses `app_links` to set GoRouter `initialLocation` on cold start and `go()` on warm opens (`core/deep_links/`). Local API can set `INVITE_EMAIL_PUBLISH_DISABLED=true` to skip Pub/Sub while testing accept/preview.
 
 **Pre-beta device QA:** [pre-beta-qa.md](pre-beta-qa.md) (App Check, encode, cache, push, deep links, invite cold start).
 
@@ -220,7 +220,9 @@ Covers gallery/calendar/registry/fun domain rules (`services/api/tests/`). CI ru
 - Expect `/invite-accept` → preview API → follower or co-owner onboarding. Mid-flow kill + relaunch without link should resume via stored `pendingInviteToken` (`AppSession.redirectFor`).
 - Disable `DEV_AUTO_SIGN_IN_*` dart-defines when testing unsigned invite UX.
 
-**In-app + push notifications:** API `domain/notifications.py` publishes `notify_fan_out` or `notify_user` to the `photo-upload-finalized` topic; the worker handles the same types on `POST /pubsub/push` and inserts `notifications` rows. **Instant FCM** only when `push_notifications_enabled` and `notification_digest=realtime`. **`daily`** digest: in-app inbox only (no batch push). **`weekly`** digest: one summary push (Sunday 14:00 UTC) via Cloud Scheduler → Pub/Sub `{"type":"weekly_notification_digest"}` (`./scripts/setup-weekly-digest-scheduler.sh`; optional manual `POST /cron/weekly-notification-digest` on worker).
+**GCS finalize:** display bucket events publish to **`photo-upload-finalized`** only (worker thumbnails).
+
+**In-app + push notifications:** API `domain/notifications.py` publishes `notify_fan_out` or `notify_user` to **`lanonna-async-commands`**; the worker handles the same types on `POST /pubsub/push` and inserts `notifications` rows. **Instant FCM** only when `push_notifications_enabled` and `notification_digest=realtime`. **`daily`** digest: in-app inbox only (no batch push). **`weekly`** digest: one summary push (Sunday 14:00 UTC) via Cloud Scheduler → Pub/Sub `{"type":"weekly_notification_digest"}` on **`lanonna-async-commands`** (`./scripts/setup-weekly-digest-scheduler.sh`; optional manual `POST /cron/weekly-notification-digest` on worker).
 
 | Trigger | Publisher | Audience |
 |---------|-----------|----------|

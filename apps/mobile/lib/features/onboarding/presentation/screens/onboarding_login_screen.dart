@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/api/api_error_message.dart';
 import '../../../../core/auth/auth_repository.dart';
 import '../../../../core/validation/form_validators.dart';
 import '../../data/onboarding_form_drafts.dart';
@@ -114,7 +115,7 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
     } on FirebaseAuthException catch (e) {
       setState(() => _error = e.message ?? e.code);
     } catch (e) {
-      final msg = e.toString();
+      final msg = apiErrorMessage(e);
       if (msg.contains('ApiException: 10') || msg.contains('DEVELOPER_ERROR')) {
         setState(() => _error =
             'Google Sign-In is not configured for this Android build yet. '

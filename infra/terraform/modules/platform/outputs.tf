@@ -18,12 +18,20 @@ output "pubsub_topic" {
   value = google_pubsub_topic.upload.name
 }
 
+output "pubsub_topic_commands" {
+  value = google_pubsub_topic.async_commands.name
+}
+
 output "pubsub_subscription_worker" {
   value = google_pubsub_subscription.worker.name
 }
 
 output "pubsub_subscription_worker_push" {
   value = var.enable_worker_push_subscription ? google_pubsub_subscription.worker_push[0].name : null
+}
+
+output "pubsub_subscription_worker_push_commands" {
+  value = var.enable_worker_push_subscription ? google_pubsub_subscription.worker_push_commands[0].name : null
 }
 
 output "sql_connection_name" {

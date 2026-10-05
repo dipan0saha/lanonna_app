@@ -1,4 +1,5 @@
 import '../../../core/api/api_client.dart';
+import '../../../core/api/api_exception.dart';
 import '../../../core/domain/baby_summary.dart';
 
 class UserEngagementStats {
@@ -222,8 +223,9 @@ class AccountRepository {
     try {
       final json = await _api.getJson('/v1/babies/$babyId/data-export/latest');
       return DataExportJob.fromJson(json);
-    } on Exception {
-      return null;
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) return null;
+      rethrow;
     }
   }
 

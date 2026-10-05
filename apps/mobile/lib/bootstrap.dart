@@ -27,7 +27,7 @@ import 'features/onboarding/data/onboarding_repository.dart';
 import 'features/onboarding/data/onboarding_storage.dart';
 import 'features/onboarding/presentation/app_session.dart';
 import 'features/onboarding/presentation/onboarding_coordinator.dart';
-import 'main.dart';
+import 'app.dart';
 
 Future<Widget> bootstrapLaNonnaApp() async {
   if (kDebugMode) {

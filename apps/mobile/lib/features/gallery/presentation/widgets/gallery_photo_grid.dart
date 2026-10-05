@@ -54,22 +54,24 @@ class GalleryPhotoGrid extends StatelessWidget {
                     ),
                   ),
                 if (photo.status != 'pending') ...[
-                  Positioned(
-                    left: 5,
-                    bottom: 5,
-                    child: _GalleryTileBadge(
-                      glyph: const GalleryCommentGlyph(),
-                      count: photo.commentCount,
+                  if (photo.commentCount > 0)
+                    Positioned(
+                      left: 5,
+                      bottom: 5,
+                      child: _GalleryTileBadge(
+                        glyph: const GalleryCommentGlyph(),
+                        count: photo.commentCount,
+                      ),
                     ),
-                  ),
-                  Positioned(
-                    right: 5,
-                    bottom: 5,
-                    child: _GalleryTileBadge(
-                      glyph: const GallerySquishGlyph(),
-                      count: photo.squishCount,
+                  if (photo.squishCount > 0)
+                    Positioned(
+                      right: 5,
+                      bottom: 5,
+                      child: _GalleryTileBadge(
+                        glyph: const GallerySquishGlyph(),
+                        count: photo.squishCount,
+                      ),
                     ),
-                  ),
                 ],
               ],
             ),

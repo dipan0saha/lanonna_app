@@ -12,6 +12,7 @@ from lanonna_api.repositories.account_delete import (
 
 
 def delete_account_eligibility(firebase_uid: str) -> dict[str, Any]:
+    """v1: always allowed; mobile calls GET …/eligibility before delete (see product requirements)."""
     return {"allowed": True, "blockers": []}
 
 

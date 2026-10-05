@@ -35,4 +35,32 @@ void main() {
     expect(find.byType(GalleryCommentGlyph), findsOneWidget);
     expect(find.byType(GallerySquishGlyph), findsOneWidget);
   });
+
+  testWidgets('GalleryPhotoGrid hides badges when counts are zero', (tester) async {
+    final photos = [
+      PhotoSummary(
+        id: 'p2',
+        status: 'ready',
+        createdAt: DateTime(2026, 10, 1),
+        squishCount: 0,
+        commentCount: 0,
+        uploaderDisplayName: 'Sarah',
+      ),
+    ];
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: Scaffold(
+          body: GalleryPhotoGrid(
+            photos: photos,
+            onPhotoTap: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byType(GalleryCommentGlyph), findsNothing);
+    expect(find.byType(GallerySquishGlyph), findsNothing);
+  });
 }

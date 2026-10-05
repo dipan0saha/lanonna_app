@@ -100,7 +100,12 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
                   if (job != null) ...[
                     Text('Status: ${job.status}', style: context.textStyles.labelLarge),
                     if (job.errorMessage != null)
-                      Text(job.errorMessage!, style: const TextStyle(color: Colors.red)),
+                      Text(
+                        job.errorMessage!,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
                     const SizedBox(height: 12),
                   ],
                   FilledButton(

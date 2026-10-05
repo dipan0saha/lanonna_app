@@ -6,7 +6,7 @@ set -euo pipefail
 PROJECT_ID="${GCP_PROJECT_ID:-lanonna-dev}"
 REGION="${GCP_REGION:-us-central1}"
 JOB_NAME="${WEEKLY_DIGEST_JOB_NAME:-weekly-notification-digest}"
-TOPIC="${WORKER_PUBSUB_TOPIC:-photo-upload-finalized}"
+TOPIC="${WORKER_PUBSUB_TOPIC:-lanonna-async-commands}"
 MESSAGE_BODY='{"type":"weekly_notification_digest"}'
 
 gcloud config set project "${PROJECT_ID}"

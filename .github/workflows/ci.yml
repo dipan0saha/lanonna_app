@@ -31,7 +31,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -r services/api/requirements.txt
+      - run: pip install -e packages/lanonna_activity_copy -r services/api/requirements.txt
       - run: PYTHONPATH=services/api/src pytest -q services/api/tests
 
   email-templates:
@@ -56,6 +56,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -r services/worker/requirements.txt pytest
+      - run: pip install -e packages/lanonna_activity_copy -r services/worker/requirements.txt pytest
       - run: PYTHONPATH=services/worker/src python -m compileall services/worker/src
       - run: PYTHONPATH=services/worker/src pytest -q services/worker/tests

@@ -20,7 +20,13 @@ class BatchInviteRequest(BaseModel):
 
 class InviteRowResult(BaseModel):
     email: str
-    status: Literal["created", "skipped_member", "skipped_invalid", "skipped_duplicate"]
+    status: Literal[
+        "created",
+        "skipped_member",
+        "skipped_invalid",
+        "skipped_duplicate",
+        "email_queue_failed",
+    ]
     invitation_id: uuid.UUID | None = None
     message: str | None = None
 

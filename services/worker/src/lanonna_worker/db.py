@@ -8,6 +8,7 @@ import psycopg
 from psycopg.rows import dict_row
 from psycopg.types.json import Json
 
+from lanonna_activity_copy import photo_shared_summary
 from lanonna_worker.config import settings
 
 
@@ -94,12 +95,8 @@ def mark_photo_ready(
                 if actor_row and actor_row.get("actor_name")
                 else "Someone"
             )
-            caption = (row.get("caption") or "").strip()
-            if caption:
-                label = caption if len(caption) <= 60 else f"{caption[:59].rstrip()}…"
-                summary = f'{actor} added "{label}"'
-            else:
-                summary = f"{actor} shared a photo"
+            caption = row.get("caption")
+            summary = photo_shared_summary(actor, caption)
             conn.execute(
                 """
                 INSERT INTO activity_events (
