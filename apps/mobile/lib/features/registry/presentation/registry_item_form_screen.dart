@@ -9,6 +9,7 @@ import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_labeled_text_field.dart';
 import '../../../core/widgets/app_semantics.dart';
+import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../home/data/home_refresh_signal.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
@@ -156,12 +157,15 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
       color: AppColors.muted,
     );
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.isEdit ? 'Edit Registry Item' : 'Add Registry Item'),
-      ),
+    return PrototypeSubpageScaffold(
+      title: widget.isEdit ? 'Edit Registry Item' : 'Add Registry Item',
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(
+          AppMetrics.horizontalPadding,
+          0,
+          AppMetrics.horizontalPadding,
+          96,
+        ),
         children: [
           AppLabeledTextField(
             semanticsId: 'registry_item_name',

@@ -153,6 +153,8 @@ Semantic success, warning, info, and error use dedicated tokens on the brand ext
 ### 5.2 Shell navigation
 
 - **Bottom navigation** with five destinations, in order: **Home**, **Gallery**, **Calendar**, **Registry**, **Fun** (gamification).
+- **Tab roots** (the five bottom-nav screens) use `ShellTabLayout` and include the **home top bar** (baby switcher/title, search, notifications bell).
+- **All other signed-in content screens** — tab drill-downs (e.g. gallery photo, calendar event detail, registry edit), account/settings stack routes, and invite subpages — use a **single** subpage header (**back** + centered **title**) only; **no** stacked home top bar (same principle as FR-INV-008; see FR-SHELL-001).
 - **Profile** and **Settings** are **stack screens** (`/profile`, `/settings`, `/profile/edit`), reached from the shell app bar or account menu — they are **not** bottom-nav tabs.
 - **Offline**: When the device is offline, show a **banner**; retain last-loaded content; suppress per-section error UI that would spam the home scroll.
 
@@ -368,7 +370,13 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-DEEP-003 | Route ordering | Static `create` routes before `:id` siblings | Router config |
 | FR-DEEP-004 | Cold-start capture | Invite links set initial route before `runApp` | Deep link service |
 
-### 7.13 Background jobs
+### 7.13 Shell chrome — FR-SHELL
+
+| ID | Requirement | Acceptance criteria | Implementation note |
+|----|-------------|---------------------|---------------------|
+| FR-SHELL-001 | Subpage header only | Tab drill-downs, settings/account stack, and invite subpages show back + title; home top bar appears only on tab roots | `ShellTabLayout` + `shellHomeTopBar`; `PrototypeSubpageScaffold` for subpages (see §5.2, FR-INV-008) |
+
+### 7.14 Background jobs
 
 | Job | Requirement |
 |-----|-------------|
@@ -378,7 +386,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | Image metadata | Client EXIF/dimensions at encode; API may validate |
 | Notification digests | **Weekly:** Cloud Scheduler → Pub/Sub `weekly_notification_digest` → worker summary FCM. **Daily:** in-app only (no scheduled push in v1). |
 
-### 7.14 Invitation API operations
+### 7.15 Invitation API operations
 
 The API must support these invitation flows with the semantics described in FR-INV:
 

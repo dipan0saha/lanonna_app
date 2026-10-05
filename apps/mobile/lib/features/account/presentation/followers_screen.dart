@@ -45,7 +45,6 @@ class _FollowersScreenState extends State<FollowersScreen> {
     return AppSemantics.container(
       'followers_screen',
       PrototypeSubpageScaffold(
-      includeShellTopBar: true,
       title: 'Manage followers',
       body: _loading
           ? const Center(child: CircularProgressIndicator())

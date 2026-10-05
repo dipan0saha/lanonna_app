@@ -110,6 +110,8 @@ Product UI tokens live under `apps/mobile/lib/core/theme/` (see also PRD §5.1):
 
 `MaterialApp` uses `theme: AppTheme.light` in `main.dart`. **New screens:** import `core/theme/theme.dart`, use `context.textStyles`, `context.brand`, `context.colors`, and `AppMetrics` — do not add inline `GoogleFonts` or one-off hex in features. Shared widgets (`OnboardingHeadline`, `OnboardingPrimaryButton`, home shell) already use this layer.
 
+**Shell vs subpage chrome (FR-SHELL-001):** Bottom-tab screens wrap content in `ShellTabLayout` (home top bar: baby switcher, search, notifications). Drill-downs, settings/account stack routes, and forms such as calendar/registry edit use `PrototypeSubpageScaffold` (back + centered title only). Do not stack `shellHomeTopBar` on subpages.
+
 **Text fields:** Typed input uses `AppTextTheme.fieldInput` (Inter **regular**, w400). Use [`AppTextField`](../../apps/mobile/lib/core/widgets/app_text_field.dart), [`AppLabeledTextField`](../../apps/mobile/lib/core/widgets/app_labeled_text_field.dart), or [`AppTextFormField`](../../apps/mobile/lib/core/widgets/app_text_form_field.dart) — not raw `TextField` / `TextFormField` (theme `bodyLarge` is bold).
 
 ### Reset dev test data (babies + onboarding)
@@ -253,6 +255,7 @@ Apply SQL files in order from `infra/db/migrations/` (`001`–`022`; see [migrat
 |--------|---------|
 | `apply_migrations.py` | Runs every `migrations/*.sql` in lexicographic order (DDL is idempotent; safe to re-run on dev) |
 | `clear_dev_test_data.py` | Delete baby-domain rows for a test user; optional `--reset-onboarding` |
+| `scripts/hard_delete_user.sh` | One-liner hard delete by email (SQL + GCS + Firebase); uses `infra/db/.venv` |
 
 Set `DB_HOST`, `DB_PORT` (e.g. `5433` if 5432 is in use), `DB_PASSWORD`, and `DB_USER` / `DB_NAME` as needed (defaults match dev Cloud SQL via proxy).
 

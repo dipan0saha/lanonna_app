@@ -61,7 +61,6 @@ class _NotificationPreferencesScreenState extends State<NotificationPreferencesS
     final l10n = AppLocalizations.of(context)!;
     final prefs = _prefs;
     return PrototypeSubpageScaffold(
-      includeShellTopBar: true,
       title: l10n.settingsNotifications,
       body: _loading || prefs == null
           ? const Center(child: CircularProgressIndicator())

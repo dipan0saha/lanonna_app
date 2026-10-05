@@ -41,7 +41,6 @@ class _LegalDocumentScreenState extends State<LegalDocumentScreen> {
       LegalDocumentKind.privacy => 'Privacy Policy',
     };
     return PrototypeSubpageScaffold(
-      includeShellTopBar: false,
       title: title,
       body: Stack(
         children: [

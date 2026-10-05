@@ -81,7 +81,6 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
     }
 
     return PrototypeSubpageScaffold(
-      includeShellTopBar: true,
       title: 'Announcement',
       actions: [
         IconButton(

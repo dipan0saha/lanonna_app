@@ -275,7 +275,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       );
     }
     return PrototypeSubpageScaffold(
-      includeShellTopBar: true,
       title: 'Event',
       actions: [
         if (_isOwner)

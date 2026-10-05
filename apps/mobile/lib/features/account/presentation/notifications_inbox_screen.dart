@@ -36,7 +36,6 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
     return AppSemantics.container(
       'notifications_inbox',
       PrototypeSubpageScaffold(
-        includeShellTopBar: true,
         title: 'Notifications',
         body: _loading
           ? const Center(child: CircularProgressIndicator())

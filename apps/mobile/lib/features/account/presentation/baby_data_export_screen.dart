@@ -83,7 +83,6 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
   Widget build(BuildContext context) {
     final job = _job;
     return PrototypeSubpageScaffold(
-      includeShellTopBar: true,
       title: 'Export baby data',
       body: Padding(
         padding: const EdgeInsets.all(16),

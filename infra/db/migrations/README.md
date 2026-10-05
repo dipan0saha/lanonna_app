@@ -58,4 +58,14 @@ DB_PASSWORD="$PGPASSWORD" DB_PORT=5433 python clear_dev_test_data.py \\
 
 Removes baby profiles and related rows (`photos`, `invitations`, `activity_events`, etc.) for babies linked to that user. Keeps the Firebase `app_users` row; use `--reset-onboarding` so the app runs owner onboarding again. See `clear_dev_test_data.py --help` for `--dry-run` and `--all-babies` (requires `LANONNA_DEV_CLEAR_ALL=1`).
 
+## Hard-delete user (SQL + GCS + Firebase)
+
+For disposable QA accounts (not Maestro smoke / `lanonna.dev.qa.*` fixtures):
+
+```bash
+./scripts/hard_delete_user.sh you@example.com
+```
+
+Sole-owned baby profiles and media are removed from Cloud SQL and GCS; co-owned babies stay; Firebase Auth user is deleted. Use `--dry-run`, `--skip-gcs`, or `--skip-firebase` as needed.
+
 See also [docs/engineering/initial-setup.md](../../docs/engineering/initial-setup.md) and [building-the-app.md](../../docs/engineering/building-the-app.md).

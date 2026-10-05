@@ -29,6 +29,8 @@ Creates **`lanonna.dev.qa.owner@test.com`** (Sarah QA, baby **Parker** + second 
 
 ## Recommended ways to test on emulator
 
+**Shell chrome (FR-SHELL-001):** On tab roots (Home, Gallery, Calendar, Registry, Fun) confirm the home top bar (baby title, search, bell). Open Gallery photo detail, Calendar event detail, Registry add/edit, and Settings from account — each should show **only** back + title (no duplicate home top bar).
+
 ### 1. Manual (most reliable for full-stack)
 
 ```bash
@@ -213,7 +215,8 @@ adb shell am start -a android.intent.action.VIEW \
 **Email patterns used in QA:** `lanonna.del.*@gmail.com`, `lanonna.delete.test.*@gmail.com`.
 
 1. Delete Firebase users (Admin SDK `list_users` + filter by email prefix).
-2. SQL: delete in FK order — invitations → `baby_memberships` → `baby_profiles` → `app_users` for those UIDs (or use [`infra/db/clear_dev_test_data.py`](../infra/db/clear_dev_test_data.py) per email with `--delete-app-user` when appropriate).
+2. Full wipe (SQL + GCS + Firebase): `./scripts/hard_delete_user.sh you@example.com` (sole-owned babies hard-deleted; co-owned babies kept).
+3. Baby data only, keep Firebase login: [`infra/db/clear_dev_test_data.py`](../infra/db/clear_dev_test_data.py) with `--delete-app-user` when appropriate.
 
 Do not delete smoke/Maestro fixture users.
 

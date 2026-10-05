@@ -32,7 +32,6 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return PrototypeSubpageScaffold(
-      includeShellTopBar: true,
       title: l10n.settingsTitle,
       body: ListView(
         children: [

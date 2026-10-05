@@ -329,7 +329,6 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     final baby = _baby;
     final currentBabyId = baby?.id;
     return PrototypeSubpageScaffold(
-      includeShellTopBar: true,
       title: 'Photo',
       actions: [
         if (_photoIds.length > 1) ...[

@@ -78,7 +78,6 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
     final canDelete = allowed && !_checkingEligibility && _eligibilityError == null;
 
     return PrototypeSubpageScaffold(
-      includeShellTopBar: true,
       title: l10n.deleteAccountTitle,
       body: Padding(
         padding: const EdgeInsets.all(16),

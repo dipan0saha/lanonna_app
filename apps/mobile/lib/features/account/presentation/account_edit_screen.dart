@@ -138,7 +138,6 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
   @override
   Widget build(BuildContext context) {
     return PrototypeSubpageScaffold(
-      includeShellTopBar: true,
       title: 'Edit Profile',
       body: Padding(
         padding: const EdgeInsets.all(16),
