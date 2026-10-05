@@ -71,6 +71,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteAccountDeleting => 'Deleting…';
 
   @override
+  String get deleteAccountChecking =>
+      'Checking whether your account can be deleted…';
+
+  @override
+  String get deleteAccountBlocked =>
+      'Your account cannot be deleted right now.';
+
+  @override
   String get emailVerifyHeadline => 'Check your email';
 
   @override

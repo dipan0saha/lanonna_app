@@ -28,6 +28,15 @@ void main() {
     expect(fieldLabel.color, AppColors.textPrimary);
   });
 
+  test('headlineSmall uses Baloo display sizing for tab titles', () {
+    final theme = AppTextTheme.build();
+    final style = theme.headlineSmall!;
+    expect(style.fontSize, 24);
+    expect(style.fontWeight, FontWeight.w700);
+    expect(style.color, AppColors.textPrimary);
+    expect(style.height, 1.25);
+  });
+
   test('fieldInput uses regular weight for typed text', () {
     final theme = AppTextTheme.build();
     final input = AppTextTheme.fieldInput(theme);

@@ -8,6 +8,7 @@ class BabySummary {
     this.expectedBirthDate,
     this.actualBirthDate,
     this.avatarUrl,
+    this.relationshipLabel,
   });
 
   final String id;
@@ -18,6 +19,7 @@ class BabySummary {
   final String lifecycleStatus;
   final String role;
   final String? avatarUrl;
+  final String? relationshipLabel;
 
   factory BabySummary.fromJson(Map<String, dynamic> json) {
     return BabySummary(
@@ -29,6 +31,7 @@ class BabySummary {
       lifecycleStatus: json['lifecycle_status'] as String? ?? 'expecting',
       role: json['role'] as String? ?? 'follower',
       avatarUrl: json['avatar_url'] as String?,
+      relationshipLabel: json['relationship_label'] as String?,
     );
   }
 }

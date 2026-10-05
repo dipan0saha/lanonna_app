@@ -11,7 +11,7 @@ from lanonna_api.domain.notification_copy import actor_display_name
 from lanonna_api.domain.notifications import (
     FanOutSpec,
     NotificationChannel,
-    enqueue_notify_user,
+    safe_enqueue_notify_user,
     safe_enqueue_fan_out,
 )
 from lanonna_api.repositories.activity_events import insert_activity_event
@@ -217,7 +217,7 @@ def set_rsvp(
     creator = event.get("created_by_firebase_uid")
     if creator and creator != firebase_uid:
         actor = actor_display_name(firebase_uid)
-        enqueue_notify_user(
+        safe_enqueue_notify_user(
             creator,
             title="New RSVP",
             body=f'{actor} responded "{status}" to {event["title"]}',
@@ -245,7 +245,7 @@ def add_event_comment(
     creator = event.get("created_by_firebase_uid")
     if creator and creator != firebase_uid:
         actor = actor_display_name(firebase_uid)
-        enqueue_notify_user(
+        safe_enqueue_notify_user(
             creator,
             title="New comment",
             body=f'{actor} commented on "{event["title"]}"',

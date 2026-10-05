@@ -230,4 +230,29 @@ class AccountRepository {
   Future<void> deleteAccount() async {
     await _api.postJson('/v1/me/delete-account', body: {'confirm': true});
   }
+
+  Future<DeleteAccountEligibility> fetchDeleteAccountEligibility() async {
+    final json = await _api.getJson('/v1/me/delete-account/eligibility');
+    return DeleteAccountEligibility.fromJson(json);
+  }
+}
+
+class DeleteAccountEligibility {
+  const DeleteAccountEligibility({
+    required this.allowed,
+    required this.blockers,
+  });
+
+  final bool allowed;
+  final List<String> blockers;
+
+  factory DeleteAccountEligibility.fromJson(Map<String, dynamic> json) {
+    final raw = json['blockers'];
+    return DeleteAccountEligibility(
+      allowed: json['allowed'] as bool? ?? false,
+      blockers: raw is List
+          ? raw.map((e) => e.toString()).toList()
+          : const [],
+    );
+  }
 }

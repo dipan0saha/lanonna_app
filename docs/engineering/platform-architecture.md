@@ -37,7 +37,7 @@
 8. **Region discipline** — primary **`us-central1`** (free-tier eligible for Run; co-locate SQL, GCS, Run, Pub/Sub).
 9. **Notify, don’t poll** — **FCM** for new content; batch/paginate API reads to stay within Run free tier.
 
-**Implemented on dev (2026):** separate **Cloud Run `api`** and **`worker`**; GCS display + thumbnails; Pub/Sub finalize → worker thumb + `photo_shared` activity + **member notify** on photo ready; API JWT, signed upload/read URLs, baby-scoped CRUD for gallery (comments PATCH, photo baby tags), calendar, registry, and fun; SQL migrations through **`020`** ([migrations/README.md](../../infra/db/migrations/README.md)); Flutter owner/follower home (teasers incl. recent/favorite photos), gallery sub-routes, baby **avatar_url**, account (export/delete/notifications inbox), search, birth announcement; **FCM** device tokens + worker notification writers + weekly digest Scheduler (Pub/Sub). See [development.md](development.md) for route list and [building-the-app.md](building-the-app.md) for the prerequisite gate.
+**Implemented on dev (2026):** separate **Cloud Run `api`** and **`worker`**; GCS display + thumbnails; Pub/Sub finalize → worker thumb + `photo_shared` activity + **member notify** on photo ready; API JWT, signed upload/read URLs, baby-scoped CRUD for gallery (comments PATCH, photo baby tags), calendar, registry, and fun; SQL migrations through **`022`** ([migrations/README.md](../../infra/db/migrations/README.md)); Flutter owner/follower home (teasers incl. recent/favorite photos), gallery sub-routes, baby **avatar_url**, account (export/delete/notifications inbox), search, birth announcement; **FCM** device tokens + worker notification writers + weekly digest Scheduler (Pub/Sub). See [development.md](development.md) for route list and [building-the-app.md](building-the-app.md) for the prerequisite gate.
 
 **Deferred (initial years):**
 
@@ -330,7 +330,7 @@ Isolates **storage + egress** if behavior drifts from §2.5 (SQL/Run/email held 
 - [x] Worker **thumbnail** from `display/`; **`photo_shared`** `activity_events` when photo becomes ready (named summary); API **`photo_squish`** / **`photo_comment`** on gallery social actions
 - [x] Worker `send_invite_email` handler (Mailjet)
 - [x] Gallery list + detail with pagination params; detail returns **display** signed URL
-- [x] SQL migrations **`009`–`020`** (birth announcement through **photo_baby_tags** and **app_versions** force-update; see `infra/db/migrations/README.md`)
+- [x] SQL migrations **`009`–`022`** (birth announcement through **photo_baby_tags**, **app_versions** force-update, **worker idempotency**, **profile demographics**; see `infra/db/migrations/README.md`)
 - [x] `device_tokens` + mobile FCM registration; API notify publishers; worker in-app + **realtime FCM**; **push on new photo** and social events (see [development.md](development.md))
 - [x] Weekly digest push job (Scheduler → Pub/Sub → worker)
 - [ ] Worker thumb path hardened for gallery-scale volume (monitoring, backoff, dead-letter policy)

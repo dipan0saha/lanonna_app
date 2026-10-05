@@ -19,6 +19,8 @@
   "deleteAccountBody": "This permanently deletes your La Nonna account. Any Baby Profiles solely owned by your account will also be deleted. Baby Profiles with a co owner will not be deleted; ownership will transfer fully to the co owner.",
   "deleteAccountButton": "Delete my account",
   "deleteAccountDeleting": "Deleting…",
+  "deleteAccountChecking": "Checking whether your account can be deleted…",
+  "deleteAccountBlocked": "Your account cannot be deleted right now.",
   "emailVerifyHeadline": "Check your email",
   "emailVerifyBody": "We sent a message to {email} with a Verify my email button. Tap it to activate your account. If you do not see it, check spam or junk.",
   "@emailVerifyBody": {

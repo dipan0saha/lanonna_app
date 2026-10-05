@@ -9,6 +9,7 @@ import '../../home/data/home_refresh_signal.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../../core/domain/baby_summary.dart';
+import '../../../core/domain/baby_list_subtitle.dart';
 
 Future<void> showBabySwitcherSheet(BuildContext context) async {
   await showModalBottomSheet<void>(
@@ -20,17 +21,6 @@ Future<void> showBabySwitcherSheet(BuildContext context) async {
     ),
     builder: (ctx) => const _BabySwitcherSheetBody(),
   );
-}
-
-String _babySubtitle(BabySummary baby) {
-  if (baby.lifecycleStatus == 'born') {
-    final born = baby.actualBirthDate;
-    if (born != null && born.isNotEmpty) return 'Born $born';
-    return 'Born';
-  }
-  final due = baby.expectedBirthDate;
-  if (due != null && due.isNotEmpty) return 'Due $due';
-  return 'Expecting';
 }
 
 class _BabySwitcherSheetBody extends StatefulWidget {
@@ -118,7 +108,7 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
                         ),
                       ),
                       title: Text(baby.name),
-                      subtitle: Text(_babySubtitle(baby)),
+                      subtitle: Text(babyListSubtitle(baby)),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [

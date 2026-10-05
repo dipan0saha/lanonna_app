@@ -208,6 +208,18 @@ abstract class AppLocalizations {
   /// **'Deleting…'**
   String get deleteAccountDeleting;
 
+  /// No description provided for @deleteAccountChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking whether your account can be deleted…'**
+  String get deleteAccountChecking;
+
+  /// No description provided for @deleteAccountBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account cannot be deleted right now.'**
+  String get deleteAccountBlocked;
+
   /// No description provided for @emailVerifyHeadline.
   ///
   /// In en, this message translates to:

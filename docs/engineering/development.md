@@ -102,7 +102,7 @@ Product UI tokens live under `apps/mobile/lib/core/theme/` (see also PRD §5.1):
 |------|------|
 | `app_colors.dart` | Raw brand hex (palette only) |
 | `app_metrics.dart` | Spacing, radii, button sizes |
-| `app_text_theme.dart` | Inter + Baloo 2 text styles |
+| `app_text_theme.dart` | Inter + Baloo 2 text styles; tab screen titles use `headlineSmall` (Baloo 2, 24px) |
 | `app_brand_theme.dart` | `ThemeExtension` — sage/peach tints, insight fills |
 | `app_theme.dart` | `AppTheme.light` → `ThemeData` + component themes |
 | `la_nonna_theme.dart` | `context.textStyles`, `context.brand`, `context.colors` |

@@ -108,7 +108,7 @@ def test_squish_photo_inserts_activity_when_active():
     ), patch(
         "lanonna_api.domain.gallery.insert_activity_event",
     ) as activity_mock, patch(
-        "lanonna_api.domain.gallery.enqueue_notify_user",
+        "lanonna_api.domain.gallery.safe_enqueue_notify_user",
     ):
         squish_photo("uid", baby_id, photo_id)
         activity_mock.assert_called_once()
@@ -145,10 +145,37 @@ def test_add_comment_inserts_activity():
     ), patch(
         "lanonna_api.domain.gallery.insert_activity_event",
     ) as activity_mock, patch(
-        "lanonna_api.domain.gallery.enqueue_notify_user",
+        "lanonna_api.domain.gallery.safe_enqueue_notify_user",
     ):
         add_comment("uid", baby_id, photo_id, "Nice!")
         activity_mock.assert_called_once()
         assert activity_mock.call_args[0][2] == "photo_comment"
         assert "Aunt Carol" in activity_mock.call_args[0][3]
         assert "Bump update" in activity_mock.call_args[0][3]
+
+
+def test_squish_photo_succeeds_when_notify_enqueue_fails():
+    baby_id = uuid.uuid4()
+    photo_id = uuid.uuid4()
+    photo_row = {
+        "status": "ready",
+        "caption": "First ultrasound",
+        "uploader_firebase_uid": "owner-uid",
+    }
+    with patch("lanonna_api.domain.gallery.require_membership"), patch(
+        "lanonna_api.domain.gallery.get_photo_for_baby",
+        return_value=photo_row,
+    ), patch(
+        "lanonna_api.domain.gallery.toggle_squish",
+        return_value=True,
+    ), patch(
+        "lanonna_api.domain.gallery.actor_display_name",
+        return_value="Grandma Sue",
+    ), patch(
+        "lanonna_api.domain.gallery.insert_activity_event",
+    ), patch(
+        "lanonna_api.domain.notifications.publish_notify_user",
+        side_effect=RuntimeError("pubsub down"),
+    ):
+        result = squish_photo("squish-uid", baby_id, photo_id)
+    assert result == {"squished": True}

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/api/api_error_message.dart';
 import '../../../core/auth/auth_repository.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/la_nonna_theme.dart';
@@ -20,6 +21,39 @@ class DeleteAccountScreen extends StatefulWidget {
 
 class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
   var _deleting = false;
+  var _checkingEligibility = true;
+  DeleteAccountEligibility? _eligibility;
+  String? _eligibilityError;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadEligibility();
+  }
+
+  Future<void> _loadEligibility() async {
+    setState(() {
+      _checkingEligibility = true;
+      _eligibilityError = null;
+    });
+    try {
+      final eligibility =
+          await context.read<AccountRepository>().fetchDeleteAccountEligibility();
+      if (mounted) {
+        setState(() {
+          _eligibility = eligibility;
+          _checkingEligibility = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _eligibilityError = apiErrorMessage(e);
+          _checkingEligibility = false;
+        });
+      }
+    }
+  }
 
   Future<void> _delete() async {
     setState(() => _deleting = true);
@@ -29,7 +63,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
       if (mounted) context.go(OnboardingRoutes.ownerCarousel);
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showAlert(context, '$e');
+        AppSnackBar.showAlert(context, apiErrorMessage(e));
       }
     } finally {
       if (mounted) setState(() => _deleting = false);
@@ -39,6 +73,10 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final allowed = _eligibility?.allowed ?? false;
+    final blockers = _eligibility?.blockers ?? const [];
+    final canDelete = allowed && !_checkingEligibility && _eligibilityError == null;
+
     return PrototypeSubpageScaffold(
       includeShellTopBar: true,
       title: l10n.deleteAccountTitle,
@@ -51,12 +89,45 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
               l10n.deleteAccountBody,
               style: context.textStyles.bodyMedium,
             ),
+            if (_checkingEligibility) ...[
+              const SizedBox(height: 24),
+              Text(
+                l10n.deleteAccountChecking,
+                style: context.textStyles.bodySmall?.copyWith(
+                  color: AppColors.muted,
+                ),
+              ),
+            ],
+            if (_eligibilityError != null) ...[
+              const SizedBox(height: 16),
+              Text(
+                _eligibilityError!,
+                style: context.textStyles.bodySmall?.copyWith(
+                  color: AppColors.error,
+                ),
+              ),
+            ],
+            if (!allowed && blockers.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Text(
+                l10n.deleteAccountBlocked,
+                style: context.textStyles.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              for (final blocker in blockers)
+                Text(
+                  '• $blocker',
+                  style: context.textStyles.bodySmall,
+                ),
+            ],
             const SizedBox(height: 24),
             FilledButton(
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.error,
               ),
-              onPressed: _deleting ? null : _delete,
+              onPressed: (_deleting || !canDelete) ? null : _delete,
               child: Text(
                 _deleting ? l10n.deleteAccountDeleting : l10n.deleteAccountButton,
               ),

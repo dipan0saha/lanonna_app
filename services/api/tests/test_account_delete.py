@@ -1,13 +1,28 @@
 import uuid
+from contextlib import contextmanager
 from unittest.mock import patch
 
 import pytest
 from firebase_admin import auth as firebase_auth
+from fastapi.testclient import TestClient
 
+from lanonna_api.auth import current_user
 from lanonna_api.domain.account_delete import (
     delete_account,
     delete_account_eligibility,
 )
+from lanonna_api.main import app
+
+client = TestClient(app)
+
+
+@contextmanager
+def _auth_as(uid: str = "uid-1", email: str = "user@test.com"):
+    app.dependency_overrides[current_user] = lambda: {"uid": uid, "email": email}
+    try:
+        yield
+    finally:
+        app.dependency_overrides.pop(current_user, None)
 
 
 def test_eligibility_allowed_even_with_sole_owned_babies():
@@ -19,6 +34,20 @@ def test_eligibility_allowed_even_with_sole_owned_babies():
         result = delete_account_eligibility("uid")
     assert result["allowed"] is True
     assert result["blockers"] == []
+
+
+def test_delete_account_eligibility_route():
+    with (
+        _auth_as(),
+        patch("lanonna_api.routers.profile.upsert_app_user"),
+        patch(
+            "lanonna_api.domain.account_delete.delete_account_eligibility",
+            return_value={"allowed": True, "blockers": []},
+        ),
+    ):
+        response = client.get("/v1/me/delete-account/eligibility")
+    assert response.status_code == 200
+    assert response.json() == {"allowed": True, "blockers": []}
 
 
 def test_delete_account_firebase_before_sql():

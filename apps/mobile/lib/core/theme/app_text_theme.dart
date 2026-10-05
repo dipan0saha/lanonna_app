@@ -25,6 +25,13 @@ abstract final class AppTextTheme {
         color: AppColors.textPrimary,
         height: 1.15,
       ),
+      // Tab screen titles (Gallery, Calendar, Registry, Fun) — prototype h1.headline.
+      headlineSmall: GoogleFonts.baloo2(
+        fontSize: AppMetrics.headlineSize,
+        fontWeight: FontWeight.w700,
+        color: AppColors.textPrimary,
+        height: 1.25,
+      ),
       titleLarge: GoogleFonts.baloo2(
         fontSize: AppMetrics.headlineSize,
         fontWeight: FontWeight.w700,

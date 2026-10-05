@@ -4,7 +4,12 @@ from unittest.mock import patch
 
 import pytest
 
-from lanonna_api.domain.calendar import _parse_month, create_calendar_event
+from lanonna_api.domain.calendar import (
+    _parse_month,
+    add_event_comment,
+    create_calendar_event,
+    set_rsvp,
+)
 
 
 def test_parse_month_january():
@@ -85,5 +90,62 @@ def test_create_event_passes_catalog_suggestion_id():
             catalog_suggestion_id="baby_shower",
         )
         assert create_mock.call_args.kwargs["catalog_suggestion_id"] == "baby_shower"
+
+
+def test_set_rsvp_succeeds_when_notify_enqueue_fails():
+    baby_id = uuid.uuid4()
+    event_id = uuid.uuid4()
+    event = {
+        "title": "Baby shower",
+        "created_by_firebase_uid": "creator-uid",
+    }
+    with patch("lanonna_api.domain.calendar.require_membership"), patch(
+        "lanonna_api.domain.calendar.get_event",
+        return_value=event,
+    ), patch(
+        "lanonna_api.domain.calendar.upsert_app_user",
+    ), patch(
+        "lanonna_api.domain.calendar.upsert_rsvp",
+    ), patch(
+        "lanonna_api.domain.calendar.actor_display_name",
+        return_value="Alex",
+    ), patch(
+        "lanonna_api.domain.notifications.publish_notify_user",
+        side_effect=RuntimeError("pubsub down"),
+    ):
+        result = set_rsvp("rsvp-uid", baby_id, event_id, "going")
+    assert result == {"status": "going"}
+
+
+def test_add_event_comment_succeeds_when_notify_enqueue_fails():
+    baby_id = uuid.uuid4()
+    event_id = uuid.uuid4()
+    event = {
+        "title": "Baby shower",
+        "created_by_firebase_uid": "creator-uid",
+    }
+    with patch("lanonna_api.domain.calendar.require_membership"), patch(
+        "lanonna_api.domain.calendar.get_event",
+        return_value=event,
+    ), patch(
+        "lanonna_api.domain.calendar.upsert_app_user",
+    ), patch(
+        "lanonna_api.domain.calendar.insert_event_comment",
+        return_value={
+            "id": uuid.uuid4(),
+            "body": "See you there",
+            "created_at": datetime(2026, 6, 1, tzinfo=timezone.utc),
+        },
+    ), patch(
+        "lanonna_api.domain.calendar.actor_display_name",
+        return_value="Alex",
+    ), patch(
+        "lanonna_api.domain.notifications.publish_notify_user",
+        side_effect=RuntimeError("pubsub down"),
+    ):
+        result = add_event_comment(
+            "comment-uid", baby_id, event_id, "See you there"
+        )
+    assert result["body"] == "See you there"
 
 

@@ -12,6 +12,7 @@ import '../../home/data/home_refresh_signal.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../../core/domain/baby_summary.dart';
+import '../../../core/domain/baby_list_subtitle.dart';
 import '../../home/domain/app_routes.dart';
 import '../../onboarding/domain/onboarding_routes.dart';
 import '../data/account_repository.dart';
@@ -73,16 +74,7 @@ class _AccountScreenState extends State<AccountScreen> {
     return source[0].toUpperCase();
   }
 
-  String _babySubtitle(BabySummary baby) {
-    if (baby.lifecycleStatus == 'born') {
-      final born = baby.actualBirthDate;
-      if (born != null && born.isNotEmpty) return 'Born $born';
-      return 'Born';
-    }
-    final due = baby.expectedBirthDate;
-    if (due != null && due.isNotEmpty) return 'Due $due';
-    return 'Expecting';
-  }
+  String _babySubtitle(BabySummary baby) => babyListSubtitle(baby);
 
   Color _roleBadgeColor(String role) {
     return role == 'owner' ? AppColors.sageTint : AppColors.peachTint;

@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -32,18 +31,6 @@ import 'core/widgets/app_snackbar.dart';
 import 'core/widgets/app_offline_wrapper.dart';
 import 'firebase_options.dart';
 
-Future<void> _maybeDevAutoSignIn() async {
-  if (!kDebugMode) return;
-  const email = String.fromEnvironment('DEV_AUTO_SIGN_IN_EMAIL');
-  const password = String.fromEnvironment('DEV_AUTO_SIGN_IN_PASSWORD');
-  if (email.isEmpty || password.isEmpty) return;
-  if (FirebaseAuth.instance.currentUser != null) return;
-  await FirebaseAuth.instance.signInWithEmailAndPassword(
-    email: email,
-    password: password,
-  );
-}
-
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -59,7 +46,6 @@ Future<void> main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await activateFirebaseAppCheck();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  await _maybeDevAutoSignIn();
   final app = await bootstrapLaNonnaApp();
   runApp(app);
 }

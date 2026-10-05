@@ -31,7 +31,7 @@ from lanonna_api.domain.activity_copy import (
     photo_squish_summary,
 )
 from lanonna_api.domain.notification_copy import actor_display_name
-from lanonna_api.domain.notifications import NotificationChannel, enqueue_notify_user
+from lanonna_api.domain.notifications import NotificationChannel, safe_enqueue_notify_user
 from lanonna_api.repositories.activity_events import insert_activity_event
 from lanonna_api.repositories.users import upsert_app_user
 from lanonna_api.storage import mint_display_upload_for_object, mint_signed_read_url
@@ -205,7 +205,7 @@ def squish_photo(
     uploader = row["uploader_firebase_uid"]
     if active and uploader != firebase_uid:
         actor = actor_display_name(firebase_uid)
-        enqueue_notify_user(
+        safe_enqueue_notify_user(
             uploader,
             title="New squish",
             body=f"{actor} squished your photo",
@@ -241,7 +241,7 @@ def add_comment(
     uploader = row["uploader_firebase_uid"]
     if uploader != firebase_uid:
         actor = actor_display_name(firebase_uid)
-        enqueue_notify_user(
+        safe_enqueue_notify_user(
             uploader,
             title="New comment",
             body=f"{actor} commented on your photo",

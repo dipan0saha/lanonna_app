@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_client.dart';
+import '../../../core/api/api_error_message.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_semantics.dart';
 import 'upload/run_gallery_photo_upload.dart';
@@ -124,7 +125,7 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
       });
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = apiErrorMessage(e);
         _loading = false;
       });
     }
