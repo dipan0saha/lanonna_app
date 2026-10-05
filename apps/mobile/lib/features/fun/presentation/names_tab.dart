@@ -101,7 +101,7 @@ class _NamesTabState extends State<NamesTab> {
             const Padding(
               padding: EdgeInsets.all(24),
               child: Text(
-                'Suggest a name below — everyone gets a say.',
+                'Suggest a name below - everyone gets a say.',
                 textAlign: TextAlign.center,
               ),
             ),

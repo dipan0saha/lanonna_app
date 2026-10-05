@@ -13,13 +13,7 @@ QA_FOLLOWER_EMAIL="${QA_FOLLOWER_EMAIL:-lanonna.dev.qa.follower@test.com}"
 QA_TEST_PASSWORD="${QA_TEST_PASSWORD:-${SMOKE_TEST_PASSWORD:-}}"
 FIXTURES="${MAESTRO_FIXTURES_OUT:-${MOBILE}/maestro/.qa-fixtures.env}"
 COUNT="${QA_GALLERY_PHOTO_COUNT:-5}"
-
-WORKER_PYTHON="${REPO_ROOT}/services/worker/.venv/bin/python"
-GEN_JPEG="${REPO_ROOT}/scripts/generate_qa_sample_jpeg.py"
-JPEG_PYTHON="${WORKER_PYTHON}"
-if [[ ! -x "${JPEG_PYTHON}" ]]; then
-  JPEG_PYTHON="$(command -v python3)"
-fi
+SAMPLES_DIR="${QA_GALLERY_SAMPLES_DIR:-${REPO_ROOT}/emulator_testing/sample_photos}"
 
 if [[ -z "${QA_TEST_PASSWORD}" ]]; then
   echo "Set SMOKE_TEST_PASSWORD in maestro/local.env" >&2
@@ -37,11 +31,6 @@ BABY_ID="${baby_profile_id:-}"
 
 if [[ -z "${BABY_ID}" ]]; then
   echo "baby_profile_id not in ${FIXTURES}" >&2
-  exit 1
-fi
-
-if ! "${JPEG_PYTHON}" -c "from PIL import Image" 2>/dev/null; then
-  echo "Install Pillow for QA gallery seeds (e.g. pip install Pillow)." >&2
   exit 1
 fi
 
@@ -80,21 +69,37 @@ sign_in() {
 echo "Sign-in ${QA_OWNER_EMAIL}…"
 OWNER_TOKEN="$(sign_in "${QA_OWNER_EMAIL}")"
 
-CAPTIONS=(
-  "QA gallery — ultrasound"
-  "QA gallery — nursery prep"
-  "QA gallery — family visit"
-  "QA gallery — baby bump"
-  "QA gallery — shower day"
+PHOTO_FILES=(
+  "${SAMPLES_DIR}/qa_ultrasound.jpg"
+  "${SAMPLES_DIR}/qa_nursery.jpg"
+  "${SAMPLES_DIR}/qa_family.jpg"
+  "${SAMPLES_DIR}/qa_baby_bump.jpg"
+  "${SAMPLES_DIR}/qa_shower.jpg"
 )
+CAPTIONS=(
+  "QA gallery - ultrasound"
+  "QA gallery - nursery prep"
+  "QA gallery - family visit"
+  "QA gallery - baby bump"
+  "QA gallery - shower day"
+)
+
+if (( COUNT > ${#PHOTO_FILES[@]} )); then
+  echo "QA_GALLERY_PHOTO_COUNT=${COUNT} exceeds ${#PHOTO_FILES[@]} sample file(s)." >&2
+  exit 1
+fi
+for ((i = 0; i < COUNT; i++)); do
+  if [[ ! -f "${PHOTO_FILES[$i]}" ]]; then
+    echo "Missing sample: ${PHOTO_FILES[$i]}" >&2
+    exit 1
+  fi
+done
 
 FIRST_PHOTO_ID=""
 echo "Uploading ${COUNT} sample photo(s) for baby ${BABY_ID}…"
 for ((i = 0; i < COUNT; i++)); do
   CAPTION="${CAPTIONS[$i]:-QA gallery sample $((i + 1))}"
-  HUE=$((120 + i * 35))
-  TMP_JPEG="$(mktemp)"
-  "${JPEG_PYTHON}" "${GEN_JPEG}" --label "${CAPTION}" --hue "${HUE}" > "${TMP_JPEG}"
+  TMP_JPEG="${PHOTO_FILES[$i]}"
   BYTE_LEN="$(wc -c < "${TMP_JPEG}" | tr -d ' ')"
 
   INIT_JSON="$(curl -sS -X POST "${API_BASE}/v1/photos/init" \
@@ -110,7 +115,6 @@ for ((i = 0; i < COUNT; i++)); do
     -H 'Content-Type: image/jpeg' \
     -H 'x-goog-content-length-range: 0,2097152' \
     --data-binary @"${TMP_JPEG}"
-  rm -f "${TMP_JPEG}"
   echo "    photo_id=${PHOTO_ID}"
   sleep 2
 done

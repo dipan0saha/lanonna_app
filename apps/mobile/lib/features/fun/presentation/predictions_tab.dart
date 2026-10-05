@@ -258,7 +258,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
           if (p == null || p.birthdateHistogram.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
-              child: Text('No guesses yet — be the first!'),
+              child: Text('No guesses yet - be the first!'),
             )
           else
             for (final row in p.birthdateHistogram)

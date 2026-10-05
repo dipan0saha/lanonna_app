@@ -302,7 +302,7 @@ class _CalendarScreenState extends State<CalendarScreen> with BabyContextReload 
                           Text(
                             _isOwner
                                 ? 'Add ultrasounds, showers, or the gender reveal so family knows when to celebrate.'
-                                : 'Nothing on the calendar yet — check back soon.',
+                                : 'Nothing on the calendar yet - check back soon.',
                             textAlign: TextAlign.center,
                             style: styles.bodyMedium?.copyWith(
                               color: AppColors.muted,

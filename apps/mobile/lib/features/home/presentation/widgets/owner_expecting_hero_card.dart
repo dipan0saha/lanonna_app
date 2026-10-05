@@ -55,7 +55,7 @@ class OwnerExpectingHeroCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            daysToDueDate?.toString() ?? '—',
+            daysToDueDate?.toString() ?? '-',
             style: text.displayLarge,
           ),
           const SizedBox(height: 4),

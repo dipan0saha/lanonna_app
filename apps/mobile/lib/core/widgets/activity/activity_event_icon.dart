@@ -25,7 +25,7 @@ class ActivityEventIcon extends StatelessWidget {
   IconData _iconFor(String type) {
     switch (type) {
       case 'photo_squish':
-        return Icons.back_hand_outlined;
+        return Icons.volunteer_activism_outlined;
       case 'photo_comment':
         return Icons.chat_bubble_outline;
       case 'photo_shared':

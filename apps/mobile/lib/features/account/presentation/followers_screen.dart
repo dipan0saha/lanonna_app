@@ -58,7 +58,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
                 ),
                 const SizedBox(height: 12),
                 if (_members.isEmpty && _invites.isEmpty)
-                  const Text('No followers yet — invite family to join.'),
+                  const Text('No followers yet - invite family to join.'),
                 for (final m in _members)
                   Card(
                     child: ListTile(

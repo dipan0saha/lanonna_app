@@ -241,7 +241,7 @@ abstract class AppLocalizations {
   /// No description provided for @emailVerifyContinuePending.
   ///
   /// In en, this message translates to:
-  /// **'Not verified yet — open the newest email and tap Verify my email, then try Continue.'**
+  /// **'Not verified yet - open the newest email and tap Verify my email, then try Continue.'**
   String get emailVerifyContinuePending;
 
   /// No description provided for @emailVerifySent.

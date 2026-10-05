@@ -61,7 +61,7 @@ class HomeBirthWelcomeCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Day ${welcome.daysSinceBirth + 1} — share the keepsake with family.',
+            'Day ${welcome.daysSinceBirth + 1} - share the keepsake with family.',
             textAlign: TextAlign.center,
             style: text.bodyMedium,
           ),

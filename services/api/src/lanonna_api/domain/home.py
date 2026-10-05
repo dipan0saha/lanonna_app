@@ -286,7 +286,7 @@ def announce_arrival(
             FanOutSpec(
                 baby_profile_id=baby_profile_id,
                 title="Baby has arrived!",
-                body=f"{baby_name} has arrived — see the announcement",
+                body=f"{baby_name} has arrived - see the announcement",
                 deep_link=f"/baby/{baby_profile_id}/announcement",
                 exclude_firebase_uid=firebase_uid,
                 notification_channel=NotificationChannel.CALENDAR,

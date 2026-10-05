@@ -279,7 +279,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Delete this photo?'),
         content: const Text(
-          'This removes it for everyone who can see it — this can\'t be undone.',
+          'This removes it for everyone who can see it - this can\'t be undone.',
         ),
         actions: [
           TextButton(

@@ -91,7 +91,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get emailVerifyContinuePending =>
-      'Not verified yet — open the newest email and tap Verify my email, then try Continue.';
+      'Not verified yet - open the newest email and tap Verify my email, then try Continue.';
 
   @override
   String get emailVerifySent => 'Verification email sent.';

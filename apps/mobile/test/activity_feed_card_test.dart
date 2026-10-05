@@ -41,7 +41,7 @@ void main() {
     );
 
     expect(
-      find.text('Nothing yet — activity will show up here.'),
+      find.text('Nothing yet - activity will show up here.'),
       findsOneWidget,
     );
   });

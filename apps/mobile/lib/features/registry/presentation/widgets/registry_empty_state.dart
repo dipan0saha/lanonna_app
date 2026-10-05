@@ -26,7 +26,7 @@ class RegistryEmptyState extends StatelessWidget {
           Text(
             isOwner
                 ? 'Add the things your baby will need so family knows what to bring.'
-                : "Nothing's been added to the registry yet — check back soon.",
+                : "Nothing's been added to the registry yet - check back soon.",
             textAlign: TextAlign.center,
             style: context.textStyles.bodyMedium?.copyWith(color: AppColors.muted),
           ),

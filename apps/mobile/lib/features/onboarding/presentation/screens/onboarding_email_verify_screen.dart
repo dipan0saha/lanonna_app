@@ -115,7 +115,7 @@ class _OnboardingEmailVerifyScreenState extends State<OnboardingEmailVerifyScree
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Text(
-                  'This looks like a dev-only address — it may not receive mail. '
+                  'This looks like a dev-only address - it may not receive mail. '
                   'Mark the account verified in Firebase Console, or use a real email.',
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),

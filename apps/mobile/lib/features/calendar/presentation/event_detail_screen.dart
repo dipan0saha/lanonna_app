@@ -385,7 +385,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                         ),
                       Expanded(
                         child: Text(
-                          '${detail.rsvpSummary.going} going · ${detail.rsvpSummary.maybe} maybe — View RSVPs ›',
+                          '${detail.rsvpSummary.going} going · ${detail.rsvpSummary.maybe} maybe - View RSVPs ›',
                           style: const TextStyle(
                             color: AppColors.primaryDark,
                             fontWeight: FontWeight.w600,
