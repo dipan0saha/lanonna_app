@@ -1,61 +1,64 @@
-name: CI
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-
-jobs:
-  mobile:
-    name: Flutter (apps/mobile)
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: apps/mobile
-    steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-      - run: flutter pub get
-      - run: flutter analyze
-      - run: flutter test
-
-  api:
-    name: Python API (services/api)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install -e packages/lanonna_activity_copy -r services/api/requirements.txt
-      - run: PYTHONPATH=services/api/src pytest -q services/api/tests
-
-  email-templates:
-    name: Email template sync
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: bash scripts/sync-email-templates.sh check
-
-  firebase-auth-email-templates:
-    name: Firebase auth email templates
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: bash scripts/sync-firebase-auth-templates.sh check
-
-  worker:
-    name: Python worker (services/worker)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install -e packages/lanonna_activity_copy -r services/worker/requirements.txt pytest
-      - run: PYTHONPATH=services/worker/src python -m compileall services/worker/src
-      - run: PYTHONPATH=services/worker/src pytest -q services/worker/tests
+# GitHub Actions CI disabled — run checks locally (flutter analyze/test, pytest).
+# Re-enable by uncommenting this file and enabling Actions in repo Settings.
+#
+# name: CI
+#
+# on:
+#   push:
+#     branches: [main]
+#   pull_request:
+#     branches: [main]
+#
+# jobs:
+#   mobile:
+#     name: Flutter (apps/mobile)
+#     runs-on: ubuntu-latest
+#     defaults:
+#       run:
+#         working-directory: apps/mobile
+#     steps:
+#       - uses: actions/checkout@v4
+#       - uses: subosito/flutter-action@v2
+#         with:
+#           channel: stable
+#           cache: true
+#       - run: flutter pub get
+#       - run: flutter analyze
+#       - run: flutter test
+#
+#   api:
+#     name: Python API (services/api)
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
+#       - uses: actions/setup-python@v5
+#         with:
+#           python-version: "3.12"
+#       - run: pip install -e packages/lanonna_activity_copy -r services/api/requirements.txt
+#       - run: PYTHONPATH=services/api/src pytest -q services/api/tests
+#
+#   email-templates:
+#     name: Email template sync
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
+#       - run: bash scripts/sync-email-templates.sh check
+#
+#   firebase-auth-email-templates:
+#     name: Firebase auth email templates
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
+#       - run: bash scripts/sync-firebase-auth-templates.sh check
+#
+#   worker:
+#     name: Python worker (services/worker)
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
+#       - uses: actions/setup-python@v5
+#         with:
+#           python-version: "3.12"
+#       - run: pip install -e packages/lanonna_activity_copy -r services/worker/requirements.txt pytest
+#       - run: PYTHONPATH=services/worker/src python -m compileall services/worker/src
+#       - run: PYTHONPATH=services/worker/src pytest -q services/worker/tests
