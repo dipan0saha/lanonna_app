@@ -202,7 +202,7 @@ Retain route-level flows documented in Appendix B: auth, onboarding, baby profil
 
 | Path | Steps after authentication |
 |------|----------------------------|
-| **Owner** | Carousel → signup/login → email verify → complete profile → create baby → first moment (optional preset events/registry) → batch invite → Home |
+| **Owner** | Carousel → signup/login → email verify → complete profile → create baby → first moment (optional preset events/registry) → batch invite → Home; **main app** only after `owner_onboarding_completed` (not merely profile + baby) |
 | **Follower** | Invite accept → invite preview → signup/login → complete profile → confirm relationship → follower carousel → Home |
 | **Co-owner** | Invite accept (owner role) → co-owner invite screen → signup/login → complete profile → co-owner welcome → Home |
 
@@ -240,7 +240,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-ONB-005 | First moment | Optional preset event/registry chips and name ideas; skippable | `POST /v1/babies/{id}/onboarding/first-moment` |
 | FR-ONB-006 | Batch email invite | Multiple invite rows; co-owner badges (Wife/Husband); skip row if email already member | API + `check membership by email` |
 | FR-ONB-007 | Follower relationship confirm | Follower **views** owner-set relationship label (S09) before carousel; not editable by invitee | Invite preview `relationship_label` |
-| FR-ONB-008 | Coordinator resume | Kill app mid-onboarding → resume same step | Local persistence of path/step |
+| FR-ONB-008 | Coordinator resume | Kill app mid-onboarding → resume same step; owner router blocks `/home` until `owner_onboarding_completed` | Local persistence of path/step; `AppSession` guards |
 | FR-ONB-009 | Deprecated role selection | `/role-selection` redirects to owner carousel | Router redirect |
 | FR-ONB-010 | Owner UI prototype parity | Owner onboarding S04 matches `Complete_Your_Profile_Screen_1.html`; other owner steps (S01–S07) and first-run Home (S11–S12) align with onboarding prototype where not superseded; login mirrors signup stack; Facebook omitted | Flutter onboarding + home modules |
 | FR-ONB-011 | Follower/co-owner invite onboarding | Follower S08–S10 + follower first-run Home; co-owner S08 + welcome; wrong-email screen; accept after complete profile; prototype copy (Facebook omitted) | `/invite-accept` bootstrap, invite path coordinator |

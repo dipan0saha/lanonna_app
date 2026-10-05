@@ -15,6 +15,7 @@ import '../../../core/domain/baby_summary.dart';
 import '../../../core/domain/baby_list_subtitle.dart';
 import '../../home/domain/app_routes.dart';
 import '../../onboarding/domain/onboarding_routes.dart';
+import '../../onboarding/presentation/onboarding_coordinator.dart';
 import '../data/account_repository.dart';
 import 'widgets/account_engagement_stat_row.dart';
 import 'widgets/account_profile_card.dart';
@@ -59,6 +60,7 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Future<void> _signOut() async {
     // Push token cleanup is handled by PushNotificationService auth listener.
+    await context.read<OnboardingCoordinator>().resetOwnerCompletionForSignOut();
     await context.read<AuthRepository>().signOut();
     if (mounted) context.go(OnboardingRoutes.ownerCarousel);
   }

@@ -30,13 +30,17 @@ class AppSession extends ChangeNotifier {
   bool get ownerOnboardingComplete =>
       _storage.isCompleted || (_status?.ownerOnboardingCompleted ?? false);
 
-  bool get hasBabyAccess => _status?.hasBabyMembership ?? false;
-
   bool get canAccessMainApp {
     if (ownerOnboardingComplete) return true;
     if (_coordinator.inviteOnboardingCompleted) return true;
     if (_coordinator.isInvitePath) return false;
-    return hasBabyAccess && (_status?.profileComplete ?? false);
+    return false;
+  }
+
+  /// Test-only hook to set onboarding status without calling the API.
+  @visibleForTesting
+  void debugSetStatus(OnboardingStatus? status) {
+    _status = status;
   }
 
   Future<void> refreshFromApi() async {
@@ -72,6 +76,17 @@ class AppSession extends ChangeNotifier {
     OnboardingRoutes.followerCarousel,
     OnboardingRoutes.coOwnerWelcome,
     OnboardingRoutes.wrongEmail,
+  };
+
+  static const _ownerPostBabyAllowed = {
+    OnboardingRoutes.ownerCarousel,
+    OnboardingRoutes.signup,
+    OnboardingRoutes.login,
+    OnboardingRoutes.emailVerify,
+    OnboardingRoutes.completeProfile,
+    OnboardingRoutes.ownerFirstMoment,
+    OnboardingRoutes.ownerInvite,
+    ..._invitePublic,
   };
 
   String? redirectFor({
@@ -172,6 +187,18 @@ class AppSession extends ChangeNotifier {
         if (allowed.contains(path)) return null;
         return OnboardingRoutes.ownerCreateBaby;
       }
+      if (!_coordinator.isInvitePath &&
+          !ownerOnboardingComplete &&
+          (status.hasOwnerBaby || status.hasBabyMembership)) {
+        if (_ownerPostBabyAllowed.contains(path)) return null;
+        if (path == OnboardingRoutes.ownerCreateBaby) {
+          return _onboardingResumePath(status);
+        }
+        if (OnboardingRoutes.isOnboardingPath(path)) {
+          return _onboardingResumePath(status);
+        }
+        return _onboardingResumePath(status);
+      }
     }
 
     if (path == OnboardingRoutes.signup || path == OnboardingRoutes.login) {
@@ -210,6 +237,13 @@ class AppSession extends ChangeNotifier {
         return OnboardingRoutes.ownerFirstMoment;
       }
       return OnboardingRoutes.ownerCreateBaby;
+    }
+    if (!ownerOnboardingComplete) {
+      final step = _coordinator.activeStep;
+      if (step == OnboardingStep.batchInvite) {
+        return OnboardingRoutes.ownerInvite;
+      }
+      return OnboardingRoutes.ownerFirstMoment;
     }
     return OnboardingRoutes.ownerInvite;
   }

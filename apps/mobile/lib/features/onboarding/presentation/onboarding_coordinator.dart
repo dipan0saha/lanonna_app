@@ -171,6 +171,11 @@ class OnboardingCoordinator extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Clears local owner completion so the next signed-in user is not treated as onboarded.
+  Future<void> resetOwnerCompletionForSignOut() async {
+    await _storage.setCompleted(false);
+  }
+
   Future<void> completeInviteOnboarding() async {
     await _storage.setInviteOnboardingCompleted(true);
     _activeStep = null;

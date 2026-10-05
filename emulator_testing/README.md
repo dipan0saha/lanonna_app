@@ -228,6 +228,7 @@ Do not delete smoke/Maestro fixture users.
 | Could not delete Firebase user | Missing `firebaseauth.admin` on API SA (see above) |
 | Maestro fails immediately on driver | ADB/Maestro driver; restart adb, `--reinstall-driver`, single device |
 | API works in script but not app | Old APK, wrong `API_BASE_URL`, or App Check (rare on dev with enforce off) |
+| Skipped first moment / invite after create baby | Stale `owner_onboarding_completed` in app prefs; log out (clears flag) or clear app data; rebuild current debug app |
 
 ---
 
