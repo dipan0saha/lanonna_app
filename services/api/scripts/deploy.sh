@@ -41,7 +41,7 @@ gcloud run deploy "${SERVICE}" \
   --allow-unauthenticated \
   --add-cloudsql-instances="${CONN}" \
   --set-secrets="DB_PASSWORD=db-lanonna-app-password:latest,ADMIN_API_KEY=admin-api-key:latest" \
-  --set-env-vars="ENVIRONMENT=dev,GCP_PROJECT_ID=${PROJECT_ID},CLOUD_SQL_CONNECTION_NAME=${CONN},DB_USER=lanonna_app,DB_NAME=lanonna,GCS_SIGNING_SERVICE_ACCOUNT=lanonna-api@${PROJECT_ID}.iam.gserviceaccount.com,DISPLAY_BUCKET=${PROJECT_ID}-display,PUBSUB_TOPIC_COMMANDS=lanonna-async-commands,APP_CHECK_ENFORCE=${APP_CHECK_ENFORCE}" \
+  --set-env-vars="ENVIRONMENT=dev,GCP_PROJECT_ID=${PROJECT_ID},CLOUD_SQL_CONNECTION_NAME=${CONN},DB_USER=lanonna_app,DB_NAME=lanonna,GCS_SIGNING_SERVICE_ACCOUNT=lanonna-api@${PROJECT_ID}.iam.gserviceaccount.com,DISPLAY_BUCKET=${PROJECT_ID}-display,THUMBNAILS_BUCKET=${PROJECT_ID}-thumbnails,PUBSUB_TOPIC_COMMANDS=lanonna-async-commands,APP_CHECK_ENFORCE=${APP_CHECK_ENFORCE}" \
   --min-instances=0 \
   --max-instances=10 \
   --memory=512Mi \

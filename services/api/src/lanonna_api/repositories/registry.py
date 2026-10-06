@@ -117,9 +117,12 @@ def get_registry_item(
                 i.baby_profile_id, i.created_by_firebase_uid,
                 p.id AS purchase_id,
                 p.purchased_by_firebase_uid,
-                p.created_at AS purchased_at
+                p.created_at AS purchased_at,
+                u.display_name AS purchaser_display_name,
+                u.email AS purchaser_email
             FROM registry_items i
             LEFT JOIN registry_purchases p ON p.registry_item_id = i.id
+            LEFT JOIN app_users u ON u.firebase_uid = p.purchased_by_firebase_uid
             WHERE i.id = %s AND i.baby_profile_id = %s
             """,
             (item_id, baby_profile_id),

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/widgets/app_semantics.dart';
 import '../home/data/home_refresh_signal.dart';
+import 'shell_branch_index.dart';
 
 class MainShellScreen extends StatelessWidget {
   const MainShellScreen({super.key, required this.navigationShell});
@@ -11,7 +12,7 @@ class MainShellScreen extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
 
   void _onTap(BuildContext context, int index) {
-    if (index == 0) {
+    if (index == ShellBranchIndex.home) {
       context.read<HomeRefreshSignal>().notifyHomeShouldRefresh();
     }
     navigationShell.goBranch(index, initialLocation: index == navigationShell.currentIndex);

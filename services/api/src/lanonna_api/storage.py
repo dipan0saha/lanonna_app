@@ -45,21 +45,6 @@ def mint_baby_avatar_upload_url(
     return _sign_put(object_name, content_type, max_bytes)
 
 
-def mint_display_upload_url(
-    firebase_uid: str,
-    content_type: str = "image/jpeg",
-    byte_length: int = 0,
-    max_bytes: int = 2_097_152,
-) -> dict[str, str | int]:
-    """User avatar upload (legacy entry point for /v1/uploads/display/signed-url)."""
-    return mint_user_avatar_upload_url(
-        firebase_uid,
-        content_type=content_type,
-        byte_length=byte_length,
-        max_bytes=max_bytes,
-    )
-
-
 def mint_display_upload_for_object(
     object_name: str,
     content_type: str = "image/jpeg",

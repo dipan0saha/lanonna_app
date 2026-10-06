@@ -1,5 +1,7 @@
 from unittest.mock import patch
 
+import pytest
+
 from lanonna_api.domain.avatar_urls import (
     gcs_object_path_from_stored,
     normalize_avatar_for_storage,
@@ -50,3 +52,12 @@ def test_mint_baby_avatar_upload_uses_baby_prefix(mock_sign):
     mint_baby_avatar_upload_url(baby_id, byte_length=1000)
     object_name = mock_sign.call_args[0][0]
     assert object_name.startswith(f"avatars/babies/{baby_id}/")
+
+
+def test_mint_user_avatar_upload_rejects_oversize_byte_length():
+    with pytest.raises(ValueError, match="maximum size"):
+        mint_user_avatar_upload_url(
+            "uid",
+            content_type="image/jpeg",
+            byte_length=3_000_000,
+        )

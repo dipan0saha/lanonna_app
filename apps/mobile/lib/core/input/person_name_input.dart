@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 /// Keyboard hint for person-name fields (baby names, suggestions, profile name).

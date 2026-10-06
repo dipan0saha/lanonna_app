@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 /// Keyboard hint for captions, comments, titles, and other prose fields.

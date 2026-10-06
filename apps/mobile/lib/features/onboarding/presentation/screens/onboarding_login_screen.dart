@@ -13,7 +13,7 @@ import '../onboarding_coordinator.dart';
 import '../utils/onboarding_auth_navigation.dart';
 import '../utils/onboarding_invite_navigation.dart';
 import '../widgets/onboarding_buttons.dart';
-import '../widgets/onboarding_carousel.dart';
+import '../widgets/onboarding_logo_mark.dart';
 import '../widgets/onboarding_fields.dart';
 import '../widgets/onboarding_scaffold.dart';
 import '../widgets/onboarding_typography.dart';

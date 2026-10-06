@@ -74,10 +74,10 @@ def get_item(
     item_id: uuid.UUID,
 ) -> dict[str, Any]:
     require_membership(firebase_uid, baby_profile_id)
-    for row in list_registry_items(baby_profile_id):
-        if row["id"] == item_id:
-            return _item_json(row)
-    raise LookupError("Registry item not found.")
+    row = get_registry_item(baby_profile_id, item_id)
+    if row is None:
+        raise LookupError("Registry item not found.")
+    return _item_json(row)
 
 
 def create_item(

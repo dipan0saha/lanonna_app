@@ -18,7 +18,6 @@ import '../../features/home/presentation/home_activity_screen.dart';
 import '../../features/invitations/presentation/batch_invite_screen.dart';
 import '../../features/onboarding/domain/onboarding_routes.dart';
 import '../../features/onboarding/presentation/app_session.dart';
-import '../../features/onboarding/presentation/screens/onboarding_batch_invite_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_complete_profile_screen.dart';
 import '../../features/legal/presentation/legal_document_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_create_baby_screen.dart';
@@ -125,7 +124,8 @@ GoRouter createAppRouter(
       ),
       GoRoute(
         path: OnboardingRoutes.ownerInvite,
-        builder: (context, state) => const OnboardingBatchInviteScreen(),
+        builder: (context, state) =>
+            const BatchInviteScreen(mode: BatchInviteMode.onboarding),
       ),
       GoRoute(
         path: OnboardingRoutes.inviteAccept,
