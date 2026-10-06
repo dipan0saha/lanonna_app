@@ -266,7 +266,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 
 | ID | Requirement | Acceptance criteria | Implementation note |
 |----|-------------|---------------------|---------------------|
-| FR-BABY-001 | Create baby | Name required; optional gender, expected/actual birth, birth stats | API + SQL `baby_profiles` |
+| FR-BABY-001 | Create baby | Owner creates baby (onboarding first baby or in-app add); optional names (default **Baby**), gender, dates, avatar; in-app reuses same UI as FR-ONB-004 without first-moment/invite | `POST /v1/babies`; [`CreateBabyScreen`](../../apps/mobile/lib/features/baby/presentation/create_baby_screen.dart) |
 | FR-BABY-002 | Edit baby | Owner edits fields; soft delete supported | API |
 | FR-BABY-003 | Auto-select new profile | After create, home context switches to new baby (E2E-005) | Client state |
 | FR-BABY-004 | Followers management | Screen lists members and pending invites | `/baby-profile/followers` |
@@ -280,7 +280,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-HOME-001 | Section composition | All capabilities in §6.2–6.3 present as sections | Fixed Flutter layout |
 | FR-HOME-002 | Profile switch reload | Changing selected baby refreshes home content and title (E2E-004) | `HomeRepository.resolveSelectedBaby`; baby-scoped tabs (home, gallery, calendar, upcoming, export, batch invite) |
 | FR-HOME-003 | Pull to refresh | Home supports pull-to-refresh (E2E-021) | Client refresh |
-| FR-HOME-006 | Calendar/registry refresh | Calendar and Registry tabs support pull-to-refresh (E2E-021) | Client refresh |
+| FR-HOME-006 | Calendar/registry refresh | Calendar, Registry, and Gallery tabs refresh after mutations and support pull-to-refresh (E2E-021); gallery list/teasers see FR-GAL-013 | Client refresh; gallery uses `notifyGalleryDataChanged` |
 | FR-HOME-004 | Empty states | No baby profile shows CTA to create (E2E-020) | Empty state UI |
 | FR-HOME-005 | Hide rules | Welcome/countdown/checklist follow §6.2 visibility rules | Client + API fields |
 | FR-HOME-007 | Activity recap | Home teaser and `/home/activity` use the same **activity row** UI as Gallery (icon, summary, timestamp); full stream from `activity_events` (paginated, all event types) | `ActivityFeedCard`; `GET …/activity-events` |
@@ -301,6 +301,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-GAL-010 | Owner edit caption | Owner can edit photo caption from detail (E2E-008) | API update; follower read-only |
 | FR-GAL-011 | Gallery recent activity | On **Gallery** (all photos), section shows up to **6** gallery-scoped activity rows (`photo_squish`, `photo_comment`): prototype row UI (icon, summary, timestamp below, dividers); empty card copy when none; all members | `GET …/activity-events?scope=gallery`; `ActivityFeedCard` |
 | FR-GAL-012 | Grid social badges | Photo tiles show comment and squish count chips when &gt; 0 | `GalleryPhotoGrid`; list API counts |
+| FR-GAL-013 | Gallery list refresh | After upload, delete, squish, or comment, gallery routes and home photo teasers update without manual pull-to-refresh | `GalleryRepository` (`ChangeNotifier`); `notifyGalleryDataChanged`; `BabyContextReload` on shell tabs; upload polls by `photoId` for thumb ready |
 
 ### 7.7 Calendar — FR-CAL
 
@@ -566,7 +567,7 @@ Aligned with `apps/mobile/lib/core/router/app_router.dart` and `features/onboard
 | galleryRecent | `/gallery/recent` | Recent |
 | galleryPhoto | `/gallery/photo/:id` | Photo detail |
 | gamification | `/gamification` | Fun / gamification |
-| babyCreate | `/baby/create` | Create baby (post-onboarding) |
+| babyCreate | `/baby/create` | Add baby (in-app); shared `CreateBabyScreen` (`CreateBabyMode.inApp`) |
 | babyEdit | `/baby/:babyId/edit` | Edit baby |
 | babyFollowers | `/baby/:babyId/followers` | Followers management |
 | babyAnnouncement | `/baby/:babyId/announcement` | Birth announcement view |

@@ -104,7 +104,9 @@ Future<Widget> bootstrapLaNonnaApp() async {
       Provider<ApiClient>.value(value: apiClient),
       Provider<OnboardingRepository>.value(value: onboardingRepository),
       Provider<HomeRepository>.value(value: homeRepository),
-      Provider<GalleryRepository>.value(value: galleryRepository),
+      ChangeNotifierProvider<GalleryRepository>.value(
+        value: galleryRepository,
+      ),
       ChangeNotifierProvider<CalendarRepository>.value(
         value: calendarRepository,
       ),

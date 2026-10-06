@@ -54,8 +54,8 @@ void main() {
         providers: [
           ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
           Provider<HomeRepository>(create: (_) => _FakeHomeRepository(baby)),
-          Provider<CalendarRepository>(create: (_) => _FakeCalendarRepository()),
-          Provider<GalleryRepository>(create: (_) => _FakeGalleryRepository()),
+          ChangeNotifierProvider<CalendarRepository>(create: (_) => _FakeCalendarRepository()),
+          ChangeNotifierProvider<GalleryRepository>(create: (_) => _FakeGalleryRepository()),
         ],
         child: MaterialApp(
           theme: AppTheme.light,

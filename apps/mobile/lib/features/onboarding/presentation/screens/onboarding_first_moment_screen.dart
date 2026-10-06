@@ -10,6 +10,7 @@ import '../../../../core/api/api_client.dart';
 import '../../../../core/api/api_error_message.dart';
 import '../../../../core/input/app_text_input_kind.dart';
 import '../../../gallery/presentation/upload/run_gallery_photo_upload.dart';
+import '../../../gallery/domain/gallery_refresh.dart';
 import '../../../../core/constants/first_moment_presets.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/create_baby_draft.dart';
@@ -176,6 +177,7 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
           imageFile: File(_photoFile!.path),
           api: api,
         );
+        if (mounted) notifyGalleryDataChanged(context);
       }
 
       await context.read<OnboardingCoordinator>().setStep(OnboardingStep.batchInvite);

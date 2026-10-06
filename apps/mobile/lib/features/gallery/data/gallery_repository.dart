@@ -1,10 +1,17 @@
+import 'package:flutter/foundation.dart';
+
 import '../../../core/api/api_client.dart';
 import 'models/photo_models.dart';
 
-class GalleryRepository {
+class GalleryRepository extends ChangeNotifier {
   GalleryRepository(this._api);
 
   final ApiClient _api;
+
+  void _markGalleryChanged() => notifyListeners();
+
+  /// Uploads and other flows outside this repository call this after mutating gallery data.
+  void markGalleryChanged() => _markGalleryChanged();
 
   Future<List<PhotoSummary>> listPhotos(
     String babyId, {
@@ -38,11 +45,13 @@ class GalleryRepository {
 
   Future<void> deletePhoto(String babyId, String photoId) async {
     await _api.deleteJson('/v1/babies/$babyId/photos/$photoId');
+    _markGalleryChanged();
   }
 
   Future<bool> toggleSquish(String babyId, String photoId) async {
     final json =
         await _api.postJson('/v1/babies/$babyId/photos/$photoId/squish');
+    _markGalleryChanged();
     return json['squished'] as bool? ?? false;
   }
 
@@ -50,6 +59,7 @@ class GalleryRepository {
     await _api.postJson('/v1/babies/$babyId/photos/$photoId/comments', body: {
       'body': body,
     });
+    _markGalleryChanged();
   }
 
   Future<void> deleteComment(
@@ -60,6 +70,7 @@ class GalleryRepository {
     await _api.deleteJson(
       '/v1/babies/$babyId/photos/$photoId/comments/$commentId',
     );
+    _markGalleryChanged();
   }
 
   Future<void> updateComment(

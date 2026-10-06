@@ -1,0 +1,4 @@
+enum CreateBabyMode {
+  onboarding,
+  inApp,
+}

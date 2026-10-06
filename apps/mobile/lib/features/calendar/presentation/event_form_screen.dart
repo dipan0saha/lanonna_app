@@ -18,6 +18,7 @@ import '../../../core/api/display_photo_upload.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../gallery/data/gallery_repository.dart';
 import '../../gallery/data/models/photo_models.dart';
+import '../../gallery/domain/gallery_refresh.dart';
 import '../../home/data/home_refresh_signal.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
@@ -180,6 +181,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
                   babyProfileId: baby.id,
                   imageFile: File(file.path),
                 );
+                if (context.mounted) notifyGalleryDataChanged(context);
                 Navigator.pop(context, (id: id, thumbUrl: null));
               },
             ),

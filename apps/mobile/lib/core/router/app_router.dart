@@ -41,7 +41,8 @@ import '../../features/account/presentation/account_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/account/presentation/notification_preferences_screen.dart';
 import '../../features/account/presentation/notifications_inbox_screen.dart';
-import '../../features/account/presentation/baby_create_screen.dart';
+import '../../features/baby/domain/create_baby_mode.dart';
+import '../../features/baby/presentation/create_baby_screen.dart';
 import '../../features/account/presentation/baby_edit_screen.dart';
 import '../../features/account/presentation/followers_screen.dart';
 import '../../features/announcement/presentation/announcement_card_screen.dart';
@@ -200,7 +201,7 @@ GoRouter createAppRouter(
       GoRoute(
         path: '/baby/create',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const BabyCreateScreen(),
+        builder: (context, state) => const CreateBabyScreen(mode: CreateBabyMode.inApp),
       ),
       GoRoute(
         path: '/baby/:babyId/edit',

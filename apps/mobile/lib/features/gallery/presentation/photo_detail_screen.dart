@@ -16,6 +16,7 @@ import '../../home/data/selected_baby_store.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../data/gallery_repository.dart';
 import '../data/models/photo_models.dart';
+import '../domain/gallery_refresh.dart';
 import '../domain/gallery_routes.dart';
 
 class PhotoDetailScreen extends StatefulWidget {
@@ -132,6 +133,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     try {
       await context.read<GalleryRepository>().toggleSquish(baby.id, detail.id);
       await _load();
+      if (mounted) notifyGalleryDataChanged(context);
     } catch (e) {
       _showApiError(e);
     }
@@ -154,6 +156,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       );
       _commentController.clear();
       await _load();
+      if (mounted) notifyGalleryDataChanged(context);
     } catch (e) {
       _showApiError(e);
     }
@@ -254,6 +257,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
         comment.id,
       );
       await _load();
+      if (mounted) notifyGalleryDataChanged(context);
     } catch (e) {
       _showApiError(e);
     }
@@ -285,7 +289,10 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     if (ok != true) return;
     try {
       await context.read<GalleryRepository>().deletePhoto(baby.id, detail.id);
-      if (mounted) context.pop();
+      if (mounted) {
+        notifyGalleryDataChanged(context);
+        context.pop();
+      }
     } catch (e) {
       _showApiError(e);
     }

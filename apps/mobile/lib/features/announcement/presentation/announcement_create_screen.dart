@@ -14,6 +14,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../onboarding/presentation/widgets/onboarding_prototype_widgets.dart';
+import '../../gallery/domain/gallery_refresh.dart';
 import '../data/announcement_repository.dart';
 
 class AnnouncementCreateScreen extends StatefulWidget {
@@ -134,6 +135,7 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
           babyProfileId: widget.babyId,
           imageFile: File(_photo!.path),
         );
+        if (mounted) notifyGalleryDataChanged(context);
       }
       await context.read<AnnouncementRepository>().save(
         widget.babyId,

@@ -29,14 +29,14 @@ lanonna_app/
 | Module | Shell route | Notes |
 |--------|-------------|--------|
 | `home/` | `/home` | Owner expecting/born; `home-summary`; announce arrival |
-| `gallery/` | `/gallery`, `/gallery/recent`, `/gallery/favorites` | Grid with comment/squish badges when count **> 0** (FR-GAL-012); detail, squish, comments (create/edit/delete), owner baby tags (“In this photo”); `/gallery/photo/:id`; all-mode **Recent Activity** from `GET …/activity-events?scope=gallery` (squish/comment events; prototype row UI) |
+| `gallery/` | `/gallery`, `/gallery/recent`, `/gallery/favorites` | Grid with comment/squish badges when count **> 0** (FR-GAL-012); detail, squish, comments (create/edit/delete), owner baby tags (“In this photo”); `/gallery/photo/:id`; all-mode **Recent Activity** from `GET …/activity-events?scope=gallery` (squish/comment events; prototype row UI). **`GalleryRepository`** is a `ChangeNotifier` (like calendar); list uploads/mutations call **`notifyGalleryDataChanged`** so shell tabs + home teasers reload; FAB upload polls processing by **`photoId`** before refreshing thumbs. |
 | `calendar/` | `/calendar` | Month + upcoming; event CRUD; static AI suggestions (`AiSuggestionsScaffold` + asset) |
 | `registry/` | `/registry` | Needed/purchased, shipping, purchase claim; AI suggestions |
-| `fun/` | `/gamification` | Names + Predictions tabs (**Family Fun**) |
-| `account/` | `/profile`, `/account/edit`, `/baby/create`, `/baby/:id/edit`, `/baby/:id/followers` | Profile card, baby list, add/edit baby |
+| `baby/` | (shared) | `CreateBabyScreen` + submit helper — onboarding and `/baby/create` modes |
+| `account/` | `/profile`, `/account/edit`, `/baby/create`, `/baby/:id/edit`, `/baby/:id/followers` | Profile card, baby list, add/edit baby; **`/baby/create`** uses shared [`CreateBabyScreen`](../../apps/mobile/lib/features/baby/presentation/create_baby_screen.dart) (`CreateBabyMode.inApp`) — same prototype create-baby UX as onboarding, without first-moment/invite |
 | `announcement/` | `/baby/:id/announcement`, `/baby/:id/announcement/create` | Keepsake card (signed `photo_display_url` on GET) + create |
 | `shell/` | (sheet from tab `HomeTopBar`) | Baby switcher; **My Account** footer |
-| `onboarding/`, `invitations/` | Onboarding + deep links | Owner/follower/co-owner paths |
+| `onboarding/`, `invitations/` | Onboarding + deep links | Owner/follower/co-owner paths; owner create-baby route wraps shared `CreateBabyScreen` (`CreateBabyMode.onboarding`) |
 
 Repositories are registered in `bootstrap.dart`; routes in `core/router/app_router.dart`. Legacy redirects: `/login` → onboarding login, `/role-selection` → owner carousel. Shared API models (e.g. `BabySummary`) live under `apps/mobile/lib/core/domain/`. **Selected baby:** `HomeRepository.resolveSelectedBaby(SelectedBabyStore)` — use for baby-scoped loads (not raw `selectedBabyId` alone). **Route-scoped baby:** `HomeRepository.babyById(id)` for deep links and screens keyed by `babyId` in the URL. Static catalogs: `assets/calendar/event_suggestions.json`, `assets/registry/registry_suggestions.json`.
 

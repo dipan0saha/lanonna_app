@@ -10,7 +10,6 @@ import 'upload/run_gallery_photo_upload.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
-import '../../home/data/home_refresh_signal.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/presentation/baby_context_reload.dart';
 import '../../home/data/models/home_summary.dart';
@@ -19,6 +18,7 @@ import '../../home/data/selected_baby_store.dart';
 import '../../shell/presentation/shell_tab_layout.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../data/gallery_repository.dart';
+import '../domain/gallery_refresh.dart';
 import '../data/models/photo_models.dart';
 import '../domain/gallery_routes.dart';
 import 'sheets/photo_source_sheet.dart';
@@ -43,6 +43,7 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
   String? _error;
   var _loading = true;
   var _uploading = false;
+  GalleryRepository? _galleryRepo;
 
   bool get _isAllMode => widget.mode == GalleryViewMode.all;
 
@@ -67,8 +68,12 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
   @override
   void initState() {
     super.initState();
+    _galleryRepo = context.read<GalleryRepository>();
+    _galleryRepo!.addListener(_onGalleryChanged);
     _load();
   }
+
+  void _onGalleryChanged() => _load();
 
   @override
   void didChangeDependencies() {
@@ -78,6 +83,7 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
 
   @override
   void dispose() {
+    _galleryRepo?.removeListener(_onGalleryChanged);
     disposeBabyContextListeners();
     super.dispose();
   }
@@ -140,18 +146,20 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
     if (file == null) return;
     setState(() => _uploading = true);
     try {
-      await runGalleryPhotoUpload(
+      final photoId = await runGalleryPhotoUpload(
         context: context,
         babyProfileId: baby.id,
         imageFile: file,
         api: context.read<ApiClient>(),
       );
-      await _pollUntilReady(baby.id);
       if (mounted) {
-        context.read<HomeRefreshSignal>().notifyHomeShouldRefresh();
+        notifyGalleryDataChanged(context);
         AppSnackBar.showInfo(context, 'Photo uploaded');
       }
-      await _load();
+      await _pollUntilReady(baby.id, photoId);
+      if (mounted) {
+        notifyGalleryDataChanged(context);
+      }
     } catch (e) {
       if (mounted) {
         AppSnackBar.showAlert(context, 'Upload failed: $e');
@@ -161,12 +169,22 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
     }
   }
 
-  Future<void> _pollUntilReady(String babyId) async {
+  Future<void> _pollUntilReady(String babyId, String photoId) async {
     final galleryRepo = context.read<GalleryRepository>();
     for (var i = 0; i < 12; i++) {
       await Future<void>.delayed(const Duration(seconds: 2));
+      if (!mounted) return;
       final photos = await galleryRepo.listPhotos(babyId);
-      if (photos.any((p) => p.status == 'ready' && p.thumbUrl != null)) {
+      PhotoSummary? match;
+      for (final p in photos) {
+        if (p.id == photoId) {
+          match = p;
+          break;
+        }
+      }
+      if (match != null &&
+          match.status == 'ready' &&
+          match.thumbUrl != null) {
         return;
       }
     }

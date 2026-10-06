@@ -48,8 +48,10 @@ Follow [platform-architecture.md](platform-architecture.md) Month 1–2:
 11. **Done (invites):** cold/warm `lanonna://app/invite-accept` via `app_links` — QA per [development.md](development.md) invite section
 12. **Done (settings polish):** `/settings`, per-channel notification prefs (migration `016`), Help mailto (`SUPPORT_EMAIL`), l10n pilot (`app_en.arb`); sync dev API URL via [flavors/README.md](../../apps/mobile/flavors/README.md)
 13. **Done (gallery gaps):** comment edit (FR-GAL-007 PATCH + UI), photo baby tags v1 (FR-GAL-008, migration `019`), `resolveSelectedBaby` on upcoming/export/batch invite, gallery `home-summary` error banner, signed-URL image retry — redeploy API after schema/API changes (`services/api/scripts/deploy.sh`)
-14. **Release APK to Drive:** `./scripts/ship_release_apk_to_drive.sh` (dev flavor; overwrites `lanonna_app.apk` under `LANONNA_DRIVE_DIR`)
-15. **Beta gate:** `./scripts/run-beta-gate.sh` (tests + optional API deploy); `./scripts/setup-expired-invites-scheduler.sh`; force-update via `app_versions` + `GET /v1/app/version` (Flutter `AppVersionGate`)
+14. **Done (gallery refresh):** `GalleryRepository` + `notifyGalleryDataChanged` + `BabyContextReload` — gallery grid, sub-routes, and home photo teasers refresh after upload/delete/squish/comment without manual pull-to-refresh (FR-GAL-013)
+15. **Done (unified create baby):** `CreateBabyScreen` — onboarding + `/baby/create` share one form/submit pipeline (`CreateBabyMode`)
+16. **Release APK to Drive:** `./scripts/ship_release_apk_to_drive.sh` (dev flavor; overwrites `lanonna_app.apk` under `LANONNA_DRIVE_DIR`)
+17. **Beta gate:** `./scripts/run-beta-gate.sh` (tests + optional API deploy); `./scripts/setup-expired-invites-scheduler.sh`; force-update via `app_versions` + `GET /v1/app/version` (Flutter `AppVersionGate`)
 
 ## If worker URL changes
 
