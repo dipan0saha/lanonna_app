@@ -1,10 +1,29 @@
+import 'package:flutter/material.dart';
+
 abstract final class AppMetrics {
   /// Onboarding pages and in-app sections (PRD §5.1).
   static const double horizontalPadding = 26;
 
+  /// Stack subpages (account, settings, followers): single horizontal inset.
+  static EdgeInsets get subpageScrollPadding => const EdgeInsets.fromLTRB(
+        horizontalPadding,
+        16,
+        horizontalPadding,
+        24,
+      );
+
   /// Home hero / welcome cards (prototype shell).
   static const double homeHeroRadius = 20;
   static const double fieldRadius = 12;
+  /// Gap between block section title and content below (cards, surfaces, lists).
+  static const double sectionTitleGap = 10;
+
+  /// Vertical space between major sections on the same scroll.
+  static const double sectionBlockSpacing = 16;
+
+  /// Fixed height for home [HomeSectionHeader] title row (title + trailing).
+  static const double sectionHeaderRowHeight = 24;
+
   /// Gap between field label and input (prototype `.field-label`).
   static const double fieldLabelGap = 6;
   /// Vertical space between stacked form fields (prototype `.field` margin).

@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_metrics.dart';
+import '../../../core/widgets/app_section_title.dart';
 import '../../../core/widgets/vote_count_pill.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/domain/baby_summary.dart';
@@ -151,14 +153,10 @@ class _PredictionsTabState extends State<PredictionsTab> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Row(
-            children: [
-              Text('Boy or Girl?', style: context.textStyles.labelLarge),
-              const Spacer(),
-              if (total > 0) VoteCountPill(total: total),
-            ],
+          AppSectionTitle(
+            title: 'Boy or Girl?',
+            action: total > 0 ? VoteCountPill(total: total) : null,
           ),
-          const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
@@ -203,9 +201,8 @@ class _PredictionsTabState extends State<PredictionsTab> {
               ),
             ),
           TextButton(onPressed: _showVoters, child: const Text('View who voted')),
-          const SizedBox(height: 12),
-          Text('Birthdate guesses', style: context.textStyles.labelLarge),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppMetrics.sectionBlockSpacing),
+          const AppSectionTitle(title: 'Birthdate guesses'),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(12),
@@ -254,7 +251,8 @@ class _PredictionsTabState extends State<PredictionsTab> {
               ),
             ),
           ),
-          Text('Popular Dates', style: context.textStyles.labelLarge),
+          const SizedBox(height: AppMetrics.sectionBlockSpacing),
+          const AppSectionTitle(title: 'Popular Dates'),
           if (p == null || p.birthdateHistogram.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 8),

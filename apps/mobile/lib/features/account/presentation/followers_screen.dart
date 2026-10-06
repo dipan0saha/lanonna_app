@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/theme/app_metrics.dart';
+import '../../../core/widgets/app_bordered_surface.dart';
+import '../../../core/widgets/app_section_title.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
@@ -49,7 +52,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
-              padding: const EdgeInsets.all(16),
+              padding: AppMetrics.subpageScrollPadding,
               children: [
                 Text(
                   '${count} follower${count == 1 ? '' : 's'}',
@@ -59,7 +62,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
                 if (_members.isEmpty && _invites.isEmpty)
                   const Text('No followers yet - invite family to join.'),
                 for (final m in _members)
-                  Card(
+                  AppBorderedSurface(
                     child: ListTile(
                       title: Text(m.displayName),
                       subtitle: Text(m.relationshipLabel ?? m.email ?? m.role),
@@ -67,8 +70,8 @@ class _FollowersScreenState extends State<FollowersScreen> {
                     ),
                   ),
                 if (_invites.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  Text('Pending invites', style: context.textStyles.labelLarge),
+                  const SizedBox(height: AppMetrics.sectionBlockSpacing),
+                  const AppSectionTitle(title: 'Pending invites'),
                   for (final inv in _invites)
                     ListTile(
                       title: Text(inv.email),

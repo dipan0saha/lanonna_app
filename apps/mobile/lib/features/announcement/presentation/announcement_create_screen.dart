@@ -14,6 +14,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../onboarding/presentation/widgets/onboarding_prototype_widgets.dart';
+import '../../onboarding/presentation/widgets/onboarding_typography.dart';
 import '../../gallery/domain/gallery_refresh.dart';
 import '../data/announcement_repository.dart';
 
@@ -210,7 +211,8 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
             kind: AppTextInputKind.personName,
             controller: _last,
           ),
-          Text('Gender', style: context.textStyles.labelLarge),
+          const OnboardingFieldLabel('Gender'),
+          const SizedBox(height: 8),
           Row(
             children: [
               _genderSegment('Boy', 'male'),

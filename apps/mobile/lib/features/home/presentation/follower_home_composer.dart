@@ -9,7 +9,7 @@ import 'widgets/home_family_insight_gender_card.dart';
 import 'widgets/home_follower_quick_actions.dart';
 import 'widgets/home_insight_card.dart';
 import 'widgets/home_prd_sections.dart';
-import 'widgets/home_section_header.dart';
+import 'widgets/home_scroll_section.dart';
 import 'widgets/owner_expecting_hero_card.dart';
 
 class FollowerHomeComposer extends StatelessWidget {
@@ -61,24 +61,26 @@ class FollowerHomeComposer extends StatelessWidget {
             followerFootnote:
                 "You'll be notified the moment $babyName arrives.",
           ),
-          const HomeSectionHeader(title: 'Quick Actions'),
-          HomeFollowerQuickActions(
-            onVoteInFun: onVoteInFun,
-            onViewGallery: onViewGallery,
+          HomeScrollSection(
+            title: 'Quick Actions',
+            body: HomeFollowerQuickActions(
+              onVoteInFun: onVoteInFun,
+              onViewGallery: onViewGallery,
+            ),
           ),
           if (s != null && s.showRichInsight)
             HomeFamilyInsightGenderCard(
               summary: s,
               onViewAll: () => context.go(AppRoutes.gamification),
             )
-          else ...[
-            const HomeSectionHeader(title: 'Family Insight'),
-            const HomeInsightCard(
-              message:
-                  'No family votes yet. Check back once everyone starts playing along in Fun.',
+          else
+            const HomeScrollSection(
+              title: 'Family Insight',
+              body: HomeInsightCard(
+                message:
+                    'No family votes yet. Check back once everyone starts playing along in Fun.',
+              ),
             ),
-            const SizedBox(height: 18),
-          ],
           if (s != null)
             HomePrdSections(
               summary: s,
@@ -99,10 +101,12 @@ class FollowerHomeComposer extends StatelessWidget {
             babyId: baby.id,
             onSignedUrlError: onRefresh,
           ),
-        const HomeSectionHeader(title: 'Quick Actions'),
-        HomeFollowerQuickActions(
-          onVoteInFun: onVoteInFun,
-          onViewGallery: onViewGallery,
+        HomeScrollSection(
+          title: 'Quick Actions',
+          body: HomeFollowerQuickActions(
+            onVoteInFun: onVoteInFun,
+            onViewGallery: onViewGallery,
+          ),
         ),
         if (s != null)
           HomePrdSections(

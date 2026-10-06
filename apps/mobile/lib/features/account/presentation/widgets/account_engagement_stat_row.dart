@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_bordered_surface.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../data/account_repository.dart';
 
@@ -12,17 +13,15 @@ class AccountEngagementStatRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = context.textStyles.labelSmall?.copyWith(color: AppColors.muted);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-        child: Row(
-          children: [
-            _cell(context, stats.photosSquished.toString(), 'Photos Squished', label),
-            _cell(context, stats.eventsAttended.toString(), 'Events Attended', label),
-            _cell(context, stats.itemsBought.toString(), 'Items Bought', label),
-            _cell(context, stats.comments.toString(), 'Comments', label),
-          ],
-        ),
+    return AppBorderedSurface(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      child: Row(
+        children: [
+          _cell(context, stats.photosSquished.toString(), 'Photos Squished', label),
+          _cell(context, stats.eventsAttended.toString(), 'Events Attended', label),
+          _cell(context, stats.itemsBought.toString(), 'Items Bought', label),
+          _cell(context, stats.comments.toString(), 'Comments', label),
+        ],
       ),
     );
   }

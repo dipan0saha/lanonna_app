@@ -12,6 +12,7 @@ import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/widgets/app_country_dropdown_field.dart';
 import '../../../core/widgets/app_labeled_text_field.dart';
 import '../../../core/api/display_photo_upload.dart';
+import '../../../core/theme/app_metrics.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../onboarding/presentation/widgets/onboarding_prototype_widgets.dart';
 import '../data/account_repository.dart';
@@ -141,7 +142,7 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
     return PrototypeSubpageScaffold(
       title: 'Edit Profile',
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: AppMetrics.subpageScrollPadding,
         child: ListView(
           children: [
             Center(

@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/api/api_error_message.dart';
+import '../../../core/theme/app_metrics.dart';
+import '../../../core/widgets/app_section_title.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
@@ -85,7 +87,7 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
     return PrototypeSubpageScaffold(
       title: 'Export baby data',
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: AppMetrics.subpageScrollPadding,
         child: _loading
             ? const Center(child: CircularProgressIndicator())
             : Column(
@@ -97,7 +99,7 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
                   ),
                   const SizedBox(height: 16),
                   if (job != null) ...[
-                    Text('Status: ${job.status}', style: context.textStyles.labelLarge),
+                    AppSectionTitle(title: 'Status: ${job.status}'),
                     if (job.errorMessage != null)
                       Text(
                         job.errorMessage!,
@@ -105,7 +107,7 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
                           color: Theme.of(context).colorScheme.error,
                         ),
                       ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppMetrics.sectionBlockSpacing),
                   ],
                   FilledButton(
                     onPressed: _requesting ? null : _requestExport,

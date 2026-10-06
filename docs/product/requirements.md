@@ -375,7 +375,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 
 | ID | Requirement | Acceptance criteria | Implementation note |
 |----|-------------|---------------------|---------------------|
-| FR-SHELL-001 | Subpage header only | Tab drill-downs, settings/account stack, and invite subpages show back + title; home top bar appears only on tab roots | `ShellTabLayout` + `shellHomeTopBar`; `PrototypeSubpageScaffold` for subpages (see §5.2, FR-INV-008) |
+| FR-SHELL-001 | Subpage header only | Tab drill-downs, settings/account stack, and invite subpages show back + title; home top bar appears only on tab roots; My Account uses subpage scaffold with bordered tiles inset to `AppMetrics.horizontalPadding` (26px); home and subpage blocks use consistent section title→content rhythm (`sectionTitleGap`, `HomeScrollSection` / `AppSectionTitle`) | `ShellTabLayout` + `shellHomeTopBar`; `PrototypeSubpageScaffold` for subpages; `AppBorderedSurface` + `subpageScrollPadding`; `HomeScrollSection` / `AppSectionTitle` (see §5.2, FR-INV-008, #410) |
 
 ### 7.14 Background jobs
 

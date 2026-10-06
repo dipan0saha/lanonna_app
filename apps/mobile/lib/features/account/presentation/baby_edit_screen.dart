@@ -11,12 +11,14 @@ import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/widgets/app_labeled_text_field.dart';
 import '../../../core/api/display_photo_upload.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../home/data/home_repository.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../../onboarding/presentation/utils/onboarding_baby_helpers.dart';
 import '../../onboarding/presentation/widgets/onboarding_prototype_widgets.dart';
+import '../../onboarding/presentation/widgets/onboarding_typography.dart';
 
 class BabyEditScreen extends StatefulWidget {
   const BabyEditScreen({super.key, required this.babyId});
@@ -119,7 +121,7 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
     return PrototypeSubpageScaffold(
       title: 'Edit Baby',
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: AppMetrics.subpageScrollPadding,
         children: [
           if (_isOwner) ...[
             Center(
@@ -141,7 +143,8 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
             kind: AppTextInputKind.personName,
             controller: _name,
           ),
-          Text('Gender', style: context.textStyles.labelLarge),
+          const OnboardingFieldLabel('Gender'),
+          const SizedBox(height: 8),
           Row(
             children: [
               Expanded(

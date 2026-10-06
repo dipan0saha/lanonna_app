@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
+import '../../../core/widgets/app_section_title.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../data/notifications_repository.dart';
 
@@ -65,13 +67,12 @@ class _NotificationPreferencesScreenState extends State<NotificationPreferencesS
       body: _loading || prefs == null
           ? const Center(child: CircularProgressIndicator())
           : ListView(
-              padding: const EdgeInsets.all(16),
+              padding: AppMetrics.subpageScrollPadding,
               children: [
-                Text(
-                  'How often would you like updates?',
+                AppSectionTitle(
+                  title: 'How often would you like updates?',
                   style: context.textStyles.titleSmall,
                 ),
-                const SizedBox(height: 12),
                 _digestTile('realtime', 'Real-time', prefs),
                 _digestTile('daily', 'Daily digest', prefs),
                 _digestTile('weekly', 'Weekly digest', prefs),
@@ -88,9 +89,11 @@ class _NotificationPreferencesScreenState extends State<NotificationPreferencesS
                   onChanged: (v) =>
                       setState(() => _prefs = prefs.copyWith(emailDigestEnabled: v)),
                 ),
-                const SizedBox(height: 16),
-                Text('Notification channels', style: context.textStyles.titleSmall),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppMetrics.sectionBlockSpacing),
+                AppSectionTitle(
+                  title: 'Notification channels',
+                  style: context.textStyles.titleSmall,
+                ),
                 SwitchListTile(
                   title: Text(l10n.notificationChannelGallery),
                   subtitle: Text(l10n.notificationChannelGallerySubtitle),

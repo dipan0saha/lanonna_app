@@ -3,11 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_metrics.dart';
 import '../../../account/data/account_repository.dart';
 import '../../../registry/domain/registry_routes.dart';
 import '../../data/models/home_summary.dart';
-import 'home_section_header.dart';
+import 'home_scroll_section.dart';
 
 class HomeNewFollowersSection extends StatelessWidget {
   const HomeNewFollowersSection({
@@ -22,28 +21,22 @@ class HomeNewFollowersSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (followers.isEmpty) return const SizedBox.shrink();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const HomeSectionHeader(title: 'New Followers'),
-        Card(
-          margin: EdgeInsets.symmetric(horizontal: AppMetrics.horizontalPadding),
-          child: Column(
-            children: [
-              for (final f in followers)
-                ListTile(
-                  title: Text(f.displayName),
-                  trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
-                ),
-              TextButton(
-                onPressed: () => context.push('/baby/$babyId/followers'),
-                child: const Text('Manage followers'),
-              ),
-            ],
+    return HomeScrollSection.bordered(
+      title: 'New Followers',
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: [
+          for (final f in followers)
+            ListTile(
+              title: Text(f.displayName),
+              trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
+            ),
+          TextButton(
+            onPressed: () => context.push('/baby/$babyId/followers'),
+            child: const Text('Manage followers'),
           ),
-        ),
-        const SizedBox(height: 12),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -63,33 +56,27 @@ class HomeInviteStatusSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (invites.isEmpty) return const SizedBox.shrink();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const HomeSectionHeader(title: 'Invite Status'),
-        Card(
-          margin: EdgeInsets.symmetric(horizontal: AppMetrics.horizontalPadding),
-          child: Column(
-            children: [
-              for (final inv in invites)
-                ListTile(
-                  title: Text(inv.inviteeEmail),
-                  subtitle: Text(inv.status),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () async {
-                      await context
-                          .read<AccountRepository>()
-                          .revokeInvitation(babyId, inv.id);
-                      onChanged();
-                    },
-                  ),
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-      ],
+    return HomeScrollSection.bordered(
+      title: 'Invite Status',
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: [
+          for (final inv in invites)
+            ListTile(
+              title: Text(inv.inviteeEmail),
+              subtitle: Text(inv.status),
+              trailing: IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () async {
+                  await context
+                      .read<AccountRepository>()
+                      .revokeInvitation(babyId, inv.id);
+                  onChanged();
+                },
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -102,28 +89,22 @@ class HomeRegistryHighlightsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) return const SizedBox.shrink();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const HomeSectionHeader(title: 'Registry Highlights'),
-        Card(
-          margin: EdgeInsets.symmetric(horizontal: AppMetrics.horizontalPadding),
-          child: Column(
-            children: items
-                .map(
-                  (item) => ListTile(
-                    title: Text(item.name),
-                    trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
-                    onTap: () => context.push(
-                      RegistryRoutes.itemEdit(item.id),
-                    ),
-                  ),
-                )
-                .toList(),
-          ),
-        ),
-        const SizedBox(height: 12),
-      ],
+    return HomeScrollSection.bordered(
+      title: 'Registry Highlights',
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: items
+            .map(
+              (item) => ListTile(
+                title: Text(item.name),
+                trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
+                onTap: () => context.push(
+                  RegistryRoutes.itemEdit(item.id),
+                ),
+              ),
+            )
+            .toList(),
+      ),
     );
   }
 }
@@ -141,27 +122,21 @@ class HomeRecentPurchasesSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (purchases.isEmpty) return const SizedBox.shrink();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const HomeSectionHeader(title: 'Recent Registry Purchases'),
-        Card(
-          margin: EdgeInsets.symmetric(horizontal: AppMetrics.horizontalPadding),
-          child: Column(
-            children: purchases.map((p) {
-              final subtitle = isOwner && p.purchaserDisplayName != null
-                  ? '${p.purchaserDisplayName} is buying'
-                  : 'Recently claimed';
-              return ListTile(
-                title: Text(p.itemName),
-                subtitle: Text(subtitle),
-                onTap: () => context.push(RegistryRoutes.itemEdit(p.itemId)),
-              );
-            }).toList(),
-          ),
-        ),
-        const SizedBox(height: 12),
-      ],
+    return HomeScrollSection.bordered(
+      title: 'Recent Registry Purchases',
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: purchases.map((p) {
+          final subtitle = isOwner && p.purchaserDisplayName != null
+              ? '${p.purchaserDisplayName} is buying'
+              : 'Recently claimed';
+          return ListTile(
+            title: Text(p.itemName),
+            subtitle: Text(subtitle),
+            onTap: () => context.push(RegistryRoutes.itemEdit(p.itemId)),
+          );
+        }).toList(),
+      ),
     );
   }
 }

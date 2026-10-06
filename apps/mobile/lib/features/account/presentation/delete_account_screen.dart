@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/auth/auth_repository.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
@@ -80,7 +81,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
     return PrototypeSubpageScaffold(
       title: l10n.deleteAccountTitle,
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: AppMetrics.subpageScrollPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_metrics.dart';
+import '../../../core/widgets/app_section_title.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/media/cached_signed_image.dart';
@@ -105,7 +107,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                           padding: const EdgeInsets.all(16),
                           children: [
                             if (results.photos.isNotEmpty) ...[
-                              Text('Photos', style: context.textStyles.labelLarge),
+                              const AppSectionTitle(title: 'Photos'),
                               for (final p in results.photos)
                                 ListTile(
                                   leading: p.thumbUrl != null
@@ -129,8 +131,8 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                                 ),
                             ],
                             if (results.events.isNotEmpty) ...[
-                              const SizedBox(height: 12),
-                              Text('Events', style: context.textStyles.labelLarge),
+                              const SizedBox(height: AppMetrics.sectionBlockSpacing),
+                              const AppSectionTitle(title: 'Events'),
                               for (final e in results.events)
                                 ListTile(
                                   leading: const Icon(Icons.event_outlined),
@@ -142,8 +144,8 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                                 ),
                             ],
                             if (results.registryItems.isNotEmpty) ...[
-                              const SizedBox(height: 12),
-                              Text('Registry', style: context.textStyles.labelLarge),
+                              const SizedBox(height: AppMetrics.sectionBlockSpacing),
+                              const AppSectionTitle(title: 'Registry'),
                               for (final r in results.registryItems)
                                 ListTile(
                                   leading: const Icon(Icons.card_giftcard_outlined),
@@ -152,8 +154,8 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                                 ),
                             ],
                             if (results.nameSuggestions.isNotEmpty) ...[
-                              const SizedBox(height: 12),
-                              Text('Names', style: context.textStyles.labelLarge),
+                              const SizedBox(height: AppMetrics.sectionBlockSpacing),
+                              const AppSectionTitle(title: 'Names'),
                               for (final n in results.nameSuggestions)
                                 ListTile(
                                   leading: const Icon(Icons.favorite_outline),

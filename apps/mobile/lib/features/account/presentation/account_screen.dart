@@ -4,8 +4,12 @@ import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
 import '../../../core/auth/auth_repository.dart';
+import '../../../core/theme/app_metrics.dart';
+import '../../../core/widgets/app_bordered_surface.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_semantics.dart';
+import '../../../core/widgets/app_section_title.dart';
+import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../home/data/home_refresh_signal.dart';
@@ -110,9 +114,8 @@ class _AccountScreenState extends State<AccountScreen> {
     final email = payload?.email ?? user?.email;
     final showOwnerPrefs = payload?.hasOwnerBaby ?? false;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('My Account')),
+    return PrototypeSubpageScaffold(
+      title: 'My Account',
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _loadError != null
@@ -132,7 +135,7 @@ class _AccountScreenState extends State<AccountScreen> {
           : RefreshIndicator(
               onRefresh: _load,
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: AppMetrics.subpageScrollPadding,
                 children: [
                   AccountProfileCard(
                     initials: _initials(payload?.displayName, email),
@@ -145,21 +148,15 @@ class _AccountScreenState extends State<AccountScreen> {
                   if (payload != null)
                     AccountEngagementStatRow(stats: payload.engagement),
                   const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text('Baby Profiles', style: context.textStyles.labelLarge),
-                      ),
-                      TextButton(
-                        onPressed: () => context.push('/baby/create'),
-                        child: const Text('+ Add New'),
-                      ),
-                    ],
+                  AppSectionTitle(
+                    title: 'Baby Profiles',
+                    action: TextButton(
+                      onPressed: () => context.push('/baby/create'),
+                      child: const Text('+ Add New'),
+                    ),
                   ),
-                  const SizedBox(height: 4),
                   for (final baby in payload?.babies ?? [])
-                    Card(
-                      margin: const EdgeInsets.only(bottom: 8),
+                    AppBorderedSurface(
                       child: ListTile(
                         leading: CircleAvatar(
                           backgroundColor: AppColors.peachTint,
@@ -187,14 +184,13 @@ class _AccountScreenState extends State<AccountScreen> {
                       ),
                     ),
                   if (payload?.storageUsage != null) ...[
-                    const SizedBox(height: 16),
-                    Text('Storage', style: context.textStyles.labelLarge),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppMetrics.sectionBlockSpacing),
+                    const AppSectionTitle(title: 'Storage'),
                     AccountStorageCard(usage: payload!.storageUsage!),
                   ],
-                  const SizedBox(height: 16),
-                  Text('Preferences', style: context.textStyles.labelLarge),
-                  Card(
+                  const SizedBox(height: AppMetrics.sectionBlockSpacing),
+                  const AppSectionTitle(title: 'Preferences'),
+                  AppBorderedSurface(
                     child: Column(
                       children: [
                         ListTile(
@@ -227,9 +223,9 @@ class _AccountScreenState extends State<AccountScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Text('Account', style: context.textStyles.labelLarge),
-                  Card(
+                  const SizedBox(height: AppMetrics.sectionBlockSpacing),
+                  const AppSectionTitle(title: 'Account'),
+                  AppBorderedSurface(
                     child: ListTile(
                       title: const Text(
                         'Delete account',

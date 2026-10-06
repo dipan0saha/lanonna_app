@@ -8,6 +8,7 @@ import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
+import '../../../core/widgets/app_section_title.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
@@ -236,18 +237,15 @@ class _RegistryScreenState extends State<RegistryScreen> with BabyContextReload 
                     ),
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                      child: Row(
-                        children: [
-                          Text('Needed', style: context.textStyles.labelLarge),
-                          const Spacer(),
-                          Text(
-                            'Priority: High first',
-                            style: context.textStyles.labelSmall?.copyWith(
-                              color: AppColors.muted,
-                            ),
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                      child: AppSectionTitle(
+                        title: 'Needed',
+                        action: Text(
+                          'Priority: High first',
+                          style: context.textStyles.labelSmall?.copyWith(
+                            color: AppColors.muted,
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
@@ -286,8 +284,13 @@ class _RegistryScreenState extends State<RegistryScreen> with BabyContextReload 
                   ),
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-                      child: Text('Purchased', style: context.textStyles.labelLarge),
+                      padding: const EdgeInsets.fromLTRB(
+                        16,
+                        AppMetrics.sectionBlockSpacing,
+                        16,
+                        0,
+                      ),
+                      child: const AppSectionTitle(title: 'Purchased'),
                     ),
                   ),
                   SliverToBoxAdapter(

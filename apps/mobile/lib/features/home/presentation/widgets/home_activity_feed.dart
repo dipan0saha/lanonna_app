@@ -5,7 +5,8 @@ import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/widgets/activity/activity_feed_card.dart';
 import '../../data/models/home_summary.dart';
 import '../../domain/app_routes.dart';
-import 'home_section_header.dart';
+import 'home_scroll_section.dart';
+import 'home_section_trailing.dart';
 
 class HomeActivityFeed extends StatelessWidget {
   const HomeActivityFeed({
@@ -24,27 +25,31 @@ class HomeActivityFeed extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) return const SizedBox.shrink();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (showSectionHeader)
-          HomeSectionHeader(
-            title: 'Activity Recap',
-            action: showViewAll
-                ? TextButton(
-                    onPressed: () => context.push(
-                      AppRoutes.homeActivity(babyId),
-                    ),
-                    child: const Text('View all'),
-                  )
-                : null,
-          ),
-        ActivityFeedCard(
-          items: items,
-          padding: EdgeInsets.symmetric(horizontal: AppMetrics.horizontalPadding),
-        ),
-        const SizedBox(height: 18),
-      ],
+
+    final body = ActivityFeedCard(
+      items: items,
+      padding: EdgeInsets.symmetric(horizontal: AppMetrics.horizontalPadding),
+    );
+
+    if (!showSectionHeader) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          body,
+          const SizedBox(height: AppMetrics.sectionBlockSpacing),
+        ],
+      );
+    }
+
+    return HomeScrollSection(
+      title: 'Activity Recap',
+      trailing: showViewAll
+          ? HomeSectionLink(
+              label: 'View all',
+              onPressed: () => context.push(AppRoutes.homeActivity(babyId)),
+            )
+          : null,
+      body: body,
     );
   }
 }

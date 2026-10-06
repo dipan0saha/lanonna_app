@@ -8,7 +8,7 @@ import 'widgets/home_birth_welcome_card.dart';
 import 'widgets/home_family_insight_gender_card.dart';
 import 'widgets/home_insight_card.dart';
 import 'widgets/home_prd_sections.dart';
-import 'widgets/home_section_header.dart';
+import 'widgets/home_scroll_section.dart';
 import 'widgets/owner_expecting_hero_card.dart';
 import 'widgets/owner_getting_started_card.dart';
 import 'widgets/owner_quick_actions_row.dart';
@@ -65,16 +65,16 @@ class OwnerHomeComposer extends StatelessWidget {
               summary: s,
               onViewAll: () => context.go(AppRoutes.gamification),
             )
-          else ...[
-            const HomeSectionHeader(title: 'Family Insight'),
-            HomeInsightCard(
-              message:
-                  'No votes yet. Invite family so they can guess names, gender, and the big day.',
-              actionLabel: 'Invite',
-              onAction: () => context.push(AppRoutes.inviteFamily),
+          else
+            HomeScrollSection(
+              title: 'Family Insight',
+              body: HomeInsightCard(
+                message:
+                    'No votes yet. Invite family so they can guess names, gender, and the big day.',
+                actionLabel: 'Invite',
+                onAction: () => context.push(AppRoutes.inviteFamily),
+              ),
             ),
-            const SizedBox(height: 18),
-          ],
           if (s != null && s.gettingStarted != null)
             OwnerGettingStartedCard(
               summary: s.gettingStarted!,

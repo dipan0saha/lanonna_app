@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/features/home/presentation/widgets/home_section_header.dart';
+import 'package:lanonna/features/home/presentation/widgets/home_section_trailing.dart';
 
 double _titleLeft(WidgetTester tester, String upperTitle) {
   final finder = find.text(upperTitle);
@@ -22,9 +23,9 @@ void main() {
               const HomeSectionHeader(title: 'RSVP Reminders'),
               HomeSectionHeader(
                 title: 'Upcoming Events',
-                action: TextButton(
+                trailing: HomeSectionLink(
+                  label: 'View all',
                   onPressed: () {},
-                  child: const Text('View all'),
                 ),
               ),
             ],
