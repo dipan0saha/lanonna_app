@@ -3,8 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/auth/auth_repository.dart';
-import '../../../core/input/app_text_input_kind.dart';
-import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
@@ -31,7 +29,7 @@ class RegistryScreen extends StatefulWidget {
 class _RegistryScreenState extends State<RegistryScreen> with BabyContextReload {
   BabySummary? _baby;
   List<RegistryItem> _items = [];
-  String? _shippingAddress;
+  RegistryShippingAddress? _shipping;
   var _loading = true;
 
   @override
@@ -70,11 +68,11 @@ class _RegistryScreenState extends State<RegistryScreen> with BabyContextReload 
         return;
       }
       final items = await regRepo.listItems(baby.id);
-      final address = await regRepo.getShippingAddress(baby.id);
+      final shipping = await regRepo.getShippingAddress(baby.id);
       setState(() {
         _baby = baby;
         _items = items;
-        _shippingAddress = address;
+        _shipping = shipping;
         _loading = false;
       });
     } catch (_) {
@@ -90,36 +88,63 @@ class _RegistryScreenState extends State<RegistryScreen> with BabyContextReload 
   List<RegistryItem> get _purchased =>
       _items.where((i) => i.isPurchased).toList();
 
-  Future<void> _editShipping() async {
-    final baby = _baby;
-    if (baby == null || !_isOwner) return;
-    final controller = TextEditingController(text: _shippingAddress ?? '');
-    final saved = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Shipping address'),
-        content: AppTextField(
-          kind: AppTextInputKind.prose,
-          controller: controller,
-          maxLines: 4,
-          decoration: const InputDecoration(hintText: 'Address for gifts'),
+  Future<void> _openShippingEditor() async {
+    final changed = await context.push<bool>(RegistryRoutes.shippingAddress);
+    if (changed == true) await _load();
+  }
+
+  Widget _shippingSection() {
+    final shipping = _shipping;
+    final hasAddress = shipping != null && !shipping.isEmpty;
+    if (!_isOwner && !hasAddress) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Row(
+            children: [
+              Text(
+                'Shipping Address',
+                style: context.textStyles.labelLarge?.copyWith(
+                  color: AppColors.muted,
+                ),
+              ),
+              const Spacer(),
+              if (_isOwner)
+                TextButton(
+                  onPressed: _openShippingEditor,
+                  child: Text(hasAddress ? 'Edit' : 'Add shipping address'),
+                ),
+            ],
+          ),
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Save')),
-        ],
-      ),
+        if (hasAddress)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Text(
+                  shipping!.formatted ?? '',
+                  style: context.textStyles.bodyMedium?.copyWith(height: 1.45),
+                ),
+              ),
+            ),
+          )
+        else if (_isOwner)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+            child: Text(
+              'Add an address so family knows where to send gifts.',
+              style: context.textStyles.bodySmall?.copyWith(
+                color: AppColors.muted,
+              ),
+            ),
+          ),
+      ],
     );
-    if (saved != true) return;
-    final address = AppTextInputPolicy.normalizeForSubmit(
-      AppTextInputKind.prose,
-      controller.text,
-    );
-    await context.read<RegistryRepository>().updateShippingAddress(
-      baby.id,
-      address.isEmpty ? null : address,
-    );
-    await _load();
   }
 
   Future<void> _claim(RegistryItem item) async {
@@ -194,6 +219,7 @@ class _RegistryScreenState extends State<RegistryScreen> with BabyContextReload 
                       onTap: () => context.push(RegistryRoutes.aiSuggestions),
                     ),
                   ),
+                SliverToBoxAdapter(child: _shippingSection()),
                 if (_items.isEmpty)
                   SliverFillRemaining(
                     child: RegistryEmptyState(
@@ -204,37 +230,6 @@ class _RegistryScreenState extends State<RegistryScreen> with BabyContextReload 
                     ),
                   )
                 else ...[
-                  if (_shippingAddress != null || _isOwner)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                        child: Row(
-                          children: [
-                            Text(
-                              'Shipping Address',
-                              style: context.textStyles.labelLarge?.copyWith(
-                                color: AppColors.muted,
-                              ),
-                            ),
-                            const Spacer(),
-                            if (_isOwner)
-                              TextButton(onPressed: _editShipping, child: const Text('Edit')),
-                          ],
-                        ),
-                      ),
-                    ),
-                  if (_shippingAddress != null)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(14),
-                            child: Text(_shippingAddress!),
-                          ),
-                        ),
-                      ),
-                    ),
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),

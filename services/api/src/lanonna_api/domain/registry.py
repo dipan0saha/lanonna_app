@@ -14,6 +14,11 @@ from lanonna_api.domain.notifications import (
 )
 from lanonna_api.repositories.activity_events import insert_activity_event
 from lanonna_api.repositories.babies import get_baby_membership
+from lanonna_api.domain.registry_shipping import (
+    shipping_is_empty,
+    shipping_response_from_row,
+    validate_shipping_patch,
+)
 from lanonna_api.repositories.registry import (
     catalog_suggestion_claimed,
     create_purchase,
@@ -22,11 +27,11 @@ from lanonna_api.repositories.registry import (
     delete_registry_item,
     get_purchase,
     get_registry_item,
-    get_shipping_address,
+    get_shipping_address_row,
     item_has_purchase,
     list_registry_items,
     update_registry_item,
-    update_shipping_address,
+    update_shipping_address_fields,
 )
 from lanonna_api.repositories.users import upsert_app_user
 
@@ -229,14 +234,44 @@ def undo_purchase(
 
 def read_shipping(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, Any]:
     require_membership(firebase_uid, baby_profile_id)
-    return {"address": get_shipping_address(baby_profile_id)}
+    row = get_shipping_address_row(baby_profile_id)
+    return shipping_response_from_row(row)
 
 
 def patch_shipping(
     firebase_uid: str,
     baby_profile_id: uuid.UUID,
-    address: str | None,
+    patch: dict[str, str | None],
 ) -> dict[str, Any]:
     assert_owner_membership(firebase_uid, baby_profile_id)
-    update_shipping_address(baby_profile_id, address)
-    return {"address": address}
+    fields = {
+        "line1": patch.get("line1"),
+        "line2": patch.get("line2"),
+        "city": patch.get("city"),
+        "region": patch.get("region"),
+        "postal_code": patch.get("postal_code"),
+        "country_code": patch.get("country_code"),
+    }
+    validate_shipping_patch(fields)
+    if shipping_is_empty(fields):
+        update_shipping_address_fields(
+            baby_profile_id,
+            line1=None,
+            line2=None,
+            city=None,
+            region=None,
+            postal_code=None,
+            country_code=None,
+        )
+    else:
+        update_shipping_address_fields(
+            baby_profile_id,
+            line1=fields["line1"],
+            line2=fields.get("line2"),
+            city=fields["city"],
+            region=fields.get("region"),
+            postal_code=fields["postal_code"],
+            country_code=fields["country_code"],
+        )
+    row = get_shipping_address_row(baby_profile_id)
+    return shipping_response_from_row(row)

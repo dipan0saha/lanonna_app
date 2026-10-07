@@ -49,6 +49,7 @@ import '../../features/announcement/presentation/announcement_create_screen.dart
 import '../../features/registry/domain/registry_routes.dart';
 import '../../features/registry/presentation/registry_ai_suggestions_screen.dart';
 import '../../features/registry/presentation/registry_item_form_screen.dart';
+import '../../features/registry/presentation/registry_shipping_address_screen.dart';
 import '../../features/registry/presentation/registry_screen.dart';
 import '../../features/search/presentation/global_search_screen.dart';
 import '../../features/shell/main_shell_screen.dart';
@@ -365,6 +366,11 @@ GoRouter createAppRouter(
                     path: 'ai-suggestions',
                     builder: (context, state) =>
                         const RegistryAiSuggestionsScreen(),
+                  ),
+                  GoRoute(
+                    path: 'shipping-address',
+                    builder: (context, state) =>
+                        const RegistryShippingAddressScreen(),
                   ),
                 ],
               ),

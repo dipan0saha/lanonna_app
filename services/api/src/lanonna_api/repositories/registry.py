@@ -9,28 +9,61 @@ from lanonna_api.repositories.catalog_suggestions import (
 )
 
 
-def get_shipping_address(baby_profile_id: uuid.UUID) -> str | None:
+_SHIPPING_COLUMNS = """
+    registry_shipping_line1,
+    registry_shipping_line2,
+    registry_shipping_city,
+    registry_shipping_region,
+    registry_shipping_postal_code,
+    registry_shipping_country_code
+"""
+
+
+def get_shipping_address_row(baby_profile_id: uuid.UUID) -> dict[str, Any] | None:
     with get_connection() as conn:
         row = conn.execute(
-            """
-            SELECT registry_shipping_address
+            f"""
+            SELECT {_SHIPPING_COLUMNS}
             FROM baby_profiles
             WHERE id = %s AND deleted_at IS NULL
             """,
             (baby_profile_id,),
         ).fetchone()
-    return row["registry_shipping_address"] if row else None
+    return dict(row) if row else None
 
 
-def update_shipping_address(baby_profile_id: uuid.UUID, address: str | None) -> None:
+def update_shipping_address_fields(
+    baby_profile_id: uuid.UUID,
+    *,
+    line1: str | None,
+    line2: str | None,
+    city: str | None,
+    region: str | None,
+    postal_code: str | None,
+    country_code: str | None,
+) -> None:
     with get_connection() as conn:
         conn.execute(
             """
             UPDATE baby_profiles
-            SET registry_shipping_address = %s, updated_at = now()
+            SET registry_shipping_line1 = %s,
+                registry_shipping_line2 = %s,
+                registry_shipping_city = %s,
+                registry_shipping_region = %s,
+                registry_shipping_postal_code = %s,
+                registry_shipping_country_code = %s,
+                updated_at = now()
             WHERE id = %s AND deleted_at IS NULL
             """,
-            (address, baby_profile_id),
+            (
+                line1,
+                line2,
+                city,
+                region,
+                postal_code,
+                country_code,
+                baby_profile_id,
+            ),
         )
 
 

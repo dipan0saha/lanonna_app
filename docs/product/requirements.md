@@ -327,6 +327,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-REG-006 | Edit purchased item | Owner cannot edit item fields after purchase; can open detail; owner may reset via purchase delete (FR-REG-003) | API + UI guard |
 | FR-REG-007 | Owner mark purchased | Owner/co-owner marks a needed item as purchased (e.g. gift bought off-app); item moves to Purchased; followers no longer see claim action; owner may undo (FR-REG-003) | Reuses `POST .../purchase`; Registry Needed UI |
 | FR-REG-008 | AI registry suggestions | Static catalog by expecting/age tabs; shared `AiSuggestionsScaffold` with calendar; hide rows already added (`catalog_suggestion_id` on item) | `/registry/ai-suggestions`; `registry_suggestions.json`; migration `017` |
+| FR-REG-009 | Registry shipping address (#408) | Owner edits structured address (street, city, optional region, postal, country) on dedicated screen; followers read formatted address on Registry tab; owner may clear | `baby_profiles.registry_shipping_*`; `GET/PATCH .../registry/shipping-address`; `/registry/shipping-address`; migration `023` |
 
 ### 7.9 Gamification — FR-GAM
 
@@ -574,6 +575,7 @@ Aligned with `apps/mobile/lib/core/router/app_router.dart` and `features/onboard
 | babyAnnouncementCreate | `/baby/:babyId/announcement/create` | Create announcement |
 | registry | `/registry` | Registry |
 | registryAiSuggestions | `/registry/ai-suggestions` | Static registry suggestions |
+| registryShippingAddress | `/registry/shipping-address` | Structured shipping address form (#408) |
 | registryItem | `/registry/item/:id` | Item detail (redirects to edit) |
 | registryItemCreate | `/registry/item/create` | Create item |
 | registryItemEdit | `/registry/item/:id/edit` | Edit item |

@@ -65,15 +65,20 @@ class RegistryRepository {
     await _api.deleteJson('/v1/babies/$babyId/registry/items/$itemId/purchase');
   }
 
-  Future<String?> getShippingAddress(String babyId) async {
+  Future<RegistryShippingAddress> getShippingAddress(String babyId) async {
     final json =
         await _api.getJson('/v1/babies/$babyId/registry/shipping-address');
-    return json['address'] as String?;
+    return RegistryShippingAddress.fromJson(json);
   }
 
-  Future<void> updateShippingAddress(String babyId, String? address) async {
-    await _api.patchJson('/v1/babies/$babyId/registry/shipping-address', body: {
-      'address': address,
-    });
+  Future<RegistryShippingAddress> updateShippingAddress(
+    String babyId,
+    Map<String, dynamic> body,
+  ) async {
+    final json = await _api.patchJson(
+      '/v1/babies/$babyId/registry/shipping-address',
+      body: body,
+    );
+    return RegistryShippingAddress.fromJson(json);
   }
 }

@@ -479,7 +479,11 @@ def provision_qa_enrichment(
             gender = 'male',
             expected_birth_date = %s,
             lifecycle_status = 'expecting',
-            registry_shipping_address = '123 QA Lane, Austin, TX 78701',
+            registry_shipping_line1 = '123 QA Lane',
+            registry_shipping_city = 'Austin',
+            registry_shipping_region = 'TX',
+            registry_shipping_postal_code = '78701',
+            registry_shipping_country_code = 'US',
             updated_at = now()
         WHERE id = %s
         """,

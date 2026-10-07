@@ -10,6 +10,7 @@ from lanonna_api.auth import current_user
 from lanonna_api.http_errors import map_domain_errors
 from lanonna_api.domain import registry as registry_domain
 from lanonna_api.repositories.users import upsert_app_user
+from lanonna_api.schemas.registry_shipping import ShippingAddressPatch
 
 router = APIRouter(
     prefix="/v1/babies/{baby_profile_id}/registry",
@@ -30,10 +31,6 @@ class ItemUpdate(BaseModel):
     description: str | None = None
     product_url: str | None = None
     priority: int | None = Field(default=None, ge=1, le=5)
-
-
-class ShippingPatch(BaseModel):
-    address: str | None = None
 
 
 @router.get("/items")
@@ -141,6 +138,7 @@ def get_shipping(
     baby_profile_id: uuid.UUID,
     user: dict[str, Any] = Depends(current_user),
 ) -> dict[str, Any]:
+    upsert_app_user(user["uid"], user.get("email"))
     try:
         return registry_domain.read_shipping(user["uid"], baby_profile_id)
     except Exception as exc:
@@ -150,12 +148,15 @@ def get_shipping(
 @router.patch("/shipping-address")
 def patch_shipping(
     baby_profile_id: uuid.UUID,
-    body: ShippingPatch,
+    body: ShippingAddressPatch,
     user: dict[str, Any] = Depends(current_user),
 ) -> dict[str, Any]:
+    upsert_app_user(user["uid"], user.get("email"))
     try:
         return registry_domain.patch_shipping(
-            user["uid"], baby_profile_id, body.address
+            user["uid"],
+            baby_profile_id,
+            body.model_dump(),
         )
     except Exception as exc:
         raise map_domain_errors(exc) from exc

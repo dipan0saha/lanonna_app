@@ -180,6 +180,18 @@ Owner signed in on emulator (no auto-login):
 
 ---
 
+## Registry shipping address (#408 / FR-REG-009)
+
+Owner on Registry tab:
+
+1. Tap **Add shipping address** (or **Edit**) → fill street, city, postal, country (region optional) → **Save address**.
+2. Confirm formatted card on Registry; follower account sees same card, no edit.
+3. **Remove address** on form → card hidden for followers.
+
+Requires API deploy + migration `023` on dev DB.
+
+---
+
 ## Calendar event create (#398 / FR-CAL-002)
 
 Owner signed in on emulator (no auto-login):
