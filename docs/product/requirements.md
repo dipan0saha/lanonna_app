@@ -293,7 +293,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-GAL-002 | Display asset policy | Long edge ~2048px; WebP preferred; max size enforced at init | Flutter encode; API rejects oversize |
 | FR-GAL-003 | Thumbnail ready | Feed shows thumb after worker processes finalize event | Pub/Sub worker → `thumbnails/` |
 | FR-GAL-004 | Gallery views | Recent and favorites routes | `/gallery/recent`, `/gallery/favorites`; list API `sort=recent\|favorites\|default`; home teasers link “View all” |
-| FR-GAL-005 | Photo detail | Fullscreen display asset; metadata and actions | `/gallery/photo/:id` |
+| FR-GAL-005 | Photo detail | Fullscreen display asset; metadata and actions; mutations (squish, comments, caption) refresh in place without full-screen reload (`detail_screen_load.dart`) | `/gallery/photo/:id` |
 | FR-GAL-006 | Squish | Toggle like; count updates (E2E-008) | API `photo_squishes` |
 | FR-GAL-007 | Comments | Members create comments; author edits own; author or baby **owner** deletes (moderation); list includes `can_edit` / `can_delete` | `photo_comments`; `POST` / `PATCH` / `DELETE` on `…/photos/{id}/comments` |
 | FR-GAL-008 | Tags | Owner tags other babies the user belongs to on a photo (metadata v1; no cross-feed) | `photo_baby_tags` + `PUT .../photos/{id}/tags` |
@@ -360,7 +360,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-PROF-002 | Edit profile | Update display name, avatar, optional demographics (phone, DOB, country, postal) | `/account/edit` |
 | FR-PROF-003 | Storage usage | Owner sees media allocation meter (used vs quota across owned babies) | `/profile`; `GET /v1/me/account` → `storage_usage` |
 | FR-SET-001 | Settings screen | Notification prefs, help/support entry | `/settings` |
-| FR-SET-002 | Language | **English only**; copy in ARB/localization files (no hardcoded UI strings). No Spanish or other locales in product scope. | `app_en.arb` |
+| FR-SET-002 | Language | **English only**; copy in ARB/localization files (no hardcoded UI strings). No Spanish or other locales in product scope. Count labels use ICU `plural` in ARB (e.g. squish/comment/vote/love/registry teaser — #11). | `app_en.arb`; migrate incrementally |
 | FR-SET-003 | No dark mode picker | Theme remains light only | Product decision (light-only brand) |
 | FR-SET-004 | Minimum app version | Below minimum: **hard block** — full-screen prompt; only action is open store / update | Reads `app_versions`; no dismiss |
 | FR-SET-005 | Delete account | User confirms on `/account/delete`; mobile calls **`GET /v1/me/delete-account/eligibility`** first (v1 returns `allowed: true`). Account is permanently deleted (Firebase user removed, SQL profile anonymized). **Sole-owned** baby profiles are soft-deleted with the account (all memberships on those babies removed; pending invites revoked). **Co-owned** baby profiles remain; deleting user’s owner membership is removed and remaining owner(s) retain full ownership. No manual “transfer ownership” step. Confirmation copy: “This permanently deletes your La Nonna account. Any Baby Profiles solely owned by your account will also be deleted. Baby Profiles with a co owner will not be deleted; ownership will transfer fully to the co owner.” | `GET/POST /v1/me/delete-account/*`; NFR-DATA-001 |

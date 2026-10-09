@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/widgets/app_snackbar.dart';
@@ -142,6 +143,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
+    final l10n = AppLocalizations.of(context)!;
     final p = _payload;
     final total = (p?.maleVotes ?? 0) + (p?.femaleVotes ?? 0);
     final boyPct = total > 0 ? ((p!.maleVotes / total) * 100).round() : 50;
@@ -262,7 +264,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
             for (final row in p.birthdateHistogram)
               ListTile(
                 title: Text(row.date),
-                trailing: Text('${row.count} votes'),
+                trailing: Text(l10n.predictionVoteCount(row.count)),
               ),
           const SizedBox(height: 8),
           if (birthdateLocked)

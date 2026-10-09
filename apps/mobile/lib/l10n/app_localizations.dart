@@ -255,6 +255,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Resend email'**
   String get emailVerifyResend;
+
+  /// No description provided for @photoSquishCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{0 squishes} =1{1 squish} other{{count} squishes}}'**
+  String photoSquishCount(int count);
+
+  /// No description provided for @photoCommentCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{0 comments} =1{1 comment} other{{count} comments}}'**
+  String photoCommentCount(int count);
+
+  /// No description provided for @predictionVoteCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{0 votes} =1{1 vote} other{{count} votes}}'**
+  String predictionVoteCount(int count);
+
+  /// No description provided for @nameLoveCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{0 loves} =1{1 love} other{{count} loves}}'**
+  String nameLoveCount(int count);
+
+  /// No description provided for @registryItemsStillNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{0 items still needed} =1{1 item still needed} other{{count} items still needed}}'**
+  String registryItemsStillNeeded(int count);
 }
 
 class _AppLocalizationsDelegate

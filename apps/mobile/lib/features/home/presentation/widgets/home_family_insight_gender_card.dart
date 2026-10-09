@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/vote_count_pill.dart';
@@ -19,6 +20,7 @@ class HomeFamilyInsightGenderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final totals = summary.genderTotals ?? const GenderTotals(male: 0, female: 0);
     final total = totals.male + totals.female;
     final boyPct = total > 0 ? ((totals.male / total) * 100).round() : 50;
@@ -78,7 +80,7 @@ class HomeFamilyInsightGenderCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '${topName.suggestedName} · ${topName.likeCount} loves',
+                        '${topName.suggestedName} · ${l10n.nameLoveCount(topName.likeCount)}',
                         style: context.textStyles.titleSmall,
                       ),
                     ],

@@ -109,6 +109,28 @@ class PhotoDetail {
   final List<PhotoComment> comments;
   final List<PhotoTaggedBaby> taggedBabies;
 
+  PhotoDetail copyWith({
+    String? caption,
+    int? squishCount,
+    bool? viewerHasSquished,
+    List<PhotoComment>? comments,
+    List<PhotoTaggedBaby>? taggedBabies,
+  }) {
+    return PhotoDetail(
+      id: id,
+      status: status,
+      caption: caption ?? this.caption,
+      createdAt: createdAt,
+      displayUrl: displayUrl,
+      thumbUrl: thumbUrl,
+      uploaderDisplayName: uploaderDisplayName,
+      squishCount: squishCount ?? this.squishCount,
+      viewerHasSquished: viewerHasSquished ?? this.viewerHasSquished,
+      comments: comments ?? this.comments,
+      taggedBabies: taggedBabies ?? this.taggedBabies,
+    );
+  }
+
   factory PhotoDetail.fromJson(Map<String, dynamic> json) {
     final commentsRaw = json['comments'];
     final taggedRaw = json['tagged_babies'];

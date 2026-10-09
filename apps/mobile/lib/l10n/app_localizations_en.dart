@@ -98,4 +98,64 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get emailVerifyResend => 'Resend email';
+
+  @override
+  String photoSquishCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count squishes',
+      one: '1 squish',
+      zero: '0 squishes',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String photoCommentCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count comments',
+      one: '1 comment',
+      zero: '0 comments',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String predictionVoteCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count votes',
+      one: '1 vote',
+      zero: '0 votes',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String nameLoveCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count loves',
+      one: '1 love',
+      zero: '0 loves',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String registryItemsStillNeeded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items still needed',
+      one: '1 item still needed',
+      zero: '0 items still needed',
+    );
+    return '$_temp0';
+  }
 }

@@ -132,6 +132,30 @@ class EventDetail extends CalendarEvent {
   final List<RsvpAttendee> rsvpAttendees;
   final List<EventComment> comments;
 
+  EventDetail copyWith({
+    String? coverPhotoDisplayUrl,
+    RsvpSummary? rsvpSummary,
+    String? viewerRsvp,
+    List<RsvpAttendee>? rsvpAttendees,
+    List<EventComment>? comments,
+  }) {
+    return EventDetail(
+      id: id,
+      title: title,
+      description: description,
+      startsAt: startsAt,
+      endsAt: endsAt,
+      location: location,
+      videoCallUrl: videoCallUrl,
+      coverPhotoId: coverPhotoId,
+      coverPhotoDisplayUrl: coverPhotoDisplayUrl ?? this.coverPhotoDisplayUrl,
+      rsvpSummary: rsvpSummary ?? this.rsvpSummary,
+      viewerRsvp: viewerRsvp ?? this.viewerRsvp,
+      rsvpAttendees: rsvpAttendees ?? this.rsvpAttendees,
+      comments: comments ?? this.comments,
+    );
+  }
+
   factory EventDetail.fromJson(Map<String, dynamic> json) {
     final commentsRaw = json['comments'];
     return EventDetail(

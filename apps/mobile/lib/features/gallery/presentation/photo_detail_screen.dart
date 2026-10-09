@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
+import '../../../core/presentation/detail_screen_load.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/media/cached_signed_image.dart';
 import '../../../core/widgets/app_snackbar.dart';
@@ -32,7 +34,8 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
   BabySummary? _baby;
   PhotoDetail? _detail;
   List<String> _photoIds = [];
-  var _loading = true;
+  var _initialLoadInFlight = true;
+  final _scrollController = ScrollController();
   var _editingCaption = false;
   var _signedUrlRetried = false;
   var _savingTags = false;
@@ -44,7 +47,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _load();
+    _loadInitial();
   }
 
   @override
@@ -54,25 +57,30 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       _editingCaption = false;
       _signedUrlRetried = false;
       _commentController.clear();
-      _load();
+      setState(() {
+        _detail = null;
+        _initialLoadInFlight = true;
+      });
+      _loadInitial();
     }
   }
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _captionController.dispose();
     _commentController.dispose();
     super.dispose();
   }
 
-  Future<void> _load() async {
-    setState(() => _loading = true);
+  Future<void> _loadInitial() async {
+    setState(() => _initialLoadInFlight = true);
     try {
       final homeRepo = context.read<HomeRepository>();
       final store = context.read<SelectedBabyStore>();
       final baby = await homeRepo.resolveSelectedBaby(store);
       if (baby == null) {
-        setState(() => _loading = false);
+        setState(() => _initialLoadInFlight = false);
         return;
       }
       final galleryRepo = context.read<GalleryRepository>();
@@ -82,20 +90,54 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       final memberBabies = baby.role == 'owner'
           ? await homeRepo.listBabies()
           : <BabySummary>[];
+      if (!mounted) return;
       setState(() {
         _baby = baby;
         _detail = detail;
         _photoIds = photos.map((p) => p.id).toList();
         _memberBabies = memberBabies;
         _taggedBabyIds = detail.taggedBabies.map((t) => t.id).toSet();
-        _loading = false;
+        _initialLoadInFlight = false;
       });
     } catch (e) {
-      setState(() => _loading = false);
-      if (mounted) {
-        AppSnackBar.showAlert(context, apiErrorMessage(e));
-      }
+      if (!mounted) return;
+      setState(() => _initialLoadInFlight = false);
+      AppSnackBar.showAlert(context, apiErrorMessage(e));
     }
+  }
+
+  Future<void> _refreshPhotoDetail({bool scrollToComments = false}) async {
+    final baby = _baby;
+    if (baby == null) return;
+    try {
+      final detail = await context
+          .read<GalleryRepository>()
+          .fetchPhoto(baby.id, widget.photoId);
+      if (!mounted) return;
+      setState(() {
+        _detail = detail;
+        if (!_editingCaption) {
+          _captionController.text = detail.caption ?? '';
+        }
+        _taggedBabyIds = detail.taggedBabies.map((t) => t.id).toSet();
+      });
+      if (scrollToComments) {
+        _scrollToBottom();
+      }
+    } catch (e) {
+      _showApiError(e);
+    }
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients) return;
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   bool get _isOwner => _baby?.role == 'owner';
@@ -119,8 +161,12 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
         detail.id,
         caption.isEmpty ? null : caption,
       );
-      setState(() => _editingCaption = false);
-      await _load();
+      setState(() {
+        _editingCaption = false;
+        _detail = detail.copyWith(
+          caption: caption.isEmpty ? null : caption,
+        );
+      });
     } catch (e) {
       _showApiError(e);
     }
@@ -130,10 +176,24 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     final baby = _baby;
     final detail = _detail;
     if (baby == null || detail == null) return;
+    final wasSquished = detail.viewerHasSquished;
     try {
-      await context.read<GalleryRepository>().toggleSquish(baby.id, detail.id);
-      await _load();
-      if (mounted) notifyGalleryDataChanged(context);
+      final squished = await context
+          .read<GalleryRepository>()
+          .toggleSquish(baby.id, detail.id);
+      if (!mounted) return;
+      final delta = squished == wasSquished
+          ? 0
+          : squished
+              ? 1
+              : -1;
+      setState(() {
+        _detail = detail.copyWith(
+          viewerHasSquished: squished,
+          squishCount: detail.squishCount + delta,
+        );
+      });
+      notifyGalleryDataChanged(context);
     } catch (e) {
       _showApiError(e);
     }
@@ -155,7 +215,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
         text,
       );
       _commentController.clear();
-      await _load();
+      await _refreshPhotoDetail(scrollToComments: true);
       if (mounted) notifyGalleryDataChanged(context);
     } catch (e) {
       _showApiError(e);
@@ -200,7 +260,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
         comment.id,
         text,
       );
-      await _load();
+      await _refreshPhotoDetail();
     } catch (e) {
       _showApiError(e);
     }
@@ -232,7 +292,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
   void _onDisplayUrlError() {
     if (_signedUrlRetried) return;
     _signedUrlRetried = true;
-    _load();
+    _refreshPhotoDetail();
   }
 
   Future<void> _deleteComment(PhotoComment comment) async {
@@ -256,7 +316,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
         detail.id,
         comment.id,
       );
-      await _load();
+      await _refreshPhotoDetail();
       if (mounted) notifyGalleryDataChanged(context);
     } catch (e) {
       _showApiError(e);
@@ -308,8 +368,12 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final styles = context.textStyles;
-    if (_loading) {
+    if (shouldShowDetailFullScreenLoader(
+      hasContent: _detail != null,
+      initialLoadInFlight: _initialLoadInFlight,
+    )) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
@@ -347,6 +411,8 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
         children: [
           Expanded(
             child: SingleChildScrollView(
+              key: PageStorageKey<String>('photo-detail-${widget.photoId}'),
+              controller: _scrollController,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -428,11 +494,11 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                                       ? Icons.favorite
                                       : Icons.favorite_border,
                                 ),
-                                label: Text('${detail.squishCount} squishes'),
+                                label: Text(l10n.photoSquishCount(detail.squishCount)),
                               ),
                             ),
                             const SizedBox(width: 8),
-                            Text('${detail.comments.length} comments'),
+                            Text(l10n.photoCommentCount(detail.comments.length)),
                           ],
                         ),
                         if (_isOwner &&

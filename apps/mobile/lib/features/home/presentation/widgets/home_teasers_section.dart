@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../../../../core/media/cached_signed_image.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -25,6 +26,7 @@ class HomeTeasersSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final children = <Widget>[];
 
     if (teasers.notificationPreview.isNotEmpty) {
@@ -117,7 +119,7 @@ class HomeTeasersSection extends StatelessWidget {
           title: 'Registry Highlights',
           padding: EdgeInsets.zero,
           child: ListTile(
-            title: Text('${teasers.registryOpenCount} items still needed'),
+            title: Text(l10n.registryItemsStillNeeded(teasers.registryOpenCount)),
             trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
             onTap: () => context.go('/registry'),
           ),

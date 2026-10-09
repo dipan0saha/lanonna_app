@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/input/app_text_input_kind.dart';
@@ -72,6 +73,7 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (_loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -125,11 +127,11 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
                     OutlinedButton.icon(
                       onPressed: _squish,
                       icon: const Icon(Icons.favorite_border, size: 18),
-                      label: Text('${d.squishCount} squishes'),
+                      label: Text(l10n.photoSquishCount(d.squishCount)),
                     ),
                     const SizedBox(width: 12),
                     Chip(
-                      label: Text('${d.commentCount} comments'),
+                      label: Text(l10n.photoCommentCount(d.commentCount)),
                       visualDensity: VisualDensity.compact,
                     ),
                   ],

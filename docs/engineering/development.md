@@ -29,7 +29,7 @@ lanonna_app/
 | Module | Shell route | Notes |
 |--------|-------------|--------|
 | `home/` | `/home` | Owner expecting/born; `home-summary`; announce arrival |
-| `gallery/` | `/gallery`, `/gallery/recent`, `/gallery/favorites` | Grid with comment/squish badges when count **> 0** (FR-GAL-012); detail, squish, comments (create; edit/delete per API `can_edit` / `can_delete`), owner baby tags (“In this photo”); `/gallery/photo/:id`; all-mode **Recent Activity** from `GET …/activity-events?scope=gallery` (squish/comment events; prototype row UI). **`GalleryRepository`** is a `ChangeNotifier` (like calendar); list uploads/mutations call **`notifyGalleryDataChanged`** so shell tabs + home teasers reload; FAB upload polls processing by **`photoId`** before refreshing thumbs. |
+| `gallery/` | `/gallery`, `/gallery/recent`, `/gallery/favorites` | Grid with comment/squish badges when count **> 0** (FR-GAL-012); **photo detail** uses initial load spinner only (`core/presentation/detail_screen_load.dart`); squish/comment/caption refresh in place (`_refreshPhotoDetail` / local patch); `/gallery/photo/:id`; calendar **event detail** same pattern; all-mode **Recent Activity** from `GET …/activity-events?scope=gallery` (squish/comment events; prototype row UI). **`GalleryRepository`** is a `ChangeNotifier` (like calendar); list uploads/mutations call **`notifyGalleryDataChanged`** so shell tabs + home teasers reload; FAB upload polls processing by **`photoId`** before refreshing thumbs. |
 | `calendar/` | `/calendar` | Month + upcoming; event CRUD; static AI suggestions (`AiSuggestionsScaffold` + asset) |
 | `registry/` | `/registry` | Needed/purchased, shipping, purchase claim; AI suggestions |
 | `baby/` | (shared) | `CreateBabyScreen` + submit helper — onboarding and `/baby/create` modes |
@@ -119,6 +119,8 @@ Product UI tokens live under `apps/mobile/lib/core/theme/` (see also PRD §5.1):
 **Section titles:** Block headers on subpage/tab scrolls use [`AppSectionTitle`](../../apps/mobile/lib/core/widgets/app_section_title.dart) (built-in `AppMetrics.sectionTitleGap`, 10px). Home tab blocks use [`HomeSectionHeader`](../../apps/mobile/lib/features/home/presentation/widgets/home_section_header.dart) (same gap token). Separate major sections with `AppMetrics.sectionBlockSpacing` (16). Form field labels use `OnboardingFieldLabel` / `AppLabeledTextField`, not `AppSectionTitle`.
 
 **Text fields:** Typed input uses `AppTextTheme.fieldInput` (Inter **regular**, w400). Use [`AppTextField`](../../apps/mobile/lib/core/widgets/app_text_field.dart), [`AppLabeledTextField`](../../apps/mobile/lib/core/widgets/app_labeled_text_field.dart), or [`AppTextFormField`](../../apps/mobile/lib/core/widgets/app_text_form_field.dart) — not raw `TextField` / `TextFormField` (theme `bodyLarge` is bold).
+
+**Localization (FR-SET-002):** User-visible strings belong in [`app_en.arb`](../../apps/mobile/lib/l10n/app_en.arb); run `flutter gen-l10n` after edits. Use ICU `{count, plural, …}` for quantity labels (photo squish/comment counts, prediction votes, name loves, registry teaser — #11); read via `AppLocalizations.of(context)!`. Do not hand-roll `'$n votes'` in widgets. Uppercase gender totals stay in [`VoteCountPill`](../../apps/mobile/lib/core/widgets/vote_count_pill.dart) (`1 VOTE` / `N VOTES`).
 
 ### Reset dev test data (babies + onboarding)
 

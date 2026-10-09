@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/api/api_error_message.dart';
+import '../../../core/presentation/detail_screen_load.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/media/cached_signed_image.dart';
 import '../../../core/widgets/app_snackbar.dart';
@@ -32,26 +33,28 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   BabySummary? _baby;
   EventDetail? _detail;
   final _commentController = TextEditingController();
-  var _loading = true;
+  final _scrollController = ScrollController();
+  var _initialLoadInFlight = true;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _loadInitial();
   }
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _commentController.dispose();
     super.dispose();
   }
 
   void _onCoverUrlError() {
-    _load();
+    _refreshEventDetail();
   }
 
-  Future<void> _load() async {
-    setState(() => _loading = true);
+  Future<void> _loadInitial() async {
+    setState(() => _initialLoadInFlight = true);
     try {
       final homeRepo = context.read<HomeRepository>();
       final store = context.read<SelectedBabyStore>();
@@ -63,15 +66,41 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       final detail = await context
           .read<CalendarRepository>()
           .fetchEvent(baby.id, widget.eventId);
+      if (!mounted) return;
       setState(() {
         _baby = baby;
         _detail = detail;
-        _loading = false;
+        _initialLoadInFlight = false;
       });
     } catch (e) {
       if (!mounted) return;
+      setState(() => _initialLoadInFlight = false);
       AppSnackBar.showAlert(context, apiErrorMessage(e));
       returnToCalendar(context);
+    }
+  }
+
+  Future<void> _refreshEventDetail({bool scrollToComments = false}) async {
+    final baby = _baby;
+    if (baby == null) return;
+    try {
+      final detail = await context
+          .read<CalendarRepository>()
+          .fetchEvent(baby.id, widget.eventId);
+      if (!mounted) return;
+      setState(() => _detail = detail);
+      if (scrollToComments) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!_scrollController.hasClients) return;
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
+          );
+        });
+      }
+    } catch (e) {
+      _showApiError(e);
     }
   }
 
@@ -140,7 +169,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         widget.eventId,
         status,
       );
-      await _load();
+      await _refreshEventDetail();
     } catch (e) {
       _showApiError(e);
     }
@@ -160,7 +189,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         text,
       );
       _commentController.clear();
-      await _load();
+      await _refreshEventDetail(scrollToComments: true);
     } catch (e) {
       _showApiError(e);
     }
@@ -203,7 +232,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         comment.id,
         text,
       );
-      await _load();
+      await _refreshEventDetail();
     } catch (e) {
       _showApiError(e);
     }
@@ -229,7 +258,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         widget.eventId,
         comment.id,
       );
-      await _load();
+      await _refreshEventDetail();
     } catch (e) {
       _showApiError(e);
     }
@@ -262,7 +291,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
+    if (shouldShowDetailFullScreenLoader(
+      hasContent: _detail != null,
+      initialLoadInFlight: _initialLoadInFlight,
+    )) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     final detail = _detail;
@@ -270,9 +302,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) returnToCalendar(context);
       });
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: Text('Event not found')));
     }
     return PrototypeSubpageScaffold(
       title: 'Event',
@@ -292,6 +322,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         children: [
           Expanded(
             child: ListView(
+              key: PageStorageKey<String>('event-detail-${widget.eventId}'),
+              controller: _scrollController,
               padding: const EdgeInsets.all(16),
               children: [
                 Text(detail.title, style: Theme.of(context).textTheme.headlineSmall),
