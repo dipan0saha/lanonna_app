@@ -150,6 +150,7 @@ def _send_fcm(
     body: str,
     deep_link: str | None,
     notification_id: uuid.UUID,
+    baby_profile_id: uuid.UUID | None = None,
 ) -> None:
     push_on, digest = _user_push_prefs(conn, firebase_uid)
     if not push_on or digest != "realtime":
@@ -160,10 +161,12 @@ def _send_fcm(
         return
 
     _ensure_fcm()
-    data = {
+    data: dict[str, str] = {
         "deep_link": deep_link or "/home",
         "notification_id": str(notification_id),
     }
+    if baby_profile_id is not None:
+        data["baby_profile_id"] = str(baby_profile_id)
     message = messaging.MulticastMessage(
         notification=messaging.Notification(title=title, body=body),
         data=data,
@@ -233,6 +236,7 @@ def process_notify_fan_out(
                 body=body,
                 deep_link=deep_link,
                 notification_id=nid,
+                baby_profile_id=baby_id,
             )
 
 
@@ -271,6 +275,7 @@ def process_notify_user(
             body=body,
             deep_link=deep_link,
             notification_id=nid,
+            baby_profile_id=baby_id,
         )
 
 

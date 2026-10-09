@@ -176,12 +176,14 @@ class HomeNotificationPreview {
     required this.title,
     required this.body,
     this.deepLink,
+    this.babyProfileId,
   });
 
   final String id;
   final String title;
   final String body;
   final String? deepLink;
+  final String? babyProfileId;
 
   factory HomeNotificationPreview.fromJson(Map<String, dynamic> json) {
     return HomeNotificationPreview(
@@ -189,6 +191,7 @@ class HomeNotificationPreview {
       title: json['title'] as String? ?? '',
       body: json['body'] as String? ?? '',
       deepLink: json['deep_link'] as String?,
+      babyProfileId: json['baby_profile_id']?.toString(),
     );
   }
 }

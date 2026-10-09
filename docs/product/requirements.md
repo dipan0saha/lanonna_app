@@ -296,7 +296,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-GAL-005 | Photo detail | Fullscreen display asset; metadata and actions; mutations (squish, comments, caption) refresh in place without full-screen reload (`detail_screen_load.dart`) | `/gallery/photo/:id` |
 | FR-GAL-006 | Squish | Toggle like; count updates (E2E-008) | API `photo_squishes` |
 | FR-GAL-007 | Comments | Members create comments; author edits own; author or baby **owner** deletes (moderation); list includes `can_edit` / `can_delete` | `photo_comments`; `POST` / `PATCH` / `DELETE` on `…/photos/{id}/comments` |
-| FR-GAL-008 | Tags | Owner tags other babies the user belongs to on a photo (metadata v1; no cross-feed) | `photo_baby_tags` + `PUT .../photos/{id}/tags` |
+| FR-GAL-008 | Tags | Owner tags other babies they belong to on a photo (metadata v1; no cross-feed). **Read:** `tagged_babies` on photo detail (and tag PUT response) lists only babies the **viewer** is a member of — followers never see names of profiles they were not invited to (#9) | `photo_baby_tags`; `list_tagged_babies_for_photo(photo_id, viewer_uid)` joins `baby_memberships`; `PUT .../photos/{id}/tags` |
 | FR-GAL-009 | Pending visibility | Photos not visible to others until processing complete | SQL status + API filter |
 | FR-GAL-010 | Owner edit caption | Owner can edit photo caption from detail (E2E-008) | API update; follower read-only |
 | FR-GAL-011 | Gallery recent activity | On **Gallery** (all photos), section shows up to **6** gallery-scoped activity rows (`photo_squish`, `photo_comment`): prototype row UI (icon, summary, timestamp below, dividers); empty card copy when none; all members | `GET …/activity-events?scope=gallery`; `ActivityFeedCard` |
@@ -320,7 +320,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 
 | ID | Requirement | Acceptance criteria | Implementation note |
 |----|-------------|---------------------|---------------------|
-| FR-REG-001 | Item CRUD | Owner creates/edits/deletes items (E2E-010) | API + routes |
+| FR-REG-001 | Item CRUD | Owner creates/edits/deletes items (E2E-010); add/edit form validates required item name inline; API errors via `runMutation` / `apiErrorMessage` (#8) | API + routes; `RegistryItemFormScreen` |
 | FR-REG-002 | Follower purchase claim | Follower marks item via in-app “I’ll buy this”; only one purchase per item | Unique index on `registry_item_id`; `POST .../purchase` |
 | FR-REG-003 | Owner undo purchase | Owner can delete any purchase to reset item | API delete |
 | FR-REG-004 | Registry list on tab | Full list on Registry screen; **Needed** rows show item name/description at full card width with purchase/edit/delete actions on a separate row (#399) | Registry tab primary content |
@@ -338,7 +338,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-GAM-001 | Gender prediction | Follower votes male/female; can change vote | `votes` vote_type gender |
 | FR-GAM-002 | Birthdate prediction | Follower explicitly selects a calendar day (profile due date is highlight only, never auto-submitted); confirm before save; can change guess later (#5) | `votes` vote_type birthdate; mobile `features/fun/domain/birthdate_prediction.dart`; `PredictionsTab` draft + single submit |
 | FR-GAM-003 | Identified predictions | Gender/birthdate votes attributed to the member; visible in who-voted lists | `votes.is_anonymous` legacy only; new votes stored identified |
-| FR-GAM-004 | Name suggestions | Submit suggestions with gender scope (non-owners: one per gender); author may remove own suggestion; owner may remove any; list includes `can_delete`; expecting create-baby profile names auto-seed on baby create (#400); stored/displayed names preserve user casing (McKenzie, hyphenated names); API rejects duplicate names per gender case-insensitively (#12) | `name_suggestions`; `GET …/fun/names` `can_delete`; mobile `AppTextInputKind.personName`; `find_name_suggestion_case_insensitive` |
+| FR-GAM-004 | Name suggestions | Submit suggestions with gender scope (non-owners: one per gender); author may remove own suggestion; owner may remove any; list includes `can_delete`; expecting create-baby profile names auto-seed on baby create (#400); stored/displayed names preserve user casing (McKenzie, hyphenated names); API rejects duplicate names per gender case-insensitively (#12); server limit/errors shown via `runMutation` (#8) | `name_suggestions`; `GET …/fun/names` `can_delete`; mobile `AppTextInputKind.personName`; `find_name_suggestion_case_insensitive` |
 | FR-GAM-005 | Name likes | Like others’ suggestions | `name_suggestion_likes` |
 | FR-GAM-006 | Fun tab hub | Gamification screen hosts suggestions + predictions (E2E-011) | `/gamification` |
 | FR-GAM-007 | User stats | Aggregated counts for recap | `user_stats` via triggers or API |
@@ -349,7 +349,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 |----|-------------|---------------------|---------------------|
 | FR-NOTIF-001 | In-app inbox | Bell (or equivalent) opens full notification list; mark read; home shows preview of recent unread (§6.2 item 5) | `notifications` table; `GET/PATCH` inbox routes |
 | FR-NOTIF-002 | Push delivery | New photo, RSVP, etc. respect user prefs | Worker FCM when `push_notifications_enabled` and digest **`realtime`**; **`daily`** = inbox only; **`weekly`** = summary push (Scheduler) |
-| FR-NOTIF-003 | Deep link payload | Push opens correct `:id` route | FCM `data.deep_link` + `navigateAppDeepLink` |
+| FR-NOTIF-003 | Deep link payload | Push/inbox/home preview opens the correct screen (including nested tab routes) | FCM `data.deep_link` + optional `baby_profile_id`; client `navigateAppDeepLink` uses **`go`** for shell tab paths (`/home`, `/gallery`, …) and **`push`** for root routes (`/notifications/inbox`, `/profile`, …); switches selected baby when `baby_profile_id` differs |
 | FR-NOTIF-004 | Preferences | Per-channel toggles in settings (E2E-014 partial) | `GET/PATCH /v1/me/notification-preferences`; `notify_*_enabled` on `app_users` (`gallery`, `calendar`, `registry`, `comments`); worker gates inbox + FCM |
 
 ### 7.11 Profile and settings — FR-PROF, FR-SET
@@ -582,7 +582,7 @@ Aligned with `apps/mobile/lib/core/router/app_router.dart` and `features/onboard
 | registryItemCreate | `/registry/item/create` | Create item |
 | registryItemEdit | `/registry/item/:id/edit` | Edit item |
 
-**Deep links:** API payloads may use `/account` or `/notifications`; the client normalizes these to `/profile` and `/notifications/inbox` (`deep_link_navigation.dart`).
+**Deep links:** API payloads may use `/account` or `/notifications`; the client normalizes these to `/profile` and `/notifications/inbox` (`deep_link_navigation.dart`). Notification rows may include `baby_profile_id` for inbox, home preview, and FCM data.
 
 Use static URL builder helpers (e.g. `AppRoutes`, `GalleryRoutes`, `CalendarRoutes`) for navigation and push payloads.
 

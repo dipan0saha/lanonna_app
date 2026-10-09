@@ -44,7 +44,11 @@ class HomeTeasersSection extends StatelessWidget {
                         ? const Icon(Icons.chevron_right, color: AppColors.muted)
                         : null,
                     onTap: n.deepLink != null && n.deepLink!.isNotEmpty
-                        ? () => navigateAppDeepLink(context, n.deepLink)
+                        ? () => navigateAppDeepLink(
+                              context,
+                              n.deepLink,
+                              babyProfileId: n.babyProfileId,
+                            )
                         : null,
                   ),
                 )

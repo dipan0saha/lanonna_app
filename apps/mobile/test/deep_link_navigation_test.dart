@@ -42,4 +42,32 @@ void main() {
       );
     });
   });
+
+  group('isShellDeepLinkPath', () {
+    test('treats tab routes and nested shell paths as shell', () {
+      expect(isShellDeepLinkPath('/home'), isTrue);
+      expect(isShellDeepLinkPath('/gallery'), isTrue);
+      expect(isShellDeepLinkPath('/gallery/photo/abc'), isTrue);
+      expect(isShellDeepLinkPath('/calendar/event/e1'), isTrue);
+      expect(isShellDeepLinkPath('/registry'), isTrue);
+      expect(isShellDeepLinkPath('/gamification'), isTrue);
+    });
+
+    test('treats root stack routes as non-shell', () {
+      expect(isShellDeepLinkPath('/notifications/inbox'), isFalse);
+      expect(isShellDeepLinkPath('/profile'), isFalse);
+      expect(isShellDeepLinkPath('/settings'), isFalse);
+    });
+  });
+
+  group('shellBranchIndexForDeepLinkPath', () {
+    test('maps paths to shell branch indices', () {
+      expect(shellBranchIndexForDeepLinkPath('/home'), 0);
+      expect(shellBranchIndexForDeepLinkPath('/gallery/recent'), 1);
+      expect(shellBranchIndexForDeepLinkPath('/calendar/event/x'), 2);
+      expect(shellBranchIndexForDeepLinkPath('/registry/item/create'), 3);
+      expect(shellBranchIndexForDeepLinkPath('/gamification'), 4);
+      expect(shellBranchIndexForDeepLinkPath('/notifications/inbox'), isNull);
+    });
+  });
 }

@@ -233,6 +233,9 @@ def _build_home_teasers(
                 "title": n["title"],
                 "body": n["body"],
                 "deep_link": n.get("deep_link"),
+                "baby_profile_id": str(n["baby_profile_id"])
+                if n.get("baby_profile_id")
+                else None,
                 "created_at": n["created_at"].isoformat()
                 if hasattr(n["created_at"], "isoformat")
                 else str(n["created_at"]),

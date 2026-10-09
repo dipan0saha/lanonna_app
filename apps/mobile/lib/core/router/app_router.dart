@@ -56,14 +56,14 @@ import '../../features/shell/main_shell_screen.dart';
 import '../auth/auth_repository.dart';
 import 'router_refresh.dart';
 
-final _rootNavigatorKey = GlobalKey<NavigatorState>();
+final appRootNavigatorKey = GlobalKey<NavigatorState>();
 
 GoRouter createAppRouter(
   RouterRefreshListenable refreshListenable, {
   String? initialLocation,
 }) {
   return GoRouter(
-    navigatorKey: _rootNavigatorKey,
+    navigatorKey: appRootNavigatorKey,
     initialLocation: initialLocation ?? OnboardingRoutes.ownerCarousel,
     refreshListenable: refreshListenable,
     redirect: (context, state) {
@@ -161,85 +161,85 @@ GoRouter createAppRouter(
       ),
       GoRoute(
         path: '/profile',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: appRootNavigatorKey,
         builder: (context, state) => const AccountScreen(),
       ),
       GoRoute(
         path: '/account/edit',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: appRootNavigatorKey,
         builder: (context, state) => const AccountEditScreen(),
       ),
       GoRoute(
         path: '/settings',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: appRootNavigatorKey,
         builder: (context, state) => const SettingsScreen(),
       ),
       GoRoute(
         path: '/account/notification-preferences',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: appRootNavigatorKey,
         builder: (context, state) => const NotificationPreferencesScreen(),
       ),
       GoRoute(
         path: '/account/export',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: appRootNavigatorKey,
         builder: (context, state) => const BabyDataExportScreen(),
       ),
       GoRoute(
         path: '/account/delete',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: appRootNavigatorKey,
         builder: (context, state) => const DeleteAccountScreen(),
       ),
       GoRoute(
         path: '/notifications/inbox',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: appRootNavigatorKey,
         builder: (context, state) => const NotificationsInboxScreen(),
       ),
       GoRoute(
         path: '/search',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: appRootNavigatorKey,
         builder: (context, state) => const GlobalSearchScreen(),
       ),
       GoRoute(
         path: '/baby/create',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: appRootNavigatorKey,
         builder: (context, state) => const CreateBabyScreen(mode: CreateBabyMode.inApp),
       ),
       GoRoute(
         path: '/baby/:babyId/edit',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: appRootNavigatorKey,
         builder: (context, state) => BabyEditScreen(
           babyId: state.pathParameters['babyId']!,
         ),
       ),
       GoRoute(
         path: '/baby/:babyId/followers',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: appRootNavigatorKey,
         builder: (context, state) => FollowersScreen(
           babyId: state.pathParameters['babyId']!,
         ),
       ),
       GoRoute(
         path: '/baby/:babyId/announcement',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: appRootNavigatorKey,
         builder: (context, state) => AnnouncementCardScreen(
           babyId: state.pathParameters['babyId']!,
         ),
       ),
       GoRoute(
         path: '/baby/:babyId/announcement/create',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: appRootNavigatorKey,
         builder: (context, state) => AnnouncementCreateScreen(
           babyId: state.pathParameters['babyId']!,
         ),
       ),
       GoRoute(
         path: AppRoutes.inviteFamily,
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: appRootNavigatorKey,
         builder: (context, state) => const BatchInviteScreen(mode: BatchInviteMode.fromHome),
       ),
       GoRoute(
         path: '/home/activity',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: appRootNavigatorKey,
         builder: (context, state) {
           final babyId = state.uri.queryParameters['babyId'] ?? '';
           return HomeActivityScreen(babyId: babyId);

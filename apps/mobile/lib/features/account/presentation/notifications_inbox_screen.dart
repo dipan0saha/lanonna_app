@@ -60,7 +60,11 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
                                 .markRead(n.id);
                           }
                           if (mounted && n.deepLink != null && n.deepLink!.isNotEmpty) {
-                            navigateAppDeepLink(context, n.deepLink);
+                            await navigateAppDeepLink(
+                              context,
+                              n.deepLink,
+                              babyProfileId: n.babyProfileId,
+                            );
                           }
                           await _load();
                         },

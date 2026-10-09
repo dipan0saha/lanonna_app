@@ -4,6 +4,7 @@ import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
+import '../../../core/api/api_exception.dart';
 import '../../../core/presentation/detail_screen_load.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/media/cached_signed_image.dart';
@@ -18,6 +19,7 @@ import '../../home/data/selected_baby_store.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../data/gallery_repository.dart';
 import '../data/models/photo_models.dart';
+import '../domain/gallery_navigation.dart';
 import '../domain/gallery_refresh.dart';
 import '../domain/gallery_routes.dart';
 
@@ -102,6 +104,11 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _initialLoadInFlight = false);
+      if (e is ApiException && e.statusCode == 404) {
+        AppSnackBar.showAlert(context, 'This photo is no longer available.');
+        returnToGallery(context);
+        return;
+      }
       AppSnackBar.showAlert(context, apiErrorMessage(e));
     }
   }

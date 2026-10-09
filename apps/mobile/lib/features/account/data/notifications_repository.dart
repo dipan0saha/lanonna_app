@@ -62,6 +62,7 @@ class InboxNotification {
     required this.body,
     this.readAt,
     this.deepLink,
+    this.babyProfileId,
   });
 
   final String id;
@@ -69,6 +70,7 @@ class InboxNotification {
   final String body;
   final String? readAt;
   final String? deepLink;
+  final String? babyProfileId;
 
   factory InboxNotification.fromJson(Map<String, dynamic> json) {
     return InboxNotification(
@@ -77,6 +79,7 @@ class InboxNotification {
       body: json['body'] as String? ?? '',
       readAt: json['read_at'] as String?,
       deepLink: json['deep_link'] as String?,
+      babyProfileId: json['baby_profile_id']?.toString(),
     );
   }
 }

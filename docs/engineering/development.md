@@ -122,6 +122,8 @@ Product UI tokens live under `apps/mobile/lib/core/theme/` (see also PRD §5.1):
 
 **Localization (FR-SET-002):** User-visible strings belong in [`app_en.arb`](../../apps/mobile/lib/l10n/app_en.arb); run `flutter gen-l10n` after edits. Use ICU `{count, plural, …}` for quantity labels (photo squish/comment counts, prediction votes, name loves, registry teaser — #11); read via `AppLocalizations.of(context)!`. Do not hand-roll `'$n votes'` in widgets. Uppercase gender totals stay in [`VoteCountPill`](../../apps/mobile/lib/core/widgets/vote_count_pill.dart) (`1 VOTE` / `N VOTES`).
 
+**API errors from UI mutations (#8):** Repository calls throw [`ApiException`](../../apps/mobile/lib/core/api/api_exception.dart); map with [`apiErrorMessage`](../../apps/mobile/lib/core/api/api_error_message.dart). Use [`runMutation`](../../apps/mobile/lib/core/api/run_mutation.dart) in presentation for create/update/delete actions so users always see server `detail` (e.g. Fun name limit). **Client-side** required fields: `Form` + [`form_validators.dart`](../../apps/mobile/lib/core/validation/form_validators.dart) + `AppLabeledTextFormField` (registry item, shipping address); lightweight `Form` on Fun name suggest card. Do not silently `return` on empty required input or show raw `'Save failed: $e'`.
+
 **Event times (UTC-in / local-out, #4):** API `starts_at` / `ends_at` are UTC instants. Parse with [`parseApiInstant`](../../apps/mobile/lib/core/time/app_date_time.dart) at model boundaries (`CalendarEvent`, home `NextUpEvent`, search hits). Submit with `toApiInstant`. Display via `formatEventListDateTime`, `formatEventDetailWhen`, and home badge helpers — do not format raw `DateTime` fields in widgets. Calendar month/day math uses `eventLocalStart` / `eventOnLocalCalendarDay` (re-exported from `calendar_display.dart`).
 
 ### Reset dev test data (babies + onboarding)
@@ -194,7 +196,7 @@ Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps:
 | GET, PATCH, DELETE | `/v1/babies/{id}/photos/{photo_id}` | JWT (member read; owner mutate); signed thumb/display URLs; GET includes `tagged_babies` |
 | POST | `/v1/babies/{id}/photos/{photo_id}/squish` | JWT (member); toggle squish |
 | POST, PATCH, DELETE | `/v1/babies/{id}/photos/{photo_id}/comments` | JWT (member); photo detail comments include `can_edit` / `can_delete` (`domain/content_permissions.py`: author edits; owner or author deletes) |
-| PUT | `/v1/babies/{id}/photos/{photo_id}/tags` | JWT (owner); body `tagged_baby_profile_ids` |
+| PUT | `/v1/babies/{id}/photos/{photo_id}/tags` | JWT (owner); body `tagged_baby_profile_ids`. Photo detail `tagged_babies` and this response list only tags for babies the **viewer** belongs to (join `baby_memberships`; #9) |
 | GET, POST | `/v1/babies/{id}/events` | JWT (member read; owner create); query `month=YYYY-MM`, `upcoming=true`. Optional `video_call_url`: `domain/url_validation.normalize_optional_http_url` (empty → null; bare domain → `https://`; http/https only). Mobile: `validateOptionalHttpUrl` / `normalizeOptionalHttpUrl` in `form_validators.dart` on `EventFormScreen` (#13). Mobile stores/sends `starts_at` as UTC (`toApiInstant`); all event UI uses `core/time/app_date_time.dart` for local display (#4). Lists reload after create via `CalendarRepository` + FAB `push` result (`#398`). |
 | GET, PATCH, DELETE | `/v1/babies/{id}/events/{event_id}` | JWT; PATCH normalizes `video_call_url` when present |
 | PUT | `/v1/babies/{id}/events/{event_id}/rsvp` | JWT (member); body `{status}` |
@@ -246,7 +248,7 @@ Covers gallery/calendar/registry/fun domain rules (`services/api/tests/`). CI ru
 | Baby arrived (announce) | API home PATCH | Baby members (excl. owner) |
 | Invite accepted | API accept | Inviter |
 
-API local dev: `NOTIFY_PUBLISH_DISABLED=true`. Mobile: `firebase_messaging`, `PushNotificationService` → `PUT`/`DELETE /v1/me/device-tokens` on auth; opens `deep_link` from FCM data. Worker SA: `roles/firebasecloudmessaging.admin` on dev if sends fail.
+API local dev: `NOTIFY_PUBLISH_DISABLED=true`. Mobile: `firebase_messaging`, `PushNotificationService` → `PUT`/`DELETE /v1/me/device-tokens` on auth; opens FCM `data.deep_link` (and optional `data.baby_profile_id`) via `navigateAppDeepLink` in `core/router/deep_link_navigation.dart`. **Shell vs root:** tab destinations (`/gallery/photo/:id`, `/calendar/event/:id`, `/registry`, …) must use `GoRouter.go` so the indexed shell is not stacked twice; inbox/profile/settings use `push` on the root navigator. Inbox + home `notification_preview` include `baby_profile_id` when present so multi-baby accounts load the right context before navigation. Worker SA: `roles/firebasecloudmessaging.admin` on dev if sends fail.
 
 **Invite onboarding QA (FR-ONB-011):**
 

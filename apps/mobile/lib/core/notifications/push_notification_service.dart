@@ -19,8 +19,12 @@ class PushNotificationService {
 
   Future<void> start({
     required Stream<User?> authStateChanges,
-    void Function(String? deepLink)? onDeepLink,
-    void Function(BuildContext context, String? deepLink)? onOpenDeepLink,
+    void Function(String? deepLink, String? babyProfileId)? onDeepLink,
+    void Function(
+      BuildContext context,
+      String? deepLink,
+      String? babyProfileId,
+    )? onOpenDeepLink,
     BuildContext? context,
   }) async {
     if (kIsWeb) return;
@@ -41,28 +45,34 @@ class PushNotificationService {
       await _registerToken(token);
     });
 
-    void openDeepLink(String? link) {
+    void openDeepLink(Map<String, dynamic> data) {
+      final link = data['deep_link'] as String?;
+      final babyProfileId = data['baby_profile_id'] as String?;
       if (onDeepLink != null) {
-        onDeepLink(link);
+        onDeepLink(link, babyProfileId);
         return;
       }
       if (context != null && context.mounted) {
         if (onOpenDeepLink != null) {
-          onOpenDeepLink(context, link);
+          onOpenDeepLink(context, link, babyProfileId);
         } else {
-          navigateAppDeepLink(context, link);
+          navigateAppDeepLink(
+            context,
+            link,
+            babyProfileId: babyProfileId,
+          );
         }
       }
     }
 
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
-      openDeepLink(message.data['deep_link']);
+      openDeepLink(message.data);
     });
 
     final initial = await messaging.getInitialMessage();
     if (initial != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        openDeepLink(initial.data['deep_link']);
+        openDeepLink(initial.data);
       });
     }
 

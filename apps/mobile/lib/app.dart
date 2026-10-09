@@ -128,9 +128,10 @@ class _LaNonnaAppState extends State<LaNonnaApp> {
     );
     _pushService!.start(
       authStateChanges: context.read<AuthRepository>().authStateChanges(),
-      onDeepLink: (link) {
-        final path = normalizeAppDeepLinkPath(link);
-        if (path != null) _router.push(path);
+      onDeepLink: (link, babyProfileId) {
+        final ctx = appRootNavigatorKey.currentContext;
+        if (ctx == null) return;
+        navigateAppDeepLink(ctx, link, babyProfileId: babyProfileId);
       },
       context: context,
     );
