@@ -55,6 +55,8 @@ class PhotoComment {
     required this.authorDisplayName,
     required this.createdAt,
     required this.isMine,
+    required this.canEdit,
+    required this.canDelete,
   });
 
   final String id;
@@ -62,15 +64,20 @@ class PhotoComment {
   final String authorDisplayName;
   final DateTime createdAt;
   final bool isMine;
+  final bool canEdit;
+  final bool canDelete;
 
   factory PhotoComment.fromJson(Map<String, dynamic> json) {
+    final isMine = json['is_mine'] as bool? ?? false;
     return PhotoComment(
       id: json['id'] as String,
       body: json['body'] as String,
       authorDisplayName:
           json['author_display_name'] as String? ?? 'Family member',
       createdAt: DateTime.parse(json['created_at'] as String),
-      isMine: json['is_mine'] as bool? ?? false,
+      isMine: isMine,
+      canEdit: json['can_edit'] as bool? ?? isMine,
+      canDelete: json['can_delete'] as bool? ?? isMine,
     );
   }
 }

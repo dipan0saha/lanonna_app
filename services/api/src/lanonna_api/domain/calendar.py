@@ -6,6 +6,11 @@ from typing import Any
 
 from lanonna_api.domain import assert_owner_membership
 from lanonna_api.domain.catalog_suggestion_ids import normalize_catalog_suggestion_id
+from lanonna_api.domain.content_permissions import (
+    member_comment_to_json,
+    member_content_can_delete,
+    member_content_can_edit,
+)
 from lanonna_api.domain.gallery import require_membership
 from lanonna_api.domain.notification_copy import actor_display_name
 from lanonna_api.domain.notifications import (
@@ -23,6 +28,7 @@ from lanonna_api.repositories.events import (
     delete_event,
     get_caller_rsvp,
     get_event,
+    get_event_comment,
     insert_event_comment,
     list_event_comments,
     list_events,
@@ -86,7 +92,7 @@ def get_event_detail(
     baby_profile_id: uuid.UUID,
     event_id: uuid.UUID,
 ) -> dict[str, Any]:
-    require_membership(firebase_uid, baby_profile_id)
+    membership = require_membership(firebase_uid, baby_profile_id)
     row = get_event(baby_profile_id, event_id)
     if row is None:
         raise LookupError("Event not found.")
@@ -114,14 +120,9 @@ def get_event_detail(
             for r in rsvps
         ],
         "comments": [
-            {
-                "id": str(c["id"]),
-                "body": c["body"],
-                "author_display_name": author_display_name_from_row(c),
-                "author_firebase_uid": c["author_firebase_uid"],
-                "created_at": c["created_at"].isoformat(),
-                "is_mine": c["author_firebase_uid"] == firebase_uid,
-            }
+            member_comment_to_json(
+                c, firebase_uid, membership, author_display_name_from_row(c)
+            )
             for c in comments
         ],
     }
@@ -266,8 +267,18 @@ def delete_event_comment(
     event_id: uuid.UUID,
     comment_id: uuid.UUID,
 ) -> None:
-    require_membership(firebase_uid, baby_profile_id)
-    if not soft_delete_event_comment(event_id, comment_id, firebase_uid):
+    membership = require_membership(firebase_uid, baby_profile_id)
+    event = get_event(baby_profile_id, event_id)
+    if event is None:
+        raise LookupError("Event not found.")
+    comment = get_event_comment(event_id, comment_id)
+    if comment is None:
+        raise LookupError("Comment not found.")
+    if not member_content_can_delete(
+        firebase_uid, membership, comment["author_firebase_uid"]
+    ):
+        raise PermissionError("Cannot delete this comment.")
+    if not soft_delete_event_comment(event_id, comment_id):
         raise LookupError("Comment not found.")
 
 
@@ -284,7 +295,17 @@ def edit_event_comment(
         raise LookupError("Event not found.")
     if not body.strip():
         raise ValueError("Comment body required.")
-    updated = update_event_comment(event_id, comment_id, firebase_uid, body)
+    comment = get_event_comment(event_id, comment_id)
+    if comment is None:
+        raise LookupError("Comment not found.")
+    if not member_content_can_edit(firebase_uid, comment["author_firebase_uid"]):
+        raise PermissionError("Cannot edit this comment.")
+    updated = update_event_comment(
+        event_id,
+        comment_id,
+        comment["author_firebase_uid"],
+        body,
+    )
     if updated is None:
         raise LookupError("Comment not found.")
     return {

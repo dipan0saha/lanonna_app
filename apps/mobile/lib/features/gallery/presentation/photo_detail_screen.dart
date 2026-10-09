@@ -165,7 +165,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
   Future<void> _editComment(PhotoComment comment) async {
     final baby = _baby;
     final detail = _detail;
-    if (baby == null || detail == null || !comment.isMine) return;
+    if (baby == null || detail == null || !comment.canEdit) return;
     final controller = TextEditingController(text: comment.body);
     final saved = await showDialog<bool>(
       context: context,
@@ -238,7 +238,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
   Future<void> _deleteComment(PhotoComment comment) async {
     final baby = _baby;
     final detail = _detail;
-    if (baby == null || detail == null || !comment.isMine) return;
+    if (baby == null || detail == null || !comment.canDelete) return;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -515,18 +515,23 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                                     ],
                                   ),
                                 ),
-                                if (detail.comments[i].isMine)
+                                if (detail.comments[i].canEdit ||
+                                    detail.comments[i].canDelete)
                                   Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      IconButton(
-                                        icon: const Icon(Icons.edit_outlined, size: 18),
-                                        onPressed: () => _editComment(detail.comments[i]),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.delete_outline, size: 18),
-                                        onPressed: () => _deleteComment(detail.comments[i]),
-                                      ),
+                                      if (detail.comments[i].canEdit)
+                                        IconButton(
+                                          icon: const Icon(Icons.edit_outlined, size: 18),
+                                          onPressed: () =>
+                                              _editComment(detail.comments[i]),
+                                        ),
+                                      if (detail.comments[i].canDelete)
+                                        IconButton(
+                                          icon: const Icon(Icons.delete_outline, size: 18),
+                                          onPressed: () =>
+                                              _deleteComment(detail.comments[i]),
+                                        ),
                                     ],
                                   ),
                               ],

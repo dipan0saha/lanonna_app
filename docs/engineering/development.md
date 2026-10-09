@@ -29,7 +29,7 @@ lanonna_app/
 | Module | Shell route | Notes |
 |--------|-------------|--------|
 | `home/` | `/home` | Owner expecting/born; `home-summary`; announce arrival |
-| `gallery/` | `/gallery`, `/gallery/recent`, `/gallery/favorites` | Grid with comment/squish badges when count **> 0** (FR-GAL-012); detail, squish, comments (create/edit/delete), owner baby tags (“In this photo”); `/gallery/photo/:id`; all-mode **Recent Activity** from `GET …/activity-events?scope=gallery` (squish/comment events; prototype row UI). **`GalleryRepository`** is a `ChangeNotifier` (like calendar); list uploads/mutations call **`notifyGalleryDataChanged`** so shell tabs + home teasers reload; FAB upload polls processing by **`photoId`** before refreshing thumbs. |
+| `gallery/` | `/gallery`, `/gallery/recent`, `/gallery/favorites` | Grid with comment/squish badges when count **> 0** (FR-GAL-012); detail, squish, comments (create; edit/delete per API `can_edit` / `can_delete`), owner baby tags (“In this photo”); `/gallery/photo/:id`; all-mode **Recent Activity** from `GET …/activity-events?scope=gallery` (squish/comment events; prototype row UI). **`GalleryRepository`** is a `ChangeNotifier` (like calendar); list uploads/mutations call **`notifyGalleryDataChanged`** so shell tabs + home teasers reload; FAB upload polls processing by **`photoId`** before refreshing thumbs. |
 | `calendar/` | `/calendar` | Month + upcoming; event CRUD; static AI suggestions (`AiSuggestionsScaffold` + asset) |
 | `registry/` | `/registry` | Needed/purchased, shipping, purchase claim; AI suggestions |
 | `baby/` | (shared) | `CreateBabyScreen` + submit helper — onboarding and `/baby/create` modes |
@@ -189,12 +189,12 @@ Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps:
 | GET | `/v1/babies/{id}/photos` | JWT (member); `limit`/`offset`; `sort=default\|recent\|favorites`; followers see `ready` only |
 | GET, PATCH, DELETE | `/v1/babies/{id}/photos/{photo_id}` | JWT (member read; owner mutate); signed thumb/display URLs; GET includes `tagged_babies` |
 | POST | `/v1/babies/{id}/photos/{photo_id}/squish` | JWT (member); toggle squish |
-| POST, PATCH, DELETE | `/v1/babies/{id}/photos/{photo_id}/comments` | JWT (member; PATCH author-only) |
+| POST, PATCH, DELETE | `/v1/babies/{id}/photos/{photo_id}/comments` | JWT (member); photo detail comments include `can_edit` / `can_delete` (`domain/content_permissions.py`: author edits; owner or author deletes) |
 | PUT | `/v1/babies/{id}/photos/{photo_id}/tags` | JWT (owner); body `tagged_baby_profile_ids` |
 | GET, POST | `/v1/babies/{id}/events` | JWT (member read; owner create); query `month=YYYY-MM`, `upcoming=true`. Mobile stores `starts_at` as UTC; calendar UI displays local time and reloads lists after create via `CalendarRepository` + FAB `push` result (`#398`). |
 | GET, PATCH, DELETE | `/v1/babies/{id}/events/{event_id}` | JWT |
 | PUT | `/v1/babies/{id}/events/{event_id}/rsvp` | JWT (member); body `{status}` |
-| POST, PATCH, DELETE | `/v1/babies/{id}/events/{event_id}/comments` | JWT (member; PATCH author-only) |
+| POST, PATCH, DELETE | `/v1/babies/{id}/events/{event_id}/comments` | JWT (member); same comment capability flags as photo comments (FR-CAL-005) |
 | GET, POST | `/v1/babies/{id}/registry/items` | JWT (member read; owner create) |
 | GET, PATCH, DELETE | `/v1/babies/{id}/registry/items/{item_id}` | JWT; no PATCH when purchased |
 | POST, DELETE | `/v1/babies/{id}/registry/items/{item_id}/purchase` | JWT (claim / undo) |

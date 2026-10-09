@@ -84,20 +84,27 @@ class EventComment {
     required this.body,
     required this.authorDisplayName,
     required this.isMine,
+    required this.canEdit,
+    required this.canDelete,
   });
 
   final String id;
   final String body;
   final String authorDisplayName;
   final bool isMine;
+  final bool canEdit;
+  final bool canDelete;
 
   factory EventComment.fromJson(Map<String, dynamic> json) {
+    final isMine = json['is_mine'] as bool? ?? false;
     return EventComment(
       id: json['id'] as String,
       body: json['body'] as String,
       authorDisplayName:
           json['author_display_name'] as String? ?? 'Family member',
-      isMine: json['is_mine'] as bool? ?? false,
+      isMine: isMine,
+      canEdit: json['can_edit'] as bool? ?? isMine,
+      canDelete: json['can_delete'] as bool? ?? isMine,
     );
   }
 }

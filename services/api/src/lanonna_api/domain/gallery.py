@@ -10,10 +10,16 @@ from lanonna_api.repositories.photo_tags import (
     list_tagged_babies_for_photo,
     replace_photo_baby_tags,
 )
+from lanonna_api.domain.content_permissions import (
+    member_comment_to_json,
+    member_content_can_delete,
+    member_content_can_edit,
+)
 from lanonna_api.repositories.photos import (
     PhotoListSort,
     caller_squished,
     delete_photo,
+    get_photo_comment,
     get_photo_for_baby,
     insert_photo_comment,
     list_photo_comments,
@@ -147,14 +153,7 @@ def get_photo_detail(
             {"id": str(t["id"]), "name": t["name"]} for t in tagged
         ],
         "comments": [
-            {
-                "id": str(c["id"]),
-                "body": c["body"],
-                "author_display_name": _display_name(c),
-                "author_firebase_uid": c["author_firebase_uid"],
-                "created_at": c["created_at"].isoformat(),
-                "is_mine": c["author_firebase_uid"] == firebase_uid,
-            }
+            member_comment_to_json(c, firebase_uid, membership, _display_name(c))
             for c in comments
         ],
     }
@@ -262,8 +261,18 @@ def delete_comment(
     photo_id: uuid.UUID,
     comment_id: uuid.UUID,
 ) -> None:
-    require_membership(firebase_uid, baby_profile_id)
-    if not soft_delete_photo_comment(photo_id, comment_id, firebase_uid):
+    membership = require_membership(firebase_uid, baby_profile_id)
+    row = get_photo_for_baby(baby_profile_id, photo_id)
+    if row is None:
+        raise LookupError("Photo not found.")
+    comment = get_photo_comment(photo_id, comment_id)
+    if comment is None:
+        raise LookupError("Comment not found.")
+    if not member_content_can_delete(
+        firebase_uid, membership, comment["author_firebase_uid"]
+    ):
+        raise PermissionError("Cannot delete this comment.")
+    if not soft_delete_photo_comment(photo_id, comment_id):
         raise LookupError("Comment not found.")
 
 
@@ -280,7 +289,17 @@ def edit_comment(
         raise LookupError("Photo not found.")
     if not body.strip():
         raise ValueError("Comment body required.")
-    updated = update_photo_comment(photo_id, comment_id, firebase_uid, body)
+    comment = get_photo_comment(photo_id, comment_id)
+    if comment is None:
+        raise LookupError("Comment not found.")
+    if not member_content_can_edit(firebase_uid, comment["author_firebase_uid"]):
+        raise PermissionError("Cannot edit this comment.")
+    updated = update_photo_comment(
+        photo_id,
+        comment_id,
+        comment["author_firebase_uid"],
+        body,
+    )
     if updated is None:
         raise LookupError("Comment not found.")
     return {

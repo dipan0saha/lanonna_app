@@ -293,10 +293,25 @@ def update_event_comment(
     return dict(row) if row else None
 
 
+def get_event_comment(
+    event_id: uuid.UUID,
+    comment_id: uuid.UUID,
+) -> dict[str, Any] | None:
+    with get_connection() as conn:
+        row = conn.execute(
+            """
+            SELECT id, body, author_firebase_uid, created_at, updated_at
+            FROM event_comments
+            WHERE id = %s AND event_id = %s AND deleted_at IS NULL
+            """,
+            (comment_id, event_id),
+        ).fetchone()
+    return dict(row) if row else None
+
+
 def soft_delete_event_comment(
     event_id: uuid.UUID,
     comment_id: uuid.UUID,
-    author_firebase_uid: str,
 ) -> bool:
     with get_connection() as conn:
         cur = conn.execute(
@@ -304,9 +319,8 @@ def soft_delete_event_comment(
             UPDATE event_comments
             SET deleted_at = now(), updated_at = now()
             WHERE id = %s AND event_id = %s
-              AND author_firebase_uid = %s
               AND deleted_at IS NULL
             """,
-            (comment_id, event_id, author_firebase_uid),
+            (comment_id, event_id),
         )
     return cur.rowcount > 0

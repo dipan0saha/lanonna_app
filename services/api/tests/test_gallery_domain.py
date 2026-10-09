@@ -26,6 +26,9 @@ def test_edit_comment_not_found_when_update_returns_none():
         "lanonna_api.domain.gallery.get_photo_for_baby",
         return_value={"status": "ready"},
     ), patch(
+        "lanonna_api.domain.gallery.get_photo_comment",
+        return_value={"author_firebase_uid": "uid"},
+    ), patch(
         "lanonna_api.domain.gallery.update_photo_comment",
         return_value=None,
     ):

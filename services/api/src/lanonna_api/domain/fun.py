@@ -30,17 +30,8 @@ from lanonna_api.repositories.fun import (
     upsert_gender_vote,
     user_has_like,
 )
+from lanonna_api.domain.content_permissions import member_content_can_delete
 from lanonna_api.repositories.users import upsert_app_user
-
-
-def _suggestion_can_delete(
-    firebase_uid: str,
-    membership: dict[str, Any] | None,
-    suggested_by_firebase_uid: str,
-) -> bool:
-    is_owner = membership is not None and membership["role"] == "owner"
-    is_author = suggested_by_firebase_uid == firebase_uid
-    return is_owner or is_author
 
 
 def list_names(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, Any]:
@@ -59,7 +50,7 @@ def list_names(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, Any]:
                 "like_count": row["like_count"],
                 "author_display_name": author_display_name_from_row(row),
                 "is_mine": author_uid == firebase_uid,
-                "can_delete": _suggestion_can_delete(
+                "can_delete": member_content_can_delete(
                     firebase_uid, membership, author_uid
                 ),
                 "viewer_has_liked": user_has_like(sid, firebase_uid),
@@ -117,7 +108,7 @@ def remove_suggestion(
     row = get_name_suggestion(baby_profile_id, suggestion_id)
     if row is None:
         raise LookupError("Suggestion not found.")
-    if not _suggestion_can_delete(
+    if not member_content_can_delete(
         firebase_uid, membership, row["suggested_by_firebase_uid"]
     ):
         raise PermissionError("Cannot delete this suggestion.")

@@ -168,7 +168,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
   Future<void> _editComment(EventComment comment) async {
     final baby = _baby;
-    if (baby == null || !comment.isMine) return;
+    if (baby == null || !comment.canEdit) return;
     final controller = TextEditingController(text: comment.body);
     final saved = await showDialog<bool>(
       context: context,
@@ -211,7 +211,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
   Future<void> _deleteComment(EventComment comment) async {
     final baby = _baby;
-    if (baby == null || !comment.isMine) return;
+    if (baby == null || !comment.canDelete) return;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -400,18 +400,20 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   ListTile(
                     title: Text(c.authorDisplayName),
                     subtitle: Text(c.body),
-                    trailing: c.isMine
+                    trailing: (c.canEdit || c.canDelete)
                         ? Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit_outlined, size: 20),
-                                onPressed: () => _editComment(c),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline, size: 20),
-                                onPressed: () => _deleteComment(c),
-                              ),
+                              if (c.canEdit)
+                                IconButton(
+                                  icon: const Icon(Icons.edit_outlined, size: 20),
+                                  onPressed: () => _editComment(c),
+                                ),
+                              if (c.canDelete)
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline, size: 20),
+                                  onPressed: () => _deleteComment(c),
+                                ),
                             ],
                           )
                         : null,
