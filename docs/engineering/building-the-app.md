@@ -51,7 +51,7 @@ Follow [platform-architecture.md](platform-architecture.md) Month 1–2:
 14. **Done (gallery refresh):** `GalleryRepository` + `notifyGalleryDataChanged` + `BabyContextReload` — gallery grid, sub-routes, and home photo teasers refresh after upload/delete/squish/comment without manual pull-to-refresh (FR-GAL-013)
 15. **Done (unified create baby):** `CreateBabyScreen` — onboarding + `/baby/create` share one form/submit pipeline (`CreateBabyMode`)
 16. **Done (#410 account surfaces):** `AppBorderedSurface` + `subpageScrollPadding` — My Account and home owner/teaser tiles align to 26px content width; `CardTheme` horizontal margin removed
-16. **Release APK to Drive:** `./scripts/ship_release_apk_to_drive.sh` (dev flavor; overwrites `lanonna_app.apk` under `LANONNA_DRIVE_DIR`)
+16. **Release APK to Drive:** `./scripts/ship_release_apk_to_drive.sh` (dev flavor; universal APK → `lanonna_app.apk`). **Emulator (x86_64):** `./scripts/ship_release_apk_x86_64_to_drive.sh` → `lanonna_app_x86_64.apk` (smaller, one ABI).
 17. **Beta gate:** `./scripts/run-beta-gate.sh` (tests + optional API deploy); `./scripts/setup-expired-invites-scheduler.sh`; force-update via `app_versions` + `GET /v1/app/version` (Flutter `AppVersionGate`)
 
 ## If worker URL changes
