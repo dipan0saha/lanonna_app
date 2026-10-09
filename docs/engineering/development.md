@@ -67,7 +67,7 @@ flutter run --dart-define-from-file=flavors/dev.json
 
 ### Text input capitalization
 
-User-facing text fields should use [`AppTextField`](../../apps/mobile/lib/core/widgets/app_text_field.dart) (or [`OnboardingTextField`](../../apps/mobile/lib/features/onboarding/presentation/widgets/onboarding_fields.dart) with `AppTextInputKind`) instead of raw `TextField` + `TextCapitalization`. Policy lives in [`app_text_input_kind.dart`](../../apps/mobile/lib/core/input/app_text_input_kind.dart): `personName` (title-case per word), `prose` (sentence-case), `none` (email, password, URLs, search). On submit, call `AppTextInputPolicy.normalizeForSubmit(kind, text)` before persisting to the API.
+User-facing text fields should use [`AppTextField`](../../apps/mobile/lib/core/widgets/app_text_field.dart) (or [`OnboardingTextField`](../../apps/mobile/lib/features/onboarding/presentation/widgets/onboarding_fields.dart) with `AppTextInputKind`) instead of raw `TextField` + `TextCapitalization`. Policy lives in [`app_text_input_kind.dart`](../../apps/mobile/lib/core/input/app_text_input_kind.dart): `personName` (capitalize the first letter of each word or hyphen/apostrophe-separated part; preserve internal capitals such as McKenzie or `QAOwnerName`), `prose` (sentence-case), `none` (email, password, URLs, search). On submit, call `AppTextInputPolicy.normalizeForSubmit(kind, text)` before persisting to the API. Fun name dedup on the API is case-insensitive per baby and gender.
 
 Transient feedback uses [`AppSnackBar`](../../apps/mobile/lib/core/widgets/app_snackbar.dart): `showInfo` (1s acknowledgments) and `showAlert` (4s validation/errors). Do not call `ScaffoldMessenger.showSnackBar` directly.
 

@@ -41,6 +41,26 @@ def list_name_suggestions(baby_profile_id: uuid.UUID) -> list[dict[str, Any]]:
     return [dict(r) for r in rows]
 
 
+def find_name_suggestion_case_insensitive(
+    baby_profile_id: uuid.UUID,
+    suggested_name: str,
+    gender: str,
+) -> dict[str, Any] | None:
+    with get_connection() as conn:
+        row = conn.execute(
+            """
+            SELECT id, suggested_name, gender
+            FROM name_suggestions
+            WHERE baby_profile_id = %s
+              AND gender = %s
+              AND lower(suggested_name) = lower(%s)
+            LIMIT 1
+            """,
+            (baby_profile_id, gender, suggested_name.strip()),
+        ).fetchone()
+    return dict(row) if row else None
+
+
 def insert_name_suggestion(
     baby_profile_id: uuid.UUID,
     firebase_uid: str,

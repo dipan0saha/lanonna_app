@@ -10,13 +10,34 @@ void main() {
       );
     });
 
-    test('personName title-cases', () {
+    test('personName capitalizes without flattening casing', () {
       expect(
         AppTextInputPolicy.normalizeForSubmit(
           AppTextInputKind.personName,
           'tristian',
         ),
         'Tristian',
+      );
+      expect(
+        AppTextInputPolicy.normalizeForSubmit(
+          AppTextInputKind.personName,
+          'McKenzie',
+        ),
+        'McKenzie',
+      );
+      expect(
+        AppTextInputPolicy.normalizeForSubmit(
+          AppTextInputKind.personName,
+          'QAFollowerName',
+        ),
+        'QAFollowerName',
+      );
+      expect(
+        AppTextInputPolicy.normalizeForSubmit(
+          AppTextInputKind.personName,
+          'mary-kate',
+        ),
+        'Mary-Kate',
       );
     });
 

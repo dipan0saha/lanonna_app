@@ -338,7 +338,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-GAM-001 | Gender prediction | Follower votes male/female; can change vote | `votes` vote_type gender |
 | FR-GAM-002 | Birthdate prediction | Follower picks date; can change | `votes` vote_type birthdate |
 | FR-GAM-003 | Identified predictions | Gender/birthdate votes attributed to the member; visible in who-voted lists | `votes.is_anonymous` legacy only; new votes stored identified |
-| FR-GAM-004 | Name suggestions | Submit suggestions with gender scope (non-owners: one per gender); author may remove own suggestion; owner may remove any; list includes `can_delete`; expecting create-baby profile names auto-seed on baby create (#400) | `name_suggestions`; `GET …/fun/names` `can_delete`; mobile Fun Names uses API flag (#16) |
+| FR-GAM-004 | Name suggestions | Submit suggestions with gender scope (non-owners: one per gender); author may remove own suggestion; owner may remove any; list includes `can_delete`; expecting create-baby profile names auto-seed on baby create (#400); stored/displayed names preserve user casing (McKenzie, hyphenated names); API rejects duplicate names per gender case-insensitively (#12) | `name_suggestions`; `GET …/fun/names` `can_delete`; mobile `AppTextInputKind.personName`; `find_name_suggestion_case_insensitive` |
 | FR-GAM-005 | Name likes | Like others’ suggestions | `name_suggestion_likes` |
 | FR-GAM-006 | Fun tab hub | Gamification screen hosts suggestions + predictions (E2E-011) | `/gamification` |
 | FR-GAM-007 | User stats | Aggregated counts for recap | `user_stats` via triggers or API |

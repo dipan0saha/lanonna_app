@@ -18,6 +18,7 @@ from lanonna_api.repositories.fun import (
     caller_liked_suggestion_ids,
     count_suggestions_by_author_gender,
     delete_name_suggestion,
+    find_name_suggestion_case_insensitive,
     gender_vote_totals,
     get_caller_votes,
     get_name_suggestion,
@@ -80,6 +81,8 @@ def suggest_name(
     if membership and membership["role"] != "owner":
         if count_suggestions_by_author_gender(baby_profile_id, firebase_uid, gender) >= 1:
             raise PermissionError("You already suggested a name for this gender.")
+    if find_name_suggestion_case_insensitive(baby_profile_id, suggested_name, gender):
+        raise ValueError("That name is already on the list for this gender.")
     upsert_app_user(firebase_uid, None)
     row = insert_name_suggestion(
         baby_profile_id, firebase_uid, suggested_name, gender

@@ -8,7 +8,7 @@ enum AppTextInputKind {
   /// Email, password, URLs, search — trim only on submit.
   none,
 
-  /// Baby names, profile names — title-case per word.
+  /// Baby names, profile names — capitalize first letter per word/part; preserve casing.
   personName,
 
   /// Captions, comments, titles, descriptions — sentence case.
