@@ -22,12 +22,18 @@ String? validateDisplayName(String? value) {
   return null;
 }
 
+String? validateFunNameSuggestion(String? value) =>
+    validateRequiredTrimmed(value, fieldLabel: 'Name');
+
 String? validateRequiredTrimmed(String? value, {required String fieldLabel}) {
   if (value == null || value.trim().isEmpty) {
     return '$fieldLabel is required';
   }
   return null;
 }
+
+String? validateRegistryItemName(String? value) =>
+    validateRequiredTrimmed(value, fieldLabel: 'Item name');
 
 String? validateRegistryShippingLine1(String? value) =>
     validateRequiredTrimmed(value, fieldLabel: 'Street address');

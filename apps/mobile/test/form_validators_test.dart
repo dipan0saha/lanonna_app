@@ -24,6 +24,13 @@ void main() {
     );
   });
 
+  test('registry item and fun name validators', () {
+    expect(validateRegistryItemName('  '), isNotNull);
+    expect(validateRegistryItemName('Crib'), isNull);
+    expect(validateFunNameSuggestion(''), isNotNull);
+    expect(validateFunNameSuggestion('Ada'), isNull);
+  });
+
   test('registry shipping validators', () {
     expect(validateRegistryShippingLine1('  '), isNotNull);
     expect(validateRegistryShippingLine1(' Main '), isNull);

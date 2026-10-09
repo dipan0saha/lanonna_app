@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
+import '../../../core/api/run_mutation.dart';
 import '../../../core/input/app_text_input_kind.dart';
+import '../../../core/validation/form_validators.dart';
 import '../../../core/widgets/app_snackbar.dart';
-import '../../../core/widgets/app_text_field.dart';
+import '../../../core/widgets/app_text_form_field.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/domain/baby_summary.dart';
@@ -21,10 +23,12 @@ class NamesTab extends StatefulWidget {
 }
 
 class _NamesTabState extends State<NamesTab> {
+  final _suggestFormKey = GlobalKey<FormState>();
   NamesPayload? _payload;
   final _input = TextEditingController();
   var _gender = 'male';
   var _loading = true;
+  var _validateSuggestOnInteraction = false;
 
   bool get _isOwner => widget.baby.role == 'owner';
 
@@ -49,32 +53,41 @@ class _NamesTabState extends State<NamesTab> {
         _payload = payload;
         _loading = false;
       });
-    } catch (_) {
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.showAlert(context, apiErrorMessage(e));
+      }
       setState(() => _loading = false);
     }
   }
 
   Future<void> _submit() async {
+    setState(() => _validateSuggestOnInteraction = true);
+    if (_suggestFormKey.currentState?.validate() != true) return;
+
     final text = AppTextInputPolicy.normalizeForSubmit(
       AppTextInputKind.personName,
       _input.text,
     );
-    if (text.isEmpty) return;
-    try {
-      await context.read<FunRepository>().suggestName(
+    final ok = await runMutation(
+      context,
+      () => context.read<FunRepository>().suggestName(
         widget.baby.id,
         text,
         _gender,
-      );
-      _input.clear();
-      await _load();
-    } catch (e) {
-      if (mounted) AppSnackBar.showAlert(context, apiErrorMessage(e));
-    }
+      ),
+    );
+    if (!ok) return;
+    _input.clear();
+    await _load();
   }
 
   Future<void> _like(NameSuggestion s) async {
-    await context.read<FunRepository>().toggleLike(widget.baby.id, s.id);
+    final ok = await runMutation(
+      context,
+      () => context.read<FunRepository>().toggleLike(widget.baby.id, s.id),
+    );
+    if (!ok) return;
     await _load();
   }
 
@@ -100,12 +113,12 @@ class _NamesTabState extends State<NamesTab> {
       ),
     );
     if (ok != true) return;
-    try {
-      await context.read<FunRepository>().deleteSuggestion(widget.baby.id, s.id);
-      await _load();
-    } catch (e) {
-      if (mounted) AppSnackBar.showAlert(context, apiErrorMessage(e));
-    }
+    final ok = await runMutation(
+      context,
+      () => context.read<FunRepository>().deleteSuggestion(widget.baby.id, s.id),
+    );
+    if (!ok) return;
+    await _load();
   }
 
   @override
@@ -164,16 +177,24 @@ class _NamesTabState extends State<NamesTab> {
   }
 
   Widget _inputCard() {
+    final autovalidate = _validateSuggestOnInteraction
+        ? AutovalidateMode.onUserInteraction
+        : AutovalidateMode.disabled;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(14),
-        child: Column(
-          children: [
-            AppTextField(
-              kind: AppTextInputKind.personName,
-              controller: _input,
-              decoration: const InputDecoration(hintText: 'Suggest a name…'),
-            ),
+        child: Form(
+          key: _suggestFormKey,
+          autovalidateMode: autovalidate,
+          child: Column(
+            children: [
+              AppTextFormField(
+                kind: AppTextInputKind.personName,
+                controller: _input,
+                decoration: const InputDecoration(hintText: 'Suggest a name…'),
+                validator: validateFunNameSuggestion,
+                autovalidateMode: autovalidate,
+              ),
             const SizedBox(height: 10),
             Row(
               children: [
@@ -201,7 +222,8 @@ class _NamesTabState extends State<NamesTab> {
                   ),
                 ),
               ),
-          ],
+            ],
+          ),
         ),
       ),
     );

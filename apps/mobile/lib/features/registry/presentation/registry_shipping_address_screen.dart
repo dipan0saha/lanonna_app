@@ -7,6 +7,7 @@ import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
+import '../../../core/api/run_mutation.dart';
 import '../../../core/validation/form_validators.dart';
 import '../../../core/widgets/app_country_dropdown_field.dart';
 import '../../../core/widgets/app_labeled_text_form_field.dart';
@@ -118,27 +119,23 @@ class _RegistryShippingAddressScreenState
     setState(() => _validateOnInteraction = true);
     if (_formKey.currentState?.validate() != true) return;
     setState(() => _saving = true);
-    try {
-      final patch = RegistryShippingAddress(
-        line1: _line1.text,
-        line2: _line2.text,
-        city: _city.text,
-        region: _region.text,
-        postalCode: _postal.text,
-        countryCode: _countryCode,
-      ).toPatchJson();
-      await context.read<RegistryRepository>().updateShippingAddress(
-            baby.id,
-            patch,
-          );
-      if (mounted) context.pop(true);
-    } catch (e) {
-      if (mounted) {
-        AppSnackBar.showAlert(context, 'Save failed: $e');
-      }
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
+    final patch = RegistryShippingAddress(
+      line1: _line1.text,
+      line2: _line2.text,
+      city: _city.text,
+      region: _region.text,
+      postalCode: _postal.text,
+      countryCode: _countryCode,
+    ).toPatchJson();
+    final ok = await runMutation(
+      context,
+      () => context.read<RegistryRepository>().updateShippingAddress(
+        baby.id,
+        patch,
+      ),
+    );
+    if (mounted) setState(() => _saving = false);
+    if (ok && mounted) context.pop(true);
   }
 
   Future<void> _clear() async {
@@ -165,17 +162,15 @@ class _RegistryShippingAddressScreenState
     );
     if (confirmed != true) return;
     setState(() => _saving = true);
-    try {
-      await context.read<RegistryRepository>().updateShippingAddress(
-            baby.id,
-            RegistryShippingAddress.clearPatchJson(),
-          );
-      if (mounted) context.pop(true);
-    } catch (e) {
-      if (mounted) AppSnackBar.showAlert(context, 'Remove failed: $e');
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
+    final ok = await runMutation(
+      context,
+      () => context.read<RegistryRepository>().updateShippingAddress(
+        baby.id,
+        RegistryShippingAddress.clearPatchJson(),
+      ),
+    );
+    if (mounted) setState(() => _saving = false);
+    if (ok && mounted) context.pop(true);
   }
 
   @override
