@@ -15,7 +15,7 @@ def list_baby_members(baby_profile_id: uuid.UUID) -> list[dict[str, Any]]:
                 m.role,
                 m.relationship_label,
                 m.created_at,
-                COALESCE(u.display_name, split_part(u.email, '@', 1), 'Family member') AS display_name,
+                COALESCE(NULLIF(TRIM(u.display_name), ''), 'Family member') AS display_name,
                 u.email
             FROM baby_memberships m
             JOIN app_users u ON u.firebase_uid = m.firebase_uid

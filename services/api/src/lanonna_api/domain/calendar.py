@@ -22,7 +22,10 @@ from lanonna_api.domain.notifications import (
 )
 from lanonna_api.repositories.activity_events import insert_activity_event
 from lanonna_api.domain.media_urls import signed_display_url
-from lanonna_api.domain.users_display import author_display_name_from_row
+from lanonna_api.domain.users_display import (
+    author_display_name_from_row,
+    rsvp_display_name_from_row,
+)
 from lanonna_api.repositories.events import (
     catalog_suggestion_claimed,
     create_event,
@@ -116,7 +119,7 @@ def get_event_detail(
             {
                 "firebase_uid": r["firebase_uid"],
                 "status": r["status"],
-                "display_name": author_display_name_from_row(r),
+                "display_name": rsvp_display_name_from_row(r),
             }
             for r in rsvps
         ],

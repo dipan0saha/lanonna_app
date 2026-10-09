@@ -124,8 +124,7 @@ def list_registry_items(baby_profile_id: uuid.UUID) -> list[dict[str, Any]]:
                 p.id AS purchase_id,
                 p.purchased_by_firebase_uid,
                 p.created_at AS purchased_at,
-                u.display_name AS purchaser_display_name,
-                u.email AS purchaser_email
+                u.display_name AS purchaser_display_name
             FROM registry_items i
             LEFT JOIN registry_purchases p ON p.registry_item_id = i.id
             LEFT JOIN app_users u ON u.firebase_uid = p.purchased_by_firebase_uid
@@ -151,8 +150,7 @@ def get_registry_item(
                 p.id AS purchase_id,
                 p.purchased_by_firebase_uid,
                 p.created_at AS purchased_at,
-                u.display_name AS purchaser_display_name,
-                u.email AS purchaser_email
+                u.display_name AS purchaser_display_name
             FROM registry_items i
             LEFT JOIN registry_purchases p ON p.registry_item_id = i.id
             LEFT JOIN app_users u ON u.firebase_uid = p.purchased_by_firebase_uid

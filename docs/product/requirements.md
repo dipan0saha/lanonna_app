@@ -295,7 +295,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-GAL-004 | Gallery views | Recent and favorites routes | `/gallery/recent`, `/gallery/favorites`; list API `sort=recent\|favorites\|default`; home teasers link “View all” |
 | FR-GAL-005 | Photo detail | Fullscreen display asset; metadata and actions; mutations (squish, comments, caption) refresh in place without full-screen reload (`detail_screen_load.dart`) | `/gallery/photo/:id` |
 | FR-GAL-006 | Squish | Toggle like; count updates (E2E-008) | API `photo_squishes` |
-| FR-GAL-007 | Comments | Members create comments; author edits own; author or baby **owner** deletes (moderation); list includes `can_edit` / `can_delete` | `photo_comments`; `POST` / `PATCH` / `DELETE` on `…/photos/{id}/comments` |
+| FR-GAL-007 | Comments | Members create comments; author edits own; author or baby **owner** deletes (moderation); list includes `can_edit` / `can_delete`; comment author label is `app_users.display_name` (fallback **Family member**; never email — #7) | `photo_comments`; `domain/users_display.py`; `POST` / `PATCH` / `DELETE` on `…/photos/{id}/comments` |
 | FR-GAL-008 | Tags | Owner tags other babies they belong to on a photo (metadata v1; no cross-feed). **Read:** `tagged_babies` on photo detail (and tag PUT response) lists only babies the **viewer** is a member of — followers never see names of profiles they were not invited to (#9) | `photo_baby_tags`; `list_tagged_babies_for_photo(photo_id, viewer_uid)` joins `baby_memberships`; `PUT .../photos/{id}/tags` |
 | FR-GAL-009 | Pending visibility | Photos not visible to others until processing complete | SQL status + API filter |
 | FR-GAL-010 | Owner edit caption | Owner can edit photo caption from detail (E2E-008) | API update; follower read-only |
@@ -310,7 +310,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-CAL-001 | Event list/calendar views | Month/list UI on Calendar tab | Flutter |
 | FR-CAL-002 | Create event | Owner creates event (E2E-009); after save, event appears on Calendar **Upcoming** when `starts_at` is in the future and on month grid by **local** date; nested create routes refresh list on return (`#398`) | `/calendar/event/create` |
 | FR-CAL-003 | Event detail/edit | Detail by id; edit route for owner | `/calendar/event/:id`, `.../edit` |
-| FR-CAL-004 | RSVP | Follower/owner RSVP yes/no/maybe | `event_rsvps` |
+| FR-CAL-004 | RSVP | Follower/owner RSVP yes/no/maybe; attendee list shows each member's `display_name` (#7) | `event_rsvps`; `rsvp_display_name_from_row` |
 | FR-CAL-005 | Event comments | Same moderation rules as FR-GAL-007 on event detail | `event_comments`; `POST` / `PATCH` / `DELETE` on `…/events/{id}/comments` |
 | FR-CAL-006 | Upcoming list | View all upcoming from home teaser (E2E-018) | `/calendar/upcoming` |
 | FR-CAL-007 | AI event suggestions | Static catalog by expecting/age tabs; shared “AI Suggestions” UX with registry; hide rows already added (`catalog_suggestion_id` on event); after add, brief info snackbar confirms save (`#398`) | `/calendar/ai-suggestions`; `event_suggestions.json` |

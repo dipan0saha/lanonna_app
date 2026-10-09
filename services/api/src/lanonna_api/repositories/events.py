@@ -205,8 +205,7 @@ def list_rsvps_for_event(event_id: uuid.UUID) -> list[dict[str, Any]]:
             SELECT
                 r.firebase_uid,
                 r.status,
-                u.display_name,
-                u.email
+                u.display_name
             FROM event_rsvps r
             JOIN app_users u ON u.firebase_uid = r.firebase_uid
             WHERE r.event_id = %s
@@ -240,8 +239,7 @@ def list_event_comments(event_id: uuid.UUID) -> list[dict[str, Any]]:
             """
             SELECT
                 c.id, c.body, c.author_firebase_uid, c.created_at, c.updated_at,
-                u.display_name AS author_display_name,
-                u.email AS author_email
+                u.display_name AS author_display_name
             FROM event_comments c
             JOIN app_users u ON u.firebase_uid = c.author_firebase_uid
             WHERE c.event_id = %s AND c.deleted_at IS NULL

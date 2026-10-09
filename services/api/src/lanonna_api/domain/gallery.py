@@ -37,19 +37,14 @@ from lanonna_api.domain.activity_copy import (
     photo_squish_summary,
 )
 from lanonna_api.domain.notification_copy import actor_display_name
+from lanonna_api.domain.users_display import (
+    author_display_name_from_row,
+    uploader_display_name_from_row,
+)
 from lanonna_api.domain.notifications import NotificationChannel, safe_enqueue_notify_user
 from lanonna_api.repositories.activity_events import insert_activity_event
 from lanonna_api.repositories.users import upsert_app_user
 from lanonna_api.storage import mint_display_upload_for_object, mint_signed_read_url
-
-
-def _display_name(row: dict[str, Any]) -> str:
-    if row.get("uploader_display_name"):
-        return row["uploader_display_name"]
-    email = row.get("uploader_email") or row.get("author_email") or ""
-    if email and "@" in email:
-        return email.split("@")[0]
-    return "Family member"
 
 
 def _tagged_babies_json(
@@ -127,7 +122,7 @@ def list_gallery(
                 "thumb_url": signed_thumb_url(row.get("thumb_path")),
                 "squish_count": row["squish_count"],
                 "comment_count": row["comment_count"],
-                "uploader_display_name": _display_name(row),
+                "uploader_display_name": uploader_display_name_from_row(row),
             }
         )
     return out
@@ -153,12 +148,14 @@ def get_photo_detail(
         "created_at": row["created_at"].isoformat(),
         "display_url": signed_display_url(row.get("display_path")),
         "thumb_url": signed_thumb_url(row.get("thumb_path")),
-        "uploader_display_name": _display_name(row),
+        "uploader_display_name": uploader_display_name_from_row(row),
         "squish_count": squish_count(photo_id),
         "viewer_has_squished": squished,
         "tagged_babies": _tagged_babies_json(photo_id, firebase_uid),
         "comments": [
-            member_comment_to_json(c, firebase_uid, membership, _display_name(c))
+            member_comment_to_json(
+                c, firebase_uid, membership, author_display_name_from_row(c)
+            )
             for c in comments
         ],
     }

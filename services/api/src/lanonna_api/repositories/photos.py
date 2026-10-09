@@ -19,8 +19,7 @@ def get_photo_for_baby(
                 p.id, p.baby_profile_id, p.uploader_firebase_uid,
                 p.status, p.display_path, p.thumb_path, p.caption,
                 p.content_type, p.created_at,
-                u.display_name AS uploader_display_name,
-                u.email AS uploader_email
+                u.display_name AS uploader_display_name
             FROM photos p
             JOIN app_users u ON u.firebase_uid = p.uploader_firebase_uid
             WHERE p.id = %s AND p.baby_profile_id = %s
@@ -60,7 +59,6 @@ def list_photos_for_baby(
                 p.id, p.status, p.caption, p.created_at, p.thumb_path,
                 p.uploader_firebase_uid,
                 u.display_name AS uploader_display_name,
-                u.email AS uploader_email,
                 (SELECT COUNT(*)::int FROM photo_squishes s WHERE s.photo_id = p.id) AS squish_count,
                 (SELECT COUNT(*)::int FROM photo_comments c
                  WHERE c.photo_id = p.id AND c.deleted_at IS NULL) AS comment_count
@@ -164,8 +162,7 @@ def list_photo_comments(photo_id: uuid.UUID) -> list[dict[str, Any]]:
             """
             SELECT
                 c.id, c.body, c.author_firebase_uid, c.created_at, c.updated_at,
-                u.display_name AS author_display_name,
-                u.email AS author_email
+                u.display_name AS author_display_name
             FROM photo_comments c
             JOIN app_users u ON u.firebase_uid = c.author_firebase_uid
             WHERE c.photo_id = %s AND c.deleted_at IS NULL

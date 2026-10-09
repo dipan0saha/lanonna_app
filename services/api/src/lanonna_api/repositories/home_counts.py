@@ -74,7 +74,7 @@ def list_new_followers(
             SELECT
                 m.firebase_uid,
                 m.created_at AS joined_at,
-                COALESCE(u.display_name, u.email, 'Family member') AS display_name
+                COALESCE(NULLIF(TRIM(u.display_name), ''), 'Family member') AS display_name
             FROM baby_memberships m
             JOIN app_users u ON u.firebase_uid = m.firebase_uid
             WHERE m.baby_profile_id = %s

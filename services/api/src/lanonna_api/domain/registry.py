@@ -8,6 +8,7 @@ from lanonna_api.domain.catalog_suggestion_ids import normalize_catalog_suggesti
 from lanonna_api.domain.url_validation import normalize_optional_http_url
 from lanonna_api.domain.gallery import require_membership
 from lanonna_api.domain.notification_copy import actor_display_name
+from lanonna_api.domain.users_display import purchaser_display_name_from_row
 from lanonna_api.domain.notifications import (
     FanOutSpec,
     NotificationChannel,
@@ -37,22 +38,13 @@ from lanonna_api.repositories.registry import (
 from lanonna_api.repositories.users import upsert_app_user
 
 
-def _display_name(row: dict[str, Any]) -> str:
-    if row.get("purchaser_display_name"):
-        return row["purchaser_display_name"]
-    email = row.get("purchaser_email") or ""
-    if email and "@" in email:
-        return email.split("@")[0]
-    return "Family member"
-
-
 def _item_json(row: dict[str, Any]) -> dict[str, Any]:
     purchased = row.get("purchase_id") is not None
     purchase = None
     if purchased:
         purchase = {
             "purchased_by_firebase_uid": row.get("purchased_by_firebase_uid"),
-            "purchaser_display_name": _display_name(row),
+            "purchaser_display_name": purchaser_display_name_from_row(row),
             "purchased_at": row["purchased_at"].isoformat()
             if row.get("purchased_at") and hasattr(row["purchased_at"], "isoformat")
             else None,

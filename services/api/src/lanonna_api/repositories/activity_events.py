@@ -63,10 +63,8 @@ def list_recent_for_baby(
                     e.created_at,
                     e.payload,
                     e.actor_firebase_uid,
-                    COALESCE(
-                        NULLIF(TRIM(u.display_name), ''),
-                        split_part(u.email, '@', 1)
-                    ) AS actor_display_name
+                    COALESCE(NULLIF(TRIM(u.display_name), ''), 'Family member')
+                        AS actor_display_name
                 FROM activity_events e
                 LEFT JOIN app_users u ON u.firebase_uid = e.actor_firebase_uid
                 WHERE e.baby_profile_id = %s
@@ -86,10 +84,8 @@ def list_recent_for_baby(
                     e.created_at,
                     e.payload,
                     e.actor_firebase_uid,
-                    COALESCE(
-                        NULLIF(TRIM(u.display_name), ''),
-                        split_part(u.email, '@', 1)
-                    ) AS actor_display_name
+                    COALESCE(NULLIF(TRIM(u.display_name), ''), 'Family member')
+                        AS actor_display_name
                 FROM activity_events e
                 LEFT JOIN app_users u ON u.firebase_uid = e.actor_firebase_uid
                 WHERE e.baby_profile_id = %s

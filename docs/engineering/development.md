@@ -45,8 +45,10 @@ Repositories are registered in `bootstrap.dart`; routes in `core/router/app_rout
 | Layer | Role |
 |-------|------|
 | `routers/` | HTTP handlers (`photos`, `events`, `registry`, `fun`, `babies`, …) |
-| `domain/` | Membership, permissions, activity + notify hooks (`gallery`, `calendar`, `registry`, `fun`, `home`, `notifications`, `invitations`, `onboarding`, `membership`, `name_suggestions`, `url_validation`) |
+| `domain/` | Membership, permissions, activity + notify hooks (`gallery`, `calendar`, `registry`, `fun`, `home`, `notifications`, `invitations`, `onboarding`, `membership`, `name_suggestions`, `url_validation`, **`users_display`**) |
 | `repositories/` | Parameterized SQL only |
+
+**Member display names (#7):** Family-visible labels come from `app_users.display_name` only. Use [`domain/users_display.py`](../../services/api/src/lanonna_api/domain/users_display.py) (`author_display_name_from_row`, `uploader_display_name_from_row`, `purchaser_display_name_from_row`, `rsvp_display_name_from_row`) — never derive labels from email. SQL should alias `u.display_name` as the matching `*_display_name` (RSVP rows use unaliased `display_name` read by `rsvp_display_name_from_row`). Empty/null → **Family member**; activity/notification actor without profile → **Someone** (`actor_display_name`).
 | `storage.py` | V4 signed PUT (upload) and GET (thumb/display read) |
 
 ## Prerequisites

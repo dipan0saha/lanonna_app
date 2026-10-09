@@ -3,7 +3,13 @@ from unittest.mock import patch
 
 import pytest
 
-from lanonna_api.domain.gallery import add_comment, edit_comment, set_photo_baby_tags, squish_photo
+from lanonna_api.domain.gallery import (
+    add_comment,
+    edit_comment,
+    get_photo_detail,
+    set_photo_baby_tags,
+    squish_photo,
+)
 
 
 def test_edit_comment_rejects_empty_body():
@@ -183,3 +189,53 @@ def test_squish_photo_succeeds_when_notify_enqueue_fails():
     ):
         result = squish_photo("squish-uid", baby_id, photo_id)
     assert result == {"squished": True}
+
+
+def test_get_photo_detail_comment_uses_author_display_name():
+    baby_id = uuid.uuid4()
+    photo_id = uuid.uuid4()
+    photo_row = {
+        "id": photo_id,
+        "status": "ready",
+        "caption": None,
+        "created_at": __import__("datetime").datetime.now(__import__("datetime").timezone.utc),
+        "display_path": "display/x.jpg",
+        "thumb_path": "thumb/x.jpg",
+        "uploader_display_name": "Owner",
+    }
+    comment_row = {
+        "id": uuid.uuid4(),
+        "body": "Nice!",
+        "author_firebase_uid": "author-uid",
+        "created_at": photo_row["created_at"],
+        "updated_at": None,
+        "author_display_name": "Sarah QA",
+    }
+    with patch(
+        "lanonna_api.domain.gallery.require_membership",
+        return_value={"role": "follower"},
+    ), patch(
+        "lanonna_api.domain.gallery.get_photo_for_baby",
+        return_value=photo_row,
+    ), patch(
+        "lanonna_api.domain.gallery.list_photo_comments",
+        return_value=[comment_row],
+    ), patch(
+        "lanonna_api.domain.gallery.caller_squished",
+        return_value=False,
+    ), patch(
+        "lanonna_api.domain.gallery.squish_count",
+        return_value=0,
+    ), patch(
+        "lanonna_api.domain.gallery.list_tagged_babies_for_photo",
+        return_value=[],
+    ), patch(
+        "lanonna_api.domain.gallery.signed_display_url",
+        return_value="https://example.com/x.jpg",
+    ), patch(
+        "lanonna_api.domain.gallery.signed_thumb_url",
+        return_value="https://example.com/t.jpg",
+    ):
+        detail = get_photo_detail("viewer", baby_id, photo_id)
+
+    assert detail["comments"][0]["author_display_name"] == "Sarah QA"

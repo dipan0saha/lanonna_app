@@ -9,7 +9,10 @@ from lanonna_api.domain.name_suggestions import (
     normalize_gender_for_fun,
     normalize_suggested_name,
 )
-from lanonna_api.domain.users_display import author_display_name_from_row
+from lanonna_api.domain.users_display import (
+    author_display_name_from_row,
+    member_display_name_from_row,
+)
 from lanonna_api.repositories.activity_events import insert_activity_event
 from lanonna_api.repositories.babies import get_baby_membership
 from lanonna_api.repositories.fun import (
@@ -145,9 +148,7 @@ def get_predictions(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, 
     for v in list_gender_voters(baby_profile_id):
         name = "Anonymous"
         if not v.get("is_anonymous"):
-            name = v.get("display_name") or (
-                v.get("email", "").split("@")[0] if v.get("email") else "Family member"
-            )
+            name = member_display_name_from_row(v, "display_name")
         voters.append(
             {
                 "gender": v["gender_value"],

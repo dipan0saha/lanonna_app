@@ -8,6 +8,7 @@ from lanonna_api.domain.calendar import (
     _parse_month,
     add_event_comment,
     create_calendar_event,
+    get_event_detail,
     set_rsvp,
 )
 from lanonna_api.domain.url_validation import INVALID_HTTP_URL
@@ -171,5 +172,50 @@ def test_add_event_comment_succeeds_when_notify_enqueue_fails():
             "comment-uid", baby_id, event_id, "See you there"
         )
     assert result["body"] == "See you there"
+
+
+def test_get_event_detail_rsvp_uses_display_name_column():
+    baby_id = uuid.uuid4()
+    event_id = uuid.uuid4()
+    starts = datetime(2026, 6, 1, 12, 0, tzinfo=timezone.utc)
+    event_row = {
+        "id": event_id,
+        "title": "Shower",
+        "starts_at": starts,
+        "ends_at": None,
+        "description": None,
+        "location": None,
+        "video_call_url": None,
+        "cover_photo_id": None,
+        "catalog_suggestion_id": None,
+    }
+    with patch(
+        "lanonna_api.domain.calendar.require_membership",
+        return_value={"role": "follower"},
+    ), patch(
+        "lanonna_api.domain.calendar.get_event",
+        return_value=event_row,
+    ), patch(
+        "lanonna_api.domain.calendar.list_event_comments",
+        return_value=[],
+    ), patch(
+        "lanonna_api.domain.calendar.rsvp_summary",
+        return_value={"going": 1, "maybe": 0, "cant_go": 0},
+    ), patch(
+        "lanonna_api.domain.calendar.get_caller_rsvp",
+        return_value="going",
+    ), patch(
+        "lanonna_api.domain.calendar.list_rsvps_for_event",
+        return_value=[
+            {
+                "firebase_uid": "uid1",
+                "status": "going",
+                "display_name": "Alex QA",
+            },
+        ],
+    ):
+        detail = get_event_detail("viewer", baby_id, event_id)
+
+    assert detail["rsvp_attendees"][0]["display_name"] == "Alex QA"
 
 
