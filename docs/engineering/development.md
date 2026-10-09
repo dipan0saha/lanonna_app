@@ -122,6 +122,8 @@ Product UI tokens live under `apps/mobile/lib/core/theme/` (see also PRD §5.1):
 
 **Localization (FR-SET-002):** User-visible strings belong in [`app_en.arb`](../../apps/mobile/lib/l10n/app_en.arb); run `flutter gen-l10n` after edits. Use ICU `{count, plural, …}` for quantity labels (photo squish/comment counts, prediction votes, name loves, registry teaser — #11); read via `AppLocalizations.of(context)!`. Do not hand-roll `'$n votes'` in widgets. Uppercase gender totals stay in [`VoteCountPill`](../../apps/mobile/lib/core/widgets/vote_count_pill.dart) (`1 VOTE` / `N VOTES`).
 
+**Event times (UTC-in / local-out, #4):** API `starts_at` / `ends_at` are UTC instants. Parse with [`parseApiInstant`](../../apps/mobile/lib/core/time/app_date_time.dart) at model boundaries (`CalendarEvent`, home `NextUpEvent`, search hits). Submit with `toApiInstant`. Display via `formatEventListDateTime`, `formatEventDetailWhen`, and home badge helpers — do not format raw `DateTime` fields in widgets. Calendar month/day math uses `eventLocalStart` / `eventOnLocalCalendarDay` (re-exported from `calendar_display.dart`).
+
 ### Reset dev test data (babies + onboarding)
 
 Cloud SQL Auth Proxy + `DB_PASSWORD` (see [migrations/README.md](../../infra/db/migrations/README.md)):
@@ -193,7 +195,7 @@ Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps:
 | POST | `/v1/babies/{id}/photos/{photo_id}/squish` | JWT (member); toggle squish |
 | POST, PATCH, DELETE | `/v1/babies/{id}/photos/{photo_id}/comments` | JWT (member); photo detail comments include `can_edit` / `can_delete` (`domain/content_permissions.py`: author edits; owner or author deletes) |
 | PUT | `/v1/babies/{id}/photos/{photo_id}/tags` | JWT (owner); body `tagged_baby_profile_ids` |
-| GET, POST | `/v1/babies/{id}/events` | JWT (member read; owner create); query `month=YYYY-MM`, `upcoming=true`. Optional `video_call_url`: `domain/url_validation.normalize_optional_http_url` (empty → null; bare domain → `https://`; http/https only). Mobile: `validateOptionalHttpUrl` / `normalizeOptionalHttpUrl` in `form_validators.dart` on `EventFormScreen` (#13). Mobile stores `starts_at` as UTC; calendar UI displays local time and reloads lists after create via `CalendarRepository` + FAB `push` result (`#398`). |
+| GET, POST | `/v1/babies/{id}/events` | JWT (member read; owner create); query `month=YYYY-MM`, `upcoming=true`. Optional `video_call_url`: `domain/url_validation.normalize_optional_http_url` (empty → null; bare domain → `https://`; http/https only). Mobile: `validateOptionalHttpUrl` / `normalizeOptionalHttpUrl` in `form_validators.dart` on `EventFormScreen` (#13). Mobile stores/sends `starts_at` as UTC (`toApiInstant`); all event UI uses `core/time/app_date_time.dart` for local display (#4). Lists reload after create via `CalendarRepository` + FAB `push` result (`#398`). |
 | GET, PATCH, DELETE | `/v1/babies/{id}/events/{event_id}` | JWT; PATCH normalizes `video_call_url` when present |
 | PUT | `/v1/babies/{id}/events/{event_id}/rsvp` | JWT (member); body `{status}` |
 | POST, PATCH, DELETE | `/v1/babies/{id}/events/{event_id}/comments` | JWT (member); same comment capability flags as photo comments (FR-CAL-005) |

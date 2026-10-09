@@ -7,6 +7,7 @@ import '../../home/data/selected_baby_store.dart';
 import '../../home/presentation/baby_context_reload.dart';
 import '../data/calendar_repository.dart';
 import '../data/models/calendar_models.dart';
+import '../../../core/time/app_date_time.dart';
 import '../domain/calendar_routes.dart';
 import 'widgets/event_date_chip.dart';
 
@@ -122,10 +123,12 @@ class _CalendarUpcomingScreenState extends State<CalendarUpcomingScreen>
                           return ListTile(
                             leading: EventDateChip(startsAt: event.startsAt),
                             title: Text(event.title),
-                            subtitle: event.location != null &&
-                                    event.location!.isNotEmpty
-                                ? Text(event.location!)
-                                : null,
+                            subtitle: Text(
+                              formatEventListDateTime(
+                                event.startsAt,
+                                Localizations.localeOf(context).toString(),
+                              ),
+                            ),
                             onTap: () => context.push(
                               CalendarRoutes.eventDetail(event.id),
                             ),

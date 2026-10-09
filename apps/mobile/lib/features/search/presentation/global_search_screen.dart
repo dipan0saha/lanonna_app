@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/time/app_date_time.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
@@ -137,7 +138,12 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                                 ListTile(
                                   leading: const Icon(Icons.event_outlined),
                                   title: Text(e.title),
-                                  subtitle: Text(e.startsAt),
+                                  subtitle: Text(
+                                    formatEventListDateTime(
+                                      e.startsAt,
+                                      Localizations.localeOf(context).toString(),
+                                    ),
+                                  ),
                                   onTap: () => context.push(
                                     CalendarRoutes.eventDetail(e.id),
                                   ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/time/app_date_time.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
@@ -18,6 +19,7 @@ class HomeUpcomingEventsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     if (events.isEmpty) return const SizedBox.shrink();
     final text = context.textStyles;
+    final locale = Localizations.localeOf(context).toString();
 
     return HomeScrollSection(
       title: 'Upcoming Events',
@@ -27,9 +29,9 @@ class HomeUpcomingEventsSection extends StatelessWidget {
       ),
       body: Column(
         children: events.map((event) {
-          final dt = DateTime.tryParse(event.startsAt);
-          final month = dt != null ? _month(dt.month) : '';
-          final day = dt?.day.toString() ?? '';
+          final dt = event.startsAt;
+          final month = dt != null ? formatEventMonthBadge(dt, locale) : '';
+          final day = dt != null ? formatEventDayBadge(dt).toString() : '';
           return Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Padding(
@@ -52,7 +54,7 @@ class HomeUpcomingEventsSection extends StatelessWidget {
                           child: Column(
                             children: [
                               Text(day, style: text.titleSmall),
-                              Text(month.toUpperCase(), style: text.labelSmall),
+                              Text(month, style: text.labelSmall),
                             ],
                           ),
                         ),
@@ -70,13 +72,5 @@ class HomeUpcomingEventsSection extends StatelessWidget {
         }).toList(),
       ),
     );
-  }
-
-  String _month(int m) {
-    const names = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    return names[m - 1];
   }
 }

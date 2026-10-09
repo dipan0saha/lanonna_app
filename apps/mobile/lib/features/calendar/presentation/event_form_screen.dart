@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_error_message.dart';
+import '../../../core/time/app_date_time.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/validation/form_validators.dart';
 import '../../../core/theme/app_colors.dart';
@@ -125,13 +126,13 @@ class _EventFormScreenState extends State<EventFormScreen> {
     _location.text = detail.location ?? '';
     _video.text = detail.videoCallUrl ?? '';
     _date = DateTime(
-      detail.startsAt.toLocal().year,
-      detail.startsAt.toLocal().month,
-      detail.startsAt.toLocal().day,
+      eventWallTime(detail.startsAt).year,
+      eventWallTime(detail.startsAt).month,
+      eventWallTime(detail.startsAt).day,
     );
     _time = TimeOfDay(
-      hour: detail.startsAt.toLocal().hour,
-      minute: detail.startsAt.toLocal().minute,
+      hour: eventWallTime(detail.startsAt).hour,
+      minute: eventWallTime(detail.startsAt).minute,
     );
     _coverPhotoId = detail.coverPhotoId;
     _coverPhotoPreviewUrl = detail.coverPhotoDisplayUrl;

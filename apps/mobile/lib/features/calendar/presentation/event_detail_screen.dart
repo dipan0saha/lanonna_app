@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/api/api_error_message.dart';
+import '../../../core/time/app_date_time.dart';
 import '../../../core/presentation/detail_screen_load.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/media/cached_signed_image.dart';
@@ -135,18 +136,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
     }
     return name.isNotEmpty ? name[0].toUpperCase() : '?';
-  }
-
-  String _formatWhen(DateTime startsAt, DateTime? endsAt) {
-    const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    final w = weekdays[startsAt.weekday - 1];
-    final date =
-        '$w, ${months[startsAt.month - 1]} ${startsAt.day}, ${startsAt.year}';
-    final hour = startsAt.hour % 12 == 0 ? 12 : startsAt.hour % 12;
-    final min = startsAt.minute.toString().padLeft(2, '0');
-    final ap = startsAt.hour >= 12 ? 'PM' : 'AM';
-    return '$date · $hour:$min $ap';
   }
 
   Future<void> _openVideo(String url) async {
@@ -347,7 +336,12 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 Text(detail.title, style: Theme.of(context).textTheme.headlineSmall),
                 const SizedBox(height: 12),
                 Text('When', style: Theme.of(context).textTheme.labelLarge),
-                Text(_formatWhen(detail.startsAt, detail.endsAt)),
+                Text(
+                  formatEventDetailWhen(
+                    detail.startsAt,
+                    Localizations.localeOf(context).toString(),
+                  ),
+                ),
                 if (detail.location != null) ...[
                   const SizedBox(height: 12),
                   Text('Location', style: Theme.of(context).textTheme.labelLarge),

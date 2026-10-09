@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lanonna/features/calendar/presentation/calendar_display.dart';
+import 'package:lanonna/core/time/app_date_time.dart';
 
 void main() {
   test('eventLocalStart converts UTC to local', () {

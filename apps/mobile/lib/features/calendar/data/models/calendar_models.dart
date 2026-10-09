@@ -1,3 +1,5 @@
+import '../../../../core/time/app_date_time.dart';
+
 class CalendarEvent {
   CalendarEvent({
     required this.id,
@@ -26,9 +28,9 @@ class CalendarEvent {
       id: json['id'] as String,
       title: json['title'] as String,
       description: json['description'] as String?,
-      startsAt: DateTime.parse(json['starts_at'] as String),
+      startsAt: parseApiInstant(json['starts_at'] as String),
       endsAt: json['ends_at'] != null
-          ? DateTime.parse(json['ends_at'] as String)
+          ? parseApiInstant(json['ends_at'] as String)
           : null,
       location: json['location'] as String?,
       videoCallUrl: json['video_call_url'] as String?,
@@ -138,9 +140,9 @@ class EventDetail extends CalendarEvent {
       id: json['id'] as String,
       title: json['title'] as String,
       description: json['description'] as String?,
-      startsAt: DateTime.parse(json['starts_at'] as String),
+      startsAt: parseApiInstant(json['starts_at'] as String),
       endsAt: json['ends_at'] != null
-          ? DateTime.parse(json['ends_at'] as String)
+          ? parseApiInstant(json['ends_at'] as String)
           : null,
       location: json['location'] as String?,
       videoCallUrl: json['video_call_url'] as String?,

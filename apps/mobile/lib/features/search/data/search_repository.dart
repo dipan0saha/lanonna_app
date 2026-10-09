@@ -1,4 +1,5 @@
 import '../../../core/api/api_client.dart';
+import '../../../core/time/app_date_time.dart';
 
 class SearchPhotoHit {
   SearchPhotoHit({required this.id, this.caption, this.thumbUrl});
@@ -19,12 +20,12 @@ class SearchEventHit {
 
   final String id;
   final String title;
-  final String startsAt;
+  final DateTime startsAt;
 
   factory SearchEventHit.fromJson(Map<String, dynamic> json) => SearchEventHit(
         id: json['id'] as String,
         title: json['title'] as String,
-        startsAt: json['starts_at'] as String,
+        startsAt: parseApiInstant(json['starts_at'] as String),
       );
 }
 

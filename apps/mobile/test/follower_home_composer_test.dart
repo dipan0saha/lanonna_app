@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:lanonna/features/home/data/models/home_summary.dart';
 import 'package:lanonna/features/home/presentation/follower_home_composer.dart';
 import 'package:lanonna/core/domain/baby_summary.dart';
@@ -18,6 +19,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: FollowerHomeComposer(
             baby: baby,
@@ -45,7 +48,7 @@ void main() {
       expectedBirthDate: '2026-10-08',
       role: 'follower',
     );
-    const summary = HomeSummary(
+    final summary = HomeSummary(
       lifecycleStatus: 'expecting',
       nameSuggestionCount: 0,
       voteCount: 5,
@@ -57,11 +60,11 @@ void main() {
         registryOpenCount: 0,
         registryHighlights: const [],
         recentPurchases: const [],
-        upcomingEvents: const [
+        upcomingEvents: [
           NextUpEvent(
             id: 'e1',
             title: 'Gender Reveal Party',
-            startsAt: '2026-10-02T18:00:00Z',
+            startsAt: DateTime.parse('2026-10-02T18:00:00Z').toLocal(),
           ),
         ],
         rsvpReminders: const [],
@@ -72,6 +75,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SingleChildScrollView(
             child: FollowerHomeComposer(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/time/app_date_time.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
@@ -135,7 +136,12 @@ class _CalendarScreenState extends State<CalendarScreen> with BabyContextReload 
               for (final event in onDay)
                 ListTile(
                   title: Text(event.title),
-                  subtitle: Text(_formatDateTime(event.startsAt)),
+                  subtitle: Text(
+                    formatEventListDateTime(
+                      event.startsAt,
+                      Localizations.localeOf(context).toString(),
+                    ),
+                  ),
                   onTap: () {
                     Navigator.pop(context);
                     context.push(CalendarRoutes.eventDetail(event.id));
@@ -320,7 +326,12 @@ class _CalendarScreenState extends State<CalendarScreen> with BabyContextReload 
                         return ListTile(
                           leading: EventDateChip(startsAt: event.startsAt),
                           title: Text(event.title),
-                          subtitle: Text(_formatDateTime(event.startsAt)),
+                          subtitle: Text(
+                    formatEventListDateTime(
+                      event.startsAt,
+                      Localizations.localeOf(context).toString(),
+                    ),
+                  ),
                           onTap: () => context.push(
                             CalendarRoutes.eventDetail(event.id),
                           ),
@@ -354,10 +365,6 @@ class _CalendarScreenState extends State<CalendarScreen> with BabyContextReload 
     return names[m - 1];
   }
 
-  String _formatDateTime(DateTime dt) {
-    final local = eventLocalStart(dt);
-    return '${_monthName(local.month)} ${local.day}, ${local.hour}:${local.minute.toString().padLeft(2, '0')}';
-  }
 }
 
 class _MonthGrid extends StatelessWidget {

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../core/api/api_client.dart';
+import '../../../core/time/app_date_time.dart';
 import 'models/calendar_models.dart';
 
 class CalendarRepository extends ChangeNotifier {
@@ -45,8 +46,8 @@ class CalendarRepository extends ChangeNotifier {
   }) async {
     final json = await _api.postJson('/v1/babies/$babyId/events', body: {
       'title': title,
-      'starts_at': startsAt.toUtc().toIso8601String(),
-      if (endsAt != null) 'ends_at': endsAt.toUtc().toIso8601String(),
+      'starts_at': toApiInstant(startsAt),
+      if (endsAt != null) 'ends_at': toApiInstant(endsAt),
       if (description != null) 'description': description,
       if (location != null) 'location': location,
       if (videoCallUrl != null) 'video_call_url': videoCallUrl,
@@ -72,8 +73,8 @@ class CalendarRepository extends ChangeNotifier {
   }) async {
     final body = <String, dynamic>{};
     if (title != null) body['title'] = title;
-    if (startsAt != null) body['starts_at'] = startsAt.toUtc().toIso8601String();
-    if (endsAt != null) body['ends_at'] = endsAt.toUtc().toIso8601String();
+    if (startsAt != null) body['starts_at'] = toApiInstant(startsAt);
+    if (endsAt != null) body['ends_at'] = toApiInstant(endsAt);
     if (description != null) body['description'] = description;
     if (location != null) body['location'] = location;
     if (videoCallUrl != null) body['video_call_url'] = videoCallUrl;

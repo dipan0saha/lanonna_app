@@ -1,4 +1,5 @@
 import '../../../../core/json/json_readers.dart';
+import '../../../../core/time/app_date_time.dart';
 
 class HomeActivityItem {
   const HomeActivityItem({
@@ -63,23 +64,23 @@ class NextUpEvent {
   const NextUpEvent({
     required this.id,
     required this.title,
-    required this.startsAt,
+    this.startsAt,
     this.location,
   });
 
   final String id;
   final String title;
-  final String startsAt;
+  final DateTime? startsAt;
   final String? location;
 
   factory NextUpEvent.fromJson(Map<String, dynamic>? json) {
     if (json == null) {
-      return const NextUpEvent(id: '', title: '', startsAt: '');
+      return const NextUpEvent(id: '', title: '');
     }
     return NextUpEvent(
       id: json['id']?.toString() ?? '',
       title: json['title'] as String? ?? '',
-      startsAt: json['starts_at'] as String? ?? '',
+      startsAt: tryParseApiInstant(json['starts_at'] as String?),
       location: json['location'] as String?,
     );
   }
@@ -153,18 +154,18 @@ class HomeRsvpReminder {
   const HomeRsvpReminder({
     required this.id,
     required this.title,
-    required this.startsAt,
+    this.startsAt,
   });
 
   final String id;
   final String title;
-  final String startsAt;
+  final DateTime? startsAt;
 
   factory HomeRsvpReminder.fromJson(Map<String, dynamic> json) {
     return HomeRsvpReminder(
       id: json['id']?.toString() ?? '',
       title: json['title'] as String? ?? '',
-      startsAt: json['starts_at'] as String? ?? '',
+      startsAt: tryParseApiInstant(json['starts_at'] as String?),
     );
   }
 }
