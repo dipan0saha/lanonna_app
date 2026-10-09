@@ -6,6 +6,7 @@ from typing import Any
 
 from lanonna_api.domain import assert_owner_membership
 from lanonna_api.domain.catalog_suggestion_ids import normalize_catalog_suggestion_id
+from lanonna_api.domain.url_validation import normalize_optional_http_url
 from lanonna_api.domain.content_permissions import (
     member_comment_to_json,
     member_content_can_delete,
@@ -145,6 +146,7 @@ def create_calendar_event(
     catalog_id = normalize_catalog_suggestion_id(catalog_suggestion_id)
     if catalog_id and catalog_suggestion_claimed(baby_profile_id, catalog_id):
         raise ValueError("This suggestion is already on the calendar.")
+    video_call_url = normalize_optional_http_url(video_call_url)
     upsert_app_user(firebase_uid, None)
     row = create_event(
         baby_profile_id,
@@ -185,6 +187,10 @@ def update_calendar_event(
     fields: dict[str, Any],
 ) -> dict[str, Any]:
     assert_owner_membership(firebase_uid, baby_profile_id)
+    if "video_call_url" in fields:
+        fields["video_call_url"] = normalize_optional_http_url(
+            fields["video_call_url"]
+        )
     row = update_event(baby_profile_id, event_id, fields)
     if row is None:
         raise LookupError("Event not found.")

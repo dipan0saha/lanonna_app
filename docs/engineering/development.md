@@ -45,7 +45,7 @@ Repositories are registered in `bootstrap.dart`; routes in `core/router/app_rout
 | Layer | Role |
 |-------|------|
 | `routers/` | HTTP handlers (`photos`, `events`, `registry`, `fun`, `babies`, …) |
-| `domain/` | Membership, permissions, activity + notify hooks (`gallery`, `calendar`, `registry`, `fun`, `home`, `notifications`, `invitations`, `onboarding`, `membership`, `name_suggestions`) |
+| `domain/` | Membership, permissions, activity + notify hooks (`gallery`, `calendar`, `registry`, `fun`, `home`, `notifications`, `invitations`, `onboarding`, `membership`, `name_suggestions`, `url_validation`) |
 | `repositories/` | Parameterized SQL only |
 | `storage.py` | V4 signed PUT (upload) and GET (thumb/display read) |
 
@@ -191,14 +191,14 @@ Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps:
 | POST | `/v1/babies/{id}/photos/{photo_id}/squish` | JWT (member); toggle squish |
 | POST, PATCH, DELETE | `/v1/babies/{id}/photos/{photo_id}/comments` | JWT (member); photo detail comments include `can_edit` / `can_delete` (`domain/content_permissions.py`: author edits; owner or author deletes) |
 | PUT | `/v1/babies/{id}/photos/{photo_id}/tags` | JWT (owner); body `tagged_baby_profile_ids` |
-| GET, POST | `/v1/babies/{id}/events` | JWT (member read; owner create); query `month=YYYY-MM`, `upcoming=true`. Mobile stores `starts_at` as UTC; calendar UI displays local time and reloads lists after create via `CalendarRepository` + FAB `push` result (`#398`). |
-| GET, PATCH, DELETE | `/v1/babies/{id}/events/{event_id}` | JWT |
+| GET, POST | `/v1/babies/{id}/events` | JWT (member read; owner create); query `month=YYYY-MM`, `upcoming=true`. Optional `video_call_url`: `domain/url_validation.normalize_optional_http_url` (empty → null; bare domain → `https://`; http/https only). Mobile: `validateOptionalHttpUrl` / `normalizeOptionalHttpUrl` in `form_validators.dart` on `EventFormScreen` (#13). Mobile stores `starts_at` as UTC; calendar UI displays local time and reloads lists after create via `CalendarRepository` + FAB `push` result (`#398`). |
+| GET, PATCH, DELETE | `/v1/babies/{id}/events/{event_id}` | JWT; PATCH normalizes `video_call_url` when present |
 | PUT | `/v1/babies/{id}/events/{event_id}/rsvp` | JWT (member); body `{status}` |
 | POST, PATCH, DELETE | `/v1/babies/{id}/events/{event_id}/comments` | JWT (member); same comment capability flags as photo comments (FR-CAL-005) |
-| GET, POST | `/v1/babies/{id}/registry/items` | JWT (member read; owner create) |
-| GET, PATCH, DELETE | `/v1/babies/{id}/registry/items/{item_id}` | JWT; no PATCH when purchased |
+| GET, POST | `/v1/babies/{id}/registry/items` | JWT (member read; owner create). Optional `product_url`: same URL rules as calendar `video_call_url` (#13); mobile `RegistryItemFormScreen`. |
+| GET, PATCH, DELETE | `/v1/babies/{id}/registry/items/{item_id}` | JWT; no PATCH when purchased; PATCH normalizes `product_url` when present |
 | POST, DELETE | `/v1/babies/{id}/registry/items/{item_id}/purchase` | JWT (claim / undo) |
-| GET, PATCH | `/v1/babies/{id}/registry/shipping-address` | JWT member read; owner PATCH. Body/response: `line1`, `line2`, `city`, `region`, `postal_code`, `country_code` (ISO-2), `formatted` (display). Save requires line1, city, postal_code, country_code; all null clears address. |
+| GET, PATCH | `/v1/babies/{id}/registry/shipping-address` | JWT member read; owner PATCH. Body/response: `line1`, `line2`, `city`, `region`, `postal_code`, `country_code` (ISO-2), `formatted` (display). Save requires line1, city, postal_code, country_code; all null clears address. Mobile: `RegistryShippingAddressScreen` uses `Form` + `form_validators.dart` + `AppLabeledTextFormField` / `AppCountryDropdownField` (autovalidate after first submit). |
 | GET, POST, DELETE | `/v1/babies/{id}/fun/names` | JWT (member); follower 1 name/gender; each suggestion includes `can_delete` (owner or author); mobile renders remove from that flag (#16) |
 | POST | `/v1/babies/{id}/fun/names/{id}/like` | JWT; one like per gender column |
 | GET | `/v1/babies/{id}/fun/predictions` | JWT |

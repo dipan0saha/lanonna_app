@@ -314,6 +314,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-CAL-005 | Event comments | Same moderation rules as FR-GAL-007 on event detail | `event_comments`; `POST` / `PATCH` / `DELETE` on `…/events/{id}/comments` |
 | FR-CAL-006 | Upcoming list | View all upcoming from home teaser (E2E-018) | `/calendar/upcoming` |
 | FR-CAL-007 | AI event suggestions | Static catalog by expecting/age tabs; shared “AI Suggestions” UX with registry; hide rows already added (`catalog_suggestion_id` on event); after add, brief info snackbar confirms save (`#398`) | `/calendar/ai-suggestions`; `event_suggestions.json` |
+| FR-CAL-008 | Optional video call URL (#13) | Empty allowed; non-empty must be http(s) (bare domains normalized to `https://`); junk schemes rejected on save with user-visible message; API returns **400** on invalid URL | `url_validation.py`; `EventFormScreen`; `form_validators.dart` |
 
 ### 7.8 Registry — FR-REG
 
@@ -327,7 +328,8 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-REG-006 | Edit purchased item | Owner cannot edit item fields after purchase; can open detail; owner may reset via purchase delete (FR-REG-003) | API + UI guard |
 | FR-REG-007 | Owner mark purchased | Owner/co-owner marks a needed item as purchased (e.g. gift bought off-app); item moves to Purchased; followers no longer see claim action; owner may undo (FR-REG-003) | Reuses `POST .../purchase`; Registry Needed UI |
 | FR-REG-008 | AI registry suggestions | Static catalog by expecting/age tabs; shared `AiSuggestionsScaffold` with calendar; hide rows already added (`catalog_suggestion_id` on item) | `/registry/ai-suggestions`; `registry_suggestions.json`; migration `017` |
-| FR-REG-009 | Registry shipping address (#408) | Owner edits structured address (street, city, optional region, postal, country) on dedicated screen; followers read formatted address on Registry tab; owner may clear | `baby_profiles.registry_shipping_*`; `GET/PATCH .../registry/shipping-address`; `/registry/shipping-address`; migration `023` |
+| FR-REG-009 | Registry shipping address (#408) | Owner edits structured address (street, city, optional region, postal, country) on dedicated screen; client `Form` validates required fields (inline errors clear on fix); followers read formatted address on Registry tab; owner may clear | `baby_profiles.registry_shipping_*`; `GET/PATCH .../registry/shipping-address`; `/registry/shipping-address`; migration `023` |
+| FR-REG-010 | Optional item link (#13) | Same URL rules as FR-CAL-008 for registry `product_url` | `RegistryItemFormScreen`; API registry create/PATCH |
 
 ### 7.9 Gamification — FR-GAM
 

@@ -10,6 +10,7 @@ from lanonna_api.domain.calendar import (
     create_calendar_event,
     set_rsvp,
 )
+from lanonna_api.domain.url_validation import INVALID_HTTP_URL
 
 
 def test_parse_month_january():
@@ -22,6 +23,29 @@ def test_parse_month_december():
     start, end = _parse_month("2025-12")
     assert start == datetime(2025, 12, 1, tzinfo=timezone.utc)
     assert end == datetime(2026, 1, 1, tzinfo=timezone.utc)
+
+
+def test_create_event_rejects_invalid_video_call_url():
+    baby_id = uuid.uuid4()
+    starts = datetime(2026, 6, 1, 12, 0, tzinfo=timezone.utc)
+    with patch(
+        "lanonna_api.domain.calendar.assert_owner_membership",
+    ), patch(
+        "lanonna_api.domain.calendar.create_event",
+    ) as create_mock:
+        with pytest.raises(ValueError, match=INVALID_HTTP_URL):
+            create_calendar_event(
+                "uid",
+                baby_id,
+                title="Call",
+                starts_at=starts,
+                ends_at=None,
+                description=None,
+                location=None,
+                video_call_url="javascript:alert(1)",
+                cover_photo_id=None,
+            )
+        create_mock.assert_not_called()
 
 
 def test_create_event_rejects_duplicate_catalog_suggestion():

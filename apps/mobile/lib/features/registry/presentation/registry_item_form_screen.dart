@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/api/api_error_message.dart';
 import '../../../core/input/app_text_input_kind.dart';
+import '../../../core/validation/form_validators.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
@@ -97,14 +99,16 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
       _name.text,
     );
     if (baby == null || name.isEmpty) return;
+    final linkError = validateOptionalHttpUrl(_link.text);
+    if (linkError != null) {
+      AppSnackBar.showAlert(context, linkError);
+      return;
+    }
     final description = AppTextInputPolicy.normalizeForSubmit(
       AppTextInputKind.prose,
       _desc.text,
     );
-    final productUrl = AppTextInputPolicy.normalizeForSubmit(
-      AppTextInputKind.none,
-      _link.text,
-    );
+    final productUrl = normalizeOptionalHttpUrl(_link.text);
     setState(() => _saving = true);
     try {
       final repo = context.read<RegistryRepository>();
@@ -114,7 +118,7 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
           widget.itemId!,
           name: name,
           description: description.isEmpty ? null : description,
-          productUrl: productUrl.isEmpty ? null : productUrl,
+          productUrl: productUrl,
           priority: _priority,
         );
       } else {
@@ -122,7 +126,7 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
           baby.id,
           name: name,
           description: description.isEmpty ? null : description,
-          productUrl: productUrl.isEmpty ? null : productUrl,
+          productUrl: productUrl,
           priority: _priority,
           catalogSuggestionId: widget.initialCatalogSuggestionId,
         );
@@ -133,7 +137,7 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
       }
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showAlert(context, 'Save failed: $e');
+        AppSnackBar.showAlert(context, apiErrorMessage(e));
       }
     } finally {
       if (mounted) setState(() => _saving = false);

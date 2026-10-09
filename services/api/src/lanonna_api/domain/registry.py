@@ -5,6 +5,7 @@ from typing import Any
 
 from lanonna_api.domain import assert_owner_membership
 from lanonna_api.domain.catalog_suggestion_ids import normalize_catalog_suggestion_id
+from lanonna_api.domain.url_validation import normalize_optional_http_url
 from lanonna_api.domain.gallery import require_membership
 from lanonna_api.domain.notification_copy import actor_display_name
 from lanonna_api.domain.notifications import (
@@ -98,6 +99,7 @@ def create_item(
     assert_owner_membership(firebase_uid, baby_profile_id)
     if not name.strip():
         raise ValueError("Item name is required.")
+    product_url = normalize_optional_http_url(product_url)
     priority = max(1, min(5, priority))
     catalog_id = normalize_catalog_suggestion_id(catalog_suggestion_id)
     if catalog_id and catalog_suggestion_claimed(baby_profile_id, catalog_id):
@@ -140,6 +142,8 @@ def patch_item(
     assert_owner_membership(firebase_uid, baby_profile_id)
     if item_has_purchase(item_id):
         raise PermissionError("Cannot edit a purchased registry item.")
+    if "product_url" in fields:
+        fields["product_url"] = normalize_optional_http_url(fields["product_url"])
     if "priority" in fields and fields["priority"] is not None:
         fields["priority"] = max(1, min(5, int(fields["priority"])))
     row = update_registry_item(baby_profile_id, item_id, fields)

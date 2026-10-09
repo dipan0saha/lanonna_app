@@ -6,7 +6,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_client.dart';
+import '../../../core/api/api_error_message.dart';
 import '../../../core/input/app_text_input_kind.dart';
+import '../../../core/validation/form_validators.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
@@ -250,6 +252,11 @@ class _EventFormScreenState extends State<EventFormScreen> {
       AppSnackBar.showAlert(context, 'Enter an event title to continue.');
       return;
     }
+    final videoError = validateOptionalHttpUrl(_video.text);
+    if (videoError != null) {
+      AppSnackBar.showAlert(context, videoError);
+      return;
+    }
     final description = AppTextInputPolicy.normalizeForSubmit(
       AppTextInputKind.prose,
       _description.text,
@@ -258,10 +265,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
       AppTextInputKind.prose,
       _location.text,
     );
-    final videoCallUrl = AppTextInputPolicy.normalizeForSubmit(
-      AppTextInputKind.none,
-      _video.text,
-    );
+    final videoCallUrl = normalizeOptionalHttpUrl(_video.text);
     setState(() => _saving = true);
     try {
       final repo = context.read<CalendarRepository>();
@@ -274,7 +278,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
           startsAt: startsAt,
           description: description.isEmpty ? null : description,
           location: location.isEmpty ? null : location,
-          videoCallUrl: videoCallUrl.isEmpty ? null : videoCallUrl,
+          videoCallUrl: videoCallUrl,
           coverPhotoId: _coverPhotoId,
         );
       } else {
@@ -284,7 +288,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
           startsAt: startsAt,
           description: description.isEmpty ? null : description,
           location: location.isEmpty ? null : location,
-          videoCallUrl: videoCallUrl.isEmpty ? null : videoCallUrl,
+          videoCallUrl: videoCallUrl,
           coverPhotoId: _coverPhotoId,
           catalogSuggestionId: widget.initialCatalogSuggestionId,
         );
@@ -299,7 +303,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
       }
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showAlert(context, 'Save failed: $e');
+        AppSnackBar.showAlert(context, apiErrorMessage(e));
       }
     } finally {
       if (mounted) setState(() => _saving = false);

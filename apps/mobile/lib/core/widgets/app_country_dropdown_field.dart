@@ -14,6 +14,8 @@ class AppCountryDropdownField extends StatelessWidget {
     this.hintText = 'Select a country',
     this.enabled = true,
     this.decoration = const InputDecoration(),
+    this.validator,
+    this.autovalidateMode,
   });
 
   final List<IsoCountry> countries;
@@ -22,6 +24,8 @@ class AppCountryDropdownField extends StatelessWidget {
   final String hintText;
   final bool enabled;
   final InputDecoration decoration;
+  final FormFieldValidator<String>? validator;
+  final AutovalidateMode? autovalidateMode;
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +40,8 @@ class AppCountryDropdownField extends StatelessWidget {
       style: fieldStyle,
       hint: Text(hintText, style: hintStyle),
       decoration: decoration,
+      validator: validator,
+      autovalidateMode: autovalidateMode,
       items: [
         for (final c in countries)
           DropdownMenuItem(

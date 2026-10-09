@@ -7,8 +7,9 @@ import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
+import '../../../core/validation/form_validators.dart';
 import '../../../core/widgets/app_country_dropdown_field.dart';
-import '../../../core/widgets/app_labeled_text_field.dart';
+import '../../../core/widgets/app_labeled_text_form_field.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
@@ -28,7 +29,7 @@ class RegistryShippingAddressScreen extends StatefulWidget {
 
 class _RegistryShippingAddressScreenState
     extends State<RegistryShippingAddressScreen> {
-  String? _fieldError;
+  final _formKey = GlobalKey<FormState>();
   final _line1 = TextEditingController();
   final _line2 = TextEditingController();
   final _city = TextEditingController();
@@ -41,6 +42,7 @@ class _RegistryShippingAddressScreenState
   var _loading = true;
   var _saving = false;
   var _hadAddress = false;
+  var _validateOnInteraction = false;
 
   @override
   void dispose() {
@@ -57,6 +59,10 @@ class _RegistryShippingAddressScreenState
     super.initState();
     _load();
   }
+
+  AutovalidateMode get _autovalidateMode => _validateOnInteraction
+      ? AutovalidateMode.onUserInteraction
+      : AutovalidateMode.disabled;
 
   Future<void> _load() async {
     setState(() => _loading = true);
@@ -106,22 +112,11 @@ class _RegistryShippingAddressScreenState
     _countryCode = address.countryCode;
   }
 
-  bool _validate() {
-    if (_line1.text.trim().isEmpty ||
-        _city.text.trim().isEmpty ||
-        _postal.text.trim().isEmpty ||
-        _countryCode == null) {
-      setState(() => _fieldError = 'Fill street, city, postal code, and country.');
-      return false;
-    }
-    setState(() => _fieldError = null);
-    return true;
-  }
-
   Future<void> _save() async {
     final baby = _baby;
     if (baby == null) return;
-    if (!_validate()) return;
+    setState(() => _validateOnInteraction = true);
+    if (_formKey.currentState?.validate() != true) return;
     setState(() => _saving = true);
     try {
       final patch = RegistryShippingAddress(
@@ -193,7 +188,10 @@ class _RegistryShippingAddressScreenState
 
     return PrototypeSubpageScaffold(
       title: 'Shipping address',
-      body: ListView(
+      body: Form(
+        key: _formKey,
+        autovalidateMode: _autovalidateMode,
+        child: ListView(
           padding: const EdgeInsets.fromLTRB(
             AppMetrics.horizontalPadding,
             0,
@@ -208,62 +206,70 @@ class _RegistryShippingAddressScreenState
               ),
             ),
             const SizedBox(height: AppMetrics.formFieldSpacing),
-            AppLabeledTextField(
+            AppLabeledTextFormField(
               semanticsId: 'registry_shipping_line1',
               label: 'Street address',
               hint: '123 Main St',
               kind: AppTextInputKind.none,
               controller: _line1,
               textInputAction: TextInputAction.next,
+              enabled: !_saving,
+              validator: validateRegistryShippingLine1,
+              autovalidateMode: _autovalidateMode,
             ),
-            AppLabeledTextField(
+            AppLabeledTextFormField(
               label: 'Apt, suite, etc. (optional)',
               hint: 'Apt 4B',
               kind: AppTextInputKind.none,
               controller: _line2,
               textInputAction: TextInputAction.next,
+              enabled: !_saving,
+              autovalidateMode: _autovalidateMode,
             ),
-            AppLabeledTextField(
+            AppLabeledTextFormField(
               label: 'City',
               hint: 'Springfield',
               kind: AppTextInputKind.none,
               controller: _city,
               textInputAction: TextInputAction.next,
+              enabled: !_saving,
+              validator: validateRegistryShippingCity,
+              autovalidateMode: _autovalidateMode,
             ),
-            AppLabeledTextField(
+            AppLabeledTextFormField(
               label: 'State / Province (optional)',
               hint: 'IL',
               kind: AppTextInputKind.none,
               controller: _region,
               textInputAction: TextInputAction.next,
+              enabled: !_saving,
+              autovalidateMode: _autovalidateMode,
             ),
-            AppLabeledTextField(
+            AppLabeledTextFormField(
               label: 'Zip / Postal code',
               hint: '62704',
               kind: AppTextInputKind.none,
               controller: _postal,
               textInputAction: TextInputAction.next,
+              enabled: !_saving,
+              validator: validateRegistryShippingPostalCode,
+              autovalidateMode: _autovalidateMode,
             ),
             Padding(
-              padding: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.only(bottom: AppMetrics.fieldLabelGap),
               child: Text('Country', style: context.fieldLabelStyle),
             ),
-            AppCountryDropdownField(
-              countries: _countries,
-              value: _countryCode,
-              enabled: !_saving,
-              onChanged: (code) => setState(() => _countryCode = code),
-            ),
-            if (_fieldError != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                _fieldError!,
-                style: context.textStyles.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.error,
-                ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppMetrics.formFieldSpacing),
+              child: AppCountryDropdownField(
+                countries: _countries,
+                value: _countryCode,
+                enabled: !_saving,
+                validator: validateCountryCode,
+                autovalidateMode: _autovalidateMode,
+                onChanged: (code) => setState(() => _countryCode = code),
               ),
-            ],
-            const SizedBox(height: AppMetrics.formFieldSpacing),
+            ),
             AppSemantics.button(
               'registry_shipping_save',
               FilledButton(
@@ -284,6 +290,7 @@ class _RegistryShippingAddressScreenState
             ],
           ],
         ),
+      ),
     );
   }
 }

@@ -4,6 +4,27 @@ from unittest.mock import patch
 import pytest
 
 from lanonna_api.domain.registry import claim_purchase, create_item, patch_item
+from lanonna_api.domain.url_validation import INVALID_HTTP_URL
+
+
+def test_create_item_rejects_invalid_product_url():
+    baby_id = uuid.uuid4()
+    with patch(
+        "lanonna_api.domain.registry.assert_owner_membership",
+    ), patch(
+        "lanonna_api.domain.registry.create_registry_item",
+    ) as create_mock:
+        with pytest.raises(ValueError, match=INVALID_HTTP_URL):
+            create_item(
+                "uid",
+                baby_id,
+                name="Crib",
+                description=None,
+                product_url="not-a-url",
+                priority=3,
+                catalog_suggestion_id=None,
+            )
+        create_mock.assert_not_called()
 
 
 def test_create_item_rejects_duplicate_catalog_suggestion():
