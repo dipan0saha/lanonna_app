@@ -296,7 +296,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-GAL-005 | Photo detail | Fullscreen display asset; metadata and actions; mutations (squish, comments, caption) refresh in place without full-screen reload (`detail_screen_load.dart`) | `/gallery/photo/:id` |
 | FR-GAL-006 | Squish | Toggle like; count updates (E2E-008) | API `photo_squishes` |
 | FR-GAL-007 | Comments | Members create comments; author edits own; author or baby **owner** deletes (moderation); list includes `can_edit` / `can_delete` | `photo_comments`; `POST` / `PATCH` / `DELETE` on `…/photos/{id}/comments` |
-| FR-GAL-008 | Tags | Owner tags other babies they belong to on a photo (metadata v1; no cross-feed). **Read:** `tagged_babies` on photo detail (and tag PUT response) lists only babies the **viewer** is a member of — followers never see names of profiles they were not invited to (#9) | `photo_baby_tags`; `list_tagged_babies_for_photo(photo_id, viewer_uid)` joins `baby_memberships`; `PUT .../photos/{id}/tags` |
+| FR-GAL-008 | Tags | Owner tags other babies the user belongs to on a photo (metadata v1; no cross-feed) | `photo_baby_tags` + `PUT .../photos/{id}/tags` |
 | FR-GAL-009 | Pending visibility | Photos not visible to others until processing complete | SQL status + API filter |
 | FR-GAL-010 | Owner edit caption | Owner can edit photo caption from detail (E2E-008) | API update; follower read-only |
 | FR-GAL-011 | Gallery recent activity | On **Gallery** (all photos), section shows up to **6** gallery-scoped activity rows (`photo_squish`, `photo_comment`): prototype row UI (icon, summary, timestamp below, dividers); empty card copy when none; all members | `GET …/activity-events?scope=gallery`; `ActivityFeedCard` |

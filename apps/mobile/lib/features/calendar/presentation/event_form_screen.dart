@@ -295,11 +295,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
       }
       if (mounted) {
         context.read<HomeRefreshSignal>().notifyHomeShouldRefresh();
-        if (widget.isEdit) {
-          context.pop();
-        } else {
-          context.pop(true);
-        }
+        context.pop(true);
       }
     } catch (e) {
       if (mounted) {

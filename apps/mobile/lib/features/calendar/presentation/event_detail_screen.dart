@@ -35,18 +35,36 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   final _commentController = TextEditingController();
   final _scrollController = ScrollController();
   var _initialLoadInFlight = true;
+  CalendarRepository? _calendarRepo;
 
   @override
   void initState() {
     super.initState();
+    _calendarRepo = context.read<CalendarRepository>();
+    _calendarRepo!.addListener(_onCalendarRepositoryChanged);
     _loadInitial();
   }
 
   @override
   void dispose() {
+    _calendarRepo?.removeListener(_onCalendarRepositoryChanged);
     _scrollController.dispose();
     _commentController.dispose();
     super.dispose();
+  }
+
+  void _onCalendarRepositoryChanged() {
+    if (_detail == null) return;
+    _refreshEventDetail();
+  }
+
+  Future<void> _openEdit() async {
+    final saved = await context.push<bool>(
+      CalendarRoutes.eventEdit(widget.eventId),
+    );
+    if (saved == true && mounted) {
+      await _refreshEventDetail();
+    }
   }
 
   void _onCoverUrlError() {
@@ -309,7 +327,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       actions: [
         if (_isOwner)
           IconButton(
-            onPressed: () => context.push(CalendarRoutes.eventEdit(detail.id)),
+            onPressed: _openEdit,
             icon: const Icon(Icons.edit_outlined, size: 20),
           ),
         if (_isOwner)
