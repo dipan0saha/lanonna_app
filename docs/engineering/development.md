@@ -199,7 +199,7 @@ Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps:
 | GET, PATCH, DELETE | `/v1/babies/{id}/registry/items/{item_id}` | JWT; no PATCH when purchased |
 | POST, DELETE | `/v1/babies/{id}/registry/items/{item_id}/purchase` | JWT (claim / undo) |
 | GET, PATCH | `/v1/babies/{id}/registry/shipping-address` | JWT member read; owner PATCH. Body/response: `line1`, `line2`, `city`, `region`, `postal_code`, `country_code` (ISO-2), `formatted` (display). Save requires line1, city, postal_code, country_code; all null clears address. |
-| GET, POST, DELETE | `/v1/babies/{id}/fun/names` | JWT (member); follower 1 name/gender |
+| GET, POST, DELETE | `/v1/babies/{id}/fun/names` | JWT (member); follower 1 name/gender; each suggestion includes `can_delete` (owner or author); mobile renders remove from that flag (#16) |
 | POST | `/v1/babies/{id}/fun/names/{id}/like` | JWT; one like per gender column |
 | GET | `/v1/babies/{id}/fun/predictions` | JWT |
 | PUT | `/v1/babies/{id}/fun/predictions/gender`, `.../birthdate` | JWT |

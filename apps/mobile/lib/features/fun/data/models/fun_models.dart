@@ -6,6 +6,7 @@ class NameSuggestion {
     required this.likeCount,
     required this.viewerHasLiked,
     required this.isMine,
+    required this.canDelete,
     required this.authorDisplayName,
   });
 
@@ -15,16 +16,19 @@ class NameSuggestion {
   final int likeCount;
   final bool viewerHasLiked;
   final bool isMine;
+  final bool canDelete;
   final String authorDisplayName;
 
   factory NameSuggestion.fromJson(Map<String, dynamic> json) {
+    final isMine = json['is_mine'] as bool? ?? false;
     return NameSuggestion(
       id: json['id'] as String,
       suggestedName: json['suggested_name'] as String,
       gender: json['gender'] as String? ?? 'unknown',
       likeCount: json['like_count'] as int? ?? 0,
       viewerHasLiked: json['viewer_has_liked'] as bool? ?? false,
-      isMine: json['is_mine'] as bool? ?? false,
+      isMine: isMine,
+      canDelete: json['can_delete'] as bool? ?? isMine,
       authorDisplayName:
           json['author_display_name'] as String? ?? 'Family member',
     );

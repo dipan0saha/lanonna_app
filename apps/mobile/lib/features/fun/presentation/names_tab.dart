@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/api/api_error_message.dart';
 import '../../../core/input/app_text_input_kind.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/la_nonna_theme.dart';
@@ -58,13 +60,17 @@ class _NamesTabState extends State<NamesTab> {
       _input.text,
     );
     if (text.isEmpty) return;
-    await context.read<FunRepository>().suggestName(
-      widget.baby.id,
-      text,
-      _gender,
-    );
-    _input.clear();
-    await _load();
+    try {
+      await context.read<FunRepository>().suggestName(
+        widget.baby.id,
+        text,
+        _gender,
+      );
+      _input.clear();
+      await _load();
+    } catch (e) {
+      if (mounted) AppSnackBar.showAlert(context, apiErrorMessage(e));
+    }
   }
 
   Future<void> _like(NameSuggestion s) async {
@@ -73,8 +79,33 @@ class _NamesTabState extends State<NamesTab> {
   }
 
   Future<void> _delete(NameSuggestion s) async {
-    await context.read<FunRepository>().deleteSuggestion(widget.baby.id, s.id);
-    await _load();
+    if (!s.canDelete) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Remove name suggestion?'),
+        content: Text(
+          'Remove "${s.suggestedName}" from the list?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await context.read<FunRepository>().deleteSuggestion(widget.baby.id, s.id);
+      await _load();
+    } catch (e) {
+      if (mounted) AppSnackBar.showAlert(context, apiErrorMessage(e));
+    }
   }
 
   @override
@@ -199,7 +230,6 @@ class _NamesTabState extends State<NamesTab> {
             padding: const EdgeInsets.only(top: 8),
             child: _NameSuggestionCard(
               suggestion: s,
-              isOwner: _isOwner,
               onLike: () => _like(s),
               onDelete: () => _delete(s),
             ),
@@ -213,13 +243,11 @@ class _NamesTabState extends State<NamesTab> {
 class _NameSuggestionCard extends StatelessWidget {
   const _NameSuggestionCard({
     required this.suggestion,
-    required this.isOwner,
     required this.onLike,
     required this.onDelete,
   });
 
   final NameSuggestion suggestion;
-  final bool isOwner;
   final VoidCallback onLike;
   final VoidCallback onDelete;
 
@@ -266,7 +294,7 @@ class _NameSuggestionCard extends StatelessWidget {
                   '${suggestion.likeCount}',
                   style: styles.labelMedium,
                 ),
-                if (isOwner)
+                if (suggestion.canDelete)
                   IconButton(
                     onPressed: onDelete,
                     visualDensity: VisualDensity.compact,

@@ -33,12 +33,24 @@ from lanonna_api.repositories.fun import (
 from lanonna_api.repositories.users import upsert_app_user
 
 
+def _suggestion_can_delete(
+    firebase_uid: str,
+    membership: dict[str, Any] | None,
+    suggested_by_firebase_uid: str,
+) -> bool:
+    is_owner = membership is not None and membership["role"] == "owner"
+    is_author = suggested_by_firebase_uid == firebase_uid
+    return is_owner or is_author
+
+
 def list_names(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, Any]:
     require_membership(firebase_uid, baby_profile_id)
+    membership = get_baby_membership(firebase_uid, baby_profile_id)
     liked = caller_liked_suggestion_ids(baby_profile_id, firebase_uid)
     suggestions = []
     for row in list_name_suggestions(baby_profile_id):
         sid = row["id"]
+        author_uid = row["suggested_by_firebase_uid"]
         suggestions.append(
             {
                 "id": str(sid),
@@ -46,7 +58,10 @@ def list_names(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, Any]:
                 "gender": row["gender"],
                 "like_count": row["like_count"],
                 "author_display_name": author_display_name_from_row(row),
-                "is_mine": row["suggested_by_firebase_uid"] == firebase_uid,
+                "is_mine": author_uid == firebase_uid,
+                "can_delete": _suggestion_can_delete(
+                    firebase_uid, membership, author_uid
+                ),
                 "viewer_has_liked": user_has_like(sid, firebase_uid),
             }
         )
@@ -102,9 +117,9 @@ def remove_suggestion(
     row = get_name_suggestion(baby_profile_id, suggestion_id)
     if row is None:
         raise LookupError("Suggestion not found.")
-    is_owner = membership is not None and membership["role"] == "owner"
-    is_author = row["suggested_by_firebase_uid"] == firebase_uid
-    if not is_owner and not is_author:
+    if not _suggestion_can_delete(
+        firebase_uid, membership, row["suggested_by_firebase_uid"]
+    ):
         raise PermissionError("Cannot delete this suggestion.")
     if not delete_name_suggestion(baby_profile_id, suggestion_id):
         raise LookupError("Suggestion not found.")
