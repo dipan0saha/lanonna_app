@@ -52,6 +52,14 @@ def _display_name(row: dict[str, Any]) -> str:
     return "Family member"
 
 
+def _tagged_babies_json(
+    photo_id: uuid.UUID,
+    viewer_firebase_uid: str,
+) -> list[dict[str, str]]:
+    tagged = list_tagged_babies_for_photo(photo_id, viewer_firebase_uid)
+    return [{"id": str(t["id"]), "name": t["name"]} for t in tagged]
+
+
 def require_membership(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, Any]:
     membership = get_baby_membership(firebase_uid, baby_profile_id)
     if membership is None:
@@ -138,7 +146,6 @@ def get_photo_detail(
         raise PermissionError("Photo not available.")
     comments = list_photo_comments(photo_id)
     squished = caller_squished(photo_id, firebase_uid)
-    tagged = list_tagged_babies_for_photo(photo_id)
     return {
         "id": str(row["id"]),
         "status": row["status"],
@@ -149,9 +156,7 @@ def get_photo_detail(
         "uploader_display_name": _display_name(row),
         "squish_count": squish_count(photo_id),
         "viewer_has_squished": squished,
-        "tagged_babies": [
-            {"id": str(t["id"]), "name": t["name"]} for t in tagged
-        ],
+        "tagged_babies": _tagged_babies_json(photo_id, firebase_uid),
         "comments": [
             member_comment_to_json(c, firebase_uid, membership, _display_name(c))
             for c in comments
@@ -332,9 +337,6 @@ def set_photo_baby_tags(
         seen.add(baby_id)
         unique_ids.append(baby_id)
     replace_photo_baby_tags(photo_id, unique_ids)
-    tagged = list_tagged_babies_for_photo(photo_id)
     return {
-        "tagged_babies": [
-            {"id": str(t["id"]), "name": t["name"]} for t in tagged
-        ],
+        "tagged_babies": _tagged_babies_json(photo_id, firebase_uid),
     }

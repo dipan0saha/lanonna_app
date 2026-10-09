@@ -1,9 +1,10 @@
 import uuid
+from datetime import datetime, timezone
 from unittest.mock import patch
 
 import pytest
 
-from lanonna_api.domain.gallery import list_gallery
+from lanonna_api.domain.gallery import get_photo_detail, list_gallery
 
 
 def test_list_gallery_denied_without_membership():
@@ -44,3 +45,95 @@ def test_list_gallery_passes_favorites_sort():
         list_mock.assert_called_once_with(
             baby_id, ready_only=False, limit=50, offset=0, sort="favorites"
         )
+
+
+def test_get_photo_detail_tagged_babies_scoped_to_viewer():
+    baby_id = uuid.uuid4()
+    photo_id = uuid.uuid4()
+    viewer_uid = "follower-uid"
+    created = datetime(2026, 10, 1, tzinfo=timezone.utc)
+    photo_row = {
+        "id": photo_id,
+        "status": "ready",
+        "caption": "Bump",
+        "created_at": created,
+        "display_path": "display/x.jpg",
+        "thumb_path": "thumbnails/x.jpg",
+        "uploader_display_name": "Owner",
+    }
+    with patch(
+        "lanonna_api.domain.gallery.get_baby_membership",
+        return_value={"role": "follower"},
+    ), patch(
+        "lanonna_api.domain.gallery.get_photo_for_baby",
+        return_value=photo_row,
+    ), patch(
+        "lanonna_api.domain.gallery.list_photo_comments",
+        return_value=[],
+    ), patch(
+        "lanonna_api.domain.gallery.caller_squished",
+        return_value=False,
+    ), patch(
+        "lanonna_api.domain.gallery.squish_count",
+        return_value=0,
+    ), patch(
+        "lanonna_api.domain.gallery.signed_display_url",
+        return_value="https://display",
+    ), patch(
+        "lanonna_api.domain.gallery.signed_thumb_url",
+        return_value="https://thumb",
+    ), patch(
+        "lanonna_api.domain.gallery.list_tagged_babies_for_photo",
+        return_value=[],
+    ) as tags_mock:
+        detail = get_photo_detail(viewer_uid, baby_id, photo_id)
+        tags_mock.assert_called_once_with(photo_id, viewer_uid)
+        assert detail["tagged_babies"] == []
+
+
+def test_get_photo_detail_owner_sees_tagged_babies_they_belong_to():
+    baby_id = uuid.uuid4()
+    photo_id = uuid.uuid4()
+    sibling_id = uuid.uuid4()
+    owner_uid = "owner-uid"
+    created = datetime(2026, 10, 1, tzinfo=timezone.utc)
+    photo_row = {
+        "id": photo_id,
+        "status": "ready",
+        "caption": None,
+        "created_at": created,
+        "display_path": None,
+        "thumb_path": None,
+        "uploader_display_name": "Owner",
+    }
+    with patch(
+        "lanonna_api.domain.gallery.get_baby_membership",
+        return_value={"role": "owner"},
+    ), patch(
+        "lanonna_api.domain.gallery.get_photo_for_baby",
+        return_value=photo_row,
+    ), patch(
+        "lanonna_api.domain.gallery.list_photo_comments",
+        return_value=[],
+    ), patch(
+        "lanonna_api.domain.gallery.caller_squished",
+        return_value=False,
+    ), patch(
+        "lanonna_api.domain.gallery.squish_count",
+        return_value=0,
+    ), patch(
+        "lanonna_api.domain.gallery.signed_display_url",
+        return_value=None,
+    ), patch(
+        "lanonna_api.domain.gallery.signed_thumb_url",
+        return_value=None,
+    ), patch(
+        "lanonna_api.domain.gallery.list_tagged_babies_for_photo",
+        return_value=[
+            {"id": sibling_id, "name": "Jordan"},
+        ],
+    ):
+        detail = get_photo_detail(owner_uid, baby_id, photo_id)
+        assert detail["tagged_babies"] == [
+            {"id": str(sibling_id), "name": "Jordan"},
+        ]

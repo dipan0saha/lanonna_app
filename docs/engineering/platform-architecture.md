@@ -148,6 +148,8 @@ HTTP handlers  →  auth middleware (Firebase JWT + optional App Check)
 
 Keep handlers thin; put business rules in domain services so workers can reuse the same modules.
 
+Embedded gallery data (e.g. `tagged_babies` on photo detail) must be **viewer-scoped** the same way as top-level routes: join `baby_memberships` on each referenced baby profile id so followers never receive names of babies they were not invited to (FR-GAL-008 / #9). Writes may still store cross-baby tags for owners; reads filter in `repositories/photo_tags.py`.
+
 ### 2.4 Photo upload and thumbnail (sequence)
 
 ```mermaid

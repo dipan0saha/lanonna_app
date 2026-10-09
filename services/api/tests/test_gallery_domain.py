@@ -66,9 +66,10 @@ def test_set_photo_baby_tags_happy_path():
     ) as replace_mock, patch(
         "lanonna_api.domain.gallery.list_tagged_babies_for_photo",
         return_value=[{"id": tag_id, "name": "Sibling"}],
-    ):
+    ) as tags_mock:
         result = set_photo_baby_tags("uid", baby_id, photo_id, [tag_id, tag_id])
         replace_mock.assert_called_once_with(photo_id, [tag_id])
+        tags_mock.assert_called_once_with(photo_id, "uid")
         assert result["tagged_babies"][0]["name"] == "Sibling"
 
 

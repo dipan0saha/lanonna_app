@@ -6,17 +6,24 @@ from typing import Any
 from lanonna_api.db import get_connection
 
 
-def list_tagged_babies_for_photo(photo_id: uuid.UUID) -> list[dict[str, Any]]:
+def list_tagged_babies_for_photo(
+    photo_id: uuid.UUID,
+    viewer_firebase_uid: str,
+) -> list[dict[str, Any]]:
+    """Tagged babies on a photo that the viewer is a member of (FR-GAL-008 read scope)."""
     with get_connection() as conn:
         rows = conn.execute(
             """
             SELECT b.id, b.name
             FROM photo_baby_tags t
             JOIN baby_profiles b ON b.id = t.tagged_baby_profile_id
+            JOIN baby_memberships m
+              ON m.baby_profile_id = t.tagged_baby_profile_id
+             AND m.firebase_uid = %s
             WHERE t.photo_id = %s
             ORDER BY b.name ASC
             """,
-            (photo_id,),
+            (viewer_firebase_uid, photo_id),
         ).fetchall()
     return [dict(r) for r in rows]
 
