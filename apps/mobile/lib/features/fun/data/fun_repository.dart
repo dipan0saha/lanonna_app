@@ -1,4 +1,5 @@
 import '../../../core/api/api_client.dart';
+import '../domain/birthdate_prediction.dart';
 import 'models/fun_models.dart';
 
 class FunRepository {
@@ -40,10 +41,8 @@ class FunRepository {
   }
 
   Future<void> setBirthdateVote(String babyId, DateTime date) async {
-    final iso =
-        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
     await _api.putJson('/v1/babies/$babyId/fun/predictions/birthdate', body: {
-      'predicted_birth_date': iso,
+      'predicted_birth_date': birthdateGuessIso(date),
     });
   }
 }

@@ -73,5 +73,51 @@
         "type": "int"
       }
     }
-  }
+  },
+  "funBirthdateYourGuess": "Your guess: {date}",
+  "@funBirthdateYourGuess": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "funBirthdateSelected": "Selected: {date}",
+  "@funBirthdateSelected": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "funBirthdateDueDate": "Due date: {label}",
+  "@funBirthdateDueDate": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "funBirthdateSaveGuess": "Save guess",
+  "funBirthdateUpdateGuess": "Update guess",
+  "funBirthdatePickDate": "Pick date…",
+  "funBirthdateConfirmSaveTitle": "Save birthdate guess?",
+  "funBirthdateConfirmSaveBody": "Your guess will be {date}. You can change it later.",
+  "@funBirthdateConfirmSaveBody": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "funBirthdateConfirmUpdateTitle": "Update birthdate guess?",
+  "funBirthdateConfirmUpdateBody": "Change your guess to {date}?",
+  "@funBirthdateConfirmUpdateBody": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "funBirthdateConfirmAction": "Save"
 }

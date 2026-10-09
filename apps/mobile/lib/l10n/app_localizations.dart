@@ -285,6 +285,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =0{0 items still needed} =1{1 item still needed} other{{count} items still needed}}'**
   String registryItemsStillNeeded(int count);
+
+  /// No description provided for @funBirthdateYourGuess.
+  ///
+  /// In en, this message translates to:
+  /// **'Your guess: {date}'**
+  String funBirthdateYourGuess(String date);
+
+  /// No description provided for @funBirthdateSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected: {date}'**
+  String funBirthdateSelected(String date);
+
+  /// No description provided for @funBirthdateDueDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Due date: {label}'**
+  String funBirthdateDueDate(String label);
+
+  /// No description provided for @funBirthdateSaveGuess.
+  ///
+  /// In en, this message translates to:
+  /// **'Save guess'**
+  String get funBirthdateSaveGuess;
+
+  /// No description provided for @funBirthdateUpdateGuess.
+  ///
+  /// In en, this message translates to:
+  /// **'Update guess'**
+  String get funBirthdateUpdateGuess;
+
+  /// No description provided for @funBirthdatePickDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick date…'**
+  String get funBirthdatePickDate;
+
+  /// No description provided for @funBirthdateConfirmSaveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save birthdate guess?'**
+  String get funBirthdateConfirmSaveTitle;
+
+  /// No description provided for @funBirthdateConfirmSaveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your guess will be {date}. You can change it later.'**
+  String funBirthdateConfirmSaveBody(String date);
+
+  /// No description provided for @funBirthdateConfirmUpdateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update birthdate guess?'**
+  String get funBirthdateConfirmUpdateTitle;
+
+  /// No description provided for @funBirthdateConfirmUpdateBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Change your guess to {date}?'**
+  String funBirthdateConfirmUpdateBody(String date);
+
+  /// No description provided for @funBirthdateConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get funBirthdateConfirmAction;
 }
 
 class _AppLocalizationsDelegate

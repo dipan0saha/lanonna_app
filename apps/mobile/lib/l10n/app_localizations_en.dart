@@ -158,4 +158,47 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String funBirthdateYourGuess(String date) {
+    return 'Your guess: $date';
+  }
+
+  @override
+  String funBirthdateSelected(String date) {
+    return 'Selected: $date';
+  }
+
+  @override
+  String funBirthdateDueDate(String label) {
+    return 'Due date: $label';
+  }
+
+  @override
+  String get funBirthdateSaveGuess => 'Save guess';
+
+  @override
+  String get funBirthdateUpdateGuess => 'Update guess';
+
+  @override
+  String get funBirthdatePickDate => 'Pick date…';
+
+  @override
+  String get funBirthdateConfirmSaveTitle => 'Save birthdate guess?';
+
+  @override
+  String funBirthdateConfirmSaveBody(String date) {
+    return 'Your guess will be $date. You can change it later.';
+  }
+
+  @override
+  String get funBirthdateConfirmUpdateTitle => 'Update birthdate guess?';
+
+  @override
+  String funBirthdateConfirmUpdateBody(String date) {
+    return 'Change your guess to $date?';
+  }
+
+  @override
+  String get funBirthdateConfirmAction => 'Save';
 }

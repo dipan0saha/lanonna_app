@@ -206,7 +206,7 @@ Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps:
 | GET, POST, DELETE | `/v1/babies/{id}/fun/names` | JWT (member); follower 1 name/gender; each suggestion includes `can_delete` (owner or author); mobile renders remove from that flag (#16) |
 | POST | `/v1/babies/{id}/fun/names/{id}/like` | JWT; one like per gender column |
 | GET | `/v1/babies/{id}/fun/predictions` | JWT |
-| PUT | `/v1/babies/{id}/fun/predictions/gender`, `.../birthdate` | JWT |
+| PUT | `/v1/babies/{id}/fun/predictions/gender`, `.../birthdate` | JWT; birthdate upsert. Mobile: calendar/`Pick date…` set a **draft** only; **Save guess** / **Update guess** confirms then `PUT` (never defaults vote to profile due date — #5); rules in `features/fun/domain/birthdate_prediction.dart` |
 
 Local API env: `services/api/.env.example`. DB password and Mailjet keys live in **Secret Manager**.
 

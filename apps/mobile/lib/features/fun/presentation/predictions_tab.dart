@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/api/api_error_message.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/theme/app_colors.dart';
@@ -12,6 +13,7 @@ import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../data/fun_repository.dart';
 import '../data/models/fun_models.dart';
+import '../domain/birthdate_prediction.dart';
 
 class PredictionsTab extends StatefulWidget {
   const PredictionsTab({super.key, required this.baby});
@@ -31,20 +33,9 @@ class _PredictionsTabState extends State<PredictionsTab> {
   @override
   void initState() {
     super.initState();
-    _visibleMonth = _dueDateMonth() ?? DateTime(DateTime.now().year, DateTime.now().month);
+    final due = babyExpectedDueDate(widget.baby);
+    _visibleMonth = visibleMonthForBirthdateGuess(dueDate: due);
     _load();
-  }
-
-  DateTime? _parseDueDate() {
-    final raw = widget.baby.expectedBirthDate;
-    if (raw == null || raw.isEmpty) return null;
-    return DateTime.tryParse(raw);
-  }
-
-  DateTime? _dueDateMonth() {
-    final due = _parseDueDate();
-    if (due == null) return null;
-    return DateTime(due.year, due.month);
   }
 
   Future<void> _load() async {
@@ -53,57 +44,93 @@ class _PredictionsTabState extends State<PredictionsTab> {
       final payload = await context
           .read<FunRepository>()
           .fetchPredictions(widget.baby.id);
+      if (!mounted) return;
+      final due = babyExpectedDueDate(widget.baby);
       setState(() {
         _payload = payload;
         _loading = false;
+        _visibleMonth = visibleMonthForBirthdateGuess(
+          savedVoteIso: payload.viewerBirthdateVote,
+          dueDate: due,
+        );
+        _pendingGuess = null;
       });
     } catch (_) {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
   Future<void> _voteGender(String gender) async {
-    await context.read<FunRepository>().setGenderVote(
-      widget.baby.id,
-      gender,
-    );
-    await _load();
+    try {
+      await context.read<FunRepository>().setGenderVote(
+        widget.baby.id,
+        gender,
+      );
+      await _load();
+    } catch (e) {
+      if (mounted) AppSnackBar.showAlert(context, apiErrorMessage(e));
+    }
   }
 
-  Future<void> _lockPrediction() async {
-    if (_payload?.viewerBirthdateVote != null) return;
-    final date = _pendingGuess ?? _parseDueDate();
-    if (date == null) {
-      if (mounted) {
-        AppSnackBar.showAlert(
-          context,
-          'Tap a date on the calendar to lock your guess',
-        );
-      }
-      return;
-    }
-    await context.read<FunRepository>().setBirthdateVote(
-      widget.baby.id,
-      date,
+  Future<void> _submitBirthdateGuess() async {
+    final l10n = AppLocalizations.of(context)!;
+    final saved = _payload?.viewerBirthdateVote;
+    final date = birthdateGuessToSubmit(pendingSelection: _pendingGuess);
+    if (date == null) return;
+    final iso = birthdateGuessIso(date);
+    final isUpdate = saved != null && saved.isNotEmpty;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          isUpdate
+              ? l10n.funBirthdateConfirmUpdateTitle
+              : l10n.funBirthdateConfirmSaveTitle,
+        ),
+        content: Text(
+          isUpdate
+              ? l10n.funBirthdateConfirmUpdateBody(iso)
+              : l10n.funBirthdateConfirmSaveBody(iso),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.funBirthdateConfirmAction),
+          ),
+        ],
+      ),
     );
-    if (!mounted) return;
-    await _load();
+    if (ok != true || !mounted) return;
+    try {
+      await context.read<FunRepository>().setBirthdateVote(
+        widget.baby.id,
+        date,
+      );
+      if (!mounted) return;
+      await _load();
+    } catch (e) {
+      if (mounted) AppSnackBar.showAlert(context, apiErrorMessage(e));
+    }
   }
 
   Future<void> _pickDate() async {
-    if (_payload?.viewerBirthdateVote != null) return;
-    final due = _parseDueDate();
+    final due = babyExpectedDueDate(widget.baby);
     final picked = await showDatePicker(
       context: context,
-      initialDate: due ?? DateTime.now(),
+      initialDate: birthdatePickerInitialDate(
+        pendingSelection: _pendingGuess,
+        savedVoteIso: _payload?.viewerBirthdateVote,
+        dueDate: due,
+      ),
       firstDate: DateTime(2020),
       lastDate: DateTime(2035),
     );
     if (picked == null || !mounted) return;
-    final repo = context.read<FunRepository>();
-    await repo.setBirthdateVote(widget.baby.id, picked);
-    if (!mounted) return;
-    await _load();
+    setState(() => _pendingGuess = picked);
   }
 
   void _showVoters() {
@@ -138,6 +165,10 @@ class _PredictionsTabState extends State<PredictionsTab> {
     });
   }
 
+  void _selectCalendarDay(DateTime day) {
+    setState(() => _pendingGuess = day);
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -147,8 +178,12 @@ class _PredictionsTabState extends State<PredictionsTab> {
     final p = _payload;
     final total = (p?.maleVotes ?? 0) + (p?.femaleVotes ?? 0);
     final boyPct = total > 0 ? ((p!.maleVotes / total) * 100).round() : 50;
-    final birthdateLocked = p?.viewerBirthdateVote != null;
-    final due = _parseDueDate();
+    final savedBirthdate = p?.viewerBirthdateVote;
+    final due = babyExpectedDueDate(widget.baby);
+    final submitEnabled = birthdateGuessSubmitEnabled(
+      pendingSelection: _pendingGuess,
+      savedVoteIso: savedBirthdate,
+    );
 
     return RefreshIndicator(
       onRefresh: _load,
@@ -231,11 +266,9 @@ class _PredictionsTabState extends State<PredictionsTab> {
                     month: _visibleMonth,
                     voteCountsByDate: _voteCountByDate(),
                     dueDate: due,
-                    viewerGuess: p?.viewerBirthdateVote,
+                    viewerGuess: savedBirthdate,
                     pendingGuess: _pendingGuess,
-                    onDayTap: p?.viewerBirthdateVote == null
-                        ? (day) => setState(() => _pendingGuess = day)
-                        : null,
+                    onDayTap: _selectCalendarDay,
                   ),
                   if (due != null &&
                       due.year == _visibleMonth.year &&
@@ -243,7 +276,9 @@ class _PredictionsTabState extends State<PredictionsTab> {
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
                       child: Text(
-                        'Due date: ${_monthName(due.month)} ${due.day}',
+                        l10n.funBirthdateDueDate(
+                          '${_monthName(due.month)} ${due.day}',
+                        ),
                         style: context.textStyles.bodySmall?.copyWith(
                           color: AppColors.primaryDark,
                         ),
@@ -267,47 +302,36 @@ class _PredictionsTabState extends State<PredictionsTab> {
                 trailing: Text(l10n.predictionVoteCount(row.count)),
               ),
           const SizedBox(height: 8),
-          if (birthdateLocked)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppColors.sageTint,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border),
+          if (savedBirthdate != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                l10n.funBirthdateYourGuess(savedBirthdate),
+                style: context.textStyles.bodySmall,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Your guess is locked', style: context.textStyles.titleSmall),
-                  const SizedBox(height: 4),
-                  Text(
-                    p!.viewerBirthdateVote!,
-                    style: context.textStyles.bodyMedium,
-                  ),
-                ],
-              ),
-            )
-          else ...[
-            if (_pendingGuess != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  'Selected: ${_pendingGuess!.year}-${_pendingGuess!.month.toString().padLeft(2, '0')}-${_pendingGuess!.day.toString().padLeft(2, '0')}',
-                  style: context.textStyles.bodySmall,
-                ),
-              ),
-            FilledButton(
-              key: const Key('lockPredictionBtn'),
-              onPressed: _lockPrediction,
-              child: const Text('Lock Prediction'),
             ),
-            const SizedBox(height: 8),
-            OutlinedButton(
-              onPressed: _pickDate,
-              child: const Text('Pick date…'),
+          if (_pendingGuess != null && submitEnabled)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                l10n.funBirthdateSelected(birthdateGuessIso(_pendingGuess!)),
+                style: context.textStyles.bodySmall,
+              ),
             ),
-          ],
+          FilledButton(
+            key: const Key('lockPredictionBtn'),
+            onPressed: submitEnabled ? _submitBirthdateGuess : null,
+            child: Text(
+              savedBirthdate == null
+                  ? l10n.funBirthdateSaveGuess
+                  : l10n.funBirthdateUpdateGuess,
+            ),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton(
+            onPressed: _pickDate,
+            child: Text(l10n.funBirthdatePickDate),
+          ),
         ],
       ),
     );
@@ -363,7 +387,7 @@ class _PredictionsMonthGrid extends StatelessWidget {
     this.dueDate,
     this.viewerGuess,
     this.pendingGuess,
-    this.onDayTap,
+    required this.onDayTap,
   });
 
   final DateTime month;
@@ -371,10 +395,7 @@ class _PredictionsMonthGrid extends StatelessWidget {
   final DateTime? dueDate;
   final String? viewerGuess;
   final DateTime? pendingGuess;
-  final void Function(DateTime day)? onDayTap;
-
-  String _iso(int year, int month, int day) =>
-      '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+  final void Function(DateTime day) onDayTap;
 
   @override
   Widget build(BuildContext context) {
@@ -389,7 +410,7 @@ class _PredictionsMonthGrid extends StatelessWidget {
       cells.add(const SizedBox());
     }
     for (var day = 1; day <= daysInMonth; day++) {
-      final iso = _iso(month.year, month.month, day);
+      final iso = birthdateGuessIso(DateTime(month.year, month.month, day));
       final count = voteCountsByDate[iso] ?? 0;
       final isDue = dueDate != null &&
           dueDate!.year == month.year &&
@@ -402,41 +423,39 @@ class _PredictionsMonthGrid extends StatelessWidget {
           pendingGuess!.day == day;
       cells.add(
         GestureDetector(
-          onTap: onDayTap == null
-              ? null
-              : () => onDayTap!(DateTime(month.year, month.month, day)),
+          onTap: () => onDayTap(DateTime(month.year, month.month, day)),
           child: Container(
-          decoration: BoxDecoration(
-            color: isDue
-                ? AppColors.peachTint
-                : isMine || isPending
-                    ? AppColors.sageTint
-                    : null,
-            borderRadius: BorderRadius.circular(6),
-            border: isDue || isPending
-                ? Border.all(color: AppColors.primaryDark)
-                : null,
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                '$day',
-                style: context.textStyles.labelSmall?.copyWith(
-                  fontWeight: isDue ? FontWeight.bold : null,
-                ),
-              ),
-              if (count > 0)
+            decoration: BoxDecoration(
+              color: isDue
+                  ? AppColors.peachTint
+                  : isMine || isPending
+                      ? AppColors.sageTint
+                      : null,
+              borderRadius: BorderRadius.circular(6),
+              border: isDue || isPending
+                  ? Border.all(color: AppColors.primaryDark)
+                  : null,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
                 Text(
-                  '$count',
+                  '$day',
                   style: context.textStyles.labelSmall?.copyWith(
-                    color: AppColors.primaryDark,
-                    fontSize: 10,
+                    fontWeight: isDue ? FontWeight.bold : null,
                   ),
                 ),
-            ],
+                if (count > 0)
+                  Text(
+                    '$count',
+                    style: context.textStyles.labelSmall?.copyWith(
+                      color: AppColors.primaryDark,
+                      fontSize: 10,
+                    ),
+                  ),
+              ],
+            ),
           ),
-        ),
         ),
       );
     }
