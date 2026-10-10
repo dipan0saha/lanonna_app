@@ -9,6 +9,7 @@ class BabySummary {
     this.actualBirthDate,
     this.avatarUrl,
     this.relationshipLabel,
+    this.canLeave = true,
   });
 
   final String id;
@@ -20,6 +21,7 @@ class BabySummary {
   final String role;
   final String? avatarUrl;
   final String? relationshipLabel;
+  final bool canLeave;
 
   factory BabySummary.fromJson(Map<String, dynamic> json) {
     return BabySummary(
@@ -32,6 +34,7 @@ class BabySummary {
       role: json['role'] as String? ?? 'follower',
       avatarUrl: json['avatar_url'] as String?,
       relationshipLabel: json['relationship_label'] as String?,
+      canLeave: json['can_leave'] as bool? ?? true,
     );
   }
 }

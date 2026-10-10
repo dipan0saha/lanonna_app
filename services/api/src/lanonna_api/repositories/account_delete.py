@@ -3,6 +3,10 @@ from __future__ import annotations
 import uuid
 
 from lanonna_api.db import get_connection
+from lanonna_api.repositories.memberships import (
+    soft_remove_all_memberships_for_user,
+    soft_remove_memberships_on_babies,
+)
 
 
 def list_sole_owned_baby_ids(firebase_uid: str) -> list[uuid.UUID]:
@@ -52,14 +56,7 @@ def soft_delete_account_rows(
                 """,
                 (sole_owned,),
             )
-            conn.execute(
-                """
-                UPDATE baby_memberships
-                SET removed_at = now(), updated_at = now()
-                WHERE baby_profile_id = ANY(%s::uuid[]) AND removed_at IS NULL
-                """,
-                (sole_owned,),
-            )
+            soft_remove_memberships_on_babies(sole_owned, conn=conn)
             conn.execute(
                 """
                 UPDATE baby_profiles
@@ -68,14 +65,7 @@ def soft_delete_account_rows(
                 """,
                 (sole_owned,),
             )
-        conn.execute(
-            """
-            UPDATE baby_memberships
-            SET removed_at = now(), updated_at = now()
-            WHERE firebase_uid = %s AND removed_at IS NULL
-            """,
-            (firebase_uid,),
-        )
+        soft_remove_all_memberships_for_user(firebase_uid, conn=conn)
         conn.execute(
             """
             UPDATE app_users

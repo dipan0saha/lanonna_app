@@ -21,6 +21,7 @@ from lanonna_api.routers import (
     fun,
     invitation_accept,
     invitations,
+    members,
     notifications,
     onboarding,
     photos,
@@ -69,6 +70,7 @@ app.include_router(notifications.router, dependencies=_app_check_deps)
 app.include_router(onboarding.router, dependencies=_app_check_deps)
 app.include_router(babies.router, dependencies=_app_check_deps)
 app.include_router(invitations.router, dependencies=_app_check_deps)
+app.include_router(members.router, dependencies=_app_check_deps)
 app.include_router(invitation_accept.router)
 app.include_router(app_config.router)
 app.include_router(photos.router, dependencies=_app_check_deps)

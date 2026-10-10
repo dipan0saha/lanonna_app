@@ -151,5 +151,23 @@
   "authPasswordResetEmailLabel": "Email",
   "authPasswordResetSend": "Send reset link",
   "authPasswordResetCancel": "Cancel",
-  "authPasswordResetSent": "Check your email for a password reset link."
+  "authPasswordResetSent": "Check your email for a password reset link.",
+  "memberRemoveConfirmTitle": "Remove from family?",
+  "memberRemoveConfirmBody": "{name} will lose access to photos, events, and registry for this baby.",
+  "@memberRemoveConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "memberRemoveAction": "Remove",
+  "memberLeaveProfile": "Leave profile",
+  "memberLeaveConfirmTitle": "Leave this baby profile?",
+  "memberLeaveConfirmBody": "You will lose access to this baby's photos, calendar, and registry.",
+  "memberLeaveAction": "Leave",
+  "memberSoleOwnerLeaveTitle": "Can't leave yet",
+  "memberSoleOwnerLeaveBody": "You are the only owner. Add a co-owner, delete this baby profile, or delete your account to leave.",
+  "memberRemovedSuccess": "Member removed.",
+  "memberLeftSuccess": "You left this baby profile."
 }

@@ -18,21 +18,12 @@ from lanonna_api.repositories.invitations import (
     list_invitations_for_baby,
     revoke_invitation,
 )
-from lanonna_api.repositories.memberships import list_baby_members
-
 logger = logging.getLogger("lanonna.api.invitations")
 
 EMAIL_QUEUE_FAILED_MESSAGE = (
     "Invitation saved; email could not be queued. "
     "Try again from Manage followers, or revoke and re-invite."
 )
-
-def list_members_for_owner(
-    firebase_uid: str,
-    baby_profile_id: uuid.UUID,
-) -> list[dict[str, Any]]:
-    require_owner_baby(firebase_uid, baby_profile_id)
-    return list_baby_members(baby_profile_id)
 
 
 def list_invitations_for_owner(

@@ -423,6 +423,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Check your email for a password reset link.'**
   String get authPasswordResetSent;
+
+  /// No description provided for @memberRemoveConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from family?'**
+  String get memberRemoveConfirmTitle;
+
+  /// No description provided for @memberRemoveConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} will lose access to photos, events, and registry for this baby.'**
+  String memberRemoveConfirmBody(String name);
+
+  /// No description provided for @memberRemoveAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get memberRemoveAction;
+
+  /// No description provided for @memberLeaveProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave profile'**
+  String get memberLeaveProfile;
+
+  /// No description provided for @memberLeaveConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave this baby profile?'**
+  String get memberLeaveConfirmTitle;
+
+  /// No description provided for @memberLeaveConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You will lose access to this baby\'s photos, calendar, and registry.'**
+  String get memberLeaveConfirmBody;
+
+  /// No description provided for @memberLeaveAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave'**
+  String get memberLeaveAction;
+
+  /// No description provided for @memberSoleOwnerLeaveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t leave yet'**
+  String get memberSoleOwnerLeaveTitle;
+
+  /// No description provided for @memberSoleOwnerLeaveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You are the only owner. Add a co-owner, delete this baby profile, or delete your account to leave.'**
+  String get memberSoleOwnerLeaveBody;
+
+  /// No description provided for @memberRemovedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Member removed.'**
+  String get memberRemovedSuccess;
+
+  /// No description provided for @memberLeftSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'You left this baby profile.'**
+  String get memberLeftSuccess;
 }
 
 class _AppLocalizationsDelegate

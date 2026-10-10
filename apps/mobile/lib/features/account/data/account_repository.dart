@@ -104,21 +104,27 @@ class AccountPayload {
 
 class MemberRow {
   MemberRow({
+    required this.firebaseUid,
     required this.displayName,
     required this.role,
+    required this.canRemove,
     this.email,
     this.relationshipLabel,
   });
 
+  final String firebaseUid;
   final String displayName;
   final String role;
+  final bool canRemove;
   final String? email;
   final String? relationshipLabel;
 
   factory MemberRow.fromJson(Map<String, dynamic> json) {
     return MemberRow(
+      firebaseUid: json['firebase_uid'] as String? ?? '',
       displayName: json['display_name'] as String? ?? 'Member',
       role: json['role'] as String? ?? 'follower',
+      canRemove: json['can_remove'] as bool? ?? false,
       email: json['email'] as String?,
       relationshipLabel: json['relationship_label'] as String?,
     );
@@ -212,6 +218,14 @@ class AccountRepository {
 
   Future<void> revokeInvitation(String babyId, String invitationId) async {
     await _api.deleteJson('/v1/babies/$babyId/invitations/$invitationId');
+  }
+
+  Future<void> removeMember(String babyId, String firebaseUid) async {
+    await _api.deleteJson('/v1/babies/$babyId/members/$firebaseUid');
+  }
+
+  Future<void> leaveBaby(String babyId) async {
+    await _api.postJson('/v1/babies/$babyId/leave', body: {});
   }
 
   Future<DataExportJob> requestExport(String babyId) async {

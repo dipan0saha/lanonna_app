@@ -262,6 +262,8 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-INV-006 | Membership check by email | Owner batch invite shows “Already a member” for existing emails | API check endpoint |
 | FR-INV-007 | Deep link accept | `/invite-accept?token=&role=` opens accept flow | App links + router |
 | FR-INV-008 | Post-home batch invite UI | `/invite-family` matches main-app prototype **followers-invite**: single subpage header **Invite Family & Friends** (no stacked home top bar); intro copy on 7-day private link (`AppMetrics.horizontalPadding`); sage co-owner hint with 💡 for **Mother/Father**; relationship picker uses Mother/Father (not Wife/Husband); **+ Add another person**; email-only send (v1) | `BatchInviteScreen` `fromHome` |
+| FR-INV-009 | Remove member | Owner removes an accepted follower or (when ≥2 owners) another owner; soft `removed_at`; immediate loss of access; activity event; re-invite may reactivate membership (#25) | `DELETE …/members/{uid}`; `domain/member_lifecycle.py` |
+| FR-INV-010 | Leave profile | Member leaves a baby they follow or co-own; sole owner cannot leave (add co-owner, delete baby, or delete account); `can_leave` on baby list | `POST …/leave`; baby switcher + `BabySummary.can_leave` |
 
 ### 7.4 Baby profile — FR-BABY
 
@@ -270,7 +272,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-BABY-001 | Create baby | Owner creates baby (onboarding first baby or in-app add); optional names (default **Baby**), gender, dates, avatar; in-app reuses same UI as FR-ONB-004 without first-moment/invite | `POST /v1/babies`; [`CreateBabyScreen`](../../apps/mobile/lib/features/baby/presentation/create_baby_screen.dart) |
 | FR-BABY-002 | Edit baby | Owner edits fields; soft delete supported | API |
 | FR-BABY-003 | Auto-select new profile | After create, home context switches to new baby (E2E-005) | Client state |
-| FR-BABY-004 | Followers management | Screen lists members and pending invites | `/baby-profile/followers` |
+| FR-BABY-004 | Followers management | Lists active members (`can_remove`) and pending invites; owner removes members with confirmation; revoke pending per FR-INV-005 | `/baby/{id}/followers`; `followers_screen.dart` |
 | FR-BABY-005 | Invite from profile | Navigate to invite screen from management; UI per FR-INV-008 | `/invite-family` |
 | FR-BABY-006 | Profile photo | Baby avatar upload uses display media policy | `baby_profiles.avatar_url` (`013`); owner baby edit and onboarding create-baby use display signed PUT + `PATCH /v1/babies/{id}`; gallery upload is separate (opt-in on create-baby, #394) |
 

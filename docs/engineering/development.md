@@ -45,7 +45,7 @@ Repositories are registered in `bootstrap.dart`; routes in `core/router/app_rout
 | Layer | Role |
 |-------|------|
 | `routers/` | HTTP handlers (`photos`, `events`, `registry`, `fun`, `babies`, …) |
-| `domain/` | Membership, permissions, activity + notify hooks (`gallery`, `calendar`, `registry`, `fun`, `home`, `notifications`, `invitations`, `onboarding`, `membership`, `name_suggestions`, `url_validation`, **`users_display`**) |
+| `domain/` | Membership, permissions, activity + notify hooks (`gallery`, `calendar`, `registry`, `fun`, `home`, `notifications`, `invitations`, **`member_lifecycle`**, `onboarding`, `membership`, `name_suggestions`, `url_validation`, **`users_display`**) |
 | `repositories/` | Parameterized SQL only |
 
 **Member display names (#7):** Family-visible labels come from `app_users.display_name` only. Use [`domain/users_display.py`](../../services/api/src/lanonna_api/domain/users_display.py) (`author_display_name_from_row`, `uploader_display_name_from_row`, `purchaser_display_name_from_row`, `rsvp_display_name_from_row`) — never derive labels from email. SQL should alias `u.display_name` as the matching `*_display_name` (RSVP rows use unaliased `display_name` read by `rsvp_display_name_from_row`). Empty/null → **Family member**; activity/notification actor without profile → **Someone** (`actor_display_name`).
@@ -128,6 +128,8 @@ Product UI tokens live under `apps/mobile/lib/core/theme/` (see also PRD §5.1):
 
 **Auth (FR-AUTH-007):** Password reset uses Firebase `sendPasswordResetEmail` via [`AuthRepository.sendPasswordResetEmail`](../../apps/mobile/lib/core/auth/auth_repository.dart). Login **Forgot password?** pre-fills the email field when valid; otherwise [`showForgotPasswordEmailDialog`](../../apps/mobile/lib/features/onboarding/presentation/widgets/forgot_password_dialog.dart). Incoming reset links are handled like other Firebase auth actions in [`auth_action_app_link.dart`](../../apps/mobile/lib/core/deep_links/auth_action_app_link.dart).
 
+**Member lifecycle (FR-INV-009 / FR-INV-010 / #25):** Remove and leave in [`member_lifecycle.py`](../../services/api/src/lanonna_api/domain/member_lifecycle.py); routes in [`routers/members.py`](../../services/api/src/lanonna_api/routers/members.py). Mobile: [`followers_screen.dart`](../../apps/mobile/lib/features/account/presentation/followers_screen.dart), leave in [`baby_switcher_sheet.dart`](../../apps/mobile/lib/features/shell/presentation/baby_switcher_sheet.dart). Re-invite reactivates tombstoned `baby_memberships` rows on accept.
+
 **Invite accept policy (FR-INV-002 / #26):** Product rules live in [`services/api/src/lanonna_api/domain/invitations.py`](../../services/api/src/lanonna_api/domain/invitations.py) (preview `accepted`/`revoked`; accept checks membership before non-pending status). Mobile treats `InvitationPreview.canContinueInviteFlow` (`pending` or `accepted`) as routable — not “expired”.
 
 **Deleted account sessions (#30 / NFR-DATA-001):** [`current_user`](../../services/api/src/lanonna_api/auth.py) calls [`assert_active_user`](../../services/api/src/lanonna_api/domain/auth_session.py) after Firebase JWT verify. Tombstoned `app_users` → **401** `detail.error = user_deleted`. [`upsert_app_user`](../../services/api/src/lanonna_api/repositories/users.py) skips email updates when `deleted_at` is set. Mobile [`ApiClient`](../../apps/mobile/lib/core/api/api_client.dart) invokes [`handleUserDeletedSession`](../../apps/mobile/lib/core/auth/user_deleted_session_handler.dart) (sign out + login route).
@@ -191,7 +193,10 @@ Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps:
 | GET | `/v1/babies/{baby_profile_id}/activity-events` | Paginated `activity_events` (`limit`, `offset`, optional `scope=gallery` for squish/comment only); items include `actor_display_name`, `photo_id` when applicable |
 | POST | `/v1/me/system-announcements/{id}/dismiss` | Dismiss system banner |
 | GET/POST/PATCH/DELETE | `/v1/admin/system-announcements` | Ops CRUD (`X-Admin-Key` header; Cloud Run secret `admin-api-key` → env `ADMIN_API_KEY`) |
-| GET | `/v1/babies/{baby_profile_id}/members` | Firebase Bearer JWT (owner); members list |
+| GET | `/v1/babies` | JWT; includes `can_leave` per membership (#25) |
+| GET | `/v1/babies/{baby_profile_id}/members` | Firebase Bearer JWT (owner); members + `can_remove` |
+| DELETE | `/v1/babies/{baby_profile_id}/members/{firebase_uid}` | Firebase Bearer JWT (owner); soft-remove member (#25) |
+| POST | `/v1/babies/{baby_profile_id}/leave` | Firebase Bearer JWT (member); self leave (#25) |
 | GET | `/v1/babies/{baby_profile_id}/invitations` | Firebase Bearer JWT (owner); pending invites |
 | DELETE | `/v1/babies/{baby_profile_id}/invitations/{invitation_id}` | Firebase Bearer JWT (owner); revoke pending |
 | GET, PUT | `/v1/babies/{baby_profile_id}/announcement` | JWT; birth announcement keepsake; GET includes `photo_display_url` when `photo_id` set |

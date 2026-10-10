@@ -7,6 +7,10 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from lanonna_api.db import get_connection
+from lanonna_api.repositories.memberships import (
+    count_active_owners,
+    reactivate_membership,
+)
 
 
 def _hash_token(token: str) -> str:
@@ -148,20 +152,6 @@ def fetch_invitation_preview_row(token: str) -> dict[str, Any] | None:
     return dict(row) if row else None
 
 
-def _count_active_owners(baby_profile_id: uuid.UUID, conn) -> int:
-    row = conn.execute(
-        """
-        SELECT COUNT(*)::int AS n
-        FROM baby_memberships
-        WHERE baby_profile_id = %s
-          AND role = 'owner'
-          AND removed_at IS NULL
-        """,
-        (baby_profile_id,),
-    ).fetchone()
-    return int(row["n"]) if row else 0
-
-
 def accept_invitation_by_token(
     token: str,
     firebase_uid: str,
@@ -238,23 +228,43 @@ def accept_invitation_by_token(
             return {"error": "expired"}
 
         invited_role = inv["role"]
-        if invited_role == "owner" and _count_active_owners(baby_profile_id, conn) >= 2:
+        if invited_role == "owner" and count_active_owners(baby_profile_id, conn) >= 2:
             return {"error": "max_owners"}
 
-        conn.execute(
+        removed_row = conn.execute(
             """
-            INSERT INTO baby_memberships (
-                baby_profile_id, firebase_uid, role, relationship_label
-            )
-            VALUES (%s, %s, %s, %s)
+            SELECT 1
+            FROM baby_memberships
+            WHERE baby_profile_id = %s
+              AND firebase_uid = %s
+              AND removed_at IS NOT NULL
+            LIMIT 1
             """,
-            (
+            (baby_profile_id, firebase_uid),
+        ).fetchone()
+        if removed_row is not None:
+            reactivate_membership(
                 baby_profile_id,
                 firebase_uid,
                 invited_role,
                 inv["relationship_label"],
-            ),
-        )
+                conn=conn,
+            )
+        else:
+            conn.execute(
+                """
+                INSERT INTO baby_memberships (
+                    baby_profile_id, firebase_uid, role, relationship_label
+                )
+                VALUES (%s, %s, %s, %s)
+                """,
+                (
+                    baby_profile_id,
+                    firebase_uid,
+                    invited_role,
+                    inv["relationship_label"],
+                ),
+            )
         conn.execute(
             """
             UPDATE invitations

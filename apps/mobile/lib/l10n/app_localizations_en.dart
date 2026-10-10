@@ -243,4 +243,41 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get authPasswordResetSent =>
       'Check your email for a password reset link.';
+
+  @override
+  String get memberRemoveConfirmTitle => 'Remove from family?';
+
+  @override
+  String memberRemoveConfirmBody(String name) {
+    return '$name will lose access to photos, events, and registry for this baby.';
+  }
+
+  @override
+  String get memberRemoveAction => 'Remove';
+
+  @override
+  String get memberLeaveProfile => 'Leave profile';
+
+  @override
+  String get memberLeaveConfirmTitle => 'Leave this baby profile?';
+
+  @override
+  String get memberLeaveConfirmBody =>
+      'You will lose access to this baby\'s photos, calendar, and registry.';
+
+  @override
+  String get memberLeaveAction => 'Leave';
+
+  @override
+  String get memberSoleOwnerLeaveTitle => 'Can\'t leave yet';
+
+  @override
+  String get memberSoleOwnerLeaveBody =>
+      'You are the only owner. Add a co-owner, delete this baby profile, or delete your account to leave.';
+
+  @override
+  String get memberRemovedSuccess => 'Member removed.';
+
+  @override
+  String get memberLeftSuccess => 'You left this baby profile.';
 }

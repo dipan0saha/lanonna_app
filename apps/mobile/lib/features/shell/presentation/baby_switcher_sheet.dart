@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/app_semantics.dart';
+import '../../../core/api/run_mutation.dart';
+import '../../../core/widgets/app_snackbar.dart';
+import '../../account/data/account_repository.dart';
 import '../../home/data/home_refresh_signal.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
@@ -55,6 +59,58 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
       });
     } catch (_) {
       setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _leaveBaby(BabySummary baby) async {
+    final l10n = AppLocalizations.of(context)!;
+    if (!baby.canLeave) {
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(l10n.memberSoleOwnerLeaveTitle),
+          content: Text(l10n.memberSoleOwnerLeaveBody),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.memberLeaveConfirmTitle),
+        content: Text(l10n.memberLeaveConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.authPasswordResetCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.memberLeaveAction),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final left = await runMutation(
+      context,
+      () => context.read<AccountRepository>().leaveBaby(baby.id),
+    );
+    if (!left || !mounted) return;
+    AppSnackBar.showInfo(context, l10n.memberLeftSuccess);
+    final store = context.read<SelectedBabyStore>();
+    final homeRepo = context.read<HomeRepository>();
+    await homeRepo.resolveSelectedBaby(store);
+    if (mounted) {
+      context.read<HomeRefreshSignal>().notifyBabyContextChanged();
+      Navigator.of(context).pop();
+      context.go('/home');
     }
   }
 
@@ -120,25 +176,40 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
                         children: [
                           if (baby.id == selectedId)
                             const Icon(Icons.check, color: AppColors.primaryDark),
-                          if (baby.role == 'owner')
-                            PopupMenuButton<String>(
-                              icon: const Icon(Icons.more_vert, size: 20),
-                              onSelected: (value) {
-                                Navigator.of(context).pop();
-                                if (value == 'edit') {
-                                  context.push('/baby/${baby.id}/edit');
-                                } else if (value == 'followers') {
-                                  context.push('/baby/${baby.id}/followers');
-                                }
-                              },
-                              itemBuilder: (ctx) => const [
-                                PopupMenuItem(value: 'edit', child: Text('Edit baby')),
+                          PopupMenuButton<String>(
+                            icon: const Icon(Icons.more_vert, size: 20),
+                            onSelected: (value) async {
+                              if (value == 'leave') {
+                                await _leaveBaby(baby);
+                                return;
+                              }
+                              Navigator.of(context).pop();
+                              if (value == 'edit') {
+                                context.push('/baby/${baby.id}/edit');
+                              } else if (value == 'followers') {
+                                context.push('/baby/${baby.id}/followers');
+                              }
+                            },
+                            itemBuilder: (ctx) {
+                              final l10n = AppLocalizations.of(ctx)!;
+                              return [
+                                if (baby.role == 'owner') ...[
+                                  const PopupMenuItem(
+                                    value: 'edit',
+                                    child: Text('Edit baby'),
+                                  ),
+                                  const PopupMenuItem(
+                                    value: 'followers',
+                                    child: Text('Manage followers'),
+                                  ),
+                                ],
                                 PopupMenuItem(
-                                  value: 'followers',
-                                  child: Text('Manage followers'),
+                                  value: 'leave',
+                                  child: Text(l10n.memberLeaveProfile),
                                 ),
-                              ],
-                            ),
+                              ];
+                            },
+                          ),
                         ],
                       ),
                       onTap: () => _select(baby),

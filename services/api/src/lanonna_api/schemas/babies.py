@@ -51,6 +51,7 @@ class BabySummary(BaseModel):
     role: Literal["owner", "follower"]
     relationship_label: str | None
     avatar_url: str | None = None
+    can_leave: bool = True
 
 
 def baby_summary_from_row(row: dict[str, Any]) -> BabySummary:
@@ -64,4 +65,5 @@ def baby_summary_from_row(row: dict[str, Any]) -> BabySummary:
         role=row["role"],
         relationship_label=row.get("relationship_label"),
         avatar_url=signed_avatar_url(row.get("avatar_url")),
+        can_leave=bool(row.get("can_leave", True)),
     )

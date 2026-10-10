@@ -15,7 +15,9 @@ from lanonna_api.repositories.babies import (
     list_babies_for_user,
     update_baby_for_owner,
 )
+from lanonna_api.domain.member_lifecycle import can_leave_baby
 from lanonna_api.domain.onboarding import seed_expecting_profile_name_suggestions, seed_first_moment
+from lanonna_api.repositories.memberships import count_active_owners
 from lanonna_api.repositories.users import upsert_app_user
 from lanonna_api.schemas.babies import (
     BabyCreateRequest,
@@ -35,7 +37,12 @@ router = APIRouter(prefix="/v1/babies", tags=["babies"])
 @router.get("", response_model=list[BabySummary])
 def list_babies(user: dict[str, Any] = Depends(current_user)) -> list[BabySummary]:
     upsert_app_user(user["uid"], user.get("email"))
-    return [baby_summary_from_row(row) for row in list_babies_for_user(user["uid"])]
+    summaries: list[BabySummary] = []
+    for row in list_babies_for_user(user["uid"]):
+        owner_count = count_active_owners(row["id"])
+        row["can_leave"] = can_leave_baby(row["role"], owner_count)
+        summaries.append(baby_summary_from_row(row))
+    return summaries
 
 
 @router.post("", response_model=BabySummary, status_code=status.HTTP_201_CREATED)

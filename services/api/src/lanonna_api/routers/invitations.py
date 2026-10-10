@@ -10,7 +10,6 @@ from lanonna_api.domain.invitations import (
     BatchInviteRow,
     batch_invite,
     list_invitations_for_owner,
-    list_members_for_owner,
     membership_check_for_owner,
     revoke_invitation_for_owner,
 )
@@ -24,19 +23,6 @@ from lanonna_api.schemas.invitations import (
 )
 
 router = APIRouter(prefix="/v1/babies", tags=["invitations"])
-
-
-def _member_json(m: dict[str, Any]) -> dict[str, Any]:
-    return {
-        "firebase_uid": m["firebase_uid"],
-        "display_name": m["display_name"],
-        "email": m.get("email"),
-        "role": m["role"],
-        "relationship_label": m.get("relationship_label"),
-        "joined_at": m["created_at"].isoformat()
-        if hasattr(m["created_at"], "isoformat")
-        else str(m["created_at"]),
-    }
 
 
 def _invitation_json(r: dict[str, Any]) -> dict[str, Any]:
@@ -53,19 +39,6 @@ def _invitation_json(r: dict[str, Any]) -> dict[str, Any]:
         if hasattr(r["created_at"], "isoformat")
         else str(r["created_at"]),
     }
-
-
-@router.get("/{baby_profile_id}/members")
-def list_members(
-    baby_profile_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_user),
-) -> list[dict[str, Any]]:
-    upsert_app_user(user["uid"], user.get("email"))
-    try:
-        members = list_members_for_owner(user["uid"], baby_profile_id)
-    except PermissionError as exc:
-        raise map_domain_errors(exc) from exc
-    return [_member_json(m) for m in members]
 
 
 @router.get("/{baby_profile_id}/invitations")
