@@ -13,7 +13,7 @@ def test_build_home_summary_includes_getting_started_and_next_event():
     }
     with (
         patch(
-            "lanonna_api.domain.home.get_baby_membership",
+            "lanonna_api.domain.home.require_active_membership",
             return_value={**baby, "role": "owner"},
         ),
         patch("lanonna_api.domain.home.count_name_suggestions", return_value=2),
@@ -71,7 +71,7 @@ def test_build_home_summary_follower_omits_getting_started():
         "role": "follower",
     }
     with (
-        patch("lanonna_api.domain.home.get_baby_membership", return_value=baby),
+        patch("lanonna_api.domain.home.require_active_membership", return_value=baby),
         patch("lanonna_api.domain.home.count_name_suggestions", return_value=0),
         patch("lanonna_api.domain.home.count_gender_votes", return_value=3),
         patch("lanonna_api.domain.home.list_recent_for_baby", return_value=[]),

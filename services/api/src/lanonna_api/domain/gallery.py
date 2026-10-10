@@ -5,7 +5,8 @@ from typing import Any
 
 from lanonna_api.domain import assert_owner_membership, create_pending_photo
 from lanonna_api.domain.media_urls import signed_display_url, signed_thumb_url
-from lanonna_api.repositories.babies import get_baby_membership, list_babies_for_user
+from lanonna_api.domain.membership_access import require_active_membership
+from lanonna_api.repositories.babies import list_babies_for_user
 from lanonna_api.repositories.photo_tags import (
     list_tagged_babies_for_photo,
     replace_photo_baby_tags,
@@ -56,10 +57,7 @@ def _tagged_babies_json(
 
 
 def require_membership(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, Any]:
-    membership = get_baby_membership(firebase_uid, baby_profile_id)
-    if membership is None:
-        raise PermissionError("Baby membership required.")
-    return membership
+    return require_active_membership(firebase_uid, baby_profile_id)
 
 
 def init_photo_upload(

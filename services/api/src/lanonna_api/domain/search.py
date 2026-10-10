@@ -4,7 +4,7 @@ import uuid
 from typing import Any
 
 from lanonna_api.domain.media_urls import signed_thumb_url
-from lanonna_api.repositories.babies import get_baby_membership
+from lanonna_api.domain.membership_access import require_active_membership
 from lanonna_api.repositories.search import (
     search_events,
     search_name_suggestions,
@@ -17,8 +17,7 @@ def search_baby_content(
     query: str,
     limit: int = 20,
 ) -> dict[str, Any]:
-    if get_baby_membership(firebase_uid, baby_profile_id) is None:
-        raise PermissionError("Baby membership required.")
+    require_active_membership(firebase_uid, baby_profile_id)
 
     q = query.strip()
     if not q:

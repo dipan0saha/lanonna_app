@@ -478,6 +478,12 @@ abstract class AppLocalizations {
   /// **'You are the only owner. Add a co-owner, delete this baby profile, or delete your account to leave.'**
   String get memberSoleOwnerLeaveBody;
 
+  /// No description provided for @membershipEndedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You no longer have access to this profile.'**
+  String get membershipEndedMessage;
+
   /// No description provided for @memberRemovedSuccess.
   ///
   /// In en, this message translates to:

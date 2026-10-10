@@ -14,9 +14,9 @@ from lanonna_api.repositories.activity_events import (
     list_recent_for_baby,
 )
 from lanonna_api.domain.media_urls import signed_display_url, signed_thumb_url
+from lanonna_api.domain.membership_access import require_active_membership
 from lanonna_api.repositories.babies import (
     get_baby_for_owner,
-    get_baby_membership,
     update_baby_for_owner,
 )
 from lanonna_api.repositories.events import get_caller_rsvp, list_events
@@ -134,8 +134,7 @@ def list_activity_events(
     offset: int = 0,
     scope: Literal["all", "gallery"] = "all",
 ) -> dict[str, Any]:
-    if get_baby_membership(firebase_uid, baby_profile_id) is None:
-        raise PermissionError("Membership required for this baby profile.")
+    require_active_membership(firebase_uid, baby_profile_id)
     limit = min(max(limit, 1), 50)
     offset = max(offset, 0)
     event_types = tuple(GALLERY_ACTIVITY_EVENT_TYPES) if scope == "gallery" else None
@@ -302,9 +301,7 @@ def build_home_summary(
     firebase_uid: str,
     baby_profile_id: uuid.UUID,
 ) -> dict[str, Any]:
-    baby = get_baby_membership(firebase_uid, baby_profile_id)
-    if baby is None:
-        raise PermissionError("Membership required for this baby profile.")
+    baby = require_active_membership(firebase_uid, baby_profile_id)
 
     is_owner = baby.get("role") == "owner"
 

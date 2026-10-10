@@ -276,6 +276,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'You are the only owner. Add a co-owner, delete this baby profile, or delete your account to leave.';
 
   @override
+  String get membershipEndedMessage =>
+      'You no longer have access to this profile.';
+
+  @override
   String get memberRemovedSuccess => 'Member removed.';
 
   @override

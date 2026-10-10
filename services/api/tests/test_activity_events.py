@@ -19,7 +19,7 @@ def test_list_activity_events_gallery_scope_filters_types():
         }
     ]
     with patch(
-        "lanonna_api.domain.home.get_baby_membership",
+        "lanonna_api.domain.home.require_active_membership",
         return_value={"role": "owner"},
     ), patch(
         "lanonna_api.domain.home.list_recent_for_baby",
@@ -38,7 +38,7 @@ def test_list_activity_events_gallery_scope_filters_types():
 def test_list_activity_events_all_scope_no_type_filter():
     baby_id = uuid.uuid4()
     with patch(
-        "lanonna_api.domain.home.get_baby_membership",
+        "lanonna_api.domain.home.require_active_membership",
         return_value={"role": "follower"},
     ), patch(
         "lanonna_api.domain.home.list_recent_for_baby",

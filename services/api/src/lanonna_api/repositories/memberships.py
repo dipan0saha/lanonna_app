@@ -85,6 +85,25 @@ def get_active_membership(
     return dict(row) if row else None
 
 
+def has_removed_membership(
+    baby_profile_id: uuid.UUID,
+    firebase_uid: str,
+) -> bool:
+    with get_connection() as conn:
+        row = conn.execute(
+            """
+            SELECT 1
+            FROM baby_memberships
+            WHERE baby_profile_id = %s
+              AND firebase_uid = %s
+              AND removed_at IS NOT NULL
+            LIMIT 1
+            """,
+            (baby_profile_id, firebase_uid),
+        ).fetchone()
+    return row is not None
+
+
 def soft_remove_membership(
     baby_profile_id: uuid.UUID,
     firebase_uid: str,

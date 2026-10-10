@@ -31,7 +31,7 @@ def map_domain_errors(exc: Exception) -> HTTPException:
         )
     if isinstance(exc, MemberLifecycleError):
         status_code = status.HTTP_400_BAD_REQUEST
-        if exc.code == "not_owner":
+        if exc.code in ("not_owner", "membership_ended"):
             status_code = status.HTTP_403_FORBIDDEN
         elif exc.code in ("target_not_member", "not_member"):
             status_code = status.HTTP_404_NOT_FOUND

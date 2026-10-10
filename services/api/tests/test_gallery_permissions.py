@@ -10,17 +10,33 @@ from lanonna_api.domain.gallery import get_photo_detail, list_gallery
 def test_list_gallery_denied_without_membership():
     baby_id = uuid.uuid4()
     with patch(
-        "lanonna_api.domain.gallery.get_baby_membership",
-        return_value=None,
+        "lanonna_api.domain.gallery.require_active_membership",
+        side_effect=PermissionError("Baby membership required."),
     ):
         with pytest.raises(PermissionError):
             list_gallery("uid", baby_id)
 
 
+def test_list_gallery_membership_ended():
+    from lanonna_api.domain.member_errors import MemberLifecycleError
+
+    baby_id = uuid.uuid4()
+    with patch(
+        "lanonna_api.domain.gallery.require_active_membership",
+        side_effect=MemberLifecycleError(
+            "membership_ended",
+            "You no longer have access to this baby profile.",
+        ),
+    ):
+        with pytest.raises(MemberLifecycleError) as exc:
+            list_gallery("uid", baby_id)
+    assert exc.value.code == "membership_ended"
+
+
 def test_list_gallery_follower_ready_only():
     baby_id = uuid.uuid4()
     with patch(
-        "lanonna_api.domain.gallery.get_baby_membership",
+        "lanonna_api.domain.gallery.require_active_membership",
         return_value={"role": "follower"},
     ), patch(
         "lanonna_api.domain.gallery.list_photos_for_baby",
@@ -35,7 +51,7 @@ def test_list_gallery_follower_ready_only():
 def test_list_gallery_passes_favorites_sort():
     baby_id = uuid.uuid4()
     with patch(
-        "lanonna_api.domain.gallery.get_baby_membership",
+        "lanonna_api.domain.gallery.require_active_membership",
         return_value={"role": "owner"},
     ), patch(
         "lanonna_api.domain.gallery.list_photos_for_baby",
@@ -62,7 +78,7 @@ def test_get_photo_detail_tagged_babies_scoped_to_viewer():
         "uploader_display_name": "Owner",
     }
     with patch(
-        "lanonna_api.domain.gallery.get_baby_membership",
+        "lanonna_api.domain.gallery.require_active_membership",
         return_value={"role": "follower"},
     ), patch(
         "lanonna_api.domain.gallery.get_photo_for_baby",
@@ -107,7 +123,7 @@ def test_get_photo_detail_owner_sees_tagged_babies_they_belong_to():
         "uploader_display_name": "Owner",
     }
     with patch(
-        "lanonna_api.domain.gallery.get_baby_membership",
+        "lanonna_api.domain.gallery.require_active_membership",
         return_value={"role": "owner"},
     ), patch(
         "lanonna_api.domain.gallery.get_photo_for_baby",

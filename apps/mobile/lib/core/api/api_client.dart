@@ -11,6 +11,9 @@ typedef AppCheckTokenProvider = Future<String?> Function();
 /// Invoked when the API rejects the session (e.g. deleted account, NFR-DATA-001).
 typedef ApiSessionInvalidatedHandler = Future<void> Function(ApiException exception);
 
+/// Invoked when baby membership was ended (removed or left) while the app is open.
+typedef ApiMembershipEndedHandler = Future<void> Function(ApiException exception);
+
 String formatApiErrorDetail(Object? detail) {
   if (detail == null) return '';
   if (detail is String) return detail;
@@ -45,7 +48,12 @@ class ApiClient {
   final IdTokenProvider _idTokenProvider;
   final AppCheckTokenProvider? _appCheckTokenProvider;
   final ApiSessionInvalidatedHandler? _onSessionInvalidated;
+  ApiMembershipEndedHandler? _onMembershipEnded;
   final http.Client _http;
+
+  void registerMembershipEndedHandler(ApiMembershipEndedHandler handler) {
+    _onMembershipEnded = handler;
+  }
 
   Future<Map<String, dynamic>> getJson(String path) async {
     final response = await _authorizedRequest('GET', path);
@@ -168,6 +176,11 @@ class ApiClient {
         exception.detail?['error'] == 'user_deleted' &&
         _onSessionInvalidated != null) {
       await _onSessionInvalidated(exception);
+    }
+    if (exception.statusCode == 403 &&
+        exception.detail?['error'] == 'membership_ended' &&
+        _onMembershipEnded != null) {
+      await _onMembershipEnded!(exception);
     }
     throw exception;
   }

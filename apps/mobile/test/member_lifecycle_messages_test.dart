@@ -6,6 +6,18 @@ import 'package:lanonna/l10n/app_localizations_en.dart';
 void main() {
   final l10n = AppLocalizationsEn();
 
+  test('maps membership_ended to user copy', () {
+    final msg = memberLifecycleErrorMessage(
+      l10n,
+      ApiException(
+        'membership_ended',
+        statusCode: 403,
+        detail: {'error': 'membership_ended', 'message': 'x'},
+      ),
+    );
+    expect(msg, l10n.membershipEndedMessage);
+  });
+
   test('maps sole_owner_cannot_leave to explanatory copy', () {
     final msg = memberLifecycleErrorMessage(
       l10n,

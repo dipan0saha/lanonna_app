@@ -168,6 +168,7 @@
   "memberLeaveAction": "Leave",
   "memberSoleOwnerLeaveTitle": "Can't leave yet",
   "memberSoleOwnerLeaveBody": "You are the only owner. Add a co-owner, delete this baby profile, or delete your account to leave.",
+  "membershipEndedMessage": "You no longer have access to this profile.",
   "memberRemovedSuccess": "Member removed.",
   "memberLeftSuccess": "You left this baby profile."
 }

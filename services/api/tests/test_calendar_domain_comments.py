@@ -38,6 +38,9 @@ def test_edit_event_comment_not_found_when_update_returns_none():
         "lanonna_api.domain.calendar.get_event",
         return_value={"title": "Party"},
     ), patch(
+        "lanonna_api.domain.calendar.get_event_comment",
+        return_value={"author_firebase_uid": "uid", "body": "old"},
+    ), patch(
         "lanonna_api.domain.calendar.update_event_comment",
         return_value=None,
     ):

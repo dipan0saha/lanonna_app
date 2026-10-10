@@ -11,6 +11,8 @@ String memberLifecycleErrorMessage(AppLocalizations l10n, ApiException error) {
       return l10n.memberSoleOwnerLeaveBody;
     case 'use_leave_endpoint':
       return l10n.memberLeaveProfile;
+    case 'membership_ended':
+      return l10n.membershipEndedMessage;
     case 'target_not_member':
     case 'not_member':
       return error.detail?['message'] as String? ?? error.message;

@@ -9,6 +9,7 @@ import 'core/deep_links/app_link_bootstrap.dart';
 import 'core/deep_links/auth_action_app_link.dart';
 import 'core/deep_links/invite_app_link.dart';
 import 'core/auth/auth_repository.dart';
+import 'core/auth/membership_access_handler.dart';
 import 'core/auth/user_deleted_session_handler.dart';
 import 'core/network/connectivity_service.dart';
 import 'core/router/router_refresh.dart';
@@ -79,6 +80,14 @@ Future<Widget> bootstrapLaNonnaApp() async {
   );
   final selectedBabyStore = SelectedBabyStore(prefs);
   final homeRefreshSignal = HomeRefreshSignal();
+  apiClient.registerMembershipEndedHandler(
+    (exception) => handleMembershipEnded(
+      homeRepository: homeRepository,
+      store: selectedBabyStore,
+      signal: homeRefreshSignal,
+      exception: exception,
+    ),
+  );
   final connectivityService = ConnectivityService();
   await connectivityService.init();
   final routerRefresh = RouterRefreshListenable(
