@@ -1,6 +1,6 @@
 La Nonna — You're invited
 
-{{inviter_name}} invited you to follow {{baby_name}}'s journey on La Nonna.
+{{invite_intro_text}}
 {{relationship_line}}
 
 Accept your invitation:

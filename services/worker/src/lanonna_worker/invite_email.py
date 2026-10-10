@@ -10,6 +10,11 @@ import httpx
 
 from lanonna_worker.config import settings
 from lanonna_worker.db import get_connection
+from lanonna_worker.invite_email_copy import (
+    invite_email_intro_html,
+    invite_email_intro_text,
+    invite_email_subject,
+)
 
 logger = logging.getLogger("lanonna.worker.invite_email")
 
@@ -61,6 +66,7 @@ def _fetch_email_context(invitation_id: uuid.UUID) -> dict | None:
 def _render_invite_email(ctx: dict, invite_url: str) -> tuple[str, str, str]:
     inviter = ctx["inviter_display_name"]
     baby = ctx["baby_name"]
+    role = ctx.get("role") or "follower"
     invitee = ctx["invitee_email"]
     expires = _format_expires(ctx["expires_at"])
     relationship = ctx.get("relationship_label")
@@ -76,19 +82,19 @@ def _render_invite_email(ctx: dict, invite_url: str) -> tuple[str, str, str]:
     html = _load_template("invite_v1.html")
     text = _load_template("invite_v1.txt")
     replacements = {
-        "{{inviter_name}}": inviter,
-        "{{baby_name}}": baby,
         "{{invite_url}}": invite_url,
         "{{invitee_email}}": invitee,
         "{{expires_at}}": expires,
         "{{relationship_block}}": relationship_block,
         "{{relationship_line}}": relationship_line,
+        "{{invite_intro_text}}": invite_email_intro_text(inviter, baby, role),
+        "{{invite_intro_html}}": invite_email_intro_html(inviter, baby, role),
     }
     for key, value in replacements.items():
         html = html.replace(key, value)
         text = text.replace(key, value)
 
-    subject = f"{inviter} invited you to {baby} on La Nonna"
+    subject = invite_email_subject(inviter, baby, role)
     return subject, html, text
 
 

@@ -1,9 +1,45 @@
 import uuid
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from lanonna_worker.invite_email import send_invite_email
+from lanonna_worker.invite_email import _render_invite_email, send_invite_email
+
+
+def _sample_ctx(role: str) -> dict:
+    return {
+        "invitee_email": "guest@test.com",
+        "role": role,
+        "relationship_label": "Mom",
+        "expires_at": datetime(2026, 12, 1, tzinfo=timezone.utc),
+        "baby_name": "Baby",
+        "inviter_display_name": "Alex",
+    }
+
+
+def test_render_invite_email_follower_uses_follow_copy():
+    subject, html, text = _render_invite_email(
+        _sample_ctx("follower"),
+        "lanonna://app/invite-accept?token=abc",
+    )
+    assert subject == "Alex invited you to Baby on La Nonna"
+    assert "invited you to follow" in text
+    assert "co-owner" not in text.lower()
+    assert "invited you to follow" in html
+    assert "co-owner" not in html.lower()
+
+
+def test_render_invite_email_owner_uses_coowner_copy():
+    subject, html, text = _render_invite_email(
+        _sample_ctx("owner"),
+        "lanonna://app/invite-accept?token=abc&role=owner",
+    )
+    assert subject == "Alex invited you to co-manage Baby on La Nonna"
+    assert "co-owner" in text
+    assert "follow" not in text.lower()
+    assert "co-owner" in html
+    assert "invited you to follow" not in html
 
 
 @patch("lanonna_worker.invite_email.settings")
