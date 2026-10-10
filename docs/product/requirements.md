@@ -155,7 +155,7 @@ Semantic success, warning, info, and error use dedicated tokens on the brand ext
 - **Bottom navigation** with five destinations, in order: **Home**, **Gallery**, **Calendar**, **Registry**, **Fun** (gamification).
 - **Tab roots** (the five bottom-nav screens) use `ShellTabLayout` and include the **home top bar** (baby switcher/title, search, notifications bell).
 - **All other signed-in content screens** — tab drill-downs (e.g. gallery photo, calendar event detail, registry edit), account/settings stack routes, and invite subpages — use a **single** subpage header (**back** + centered **title**) only; **no** stacked home top bar (same principle as FR-INV-008; see FR-SHELL-001).
-- **Profile** and **Settings** are **stack screens** (`/profile`, `/settings`, `/profile/edit`), reached from the shell app bar or account menu — they are **not** bottom-nav tabs.
+- **Profile** and **Settings** are **stack screens** (`/profile`, `/settings`, `/account/edit`; deep links may use `/profile/edit`, normalized to `/account/edit`), reached from the shell app bar or account menu — they are **not** bottom-nav tabs.
 - **Offline**: When the device is offline, show a **banner**; retain last-loaded content; suppress per-section error UI that would spam the home scroll.
 
 ### 5.3 Accessibility and forms
@@ -261,7 +261,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-INV-005 | Revoke pending invite | Owner revokes; row removed from pending list (E2E-016) | API delete/cancel invite |
 | FR-INV-006 | Membership check by email | Owner batch invite shows “Already a member” for existing emails | API check endpoint |
 | FR-INV-007 | Deep link accept | `/invite-accept?token=&role=` opens accept flow | App links + router |
-| FR-INV-008 | Post-home batch invite UI | `/invite-family` matches main-app prototype **followers-invite**: single subpage header **Invite Family & Friends** (no stacked home top bar); intro copy on 7-day private link (`AppMetrics.horizontalPadding`); sage co-owner hint with 💡 for **Mother/Father**; relationship picker uses Mother/Father (not Wife/Husband); **+ Add another person**; email-only send (v1) | `BatchInviteScreen` `fromHome` |
+| FR-INV-008 | Post-home batch invite UI | `/invite-family` matches main-app prototype **followers-invite**: single subpage header **Invite Family & Friends** (no stacked home top bar); intro copy on **14-day** private link (`AppMetrics.horizontalPadding`; API `invitations.expires_at`); sage co-owner hint with 💡 for **Mother/Father**; relationship picker uses Mother/Father (not Wife/Husband); **+ Add another person**; email-only send (v1) | `BatchInviteScreen` `fromHome` |
 | FR-INV-009 | Remove member | Owner removes an accepted follower or (when ≥2 owners) another owner; soft `removed_at`; immediate loss of access; activity event; re-invite may reactivate membership (#25) | `DELETE …/members/{uid}`; `domain/member_lifecycle.py` |
 | FR-INV-010 | Leave profile | Member leaves a baby they follow or co-own; sole owner cannot leave (add co-owner, delete baby, or delete account); `can_leave` on baby list | `POST …/leave`; baby switcher + `BabySummary.can_leave` |
 

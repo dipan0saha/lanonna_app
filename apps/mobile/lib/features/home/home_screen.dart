@@ -206,7 +206,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: TextStyle(color: Theme.of(context).colorScheme.error),
                   ),
                 ),
-            if (_summaryError != null && _baby != null)
+            if (_summaryError != null &&
+                _baby != null &&
+                (context.read<ConnectivityService>().isOnline ||
+                    _summary == null))
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: MaterialBanner(

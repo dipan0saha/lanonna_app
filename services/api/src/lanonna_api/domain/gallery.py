@@ -45,6 +45,7 @@ from lanonna_api.domain.users_display import (
 from lanonna_api.domain.notifications import NotificationChannel, safe_enqueue_notify_user
 from lanonna_api.repositories.activity_events import insert_activity_event
 from lanonna_api.repositories.users import upsert_app_user
+from lanonna_api.config import settings
 from lanonna_api.storage import mint_display_upload_for_object, mint_signed_read_url
 
 
@@ -70,6 +71,8 @@ def init_photo_upload(
 ) -> dict[str, Any]:
     if byte_length > max_bytes:
         raise ValueError("Display asset exceeds maximum size.")
+    if content_type not in settings.display_allowed_content_types:
+        raise ValueError(f"Unsupported content type: {content_type}")
     upsert_app_user(user["uid"], user.get("email"))
     assert_owner_membership(user["uid"], baby_profile_id)
     photo = create_pending_photo(

@@ -41,7 +41,7 @@ class RsvpBody(BaseModel):
 
 
 class CommentBody(BaseModel):
-    body: str = Field(min_length=1)
+    body: str = Field(min_length=1, max_length=2000)
 
 
 @router.get("")
@@ -140,7 +140,7 @@ def rsvp_route(
 
 
 class CommentPatch(BaseModel):
-    body: str = Field(min_length=1)
+    body: str = Field(min_length=1, max_length=2000)
 
 
 @router.patch("/{event_id}/comments/{comment_id}")

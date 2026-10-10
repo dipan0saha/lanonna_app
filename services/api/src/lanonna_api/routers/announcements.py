@@ -30,7 +30,7 @@ class AnnouncementBody(BaseModel):
 
 
 class CommentBody(BaseModel):
-    body: str = Field(min_length=1)
+    body: str = Field(min_length=1, max_length=2000)
 
 
 @router.get("")

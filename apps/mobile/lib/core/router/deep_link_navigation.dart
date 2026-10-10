@@ -15,6 +15,8 @@ String? normalizeAppDeepLinkPath(String? deepLink) {
   }
   if (path == '/account') {
     path = '/profile';
+  } else if (path == '/profile/edit') {
+    path = '/account/edit';
   } else if (path == '/notifications') {
     path = '/notifications/inbox';
   }

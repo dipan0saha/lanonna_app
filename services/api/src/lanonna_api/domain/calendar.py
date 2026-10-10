@@ -47,6 +47,16 @@ from lanonna_api.repositories.photos import get_photo_for_baby
 from lanonna_api.repositories.users import upsert_app_user
 
 
+def _require_baby_cover_photo(
+    baby_profile_id: uuid.UUID,
+    cover_photo_id: uuid.UUID | None,
+) -> None:
+    if cover_photo_id is None:
+        return
+    if get_photo_for_baby(baby_profile_id, cover_photo_id) is None:
+        raise ValueError("Cover photo must belong to this baby profile.")
+
+
 def _parse_month(month: str) -> tuple[datetime, datetime]:
     year, mon = month.split("-")
     start = datetime(int(year), int(mon), 1, tzinfo=timezone.utc)
@@ -150,6 +160,7 @@ def create_calendar_event(
     if catalog_id and catalog_suggestion_claimed(baby_profile_id, catalog_id):
         raise ValueError("This suggestion is already on the calendar.")
     video_call_url = normalize_optional_http_url(video_call_url)
+    _require_baby_cover_photo(baby_profile_id, cover_photo_id)
     upsert_app_user(firebase_uid, None)
     row = create_event(
         baby_profile_id,
@@ -194,6 +205,8 @@ def update_calendar_event(
         fields["video_call_url"] = normalize_optional_http_url(
             fields["video_call_url"]
         )
+    if "cover_photo_id" in fields:
+        _require_baby_cover_photo(baby_profile_id, fields.get("cover_photo_id"))
     row = update_event(baby_profile_id, event_id, fields)
     if row is None:
         raise LookupError("Event not found.")

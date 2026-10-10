@@ -22,6 +22,16 @@ from lanonna_api.repositories.announcements import (
 from lanonna_api.storage import mint_signed_read_url
 
 
+def _require_baby_announcement_photo(
+    baby_profile_id: uuid.UUID,
+    photo_id: uuid.UUID | None,
+) -> None:
+    if photo_id is None:
+        return
+    if get_photo_for_baby(baby_profile_id, photo_id) is None:
+        raise ValueError("Photo must belong to this baby profile.")
+
+
 def _photo_display_url(baby_profile_id: uuid.UUID, photo_id: uuid.UUID | None) -> str | None:
     if photo_id is None:
         return None
@@ -97,6 +107,7 @@ def _persist_announcement(
         weight_text=weight_text,
         length_text=length_text,
     )
+    _require_baby_announcement_photo(baby_profile_id, photo_id)
     ann = upsert_announcement(
         baby_profile_id,
         firebase_uid,

@@ -1,9 +1,16 @@
 from __future__ import annotations
 
+import logging
 import uuid
 from typing import Any
 
 from lanonna_api.config import settings
+
+logger = logging.getLogger(__name__)
+
+EXPORT_QUEUE_FAILED_MESSAGE = (
+    "Export could not be started. Please try again in a few minutes."
+)
 from lanonna_api.pubsub import publish_baby_data_export
 from lanonna_api.repositories.babies import get_baby_for_owner
 from lanonna_api.repositories.data_export import (
@@ -47,8 +54,13 @@ def request_baby_data_export(
     try:
         publish_baby_data_export(row["id"])
     except Exception as exc:
-        mark_export_job_failed(row["id"], str(exc))
-        raise RuntimeError(f"Export job could not be queued: {exc}") from exc
+        logger.exception(
+            "export_queue_failed job_id=%s baby_profile_id=%s",
+            row["id"],
+            baby_profile_id,
+        )
+        mark_export_job_failed(row["id"], EXPORT_QUEUE_FAILED_MESSAGE)
+        raise RuntimeError(EXPORT_QUEUE_FAILED_MESSAGE) from exc
     return _job_response(row)
 
 

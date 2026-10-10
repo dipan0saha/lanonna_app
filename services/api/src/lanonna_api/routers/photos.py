@@ -17,7 +17,7 @@ router = APIRouter(tags=["photos"])
 class PhotoInitRequest(BaseModel):
     baby_profile_id: uuid.UUID
     content_type: str = Field(default="image/jpeg")
-    byte_length: int = Field(gt=0)
+    byte_length: int = Field(gt=0, le=2_097_152)
     caption: str | None = Field(default=None, max_length=2000)
 
 
@@ -26,11 +26,11 @@ class CaptionPatch(BaseModel):
 
 
 class CommentBody(BaseModel):
-    body: str = Field(min_length=1)
+    body: str = Field(min_length=1, max_length=2000)
 
 
 class CommentPatch(BaseModel):
-    body: str = Field(min_length=1)
+    body: str = Field(min_length=1, max_length=2000)
 
 
 class PhotoTagsBody(BaseModel):

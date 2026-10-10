@@ -7,6 +7,10 @@ void main() {
       expect(normalizeAppDeepLinkPath('/account'), '/profile');
     });
 
+    test('maps /profile/edit to /account/edit', () {
+      expect(normalizeAppDeepLinkPath('/profile/edit'), '/account/edit');
+    });
+
     test('keeps /account subpaths for registered routes', () {
       expect(normalizeAppDeepLinkPath('/account/edit'), '/account/edit');
       expect(normalizeAppDeepLinkPath('/account/export'), '/account/export');

@@ -1,8 +1,8 @@
 # Codebase remediation plan
 
-**Document version:** 1.4  
-**Last updated:** 2026-10-04  
-**Status:** Active — implementation tracker for gaps found in the 2026-10 codebase review  
+**Document version:** 1.5  
+**Last updated:** 2026-10-10  
+**Status:** Active — phased tracker; many P0/P1 items from the 2026-10 review are **done** (see checkboxes below). Open gaps and new findings: [code-review-findings-2026-10.md](code-review-findings-2026-10.md).  
 **Architecture reference:** [platform-architecture.md](platform-architecture.md)  
 **Conventions:** [development.md](development.md)
 
@@ -12,7 +12,7 @@ This plan fixes identified gaps **without breaking v1 features**. Work follows p
 
 ## Executive summary
 
-The repo matches the intended **Flutter → JWT API → Postgres** and **GCS → Pub/Sub → worker** shape. Highest-risk gaps: **worker notification idempotency**, **account delete ordering**, **avatar URLs vs signed-read policy**, **mobile baby-context / signed-URL TTL** bugs, **layering drift** on invites/onboarding, and **API/worker notification channel duplication**.
+The repo matches the intended **Flutter → JWT API → Postgres** and **GCS → Pub/Sub → worker** shape. **Worker notification idempotency** (migration `021`) and several mobile/API fixes from this plan are shipped; remaining pre-beta work is tracked in [code-review-findings-2026-10.md](code-review-findings-2026-10.md) (e.g. account delete ordering, worker OIDC, release signing, infra IAM).
 
 Remediation is split into **phases 0–7** (code phases 0–6, then **Phase 7** deploy and ship). Merge in dependency order (see [PR sequence](#suggested-pr-sequence)).
 
@@ -350,7 +350,7 @@ Docs-only; no product code changes.
 - [x] `remediation-plan.md` created
 - [x] Route table includes `GET /v1/app/version`
 - [x] Maestro + worker README aligned
-- [x] Engineering docs reference migrations through `020`
+- [x] Engineering docs reference migrations through `023` (2026-10-10)
 - [x] `verify-dev-migrations.sh` updated for `020`
 
 ### Phase 1 — completed 2026-10-04

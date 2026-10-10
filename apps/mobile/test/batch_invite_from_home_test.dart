@@ -28,7 +28,7 @@ void main() {
 
     expect(find.text('Invite Family & Friends'), findsOneWidget);
     expect(
-      find.text("We'll send each person a private link. It expires in 7 days."),
+      find.text("We'll send each person a private link. It expires in 14 days."),
       findsOneWidget,
     );
     expect(

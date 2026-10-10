@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Verify dev Cloud SQL has migrations 001–021 applied (when proxy + PGPASSWORD are set).
+# Verify dev Cloud SQL has migrations 001–023 applied (when proxy + PGPASSWORD are set).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -35,7 +35,7 @@ if [[ "${count}" != "${expected}" ]]; then
   exit 1
 fi
 
-for ver in 017_registry_catalog_suggestion_id 018_events_catalog_suggestion_id 019_photo_baby_tags 020_app_versions 021_worker_idempotency; do
+for ver in 017_registry_catalog_suggestion_id 018_events_catalog_suggestion_id 019_photo_baby_tags 020_app_versions 021_worker_idempotency 022_user_profile_demographics 023_registry_shipping_structured; do
   psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" -tAc \
     "SELECT 1 FROM schema_migrations WHERE version = '${ver}'" | grep -q 1 || {
     echo "Missing migration row: ${ver}"

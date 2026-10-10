@@ -4,6 +4,7 @@ import '../../features/onboarding/domain/onboarding_routes.dart';
 import '../../features/onboarding/presentation/onboarding_coordinator.dart';
 import '../api/api_exception.dart';
 import '../router/app_router.dart';
+import '../widgets/app_snackbar.dart';
 import 'auth_repository.dart';
 
 var _handlingUserDeleted = false;
@@ -22,6 +23,8 @@ Future<void> handleUserDeletedSession({
     await coordinator.clearPendingInvite();
     final context = appRootNavigatorKey.currentContext;
     if (context != null && context.mounted) {
+      final message = exception?.message ?? 'This account was deleted.';
+      AppSnackBar.showAlert(context, message);
       context.go(OnboardingRoutes.login);
     }
   } finally {

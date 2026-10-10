@@ -163,7 +163,10 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
       }
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showAlert(context, 'Upload failed: $e');
+        AppSnackBar.showAlert(
+          context,
+          'Upload failed: ${apiErrorMessage(e)}',
+        );
       }
     } finally {
       if (mounted) setState(() => _uploading = false);

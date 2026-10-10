@@ -7,6 +7,7 @@ import '../../features/home/data/home_repository.dart';
 import '../../features/home/data/selected_baby_store.dart';
 import '../api/api_exception.dart';
 import '../router/app_router.dart';
+import '../widgets/app_snackbar.dart';
 
 var _handlingMembershipEnded = false;
 
@@ -28,9 +29,7 @@ Future<void> handleMembershipEnded({
       final l10n = AppLocalizations.of(context);
       if (l10n != null) {
         final message = memberLifecycleErrorMessage(l10n, exception);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
+        AppSnackBar.showAlert(context, message);
       }
     }
   } finally {

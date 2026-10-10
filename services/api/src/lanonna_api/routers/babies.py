@@ -133,7 +133,7 @@ def home_summary(
     upsert_app_user(user["uid"], user.get("email"))
     try:
         data = build_home_summary(user["uid"], baby_profile_id)
-    except PermissionError as exc:
+    except Exception as exc:
         raise map_domain_errors(exc) from exc
     return HomeSummaryResponse(**data)
 
@@ -155,7 +155,7 @@ def activity_events(
             offset=offset,
             scope=scope,
         )
-    except PermissionError as exc:
+    except Exception as exc:
         raise map_domain_errors(exc) from exc
 
 

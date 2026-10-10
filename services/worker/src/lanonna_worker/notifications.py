@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import uuid
+from datetime import date
 from typing import Any
 
 import firebase_admin
@@ -288,6 +289,11 @@ def process_weekly_notification_digest(
             conn, f"pubsub:{pubsub_message_id}"
         ):
             logger.info("weekly_digest_skip_duplicate message_id=%s", pubsub_message_id)
+            return
+        if pubsub_message_id is None and not try_claim_delivery(
+            conn, f"weekly_digest:http_cron:{date.today().isoformat()}"
+        ):
+            logger.info("weekly_digest_skip_http_cron_duplicate")
             return
         rows = conn.execute(
             """

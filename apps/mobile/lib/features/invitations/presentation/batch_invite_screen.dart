@@ -389,7 +389,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const OnboardingSupportText(
-            "We'll send each person a private link. It expires in 7 days.",
+            "We'll send each person a private link. It expires in 14 days.",
           ),
           const SizedBox(height: 12),
           _coOwnerHintBanner(),

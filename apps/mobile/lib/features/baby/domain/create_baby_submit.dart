@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/api/api_client.dart';
+import '../../../core/api/api_error_message.dart';
 import '../../../core/api/display_photo_upload.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../../gallery/domain/gallery_refresh.dart';
@@ -114,7 +115,9 @@ Future<BabySummary> submitCreateBaby({
       await homeRepo.updateBaby(baby.id, avatarUrl: avatarUrl);
       avatarSaved = true;
     } catch (e) {
-      onNonFatalError?.call('Baby created; profile photo failed: $e');
+      onNonFatalError?.call(
+        'Baby created; profile photo failed: ${apiErrorMessage(e)}',
+      );
     }
     if (input.sharePhotoToGallery) {
       try {
@@ -131,7 +134,7 @@ Future<BabySummary> submitCreateBaby({
         final prefix = avatarSaved
             ? 'Profile photo saved; gallery upload failed'
             : 'Baby created; gallery upload failed';
-        onNonFatalError?.call('$prefix: $e');
+        onNonFatalError?.call('$prefix: ${apiErrorMessage(e)}');
       }
     }
   }

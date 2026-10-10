@@ -22,7 +22,7 @@ export SMOKE_TEST_PASSWORD='…'
 | Terraform `lanonna-dev` | `terraform validate` passes; apply when module changes | Push sub, CORS, API/worker TokenCreator in `modules/platform` |
 | Cloud Run `api` / `worker` | Deployed | `services/*/scripts/deploy.sh` |
 | Auth + API | Smoke-tested | Flutter dev screen or curl with Firebase JWT |
-| Cloud SQL | Migrations through **`022`** applied on dev | Proxy + `apply_migrations.py`; retest cleanup: `clear_dev_test_data.py` — [migrations/README.md](../../infra/db/migrations/README.md) |
+| Cloud SQL | Migrations through **`023`** applied on dev | Proxy + `apply_migrations.py`; retest cleanup: `clear_dev_test_data.py` — [migrations/README.md](../../infra/db/migrations/README.md) |
 | GCS → Pub/Sub → worker | `./scripts/infra-smoke-display-upload.sh` | Signed PUT + worker `gcs_object_finalized` log |
 | Worker security (dev) | **No** `allUsers` on `worker` | Push sub + OIDC in Terraform; **Run invoker** via `apply-dev-run-iam.sh` |
 | CI | Green on `main` | `flutter analyze` + `flutter test`; API + worker `pytest` — see [development.md](development.md) |
@@ -35,7 +35,7 @@ export SMOKE_TEST_PASSWORD='…'
 
 Follow [platform-architecture.md](platform-architecture.md) Month 1–2:
 
-1. SQL migrations: keep dev current per [migrations/README.md](../../infra/db/migrations/README.md) (through `022`)
+1. SQL migrations: keep dev current per [migrations/README.md](../../infra/db/migrations/README.md) (through `023`)
 2. **Done:** **Gallery** + **Calendar** — social API (`007`), Flutter tabs, signed read URLs, squish/RSVP/comments; worker `photo_shared` on thumb ready
 3. **Done:** **Registry** + **Fun** — social API (`008`), Flutter tabs, purchase/votes/likes; static AI suggestion JSON (calendar + registry)
 4. **Done:** app shell + **owner onboarding** (carousel → auth → profile → baby → first moment → invites → home)

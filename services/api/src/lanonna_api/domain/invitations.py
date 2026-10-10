@@ -111,9 +111,8 @@ def batch_invite(
             publish_send_invite_email(created["id"], created["invite_token"])
         except Exception:
             logger.exception(
-                "invite_email_enqueue_failed invitation_id=%s email=%s",
+                "invite_email_enqueue_failed invitation_id=%s",
                 created["id"],
-                email,
             )
             results.append(
                 {

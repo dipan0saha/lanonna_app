@@ -1,7 +1,17 @@
 import uuid
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from lanonna_worker.invite_email import send_invite_email
+
+
+@patch("lanonna_worker.invite_email.settings")
+def test_send_invite_email_raises_when_mailjet_not_configured(mock_settings):
+    mock_settings.mailjet_api_key = ""
+    mock_settings.mailjet_api_secret = ""
+    with pytest.raises(RuntimeError, match="Mailjet is not configured"):
+        send_invite_email(uuid.uuid4(), "token")
 
 
 @patch("lanonna_worker.invite_email.settings")

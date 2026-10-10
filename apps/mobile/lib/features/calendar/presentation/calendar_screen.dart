@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/api/api_error_message.dart';
+import '../../../core/network/connectivity_service.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/theme/app_colors.dart';
@@ -94,9 +96,15 @@ class _CalendarScreenState extends State<CalendarScreen> with BabyContextReload 
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
+      final offline = !context.read<ConnectivityService>().isOnline;
       setState(() {
         _loading = false;
-        _loadError = 'Could not load calendar. Pull down to retry.';
+        if (offline) {
+          _loadError = 'Connect to the internet to load your calendar.';
+        } else {
+          _loadError = apiErrorMessage(e);
+        }
       });
     }
   }

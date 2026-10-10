@@ -94,11 +94,11 @@ def _render_invite_email(ctx: dict, invite_url: str) -> tuple[str, str, str]:
 
 def send_invite_email(invitation_id: uuid.UUID, invite_token: str) -> None:
     if not settings.mailjet_api_key or not settings.mailjet_api_secret:
-        logger.warning(
-            "mailjet_not_configured invitation_id=%s — skipping send",
+        logger.error(
+            "mailjet_not_configured invitation_id=%s",
             invitation_id,
         )
-        return
+        raise RuntimeError("Mailjet is not configured; cannot send invite email")
 
     ctx = _fetch_email_context(invitation_id)
     if ctx is None:
