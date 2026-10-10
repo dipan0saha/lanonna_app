@@ -13,6 +13,7 @@ Future<void> goOnboardingBack(
   Future<void> Function()? persist,
 }) async {
   if (persist != null) await persist();
+  if (!context.mounted) return;
   await context.read<OnboardingCoordinator>().setStep(step);
   if (context.mounted) context.go(route);
 }

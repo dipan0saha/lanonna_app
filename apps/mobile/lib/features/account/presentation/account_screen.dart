@@ -66,6 +66,7 @@ class _AccountScreenState extends State<AccountScreen> {
   Future<void> _signOut() async {
     // Push token cleanup is handled by PushNotificationService auth listener.
     await context.read<OnboardingCoordinator>().resetOwnerCompletionForSignOut();
+    if (!mounted) return;
     await context.read<AuthRepository>().signOut();
     if (mounted) context.go(OnboardingRoutes.ownerCarousel);
   }

@@ -138,6 +138,7 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
         );
         if (mounted) notifyGalleryDataChanged(context);
       }
+      if (!mounted) return;
       await context.read<AnnouncementRepository>().save(
         widget.babyId,
         firstName: firstName,

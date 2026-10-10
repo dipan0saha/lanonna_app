@@ -90,6 +90,7 @@ class _LaNonnaAppState extends State<LaNonnaApp> {
       case EmailVerifyLinkOutcome.success:
       case EmailVerifyLinkOutcome.alreadyVerified:
         await authRepo.refreshSessionClaims();
+        if (!mounted) return;
         final coordinator = context.read<OnboardingCoordinator>();
         await coordinator.setStep(OnboardingStep.completeProfile);
         if (!mounted) return;

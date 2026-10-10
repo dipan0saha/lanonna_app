@@ -123,6 +123,7 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
           imageFile: File(_photoFile!.path),
         );
       }
+      if (!mounted) return;
       await context.read<AccountRepository>().updateProfile(
             displayName: displayName.isEmpty ? 'Account' : displayName,
             avatarUrl: avatarUrl,

@@ -102,6 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _loadComplete = true;
       });
     } catch (e) {
+      if (!mounted) return;
       final offline = !context.read<ConnectivityService>().isOnline;
       setState(() {
         if (offline && _baby != null) {
@@ -149,6 +150,7 @@ class _HomeScreenState extends State<HomeScreen> {
           if (!mounted) return;
           final ann = await context.read<AnnouncementRepository>().fetch(baby.id);
           if (ann == null) {
+            if (!mounted) return;
             final goCreate = await showDialog<bool>(
               context: context,
               builder: (ctx) => AlertDialog(

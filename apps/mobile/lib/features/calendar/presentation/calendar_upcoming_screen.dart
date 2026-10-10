@@ -65,6 +65,7 @@ class _CalendarUpcomingScreenState extends State<CalendarUpcomingScreen>
         });
         return;
       }
+      if (!mounted) return;
       final events = await context.read<CalendarRepository>().listEvents(
             baby.id,
             upcoming: true,

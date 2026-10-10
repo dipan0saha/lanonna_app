@@ -51,7 +51,7 @@ def invitation_preview(
     if preview is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="not_found",
+            detail={"error": "not_found"},
         )
     preview_status = preview.get("status")
     if preview_status in ("expired", "revoked"):

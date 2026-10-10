@@ -37,6 +37,7 @@ class _OnboardingCoOwnerInviteScreenState extends State<OnboardingCoOwnerInviteS
 
   Future<void> _prepare() async {
     await context.read<OnboardingCoordinator>().setStep(OnboardingStep.coOwnerInvite);
+    if (!mounted) return;
     final preview = await ensureInvitePreviewLoaded(context);
     if (!mounted) return;
     if (preview == null) return;
@@ -61,6 +62,7 @@ class _OnboardingCoOwnerInviteScreenState extends State<OnboardingCoOwnerInviteS
       try {
         await context.read<InvitationsRepository>().accept(token);
         await coordinator.completeInviteOnboarding();
+        if (!mounted) return;
         await context.read<AppSession>().refreshFromApi();
         if (mounted) context.go('/home');
       } catch (_) {

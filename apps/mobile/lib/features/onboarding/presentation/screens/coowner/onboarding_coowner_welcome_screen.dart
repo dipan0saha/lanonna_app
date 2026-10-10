@@ -32,6 +32,7 @@ class OnboardingCoOwnerWelcomeScreen extends StatelessWidget {
               label: 'Go to Home',
               onPressed: () async {
                 await coordinator.setStep(OnboardingStep.coOwnerWelcome);
+                if (!context.mounted) return;
                 await finishInviteOnboardingAndGoHome(context);
               },
             ),

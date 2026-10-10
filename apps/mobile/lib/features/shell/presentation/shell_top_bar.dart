@@ -65,6 +65,7 @@ class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
       final store = context.read<SelectedBabyStore>();
       final resolved =
           await context.read<HomeRepository>().resolveSelectedBaby(store);
+      if (!mounted) return;
       final unread = await context.read<NotificationsRepository>().unreadCount();
       if (mounted) {
         setState(() {
@@ -72,7 +73,9 @@ class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
           _unreadCount = unread;
         });
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('shell_top_bar_refresh_failed: $e');
+    }
   }
 
   @override

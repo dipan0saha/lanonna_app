@@ -144,24 +144,24 @@ Related: [remediation-plan.md](remediation-plan.md) (earlier phased plan), [pre-
 
 ## Low
 
-| ID | Issue | Where |
-|----|-------|-------|
-| L-01 | `use_build_context_synchronously` infos across ~50 files (e.g. `app.dart` after `refreshSessionClaims`, `photo_source_sheet.dart`, `followers_screen.dart`) | mobile `lib/` |
-| L-02 | Analyzer warnings: unnecessary `!` in `follower_home_composer.dart`, `owner_home_composer.dart`, `registry_screen.dart`; unused import in `home_teasers_section.dart` | mobile `lib/features/home`, `registry` |
-| L-03 | Shell top bar refresh swallows errors (`catch (_) {}`) | `shell_top_bar.dart` |
-| L-04 | FCM register/unregister failures swallowed | `core/notifications/push_notification_service.dart` |
-| L-05 | Home summary wraps unknown errors with raw `$e` | `home_repository.dart` |
-| L-06 | App Check debug token `print` for Maestro | `app_check_bootstrap.dart` |
-| L-07 | Default API base URL baked in source; release builds must use `--dart-define-from-file` | `config/app_config.dart` |
-| L-08 | Accessibility: semantics labels concentrated in shell/onboarding; many controls unlabeled (WCAG AA is the PRD baseline) | mobile |
-| L-09 | Hardcoded UI strings vs `app_en.arb` (FR-SET-002) | e.g. `account_edit_screen.dart`, `home_screen.dart` |
-| L-10 | No CORS middleware (fine for mobile-only; needs policy if a web client is added) | `services/api/main.py` |
-| L-11 | `pytest` listed in production `requirements.txt` | `services/api/requirements.txt` |
-| L-12 | Invitation preview 404 uses `detail="not_found"` string; accept errors use `{"error": …}` | `routers/invitation_accept.py` |
-| L-13 | FCM tokens deleted on any multicast failure without checking error class | `worker/notifications.py` |
-| L-14 | Poison/unknown Pub/Sub messages are logged and acked (204) with no metric | `worker/main.py` |
-| L-15 | Dockerfiles run as root; Cloud Build only builds/pushes (no tests) | `services/*/Dockerfile`, `cloudbuild.yaml` |
-| L-16 | Duplicate email template trees (intentional) but sync check is disabled with CI | `packages/email-templates`, `services/worker/email_templates` |
+| ID | Issue | Where | Status |
+|----|-------|-------|--------|
+| L-01 | `use_build_context_synchronously` infos across ~50 files (e.g. `app.dart` after `refreshSessionClaims`, `photo_source_sheet.dart`, `followers_screen.dart`) | mobile `lib/` | ✅ Fixed |
+| L-02 | Analyzer warnings: unnecessary `!` in `follower_home_composer.dart`, `owner_home_composer.dart`, `registry_screen.dart`; unused import in `home_teasers_section.dart` | mobile `lib/features/home`, `registry` | ✅ Fixed |
+| L-03 | Shell top bar refresh swallows errors (`catch (_) {}`) | `shell_top_bar.dart` | ✅ Fixed |
+| L-04 | FCM register/unregister failures swallowed | `core/notifications/push_notification_service.dart` | ✅ Fixed |
+| L-05 | Home summary wraps unknown errors with raw `$e` | `home_repository.dart` | ✅ Fixed |
+| L-06 | App Check debug token `print` for Maestro | `app_check_bootstrap.dart` | ✅ Fixed |
+| L-07 | Default API base URL baked in source; release builds must use `--dart-define-from-file` | `config/app_config.dart` | Open |
+| L-08 | Accessibility: semantics labels concentrated in shell/onboarding; many controls unlabeled (WCAG AA is the PRD baseline) | mobile | Open |
+| L-09 | Hardcoded UI strings vs `app_en.arb` (FR-SET-002) | e.g. `account_edit_screen.dart`, `home_screen.dart` | Open |
+| L-10 | No CORS middleware (fine for mobile-only; needs policy if a web client is added) | `services/api/main.py` | Open |
+| L-11 | `pytest` listed in production `requirements.txt` | `services/api/requirements.txt` | ✅ Fixed |
+| L-12 | Invitation preview 404 uses `detail="not_found"` string; accept errors use `{"error": …}` | `routers/invitation_accept.py` | ✅ Fixed |
+| L-13 | FCM tokens deleted on any multicast failure without checking error class | `worker/notifications.py` | ✅ Fixed |
+| L-14 | Poison/unknown Pub/Sub messages are logged and acked (204) with no metric | `worker/main.py` | Open |
+| L-15 | Dockerfiles run as root; Cloud Build only builds/pushes (no tests) | `services/*/Dockerfile`, `cloudbuild.yaml` | Open |
+| L-16 | Duplicate email template trees (intentional) but sync check is disabled with CI | `packages/email-templates`, `services/worker/email_templates` | Open |
 
 ---
 

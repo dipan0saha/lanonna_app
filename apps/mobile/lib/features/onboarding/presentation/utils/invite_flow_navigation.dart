@@ -34,6 +34,7 @@ Future<void> navigateAfterCompleteProfile(BuildContext context) async {
     final babyId = result.babyProfileId ?? coordinator.invitedBabyId;
     if (babyId != null) {
       await coordinator.setInvitedBabyId(babyId);
+      if (!context.mounted) return;
       await context.read<SelectedBabyStore>().setSelectedBabyId(babyId);
     }
 

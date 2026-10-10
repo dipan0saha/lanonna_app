@@ -121,6 +121,7 @@ Future<BabySummary> submitCreateBaby({
     }
     if (input.sharePhotoToGallery) {
       try {
+        if (!context.mounted) return baby;
         await runGalleryPhotoUpload(
           context: context,
           babyProfileId: baby.id,

@@ -59,7 +59,8 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
                                 .read<NotificationsRepository>()
                                 .markRead(n.id);
                           }
-                          if (mounted && n.deepLink != null && n.deepLink!.isNotEmpty) {
+                          if (n.deepLink != null && n.deepLink!.isNotEmpty) {
+                            if (!context.mounted) return;
                             await navigateAppDeepLink(
                               context,
                               n.deepLink,

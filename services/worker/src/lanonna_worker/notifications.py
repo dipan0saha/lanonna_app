@@ -23,6 +23,28 @@ _CHANNEL_COLUMNS: dict[str, str] = {
 _fcm_initialized = False
 
 
+def _should_delete_fcm_token(exc: BaseException | None) -> bool:
+    """Drop stale device tokens only for permanent registration failures."""
+    if exc is None:
+        return False
+    if isinstance(
+        exc,
+        (
+            messaging.UnregisteredError,
+            messaging.SenderIdMismatchError,
+        ),
+    ):
+        return True
+    code = getattr(exc, "code", None)
+    if isinstance(code, str) and code.upper() in {
+        "NOT_FOUND",
+        "UNREGISTERED",
+        "INVALID_ARGUMENT",
+    }:
+        return True
+    return False
+
+
 def _ensure_fcm() -> None:
     global _fcm_initialized
     if _fcm_initialized:
@@ -189,7 +211,7 @@ def _send_fcm(
                 firebase_uid,
                 exc,
             )
-        if idx < len(tokens):
+        if idx < len(tokens) and _should_delete_fcm_token(exc):
             _delete_fcm_token(conn, tokens[idx])
 
 

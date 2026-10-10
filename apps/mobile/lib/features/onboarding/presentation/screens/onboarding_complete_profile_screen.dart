@@ -234,6 +234,7 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
 
   Future<void> _continue() async {
     await _persistDraft();
+    if (!mounted) return;
     if (!_acceptedTerms) {
       setState(() => _error = 'Please accept the terms to continue');
       return;
@@ -262,6 +263,7 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
           imageFile: File(_photoFile!.path),
         );
       }
+      if (!mounted) return;
       await context.read<OnboardingRepository>().updateProfile(
             displayName: displayName,
             avatarUrl: avatarUrl,
@@ -271,6 +273,7 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
             postalCode: _postalController.text.trim(),
             acceptTerms: true,
           );
+      if (!mounted) return;
       await context.read<AppSession>().refreshFromApi();
       if (!mounted) return;
       await navigateAfterCompleteProfile(context);

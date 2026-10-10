@@ -102,7 +102,7 @@ class OwnerHomeComposer extends StatelessWidget {
           ),
         if (s != null)
           HomePrdSections(
-            summary: s!,
+            summary: s,
             babyId: baby.id,
             isOwner: true,
             onRefresh: onRefresh,

@@ -133,12 +133,11 @@ class _FollowersScreenState extends State<FollowersScreen> {
                                   .revokeInvitation(widget.babyId, inv.id);
                               await _load();
                             } catch (e) {
-                              if (mounted) {
-                                AppSnackBar.showAlert(
-                                  context,
-                                  apiErrorMessage(e),
-                                );
-                              }
+                              if (!context.mounted) return;
+                              AppSnackBar.showAlert(
+                                context,
+                                apiErrorMessage(e),
+                              );
                             }
                           },
                         ),

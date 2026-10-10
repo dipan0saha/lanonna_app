@@ -63,6 +63,7 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
       if (!mounted) return;
       final coordinator = context.read<OnboardingCoordinator>();
       await coordinator.setStep(OnboardingStep.login);
+      if (!mounted) return;
       final params = GoRouterState.of(context).uri.queryParameters;
       final inviteToken = params['invite_token'];
       if (inviteToken != null && inviteToken.isNotEmpty) {

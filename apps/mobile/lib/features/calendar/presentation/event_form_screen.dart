@@ -161,6 +161,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
     final baby = _baby;
     if (baby == null) return;
     final photos = await context.read<GalleryRepository>().listPhotos(baby.id);
+    if (!mounted) return;
     final picked = await showModalBottomSheet<({String? id, String? thumbUrl})?>(
       context: context,
       builder: (context) => SafeArea(
@@ -176,15 +177,18 @@ class _EventFormScreenState extends State<EventFormScreen> {
                   imageQuality: 85,
                 );
                 if (file == null) {
+                  if (!context.mounted) return;
                   Navigator.pop(context);
                   return;
                 }
+                if (!context.mounted) return;
                 final id = await DisplayPhotoUpload(context.read<ApiClient>())
                     .uploadGalleryPhoto(
                   babyProfileId: baby.id,
                   imageFile: File(file.path),
                 );
-                if (context.mounted) notifyGalleryDataChanged(context);
+                if (!context.mounted) return;
+                notifyGalleryDataChanged(context);
                 Navigator.pop(context, (id: id, thumbUrl: null));
               },
             ),

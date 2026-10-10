@@ -85,6 +85,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
         setState(() => _initialLoadInFlight = false);
         return;
       }
+      if (!mounted) return;
       final galleryRepo = context.read<GalleryRepository>();
       final photos = await galleryRepo.listPhotos(baby.id);
       final detail = await galleryRepo.fetchPhoto(baby.id, widget.photoId);
@@ -261,6 +262,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     controller.dispose();
     if (text.isEmpty) return;
     try {
+      if (!mounted) return;
       await context.read<GalleryRepository>().updateComment(
         baby.id,
         detail.id,
@@ -318,6 +320,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     );
     if (ok != true) return;
     try {
+      if (!mounted) return;
       await context.read<GalleryRepository>().deleteComment(
         baby.id,
         detail.id,
@@ -355,6 +358,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     );
     if (ok != true) return;
     try {
+      if (!mounted) return;
       await context.read<GalleryRepository>().deletePhoto(baby.id, detail.id);
       if (mounted) {
         notifyGalleryDataChanged(context);

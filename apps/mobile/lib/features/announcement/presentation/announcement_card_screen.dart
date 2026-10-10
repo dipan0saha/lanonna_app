@@ -43,6 +43,7 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
     setState(() => _loading = true);
     final homeRepo = context.read<HomeRepository>();
     final routeBaby = await homeRepo.babyById(widget.babyId);
+    if (!mounted) return;
     final detail =
         await context.read<AnnouncementRepository>().fetch(widget.babyId);
     setState(() {

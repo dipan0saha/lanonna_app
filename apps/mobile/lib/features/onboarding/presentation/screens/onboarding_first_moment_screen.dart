@@ -146,6 +146,7 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
 
   Future<void> _advance({required bool seed}) async {
     await _syncDraft();
+    if (!mounted) return;
     final babyId = context.read<OnboardingCoordinator>().createdBabyId;
     if (babyId == null) {
       setState(() => _error = 'Baby profile missing.');
@@ -171,6 +172,7 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
       if (_photoFile != null &&
           _lifecycle == BabyLifecycle.born &&
           !kIsWeb) {
+        if (!mounted) return;
         await runGalleryPhotoUpload(
           context: context,
           babyProfileId: babyId,
@@ -180,6 +182,7 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
         if (mounted) notifyGalleryDataChanged(context);
       }
 
+      if (!mounted) return;
       await context.read<OnboardingCoordinator>().setStep(OnboardingStep.batchInvite);
       if (mounted) context.go(OnboardingRoutes.ownerInvite);
     } catch (e) {

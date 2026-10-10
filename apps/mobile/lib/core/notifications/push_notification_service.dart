@@ -93,8 +93,8 @@ class PushNotificationService {
       final token = await FirebaseMessaging.instance.getToken();
       if (token == null || token.isEmpty) return;
       await _registerToken(token);
-    } catch (_) {
-      // App Check / network may block token registration on dev emulators.
+    } catch (e) {
+      debugPrint('push_token_register_current_failed: $e');
     }
   }
 
@@ -110,8 +110,8 @@ class PushNotificationService {
         platform: platform,
       );
       _lastRegisteredToken = token;
-    } catch (_) {
-      // Non-fatal for cold start (e.g. App Check not configured on emulator).
+    } catch (e) {
+      debugPrint('push_token_register_failed: $e');
     }
   }
 

@@ -18,12 +18,12 @@ Future<void> activateFirebaseAppCheck() async {
       final token = await FirebaseAppCheck.instance.getToken();
       if (token != null) {
         // `print` so Maestro release builds still emit the token in logcat.
-        print(
+        debugPrint(
           'Firebase App Check debug token (register in Firebase Console → App Check): $token',
         );
       }
     } catch (e) {
-      print('App Check token not ready yet: $e');
+      debugPrint('App Check token not ready yet: $e');
     }
   }
 }

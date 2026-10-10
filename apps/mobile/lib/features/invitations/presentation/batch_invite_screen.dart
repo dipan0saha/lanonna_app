@@ -168,6 +168,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
       setState(() => _rows[index].membershipHint = null);
       return;
     }
+    if (!mounted) return;
     try {
       final result = await context.read<InvitationsRepository>().checkMembership(
             babyId,
@@ -248,6 +249,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
           setState(() => _error = validationError ?? 'No invites to send.');
           return;
         }
+        if (!mounted) return;
         final response = await context
             .read<OnboardingRepository>()
             .sendBatchInvites(babyId, invites);
@@ -262,8 +264,11 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
         }
       }
       if (_isOnboarding) {
+        if (!mounted) return;
         await context.read<AuthRepository>().refreshSessionClaims();
+        if (!mounted) return;
         await context.read<OnboardingCoordinator>().completeOnboarding();
+        if (!mounted) return;
         await context.read<AppSession>().refreshFromApi();
         if (mounted) context.go('/home');
       } else if (mounted) {

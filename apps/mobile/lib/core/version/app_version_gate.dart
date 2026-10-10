@@ -119,6 +119,7 @@ class _AppVersionGateState extends State<AppVersionGate> {
 
   Future<void> _check() async {
     final info = await PackageInfo.fromPlatform();
+    if (!mounted) return;
     final installed = info.version;
     final client = context.read<ApiClient>();
     final requirement = await fetchAppVersionRequirement(client);

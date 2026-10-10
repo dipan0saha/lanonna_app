@@ -5,7 +5,6 @@ import 'package:lanonna/l10n/app_localizations.dart';
 import '../../../../core/media/cached_signed_image.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
-import '../../../../core/widgets/app_bordered_surface.dart';
 import '../../../../core/router/deep_link_navigation.dart';
 import '../../../calendar/domain/calendar_routes.dart';
 import '../../../gallery/domain/gallery_routes.dart';

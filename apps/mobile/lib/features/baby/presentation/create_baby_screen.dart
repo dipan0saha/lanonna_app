@@ -230,6 +230,7 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
       await store.setSelectedBabyId(baby.id);
 
       if (_isOnboarding) {
+        if (!mounted) return;
         final coordinator = context.read<OnboardingCoordinator>();
         final session = context.read<AppSession>();
         await coordinator.setCreatedBabyId(baby.id);

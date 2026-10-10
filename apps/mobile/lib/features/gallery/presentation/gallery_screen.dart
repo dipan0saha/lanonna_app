@@ -145,13 +145,15 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
     if (baby == null || !_isOwner || _uploading) return;
     final file = await showPhotoSourceSheet(context);
     if (file == null) return;
+    if (!mounted) return;
     setState(() => _uploading = true);
     try {
+      final api = context.read<ApiClient>();
       final photoId = await runGalleryPhotoUpload(
         context: context,
         babyProfileId: baby.id,
         imageFile: file,
-        api: context.read<ApiClient>(),
+        api: api,
       );
       if (mounted) {
         notifyGalleryDataChanged(context);

@@ -161,6 +161,7 @@ class _RegistryShippingAddressScreenState
       ),
     );
     if (confirmed != true) return;
+    if (!mounted) return;
     setState(() => _saving = true);
     final ok = await runMutation(
       context,

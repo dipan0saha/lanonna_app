@@ -127,7 +127,7 @@ class _RegistryScreenState extends State<RegistryScreen> with BabyContextReload 
               child: Padding(
                 padding: const EdgeInsets.all(14),
                 child: Text(
-                  shipping!.formatted ?? '',
+                  shipping.formatted ?? '',
                   style: context.textStyles.bodyMedium?.copyWith(height: 1.45),
                 ),
               ),
@@ -172,6 +172,7 @@ class _RegistryScreenState extends State<RegistryScreen> with BabyContextReload 
       );
       if (confirmed != true) return;
     }
+    if (!mounted) return;
     await context.read<RegistryRepository>().claimPurchase(baby.id, item.id);
     await _load();
   }

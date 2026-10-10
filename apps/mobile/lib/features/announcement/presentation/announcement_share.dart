@@ -17,6 +17,7 @@ class AnnouncementShare {
   ) async {
     final repo = context.read<AnnouncementRepository>();
     final detail = await repo.fetch(babyId);
+    if (!context.mounted) return;
     if (detail == null) {
       await Share.share('Our baby announcement is here!');
       return;

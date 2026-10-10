@@ -92,6 +92,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         if (mounted) returnToCalendar(context);
         return;
       }
+      if (!mounted) return;
       final detail = await context
           .read<CalendarRepository>()
           .fetchEvent(baby.id, widget.eventId);
@@ -249,6 +250,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     controller.dispose();
     if (text.isEmpty) return;
     try {
+      if (!mounted) return;
       await context.read<CalendarRepository>().updateComment(
         baby.id,
         widget.eventId,
@@ -276,6 +278,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     );
     if (ok != true) return;
     try {
+      if (!mounted) return;
       await context.read<CalendarRepository>().deleteComment(
         baby.id,
         widget.eventId,
@@ -308,6 +311,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       ),
     );
     if (confirmed != true) return;
+    if (!mounted) return;
     await context.read<CalendarRepository>().deleteEvent(baby.id, widget.eventId);
     if (mounted) returnToCalendar(context);
   }

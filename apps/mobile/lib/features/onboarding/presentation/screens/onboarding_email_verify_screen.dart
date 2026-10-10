@@ -50,6 +50,7 @@ class _OnboardingEmailVerifyScreenState extends State<OnboardingEmailVerifyScree
     if (user?.emailVerified ?? false) {
       _pollTimer?.cancel();
       await authRepo.refreshSessionClaims();
+      if (!mounted) return;
       final coordinator = context.read<OnboardingCoordinator>();
       await coordinator.setStep(OnboardingStep.completeProfile);
       if (mounted) context.go(OnboardingRoutes.completeProfile);

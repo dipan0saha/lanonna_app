@@ -1,4 +1,5 @@
 import '../../../core/api/api_client.dart';
+import '../../../core/api/api_error_message.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/domain/baby_summary.dart';
 import 'home_summary_result.dart';
@@ -80,7 +81,7 @@ class HomeRepository {
       return HomeSummaryFailed(e);
     } catch (e) {
       return HomeSummaryFailed(
-        ApiException('Could not read home summary: $e'),
+        ApiException(apiErrorMessage(e)),
       );
     }
   }

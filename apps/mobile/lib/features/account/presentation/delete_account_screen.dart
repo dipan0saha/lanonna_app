@@ -60,6 +60,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
     setState(() => _deleting = true);
     try {
       await context.read<AccountRepository>().deleteAccount();
+      if (!mounted) return;
       await context.read<AuthRepository>().signOut();
       if (mounted) context.go(OnboardingRoutes.ownerCarousel);
     } catch (e) {

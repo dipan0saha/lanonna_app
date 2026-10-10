@@ -48,6 +48,16 @@ def test_invitation_accept_success():
     notify.assert_called_once()
 
 
+def test_invitation_preview_not_found_returns_structured_detail():
+    with patch(
+        "lanonna_api.routers.invitation_accept.preview_invitation",
+        return_value=None,
+    ):
+        response = client.get("/v1/invitations/preview?token=abcdefghijkl")
+    assert response.status_code == 404
+    assert response.json()["detail"] == {"error": "not_found"}
+
+
 def test_invitation_accept_not_found_returns_404():
     with (
         _auth_as(),

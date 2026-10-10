@@ -231,7 +231,7 @@ Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps:
 
 Local API env: `services/api/.env.example`. DB password and Mailjet keys live in **Secret Manager**.
 
-**Local API tests** (after `pip install -r services/api/requirements.txt` in `services/api/.venv`):
+**Local API tests** (after `pip install -r services/api/requirements-dev.txt` in `services/api/.venv`):
 
 ```bash
 cd services/api

@@ -84,6 +84,7 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
     final homeRepo = context.read<HomeRepository>();
     final store = context.read<SelectedBabyStore>();
     final baby = await homeRepo.resolveSelectedBaby(store);
+    if (!mounted) return;
     setState(() => _baby = baby);
     if (widget.isEdit && baby != null) {
       final items = await context.read<RegistryRepository>().listItems(baby.id);

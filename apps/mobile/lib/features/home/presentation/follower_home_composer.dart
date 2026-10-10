@@ -110,7 +110,7 @@ class FollowerHomeComposer extends StatelessWidget {
         ),
         if (s != null)
           HomePrdSections(
-            summary: s!,
+            summary: s,
             babyId: baby.id,
             isOwner: false,
             onRefresh: onRefresh,

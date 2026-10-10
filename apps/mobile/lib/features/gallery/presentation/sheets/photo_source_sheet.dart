@@ -21,6 +21,7 @@ Future<File?> showPhotoSourceSheet(BuildContext context) async {
                   maxWidth: 2048,
                   imageQuality: 85,
                 );
+                if (!context.mounted) return;
                 Navigator.pop(context, file != null ? File(file.path) : null);
               },
             ),
@@ -34,6 +35,7 @@ Future<File?> showPhotoSourceSheet(BuildContext context) async {
                   maxWidth: 2048,
                   imageQuality: 85,
                 );
+                if (!context.mounted) return;
                 Navigator.pop(context, file != null ? File(file.path) : null);
               },
             ),

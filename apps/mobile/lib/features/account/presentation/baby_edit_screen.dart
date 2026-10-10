@@ -99,6 +99,7 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
           imageFile: File(_photoFile!.path),
         );
       }
+      if (!mounted) return;
       await context.read<HomeRepository>().updateBaby(
         widget.babyId,
         name: name,

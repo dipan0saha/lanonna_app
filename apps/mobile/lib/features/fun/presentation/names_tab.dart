@@ -118,6 +118,7 @@ class _NamesTabState extends State<NamesTab> {
       ),
     );
     if (ok != true) return;
+    if (!mounted) return;
     final removed = await runMutation(
       context,
       () => context.read<FunRepository>().deleteSuggestion(widget.baby.id, s.id),

@@ -34,6 +34,7 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
     final baby = await context.read<HomeRepository>().resolveOwnerBaby(
       context.read<SelectedBabyStore>(),
     );
+    if (!mounted) return;
     final babyId = baby?.id;
     if (babyId == null) {
       setState(() {
@@ -60,6 +61,7 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
     final baby = await context.read<HomeRepository>().resolveOwnerBaby(
       context.read<SelectedBabyStore>(),
     );
+    if (!mounted) return;
     final babyId = baby?.id;
     if (babyId == null) return;
     setState(() => _requesting = true);

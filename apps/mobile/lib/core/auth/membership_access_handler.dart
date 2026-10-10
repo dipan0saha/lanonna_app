@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../../features/account/domain/member_lifecycle_messages.dart';
