@@ -44,6 +44,24 @@ def owner_membership_exists(firebase_uid: str, baby_profile_id: uuid.UUID) -> bo
     return row is not None
 
 
+def lock_baby_profile_for_update(
+    baby_profile_id: uuid.UUID,
+    conn: Any,
+) -> dict[str, Any] | None:
+    """Serialize membership changes per baby (e.g. co-owner accept race, M-02)."""
+    row = conn.execute(
+        """
+        SELECT name
+        FROM baby_profiles
+        WHERE id = %s
+          AND deleted_at IS NULL
+        FOR UPDATE
+        """,
+        (baby_profile_id,),
+    ).fetchone()
+    return dict(row) if row else None
+
+
 def count_active_owners(baby_profile_id: uuid.UUID, conn=None) -> int:
     sql = """
         SELECT COUNT(*)::int AS n

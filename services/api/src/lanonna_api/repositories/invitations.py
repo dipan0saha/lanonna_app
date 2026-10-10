@@ -9,6 +9,7 @@ from typing import Any
 from lanonna_api.db import get_connection
 from lanonna_api.repositories.memberships import (
     count_active_owners,
+    lock_baby_profile_for_update,
     reactivate_membership,
 )
 

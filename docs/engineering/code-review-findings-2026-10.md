@@ -83,7 +83,7 @@ Related: [remediation-plan.md](remediation-plan.md) (earlier phased plan), [pre-
 | ID | Issue | Where | Fix | Status |
 |----|-------|-------|-----|--------|
 | M-01 | Owner-gated routes return generic 403 for ended owners, not structured `membership_ended` | `domain/membership.py`, `repositories/babies.py` | If `has_removed_membership`, raise `MemberLifecycleError("membership_ended", …)` | ✅ Fixed |
-| M-02 | Co-owner accept race: `count_active_owners` then insert without row lock / constraint | `repositories/invitations.py` (accept path) | `SELECT … FOR UPDATE` on baby row or DB constraint; re-check inside lock | Open |
+| M-02 | Co-owner accept race: `count_active_owners` then insert without row lock / constraint | `repositories/invitations.py` (accept path) | `SELECT … FOR UPDATE` on baby row or DB constraint; re-check inside lock | ✅ Fixed |
 | M-03 | Photo init commits pending row before content-type validation; `byte_length` has no upper bound in schema | `domain/gallery.py`, `routers/photos.py` | Validate content type first; add `le=2_097_152` | ✅ Fixed |
 | M-04 | Comment bodies unbounded (`min_length=1` only) on photos/events/announcements | `routers/photos.py`, `events.py`, `announcements.py` | Add `max_length` aligned with product/DB | ✅ Fixed |
 | M-05 | Event `cover_photo_id` not validated as belonging to the baby on create/update | `domain/calendar.py` | `get_photo_for_baby` when set | ✅ Fixed |
@@ -187,6 +187,6 @@ Related: [remediation-plan.md](remediation-plan.md) (earlier phased plan), [pre-
 
 1. **Correctness / data safety:** H-03, M-17 (H-02, H-07, H-08 ✅)
 2. **Pre-beta security:** H-01, H-04, H-05, H-06, M-27
-3. **Validation + races:** M-02, M-11–M-13 (M-03–M-06 ✅)
+3. **Validation + races:** M-11–M-13 (M-02–M-06 ✅)
 4. **Infra + docs + CI:** M-18–M-22, M-32–M-35
 5. **Mobile UX polish + lint:** M-31, remaining Low (M-23–M-30 largely ✅)
