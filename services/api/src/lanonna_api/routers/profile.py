@@ -3,6 +3,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from lanonna_api.auth import current_user
+from lanonna_api.domain.date_validation import validate_user_birth_date
 from lanonna_api.domain.avatar_urls import normalize_avatar_for_storage, signed_avatar_url
 from lanonna_api.http_errors import map_domain_errors
 from lanonna_api.domain.account import build_account_extensions
@@ -61,6 +62,14 @@ def patch_profile(
 ) -> ProfileResponse:
     upsert_app_user(user["uid"], user.get("email"))
     changes = body.model_dump(exclude_unset=True)
+    if "birth_date" in changes and changes["birth_date"] is not None:
+        try:
+            validate_user_birth_date(changes["birth_date"])
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(exc),
+            ) from exc
     if "avatar_url" in changes and changes["avatar_url"] is not None:
         try:
             changes["avatar_url"] = normalize_avatar_for_storage(changes["avatar_url"])

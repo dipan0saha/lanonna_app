@@ -4,7 +4,7 @@ import re
 from datetime import date
 from typing import Any
 
-from lanonna_api.domain.home import validate_actual_birth_date
+from lanonna_api.domain.date_validation import validate_actual_birth_date
 
 _ALLOWED_GENDERS = frozenset({"male", "female", "unknown"})
 _BIRTH_TIME_RE = re.compile(r"^([01]?\d|2[0-3]):[0-5]\d$")

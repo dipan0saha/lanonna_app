@@ -44,26 +44,16 @@ from lanonna_api.repositories.registry import (
     list_recent_registry_purchases,
 )
 from lanonna_api.repositories.system_announcements import list_active_for_user
+from lanonna_api.domain.date_validation import (
+    utc_today as _utc_today,
+    validate_actual_birth_date,
+)
 from lanonna_api.domain.notifications import (
     FanOutSpec,
     NotificationChannel,
     safe_enqueue_fan_out,
 )
 _BIRTH_WELCOME_VISIBLE_DAYS = 7
-
-
-def _utc_today() -> date:
-    return datetime.now(timezone.utc).date()
-
-
-# Allow calendar dates up to one day ahead of UTC for owners in timezones east of UTC.
-_BIRTH_DATE_UTC_SLACK_DAYS = 1
-
-
-def validate_actual_birth_date(actual_birth_date: date) -> None:
-    latest_allowed = _utc_today() + timedelta(days=_BIRTH_DATE_UTC_SLACK_DAYS)
-    if actual_birth_date > latest_allowed:
-        raise ValueError("Date of birth cannot be in the future.")
 
 
 def _display_url_for_photo(baby_profile_id: uuid.UUID, photo_id: uuid.UUID | None) -> str | None:
