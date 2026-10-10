@@ -4,7 +4,7 @@ import logging
 
 from fastapi import HTTPException, status
 
-from lanonna_api.domain.auth_session import UserDeletedError
+from lanonna_api.domain.user_errors import UserDeletedError
 from lanonna_api.request_context import get_request_id
 
 logger = logging.getLogger("lanonna.api.errors")

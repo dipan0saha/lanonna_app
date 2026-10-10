@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from lanonna_api.db import get_connection
+from lanonna_api.domain.user_errors import UserDeletedError
 
 _PROFILE_COLUMNS = """
     firebase_uid, email, display_name, avatar_url,
@@ -36,9 +37,21 @@ def upsert_app_user(firebase_uid: str, email: str | None) -> dict[str, Any]:
                 SELECT {_PROFILE_COLUMNS}
                 FROM app_users
                 WHERE firebase_uid = %s
+                  AND deleted_at IS NULL
                 """,
                 (firebase_uid,),
             ).fetchone()
+            if row is None:
+                tombstone = conn.execute(
+                    """
+                    SELECT deleted_at
+                    FROM app_users
+                    WHERE firebase_uid = %s
+                    """,
+                    (firebase_uid,),
+                ).fetchone()
+                if tombstone is not None and tombstone.get("deleted_at") is not None:
+                    raise UserDeletedError()
     if row is None:
         raise RuntimeError("upsert_app_user returned no row")
     return dict(row)
@@ -74,6 +87,7 @@ def update_profile(
                 updated_at = now()
                 {terms_clause}
             WHERE firebase_uid = %s
+              AND deleted_at IS NULL
             RETURNING {_PROFILE_COLUMNS}
             """,
             (
@@ -99,6 +113,7 @@ def complete_owner_onboarding(firebase_uid: str) -> dict[str, Any]:
             SET owner_onboarding_completed_at = now(),
                 updated_at = now()
             WHERE firebase_uid = %s
+              AND deleted_at IS NULL
             RETURNING firebase_uid, email, display_name, avatar_url,
                       owner_onboarding_completed_at,
                       created_at, updated_at
@@ -226,6 +241,7 @@ def update_notification_preferences(
                 notify_comments_enabled = %s,
                 updated_at = now()
             WHERE firebase_uid = %s
+              AND deleted_at IS NULL
             RETURNING {_PROFILE_COLUMNS}
             """,
             (
