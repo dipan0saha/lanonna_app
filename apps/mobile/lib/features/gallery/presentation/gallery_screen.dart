@@ -246,15 +246,6 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
               const SliverFillRemaining(
                 child: Center(child: CircularProgressIndicator()),
               )
-            else if (_baby == null)
-              SliverFillRemaining(
-                child: Center(
-                  child: Text(
-                    'Create a baby profile to use Gallery.',
-                    style: context.textStyles.bodyMedium,
-                  ),
-                ),
-              )
             else if (_error != null)
               SliverFillRemaining(
                 child: AsyncTabBody(
@@ -262,6 +253,15 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
                   error: _error,
                   onRetry: _load,
                   child: const SizedBox.shrink(),
+                ),
+              )
+            else if (_baby == null)
+              SliverFillRemaining(
+                child: Center(
+                  child: Text(
+                    'Create a baby profile to use Gallery.',
+                    style: context.textStyles.bodyMedium,
+                  ),
                 ),
               )
             else if (_photos.isEmpty)

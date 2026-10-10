@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/network/connectivity_service.dart';
 import '../../account/data/notifications_repository.dart';
 import '../../home/data/home_refresh_signal.dart';
 import '../../home/data/home_repository.dart';
@@ -25,6 +26,8 @@ class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
   var _unreadCount = 0;
   SelectedBabyStore? _babyStore;
   HomeRefreshSignal? _babyRefresh;
+  ConnectivityService? _connectivity;
+  var _wasOffline = false;
 
   @override
   void initState() {
@@ -47,13 +50,32 @@ class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
       _babyRefresh = refresh;
       _babyRefresh!.addListener(_onBabyContextChanged);
     }
+    final connectivity = context.read<ConnectivityService>();
+    if (_connectivity != connectivity) {
+      _connectivity?.removeListener(_onConnectivityChanged);
+      _connectivity = connectivity;
+      _wasOffline = !connectivity.isOnline;
+      _connectivity!.addListener(_onConnectivityChanged);
+    }
   }
 
   @override
   void dispose() {
     _babyStore?.removeListener(_onBabyContextChanged);
     _babyRefresh?.removeListener(_onBabyContextChanged);
+    _connectivity?.removeListener(_onConnectivityChanged);
     super.dispose();
+  }
+
+  void _onConnectivityChanged() {
+    if (!mounted) return;
+    final online = _connectivity?.isOnline ?? true;
+    if (online && _wasOffline) {
+      _wasOffline = false;
+      _refresh();
+    } else if (!online) {
+      _wasOffline = true;
+    }
   }
 
   void _onBabyContextChanged() {

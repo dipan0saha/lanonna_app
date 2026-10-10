@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
-import '../../../core/network/connectivity_service.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/widgets/async_tab_body.dart';
 import '../../../core/theme/app_colors.dart';
@@ -29,7 +28,6 @@ class _FunScreenState extends State<FunScreen> with BabyContextReload {
   BabySummary? _baby;
   var _loading = true;
   String? _error;
-  ConnectivityService? _connectivity;
 
   @override
   void initState() {
@@ -41,24 +39,11 @@ class _FunScreenState extends State<FunScreen> with BabyContextReload {
   void didChangeDependencies() {
     super.didChangeDependencies();
     registerBabyContextListeners();
-    final connectivity = context.read<ConnectivityService>();
-    if (_connectivity != connectivity) {
-      _connectivity?.removeListener(_onConnectivityChanged);
-      _connectivity = connectivity;
-      _connectivity!.addListener(_onConnectivityChanged);
-    }
-  }
-
-  void _onConnectivityChanged() {
-    if (_connectivity?.isOnline == true && _error != null) {
-      _loadBaby();
-    }
   }
 
   @override
   void dispose() {
     disposeBabyContextListeners();
-    _connectivity?.removeListener(_onConnectivityChanged);
     super.dispose();
   }
 

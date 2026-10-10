@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/api/api_exception.dart';
@@ -16,6 +18,16 @@ void main() {
     expect(loaded.summary.lifecycleStatus, 'expecting');
     expect(loaded.summary.teasers?.registryOpenCount, 1);
     expect(loaded.summary.recentActivity, isEmpty);
+  });
+
+  test('listBabies falls back to cache when network fails', () async {
+    final api = _FlakyBabiesApi();
+    final repo = HomeRepository(api);
+    final online = await repo.listBabies();
+    expect(online, hasLength(2));
+    api.failRequests = true;
+    final offline = await repo.listBabies();
+    expect(offline, online);
   });
 
   test('resolveSelectedBaby uses first baby when none selected', () async {
@@ -83,6 +95,26 @@ class _MixedBabiesApi extends ApiClient {
     return [
       {'id': 'baby-o', 'name': 'Owned', 'role': 'owner', 'lifecycle_status': 'expecting'},
       {'id': 'baby-f', 'name': 'Followed', 'role': 'follower', 'lifecycle_status': 'expecting'},
+    ];
+  }
+}
+
+class _FlakyBabiesApi extends ApiClient {
+  _FlakyBabiesApi() : super(idTokenProvider: () async => 'token');
+
+  var failRequests = false;
+
+  @override
+  Future<List<dynamic>> getJsonList(
+    String path, {
+    Map<String, String>? queryParameters,
+  }) async {
+    if (failRequests) {
+      throw const SocketException('failed host lookup');
+    }
+    return [
+      {'id': 'baby-a', 'name': 'Alpha', 'role': 'owner', 'lifecycle_status': 'expecting'},
+      {'id': 'baby-b', 'name': 'Beta', 'role': 'owner', 'lifecycle_status': 'expecting'},
     ];
   }
 }

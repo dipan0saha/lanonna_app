@@ -10,13 +10,28 @@ class HomeRepository {
   HomeRepository(this._api);
 
   final ApiClient _api;
+  List<BabySummary>? _cachedBabies;
+
+  void clearCachedBabies() {
+    _cachedBabies = null;
+  }
 
   Future<List<BabySummary>> listBabies() async {
-    final list = await _api.getJsonList('/v1/babies');
-    return list
-        .whereType<Map<String, dynamic>>()
-        .map(BabySummary.fromJson)
-        .toList();
+    try {
+      final list = await _api.getJsonList('/v1/babies');
+      final babies = list
+          .whereType<Map<String, dynamic>>()
+          .map(BabySummary.fromJson)
+          .toList();
+      _cachedBabies = babies;
+      return babies;
+    } catch (e) {
+      final cached = _cachedBabies;
+      if (cached != null && cached.isNotEmpty) {
+        return cached;
+      }
+      rethrow;
+    }
   }
 
   /// Selected baby from [store], or first baby when none selected / id stale.

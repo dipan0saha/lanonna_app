@@ -118,6 +118,7 @@ Prioritized by impact and fit with existing architecture. Pick one item per cycl
 
 - [`ConnectivityService`](../../apps/mobile/lib/core/network/connectivity_service.dart): one offline banner; show cached thumbs where possible; avoid per-section error spam.
 - Coalesce duplicate `resolveSelectedBaby` + feature fetches when opening a screen.
+- `HomeRepository` caches the last successful baby list for offline `resolveSelectedBaby`; reconnect reloads via `BabyContextReload`.
 
 ### P2 — Ops / release
 

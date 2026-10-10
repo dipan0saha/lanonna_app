@@ -6,6 +6,7 @@ import '../../../core/api/api_error_message.dart';
 import '../../../core/api/run_mutation.dart';
 import '../../../core/auth/auth_repository.dart';
 import '../../../core/widgets/app_semantics.dart';
+import '../../../core/widgets/async_tab_body.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/widgets/app_section_title.dart';
@@ -230,21 +231,11 @@ class _RegistryScreenState extends State<RegistryScreen> with BabyContextReload 
                 )
               else if (_loadError != null)
                 SliverFillRemaining(
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(_loadError!, textAlign: TextAlign.center),
-                          const SizedBox(height: 12),
-                          FilledButton(
-                            onPressed: _load,
-                            child: const Text('Retry'),
-                          ),
-                        ],
-                      ),
-                    ),
+                  child: AsyncTabBody(
+                    loading: false,
+                    error: _loadError,
+                    onRetry: _load,
+                    child: const SizedBox.shrink(),
                   ),
                 )
               else if (_baby == null)
