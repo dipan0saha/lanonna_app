@@ -47,9 +47,10 @@ def create_baby_with_owner_membership(
             """
             INSERT INTO baby_profiles (
                 id, name, gender, expected_birth_date,
-                actual_birth_date, lifecycle_status
+                actual_birth_date, lifecycle_status,
+                created_by_firebase_uid
             )
-            VALUES (%s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
             RETURNING id, name, gender, expected_birth_date,
                       actual_birth_date, lifecycle_status, created_at
             """,
@@ -60,6 +61,7 @@ def create_baby_with_owner_membership(
                 expected_birth_date,
                 actual_birth_date,
                 lifecycle_status,
+                firebase_uid,
             ),
         ).fetchone()
         conn.execute(

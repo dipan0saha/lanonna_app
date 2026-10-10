@@ -247,6 +247,41 @@ def user_has_owner_baby(firebase_uid: str) -> bool:
     return row is not None
 
 
+def user_has_follower_membership(firebase_uid: str) -> bool:
+    with get_connection() as conn:
+        row = conn.execute(
+            """
+            SELECT 1
+            FROM baby_memberships
+            WHERE firebase_uid = %s
+              AND role = 'follower'
+              AND removed_at IS NULL
+            LIMIT 1
+            """,
+            (firebase_uid,),
+        ).fetchone()
+    return row is not None
+
+
+def user_has_self_created_baby(firebase_uid: str) -> bool:
+    with get_connection() as conn:
+        row = conn.execute(
+            """
+            SELECT 1
+            FROM baby_memberships m
+            JOIN baby_profiles b ON b.id = m.baby_profile_id
+            WHERE m.firebase_uid = %s
+              AND m.role = 'owner'
+              AND m.removed_at IS NULL
+              AND b.deleted_at IS NULL
+              AND b.created_by_firebase_uid = %s
+            LIMIT 1
+            """,
+            (firebase_uid, firebase_uid),
+        ).fetchone()
+    return row is not None
+
+
 def update_notification_preferences(
     firebase_uid: str,
     *,

@@ -23,7 +23,9 @@ from lanonna_api.repositories.users import (
     complete_owner_onboarding,
     get_app_user,
     user_has_baby_membership,
+    user_has_follower_membership,
     user_has_owner_baby,
+    user_has_self_created_baby,
 )
 
 
@@ -81,10 +83,16 @@ def onboarding_status_for_user(
     )
     has_owner_baby = user_has_owner_baby(firebase_uid)
     has_baby_membership = user_has_baby_membership(firebase_uid)
+    has_self_created_baby = user_has_self_created_baby(firebase_uid)
+    has_follower_membership = user_has_follower_membership(firebase_uid)
     owner_onboarding_completed = row.get("owner_onboarding_completed_at") is not None
+    needs_owner_onboarding = (
+        not owner_onboarding_completed and has_self_created_baby
+    )
     can_access_main_app = profile_complete and (
         owner_onboarding_completed
-        or (has_baby_membership and not has_owner_baby)
+        or has_follower_membership
+        or (has_owner_baby and not has_self_created_baby)
     )
     return {
         "email_verified": email_verified,
@@ -92,6 +100,7 @@ def onboarding_status_for_user(
         "has_owner_baby": has_owner_baby,
         "has_baby_membership": has_baby_membership,
         "owner_onboarding_completed": owner_onboarding_completed,
+        "needs_owner_onboarding": needs_owner_onboarding,
         "can_access_main_app": can_access_main_app,
     }
 
@@ -106,7 +115,7 @@ def complete_owner_onboarding_for_user(
         raise LookupError("User not found")
     if not row.get("display_name"):
         raise ValueError("Complete your profile before finishing onboarding.")
-    if not user_has_owner_baby(firebase_uid):
+    if not user_has_self_created_baby(firebase_uid):
         raise ValueError("Create a baby profile before finishing onboarding.")
     if not email_verified:
         raise ValueError("Verify your email before finishing onboarding.")

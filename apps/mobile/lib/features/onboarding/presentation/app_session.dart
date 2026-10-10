@@ -193,7 +193,7 @@ class AppSession extends ChangeNotifier {
       }
       if (!_coordinator.isInvitePath &&
           !ownerOnboardingComplete &&
-          status.hasOwnerBaby) {
+          status.needsOwnerOnboarding) {
         if (_ownerPostBabyAllowed.contains(path)) return null;
         if (path == OnboardingRoutes.ownerCreateBaby) {
           return _onboardingResumePath(status);
@@ -242,7 +242,7 @@ class AppSession extends ChangeNotifier {
       }
       return OnboardingRoutes.ownerCreateBaby;
     }
-    if (!ownerOnboardingComplete) {
+    if (!ownerOnboardingComplete && status.needsOwnerOnboarding) {
       final step = _coordinator.activeStep;
       if (step == OnboardingStep.batchInvite) {
         return OnboardingRoutes.ownerInvite;

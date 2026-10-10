@@ -54,6 +54,7 @@ OnboardingStatus _ownerMidOnboarding({
     hasOwnerBaby: true,
     hasBabyMembership: true,
     ownerOnboardingCompleted: ownerOnboardingCompleted,
+    needsOwnerOnboarding: !ownerOnboardingCompleted,
     canAccessMainApp: ownerOnboardingCompleted,
   );
 }
@@ -122,6 +123,7 @@ void main() {
         hasOwnerBaby: false,
         hasBabyMembership: true,
         ownerOnboardingCompleted: false,
+        needsOwnerOnboarding: false,
         canAccessMainApp: true,
       ),
     );
@@ -143,6 +145,7 @@ void main() {
         hasOwnerBaby: false,
         hasBabyMembership: false,
         ownerOnboardingCompleted: false,
+        needsOwnerOnboarding: false,
         canAccessMainApp: false,
       ),
     );
@@ -173,6 +176,7 @@ void main() {
         hasOwnerBaby: false,
         hasBabyMembership: false,
         ownerOnboardingCompleted: false,
+        needsOwnerOnboarding: false,
         canAccessMainApp: false,
       ),
     );
@@ -182,6 +186,28 @@ void main() {
       location: '/home',
     );
     expect(redirect, OnboardingRoutes.completeProfile);
+  });
+
+  test('co-owner via invite can access home without creator onboarding', () async {
+    final f = await _fixtures(path: OnboardingPath.coOwner);
+    f.session.debugSetStatus(
+      const OnboardingStatus(
+        emailVerified: true,
+        profileComplete: true,
+        hasOwnerBaby: true,
+        hasBabyMembership: true,
+        ownerOnboardingCompleted: false,
+        needsOwnerOnboarding: false,
+        canAccessMainApp: true,
+      ),
+    );
+    expect(f.session.canAccessMainApp, isTrue);
+    final redirect = f.session.redirectFor(
+      isSignedIn: true,
+      emailVerified: true,
+      location: '/home',
+    );
+    expect(redirect, isNull);
   });
 
   test('owner with baby redirects create-baby to first moment by default', () async {

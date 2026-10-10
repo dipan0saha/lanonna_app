@@ -29,6 +29,7 @@ Apply in **lexicographic order** (filename prefix):
 | `021_worker_idempotency.sql` | Worker delivery dedupe, photo-ready notify log, `invitations.email_sent_at` |
 | `022_user_profile_demographics.sql` | `app_users` phone, birth_date, country_code, postal_code, terms_accepted_at |
 | `023_registry_shipping_structured.sql` | Structured registry shipping columns on `baby_profiles` (#408) |
+| `024_baby_created_by.sql` | `baby_profiles.created_by_firebase_uid` + backfill for owner-onboarding gating (#31) |
 
 ## Apply (dev)
 

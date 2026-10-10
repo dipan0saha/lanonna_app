@@ -18,6 +18,14 @@ def test_onboarding_profile_complete_requires_terms():
             "lanonna_api.domain.onboarding.user_has_baby_membership",
             return_value=False,
         ),
+        patch(
+            "lanonna_api.domain.onboarding.user_has_self_created_baby",
+            return_value=False,
+        ),
+        patch(
+            "lanonna_api.domain.onboarding.user_has_follower_membership",
+            return_value=False,
+        ),
     ):
         data = onboarding_status_for_user("uid", email_verified=True)
     assert data["profile_complete"] is False
@@ -28,6 +36,14 @@ def test_onboarding_profile_complete_requires_terms():
         patch("lanonna_api.domain.onboarding.user_has_owner_baby", return_value=False),
         patch(
             "lanonna_api.domain.onboarding.user_has_baby_membership",
+            return_value=False,
+        ),
+        patch(
+            "lanonna_api.domain.onboarding.user_has_self_created_baby",
+            return_value=False,
+        ),
+        patch(
+            "lanonna_api.domain.onboarding.user_has_follower_membership",
             return_value=False,
         ),
     ):
@@ -95,9 +111,18 @@ def test_can_access_main_app_false_for_owner_mid_onboarding():
             "lanonna_api.domain.onboarding.user_has_baby_membership",
             return_value=True,
         ),
+        patch(
+            "lanonna_api.domain.onboarding.user_has_self_created_baby",
+            return_value=True,
+        ),
+        patch(
+            "lanonna_api.domain.onboarding.user_has_follower_membership",
+            return_value=False,
+        ),
     ):
         data = onboarding_status_for_user("uid", email_verified=True)
     assert data["profile_complete"] is True
+    assert data["needs_owner_onboarding"] is True
     assert data["can_access_main_app"] is False
 
 
@@ -112,6 +137,14 @@ def test_can_access_main_app_true_for_follower_with_membership():
         patch("lanonna_api.domain.onboarding.user_has_owner_baby", return_value=False),
         patch(
             "lanonna_api.domain.onboarding.user_has_baby_membership",
+            return_value=True,
+        ),
+        patch(
+            "lanonna_api.domain.onboarding.user_has_self_created_baby",
+            return_value=False,
+        ),
+        patch(
+            "lanonna_api.domain.onboarding.user_has_follower_membership",
             return_value=True,
         ),
     ):
