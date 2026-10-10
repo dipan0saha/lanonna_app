@@ -130,6 +130,7 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
             birthDate: _birthDateApi(),
             countryCode: _countryCode,
             postalCode: _postal.text.trim(),
+            sendExplicitNulls: true,
           );
       if (mounted) context.pop();
     } finally {

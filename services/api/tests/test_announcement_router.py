@@ -45,3 +45,15 @@ def test_patch_announcement_rejects_invalid_birth_time(
         )
     assert response.status_code == 400
     assert "HH:MM" in response.json()["detail"]
+
+
+@patch("lanonna_api.routers.announcements.upsert_app_user")
+@patch("lanonna_api.domain.announcement.assert_owner_membership")
+def test_patch_announcement_rejects_long_weight_text(_owner, _upsert):
+    baby_id = uuid.uuid4()
+    with _auth_as():
+        response = client.patch(
+            f"/v1/babies/{baby_id}/announcement",
+            json={"weight_text": "x" * 41},
+        )
+    assert response.status_code == 422

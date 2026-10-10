@@ -26,7 +26,8 @@ class OnboardingStatus {
       hasBabyMembership: hasMembership,
       ownerOnboardingCompleted: ownerDone,
       canAccessMainApp: json['can_access_main_app'] as bool? ??
-          (profileComplete && (ownerDone || hasMembership)),
+          (profileComplete &&
+              (ownerDone || (hasMembership && !(json['has_owner_baby'] as bool? ?? false)))),
     );
   }
 }

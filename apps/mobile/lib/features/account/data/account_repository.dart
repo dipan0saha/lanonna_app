@@ -192,7 +192,22 @@ class AccountRepository {
     String? birthDate,
     String? countryCode,
     String? postalCode,
+    bool sendExplicitNulls = false,
   }) async {
+    if (sendExplicitNulls) {
+      await _api.patchJson('/v1/profile', body: {
+        'display_name': displayName,
+        if (avatarUrl != null) 'avatar_url': avatarUrl,
+        'phone': phone != null && phone.trim().isEmpty ? null : phone?.trim(),
+        'birth_date':
+            birthDate != null && birthDate.trim().isEmpty ? null : birthDate?.trim(),
+        'country_code':
+            countryCode != null && countryCode.trim().isEmpty ? null : countryCode?.trim(),
+        'postal_code':
+            postalCode != null && postalCode.trim().isEmpty ? null : postalCode?.trim(),
+      });
+      return;
+    }
     await _api.patchJson('/v1/profile', body: {
       'display_name': displayName,
       if (avatarUrl != null) 'avatar_url': avatarUrl,

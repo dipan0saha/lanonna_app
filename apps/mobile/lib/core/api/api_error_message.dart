@@ -12,9 +12,12 @@ const _networkMessage =
 
 String apiErrorMessage(Object error) {
   if (error is ApiException) {
-    if (error.statusCode == 401 && error.detail?['error'] == 'user_deleted') {
+    final code = error.detail?['error'];
+    if (error.statusCode == 401 && code == 'user_deleted') {
       return 'This account was deleted.';
     }
+    if (code == 'network_unavailable') return _offlineMessage;
+    if (code == 'network_timeout') return _networkMessage;
     return error.message;
   }
   if (error is SocketException) return _offlineMessage;

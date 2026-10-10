@@ -136,7 +136,7 @@ Product UI tokens live under `apps/mobile/lib/core/theme/` (see also PRD §5.1):
 
 **Birth announcement API (#23 / #34):** Validation in [`domain/announcement_validation.py`](../../services/api/src/lanonna_api/domain/announcement_validation.py) (birth date via `validate_actual_birth_date`, `HH:MM` birth time, gender enum; name/measurement text length caps). Partial updates: **`PATCH /v1/babies/{id}/announcement`** with `exclude_unset` merges into existing row in [`patch_announcement`](../../services/api/src/lanonna_api/domain/announcement.py). Mobile saves via `patchJson`.
 
-**Profile PATCH (#32):** `PATCH /v1/profile` uses `exclude_unset` + [`patch_profile_fields`](../../services/api/src/lanonna_api/repositories/users.py); omitted fields are not nulled. **`can_access_main_app`** on `/v1/onboarding/status` gates main app for followers with membership (#31).
+**Profile PATCH (#32):** `PATCH /v1/profile` uses `exclude_unset` + [`patch_profile_fields`](../../services/api/src/lanonna_api/repositories/users.py); omitted fields are not nulled; account edit uses explicit `null` to clear. **`can_access_main_app`** on `/v1/onboarding/status` is `profile_complete && (owner_onboarding_completed || (has_baby_membership && !has_owner_baby))` (#31).
 
 **Offline / tab errors (NFR-OFFLINE-001 / #27):** [`api_error_message.dart`](../../apps/mobile/lib/core/api/api_error_message.dart) maps socket/client failures to short copy. Tab screens use [`AsyncTabBody`](../../apps/mobile/lib/core/widgets/async_tab_body.dart) for loading/error/retry. [`OfflineBanner`](../../apps/mobile/lib/core/widgets/offline_banner.dart) uses top `SafeArea`.
 

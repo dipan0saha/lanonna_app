@@ -83,7 +83,8 @@ def onboarding_status_for_user(
     has_baby_membership = user_has_baby_membership(firebase_uid)
     owner_onboarding_completed = row.get("owner_onboarding_completed_at") is not None
     can_access_main_app = profile_complete and (
-        owner_onboarding_completed or has_baby_membership
+        owner_onboarding_completed
+        or (has_baby_membership and not has_owner_baby)
     )
     return {
         "email_verified": email_verified,

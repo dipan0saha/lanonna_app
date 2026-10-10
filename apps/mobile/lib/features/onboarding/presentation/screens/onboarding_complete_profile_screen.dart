@@ -16,7 +16,6 @@ import '../../../../core/api/display_photo_upload.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../../../core/widgets/app_country_dropdown_field.dart';
-import '../../../../core/validation/form_validators.dart';
 import '../../../legal/domain/legal_routes.dart';
 import '../../../account/data/account_repository.dart';
 import '../../data/onboarding_form_drafts.dart';

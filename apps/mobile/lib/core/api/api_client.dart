@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
@@ -152,22 +154,46 @@ class ApiClient {
     if (appCheck != null && appCheck.isNotEmpty) {
       headers['X-Firebase-AppCheck'] = appCheck;
     }
-    final response = await switch (method) {
-      'GET' => _http.get(uri, headers: headers),
-      'POST' => _http.post(uri, headers: headers, body: jsonEncode(body ?? {})),
-      'PATCH' => _http.patch(uri, headers: headers, body: jsonEncode(body ?? {})),
-      'PUT' => _http.put(uri, headers: headers, body: jsonEncode(body ?? {})),
-      'DELETE' => _http.delete(
-          uri,
-          headers: headers,
-          body: body != null ? jsonEncode(body) : null,
-        ),
-      _ => throw ApiException('Unsupported method $method'),
-    };
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      return response;
+    try {
+      final response = await switch (method) {
+        'GET' => _http.get(uri, headers: headers),
+        'POST' => _http.post(uri, headers: headers, body: jsonEncode(body ?? {})),
+        'PATCH' => _http.patch(uri, headers: headers, body: jsonEncode(body ?? {})),
+        'PUT' => _http.put(uri, headers: headers, body: jsonEncode(body ?? {})),
+        'DELETE' => _http.delete(
+            uri,
+            headers: headers,
+            body: body != null ? jsonEncode(body) : null,
+          ),
+        _ => throw ApiException('Unsupported method $method'),
+      };
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return response;
+      }
+      return _failAuthorizedResponse(response);
+    } on ApiException {
+      rethrow;
+    } on SocketException {
+      throw ApiException(
+        'network_unavailable',
+        detail: const {'error': 'network_unavailable'},
+      );
+    } on TimeoutException {
+      throw ApiException(
+        'network_timeout',
+        detail: const {'error': 'network_timeout'},
+      );
+    } on http.ClientException {
+      throw ApiException(
+        'network_unavailable',
+        detail: const {'error': 'network_unavailable'},
+      );
+    } on HandshakeException {
+      throw ApiException(
+        'network_unavailable',
+        detail: const {'error': 'network_unavailable'},
+      );
     }
-    return _failAuthorizedResponse(response);
   }
 
   Future<http.Response> _failAuthorizedResponse(http.Response response) async {
