@@ -19,13 +19,13 @@ router = APIRouter(
 
 
 class AnnouncementBody(BaseModel):
-    first_name: str | None = None
-    last_name: str | None = None
+    first_name: str | None = Field(default=None, max_length=50)
+    last_name: str | None = Field(default=None, max_length=50)
     gender: str | None = None
     birth_date: date | None = None
     birth_time: str | None = None
-    weight_text: str | None = None
-    length_text: str | None = None
+    weight_text: str | None = Field(default=None, max_length=40)
+    length_text: str | None = Field(default=None, max_length=40)
     photo_id: uuid.UUID | None = None
 
 

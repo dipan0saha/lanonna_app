@@ -19,7 +19,7 @@ void main() {
       ),
     );
 
-    expect(find.text("You're offline - showing saved content"), findsOneWidget);
+    expect(find.text("You're offline. Check your connection."), findsOneWidget);
     expect(find.text('Body'), findsOneWidget);
   });
 
@@ -36,6 +36,6 @@ void main() {
       ),
     );
 
-    expect(find.text("You're offline - showing saved content"), findsNothing);
+    expect(find.text("You're offline. Check your connection."), findsNothing);
   });
 }

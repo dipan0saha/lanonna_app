@@ -19,7 +19,7 @@ class ProfileResponse(BaseModel):
 
 
 class ProfileUpdateRequest(BaseModel):
-    display_name: str = Field(min_length=1, max_length=100)
+    display_name: str | None = Field(default=None, min_length=1, max_length=100)
     avatar_url: str | None = Field(default=None, max_length=2048)
     phone: str | None = Field(default=None, max_length=40)
     birth_date: date | None = None

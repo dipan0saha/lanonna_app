@@ -21,7 +21,8 @@ Future<void> navigateAfterOnboardingAuth(
   }
 
   await session.refreshFromApi();
-  if (coordinator.isInvitePath && coordinator.inviteOnboardingCompleted) {
+  final status = session.status;
+  if (status?.canAccessMainApp == true) {
     if (context.mounted) context.go('/home');
     return;
   }

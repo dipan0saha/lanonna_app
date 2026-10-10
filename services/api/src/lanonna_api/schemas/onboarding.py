@@ -7,3 +7,4 @@ class OnboardingStatusResponse(BaseModel):
     has_owner_baby: bool
     has_baby_membership: bool
     owner_onboarding_completed: bool
+    can_access_main_app: bool

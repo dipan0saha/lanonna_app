@@ -32,9 +32,8 @@ class AppSession extends ChangeNotifier {
       _storage.isCompleted || (_status?.ownerOnboardingCompleted ?? false);
 
   bool get canAccessMainApp {
+    if (_status?.canAccessMainApp ?? false) return true;
     if (ownerOnboardingComplete) return true;
-    if (_coordinator.inviteOnboardingCompleted) return true;
-    if (_coordinator.isInvitePath) return false;
     return false;
   }
 
@@ -194,7 +193,7 @@ class AppSession extends ChangeNotifier {
       }
       if (!_coordinator.isInvitePath &&
           !ownerOnboardingComplete &&
-          (status.hasOwnerBaby || status.hasBabyMembership)) {
+          status.hasOwnerBaby) {
         if (_ownerPostBabyAllowed.contains(path)) return null;
         if (path == OnboardingRoutes.ownerCreateBaby) {
           return _onboardingResumePath(status);

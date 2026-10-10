@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../../core/auth/auth_repository.dart';
+import '../../../../invitations/data/invitations_repository.dart';
 import '../../../../invitations/data/models/invitation_preview.dart';
+import '../../app_session.dart';
 import '../../../../invitations/presentation/invite_accept_messages.dart';
 import '../../../../invitations/presentation/invite_landing_helpers.dart';
 import '../../../../invitations/presentation/widgets/invite_landing_state_views.dart';
@@ -49,9 +52,26 @@ class _OnboardingFollowerInviteScreenState extends State<OnboardingFollowerInvit
     setState(() => _loading = false);
   }
 
-  void _acceptInvitation(InvitationPreview preview) {
-    final token = context.read<OnboardingCoordinator>().pendingInviteToken;
+  Future<void> _acceptInvitation(InvitationPreview preview) async {
+    final coordinator = context.read<OnboardingCoordinator>();
+    final token = coordinator.pendingInviteToken;
     if (token == null || token.isEmpty) return;
+    final auth = context.read<AuthRepository>();
+    if (auth.currentUser != null) {
+      try {
+        await context.read<InvitationsRepository>().accept(token);
+        await coordinator.completeInviteOnboarding();
+        await context.read<AppSession>().refreshFromApi();
+        if (mounted) context.go('/home');
+      } catch (_) {
+        if (mounted) {
+          setState(() {
+            _problemMessage = 'Could not accept this invitation. Try again.';
+          });
+        }
+      }
+      return;
+    }
     final email = preview.inviteeEmail;
     context.go(
       OnboardingRoutes.signupWithInvite(

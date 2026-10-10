@@ -8,6 +8,7 @@ from lanonna_api.domain.announcement import patch_announcement
 from lanonna_api.domain.announcement_validation import (
     validate_announcement_birth_time,
     validate_announcement_fields,
+    validate_announcement_text_fields,
 )
 from lanonna_api.domain.home import _utc_today
 
@@ -15,6 +16,11 @@ from lanonna_api.domain.home import _utc_today
 def test_validate_announcement_birth_time_rejects_garbage():
     with pytest.raises(ValueError, match="HH:MM"):
         validate_announcement_birth_time("25:99")
+
+
+def test_validate_announcement_text_fields_rejects_long_weight():
+    with pytest.raises(ValueError, match="40 characters"):
+        validate_announcement_text_fields(weight_text="x" * 41)
 
 
 def test_validate_announcement_fields_rejects_future_birth_date():

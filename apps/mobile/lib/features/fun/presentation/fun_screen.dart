@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/api/api_error_message.dart';
+import '../../../core/network/connectivity_service.dart';
 import '../../../core/widgets/app_semantics.dart';
+import '../../../core/widgets/async_tab_body.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
@@ -25,6 +28,8 @@ class _FunScreenState extends State<FunScreen> with BabyContextReload {
   var _segment = 0;
   BabySummary? _baby;
   var _loading = true;
+  String? _error;
+  ConnectivityService? _connectivity;
 
   @override
   void initState() {
@@ -36,11 +41,24 @@ class _FunScreenState extends State<FunScreen> with BabyContextReload {
   void didChangeDependencies() {
     super.didChangeDependencies();
     registerBabyContextListeners();
+    final connectivity = context.read<ConnectivityService>();
+    if (_connectivity != connectivity) {
+      _connectivity?.removeListener(_onConnectivityChanged);
+      _connectivity = connectivity;
+      _connectivity!.addListener(_onConnectivityChanged);
+    }
+  }
+
+  void _onConnectivityChanged() {
+    if (_connectivity?.isOnline == true && _error != null) {
+      _loadBaby();
+    }
   }
 
   @override
   void dispose() {
     disposeBabyContextListeners();
+    _connectivity?.removeListener(_onConnectivityChanged);
     super.dispose();
   }
 
@@ -48,13 +66,27 @@ class _FunScreenState extends State<FunScreen> with BabyContextReload {
   void onBabyContextReload() => _loadBaby();
 
   Future<void> _loadBaby() async {
-    final homeRepo = context.read<HomeRepository>();
-    final store = context.read<SelectedBabyStore>();
-    final baby = await homeRepo.resolveSelectedBaby(store);
     setState(() {
-      _baby = baby;
-      _loading = false;
+      _loading = true;
+      _error = null;
     });
+    try {
+      final homeRepo = context.read<HomeRepository>();
+      final store = context.read<SelectedBabyStore>();
+      final baby = await homeRepo.resolveSelectedBaby(store);
+      if (!mounted) return;
+      setState(() {
+        _baby = baby;
+        _loading = false;
+        _error = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = apiErrorMessage(e);
+      });
+    }
   }
 
   @override
@@ -92,11 +124,18 @@ class _FunScreenState extends State<FunScreen> with BabyContextReload {
             Expanded(
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
-                  : _baby == null
-                      ? const Center(child: Text('No baby profile yet.'))
-                      : _segment == 0
-                          ? NamesTab(baby: _baby!)
-                          : PredictionsTab(baby: _baby!),
+                  : _error != null
+                      ? AsyncTabBody(
+                          loading: false,
+                          error: _error,
+                          onRetry: _loadBaby,
+                          child: const SizedBox.shrink(),
+                        )
+                      : _baby == null
+                          ? const Center(child: Text('No baby profile yet.'))
+                          : _segment == 0
+                              ? NamesTab(baby: _baby!)
+                              : PredictionsTab(baby: _baby!),
             ),
           ],
         ),

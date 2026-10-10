@@ -18,6 +18,7 @@ import '../../../../core/theme/la_nonna_theme.dart';
 import '../../../../core/widgets/app_country_dropdown_field.dart';
 import '../../../../core/validation/form_validators.dart';
 import '../../../legal/domain/legal_routes.dart';
+import '../../../account/data/account_repository.dart';
 import '../../data/onboarding_form_drafts.dart';
 import '../../data/onboarding_repository.dart';
 import '../../domain/onboarding_path.dart';
@@ -42,6 +43,12 @@ class OnboardingCompleteProfileScreen extends StatefulWidget {
 }
 
 class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProfileScreen> {
+  final _formKey = GlobalKey<FormState>();
+  var _validateOnInteraction = false;
+  AutovalidateMode get _autovalidateMode => _validateOnInteraction
+      ? AutovalidateMode.onUserInteraction
+      : AutovalidateMode.disabled;
+
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -93,6 +100,43 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
         );
   }
 
+  Future<void> _hydrateFromServerProfile() async {
+    if (_firstNameController.text.trim().isNotEmpty ||
+        _lastNameController.text.trim().isNotEmpty) {
+      return;
+    }
+    try {
+      final account = await context.read<AccountRepository>().fetchAccount();
+      final name = account.displayName ?? '';
+      final parts = name.trim().split(RegExp(r'\s+'));
+      if (parts.isNotEmpty && parts.first.isNotEmpty) {
+        _firstNameController.text = parts.first;
+        if (parts.length > 1) {
+          _lastNameController.text = parts.sublist(1).join(' ');
+        }
+      }
+      if (_phoneController.text.isEmpty) {
+        _phoneController.text = account.phone ?? '';
+      }
+      if (_postalController.text.isEmpty) {
+        _postalController.text = account.postalCode ?? '';
+      }
+      _countryCode ??= account.countryCode;
+      if (_birthDate == null &&
+          account.birthDate != null &&
+          account.birthDate!.isNotEmpty) {
+        _birthDate = DateTime.tryParse(account.birthDate!);
+      }
+      if (_networkPhotoUrl == null && account.avatarUrl != null) {
+        _networkPhotoUrl = account.avatarUrl;
+        _photoLabel = 'Change photo';
+      }
+      if (mounted) setState(() {});
+    } catch (_) {
+      // Offline or first sign-up; form stays empty.
+    }
+  }
+
   Future<void> _loadCountries() async {
     final list = await IsoCountries.load();
     if (mounted) setState(() => _countries = list);
@@ -104,7 +148,7 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
     if (_hydrated) return;
     _hydrated = true;
     _loadCountries();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       final coordinator = context.read<OnboardingCoordinator>();
       final draft = coordinator.completeProfileDraft;
@@ -132,6 +176,7 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
         setState(() {});
         if (draft.firstName.isNotEmpty || draft.lastName.isNotEmpty) return;
       }
+      await _hydrateFromServerProfile();
       try {
         if (Firebase.apps.isEmpty) return;
         final user = FirebaseAuth.instance.currentUser;
@@ -199,20 +244,14 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
       setState(() => _error = 'Select your relationship to baby');
       return;
     }
+    if (_formKey.currentState?.validate() != true) {
+      setState(() => _validateOnInteraction = true);
+      return;
+    }
     final displayName = AppTextInputPolicy.normalizeForSubmit(
       AppTextInputKind.personName,
       '${_firstNameController.text} ${_lastNameController.text}',
     );
-    final nameError = validateDisplayName(displayName);
-    if (nameError != null) {
-      setState(() => _error = nameError);
-      return;
-    }
-    if (_firstNameController.text.trim().isEmpty ||
-        _lastNameController.text.trim().isEmpty) {
-      setState(() => _error = 'First and last name are required');
-      return;
-    }
     setState(() {
       _busy = true;
       _error = null;
@@ -303,30 +342,46 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
               ),
             ),
             const SizedBox(height: 22),
-            OnboardingTextField(
-              fieldKey: const Key('onboarding_first_name'),
-              controller: _firstNameController,
-              label: 'First name',
-              hint: 'First name',
-              kind: AppTextInputKind.personName,
-              onChanged: (_) => _persistDraft(),
-            ),
-            const SizedBox(height: 12),
-            OnboardingTextField(
-              fieldKey: const Key('onboarding_last_name'),
-              controller: _lastNameController,
-              label: 'Last name',
-              hint: 'Last name',
-              kind: AppTextInputKind.personName,
-              onChanged: (_) => _persistDraft(),
-            ),
-            const SizedBox(height: 12),
-            OnboardingTextField(
-              controller: _phoneController,
-              label: 'Phone number (optional)',
-              hint: '(555) 555-5555',
-              keyboardType: TextInputType.phone,
-              onChanged: (_) => _persistDraft(),
+            Form(
+              key: _formKey,
+              autovalidateMode: _autovalidateMode,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  OnboardingTextField(
+                    fieldKey: const Key('onboarding_first_name'),
+                    controller: _firstNameController,
+                    label: 'First name',
+                    hint: 'First name',
+                    kind: AppTextInputKind.personName,
+                    autovalidateMode: _autovalidateMode,
+                    validator: (v) =>
+                        (v == null || v.trim().isEmpty) ? 'First name is required' : null,
+                    onChanged: (_) => _persistDraft(),
+                  ),
+                  const SizedBox(height: 12),
+                  OnboardingTextField(
+                    fieldKey: const Key('onboarding_last_name'),
+                    controller: _lastNameController,
+                    label: 'Last name',
+                    hint: 'Last name',
+                    kind: AppTextInputKind.personName,
+                    autovalidateMode: _autovalidateMode,
+                    validator: (v) =>
+                        (v == null || v.trim().isEmpty) ? 'Last name is required' : null,
+                    onChanged: (_) => _persistDraft(),
+                  ),
+                  const SizedBox(height: 12),
+                  OnboardingTextField(
+                    controller: _phoneController,
+                    label: 'Phone number (optional)',
+                    hint: '(555) 555-5555',
+                    keyboardType: TextInputType.phone,
+                    autovalidateMode: _autovalidateMode,
+                    onChanged: (_) => _persistDraft(),
+                  ),
+                ],
+              ),
             ),
             if (ownerPath) ...[
               const SizedBox(height: 16),

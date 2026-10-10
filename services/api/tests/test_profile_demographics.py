@@ -33,6 +33,7 @@ def test_onboarding_profile_complete_requires_terms():
     ):
         data = onboarding_status_for_user("uid", email_verified=True)
     assert data["profile_complete"] is True
+    assert data["can_access_main_app"] is False
 
 
 def test_create_baby_persists_relationship_label():

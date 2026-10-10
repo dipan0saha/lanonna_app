@@ -76,14 +76,22 @@ def onboarding_status_for_user(
         raise LookupError("User not found")
     display_name = row.get("display_name")
     terms_at = row.get("terms_accepted_at")
+    profile_complete = bool(
+        display_name and str(display_name).strip() and terms_at is not None
+    )
+    has_owner_baby = user_has_owner_baby(firebase_uid)
+    has_baby_membership = user_has_baby_membership(firebase_uid)
+    owner_onboarding_completed = row.get("owner_onboarding_completed_at") is not None
+    can_access_main_app = profile_complete and (
+        owner_onboarding_completed or has_baby_membership
+    )
     return {
         "email_verified": email_verified,
-        "profile_complete": bool(
-            display_name and str(display_name).strip() and terms_at is not None
-        ),
-        "has_owner_baby": user_has_owner_baby(firebase_uid),
-        "has_baby_membership": user_has_baby_membership(firebase_uid),
-        "owner_onboarding_completed": row.get("owner_onboarding_completed_at") is not None,
+        "profile_complete": profile_complete,
+        "has_owner_baby": has_owner_baby,
+        "has_baby_membership": has_baby_membership,
+        "owner_onboarding_completed": owner_onboarding_completed,
+        "can_access_main_app": can_access_main_app,
     }
 
 

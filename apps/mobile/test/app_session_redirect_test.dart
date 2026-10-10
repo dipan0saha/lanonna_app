@@ -54,6 +54,7 @@ OnboardingStatus _ownerMidOnboarding({
     hasOwnerBaby: true,
     hasBabyMembership: true,
     ownerOnboardingCompleted: ownerOnboardingCompleted,
+    canAccessMainApp: ownerOnboardingCompleted,
   );
 }
 
@@ -112,11 +113,8 @@ void main() {
     expect(redirect, '/home');
   });
 
-  test('follower invite path with invite onboarding complete can access main app', () async {
-    final f = await _fixtures(
-      path: OnboardingPath.follower,
-      inviteOnboardingCompleted: true,
-    );
+  test('follower with baby membership can access main app from server flag', () async {
+    final f = await _fixtures(path: OnboardingPath.follower);
     f.session.debugSetStatus(
       const OnboardingStatus(
         emailVerified: true,
@@ -124,9 +122,16 @@ void main() {
         hasOwnerBaby: false,
         hasBabyMembership: true,
         ownerOnboardingCompleted: false,
+        canAccessMainApp: true,
       ),
     );
     expect(f.session.canAccessMainApp, isTrue);
+    final redirect = f.session.redirectFor(
+      isSignedIn: true,
+      emailVerified: true,
+      location: OnboardingRoutes.ownerCreateBaby,
+    );
+    expect(redirect, '/home');
   });
 
   test('legal routes allowed while profile incomplete', () async {
@@ -138,6 +143,7 @@ void main() {
         hasOwnerBaby: false,
         hasBabyMembership: false,
         ownerOnboardingCompleted: false,
+        canAccessMainApp: false,
       ),
     );
     expect(
@@ -167,6 +173,7 @@ void main() {
         hasOwnerBaby: false,
         hasBabyMembership: false,
         ownerOnboardingCompleted: false,
+        canAccessMainApp: false,
       ),
     );
     final redirect = f.session.redirectFor(

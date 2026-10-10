@@ -92,6 +92,10 @@ def _persist_announcement(
         gender=gender,
         birth_date=birth_date,
         birth_time=birth_time,
+        first_name=first_name,
+        last_name=last_name,
+        weight_text=weight_text,
+        length_text=length_text,
     )
     ann = upsert_announcement(
         baby_profile_id,

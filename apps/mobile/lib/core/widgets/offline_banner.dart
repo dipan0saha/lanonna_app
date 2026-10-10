@@ -15,7 +15,7 @@ class OfflineBanner extends StatelessWidget {
         child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Text(
-          "You're offline - showing saved content",
+          "You're offline. Check your connection.",
           style: context.textStyles.bodySmall?.copyWith(
             fontWeight: FontWeight.w600,
             color: context.brand.ownerBadgeText,

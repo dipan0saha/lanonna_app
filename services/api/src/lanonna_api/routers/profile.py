@@ -9,8 +9,8 @@ from lanonna_api.domain.account import build_account_extensions
 from lanonna_api.domain.account_delete import delete_account, delete_account_eligibility
 from lanonna_api.repositories.babies import list_babies_for_user
 from lanonna_api.repositories.users import (
+    patch_profile_fields,
     update_notification_preferences,
-    update_profile,
     upsert_app_user,
 )
 from pydantic import BaseModel
@@ -60,26 +60,17 @@ def patch_profile(
     user: dict[str, Any] = Depends(current_user),
 ) -> ProfileResponse:
     upsert_app_user(user["uid"], user.get("email"))
-    avatar_stored: str | None = None
-    if body.avatar_url is not None:
+    changes = body.model_dump(exclude_unset=True)
+    if "avatar_url" in changes and changes["avatar_url"] is not None:
         try:
-            avatar_stored = normalize_avatar_for_storage(body.avatar_url)
+            changes["avatar_url"] = normalize_avatar_for_storage(changes["avatar_url"])
         except ValueError as exc:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=str(exc),
             ) from exc
     try:
-        row = update_profile(
-            user["uid"],
-            body.display_name,
-            avatar_url=avatar_stored if body.avatar_url is not None else None,
-            phone=body.phone,
-            birth_date=body.birth_date,
-            country_code=body.country_code,
-            postal_code=body.postal_code,
-            accept_terms=body.accept_terms,
-        )
+        row = patch_profile_fields(user["uid"], changes)
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

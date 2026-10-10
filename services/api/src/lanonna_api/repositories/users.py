@@ -105,6 +105,70 @@ def update_profile(
     return dict(row)
 
 
+def patch_profile_fields(
+    firebase_uid: str,
+    changes: dict[str, Any],
+) -> dict[str, Any]:
+    """Apply only keys present in changes; explicit null clears nullable columns."""
+    if not changes:
+        raise ValueError("No profile fields to update.")
+
+    set_parts = ["updated_at = now()"]
+    params: list[Any] = []
+
+    if "display_name" in changes:
+        raw = changes["display_name"]
+        if raw is None or not str(raw).strip():
+            raise ValueError("Display name cannot be empty.")
+        set_parts.append("display_name = %s")
+        params.append(str(raw).strip())
+
+    if "avatar_url" in changes:
+        set_parts.append("avatar_url = %s")
+        params.append(changes["avatar_url"])
+
+    if "phone" in changes:
+        set_parts.append("phone = %s")
+        params.append(changes["phone"])
+
+    if "birth_date" in changes:
+        set_parts.append("birth_date = %s")
+        params.append(changes["birth_date"])
+
+    if "country_code" in changes:
+        set_parts.append("country_code = %s")
+        params.append(changes["country_code"])
+
+    if "postal_code" in changes:
+        set_parts.append("postal_code = %s")
+        params.append(changes["postal_code"])
+
+    if "accept_terms" in changes:
+        if changes["accept_terms"] is True:
+            set_parts.append(
+                "terms_accepted_at = COALESCE(terms_accepted_at, now())"
+            )
+        elif changes["accept_terms"] is False:
+            raise ValueError("Terms acceptance cannot be revoked.")
+
+    if len(set_parts) == 1:
+        raise ValueError("No profile fields to update.")
+
+    params.append(firebase_uid)
+    sql = f"""
+        UPDATE app_users
+        SET {", ".join(set_parts)}
+        WHERE firebase_uid = %s
+          AND deleted_at IS NULL
+        RETURNING {_PROFILE_COLUMNS}
+    """
+    with get_connection() as conn:
+        row = conn.execute(sql, tuple(params)).fetchone()
+    if row is None:
+        raise RuntimeError("patch_profile_fields returned no row")
+    return dict(row)
+
+
 def complete_owner_onboarding(firebase_uid: str) -> dict[str, Any]:
     with get_connection() as conn:
         row = conn.execute(
