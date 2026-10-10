@@ -3,6 +3,7 @@ import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
+import '../../../core/time/app_date_time.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/theme/app_colors.dart';
@@ -14,6 +15,7 @@ import '../../../core/domain/baby_summary.dart';
 import '../data/fun_repository.dart';
 import '../data/models/fun_models.dart';
 import '../domain/birthdate_prediction.dart';
+import '../domain/gender_vote_display.dart';
 
 class PredictionsTab extends StatefulWidget {
   const PredictionsTab({super.key, required this.baby});
@@ -77,7 +79,8 @@ class _PredictionsTabState extends State<PredictionsTab> {
     final saved = _payload?.viewerBirthdateVote;
     final date = birthdateGuessToSubmit(pendingSelection: _pendingGuess);
     if (date == null) return;
-    final iso = birthdateGuessIso(date);
+    final locale = Localizations.localeOf(context).languageCode;
+    final dateLabel = formatApiCalendarDateFromParts(date, locale);
     final isUpdate = saved != null && saved.isNotEmpty;
     final ok = await showDialog<bool>(
       context: context,
@@ -89,8 +92,8 @@ class _PredictionsTabState extends State<PredictionsTab> {
         ),
         content: Text(
           isUpdate
-              ? l10n.funBirthdateConfirmUpdateBody(iso)
-              : l10n.funBirthdateConfirmSaveBody(iso),
+              ? l10n.funBirthdateConfirmUpdateBody(dateLabel)
+              : l10n.funBirthdateConfirmSaveBody(dateLabel),
         ),
         actions: [
           TextButton(
@@ -175,9 +178,13 @@ class _PredictionsTabState extends State<PredictionsTab> {
       return const Center(child: CircularProgressIndicator());
     }
     final l10n = AppLocalizations.of(context)!;
+    final locale = Localizations.localeOf(context).languageCode;
     final p = _payload;
-    final total = (p?.maleVotes ?? 0) + (p?.femaleVotes ?? 0);
-    final boyPct = total > 0 ? ((p!.maleVotes / total) * 100).round() : 50;
+    final genderVotes = genderVoteDisplay(
+      maleVotes: p?.maleVotes ?? 0,
+      femaleVotes: p?.femaleVotes ?? 0,
+    );
+    final total = genderVotes.total;
     final savedBirthdate = p?.viewerBirthdateVote;
     final due = babyExpectedDueDate(widget.baby);
     final submitEnabled = birthdateGuessSubmitEnabled(
@@ -201,7 +208,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
                   'Boy',
                   p?.viewerGenderVote == 'male',
                   () => _voteGender('male'),
-                  boyPct,
+                  genderVotes.displayPercentForMale(),
                   p?.maleVotes ?? 0,
                   semanticsId: 'fun_vote_boy',
                 ),
@@ -212,23 +219,25 @@ class _PredictionsTabState extends State<PredictionsTab> {
                   'Girl',
                   p?.viewerGenderVote == 'female',
                   () => _voteGender('female'),
-                  100 - boyPct,
+                  genderVotes.displayPercentForFemale(),
                   p?.femaleVotes ?? 0,
                   semanticsId: 'fun_vote_girl',
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: total > 0 ? p!.maleVotes / total : 0.5,
-              minHeight: 8,
-              backgroundColor: AppColors.peachTint,
-              color: AppColors.primaryDark,
+          if (genderVotes.maleProgress != null) ...[
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: genderVotes.maleProgress,
+                minHeight: 8,
+                backgroundColor: AppColors.peachTint,
+                color: AppColors.primaryDark,
+              ),
             ),
-          ),
+          ],
           if (p?.viewerGenderVote != null)
             Padding(
               padding: const EdgeInsets.only(top: 8),
@@ -298,7 +307,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
           else
             for (final row in p.birthdateHistogram)
               ListTile(
-                title: Text(row.date),
+                title: Text(formatApiCalendarDate(row.date, locale)),
                 trailing: Text(l10n.predictionVoteCount(row.count)),
               ),
           const SizedBox(height: 8),
@@ -306,7 +315,9 @@ class _PredictionsTabState extends State<PredictionsTab> {
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Text(
-                l10n.funBirthdateYourGuess(savedBirthdate),
+                l10n.funBirthdateYourGuess(
+                  formatApiCalendarDate(savedBirthdate, locale),
+                ),
                 style: context.textStyles.bodySmall,
               ),
             ),
@@ -314,7 +325,9 @@ class _PredictionsTabState extends State<PredictionsTab> {
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Text(
-                l10n.funBirthdateSelected(birthdateGuessIso(_pendingGuess!)),
+                l10n.funBirthdateSelected(
+                  formatApiCalendarDateFromParts(_pendingGuess!, locale),
+                ),
                 style: context.textStyles.bodySmall,
               ),
             ),

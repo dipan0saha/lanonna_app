@@ -201,4 +201,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get funBirthdateConfirmAction => 'Save';
+
+  @override
+  String get rsvpStatusGoing => 'Going';
+
+  @override
+  String get rsvpStatusMaybe => 'Maybe';
+
+  @override
+  String get rsvpStatusCantGo => 'Can\'t go';
 }

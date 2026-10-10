@@ -56,3 +56,20 @@ String formatEventMonthBadge(DateTime startsAt, [String? localeName]) {
 }
 
 int formatEventDayBadge(DateTime startsAt) => eventWallTime(startsAt).day;
+
+/// Date-only API values (`YYYY-MM-DD`) for due dates, birthdate guesses, etc.
+DateTime? tryParseApiCalendarDate(String? raw) {
+  if (raw == null || raw.trim().isEmpty) return null;
+  return DateTime.tryParse(raw.trim());
+}
+
+String formatApiCalendarDateFromParts(DateTime date, [String? localeName]) {
+  return DateFormat.yMMMMd(localeName).format(date);
+}
+
+/// Returns empty string when [raw] is null, blank, or unparseable.
+String formatApiCalendarDate(String? raw, [String? localeName]) {
+  final dt = tryParseApiCalendarDate(raw);
+  if (dt == null) return '';
+  return formatApiCalendarDateFromParts(dt, localeName);
+}

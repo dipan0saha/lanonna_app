@@ -113,11 +113,11 @@ class _NamesTabState extends State<NamesTab> {
       ),
     );
     if (ok != true) return;
-    final ok = await runMutation(
+    final removed = await runMutation(
       context,
       () => context.read<FunRepository>().deleteSuggestion(widget.baby.id, s.id),
     );
-    if (!ok) return;
+    if (!removed) return;
     await _load();
   }
 

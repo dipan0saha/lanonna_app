@@ -4,6 +4,8 @@ import 'package:lanonna/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/vote_count_pill.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
+import '../../../../core/time/app_date_time.dart';
+import '../../../fun/domain/gender_vote_display.dart';
 import '../../data/models/home_summary.dart';
 import 'home_scroll_section.dart';
 import 'home_section_trailing.dart';
@@ -22,10 +24,14 @@ class HomeFamilyInsightGenderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final totals = summary.genderTotals ?? const GenderTotals(male: 0, female: 0);
-    final total = totals.male + totals.female;
-    final boyPct = total > 0 ? ((totals.male / total) * 100).round() : 50;
+    final genderVotes = genderVoteDisplay(
+      maleVotes: totals.male,
+      femaleVotes: totals.female,
+    );
+    final total = genderVotes.total;
     final topName = summary.topName;
     final topDate = summary.topBirthdateGuess;
+    final locale = Localizations.localeOf(context).languageCode;
 
     return HomeScrollSection.bordered(
       title: 'Family Insight',
@@ -50,21 +56,35 @@ class HomeFamilyInsightGenderCard extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              Expanded(child: _voteBox('Boy', boyPct, totals.male)),
+              Expanded(
+                child: _voteBox(
+                  'Boy',
+                  genderVotes.displayPercentForMale(),
+                  totals.male,
+                ),
+              ),
               const SizedBox(width: 10),
-              Expanded(child: _voteBox('Girl', 100 - boyPct, totals.female)),
+              Expanded(
+                child: _voteBox(
+                  'Girl',
+                  genderVotes.displayPercentForFemale(),
+                  totals.female,
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: total > 0 ? totals.male / total : 0.5,
-              minHeight: 8,
-              backgroundColor: AppColors.peachTint,
-              color: AppColors.primaryDark,
+          if (genderVotes.maleProgress != null) ...[
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: genderVotes.maleProgress,
+                minHeight: 8,
+                backgroundColor: AppColors.peachTint,
+                color: AppColors.primaryDark,
+              ),
             ),
-          ),
+          ],
           if (topName != null && topName.suggestedName.isNotEmpty) ...[
             const Divider(height: 24),
             Row(
@@ -96,7 +116,10 @@ class HomeFamilyInsightGenderCard extends StatelessWidget {
                           color: AppColors.muted,
                         ),
                       ),
-                      Text(topDate, style: context.textStyles.titleSmall),
+                      Text(
+                        formatApiCalendarDate(topDate, locale),
+                        style: context.textStyles.titleSmall,
+                      ),
                     ],
                   ),
               ],

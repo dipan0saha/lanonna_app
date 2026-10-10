@@ -1,18 +1,19 @@
+import '../time/app_date_time.dart';
 import 'baby_summary.dart';
 
-String babyLifecycleSubtitle(BabySummary baby) {
+String babyLifecycleSubtitle(BabySummary baby, [String? localeName]) {
   if (baby.lifecycleStatus == 'born') {
-    final born = baby.actualBirthDate;
-    if (born != null && born.isNotEmpty) return 'Born $born';
+    final bornLabel = formatApiCalendarDate(baby.actualBirthDate, localeName);
+    if (bornLabel.isNotEmpty) return 'Born $bornLabel';
     return 'Born';
   }
-  final due = baby.expectedBirthDate;
-  if (due != null && due.isNotEmpty) return 'Due $due';
+  final dueLabel = formatApiCalendarDate(baby.expectedBirthDate, localeName);
+  if (dueLabel.isNotEmpty) return 'Due $dueLabel';
   return 'Expecting';
 }
 
-String babyListSubtitle(BabySummary baby) {
-  final lifecycle = babyLifecycleSubtitle(baby);
+String babyListSubtitle(BabySummary baby, [String? localeName]) {
+  final lifecycle = babyLifecycleSubtitle(baby, localeName);
   final label = baby.relationshipLabel?.trim();
   if (label != null && label.isNotEmpty) {
     return '$label · $lifecycle';

@@ -108,7 +108,12 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
                         ),
                       ),
                       title: Text(baby.name),
-                      subtitle: Text(babyListSubtitle(baby)),
+                      subtitle: Text(
+                        babyListSubtitle(
+                          baby,
+                          Localizations.localeOf(context).languageCode,
+                        ),
+                      ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [

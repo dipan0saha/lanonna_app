@@ -80,7 +80,10 @@ class _AccountScreenState extends State<AccountScreen> {
     return source[0].toUpperCase();
   }
 
-  String _babySubtitle(BabySummary baby) => babyListSubtitle(baby);
+  String _babySubtitle(BabySummary baby) => babyListSubtitle(
+        baby,
+        Localizations.localeOf(context).languageCode,
+      );
 
   Color _roleBadgeColor(String role) {
     return role == 'owner' ? AppColors.sageTint : AppColors.peachTint;

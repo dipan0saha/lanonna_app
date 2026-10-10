@@ -351,6 +351,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save'**
   String get funBirthdateConfirmAction;
+
+  /// No description provided for @rsvpStatusGoing.
+  ///
+  /// In en, this message translates to:
+  /// **'Going'**
+  String get rsvpStatusGoing;
+
+  /// No description provided for @rsvpStatusMaybe.
+  ///
+  /// In en, this message translates to:
+  /// **'Maybe'**
+  String get rsvpStatusMaybe;
+
+  /// No description provided for @rsvpStatusCantGo.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t go'**
+  String get rsvpStatusCantGo;
 }
 
 class _AppLocalizationsDelegate

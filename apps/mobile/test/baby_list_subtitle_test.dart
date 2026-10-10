@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/domain/baby_list_subtitle.dart';
 import 'package:lanonna/core/domain/baby_summary.dart';
+import 'package:lanonna/core/time/app_date_time.dart';
 
 void main() {
   test('babyListSubtitle prefixes relationship label', () {
@@ -12,7 +13,8 @@ void main() {
       expectedBirthDate: '2026-12-01',
       relationshipLabel: 'Mother',
     );
-    expect(babyListSubtitle(baby), 'Mother · Due 2026-12-01');
+    final due = formatApiCalendarDate('2026-12-01', 'en_US');
+    expect(babyListSubtitle(baby, 'en_US'), 'Mother · Due $due');
   });
 
   test('babyListSubtitle omits empty relationship label', () {
@@ -23,6 +25,7 @@ void main() {
       role: 'follower',
       expectedBirthDate: '2026-12-01',
     );
-    expect(babyListSubtitle(baby), 'Due 2026-12-01');
+    final due = formatApiCalendarDate('2026-12-01', 'en_US');
+    expect(babyListSubtitle(baby, 'en_US'), 'Due $due');
   });
 }

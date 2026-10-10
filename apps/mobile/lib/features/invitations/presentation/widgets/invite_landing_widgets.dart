@@ -40,7 +40,10 @@ class InviteBabyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final babyName = preview.babyName ?? 'Baby';
-    final subtitle = inviteBabyDateSubtitle(preview);
+    final subtitle = inviteBabyDateSubtitle(
+      preview,
+      Localizations.localeOf(context).languageCode,
+    );
     final text = context.textStyles;
     return Container(
       margin: const EdgeInsets.fromLTRB(22, 6, 22, 0),

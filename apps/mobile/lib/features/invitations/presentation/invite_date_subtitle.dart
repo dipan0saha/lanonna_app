@@ -1,32 +1,12 @@
+import '../../../core/time/app_date_time.dart';
 import '../data/models/invitation_preview.dart';
 
-const _months = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
-
-String _formatUsDate(String? raw) {
-  final dt = raw == null ? null : DateTime.tryParse(raw);
-  if (dt == null) return '';
-  return '${_months[dt.month - 1]} ${dt.day}, ${dt.year}';
-}
-
-String inviteBabyDateSubtitle(InvitationPreview preview) {
+String inviteBabyDateSubtitle(InvitationPreview preview, [String? localeName]) {
   if (preview.isBorn) {
-    final formatted = _formatUsDate(preview.actualBirthDate);
+    final formatted = formatApiCalendarDate(preview.actualBirthDate, localeName);
     return formatted.isEmpty ? 'Already here' : 'Born $formatted';
   }
-  final formatted = _formatUsDate(preview.expectedBirthDate);
+  final formatted = formatApiCalendarDate(preview.expectedBirthDate, localeName);
   return formatted.isEmpty ? 'On the way' : 'Arriving $formatted';
 }
 

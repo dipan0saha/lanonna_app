@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -20,6 +21,7 @@ import '../data/calendar_repository.dart';
 import '../data/models/calendar_models.dart';
 import '../domain/calendar_navigation.dart';
 import '../domain/calendar_routes.dart';
+import '../domain/rsvp_status_labels.dart';
 
 class EventDetailScreen extends StatefulWidget {
   const EventDetailScreen({super.key, required this.eventId});
@@ -34,6 +36,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   BabySummary? _baby;
   EventDetail? _detail;
   final _commentController = TextEditingController();
+  final _commentFocusNode = FocusNode();
   final _scrollController = ScrollController();
   var _initialLoadInFlight = true;
   CalendarRepository? _calendarRepo;
@@ -50,6 +53,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   void dispose() {
     _calendarRepo?.removeListener(_onCalendarRepositoryChanged);
     _scrollController.dispose();
+    _commentFocusNode.dispose();
     _commentController.dispose();
     super.dispose();
   }
@@ -59,11 +63,17 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     _refreshEventDetail();
   }
 
+  void _unfocusCommentComposer() {
+    _commentFocusNode.unfocus();
+    FocusManager.instance.primaryFocus?.unfocus();
+  }
+
   Future<void> _openEdit() async {
     final saved = await context.push<bool>(
       CalendarRoutes.eventEdit(widget.eventId),
     );
     if (saved == true && mounted) {
+      _unfocusCommentComposer();
       await _refreshEventDetail();
     }
   }
@@ -102,6 +112,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   Future<void> _refreshEventDetail({bool scrollToComments = false}) async {
     final baby = _baby;
     if (baby == null) return;
+    if (!scrollToComments) {
+      _unfocusCommentComposer();
+    }
     try {
       final detail = await context
           .read<CalendarRepository>()
@@ -147,23 +160,26 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   void _showRsvpSheet(EventDetail detail) {
     showModalBottomSheet<void>(
       context: context,
-      builder: (ctx) => SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            Text('RSVPs', style: Theme.of(ctx).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            if (detail.rsvpAttendees.isEmpty)
-              const Text('No RSVPs yet')
-            else
-              for (final a in detail.rsvpAttendees)
-                ListTile(
-                  title: Text(a.displayName),
-                  trailing: Text(a.status.replaceAll('_', ' ')),
-                ),
-          ],
-        ),
-      ),
+      builder: (ctx) {
+        final l10n = AppLocalizations.of(ctx)!;
+        return SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Text('RSVPs', style: Theme.of(ctx).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              if (detail.rsvpAttendees.isEmpty)
+                const Text('No RSVPs yet')
+              else
+                for (final a in detail.rsvpAttendees)
+                  ListTile(
+                    title: Text(a.displayName),
+                    trailing: Text(rsvpStatusLabel(l10n, a.status)),
+                  ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -474,6 +490,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     child: AppTextField(
                       kind: AppTextInputKind.prose,
                       controller: _commentController,
+                      focusNode: _commentFocusNode,
                       decoration: const InputDecoration(hintText: 'Add a comment…'),
                       onSubmitted: (_) => _addComment(),
                     ),

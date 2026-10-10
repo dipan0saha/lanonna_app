@@ -29,6 +29,20 @@ void main() {
     });
   });
 
+  group('formatApiCalendarDate', () {
+    test('formats YYYY-MM-DD for display', () {
+      final formatted = formatApiCalendarDate('2027-02-01', 'en_US');
+      expect(formatted, contains('2027'));
+      expect(formatted, isNot(contains('2027-02-01')));
+    });
+
+    test('returns empty for invalid input', () {
+      expect(formatApiCalendarDate(null), '');
+      expect(formatApiCalendarDate(''), '');
+      expect(formatApiCalendarDate('not-a-date'), '');
+    });
+  });
+
   group('home badge', () {
     test('day and month use local date', () {
       final instant = DateTime.parse('2026-10-21T01:22:00.000Z');
