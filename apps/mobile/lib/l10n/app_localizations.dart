@@ -424,6 +424,78 @@ abstract class AppLocalizations {
   /// **'Check your email for a password reset link.'**
   String get authPasswordResetSent;
 
+  /// No description provided for @authErrorIncorrectCredentials.
+  ///
+  /// In en, this message translates to:
+  /// **'Incorrect email or password. Try again or reset your password.'**
+  String get authErrorIncorrectCredentials;
+
+  /// No description provided for @authErrorInvalidEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address.'**
+  String get authErrorInvalidEmail;
+
+  /// No description provided for @authErrorUserDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'This account has been disabled. Contact support for help.'**
+  String get authErrorUserDisabled;
+
+  /// No description provided for @authErrorEmailAlreadyInUse.
+  ///
+  /// In en, this message translates to:
+  /// **'An account already exists with this email. Sign in instead.'**
+  String get authErrorEmailAlreadyInUse;
+
+  /// No description provided for @authErrorWeakPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a stronger password (at least 6 characters).'**
+  String get authErrorWeakPassword;
+
+  /// No description provided for @authErrorTooManyRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many attempts. Wait a few minutes and try again.'**
+  String get authErrorTooManyRequests;
+
+  /// No description provided for @authErrorNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Network error. Check your connection and try again.'**
+  String get authErrorNetwork;
+
+  /// No description provided for @authErrorOperationNotAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'This sign-in method isn\'t available. Try email and password.'**
+  String get authErrorOperationNotAllowed;
+
+  /// No description provided for @authErrorAccountExistsDifferentCredential.
+  ///
+  /// In en, this message translates to:
+  /// **'An account already exists with a different sign-in method. Try email and password.'**
+  String get authErrorAccountExistsDifferentCredential;
+
+  /// No description provided for @authErrorPasswordResetIfAccountExists.
+  ///
+  /// In en, this message translates to:
+  /// **'If an account exists for this email, you\'ll receive a password reset link.'**
+  String get authErrorPasswordResetIfAccountExists;
+
+  /// No description provided for @authErrorGenericSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not sign in. Please try again.'**
+  String get authErrorGenericSignIn;
+
+  /// No description provided for @authErrorGenericSignUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not create your account. Please try again.'**
+  String get authErrorGenericSignUp;
+
   /// No description provided for @memberRemoveConfirmTitle.
   ///
   /// In en, this message translates to:

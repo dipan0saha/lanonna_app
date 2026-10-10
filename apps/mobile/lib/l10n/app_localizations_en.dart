@@ -245,6 +245,52 @@ class AppLocalizationsEn extends AppLocalizations {
       'Check your email for a password reset link.';
 
   @override
+  String get authErrorIncorrectCredentials =>
+      'Incorrect email or password. Try again or reset your password.';
+
+  @override
+  String get authErrorInvalidEmail => 'Enter a valid email address.';
+
+  @override
+  String get authErrorUserDisabled =>
+      'This account has been disabled. Contact support for help.';
+
+  @override
+  String get authErrorEmailAlreadyInUse =>
+      'An account already exists with this email. Sign in instead.';
+
+  @override
+  String get authErrorWeakPassword =>
+      'Choose a stronger password (at least 6 characters).';
+
+  @override
+  String get authErrorTooManyRequests =>
+      'Too many attempts. Wait a few minutes and try again.';
+
+  @override
+  String get authErrorNetwork =>
+      'Network error. Check your connection and try again.';
+
+  @override
+  String get authErrorOperationNotAllowed =>
+      'This sign-in method isn\'t available. Try email and password.';
+
+  @override
+  String get authErrorAccountExistsDifferentCredential =>
+      'An account already exists with a different sign-in method. Try email and password.';
+
+  @override
+  String get authErrorPasswordResetIfAccountExists =>
+      'If an account exists for this email, you\'ll receive a password reset link.';
+
+  @override
+  String get authErrorGenericSignIn => 'Could not sign in. Please try again.';
+
+  @override
+  String get authErrorGenericSignUp =>
+      'Could not create your account. Please try again.';
+
+  @override
   String get memberRemoveConfirmTitle => 'Remove from family?';
 
   @override

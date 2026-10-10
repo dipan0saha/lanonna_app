@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/api/api_error_message.dart';
+import '../../../../core/auth/auth_error_message.dart';
 import '../../../../core/auth/auth_repository.dart';
 import '../../../../core/validation/form_validators.dart';
 import '../../../../core/widgets/app_snackbar.dart';
@@ -110,7 +111,10 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
       if (!mounted) return;
       await navigateAfterOnboardingAuth(context, isSignUp: false, usedOAuth: false);
     } on FirebaseAuthException catch (e) {
-      setState(() => _error = e.message ?? e.code);
+      final l10n = AppLocalizations.of(context)!;
+      setState(
+        () => _error = authErrorMessage(e, l10n, flow: AuthFlow.signIn),
+      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -134,7 +138,9 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
       if (!mounted) return;
       AppSnackBar.showInfo(context, l10n.authPasswordResetSent);
     } on FirebaseAuthException catch (e) {
-      setState(() => _error = e.message ?? e.code);
+      setState(
+        () => _error = authErrorMessage(e, l10n, flow: AuthFlow.passwordReset),
+      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -150,7 +156,10 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
       if (!mounted) return;
       await navigateAfterOnboardingAuth(context, isSignUp: false, usedOAuth: true);
     } on FirebaseAuthException catch (e) {
-      setState(() => _error = e.message ?? e.code);
+      final l10n = AppLocalizations.of(context)!;
+      setState(
+        () => _error = authErrorMessage(e, l10n, flow: AuthFlow.signIn),
+      );
     } catch (e) {
       final msg = apiErrorMessage(e);
       if (msg.contains('ApiException: 10') || msg.contains('DEVELOPER_ERROR')) {

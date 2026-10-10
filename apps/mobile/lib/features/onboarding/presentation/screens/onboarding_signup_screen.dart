@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/api/api_error_message.dart';
+import '../../../../core/auth/auth_error_message.dart';
 import '../../../../core/auth/auth_repository.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../core/validation/form_validators.dart';
 import '../../data/onboarding_form_drafts.dart';
 import '../../domain/onboarding_path.dart';
@@ -100,7 +102,10 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
       if (!mounted) return;
       await navigateAfterOnboardingAuth(context, isSignUp: true, usedOAuth: false);
     } on FirebaseAuthException catch (e) {
-      setState(() => _error = e.message ?? e.code);
+      final l10n = AppLocalizations.of(context)!;
+      setState(
+        () => _error = authErrorMessage(e, l10n, flow: AuthFlow.signUp),
+      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -115,6 +120,11 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
       await context.read<AuthRepository>().signInWithGoogle();
       if (!mounted) return;
       await navigateAfterOnboardingAuth(context, isSignUp: true, usedOAuth: true);
+    } on FirebaseAuthException catch (e) {
+      final l10n = AppLocalizations.of(context)!;
+      setState(
+        () => _error = authErrorMessage(e, l10n, flow: AuthFlow.signUp),
+      );
     } catch (e) {
       setState(() => _error = apiErrorMessage(e));
     } finally {
