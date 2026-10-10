@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/time/app_date_time.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
@@ -56,7 +57,12 @@ Future<void> showAnnounceArrivalSheet(
                       setState(() => selected = onboardingDateAtMidnight(picked));
                     }
                   },
-                  child: Text(formatApiBirthDate(selected)),
+                  child: Text(
+                    formatApiCalendarDateFromParts(
+                      selected,
+                      localeNameForFormatting(context),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 OnboardingPrimaryButton(

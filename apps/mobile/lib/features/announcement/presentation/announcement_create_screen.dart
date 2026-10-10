@@ -12,6 +12,7 @@ import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/widgets/app_labeled_text_field.dart';
 import '../../../core/api/display_photo_upload.dart';
+import '../../../core/time/app_date_time.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
@@ -99,10 +100,17 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
     if (picked != null) setState(() => _birthTime = picked);
   }
 
-  String? _formatBirthDate() {
+  String? _birthDateForApi() {
     if (_birthDate == null) return null;
-    final d = _birthDate!;
-    return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+    return toApiCalendarDate(_birthDate!);
+  }
+
+  String? _birthDateDisplay(BuildContext context) {
+    if (_birthDate == null) return null;
+    return formatApiCalendarDateFromParts(
+      _birthDate!,
+      localeNameForFormatting(context),
+    );
   }
 
   String? _formatBirthTime() {
@@ -146,7 +154,7 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
         firstName: firstName,
         lastName: lastName.isEmpty ? null : lastName,
         gender: _gender,
-        birthDate: _formatBirthDate(),
+        birthDate: _birthDateForApi(),
         birthTime: _formatBirthTime(),
         weightText: weightText.isEmpty ? null : weightText,
         lengthText: lengthText.isEmpty ? null : lengthText,
@@ -231,7 +239,7 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
           ListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Date of birth'),
-            subtitle: Text(_formatBirthDate() ?? 'Tap to choose'),
+            subtitle: Text(_birthDateDisplay(context) ?? 'Tap to choose'),
             trailing: const Icon(Icons.calendar_today_outlined, size: 20),
             onTap: _pickDate,
           ),

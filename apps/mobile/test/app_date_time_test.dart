@@ -29,6 +29,12 @@ void main() {
     });
   });
 
+  group('toApiCalendarDate', () {
+    test('serializes calendar day as YYYY-MM-DD', () {
+      expect(toApiCalendarDate(DateTime(1990, 4, 12)), '1990-04-12');
+    });
+  });
+
   group('formatApiCalendarDate', () {
     test('formats YYYY-MM-DD for display', () {
       final formatted = formatApiCalendarDate('2027-02-01', 'en_US');

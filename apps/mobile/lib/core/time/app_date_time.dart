@@ -89,3 +89,10 @@ String formatApiCalendarDate(String? raw, [String? localeName]) {
   if (dt == null) return '';
   return formatApiCalendarDateFromParts(dt, localeName);
 }
+
+/// Serialize a calendar date for API fields (`YYYY-MM-DD`). Not for UI display.
+String toApiCalendarDate(DateTime date) {
+  return '${date.year.toString().padLeft(4, '0')}-'
+      '${date.month.toString().padLeft(2, '0')}-'
+      '${date.day.toString().padLeft(2, '0')}';
+}

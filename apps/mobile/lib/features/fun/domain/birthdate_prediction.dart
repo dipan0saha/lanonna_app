@@ -10,9 +10,7 @@ DateTime? parseBirthdateGuessIso(String? iso) {
   return tryParseApiCalendarDate(iso);
 }
 
-String birthdateGuessIso(DateTime date) {
-  return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-}
+String birthdateGuessIso(DateTime date) => toApiCalendarDate(date);
 
 /// API payload: explicit calendar selection only (never profile due date).
 DateTime? birthdateGuessToSubmit({required DateTime? pendingSelection}) =>

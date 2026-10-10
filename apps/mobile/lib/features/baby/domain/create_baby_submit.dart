@@ -8,6 +8,7 @@ import '../../../core/api/api_client.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/api/display_photo_upload.dart';
 import '../../../core/domain/baby_summary.dart';
+import '../../../core/time/app_date_time.dart';
 import '../../gallery/domain/gallery_refresh.dart';
 import '../../gallery/presentation/upload/run_gallery_photo_upload.dart';
 import '../../home/data/home_repository.dart';
@@ -75,10 +76,10 @@ Future<BabySummary> submitCreateBaby({
   );
 
   final expected = input.status == BabyLifecycle.expecting && input.selectedDate != null
-      ? formatApiDate(input.selectedDate!)
+      ? toApiCalendarDate(input.selectedDate!)
       : null;
   final actual = input.status == BabyLifecycle.born && input.selectedDate != null
-      ? formatApiDate(input.selectedDate!)
+      ? toApiCalendarDate(input.selectedDate!)
       : null;
 
   final profileNameSuggestions = expectingProfileNameSuggestionsForFun(

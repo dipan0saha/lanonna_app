@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/media/cached_signed_image.dart';
+import '../../../../core/time/app_date_time.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../data/announcement_repository.dart';
@@ -72,7 +73,13 @@ class AnnouncementKeepsakeCard extends StatelessWidget {
             ),
           const SizedBox(height: 12),
           if (d.birthDate != null)
-            Text(d.birthDate!, style: context.textStyles.bodySmall),
+            Text(
+              formatApiCalendarDate(
+                d.birthDate,
+                localeNameForFormatting(context),
+              ),
+              style: context.textStyles.bodySmall,
+            ),
         ],
       ),
     );

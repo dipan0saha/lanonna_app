@@ -18,7 +18,7 @@ import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../home/data/home_repository.dart';
 import '../../../core/domain/baby_summary.dart';
-import '../../onboarding/presentation/utils/onboarding_baby_helpers.dart';
+import '../../../core/time/app_date_time.dart';
 import '../../onboarding/presentation/widgets/onboarding_prototype_widgets.dart';
 import '../../onboarding/presentation/widgets/onboarding_typography.dart';
 
@@ -93,7 +93,7 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
     if (name.isEmpty) return;
     setState(() => _saving = true);
     try {
-      final dateIso = _date != null ? formatApiDate(_date!) : null;
+      final dateIso = _date != null ? toApiCalendarDate(_date!) : null;
       String? avatarUrl = _networkAvatarUrl;
       if (_photoFile != null && !kIsWeb) {
         avatarUrl = await DisplayPhotoUpload(context.read<ApiClient>()).uploadBabyAvatar(
@@ -179,7 +179,14 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
           ),
           ListTile(
             title: Text(_isBorn ? 'Date of birth' : 'Expected due date'),
-            subtitle: Text(_date != null ? formatApiDate(_date!) : 'Tap to choose'),
+            subtitle: Text(
+              _date != null
+                  ? formatApiCalendarDateFromParts(
+                      _date!,
+                      localeNameForFormatting(context),
+                    )
+                  : 'Tap to choose',
+            ),
             trailing: const Icon(Icons.calendar_today_outlined, size: 20),
             onTap: _pickDate,
           ),

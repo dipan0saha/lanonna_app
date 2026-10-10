@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+import '../../../../core/time/app_date_time.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/media/cached_signed_image.dart';
@@ -375,7 +377,10 @@ class PrototypeDateField extends StatelessWidget {
   Widget build(BuildContext context) {
     final display = value == null
         ? placeholder
-        : '${value!.year}-${value!.month.toString().padLeft(2, '0')}-${value!.day.toString().padLeft(2, '0')}';
+        : formatApiCalendarDateFromParts(
+            value!,
+            localeNameForFormatting(context),
+          );
     final brand = context.brand;
     final fieldText = context.textStyles.bodyMedium?.copyWith(
       fontSize: 14,

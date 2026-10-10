@@ -13,6 +13,7 @@ import '../../../../core/api/api_error_message.dart';
 import '../../../../core/data/iso_countries.dart';
 import '../../../../core/input/app_text_input_kind.dart';
 import '../../../../core/api/display_photo_upload.dart';
+import '../../../../core/time/app_date_time.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../../../core/widgets/app_country_dropdown_field.dart';
@@ -227,9 +228,17 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
     await _persistDraft();
   }
 
-  String? _birthDateLabel() {
+  String? _birthDateForApi() {
     if (_birthDate == null) return null;
-    return '${_birthDate!.year}-${_birthDate!.month.toString().padLeft(2, '0')}-${_birthDate!.day.toString().padLeft(2, '0')}';
+    return toApiCalendarDate(_birthDate!);
+  }
+
+  String? _birthDateDisplay(BuildContext context) {
+    if (_birthDate == null) return null;
+    return formatApiCalendarDateFromParts(
+      _birthDate!,
+      localeNameForFormatting(context),
+    );
   }
 
   Future<void> _continue() async {
@@ -268,7 +277,7 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
             displayName: displayName,
             avatarUrl: avatarUrl,
             phone: _phoneController.text.trim(),
-            birthDate: _birthDateLabel(),
+            birthDate: _birthDateForApi(),
             countryCode: _countryCode,
             postalCode: _postalController.text.trim(),
             acceptTerms: true,
@@ -417,7 +426,7 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
                   suffixIcon: Icon(Icons.calendar_today_outlined, size: 18),
                 ),
                 child: Text(
-                  _birthDateLabel() ?? 'Select a date',
+                  _birthDateDisplay(context) ?? 'Select a date',
                   style: text.bodyMedium?.copyWith(
                     color: _birthDate == null ? AppColors.muted : null,
                   ),

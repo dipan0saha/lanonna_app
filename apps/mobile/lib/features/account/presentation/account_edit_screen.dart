@@ -14,6 +14,7 @@ import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/widgets/app_country_dropdown_field.dart';
 import '../../../core/widgets/app_labeled_text_field.dart';
 import '../../../core/api/display_photo_upload.dart';
+import '../../../core/time/app_date_time.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../onboarding/presentation/widgets/onboarding_prototype_widgets.dart';
@@ -103,8 +104,15 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
 
   String? _birthDateApi() {
     if (_birthDate == null) return null;
-    final d = _birthDate!;
-    return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+    return toApiCalendarDate(_birthDate!);
+  }
+
+  String? _birthDateDisplay(BuildContext context) {
+    if (_birthDate == null) return null;
+    return formatApiCalendarDateFromParts(
+      _birthDate!,
+      localeNameForFormatting(context),
+    );
   }
 
   Future<void> _save() async {
@@ -191,7 +199,7 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Date of birth (optional)'),
-              subtitle: Text(_birthDateApi() ?? 'Select a date'),
+              subtitle: Text(_birthDateDisplay(context) ?? 'Select a date'),
               trailing: const Icon(Icons.calendar_today_outlined),
               onTap: _saving ? null : _pickBirthDate,
             ),
