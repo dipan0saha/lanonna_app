@@ -4,6 +4,7 @@ import logging
 
 from fastapi import HTTPException, status
 
+from lanonna_api.domain.auth_session import UserDeletedError
 from lanonna_api.request_context import get_request_id
 
 logger = logging.getLogger("lanonna.api.errors")
@@ -19,6 +20,14 @@ def internal_error_detail() -> str:
 
 
 def map_domain_errors(exc: Exception) -> HTTPException:
+    if isinstance(exc, UserDeletedError):
+        return HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "error": "user_deleted",
+                "message": "This account was deleted.",
+            },
+        )
     if isinstance(exc, PermissionError):
         return HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc))
     if isinstance(exc, LookupError):

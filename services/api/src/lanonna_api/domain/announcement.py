@@ -5,6 +5,10 @@ from datetime import date
 from typing import Any
 
 from lanonna_api.config import settings
+from lanonna_api.domain.announcement_validation import (
+    merge_announcement_patch,
+    validate_announcement_fields,
+)
 from lanonna_api.domain.gallery import require_membership
 from lanonna_api.domain.membership import assert_owner_membership
 from lanonna_api.repositories.photos import get_photo_for_baby
@@ -71,7 +75,7 @@ def fetch_announcement(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[st
     return _serialize(ann, comments)
 
 
-def save_announcement(
+def _persist_announcement(
     firebase_uid: str,
     baby_profile_id: uuid.UUID,
     *,
@@ -84,7 +88,11 @@ def save_announcement(
     length_text: str | None,
     photo_id: uuid.UUID | None,
 ) -> dict[str, Any]:
-    assert_owner_membership(firebase_uid, baby_profile_id)
+    validate_announcement_fields(
+        gender=gender,
+        birth_date=birth_date,
+        birth_time=birth_time,
+    )
     ann = upsert_announcement(
         baby_profile_id,
         firebase_uid,
@@ -99,6 +107,56 @@ def save_announcement(
     )
     comments = list_comments(ann["id"])
     return _serialize(ann, comments)
+
+
+def save_announcement(
+    firebase_uid: str,
+    baby_profile_id: uuid.UUID,
+    *,
+    first_name: str | None,
+    last_name: str | None,
+    gender: str | None,
+    birth_date: date | None,
+    birth_time: str | None,
+    weight_text: str | None,
+    length_text: str | None,
+    photo_id: uuid.UUID | None,
+) -> dict[str, Any]:
+    assert_owner_membership(firebase_uid, baby_profile_id)
+    return _persist_announcement(
+        firebase_uid,
+        baby_profile_id,
+        first_name=first_name,
+        last_name=last_name,
+        gender=gender,
+        birth_date=birth_date,
+        birth_time=birth_time,
+        weight_text=weight_text,
+        length_text=length_text,
+        photo_id=photo_id,
+    )
+
+
+def patch_announcement(
+    firebase_uid: str,
+    baby_profile_id: uuid.UUID,
+    fields: dict[str, Any],
+) -> dict[str, Any]:
+    assert_owner_membership(firebase_uid, baby_profile_id)
+    existing = get_announcement(baby_profile_id) or {}
+    merged = merge_announcement_patch(existing, fields)
+    return _persist_announcement(
+        firebase_uid,
+        baby_profile_id,
+        first_name=merged.get("first_name"),
+        last_name=merged.get("last_name"),
+        gender=merged.get("gender"),
+        birth_date=merged.get("birth_date"),
+        birth_time=merged.get("birth_time"),
+        weight_text=merged.get("weight_text"),
+        length_text=merged.get("length_text"),
+        photo_id=merged.get("photo_id"),
+    )
 
 
 def squish_announcement(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, Any]:

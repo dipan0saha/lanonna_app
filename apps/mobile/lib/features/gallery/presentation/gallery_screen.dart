@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_error_message.dart';
+import '../../../core/widgets/async_tab_body.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_semantics.dart';
 import 'upload/run_gallery_photo_upload.dart';
@@ -251,7 +252,12 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
               )
             else if (_error != null)
               SliverFillRemaining(
-                child: Center(child: Text(_error!)),
+                child: AsyncTabBody(
+                  loading: false,
+                  error: _error,
+                  onRetry: _load,
+                  child: const SizedBox.shrink(),
+                ),
               )
             else if (_photos.isEmpty)
               SliverFillRemaining(

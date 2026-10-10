@@ -56,17 +56,29 @@ def put_announcement(
 ) -> dict[str, Any]:
     upsert_app_user(user["uid"], user.get("email"))
     try:
-        return announcement_domain.save_announcement(
+        fields = body.model_dump(exclude_unset=True)
+        return announcement_domain.patch_announcement(
             user["uid"],
             baby_profile_id,
-            first_name=body.first_name,
-            last_name=body.last_name,
-            gender=body.gender,
-            birth_date=body.birth_date,
-            birth_time=body.birth_time,
-            weight_text=body.weight_text,
-            length_text=body.length_text,
-            photo_id=body.photo_id,
+            fields,
+        )
+    except Exception as exc:
+        raise map_domain_errors(exc) from exc
+
+
+@router.patch("")
+def patch_announcement_route(
+    baby_profile_id: uuid.UUID,
+    body: AnnouncementBody,
+    user: dict[str, Any] = Depends(current_user),
+) -> dict[str, Any]:
+    upsert_app_user(user["uid"], user.get("email"))
+    try:
+        fields = body.model_dump(exclude_unset=True)
+        return announcement_domain.patch_announcement(
+            user["uid"],
+            baby_profile_id,
+            fields,
         )
     except Exception as exc:
         raise map_domain_errors(exc) from exc

@@ -3,6 +3,7 @@ import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
+import '../../../core/widgets/async_tab_body.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_semantics.dart';
@@ -29,6 +30,7 @@ class PredictionsTab extends StatefulWidget {
 class _PredictionsTabState extends State<PredictionsTab> {
   PredictionsPayload? _payload;
   var _loading = true;
+  String? _error;
   late DateTime _visibleMonth;
   DateTime? _pendingGuess;
 
@@ -41,7 +43,10 @@ class _PredictionsTabState extends State<PredictionsTab> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final payload = await context
           .read<FunRepository>()
@@ -57,8 +62,12 @@ class _PredictionsTabState extends State<PredictionsTab> {
         );
         _pendingGuess = null;
       });
-    } catch (_) {
-      if (mounted) setState(() => _loading = false);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = apiErrorMessage(e);
+      });
     }
   }
 
@@ -174,9 +183,15 @@ class _PredictionsTabState extends State<PredictionsTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    return AsyncTabBody(
+      loading: _loading,
+      error: _error,
+      onRetry: _load,
+      child: _buildContent(context),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final locale = Localizations.localeOf(context).languageCode;
     final p = _payload;

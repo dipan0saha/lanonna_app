@@ -8,6 +8,9 @@ import 'api_exception.dart';
 typedef IdTokenProvider = Future<String?> Function();
 typedef AppCheckTokenProvider = Future<String?> Function();
 
+/// Invoked when the API rejects the session (e.g. deleted account, NFR-DATA-001).
+typedef ApiSessionInvalidatedHandler = Future<void> Function(ApiException exception);
+
 String formatApiErrorDetail(Object? detail) {
   if (detail == null) return '';
   if (detail is String) return detail;
@@ -32,13 +35,16 @@ class ApiClient {
   ApiClient({
     required IdTokenProvider idTokenProvider,
     AppCheckTokenProvider? appCheckTokenProvider,
+    ApiSessionInvalidatedHandler? onSessionInvalidated,
     http.Client? httpClient,
   })  : _idTokenProvider = idTokenProvider,
         _appCheckTokenProvider = appCheckTokenProvider,
+        _onSessionInvalidated = onSessionInvalidated,
         _http = httpClient ?? http.Client();
 
   final IdTokenProvider _idTokenProvider;
   final AppCheckTokenProvider? _appCheckTokenProvider;
+  final ApiSessionInvalidatedHandler? _onSessionInvalidated;
   final http.Client _http;
 
   Future<Map<String, dynamic>> getJson(String path) async {
@@ -153,7 +159,17 @@ class ApiClient {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return response;
     }
-    throw _apiExceptionFromResponse(response);
+    return _failAuthorizedResponse(response);
+  }
+
+  Future<http.Response> _failAuthorizedResponse(http.Response response) async {
+    final exception = _apiExceptionFromResponse(response);
+    if (exception.statusCode == 401 &&
+        exception.detail?['error'] == 'user_deleted' &&
+        _onSessionInvalidated != null) {
+      await _onSessionInvalidated(exception);
+    }
+    throw exception;
   }
 
   ApiException _apiExceptionFromResponse(http.Response response) {

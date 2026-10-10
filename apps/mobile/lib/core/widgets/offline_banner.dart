@@ -10,7 +10,9 @@ class OfflineBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: AppColors.peachTint,
-      child: Padding(
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Text(
           "You're offline - showing saved content",
@@ -19,6 +21,7 @@ class OfflineBanner extends StatelessWidget {
             color: context.brand.ownerBadgeText,
           ),
           textAlign: TextAlign.center,
+        ),
         ),
       ),
     );

@@ -73,7 +73,7 @@ class AnnouncementRepository {
     String? lengthText,
     String? photoId,
   }) async {
-    final json = await _api.putJson('/v1/babies/$babyId/announcement', body: {
+    final json = await _api.patchJson('/v1/babies/$babyId/announcement', body: {
       'first_name': firstName,
       'last_name': lastName,
       'gender': gender,

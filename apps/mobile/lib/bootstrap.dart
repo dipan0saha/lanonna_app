@@ -9,6 +9,7 @@ import 'core/deep_links/app_link_bootstrap.dart';
 import 'core/deep_links/auth_action_app_link.dart';
 import 'core/deep_links/invite_app_link.dart';
 import 'core/auth/auth_repository.dart';
+import 'core/auth/user_deleted_session_handler.dart';
 import 'core/network/connectivity_service.dart';
 import 'core/router/router_refresh.dart';
 import 'features/account/data/account_repository.dart';
@@ -46,9 +47,14 @@ Future<Widget> bootstrapLaNonnaApp() async {
   final onboardingStorage = await OnboardingStorage.create();
   final prefs = onboardingStorage.sharedPreferences;
   final authRepository = AuthRepository();
+  late final OnboardingCoordinator coordinator;
   final apiClient = ApiClient(
     idTokenProvider: authRepository.getIdToken,
     appCheckTokenProvider: appCheckTokenForApi,
+    onSessionInvalidated: (_) => handleUserDeletedSession(
+      authRepository: authRepository,
+      coordinator: coordinator,
+    ),
   );
   final onboardingRepository = OnboardingRepository(apiClient);
   final homeRepository = HomeRepository(apiClient);
@@ -61,7 +67,7 @@ Future<Widget> bootstrapLaNonnaApp() async {
   final announcementRepository = AnnouncementRepository(apiClient);
   final invitationsRepository = InvitationsRepository(apiClient);
   final searchRepository = SearchRepository(apiClient);
-  final coordinator = OnboardingCoordinator(
+  coordinator = OnboardingCoordinator(
     storage: onboardingStorage,
     repository: onboardingRepository,
   );

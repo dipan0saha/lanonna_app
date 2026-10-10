@@ -6,6 +6,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from lanonna_api.config import settings
+from lanonna_api.domain.auth_session import UserDeletedError, assert_active_user
 
 _bearer = HTTPBearer(auto_error=False)
 _app_initialized = False
@@ -58,4 +59,15 @@ async def current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authorization bearer token required",
         )
-    return verify_firebase_token(credentials.credentials)
+    claims = verify_firebase_token(credentials.credentials)
+    try:
+        assert_active_user(claims["uid"])
+    except UserDeletedError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "error": "user_deleted",
+                "message": "This account was deleted.",
+            },
+        ) from None
+    return claims

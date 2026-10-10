@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
+import '../../../core/widgets/async_tab_body.dart';
 import '../../../core/api/run_mutation.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/validation/form_validators.dart';
-import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_text_form_field.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/la_nonna_theme.dart';
@@ -28,6 +28,7 @@ class _NamesTabState extends State<NamesTab> {
   final _input = TextEditingController();
   var _gender = 'male';
   var _loading = true;
+  String? _error;
   var _validateSuggestOnInteraction = false;
 
   bool get _isOwner => widget.baby.role == 'owner';
@@ -45,7 +46,10 @@ class _NamesTabState extends State<NamesTab> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final payload =
           await context.read<FunRepository>().fetchNames(widget.baby.id);
@@ -54,10 +58,11 @@ class _NamesTabState extends State<NamesTab> {
         _loading = false;
       });
     } catch (e) {
-      if (mounted) {
-        AppSnackBar.showAlert(context, apiErrorMessage(e));
-      }
-      setState(() => _loading = false);
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = apiErrorMessage(e);
+      });
     }
   }
 
@@ -123,9 +128,15 @@ class _NamesTabState extends State<NamesTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    return AsyncTabBody(
+      loading: _loading,
+      error: _error,
+      onRetry: _load,
+      child: _buildContent(context),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
     final payload = _payload;
     final suggestions = payload?.suggestions ?? [];
     if (suggestions.isEmpty) {

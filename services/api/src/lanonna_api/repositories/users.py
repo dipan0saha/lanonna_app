@@ -25,10 +25,20 @@ def upsert_app_user(firebase_uid: str, email: str | None) -> dict[str, Any]:
             ON CONFLICT (firebase_uid) DO UPDATE
               SET email = EXCLUDED.email,
                   updated_at = now()
+              WHERE app_users.deleted_at IS NULL
             RETURNING {_PROFILE_COLUMNS}
             """,
             (firebase_uid, email),
         ).fetchone()
+        if row is None:
+            row = conn.execute(
+                f"""
+                SELECT {_PROFILE_COLUMNS}
+                FROM app_users
+                WHERE firebase_uid = %s
+                """,
+                (firebase_uid,),
+            ).fetchone()
     if row is None:
         raise RuntimeError("upsert_app_user returned no row")
     return dict(row)
@@ -105,6 +115,20 @@ def get_app_user(firebase_uid: str) -> dict[str, Any] | None:
         row = conn.execute(
             f"""
             SELECT {_PROFILE_COLUMNS}
+            FROM app_users
+            WHERE firebase_uid = %s
+              AND deleted_at IS NULL
+            """,
+            (firebase_uid,),
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def get_app_user_including_tombstone(firebase_uid: str) -> dict[str, Any] | None:
+    with get_connection() as conn:
+        row = conn.execute(
+            """
+            SELECT firebase_uid, deleted_at
             FROM app_users
             WHERE firebase_uid = %s
             """,
