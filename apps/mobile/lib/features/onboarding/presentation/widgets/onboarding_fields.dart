@@ -73,6 +73,172 @@ class OnboardingTextField extends StatelessWidget {
   }
 }
 
+/// Terms acceptance inside a [Form] (revalidates on user interaction).
+class OnboardingTermsFormField extends StatefulWidget {
+  const OnboardingTermsFormField({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    required this.onTermsTap,
+    required this.onPrivacyTap,
+    this.validator,
+    this.autovalidateMode = AutovalidateMode.disabled,
+    this.enabled = true,
+  });
+
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  final VoidCallback onTermsTap;
+  final VoidCallback onPrivacyTap;
+  final FormFieldValidator<bool>? validator;
+  final AutovalidateMode autovalidateMode;
+  final bool enabled;
+
+  @override
+  State<OnboardingTermsFormField> createState() => _OnboardingTermsFormFieldState();
+}
+
+class _OnboardingTermsFormFieldState extends State<OnboardingTermsFormField> {
+  final _fieldKey = GlobalKey<FormFieldState<bool>>();
+
+  @override
+  void didUpdateWidget(OnboardingTermsFormField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final field = _fieldKey.currentState;
+    if (oldWidget.value != widget.value &&
+        field != null &&
+        !field.hasInteractedByUser) {
+      field.didChange(widget.value);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FormField<bool>(
+      key: _fieldKey,
+      initialValue: widget.value,
+      validator: widget.validator,
+      autovalidateMode: widget.autovalidateMode,
+      builder: (field) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            OnboardingTermsAgreementCheckbox(
+              value: widget.value,
+              onChanged: widget.enabled
+                  ? (v) {
+                      final accepted = v ?? false;
+                      final hadError = field.hasError;
+                      field.didChange(accepted);
+                      widget.onChanged(accepted);
+                      if (hadError) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          field.validate();
+                        });
+                      }
+                    }
+                  : null,
+              onTermsTap: widget.onTermsTap,
+              onPrivacyTap: widget.onPrivacyTap,
+            ),
+            if (field.hasError) ...[
+              const SizedBox(height: 4),
+              Text(
+                field.errorText!,
+                style: TextStyle(color: Theme.of(field.context).colorScheme.error),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Mother/Father pill select inside a [Form].
+class OnboardingRelationshipFormField extends StatefulWidget {
+  const OnboardingRelationshipFormField({
+    super.key,
+    required this.value,
+    required this.onSelected,
+    this.validator,
+    this.autovalidateMode = AutovalidateMode.disabled,
+  });
+
+  final String? value;
+  final ValueChanged<String> onSelected;
+  final FormFieldValidator<String>? validator;
+  final AutovalidateMode autovalidateMode;
+
+  @override
+  State<OnboardingRelationshipFormField> createState() =>
+      _OnboardingRelationshipFormFieldState();
+}
+
+class _OnboardingRelationshipFormFieldState extends State<OnboardingRelationshipFormField> {
+  final _fieldKey = GlobalKey<FormFieldState<String>>();
+
+  @override
+  void didUpdateWidget(OnboardingRelationshipFormField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final field = _fieldKey.currentState;
+    if (oldWidget.value != widget.value &&
+        field != null &&
+        !field.hasInteractedByUser) {
+      field.didChange(widget.value);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FormField<String>(
+      key: _fieldKey,
+      initialValue: widget.value,
+      validator: widget.validator,
+      autovalidateMode: widget.autovalidateMode,
+      builder: (field) {
+        final relationshipIndex = widget.value == 'Father'
+            ? 1
+            : (widget.value == 'Mother' ? 0 : null);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const OnboardingFieldLabel('Your relationship to baby'),
+            const SizedBox(height: 8),
+            OnboardingPillSelect(
+              options: const ['Mother', 'Father'],
+              selectedIndex: relationshipIndex,
+              selectedStyleForIndex: (_) => const OnboardingPillSelectedStyle(
+                background: AppColors.sageTint,
+                border: AppColors.primaryDark,
+                foreground: AppColors.primaryDark,
+              ),
+              onSelected: (index) {
+                final label = index == 0 ? 'Mother' : 'Father';
+                final hadError = field.hasError;
+                field.didChange(label);
+                widget.onSelected(label);
+                if (hadError) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    field.validate();
+                  });
+                }
+              },
+            ),
+            if (field.hasError) ...[
+              const SizedBox(height: 4),
+              Text(
+                field.errorText!,
+                style: TextStyle(color: Theme.of(field.context).colorScheme.error),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
 /// Terms checkbox with tappable legal links (not inside [CheckboxListTile] title).
 class OnboardingTermsAgreementCheckbox extends StatelessWidget {
   const OnboardingTermsAgreementCheckbox({

@@ -37,4 +37,16 @@ void main() {
     expect(validateCountryCode(null), isNotNull);
     expect(validateCountryCode('US'), isNull);
   });
+
+  test('onboarding profile validators', () {
+    expect(validateTermsAccepted(false), isNotNull);
+    expect(validateTermsAccepted(true), isNull);
+    expect(validateOnboardingRelationshipToBaby(null), isNotNull);
+    expect(validateOnboardingRelationshipToBaby('Mother'), isNull);
+    expect(validateOnboardingProfileDisplayName('Ada', 'Lovelace'), isNull);
+    expect(
+      validateOnboardingProfileDisplayName('x' * 50, 'y' * 51),
+      'Display name is too long',
+    );
+  });
 }

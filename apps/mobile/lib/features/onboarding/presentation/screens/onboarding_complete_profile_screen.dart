@@ -14,6 +14,7 @@ import '../../../../core/data/iso_countries.dart';
 import '../../../../core/input/app_text_input_kind.dart';
 import '../../../../core/api/display_photo_upload.dart';
 import '../../../../core/time/app_date_time.dart';
+import '../../../../core/validation/form_validators.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../../../core/widgets/app_country_dropdown_field.dart';
@@ -241,18 +242,22 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
     );
   }
 
+  void _clearApiError() {
+    if (_error != null) setState(() => _error = null);
+  }
+
+  String? _validateLastName(String? value) {
+    final required = validateOnboardingLastName(value);
+    if (required != null) return required;
+    return validateOnboardingProfileDisplayName(
+      _firstNameController.text,
+      value ?? '',
+    );
+  }
+
   Future<void> _continue() async {
     await _persistDraft();
     if (!mounted) return;
-    if (!_acceptedTerms) {
-      setState(() => _error = 'Please accept the terms to continue');
-      return;
-    }
-    if (_isOwnerPath &&
-        (_relationshipLabel == null || _relationshipLabel!.isEmpty)) {
-      setState(() => _error = 'Select your relationship to baby');
-      return;
-    }
     if (_formKey.currentState?.validate() != true) {
       setState(() => _validateOnInteraction = true);
       return;
@@ -316,9 +321,6 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
   Widget build(BuildContext context) {
     final text = context.textStyles;
     final ownerPath = _isOwnerPath;
-    final relationshipIndex = _relationshipLabel == 'Father'
-        ? 1
-        : (_relationshipLabel == 'Mother' ? 0 : null);
 
     return OnboardingScaffold(
       pinBottomCta: false,
@@ -366,9 +368,11 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
                     hint: 'First name',
                     kind: AppTextInputKind.personName,
                     autovalidateMode: _autovalidateMode,
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'First name is required' : null,
-                    onChanged: (_) => _persistDraft(),
+                    validator: validateOnboardingFirstName,
+                    onChanged: (_) {
+                      _clearApiError();
+                      _persistDraft();
+                    },
                   ),
                   const SizedBox(height: 12),
                   OnboardingTextField(
@@ -378,9 +382,11 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
                     hint: 'Last name',
                     kind: AppTextInputKind.personName,
                     autovalidateMode: _autovalidateMode,
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Last name is required' : null,
-                    onChanged: (_) => _persistDraft(),
+                    validator: _validateLastName,
+                    onChanged: (_) {
+                      _clearApiError();
+                      _persistDraft();
+                    },
                   ),
                   const SizedBox(height: 12),
                   OnboardingTextField(
@@ -389,80 +395,82 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
                     hint: '(555) 555-5555',
                     keyboardType: TextInputType.phone,
                     autovalidateMode: _autovalidateMode,
-                    onChanged: (_) => _persistDraft(),
+                    onChanged: (_) {
+                      _clearApiError();
+                      _persistDraft();
+                    },
+                  ),
+                  if (ownerPath) ...[
+                    const SizedBox(height: 16),
+                    OnboardingRelationshipFormField(
+                      value: _relationshipLabel,
+                      autovalidateMode: _autovalidateMode,
+                      validator: validateOnboardingRelationshipToBaby,
+                      onSelected: (label) {
+                        setState(() => _relationshipLabel = label);
+                        _clearApiError();
+                        _persistDraft();
+                      },
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  OnboardingFieldLabel('Date of birth (optional)'),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: _busy ? null : _pickBirthDate,
+                    borderRadius: BorderRadius.circular(12),
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        hintText: 'Select a date',
+                        suffixIcon: Icon(Icons.calendar_today_outlined, size: 18),
+                      ),
+                      child: Text(
+                        _birthDateDisplay(context) ?? 'Select a date',
+                        style: text.bodyMedium?.copyWith(
+                          color: _birthDate == null ? AppColors.muted : null,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  OnboardingFieldLabel('Country (optional)'),
+                  const SizedBox(height: 8),
+                  AppCountryDropdownField(
+                    countries: _countries,
+                    value: _countryCode,
+                    enabled: !_busy,
+                    onChanged: (code) {
+                      setState(() => _countryCode = code);
+                      _clearApiError();
+                      _persistDraft();
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  OnboardingTextField(
+                    controller: _postalController,
+                    label: 'Zip / Postal code (optional)',
+                    hint: 'e.g. 94103',
+                    onChanged: (_) {
+                      _clearApiError();
+                      _persistDraft();
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  OnboardingTermsFormField(
+                    value: _acceptedTerms,
+                    enabled: !_busy,
+                    autovalidateMode: _autovalidateMode,
+                    validator: validateTermsAccepted,
+                    onChanged: (accepted) {
+                      setState(() => _acceptedTerms = accepted);
+                      _clearApiError();
+                      _persistDraft();
+                    },
+                    onTermsTap: () => context.push(LegalRoutes.terms),
+                    onPrivacyTap: () => context.push(LegalRoutes.privacy),
                   ),
                 ],
               ),
-            ),
-            if (ownerPath) ...[
-              const SizedBox(height: 16),
-              OnboardingFieldLabel('Your relationship to baby'),
-              const SizedBox(height: 8),
-              OnboardingPillSelect(
-                options: const ['Mother', 'Father'],
-                selectedIndex: relationshipIndex,
-                selectedStyleForIndex: (_) => const OnboardingPillSelectedStyle(
-                  background: AppColors.sageTint,
-                  border: AppColors.primaryDark,
-                  foreground: AppColors.primaryDark,
-                ),
-                onSelected: (index) {
-                  setState(() {
-                    _relationshipLabel = index == 0 ? 'Mother' : 'Father';
-                  });
-                  _persistDraft();
-                },
-              ),
-            ],
-            const SizedBox(height: 16),
-            OnboardingFieldLabel('Date of birth (optional)'),
-            const SizedBox(height: 8),
-            InkWell(
-              onTap: _busy ? null : _pickBirthDate,
-              borderRadius: BorderRadius.circular(12),
-              child: InputDecorator(
-                decoration: const InputDecoration(
-                  hintText: 'Select a date',
-                  suffixIcon: Icon(Icons.calendar_today_outlined, size: 18),
-                ),
-                child: Text(
-                  _birthDateDisplay(context) ?? 'Select a date',
-                  style: text.bodyMedium?.copyWith(
-                    color: _birthDate == null ? AppColors.muted : null,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            OnboardingFieldLabel('Country (optional)'),
-            const SizedBox(height: 8),
-            AppCountryDropdownField(
-              countries: _countries,
-              value: _countryCode,
-              enabled: !_busy,
-              onChanged: (code) {
-                setState(() => _countryCode = code);
-                _persistDraft();
-              },
-            ),
-            const SizedBox(height: 12),
-            OnboardingTextField(
-              controller: _postalController,
-              label: 'Zip / Postal code (optional)',
-              hint: 'e.g. 94103',
-              onChanged: (_) => _persistDraft(),
-            ),
-            const SizedBox(height: 8),
-            OnboardingTermsAgreementCheckbox(
-              value: _acceptedTerms,
-              onChanged: _busy
-                  ? null
-                  : (v) {
-                      setState(() => _acceptedTerms = v ?? false);
-                      _persistDraft();
-                    },
-              onTermsTap: () => context.push(LegalRoutes.terms),
-              onPrivacyTap: () => context.push(LegalRoutes.privacy),
             ),
             const SizedBox(height: 12),
             OnboardingPrimaryButton(

@@ -70,6 +70,15 @@ Future<({
   return (coordinator: coordinator, storage: storage, repository: repository);
 }
 
+void _useTallViewport(WidgetTester tester) {
+  tester.view.physicalSize = const Size(800, 2000);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(() {
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
+}
+
 Widget _wrap(
   Widget child, {
   required OnboardingCoordinator coordinator,
@@ -112,6 +121,61 @@ void main() {
     expect(find.text('Your relationship to baby'), findsOneWidget);
     expect(find.text('Mother'), findsOneWidget);
     expect(find.text('Continue'), findsOneWidget);
+  });
+
+  testWidgets('terms validation clears after accept without second submit', (tester) async {
+    _useTallViewport(tester);
+    final fx = await _fixturesForPath(OnboardingPath.owner);
+    await tester.pumpWidget(
+      _wrap(
+        const OnboardingCompleteProfileScreen(),
+        coordinator: fx.coordinator,
+        storage: fx.storage,
+        repository: fx.repository,
+        accountRepository: _EmptyDisplayNameAccountRepository(),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.enterText(find.byKey(const Key('onboarding_first_name')), 'Test');
+    await tester.enterText(find.byKey(const Key('onboarding_last_name')), 'User');
+    await tester.ensureVisible(find.text('Continue'));
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    expect(find.text('Please accept the terms to continue'), findsOneWidget);
+    await tester.ensureVisible(find.byType(Checkbox));
+    await tester.tap(find.byType(Checkbox));
+    await tester.pumpAndSettle();
+    expect(find.text('Please accept the terms to continue'), findsNothing);
+  });
+
+  testWidgets('relationship validation clears after selection without second submit',
+      (tester) async {
+    _useTallViewport(tester);
+    final fx = await _fixturesForPath(OnboardingPath.owner);
+    await tester.pumpWidget(
+      _wrap(
+        const OnboardingCompleteProfileScreen(),
+        coordinator: fx.coordinator,
+        storage: fx.storage,
+        repository: fx.repository,
+        accountRepository: _EmptyDisplayNameAccountRepository(),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.enterText(find.byKey(const Key('onboarding_first_name')), 'Test');
+    await tester.enterText(find.byKey(const Key('onboarding_last_name')), 'User');
+    await tester.ensureVisible(find.byType(Checkbox));
+    await tester.tap(find.byType(Checkbox));
+    await tester.pump();
+    await tester.ensureVisible(find.text('Continue'));
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    expect(find.text('Select your relationship to baby'), findsOneWidget);
+    await tester.tap(find.text('Mother'));
+    await tester.pumpAndSettle();
+    expect(find.text('Select your relationship to baby'), findsNothing);
   });
 
   testWidgets('owner continue requires terms acceptance', (tester) async {

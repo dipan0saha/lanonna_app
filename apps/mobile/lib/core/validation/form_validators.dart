@@ -22,6 +22,30 @@ String? validateDisplayName(String? value) {
   return null;
 }
 
+String? validateOnboardingFirstName(String? value) =>
+    validateRequiredTrimmed(value, fieldLabel: 'First name');
+
+String? validateOnboardingLastName(String? value) =>
+    validateRequiredTrimmed(value, fieldLabel: 'Last name');
+
+/// Full profile display name from first + last (length cap via [validateDisplayName]).
+String? validateOnboardingProfileDisplayName(String firstName, String lastName) {
+  final combined = '${firstName.trim()} ${lastName.trim()}'.trim();
+  return validateDisplayName(combined);
+}
+
+String? validateTermsAccepted(bool? value) {
+  if (value != true) return 'Please accept the terms to continue';
+  return null;
+}
+
+String? validateOnboardingRelationshipToBaby(String? value) {
+  if (value == null || value.trim().isEmpty) {
+    return 'Select your relationship to baby';
+  }
+  return null;
+}
+
 String? validateFunNameSuggestion(String? value) =>
     validateRequiredTrimmed(value, fieldLabel: 'Name');
 
