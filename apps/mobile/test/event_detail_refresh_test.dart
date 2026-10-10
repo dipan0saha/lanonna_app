@@ -9,6 +9,7 @@ import 'package:lanonna/features/calendar/data/models/calendar_models.dart';
 import 'package:lanonna/features/calendar/presentation/event_detail_screen.dart';
 import 'package:lanonna/features/home/data/home_repository.dart';
 import 'package:lanonna/features/home/data/selected_baby_store.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -87,6 +88,8 @@ void main() {
         ],
         child: MaterialApp(
           theme: AppTheme.light,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: const EventDetailScreen(eventId: 'ev-1'),
         ),
       ),
@@ -109,4 +112,5 @@ void main() {
     expect(find.text('After edit'), findsOneWidget);
     expect(calRepo.fetchCalls, greaterThan(1));
   });
+
 }

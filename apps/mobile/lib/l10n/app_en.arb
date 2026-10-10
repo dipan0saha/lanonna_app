@@ -123,6 +123,28 @@
   "rsvpStatusGoing": "Going",
   "rsvpStatusMaybe": "Maybe",
   "rsvpStatusCantGo": "Can't go",
+  "eventRsvpCountWithStatus": "{count} {status}",
+  "@eventRsvpCountWithStatus": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "eventRsvpViewAllTeaser": "{goingPart} · {maybePart} - View RSVPs ›",
+  "@eventRsvpViewAllTeaser": {
+    "placeholders": {
+      "goingPart": {
+        "type": "String"
+      },
+      "maybePart": {
+        "type": "String"
+      }
+    }
+  },
   "authPasswordResetForgotLink": "Forgot password?",
   "authPasswordResetDialogTitle": "Reset password",
   "authPasswordResetDialogBody": "Enter the email for your account. We'll send a reset link.",

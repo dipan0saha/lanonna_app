@@ -21,6 +21,7 @@ import '../data/calendar_repository.dart';
 import '../data/models/calendar_models.dart';
 import '../domain/calendar_navigation.dart';
 import '../domain/calendar_routes.dart';
+import '../domain/event_detail_focus.dart';
 import '../domain/rsvp_status_labels.dart';
 
 class EventDetailScreen extends StatefulWidget {
@@ -64,8 +65,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   }
 
   void _unfocusCommentComposer() {
-    _commentFocusNode.unfocus();
-    FocusManager.instance.primaryFocus?.unfocus();
+    unfocusEventCommentComposer(_commentFocusNode);
   }
 
   Future<void> _openEdit() async {
@@ -314,6 +314,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (shouldShowDetailFullScreenLoader(
       hasContent: _detail != null,
       initialLoadInFlight: _initialLoadInFlight,
@@ -444,7 +445,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                         ),
                       Expanded(
                         child: Text(
-                          '${detail.rsvpSummary.going} going · ${detail.rsvpSummary.maybe} maybe - View RSVPs ›',
+                          rsvpSummaryViewAllTeaser(l10n, detail.rsvpSummary),
                           style: const TextStyle(
                             color: AppColors.primaryDark,
                             fontWeight: FontWeight.w600,

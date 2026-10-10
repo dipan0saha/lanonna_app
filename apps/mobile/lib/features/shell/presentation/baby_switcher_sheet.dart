@@ -10,6 +10,7 @@ import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../../../core/domain/baby_list_subtitle.dart';
+import '../../../core/time/app_date_time.dart';
 
 Future<void> showBabySwitcherSheet(BuildContext context) async {
   await showModalBottomSheet<void>(
@@ -111,7 +112,7 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
                       subtitle: Text(
                         babyListSubtitle(
                           baby,
-                          Localizations.localeOf(context).languageCode,
+                          localeNameForFormatting(context),
                         ),
                       ),
                       trailing: Row(

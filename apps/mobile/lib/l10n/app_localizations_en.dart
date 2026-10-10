@@ -212,6 +212,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rsvpStatusCantGo => 'Can\'t go';
 
   @override
+  String eventRsvpCountWithStatus(int count, String status) {
+    return '$count $status';
+  }
+
+  @override
+  String eventRsvpViewAllTeaser(String goingPart, String maybePart) {
+    return '$goingPart · $maybePart - View RSVPs ›';
+  }
+
+  @override
   String get authPasswordResetForgotLink => 'Forgot password?';
 
   @override

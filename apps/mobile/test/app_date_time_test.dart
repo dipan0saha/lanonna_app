@@ -41,6 +41,15 @@ void main() {
       expect(formatApiCalendarDate(''), '');
       expect(formatApiCalendarDate('not-a-date'), '');
     });
+
+    test('date-only YYYY-MM-DD uses calendar day not timezone shift', () {
+      final parsed = tryParseApiCalendarDate('2027-02-01');
+      expect(parsed, DateTime.utc(2027, 2, 1));
+      final formatted = formatApiCalendarDate('2027-02-01', 'en_US');
+      expect(formatted, contains('February'));
+      expect(formatted, contains('1'));
+      expect(formatted, contains('2027'));
+    });
   });
 
   group('home badge', () {

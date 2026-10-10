@@ -88,7 +88,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
     final saved = _payload?.viewerBirthdateVote;
     final date = birthdateGuessToSubmit(pendingSelection: _pendingGuess);
     if (date == null) return;
-    final locale = Localizations.localeOf(context).languageCode;
+    final locale = localeNameForFormatting(context);
     final dateLabel = formatApiCalendarDateFromParts(date, locale);
     final isUpdate = saved != null && saved.isNotEmpty;
     final ok = await showDialog<bool>(
@@ -193,7 +193,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
 
   Widget _buildContent(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final locale = Localizations.localeOf(context).languageCode;
+    final locale = localeNameForFormatting(context);
     final p = _payload;
     final genderVotes = genderVoteDisplay(
       maleVotes: p?.maleVotes ?? 0,

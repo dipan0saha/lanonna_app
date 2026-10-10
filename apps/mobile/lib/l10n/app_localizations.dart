@@ -370,6 +370,18 @@ abstract class AppLocalizations {
   /// **'Can\'t go'**
   String get rsvpStatusCantGo;
 
+  /// No description provided for @eventRsvpCountWithStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} {status}'**
+  String eventRsvpCountWithStatus(int count, String status);
+
+  /// No description provided for @eventRsvpViewAllTeaser.
+  ///
+  /// In en, this message translates to:
+  /// **'{goingPart} · {maybePart} - View RSVPs ›'**
+  String eventRsvpViewAllTeaser(String goingPart, String maybePart);
+
   /// No description provided for @authPasswordResetForgotLink.
   ///
   /// In en, this message translates to:

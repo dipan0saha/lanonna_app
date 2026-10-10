@@ -12,7 +12,10 @@ void main() {
   );
 
   test('birthdateGuessToSubmit never uses profile due date', () {
-    expect(babyExpectedDueDate(babyWithDue), DateTime(2027, 2, 1));
+    final due = babyExpectedDueDate(babyWithDue)!;
+    expect(due.year, 2027);
+    expect(due.month, 2);
+    expect(due.day, 1);
     expect(birthdateGuessToSubmit(pendingSelection: null), isNull);
     expect(
       birthdateGuessToSubmit(

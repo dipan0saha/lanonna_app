@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/time/app_date_time.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../data/models/invitation_preview.dart';
@@ -42,7 +43,7 @@ class InviteBabyCard extends StatelessWidget {
     final babyName = preview.babyName ?? 'Baby';
     final subtitle = inviteBabyDateSubtitle(
       preview,
-      Localizations.localeOf(context).languageCode,
+      localeNameForFormatting(context),
     );
     final text = context.textStyles;
     return Container(

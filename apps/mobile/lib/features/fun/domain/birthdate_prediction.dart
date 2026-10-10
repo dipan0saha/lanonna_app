@@ -1,15 +1,13 @@
 import '../../../core/domain/baby_summary.dart';
+import '../../../core/time/app_date_time.dart';
 
 /// Baby due date from profile — calendar navigation and highlight only, never auto-vote.
 DateTime? babyExpectedDueDate(BabySummary baby) {
-  final raw = baby.expectedBirthDate;
-  if (raw == null || raw.isEmpty) return null;
-  return DateTime.tryParse(raw);
+  return tryParseApiCalendarDate(baby.expectedBirthDate);
 }
 
 DateTime? parseBirthdateGuessIso(String? iso) {
-  if (iso == null || iso.isEmpty) return null;
-  return DateTime.tryParse(iso);
+  return tryParseApiCalendarDate(iso);
 }
 
 String birthdateGuessIso(DateTime date) {

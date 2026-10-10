@@ -31,7 +31,7 @@ class HomeFamilyInsightGenderCard extends StatelessWidget {
     final total = genderVotes.total;
     final topName = summary.topName;
     final topDate = summary.topBirthdateGuess;
-    final locale = Localizations.localeOf(context).languageCode;
+    final locale = localeNameForFormatting(context);
 
     return HomeScrollSection.bordered(
       title: 'Family Insight',

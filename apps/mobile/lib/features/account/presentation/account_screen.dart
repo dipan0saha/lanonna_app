@@ -17,6 +17,7 @@ import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../../../core/domain/baby_list_subtitle.dart';
+import '../../../core/time/app_date_time.dart';
 import '../../home/domain/app_routes.dart';
 import '../../onboarding/domain/onboarding_routes.dart';
 import '../../onboarding/presentation/onboarding_coordinator.dart';
@@ -82,7 +83,7 @@ class _AccountScreenState extends State<AccountScreen> {
 
   String _babySubtitle(BabySummary baby) => babyListSubtitle(
         baby,
-        Localizations.localeOf(context).languageCode,
+        localeNameForFormatting(context),
       );
 
   Color _roleBadgeColor(String role) {
