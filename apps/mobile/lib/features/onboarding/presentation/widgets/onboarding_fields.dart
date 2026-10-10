@@ -24,6 +24,7 @@ class OnboardingTextField extends StatelessWidget {
     this.fieldKey,
     this.semanticsId,
     this.kind = AppTextInputKind.none,
+    this.autovalidateMode,
   });
 
   final TextEditingController? controller;
@@ -39,6 +40,7 @@ class OnboardingTextField extends StatelessWidget {
   final Key? fieldKey;
   final String? semanticsId;
   final AppTextInputKind kind;
+  final AutovalidateMode? autovalidateMode;
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +64,7 @@ class OnboardingTextField extends StatelessWidget {
             validator: validator,
             onFieldSubmitted: onFieldSubmitted,
             textInputAction: textInputAction,
+            autovalidateMode: autovalidateMode,
             decoration: InputDecoration(hintText: hint),
           ),
         ),
@@ -137,6 +140,7 @@ class OnboardingPasswordField extends StatefulWidget {
     this.onFieldSubmitted,
     this.fieldKey,
     this.semanticsId,
+    this.autovalidateMode,
   });
 
   final TextEditingController controller;
@@ -146,6 +150,7 @@ class OnboardingPasswordField extends StatefulWidget {
   final ValueChanged<String>? onFieldSubmitted;
   final Key? fieldKey;
   final String? semanticsId;
+  final AutovalidateMode? autovalidateMode;
 
   @override
   State<OnboardingPasswordField> createState() => _OnboardingPasswordFieldState();
@@ -170,6 +175,7 @@ class _OnboardingPasswordFieldState extends State<OnboardingPasswordField> {
             validator: widget.validator,
             onFieldSubmitted: widget.onFieldSubmitted,
             textInputAction: TextInputAction.done,
+            autovalidateMode: widget.autovalidateMode,
             decoration: InputDecoration(
               hintText: widget.hint,
               suffixIcon: IconButton(

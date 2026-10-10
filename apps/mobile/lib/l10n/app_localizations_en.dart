@@ -210,4 +210,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rsvpStatusCantGo => 'Can\'t go';
+
+  @override
+  String get authPasswordResetForgotLink => 'Forgot password?';
+
+  @override
+  String get authPasswordResetDialogTitle => 'Reset password';
+
+  @override
+  String get authPasswordResetDialogBody =>
+      'Enter the email for your account. We\'ll send a reset link.';
+
+  @override
+  String get authPasswordResetEmailLabel => 'Email';
+
+  @override
+  String get authPasswordResetSend => 'Send reset link';
+
+  @override
+  String get authPasswordResetCancel => 'Cancel';
+
+  @override
+  String get authPasswordResetSent =>
+      'Check your email for a password reset link.';
 }

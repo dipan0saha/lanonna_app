@@ -122,5 +122,12 @@
   "funBirthdateConfirmAction": "Save",
   "rsvpStatusGoing": "Going",
   "rsvpStatusMaybe": "Maybe",
-  "rsvpStatusCantGo": "Can't go"
+  "rsvpStatusCantGo": "Can't go",
+  "authPasswordResetForgotLink": "Forgot password?",
+  "authPasswordResetDialogTitle": "Reset password",
+  "authPasswordResetDialogBody": "Enter the email for your account. We'll send a reset link.",
+  "authPasswordResetEmailLabel": "Email",
+  "authPasswordResetSend": "Send reset link",
+  "authPasswordResetCancel": "Cancel",
+  "authPasswordResetSent": "Check your email for a password reset link."
 }

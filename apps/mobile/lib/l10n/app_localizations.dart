@@ -369,6 +369,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Can\'t go'**
   String get rsvpStatusCantGo;
+
+  /// No description provided for @authPasswordResetForgotLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot password?'**
+  String get authPasswordResetForgotLink;
+
+  /// No description provided for @authPasswordResetDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset password'**
+  String get authPasswordResetDialogTitle;
+
+  /// No description provided for @authPasswordResetDialogBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the email for your account. We\'ll send a reset link.'**
+  String get authPasswordResetDialogBody;
+
+  /// No description provided for @authPasswordResetEmailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get authPasswordResetEmailLabel;
+
+  /// No description provided for @authPasswordResetSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send reset link'**
+  String get authPasswordResetSend;
+
+  /// No description provided for @authPasswordResetCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get authPasswordResetCancel;
+
+  /// No description provided for @authPasswordResetSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your email for a password reset link.'**
+  String get authPasswordResetSent;
 }
 
 class _AppLocalizationsDelegate

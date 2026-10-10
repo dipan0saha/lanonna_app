@@ -14,7 +14,7 @@ from lanonna_api.repositories.invitations import (
     create_invitation,
     email_has_pending_invite,
     email_is_member,
-    get_invitation_preview_by_token,
+    fetch_invitation_preview_row,
     list_invitations_for_baby,
     revoke_invitation,
 )
@@ -144,8 +144,43 @@ def batch_invite(
     return results
 
 
+def _preview_payload_from_row(
+    data: dict[str, Any],
+    status: str,
+) -> dict[str, Any]:
+    return {
+        "status": status,
+        "invitation_id": data["id"],
+        "baby_profile_id": data["baby_profile_id"],
+        "baby_name": data["baby_name"],
+        "inviter_display_name": data["inviter_display_name"],
+        "invitee_email": data["invitee_email"],
+        "relationship_label": data["relationship_label"],
+        "invited_role": data["role"],
+        "expires_at": data["expires_at"],
+        "lifecycle_status": data["lifecycle_status"],
+        "expected_birth_date": data["expected_birth_date"],
+        "actual_birth_date": data["actual_birth_date"],
+    }
+
+
 def preview_invitation(token: str) -> dict[str, Any] | None:
-    return get_invitation_preview_by_token(token)
+    data = fetch_invitation_preview_row(token)
+    if data is None:
+        return None
+    row_status = data["status"]
+    if row_status == "revoked":
+        return {"status": "revoked"}
+    if row_status == "accepted":
+        return _preview_payload_from_row(data, "accepted")
+    if row_status != "pending":
+        return {"status": "expired"}
+    expires_at = data["expires_at"]
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if expires_at < datetime.now(timezone.utc):
+        return {"status": "expired"}
+    return _preview_payload_from_row(data, "pending")
 
 
 def format_preview_expires(expires_at: datetime | None) -> str | None:

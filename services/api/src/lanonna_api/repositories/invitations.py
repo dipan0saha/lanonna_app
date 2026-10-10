@@ -118,7 +118,8 @@ def create_invitation(
     return result
 
 
-def get_invitation_preview_by_token(token: str) -> dict[str, Any] | None:
+def fetch_invitation_preview_row(token: str) -> dict[str, Any] | None:
+    """Load invitation + baby + inviter display fields for preview/accept policy."""
     token_hash = lookup_token_hash(token)
     with get_connection() as conn:
         row = conn.execute(
@@ -144,30 +145,7 @@ def get_invitation_preview_by_token(token: str) -> dict[str, Any] | None:
             """,
             (token_hash,),
         ).fetchone()
-    if row is None:
-        return None
-    data = dict(row)
-    if data["status"] != "pending":
-        return {"status": "expired"}
-    expires_at = data["expires_at"]
-    if expires_at.tzinfo is None:
-        expires_at = expires_at.replace(tzinfo=timezone.utc)
-    if expires_at < datetime.now(timezone.utc):
-        return {"status": "expired"}
-    return {
-        "status": "pending",
-        "invitation_id": data["id"],
-        "baby_profile_id": data["baby_profile_id"],
-        "baby_name": data["baby_name"],
-        "inviter_display_name": data["inviter_display_name"],
-        "invitee_email": data["invitee_email"],
-        "relationship_label": data["relationship_label"],
-        "invited_role": data["role"],
-        "expires_at": data["expires_at"],
-        "lifecycle_status": data["lifecycle_status"],
-        "expected_birth_date": data["expected_birth_date"],
-        "actual_birth_date": data["actual_birth_date"],
-    }
+    return dict(row) if row else None
 
 
 def _count_active_owners(baby_profile_id: uuid.UUID, conn) -> int:
@@ -209,14 +187,6 @@ def accept_invitation_by_token(
             return {"error": "not_found"}
 
         inv = dict(inv)
-        if inv["status"] != "pending":
-            return {"error": "expired"}
-        expires_at = inv["expires_at"]
-        if expires_at.tzinfo is None:
-            expires_at = expires_at.replace(tzinfo=timezone.utc)
-        if expires_at < datetime.now(timezone.utc):
-            return {"error": "expired"}
-
         invitee_email = str(inv["invitee_email"]).strip().lower()
         if normalized_user_email != invitee_email:
             return {
@@ -251,6 +221,21 @@ def accept_invitation_by_token(
                 "role": existing["role"],
                 "baby_name": baby_name,
             }
+
+        invite_status = inv["status"]
+        if invite_status == "revoked":
+            return {"error": "revoked"}
+        if invite_status == "accepted":
+            return {"error": "already_used"}
+
+        if invite_status != "pending":
+            return {"error": "expired"}
+
+        expires_at = inv["expires_at"]
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        if expires_at < datetime.now(timezone.utc):
+            return {"error": "expired"}
 
         invited_role = inv["role"]
         if invited_role == "owner" and _count_active_owners(baby_profile_id, conn) >= 2:

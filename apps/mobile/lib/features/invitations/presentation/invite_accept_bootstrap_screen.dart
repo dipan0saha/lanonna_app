@@ -39,11 +39,11 @@ class _InviteAcceptBootstrapScreenState extends State<InviteAcceptBootstrapScree
     try {
       final preview = await context.read<InvitationsRepository>().fetchPreview(token);
       if (!mounted) return;
-      if (!preview.isPending) {
+      if (!preview.canContinueInviteFlow) {
         setState(() {
           _loading = false;
           _problemMessage = inviteAcceptUserMessage(
-            preview.isExpired ? 'expired' : 'not_found',
+            invitePreviewProblemCode(preview),
           );
         });
         return;

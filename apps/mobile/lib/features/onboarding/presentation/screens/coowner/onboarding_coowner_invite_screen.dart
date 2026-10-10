@@ -37,11 +37,11 @@ class _OnboardingCoOwnerInviteScreenState extends State<OnboardingCoOwnerInviteS
     final preview = await ensureInvitePreviewLoaded(context);
     if (!mounted) return;
     if (preview == null) return;
-    if (!preview.isPending) {
+    if (!preview.canContinueInviteFlow) {
       setState(() {
         _loading = false;
         _problemMessage = inviteAcceptUserMessage(
-          preview.isExpired ? 'expired' : 'not_found',
+          invitePreviewProblemCode(preview),
         );
       });
       return;
@@ -72,7 +72,7 @@ class _OnboardingCoOwnerInviteScreenState extends State<OnboardingCoOwnerInviteS
     }
 
     final preview = context.watch<OnboardingCoordinator>().cachedInvitePreview;
-    if (preview == null || !preview.isPending) {
+    if (preview == null || !preview.canContinueInviteFlow) {
       return const InviteLandingLoading();
     }
 

@@ -31,6 +31,11 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
   String? _error;
   bool _busy = false;
   var _synced = false;
+  var _validateOnInteraction = false;
+
+  AutovalidateMode get _autovalidateMode => _validateOnInteraction
+      ? AutovalidateMode.onUserInteraction
+      : AutovalidateMode.disabled;
 
   @override
   void dispose() {
@@ -77,7 +82,11 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
   }
 
   Future<void> _submit() async {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
+    final valid = _formKey.currentState?.validate() ?? false;
+    if (!valid) {
+      setState(() => _validateOnInteraction = true);
+      return;
+    }
     setState(() {
       _busy = true;
       _error = null;
@@ -120,6 +129,7 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
       onBack: () => goBackFromInviteAuth(context, persist: _persistEmail),
       body: Form(
         key: _formKey,
+        autovalidateMode: _autovalidateMode,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -135,6 +145,7 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
               hint: 'you@email.com',
               keyboardType: TextInputType.emailAddress,
               validator: validateEmail,
+              autovalidateMode: _autovalidateMode,
               onChanged: (_) => _persistEmail(),
             ),
             const SizedBox(height: 16),
@@ -142,6 +153,7 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
               fieldKey: const Key('onboarding_signup_password'),
               controller: _passwordController,
               validator: validatePassword,
+              autovalidateMode: _autovalidateMode,
             ),
             const SizedBox(height: 8),
             const OnboardingHelperText(

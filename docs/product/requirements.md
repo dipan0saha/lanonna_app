@@ -230,6 +230,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-AUTH-004 | Sign out | Sign out clears Firebase session and local push identity hooks | `DELETE /v1/me/device-tokens` on sign-out (`PushNotificationService`) |
 | FR-AUTH-005 | Unauthenticated guard | Cold launch without session shows sign-in (E2E-001) | GoRouter redirect |
 | FR-AUTH-006 | Google sign-in | User can sign in or sign up with Google (v1); links to same Firebase user model as email | Firebase Auth Google provider |
+| FR-AUTH-007 | Password reset | From sign-in, user can request a Firebase password-reset email; pre-fills email when valid on the form, otherwise prompts; success shows “check your email”; reset links open via existing auth action deep-link handler | `AuthRepository.sendPasswordResetEmail`; login **Forgot password?** + `auth_action_app_link` |
 
 ### 7.2 Onboarding — FR-ONB
 
@@ -253,9 +254,9 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 
 | ID | Requirement | Acceptance criteria | Implementation note |
 |----|-------------|---------------------|---------------------|
-| FR-INV-001 | Invitation preview | Token hash returns baby name, inviter, invitee email, relationship, role; expired/not found handled | API public or semi-public preview endpoint |
-| FR-INV-002 | Accept invitation | Email must match invitee; idempotent if already member; sets membership and marks invite accepted | API transaction |
-| FR-INV-003 | Invitation errors | `email_mismatch`, `expired`, `max_owners`, `already_member`, `not_found` with user-safe copy | Domain errors |
+| FR-INV-001 | Invitation preview | Token hash returns baby name, inviter, invitee email, relationship, role; `status` is `pending`, `accepted`, `revoked`, or `expired` (accepted includes baby fields so mobile can continue onboarding without treating the link as expired) | `GET /v1/invitations/preview`; `domain/invitations.py` |
+| FR-INV-002 | Accept invitation | Email must match invitee; **idempotent** if already member (200 `already_member`) even when invite row is already `accepted`; first accept on pending creates membership and marks invite accepted | API transaction + domain policy |
+| FR-INV-003 | Invitation errors | `email_mismatch`, `expired`, `revoked`, `already_used`, `max_owners`, `already_member`, `not_found` with user-safe copy | Domain errors; mobile `invite_accept_messages.dart` |
 | FR-INV-004 | Send invite email | Owner sends invite; pending row visible in management UI | Pub/Sub `send_invite_email` on **`lanonna-async-commands`** + Mailjet HTML templates. Batch API returns per-row status; **`email_queue_failed`** means the invite row exists but email was not queued (owner may revoke and re-invite). |
 | FR-INV-005 | Revoke pending invite | Owner revokes; row removed from pending list (E2E-016) | API delete/cancel invite |
 | FR-INV-006 | Membership check by email | Owner batch invite shows “Already a member” for existing emails | API check endpoint |
@@ -360,7 +361,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-PROF-002 | Edit profile | Update display name, avatar, optional demographics (phone, DOB, country, postal) | `/account/edit` |
 | FR-PROF-003 | Storage usage | Owner sees media allocation meter (used vs quota across owned babies) | `/profile`; `GET /v1/me/account` → `storage_usage` |
 | FR-SET-001 | Settings screen | Notification prefs, help/support entry | `/settings` |
-| FR-SET-002 | Language | **English only**; copy in ARB/localization files (no hardcoded UI strings). No Spanish or other locales in product scope. Count labels use ICU `plural` in ARB (e.g. squish/comment/vote/love/registry teaser — #11). Calendar **dates** (due date, birthdate guesses, baby switcher) use `formatApiCalendarDate`, not raw ISO (#19). | `app_en.arb`; `app_date_time.dart`; migrate incrementally |
+| FR-SET-002 | Language | **English only**; copy in ARB/localization files (no hardcoded UI strings). No Spanish or other locales in product scope. Count labels use ICU `plural` in ARB (e.g. squish/comment/vote/love/registry teaser — #11). Calendar **dates** (due date, birthdate guesses, baby switcher) use `formatApiCalendarDate`, not raw ISO (#19). Onboarding/registry **forms**: after first failed submit, enable `AutovalidateMode.onUserInteraction` on `Form` and fields so fixing input clears errors without a second submit (#21). | `app_en.arb`; `app_date_time.dart`; `onboarding_login_screen` / registry shipping pattern |
 | FR-SET-003 | No dark mode picker | Theme remains light only | Product decision (light-only brand) |
 | FR-SET-004 | Minimum app version | Below minimum: **hard block** — full-screen prompt; only action is open store / update | Reads `app_versions`; no dismiss |
 | FR-SET-005 | Delete account | User confirms on `/account/delete`; mobile calls **`GET /v1/me/delete-account/eligibility`** first (v1 returns `allowed: true`). Account is permanently deleted (Firebase user removed, SQL profile anonymized). **Sole-owned** baby profiles are soft-deleted with the account (all memberships on those babies removed; pending invites revoked). **Co-owned** baby profiles remain; deleting user’s owner membership is removed and remaining owner(s) retain full ownership. No manual “transfer ownership” step. Confirmation copy: “This permanently deletes your La Nonna account. Any Baby Profiles solely owned by your account will also be deleted. Baby Profiles with a co owner will not be deleted; ownership will transfer fully to the co owner.” | `GET/POST /v1/me/delete-account/*`; NFR-DATA-001 |

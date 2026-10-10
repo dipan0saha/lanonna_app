@@ -24,7 +24,12 @@ class InvitationPreview {
   final String? actualBirthDate;
 
   bool get isPending => status == 'pending';
+  bool get isAccepted => status == 'accepted';
   bool get isExpired => status == 'expired';
+  bool get isRevoked => status == 'revoked';
+
+  /// Pending or already-accepted invite links may continue onboarding (FR-INV-002).
+  bool get canContinueInviteFlow => isPending || isAccepted;
   bool get isCoOwnerInvite => invitedRole == 'owner';
   bool get isBorn => lifecycleStatus == 'born';
 

@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:lanonna/features/onboarding/data/onboarding_repository.dart';
 import 'package:lanonna/features/onboarding/data/onboarding_storage.dart';
 import 'package:lanonna/features/onboarding/domain/onboarding_routes.dart';
@@ -38,6 +39,8 @@ Future<void> _pumpLogin(WidgetTester tester) async {
       value: coordinator,
       child: MaterialApp.router(
         theme: AppTheme.light,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         routerConfig: router,
       ),
     ),
@@ -56,5 +59,23 @@ void main() {
     expect(find.byKey(const Key('onboarding_login_email')), findsOneWidget);
     expect(find.byKey(const Key('sign_in_button')), findsOneWidget);
     expect(find.byType(OnboardingBottomLink), findsOneWidget);
+  });
+
+  testWidgets('clears password error after failed sign in when user fixes password',
+      (tester) async {
+    await _pumpLogin(tester);
+
+    await tester.enterText(find.byKey(const Key('onboarding_login_email')), 'you@email.com');
+    await tester.enterText(find.byKey(const Key('onboarding_login_password')), 'short');
+    await tester.tap(find.byKey(const Key('sign_in_button')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Password must be at least 6 characters'), findsOneWidget);
+
+    await tester.enterText(find.byKey(const Key('onboarding_login_password')), 'secret1!');
+    await tester.pump();
+
+    expect(find.text('Password must be at least 6 characters'), findsNothing);
   });
 }

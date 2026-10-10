@@ -6,6 +6,8 @@ import 'package:provider/provider.dart';
 import '../../../../core/api/api_error_message.dart';
 import '../../../../core/auth/auth_repository.dart';
 import '../../../../core/validation/form_validators.dart';
+import '../../../../core/widgets/app_snackbar.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../data/onboarding_form_drafts.dart';
 import '../../domain/onboarding_path.dart';
 import '../../domain/onboarding_step.dart';
@@ -15,6 +17,7 @@ import '../utils/onboarding_invite_navigation.dart';
 import '../widgets/onboarding_buttons.dart';
 import '../widgets/onboarding_logo_mark.dart';
 import '../widgets/onboarding_fields.dart';
+import '../widgets/forgot_password_dialog.dart';
 import '../widgets/onboarding_scaffold.dart';
 import '../widgets/onboarding_typography.dart';
 
@@ -32,6 +35,11 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
   String? _error;
   bool _busy = false;
   var _synced = false;
+  var _validateOnInteraction = false;
+
+  AutovalidateMode get _autovalidateMode => _validateOnInteraction
+      ? AutovalidateMode.onUserInteraction
+      : AutovalidateMode.disabled;
 
   @override
   void dispose() {
@@ -84,7 +92,11 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
   }
 
   Future<void> _signInEmail() async {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
+    final valid = _formKey.currentState?.validate() ?? false;
+    if (!valid) {
+      setState(() => _validateOnInteraction = true);
+      return;
+    }
     setState(() {
       _busy = true;
       _error = null;
@@ -96,6 +108,30 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
           );
       if (!mounted) return;
       await navigateAfterOnboardingAuth(context, isSignUp: false, usedOAuth: false);
+    } on FirebaseAuthException catch (e) {
+      setState(() => _error = e.message ?? e.code);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _forgotPassword() async {
+    if (_busy) return;
+    final l10n = AppLocalizations.of(context)!;
+    var email = _emailController.text.trim();
+    if (validateEmail(email) != null) {
+      final chosen = await showForgotPasswordEmailDialog(context, initialEmail: email);
+      if (chosen == null || chosen.isEmpty || !mounted) return;
+      email = chosen;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await context.read<AuthRepository>().sendPasswordResetEmail(email);
+      if (!mounted) return;
+      AppSnackBar.showInfo(context, l10n.authPasswordResetSent);
     } on FirebaseAuthException catch (e) {
       setState(() => _error = e.message ?? e.code);
     } finally {
@@ -130,6 +166,7 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final coordinator = context.watch<OnboardingCoordinator>();
 
     return OnboardingScaffold(
@@ -157,6 +194,7 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
           ],
           Form(
             key: _formKey,
+            autovalidateMode: _autovalidateMode,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -168,6 +206,7 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
                   hint: 'you@email.com',
                   keyboardType: TextInputType.emailAddress,
                   validator: validateEmail,
+                  autovalidateMode: _autovalidateMode,
                   onChanged: (_) => _persistEmail(),
                 ),
                 const SizedBox(height: 16),
@@ -178,8 +217,17 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
                   label: 'Password',
                   hint: 'Enter your password',
                   validator: validatePassword,
+                  autovalidateMode: _autovalidateMode,
                 ),
-                const SizedBox(height: 20),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    key: const Key('forgot_password_link'),
+                    onPressed: _busy ? null : _forgotPassword,
+                    child: Text(l10n.authPasswordResetForgotLink),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 OnboardingPrimaryButton(
                   buttonKey: const Key('sign_in_button'),
                   semanticsId: 'auth_sign_in',

@@ -24,8 +24,10 @@ router = APIRouter(prefix="/v1/invitations", tags=["invitations"])
 _ACCEPT_ERROR_STATUS: dict[str, int] = {
     "not_found": status.HTTP_404_NOT_FOUND,
     "expired": status.HTTP_410_GONE,
+    "revoked": status.HTTP_410_GONE,
     "email_mismatch": status.HTTP_403_FORBIDDEN,
     "max_owners": status.HTTP_409_CONFLICT,
+    "already_used": status.HTTP_409_CONFLICT,
 }
 
 
@@ -51,21 +53,22 @@ def invitation_preview(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="not_found",
         )
-    if preview.get("status") == "expired":
-        return InvitationPreviewResponse(status="expired")
+    preview_status = preview.get("status")
+    if preview_status in ("expired", "revoked"):
+        return InvitationPreviewResponse(status=preview_status)
     expires = preview.get("expires_at")
     expires_str = (
         format_preview_expires(expires) if isinstance(expires, datetime) else None
     )
     return InvitationPreviewResponse(
-        status="pending",
-        invitation_id=preview["invitation_id"],
-        baby_profile_id=preview["baby_profile_id"],
-        baby_name=preview["baby_name"],
-        inviter_display_name=preview["inviter_display_name"],
-        invitee_email=preview["invitee_email"],
+        status=preview_status if preview_status in ("pending", "accepted") else "expired",
+        invitation_id=preview.get("invitation_id"),
+        baby_profile_id=preview.get("baby_profile_id"),
+        baby_name=preview.get("baby_name"),
+        inviter_display_name=preview.get("inviter_display_name"),
+        invitee_email=preview.get("invitee_email"),
         relationship_label=preview.get("relationship_label"),
-        invited_role=preview["invited_role"],
+        invited_role=preview.get("invited_role"),
         expires_at=expires_str,
         lifecycle_status=preview.get("lifecycle_status"),
         expected_birth_date=preview.get("expected_birth_date"),

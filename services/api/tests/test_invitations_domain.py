@@ -96,3 +96,19 @@ def test_accept_invitation_enqueues_notify_on_success():
         result = accept_invitation("token", "uid-1", "a@test.com")
     assert result["baby_profile_id"] == baby_id
     notify.assert_called_once()
+
+
+def test_accept_invitation_idempotent_already_member():
+    baby_id = uuid.uuid4()
+    with patch(
+        "lanonna_api.domain.invitations.accept_invitation_by_token",
+        return_value={
+            "already_member": True,
+            "baby_profile_id": baby_id,
+            "role": "follower",
+            "baby_name": "Parker",
+        },
+    ):
+        result = accept_invitation("token", "uid-1", "a@test.com")
+    assert result["already_member"] is True
+    assert result["baby_profile_id"] == baby_id

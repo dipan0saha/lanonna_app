@@ -41,7 +41,7 @@ class MembershipCheckResponse(BaseModel):
 
 
 class InvitationPreviewResponse(BaseModel):
-    status: Literal["pending", "expired"]
+    status: Literal["pending", "expired", "accepted", "revoked"]
     invitation_id: uuid.UUID | None = None
     baby_profile_id: uuid.UUID | None = None
     baby_name: str | None = None

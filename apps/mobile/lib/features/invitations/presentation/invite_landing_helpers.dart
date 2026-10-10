@@ -22,7 +22,7 @@ Future<InvitationPreview?> ensureInvitePreviewLoaded(BuildContext context) async
   try {
     final preview = await context.read<InvitationsRepository>().fetchPreview(token);
     if (!context.mounted) return null;
-    if (!preview.isPending) return preview;
+    if (!preview.canContinueInviteFlow) return preview;
     await coordinator.bindInviteFromPreview(token, preview);
     return preview;
   } catch (_) {
