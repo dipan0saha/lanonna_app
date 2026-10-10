@@ -1,3 +1,4 @@
+import '../../../core/api/api_exception.dart';
 import '../data/models/invitation_preview.dart';
 
 String inviteAcceptUserMessage(String errorCode) {
@@ -18,4 +19,21 @@ String invitePreviewProblemCode(InvitationPreview preview) {
   if (preview.isExpired) return 'expired';
   if (preview.isRevoked) return 'revoked';
   return 'not_found';
+}
+
+/// User copy when [InvitationsRepository.fetchPreview] fails (M-26).
+String invitePreviewFetchUserMessage(Object error, {required bool offline}) {
+  if (offline) {
+    return 'Connect to the internet to open this invitation.';
+  }
+  if (error is ApiException && error.statusCode == 404) {
+    return inviteAcceptUserMessage('not_found');
+  }
+  return 'Could not load this invitation. Try again.';
+}
+
+bool invitePreviewFetchCanRetry(Object error, {required bool offline}) {
+  if (offline) return true;
+  if (error is ApiException && error.statusCode == 404) return false;
+  return true;
 }

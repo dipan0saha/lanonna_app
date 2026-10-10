@@ -7,6 +7,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_client.dart';
+import '../../../core/api/api_error_message.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/widgets/app_labeled_text_field.dart';
 import '../../../core/api/display_photo_upload.dart';
@@ -109,6 +111,10 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
         avatarUrl: avatarUrl,
       );
       if (mounted) context.pop();
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.showAlert(context, apiErrorMessage(e));
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }

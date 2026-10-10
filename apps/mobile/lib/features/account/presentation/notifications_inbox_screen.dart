@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/api/api_error_message.dart';
 import '../../../core/router/deep_link_navigation.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
@@ -16,6 +17,7 @@ class NotificationsInboxScreen extends StatefulWidget {
 class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
   List<InboxNotification> _items = [];
   var _loading = true;
+  String? _loadError;
 
   @override
   void initState() {
@@ -24,11 +26,24 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
   }
 
   Future<void> _load() async {
-    final items = await context.read<NotificationsRepository>().listInbox();
     setState(() {
-      _items = items;
-      _loading = false;
+      _loading = true;
+      _loadError = null;
     });
+    try {
+      final items = await context.read<NotificationsRepository>().listInbox();
+      if (!mounted) return;
+      setState(() {
+        _items = items;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loadError = apiErrorMessage(e);
+        _loading = false;
+      });
+    }
   }
 
   @override
@@ -39,6 +54,23 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
         title: 'Notifications',
         body: _loading
           ? const Center(child: CircularProgressIndicator())
+          : _loadError != null
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(_loadError!, textAlign: TextAlign.center),
+                        const SizedBox(height: 12),
+                        FilledButton(
+                          onPressed: _load,
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
           : _items.isEmpty
               ? const Center(child: Text('No notifications yet'))
               : RefreshIndicator(

@@ -3,9 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../../core/auth/auth_repository.dart';
-import '../../../../invitations/data/invitations_repository.dart';
 import '../../../../invitations/data/models/invitation_preview.dart';
-import '../../app_session.dart';
 import '../../../../invitations/presentation/invite_accept_messages.dart';
 import '../../../../invitations/presentation/invite_landing_helpers.dart';
 import '../../../../invitations/presentation/widgets/invite_landing_state_views.dart';
@@ -14,6 +12,7 @@ import '../../../domain/onboarding_path.dart';
 import '../../../domain/onboarding_routes.dart';
 import '../../../domain/onboarding_step.dart';
 import '../../onboarding_coordinator.dart';
+import '../../utils/invite_flow_navigation.dart';
 import '../../widgets/onboarding_buttons.dart';
 import '../../widgets/onboarding_scaffold.dart';
 
@@ -28,6 +27,7 @@ class OnboardingFollowerInviteScreen extends StatefulWidget {
 class _OnboardingFollowerInviteScreenState extends State<OnboardingFollowerInviteScreen> {
   var _loading = true;
   String? _problemMessage;
+  VoidCallback? _retryPrepare;
 
   @override
   void initState() {
@@ -36,11 +36,29 @@ class _OnboardingFollowerInviteScreenState extends State<OnboardingFollowerInvit
   }
 
   Future<void> _prepare() async {
+    setState(() {
+      _loading = true;
+      _problemMessage = null;
+      _retryPrepare = null;
+    });
     await context.read<OnboardingCoordinator>().setStep(OnboardingStep.followerInvite);
     if (!mounted) return;
-    final preview = await ensureInvitePreviewLoaded(context);
+    final result = await ensureInvitePreviewLoaded(context);
     if (!mounted) return;
-    if (preview == null) return;
+    if (result.fetchErrorMessage != null) {
+      setState(() {
+        _loading = false;
+        _problemMessage = result.fetchErrorMessage;
+        _retryPrepare = result.canRetryFetch ? () => _prepare() : null;
+      });
+      return;
+    }
+    if (result.navigatedAway) return;
+    final preview = result.preview;
+    if (preview == null) {
+      setState(() => _loading = false);
+      return;
+    }
     if (!preview.canContinueInviteFlow) {
       setState(() {
         _loading = false;
@@ -60,15 +78,13 @@ class _OnboardingFollowerInviteScreenState extends State<OnboardingFollowerInvit
     final auth = context.read<AuthRepository>();
     if (auth.currentUser != null) {
       try {
-        await context.read<InvitationsRepository>().accept(token);
-        await coordinator.completeInviteOnboarding();
-        if (!mounted) return;
-        await context.read<AppSession>().refreshFromApi();
-        if (mounted) context.go('/home');
-      } catch (_) {
+        await acceptSignedInInviteAndContinue(context, token);
+      } catch (e) {
         if (mounted) {
           setState(() {
-            _problemMessage = 'Could not accept this invitation. Try again.';
+            _problemMessage = e is Exception
+                ? e.toString().replaceFirst('Exception: ', '')
+                : 'Could not accept this invitation. Try again.';
           });
         }
       }
@@ -91,6 +107,7 @@ class _OnboardingFollowerInviteScreenState extends State<OnboardingFollowerInvit
       return InviteLandingProblem(
         message: _problemMessage!,
         onContinue: () => leaveInvitationFlow(context),
+        onRetry: _retryPrepare,
       );
     }
 

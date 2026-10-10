@@ -64,7 +64,7 @@ Related: [remediation-plan.md](remediation-plan.md) (earlier phased plan), [pre-
 - **Where:** `apps/mobile/lib/features/onboarding/presentation/screens/follower/onboarding_follower_invite_screen.dart` (`_acceptInvitation`), same pattern in `coowner/onboarding_coowner_invite_screen.dart`
 - **Issue:** `InvitationsRepository.accept` returns an `InvitationAcceptResult` with `error` (e.g. `email_mismatch`) instead of throwing. The screens discard it and always call `completeInviteOnboarding()` + `go('/home')`, so a wrong-email accept looks successful and drops the user on Home with no membership. The post-profile path (`invite_flow_navigation.dart`) handles this correctly.
 - **Fix:** Branch on `result.error` (wrong-email route / `inviteAcceptUserMessage`), only complete onboarding on success.
-- **Status:** Open
+- **Status:** ✅ Fixed (`acceptSignedInInviteAndContinue` in `invite_flow_navigation.dart`; signed-in paths on follower/co-owner invite screens)
 
 ### H-08 Save/load flows with no error handling — Verified (account edit, followers) / Reported (others)
 - **Where:**
@@ -72,7 +72,7 @@ Related: [remediation-plan.md](remediation-plan.md) (earlier phased plan), [pre-
   - `followers_screen.dart` `_load` — two awaits, no `try/catch`, no error state.
   - Reported same pattern: `baby_edit_screen.dart`, `announcement_create_screen.dart`, `notifications_inbox_screen.dart`.
 - **Fix:** `catch (e)` → `AppSnackBar.showAlert(context, apiErrorMessage(e))` for saves; error + retry UI for loads.
-- **Status:** Open
+- **Status:** ✅ Fixed (snackbars on saves; load error + retry on followers and notifications inbox)
 
 ---
 
@@ -121,10 +121,10 @@ Related: [remediation-plan.md](remediation-plan.md) (earlier phased plan), [pre-
 
 | ID | Issue | Where | Fix | Status |
 |----|-------|-------|-----|--------|
-| M-23 | Registry load failure swallowed → empty UI; claim/undo purchase has no error handling | `features/registry/presentation/registry_screen.dart` | Error state + `runMutation` | Open |
+| M-23 | Registry load failure swallowed → empty UI; claim/undo purchase has no error handling | `features/registry/presentation/registry_screen.dart` | Error state + `runMutation` | ✅ Fixed |
 | M-24 | Home: offline + cached summary still shows `MaterialBanner` from `_summaryError` (NFR-OFFLINE-001) | `features/home/home_screen.dart` | Suppress banner when offline with cached data | ✅ Fixed |
 | M-25 | Raw exception text shown to users: gallery upload (`'Upload failed: $e'`), create-baby non-fatal errors | `gallery_screen.dart`, `baby/domain/create_baby_submit.dart` | `apiErrorMessage` | ✅ Fixed |
-| M-26 | Invite deep-link bootstrap maps any network error to “not found”; invite preview helper silently redirects to owner carousel on any error | `invite_accept_bootstrap_screen.dart`, `invite_landing_helpers.dart` | Distinguish offline/5xx from 404; show retry | Open |
+| M-26 | Invite deep-link bootstrap maps any network error to “not found”; invite preview helper silently redirects to owner carousel on any error | `invite_accept_bootstrap_screen.dart`, `invite_landing_helpers.dart` | Distinguish offline/5xx from 404; show retry | ✅ Fixed |
 | M-27 | App Check token silently omitted when `getToken` fails | `core/app_check/app_check_bootstrap.dart`, `core/api/api_client.dart` | Retry/backoff or visible warning | Open |
 | M-28 | `/profile/edit` is allowed by deep-link prefix `/profile` but only `/account/edit` is routed; PRD §5.2 says `/profile/edit`, FR-PROF-002 says `/account/edit` | `core/router/deep_link_navigation.dart`, `app_router.dart`, `requirements.md` | Redirect `/profile/edit`→`/account/edit`; fix PRD §5.2 | ✅ Fixed |
 | M-29 | Calendar tab uses fixed error string (no `apiErrorMessage`, no offline handling) | `calendar_screen.dart` | Align with gallery/fun | ✅ Fixed |
@@ -168,7 +168,7 @@ Related: [remediation-plan.md](remediation-plan.md) (earlier phased plan), [pre-
 ## Test coverage gaps
 
 - **API:** ✅ `membership_ended` on home-summary/activity-events covered (`test_babies_home_membership.py`); still thin or no router tests for `events`, `registry`, `fun`, `data_export`, `search`, `notifications`, `onboarding`, `admin_system_announcements`.
-- **Mobile:** `delete_account_screen_test.dart` only checks copy (no eligibility/delete/sign-out flow); no test for invite-accept result branches (H-07); upload tests cover headers only; login test is UI-only.
+- **Mobile:** `delete_account_screen_test.dart` only checks copy (no eligibility/delete/sign-out flow); invite accept: `invitations_repository_test.dart` + `invite_accept_messages_test.dart` (fetch/accept messaging); upload tests cover headers only; login test is UI-only.
 - **Worker:** export stuck-`running` and invite-email race paths untested.
 
 ---
@@ -185,8 +185,8 @@ Related: [remediation-plan.md](remediation-plan.md) (earlier phased plan), [pre-
 
 ## Suggested fix order
 
-1. **Correctness / data safety:** H-02, H-03, H-07, H-08, M-17
-2. **Pre-beta security:** H-01, H-04, H-05, H-06
-3. **Validation + races:** M-02–M-06, M-11–M-13
+1. **Correctness / data safety:** H-03, M-17 (H-02, H-07, H-08 ✅)
+2. **Pre-beta security:** H-01, H-04, H-05, H-06, M-27
+3. **Validation + races:** M-02, M-11–M-13 (M-03–M-06 ✅)
 4. **Infra + docs + CI:** M-18–M-22, M-32–M-35
-5. **Mobile UX polish + lint:** M-23–M-31, Low items
+5. **Mobile UX polish + lint:** M-31, remaining Low (M-23–M-30 largely ✅)

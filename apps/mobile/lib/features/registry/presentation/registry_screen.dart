@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/api/api_error_message.dart';
+import '../../../core/api/run_mutation.dart';
 import '../../../core/auth/auth_repository.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/theme/app_colors.dart';
@@ -31,6 +33,7 @@ class _RegistryScreenState extends State<RegistryScreen> with BabyContextReload 
   List<RegistryItem> _items = [];
   RegistryShippingAddress? _shipping;
   var _loading = true;
+  String? _loadError;
 
   @override
   void initState() {
@@ -54,7 +57,10 @@ class _RegistryScreenState extends State<RegistryScreen> with BabyContextReload 
   void onBabyContextReload() => _load();
 
   Future<void> _load() async {
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _loadError = null;
+    });
     try {
       final homeRepo = context.read<HomeRepository>();
       final regRepo = context.read<RegistryRepository>();
@@ -69,14 +75,19 @@ class _RegistryScreenState extends State<RegistryScreen> with BabyContextReload 
       }
       final items = await regRepo.listItems(baby.id);
       final shipping = await regRepo.getShippingAddress(baby.id);
+      if (!mounted) return;
       setState(() {
         _baby = baby;
         _items = items;
         _shipping = shipping;
         _loading = false;
       });
-    } catch (_) {
-      setState(() => _loading = false);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loadError = apiErrorMessage(e);
+        _loading = false;
+      });
     }
   }
 
@@ -173,14 +184,22 @@ class _RegistryScreenState extends State<RegistryScreen> with BabyContextReload 
       if (confirmed != true) return;
     }
     if (!mounted) return;
-    await context.read<RegistryRepository>().claimPurchase(baby.id, item.id);
+    final ok = await runMutation(
+      context,
+      () => context.read<RegistryRepository>().claimPurchase(baby.id, item.id),
+    );
+    if (!ok || !mounted) return;
     await _load();
   }
 
   Future<void> _undo(RegistryItem item) async {
     final baby = _baby;
     if (baby == null) return;
-    await context.read<RegistryRepository>().undoPurchase(baby.id, item.id);
+    final ok = await runMutation(
+      context,
+      () => context.read<RegistryRepository>().undoPurchase(baby.id, item.id),
+    );
+    if (!ok || !mounted) return;
     await _load();
   }
 
@@ -208,6 +227,25 @@ class _RegistryScreenState extends State<RegistryScreen> with BabyContextReload 
               if (_loading)
                 const SliverFillRemaining(
                   child: Center(child: CircularProgressIndicator()),
+                )
+              else if (_loadError != null)
+                SliverFillRemaining(
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(_loadError!, textAlign: TextAlign.center),
+                          const SizedBox(height: 12),
+                          FilledButton(
+                            onPressed: _load,
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 )
               else if (_baby == null)
                 const SliverFillRemaining(

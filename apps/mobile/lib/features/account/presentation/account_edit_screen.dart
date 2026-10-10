@@ -7,6 +7,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_client.dart';
+import '../../../core/api/api_error_message.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/data/iso_countries.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/widgets/app_country_dropdown_field.dart';
@@ -134,6 +136,10 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
             sendExplicitNulls: true,
           );
       if (mounted) context.pop();
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.showAlert(context, apiErrorMessage(e));
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }

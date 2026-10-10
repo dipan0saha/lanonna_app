@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/core/api/api_exception.dart';
 import 'package:lanonna/features/invitations/data/models/invitation_preview.dart';
 import 'package:lanonna/features/invitations/presentation/invite_accept_messages.dart';
 
@@ -27,5 +28,40 @@ void main() {
     );
     expect(revoked.canContinueInviteFlow, isFalse);
     expect(invitePreviewProblemCode(revoked), 'revoked');
+  });
+
+  test('invitePreviewFetchUserMessage distinguishes offline, 404, and retryable', () {
+    expect(
+      invitePreviewFetchUserMessage(Exception('x'), offline: true),
+      contains('internet'),
+    );
+    expect(
+      invitePreviewFetchUserMessage(
+        ApiException('missing', statusCode: 404),
+        offline: false,
+      ),
+      inviteAcceptUserMessage('not_found'),
+    );
+    expect(
+      invitePreviewFetchUserMessage(
+        ApiException('server', statusCode: 503),
+        offline: false,
+      ),
+      contains('Try again'),
+    );
+    expect(
+      invitePreviewFetchCanRetry(
+        ApiException('missing', statusCode: 404),
+        offline: false,
+      ),
+      isFalse,
+    );
+    expect(
+      invitePreviewFetchCanRetry(
+        ApiException('server', statusCode: 503),
+        offline: false,
+      ),
+      isTrue,
+    );
   });
 }

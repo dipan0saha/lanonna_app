@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/network/connectivity_service.dart';
 import '../../onboarding/domain/onboarding_routes.dart';
 import '../../onboarding/presentation/onboarding_coordinator.dart';
 import '../data/invitations_repository.dart';
@@ -23,6 +24,7 @@ class InviteAcceptBootstrapScreen extends StatefulWidget {
 class _InviteAcceptBootstrapScreenState extends State<InviteAcceptBootstrapScreen> {
   var _loading = true;
   String? _problemMessage;
+  VoidCallback? _retryBootstrap;
 
   @override
   void initState() {
@@ -31,6 +33,11 @@ class _InviteAcceptBootstrapScreenState extends State<InviteAcceptBootstrapScree
   }
 
   Future<void> _bootstrap() async {
+    setState(() {
+      _loading = true;
+      _problemMessage = null;
+      _retryBootstrap = null;
+    });
     final token = widget.token.trim();
     if (token.isEmpty) {
       if (mounted) context.go(OnboardingRoutes.ownerCarousel);
@@ -54,11 +61,14 @@ class _InviteAcceptBootstrapScreenState extends State<InviteAcceptBootstrapScree
           ? OnboardingRoutes.coOwnerInvite
           : OnboardingRoutes.followerInvite;
       context.go(route);
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
+      final offline = !context.read<ConnectivityService>().isOnline;
+      final canRetry = invitePreviewFetchCanRetry(e, offline: offline);
       setState(() {
         _loading = false;
-        _problemMessage = inviteAcceptUserMessage('not_found');
+        _problemMessage = invitePreviewFetchUserMessage(e, offline: offline);
+        _retryBootstrap = canRetry ? () => _bootstrap() : null;
       });
     }
   }
@@ -70,6 +80,7 @@ class _InviteAcceptBootstrapScreenState extends State<InviteAcceptBootstrapScree
       return InviteLandingProblem(
         message: _problemMessage!,
         onContinue: () => leaveInvitationFlow(context),
+        onRetry: _retryBootstrap,
       );
     }
     return const InviteLandingLoading();

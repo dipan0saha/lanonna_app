@@ -28,6 +28,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
   List<MemberRow> _members = [];
   List<InvitationRow> _invites = [];
   var _loading = true;
+  String? _loadError;
 
   @override
   void initState() {
@@ -36,14 +37,27 @@ class _FollowersScreenState extends State<FollowersScreen> {
   }
 
   Future<void> _load() async {
-    final repo = context.read<AccountRepository>();
-    final members = await repo.listMembers(widget.babyId);
-    final invites = await repo.listInvitations(widget.babyId);
     setState(() {
-      _members = members;
-      _invites = invites.where((i) => i.status == 'pending').toList();
-      _loading = false;
+      _loading = true;
+      _loadError = null;
     });
+    try {
+      final repo = context.read<AccountRepository>();
+      final members = await repo.listMembers(widget.babyId);
+      final invites = await repo.listInvitations(widget.babyId);
+      if (!mounted) return;
+      setState(() {
+        _members = members;
+        _invites = invites.where((i) => i.status == 'pending').toList();
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loadError = apiErrorMessage(e);
+        _loading = false;
+      });
+    }
   }
 
   Future<void> _confirmRemove(MemberRow member) async {
@@ -88,6 +102,23 @@ class _FollowersScreenState extends State<FollowersScreen> {
         title: 'Manage followers',
         body: _loading
             ? const Center(child: CircularProgressIndicator())
+            : _loadError != null
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(_loadError!, textAlign: TextAlign.center),
+                      const SizedBox(height: 12),
+                      FilledButton(
+                        onPressed: _load,
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              )
             : ListView(
                 padding: AppMetrics.subpageScrollPadding,
                 children: [

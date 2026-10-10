@@ -60,3 +60,35 @@ Future<void> finishInviteOnboardingAndGoHome(BuildContext context) async {
   await context.read<AppSession>().refreshFromApi();
   if (context.mounted) context.go('/home');
 }
+
+/// Signed-in accept from invite landing screens (H-07): honor API result, not only throws.
+Future<void> acceptSignedInInviteAndContinue(
+  BuildContext context,
+  String token,
+) async {
+  final coordinator = context.read<OnboardingCoordinator>();
+  final result = await context.read<InvitationsRepository>().accept(token);
+  if (!context.mounted) return;
+
+  if (result.error == 'email_mismatch') {
+    final invitee = Uri.encodeComponent(result.inviteeEmail ?? '');
+    final signedIn = Uri.encodeComponent(result.signedInEmail ?? '');
+    context.go(
+      '${OnboardingRoutes.wrongEmail}?invitee=$invitee&signed_in=$signedIn&invite_token=${Uri.encodeComponent(token)}',
+    );
+    return;
+  }
+  if (result.error != null) {
+    throw Exception(inviteAcceptUserMessage(result.error!));
+  }
+
+  final babyId = result.babyProfileId ?? coordinator.invitedBabyId;
+  if (babyId != null) {
+    await coordinator.setInvitedBabyId(babyId);
+    if (!context.mounted) return;
+    await context.read<SelectedBabyStore>().setSelectedBabyId(babyId);
+  }
+
+  if (!context.mounted) return;
+  await finishInviteOnboardingAndGoHome(context);
+}

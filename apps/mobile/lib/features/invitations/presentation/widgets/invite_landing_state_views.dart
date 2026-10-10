@@ -21,10 +21,12 @@ class InviteLandingProblem extends StatelessWidget {
     super.key,
     required this.message,
     required this.onContinue,
+    this.onRetry,
   });
 
   final String message;
   final VoidCallback onContinue;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +41,10 @@ class InviteLandingProblem extends StatelessWidget {
           const SizedBox(height: 12),
           OnboardingSupportText(message),
           const SizedBox(height: 28),
+          if (onRetry != null) ...[
+            OnboardingPrimaryButton(label: 'Try again', onPressed: onRetry!),
+            const SizedBox(height: 12),
+          ],
           OnboardingPrimaryButton(label: 'Continue', onPressed: onContinue),
         ],
       ),
