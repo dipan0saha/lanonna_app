@@ -21,8 +21,10 @@ Resource inventory for Path B. **Deploy, smoke tests, and runbooks:** [docs/engi
 | GCS display bucket | `gs://lanonna-dev-display` |
 | GCS thumbnails bucket | `gs://lanonna-dev-thumbnails` |
 | Pub/Sub topic | `photo-upload-finalized` |
-| Pub/Sub subscription (Terraform, pull) | `photo-upload-finalized-worker` |
-| Pub/Sub subscription (dev push → worker) | `photo-upload-finalized-push-dev` |
+| Pub/Sub topic (async commands) | `lanonna-async-commands` |
+| Pub/Sub subscription (dev push → worker, uploads) | `photo-upload-finalized-push-dev` |
+| Pub/Sub subscription (dev push → worker, commands) | `lanonna-async-commands-push-dev` |
+| Pub/Sub dead-letter topic + retention subscription | `lanonna-async-commands-dlq` / `lanonna-async-commands-dlq-pull` |
 | GCS notification | `lanonna-dev-display` → topic (`OBJECT_FINALIZE`) |
 | Artifact Registry (Docker) | `us-central1-docker.pkg.dev/lanonna-dev/lanonna` |
 | Cloud Run | `api`, `worker` |
@@ -36,7 +38,7 @@ Resource inventory for Path B. **Deploy, smoke tests, and runbooks:** [docs/engi
 | `lanonna-api@lanonna-dev.iam.gserviceaccount.com` | Cloud Run **api** (SQL, secrets, GCS signed URLs) |
 | `lanonna-worker@lanonna-dev.iam.gserviceaccount.com` | Cloud Run **worker** |
 
-`lanonna-api` has **self** `roles/iam.serviceAccountTokenCreator` on dev for V4 signed URLs (manual IAM; codify in Terraform later).
+`lanonna-api` has **self** `roles/iam.serviceAccountTokenCreator` on dev for V4 signed URLs (Terraform: `api_self_token_creator` in `modules/platform/run_iam.tf`).
 
 `lanonna-api` needs **`roles/firebaseauth.admin`** so `POST /v1/me/delete-account` can remove the Firebase user (Terraform: `api_firebase_auth_admin` in `modules/platform/iam.tf`).
 

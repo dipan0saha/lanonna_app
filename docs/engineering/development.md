@@ -81,6 +81,9 @@ Transient feedback uses [`AppSnackBar`](../../apps/mobile/lib/core/widgets/app_s
 | Mobile integration | `flutter test integration_test/home_summary_load_test.dart` (device/emulator) | Run locally before release |
 | Maestro (Android) | `./maestro/scripts/run-maestro-smoke.sh` after proxy + deploy | See [maestro/README.md](../../apps/mobile/maestro/README.md) |
 | API | `PYTHONPATH=services/api/src services/api/.venv/bin/pytest -q services/api/tests` | Run when touching API; included in `verify-dev-prerequisites.sh` compile path — run pytest explicitly for API changes |
+| Worker | `cd services/worker && PYTHONPATH=src ../api/.venv/bin/python -m pytest -q tests` | Reuses the API venv (it has the worker's test deps); run when touching the worker |
+
+Run **all three suites** before shipping — there is no CI, so they are the only automated gate. Flutter widgets that render the shell top bar (home, gallery, calendar tabs) need `ConnectivityService.forTesting()` and `FakeNotificationsRepository` (`apps/mobile/test/support/`) in the test `MultiProvider`. API repository SQL is mocked in most tests, so column names are not exercised — add a column-conformance test like `services/api/tests/test_search_repository.py` when you write new SQL.
 
 **Signed read URLs** expire after **900s** ([`storage.py`](../../services/api/src/lanonna_api/storage.py)). `CachedSignedImage` accepts optional `onSignedUrlError` (one callback per widget mount) so parents can refresh API data (home teasers, photo detail).
 
@@ -130,7 +133,7 @@ Product UI tokens live under `apps/mobile/lib/core/theme/` (see also PRD §5.1):
 
 **Member lifecycle (FR-INV-009 / FR-INV-010 / #25):** Remove and leave in [`member_lifecycle.py`](../../services/api/src/lanonna_api/domain/member_lifecycle.py); routes in [`routers/members.py`](../../services/api/src/lanonna_api/routers/members.py). Mobile: [`followers_screen.dart`](../../apps/mobile/lib/features/account/presentation/followers_screen.dart), leave in [`baby_switcher_sheet.dart`](../../apps/mobile/lib/features/shell/presentation/baby_switcher_sheet.dart). Re-invite reactivates tombstoned `baby_memberships` rows on accept. Ended membership on baby-scoped routes: API `403` with `detail.error == membership_ended` from [`membership_access.py`](../../services/api/src/lanonna_api/domain/membership_access.py) (`require_active_membership` / `require_membership`, home, search); client refreshes selection via [`membership_access_handler.dart`](../../apps/mobile/lib/core/auth/membership_access_handler.dart) (`ApiClient.registerMembershipEndedHandler`).
 
-**Invite accept policy (FR-INV-002 / #26):** Product rules live in [`services/api/src/lanonna_api/domain/invitations.py`](../../services/api/src/lanonna_api/domain/invitations.py) (preview `accepted`/`revoked`; accept checks membership before non-pending status). Mobile treats `InvitationPreview.canContinueInviteFlow` (`pending` or `accepted`) as routable — not “expired”.
+**Invite accept policy (FR-INV-002 / #26):** Product rules live in [`services/api/src/lanonna_api/domain/invitations.py`](../../services/api/src/lanonna_api/domain/invitations.py) (preview `accepted`/`revoked`; accept checks membership before non-pending status). **Co-owner (`role=owner`) accepts** lock the baby row (`lock_baby_profile_for_update`) before counting active owners, so concurrent accepts cannot exceed the 2-owner cap (`409 max_owners`). Mobile treats `InvitationPreview.canContinueInviteFlow` (`pending` or `accepted`) as routable — not “expired”.
 
 **Deleted account sessions (#30 / NFR-DATA-001):** [`current_user`](../../services/api/src/lanonna_api/auth.py) calls [`assert_active_user`](../../services/api/src/lanonna_api/domain/auth_session.py) after Firebase JWT verify. Tombstoned `app_users` → **401** `detail.error = user_deleted`. [`upsert_app_user`](../../services/api/src/lanonna_api/repositories/users.py) skips email updates when `deleted_at` is set. Mobile [`ApiClient`](../../apps/mobile/lib/core/api/api_client.dart) invokes [`handleUserDeletedSession`](../../apps/mobile/lib/core/auth/user_deleted_session_handler.dart) (sign out + login route).
 
@@ -184,8 +187,8 @@ Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps:
 | GET | `/v1/me/delete-account/eligibility` | Account deletion preflight (`allowed: true` in v1; mobile calls before delete) |
 | POST | `/v1/me/delete-account` | Soft-delete SQL first (sole-owned babies, memberships, `app_users.deleted_at`), then Firebase `delete_user` (#H-03). If Firebase fails after SQL, retry POST (skips SQL when already tombstoned). |
 | GET | `/v1/babies/{baby_profile_id}/search?q=` | Cross-feature search (member) |
-| POST | `/v1/babies/{baby_profile_id}/data-export` | Queue baby JSON export (owner) |
-| GET | `/v1/babies/{baby_profile_id}/data-export/latest` | Export job status + signed download URL |
+| POST | `/v1/babies/{baby_profile_id}/data-export` | Queue baby JSON export (owner); the worker runs it with Pub/Sub retry semantics ([worker README](../../services/worker/README.md)) |
+| GET | `/v1/babies/{baby_profile_id}/data-export/latest` | Export job status (`pending` / `running` / `ready` / `failed`) + signed download URL |
 | PATCH | `/v1/profile` | Firebase Bearer JWT; `display_name`, optional `avatar_url`, `phone`, `birth_date`, `country_code`, `postal_code`, `accept_terms` (sets `terms_accepted_at`). Read profile via `GET /v1/me/account`. |
 | GET | `/v1/onboarding/status` | Firebase Bearer JWT |
 | POST | `/v1/onboarding/owner/complete` | Firebase Bearer JWT |

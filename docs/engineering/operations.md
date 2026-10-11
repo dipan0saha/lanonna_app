@@ -52,7 +52,7 @@ Path B platform: **`infra/terraform/`** — one **`platform`** module, **`dev`**
 | **dev** | `lanonna-dev` | Now — limited testers |
 | **prod** | `lanonna-prod` | Real users (**not created yet**) |
 
-**Terraform manages:** APIs, GCS (+ upload notification), Pub/Sub (**push** subs + DLQ), Cloud SQL, Artifact Registry, Secret Manager **containers**, IAM, Firebase project attachment. Legacy **`infra/gcp/bootstrap.sh`** is deprecated.
+**Terraform manages:** APIs, GCS (+ upload notification), Pub/Sub (**push** subs + DLQ topic, retention subscription, and service-agent IAM), Cloud SQL, Artifact Registry, Secret Manager **containers**, IAM, Firebase project attachment. Legacy **`infra/gcp/bootstrap.sh`** is deprecated.
 
 **Dev extras:** push subscription **`photo-upload-finalized-push-dev`** (OIDC), display bucket **CORS**, API **TokenCreator** IAM. **Run invoker** on `worker`: `./scripts/apply-dev-run-iam.sh` (gcloud; TF may **403** on `setIamPolicy` — use owner account).
 
@@ -147,6 +147,7 @@ cd infra/terraform/environments/dev && terraform apply
 - Weekly digest: `./scripts/setup-weekly-digest-scheduler.sh` (Sunday 14:00 UTC)
 - Expired invites: `./scripts/setup-expired-invites-scheduler.sh`
 - **Push auth:** OIDC; Run invoker via `apply-dev-run-iam.sh` after each worker deploy
+- **Retry config:** worker env `PUBSUB_MAX_DELIVERY_ATTEMPTS` (default 5) must match `dead_letter_policy.max_delivery_attempts` in `pubsub.tf`; the export handler uses it to decide which attempt is final
 - **FCM:** Worker SA may need **`roles/firebasecloudmessaging.admin`**
 
 #### Dead-letter queue

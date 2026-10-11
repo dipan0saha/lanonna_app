@@ -75,9 +75,15 @@ Use a **throwaway** Firebase account (not Maestro smoke user).
 - [ ] Sole owner of at least one baby: Profile → Delete account shows FR-SET-005 confirmation copy; **Delete my account** is enabled; confirm → signed out to onboarding; baby no longer listed for any member.
 - [ ] Co-owner on a baby: deleting one owner leaves baby visible to the other owner (ownership unchanged aside from removed co-owner).
 
-## 10. Regression smoke
+## 10. Search, export, and co-owner invites
 
-- [ ] `flutter test` and API `pytest` green (`services/api/.venv/bin/pytest -q`).
+- [ ] Search (magnifier in the top bar): a query that matches a **name suggestion** returns results (no error banner); photo captions, events, and registry items also appear.
+- [ ] My Account → **Export baby data** (owner): job reaches **ready** and **Download export** works. Check `lanonna-async-commands-dlq-pull` is empty afterward ([operations.md](operations.md#dead-letter-queue)).
+- [ ] Invite a second co-owner and accept → success; invite a **third** co-owner → "max owners" message, no extra membership.
+
+## 11. Regression smoke
+
+- [ ] `flutter test`, API `pytest`, and worker `pytest` green (see [development.md](development.md#automated-tests)).
 - [ ] Optional: `flutter test integration_test/home_summary_load_test.dart` on emulator.
 - [ ] Owner onboarding + gallery + calendar still usable.
 

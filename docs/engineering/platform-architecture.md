@@ -31,7 +31,7 @@
 2. **Thin HTTP, fat domain** — handlers validate input; domain services enforce rules; SQL in repositories with parameterized queries.
 3. **Media off the API hot path** — bytes flow **client encode → signed URL → GCS**; API only mints URLs and metadata rows (no camera originals in v1).
 4. **Phone-quality display, not archive originals** — Flutter resizes/encodes before upload; worker only builds **feed thumbs** from the display object (cheaper storage, egress, and CPU).
-5. **Async work is durable** — GCS events → **Pub/Sub** → worker with **idempotent** handlers (safe retries).
+5. **Async work is durable** — GCS events → **Pub/Sub** → worker with **idempotent** handlers (safe retries). Idempotency claims are committed **in the same transaction as the side effect** (or live on the job row), never ahead of it — a claim committed first turns a retry into a silent drop.
 6. **Secrets centralized** — DB, Mailjet, HMAC keys in **Secret Manager**; cache in memory per instance with rotation support.
 7. **Observable by default** — structured logs (request ID), Crashlytics on client, basic alerts on 5xx and SQL disk; **no verbose body logging** in prod (log cost).
 8. **Region discipline** — primary **`us-central1`** (free-tier eligible for Run; co-locate SQL, GCS, Run, Pub/Sub).
