@@ -21,7 +21,7 @@ Path B GCP platform lives in **`infra/terraform/`** — one **`platform`** modul
 
 ### What Terraform manages
 
-- **`infra/terraform/modules/platform`** — APIs, GCS (+ upload notification), Pub/Sub topic + **pull** subscription `photo-upload-finalized-worker`, Cloud SQL, Artifact Registry, Secret Manager **containers**, IAM (api/worker + optional automation SA), Firebase project attachment
+- **`infra/terraform/modules/platform`** — APIs, GCS (+ upload notification), Pub/Sub topic + **push** subscriptions (upload + async commands; dead-letter topic after M-18), Cloud SQL, Artifact Registry, Secret Manager **containers**, IAM (api/worker + optional automation SA), Firebase project attachment
 - **`infra/terraform/environments/dev`** — `lanonna-dev`, `db-custom-1-3840`, `create_automation_sa = true`
 - **`infra/terraform/environments/prod`** — stub + `terraform.tfvars.example` (apply when `lanonna-prod` exists)
 
@@ -120,7 +120,7 @@ Scripts use **Cloud Build** to push images to `us-central1-docker.pkg.dev/lanonn
 
 ### Worker (dev Pub/Sub push)
 
-- Push subscription: **`photo-upload-finalized-push-dev`** on topic **`photo-upload-finalized`**
+- Push subscription: **`photo-upload-finalized-push-dev`** on topic **`photo-upload-finalized`** (no pull consumer; failed deliveries go to the commands DLQ topic after max attempts — see `pubsub.tf`)
 - Handler: `POST /pubsub/push` — **`send_invite_email`** (Mailjet), **`notify_fan_out` / `notify_user` / `weekly_notification_digest`** (in-app + FCM), **GCS finalize** → thumbnail + `photos.status = ready` + `photo_shared` + member notifications
 - Weekly digest: `./scripts/setup-weekly-digest-scheduler.sh` (Sunday 14:00 UTC → Pub/Sub `weekly_notification_digest` on worker topic)
 - **Mobile push:** `firebase_messaging` + token register on sign-in (`PUT /v1/me/device-tokens`). iOS: enable **Push Notifications** in Xcode. Worker SA: **`roles/firebasecloudmessaging.admin`** if FCM sends fail in dev.

@@ -20,8 +20,8 @@ terraform import "${ROOT}.google_storage_bucket.thumbnails" "${PROJECT}/lanonna-
 
 echo "Importing Pub/Sub..."
 terraform import "${ROOT}.google_pubsub_topic.upload" "projects/${PROJECT}/topics/photo-upload-finalized"
-terraform import "${ROOT}.google_pubsub_subscription.worker" "projects/${PROJECT}/subscriptions/photo-upload-finalized-worker"
 terraform import "${ROOT}.google_pubsub_subscription.worker_push[0]" "projects/${PROJECT}/subscriptions/photo-upload-finalized-push-dev" || true
+# Pull subscription photo-upload-finalized-worker was removed from Terraform (M-18); delete in GCP after apply if still present.
 
 echo "Importing Artifact Registry..."
 terraform import "${ROOT}.google_artifact_registry_repository.docker" "projects/${PROJECT}/locations/${REGION}/repositories/lanonna"

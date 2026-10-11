@@ -23,7 +23,8 @@ output "pubsub_topic_commands" {
 }
 
 output "pubsub_subscription_worker" {
-  value = google_pubsub_subscription.worker.name
+  description = "Deprecated pull subscription removed; upload uses push subscription."
+  value       = null
 }
 
 output "pubsub_subscription_worker_push" {
