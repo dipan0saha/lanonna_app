@@ -9,15 +9,14 @@ lanonna_app/
 ├── services/
 │   ├── api/                 # Cloud Run HTTP API (JWT, CRUD, signed GCS URLs)
 │   └── worker/              # Cloud Run Pub/Sub worker (thumbs, email, FCM)
-├── scripts/                 # verify-dev-prerequisites.sh, infra smoke, Run IAM
+├── scripts/                 # verify-dev-prerequisites.sh, infra smoke, Run IAM, ship APK
 ├── packages/
 │   └── email-templates/     # Mailjet HTML/text templates (versioned)
 ├── infra/
 │   ├── db/                  # `apply_migrations.py`, `clear_dev_test_data.py`, migrations/
 │   ├── terraform/           # GCP platform (dev/prod)
 │   └── gcp/                 # Resource inventory (SETUP.md)
-├── docs/                    # product/ + engineering/ documentation
-└── .github/workflows/       # CI workflow disabled — run verify-dev-prerequisites.sh locally
+└── docs/                    # product/ + engineering/ documentation
 ```
 
 **Deploy model:** `api` and `worker` ship as **two Cloud Run services** — see [platform-architecture.md](platform-architecture.md).
@@ -81,7 +80,7 @@ Transient feedback uses [`AppSnackBar`](../../apps/mobile/lib/core/widgets/app_s
 | Mobile unit/widget | `cd apps/mobile && flutter test` | Part of `verify-dev-prerequisites.sh` |
 | Mobile integration | `flutter test integration_test/home_summary_load_test.dart` (device/emulator) | Run locally before release |
 | Maestro (Android) | `./maestro/scripts/run-maestro-smoke.sh` after proxy + deploy | See [maestro/README.md](../../apps/mobile/maestro/README.md) |
-| API | `PYTHONPATH=services/api/src services/api/.venv/bin/pytest -q services/api/tests` | Run when touching API; GitHub Actions CI disabled ([open-gaps.md](open-gaps.md) M-32) |
+| API | `PYTHONPATH=services/api/src services/api/.venv/bin/pytest -q services/api/tests` | Run when touching API; included in `verify-dev-prerequisites.sh` compile path — run pytest explicitly for API changes |
 
 **Signed read URLs** expire after **900s** ([`storage.py`](../../services/api/src/lanonna_api/storage.py)). `CachedSignedImage` accepts optional `onSignedUrlError` (one callback per widget mount) so parents can refresh API data (home teasers, photo detail).
 

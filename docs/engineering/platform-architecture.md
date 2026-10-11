@@ -1,9 +1,9 @@
 # La Nonna — platform architecture (GCP)
 
-**Document version:** 1.8  
-**Last updated:** 2026-10-01  
+**Document version:** 1.9  
+**Last updated:** 2026-10-11  
 **Location:** `docs/engineering/platform-architecture.md` (this repository)  
-**Status:** Target platform architecture for greenfield build
+**Status:** Operational on `lanonna-dev`; design reference for prod
 
 **Dev implementation status:** [operations.md](operations.md) (deploy, migrations, readiness). **Routes and mobile conventions:** [development.md](development.md). **Pre-beta blockers:** [open-gaps.md](open-gaps.md). This doc is the long-term design reference (principles, flows, cost).
 
@@ -216,7 +216,7 @@ sequenceDiagram
 | **Observability** | Crashlytics, Analytics, Performance | Crashes, product analytics, screen/network perf |
 | **API** | Cloud Run (`api`) | JWT + App Check; authorization; CRUD; signed GCS URLs; publish async messages |
 | **Worker** | Cloud Run (`worker`) | Pub/Sub push: **thumb from display** (light CPU), Mailjet, FCM; separate memory from `api` |
-| **Messaging** | Pub/Sub | **Two topics:** GCS finalize → `photo-upload-finalized`; API/Scheduler jobs → `lanonna-async-commands` |
+| **Messaging** | Pub/Sub | **Two topics:** GCS finalize → `photo-upload-finalized`; API/Scheduler jobs → `lanonna-async-commands`. **Dev:** push-only delivery (no pull consumer); dead-letter topic + max delivery attempts on push subs ([operations.md](operations.md)) |
 | **Database** | Cloud SQL PostgreSQL (zonal) | Schema, migrations, FKs, transactions; connection pool on Run |
 | **Media** | GCS | `display/`, `thumbnails/`; uniform bucket-level access; lifecycle to Nearline only if long-term archive tier added later |
 | **Email (product)** | **Mailjet** (API/SMTP) | Invitations and app transactional mail — [GCP-documented option](https://cloud.google.com/compute/docs/tutorials/sending-mail) |
@@ -307,7 +307,7 @@ Isolates **storage + egress** if behavior drifts from §2.5 (SQL/Run/email held 
 ### 6.1 Operational minimums
 
 - [ ] Cloud SQL: automated backups + PITR; least-privilege DB user for Run
-- [ ] IAM: separate service accounts for **api** vs **worker**; minimal roles (SQL client, GCS object admin scoped per bucket, Pub/Sub publisher/subscriber)
+- [x] IAM: separate service accounts for **api** vs **worker** (`infra/terraform/modules/platform`); minimal roles per bucket/topic
 - [x] Request/correlation ID in API logs (`X-Request-Id` middleware); [ ] alert on Run 5xx rate and SQL disk
 - [ ] Documented restore tested once
 - [ ] Mailjet (or successor): SPF/DKIM/DMARC on sending domain
@@ -341,7 +341,8 @@ Isolates **storage + egress** if behavior drifts from §2.5 (SQL/Run/email held 
 **Async and email**
 
 - [ ] Pub/Sub push: Run invoker + OIDC at edge; worker should validate OIDC JWT in-app ([open-gaps.md](open-gaps.md) H-04); validate message shape before side effects
-- [ ] Thumbnail handler idempotent on `bucket/object/generation` to prevent duplicate rows on retry
+- [x] Push subscriptions: dead-letter topic + max delivery attempts on dev ([operations.md](operations.md))
+- [x] Thumbnail handler idempotent on `bucket/object/generation` to prevent duplicate rows on retry
 - [ ] Invite tokens: high entropy, single-use or expiring; hash at rest if stored for lookup
 
 **Governance**

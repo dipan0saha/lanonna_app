@@ -20,6 +20,6 @@ When you finish **substantive code changes** (API, worker, DB migrations, or mob
 
 1. **Commit + push** — logical commit(s) on `main` (or the branch the user named); do not commit secrets or `tfplan` artifacts.
 2. **Migrations (dev)** — Cloud SQL Auth Proxy + `infra/db/apply_migrations.py` with `DB_PASSWORD` from Secret Manager `db-lanonna-app-password` (`lanonna-dev`). Set `DB_PORT` to match the proxy (often `5433`). Run `./scripts/verify-dev-migrations.sh` when migrations changed.
-3. **Deploy** — `services/api/scripts/deploy.sh`, then `services/worker/scripts/deploy.sh`, then repo root `./scripts/apply-dev-run-iam.sh` after worker deploy.
+3. **Deploy** — `services/worker/scripts/deploy.sh`, then repo root `./scripts/apply-dev-run-iam.sh`, then `services/api/scripts/deploy.sh` (after migrations when schema changed; `sync-email-templates.sh apply` before worker if templates changed).
 
 Skip migration/deploy when the change is docs-only or cannot affect dev runtime.

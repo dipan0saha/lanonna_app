@@ -13,8 +13,8 @@ Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [op
 | Severity | Open | Themes |
 |----------|------|--------|
 | High | 4 | Release signing, worker OIDC, App Check enforce, admin surface |
-| Medium | 10 | Rate limits, worker hardening, infra/IAM/prod parity, App Check client, biometrics, CI |
-| Low | 7 | Release config, a11y/i18n, CORS, observability, Docker/CI hygiene |
+| Medium | 9 | Rate limits, worker hardening, infra/IAM/prod parity, App Check client, biometrics |
+| Low | 7 | Release config, a11y/i18n, CORS, observability, Docker hygiene |
 
 ---
 
@@ -23,7 +23,7 @@ Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [op
 ### H-01 Android release is signed with debug keys — Verified
 - **Where:** `apps/mobile/android/app/build.gradle.kts` (release `signingConfig = signingConfigs.getByName("debug")`)
 - **Issue:** Release APK/AAB uses the debug keystore (TODO left in file). Not acceptable for Play upload or any distribution you intend to update in place.
-- **Fix:** Add an upload keystore + `signingConfigs.release` read from `key.properties` / CI secrets; keep debug signing only for local `flutter run --release`.
+- **Fix:** Add an upload keystore + `signingConfigs.release` read from `key.properties` / release signing secrets; keep debug signing only for local `flutter run --release`.
 
 ### H-04 Worker `/pubsub/push` has no in-app OIDC verification — Verified (grep) / Reported (impact)
 - **Where:** `services/worker/src/lanonna_worker/main.py` (push + cron routes); no `Authorization` / OIDC verification anywhere in `services/worker/src`
@@ -73,12 +73,6 @@ Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [op
 | M-27 | App Check token silently omitted when `getToken` fails | `core/app_check/app_check_bootstrap.dart`, `core/api/api_client.dart` | Retry/backoff or visible warning |
 | M-31 | Biometric unlock (PRD §5.3) not implemented — no `local_auth` usage | n/a | Implement or mark deferred in PRD |
 
-### CI / docs / process
-
-| ID | Issue | Where | Fix |
-|----|-------|-------|-----|
-| M-32 | GitHub CI entirely commented out; README and package docs still describe CI on PRs; email-template `check` job also disabled | `.github/workflows/ci.yml`, `README.md`, `packages/email-templates/README.md` | Re-enable (add `httpx` for API tests) or update docs |
-
 ---
 
 ## Low
@@ -91,7 +85,7 @@ Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [op
 | L-10 | No CORS middleware (fine for mobile-only; needs policy if a web client is added) | `services/api/main.py` |
 | L-14 | Poison/unknown Pub/Sub messages are logged and acked (204) with no metric | `worker/main.py` |
 | L-15 | Dockerfiles run as root; Cloud Build only builds/pushes (no tests) | `services/*/Dockerfile`, `cloudbuild.yaml` |
-| L-16 | Duplicate email template trees (intentional) but sync check is disabled with CI | `packages/email-templates`, `services/worker/email_templates` |
+| L-16 | Duplicate email template trees (intentional); run `scripts/sync-email-templates.sh check` locally before commit | `packages/email-templates`, `services/worker/email_templates` |
 
 ---
 
@@ -99,7 +93,7 @@ Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [op
 
 - **API:** Router tests still thin or missing for `events`, `registry`, `fun`, `data_export`, `search`, `notifications`, `onboarding`, `admin_system_announcements`.
 - **Mobile:** `delete_account_screen_test.dart` only checks copy (no eligibility/delete/sign-out flow); upload tests cover headers only; login test is UI-only.
-- **Worker:** Add regression tests for export failure/reclaim and invite-email claim paths if not already covered on `main`.
+- **Worker:** Add or extend tests for invite-email send-claim races (`test_invite_email.py`).
 
 ---
 
@@ -107,5 +101,5 @@ Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [op
 
 1. **Pre-beta security:** H-01, H-04, H-05, H-06, M-27
 2. **Infra + prod parity:** M-19–M-22
-3. **Ops / scale:** M-09, M-15, M-16, M-32, L-14–L-16
+3. **Ops / scale:** M-09, M-15, M-16, L-14–L-16
 4. **Product / polish:** M-31, L-07–L-10

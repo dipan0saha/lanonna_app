@@ -33,7 +33,7 @@ export SMOKE_TEST_PASSWORD='…'
 | Cloud SQL | Migrations through **`027`** — proxy + `apply_migrations.py`; optional `./scripts/verify-dev-migrations.sh` |
 | GCS → Pub/Sub → worker | `./scripts/infra-smoke-display-upload.sh` (set `SMOKE_TEST_PASSWORD`) |
 | Worker security | **No** `allUsers` on `worker`; Run invoker via `apply-dev-run-iam.sh` |
-| Quality gate | `verify-dev-prerequisites.sh` (Flutter analyze/test, API/worker compile); run `pytest` when you touch Python. **GitHub Actions CI is disabled** — [open-gaps.md](open-gaps.md) (M-32) |
+| Quality gate | `verify-dev-prerequisites.sh` (Flutter analyze/test, API/worker compile); run `pytest` when you touch Python |
 | Firebase | Local plist/json + `firebase_options.dart` (see [Flutter (dev)](#flutter-dev) below) |
 | Mailjet | Secrets on worker for `send_invite_email` |
 | App Check | Code ready; dev deploy defaults `APP_CHECK_ENFORCE=false` — [pre-beta-qa.md](pre-beta-qa.md) |

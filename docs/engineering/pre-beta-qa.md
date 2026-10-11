@@ -4,8 +4,9 @@ Manual device checks before widening beta. Run against **lanonna-dev** with `flu
 
 **Prerequisites**
 
+- **Deploy / schema:** [operations.md](operations.md) — dev API + worker deployed; SQL migrations through **`027`** on dev (`apply_migrations.py` or `./scripts/verify-dev-migrations.sh`).
 - **App Check policy:** [`deploy.sh`](../../services/api/scripts/deploy.sh) defaults to **`APP_CHECK_ENFORCE=false`** on dev so sideloaded APKs work without registering every emulator token. The Flutter client still sends App Check when Firebase provides a token. Before wide beta, deploy with `APP_CHECK_ENFORCE=true ./services/api/scripts/deploy.sh` and register debug tokens (section 1 below). When enforce is off, the API accepts missing `X-Firebase-AppCheck` headers.
-- **Beta gate script:** `./scripts/run-beta-gate.sh` runs unit tests and optionally deploys API. After deploy, apply migration **`020_app_versions`** on dev SQL so `GET /v1/app/version` and force-update work.
+- **Beta gate script:** `./scripts/run-beta-gate.sh` runs unit tests and optionally deploys API. Force-update requires migration **`020_app_versions`** (included in **027** gate).
 - Firebase **App Check** enabled for Android/iOS; **debug token** registered for your emulator (log line on app start: `Firebase App Check debug token …`).
 - Disable `DEV_AUTO_SIGN_IN_*` when testing unsigned invite UX.
 - Second test account or follower membership for push fan-out tests.
@@ -90,7 +91,7 @@ Record date, device/emulator ID, and tester in your release notes when all boxes
 |------|--------|--------|
 | API deploy | | Revision from `gcloud run services describe api --region=us-central1`; URL from `flavors/dev.json` |
 | `APP_CHECK_ENFORCE` | | Dev default **false** in `deploy.sh`; set **true** + debug tokens before wide beta |
-| Migration `019` | | `apply_migrations.py` via Cloud SQL proxy |
+| Migrations `019`–`027` | | `apply_migrations.py` or `verify-dev-migrations.sh` via Cloud SQL proxy |
 | App Check debug token | | Firebase Console or `firebase appcheck:debugtokens:create` |
 | Invite cold start (adb) | | Needs valid pending invite token |
 | Push / encode / cache / tags | Manual | Second member account for fan-out |

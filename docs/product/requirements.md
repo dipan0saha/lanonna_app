@@ -451,7 +451,7 @@ Firebase Auth holds identity; link `user_id` to Firebase UID in SQL.
 | **NFR-PERF-001** | Feed and lists use thumbnail URLs; detail uses display asset. |
 | **NFR-OBS-001** | Structured logging and monitoring per platform architecture. |
 | **NFR-FORCE-001** | Minimum app version per platform from `app_versions`; **hard block** until update (FR-SET-004). |
-| **NFR-CI-001** | Maintain E2E scenario coverage (P0 first). **CI:** `flutter test` + API `pytest` on `main` ([`.github/workflows/ci.yml`](../../.github/workflows/ci.yml)). **Device:** Maestro flows + `integration_test/` (e.g. `home_summary_load_test.dart`) — manual or local; not in CI yet. |
+| **NFR-CI-001** | Maintain E2E scenario coverage (P0 first). **Local gate:** `./scripts/verify-dev-prerequisites.sh` (`flutter analyze`/`test`, API/worker compile); run API `pytest` and mobile tests when touching those layers. **Device:** Maestro flows + `integration_test/` (e.g. `home_summary_load_test.dart`) — manual before release. |
 | **NFR-DATA-001** | Support export/deletion flows for compliance and account closure. |
 
 ---

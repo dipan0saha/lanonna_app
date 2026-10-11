@@ -18,7 +18,7 @@ Pub/Sub handlers are **idempotent** (migration `021`+): `worker_delivery_log`, `
 ../../scripts/apply-dev-run-iam.sh
 ```
 
-Before deploy, if you edited [packages/email-templates](../../packages/email-templates/), run from repo root: `bash scripts/sync-email-templates.sh apply` (CI runs `check` on every PR).
+Before deploy, if you edited [packages/email-templates](../../packages/email-templates/), run from repo root: `bash scripts/sync-email-templates.sh check` then `bash scripts/sync-email-templates.sh apply`.
 
 See [docs/engineering/development.md](../../docs/engineering/development.md) and [platform-architecture.md](../../docs/engineering/platform-architecture.md).
 
