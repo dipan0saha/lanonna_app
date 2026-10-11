@@ -10,3 +10,6 @@ ALTER TABLE baby_profiles
     ADD COLUMN IF NOT EXISTS registry_shipping_region TEXT,
     ADD COLUMN IF NOT EXISTS registry_shipping_postal_code TEXT,
     ADD COLUMN IF NOT EXISTS registry_shipping_country_code CHAR(2);
+
+INSERT INTO schema_migrations (version) VALUES ('023_registry_shipping_structured')
+ON CONFLICT (version) DO NOTHING;

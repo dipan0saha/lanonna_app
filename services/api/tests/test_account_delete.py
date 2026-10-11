@@ -50,8 +50,13 @@ def test_delete_account_eligibility_route():
     assert response.json() == {"allowed": True, "blockers": []}
 
 
-def test_delete_account_firebase_before_sql():
+def test_delete_account_sql_before_firebase():
+    order: list[str] = []
     with (
+        patch(
+            "lanonna_api.domain.account_delete.account_is_tombstoned",
+            return_value=False,
+        ),
         patch(
             "lanonna_api.domain.account_delete.list_sole_owned_baby_ids",
             return_value=[],
@@ -59,19 +64,24 @@ def test_delete_account_firebase_before_sql():
         patch("lanonna_api.domain.account_delete.firebase_admin._apps", [object()]),
         patch(
             "lanonna_api.domain.account_delete.firebase_auth.delete_user",
-        ) as delete_user,
+            side_effect=lambda uid: order.append("firebase"),
+        ),
         patch(
             "lanonna_api.domain.account_delete.soft_delete_account_rows",
-        ) as soft_delete,
+            side_effect=lambda uid, sole: order.append("sql"),
+        ),
     ):
         delete_account("uid-1")
-    delete_user.assert_called_once_with("uid-1")
-    soft_delete.assert_called_once_with("uid-1", [])
+    assert order == ["sql", "firebase"]
 
 
 def test_delete_account_passes_sole_owned_babies_to_sql():
     baby_id = uuid.uuid4()
     with (
+        patch(
+            "lanonna_api.domain.account_delete.account_is_tombstoned",
+            return_value=False,
+        ),
         patch(
             "lanonna_api.domain.account_delete.list_sole_owned_baby_ids",
             return_value=[baby_id],
@@ -88,8 +98,12 @@ def test_delete_account_passes_sole_owned_babies_to_sql():
     soft_delete.assert_called_once_with("uid-sole", [baby_id])
 
 
-def test_delete_account_firebase_failure_does_not_soft_delete():
+def test_delete_account_firebase_failure_after_sql():
     with (
+        patch(
+            "lanonna_api.domain.account_delete.account_is_tombstoned",
+            return_value=False,
+        ),
         patch(
             "lanonna_api.domain.account_delete.list_sole_owned_baby_ids",
             return_value=[],
@@ -105,11 +119,38 @@ def test_delete_account_firebase_failure_does_not_soft_delete():
     ):
         with pytest.raises(RuntimeError, match="Could not delete Firebase user"):
             delete_account("uid-2")
+    soft_delete.assert_called_once()
+
+
+def test_delete_account_retry_skips_sql_when_tombstoned():
+    with (
+        patch(
+            "lanonna_api.domain.account_delete.account_is_tombstoned",
+            return_value=True,
+        ),
+        patch(
+            "lanonna_api.domain.account_delete.list_sole_owned_baby_ids",
+        ) as list_sole,
+        patch("lanonna_api.domain.account_delete.firebase_admin._apps", [object()]),
+        patch(
+            "lanonna_api.domain.account_delete.firebase_auth.delete_user",
+        ) as delete_user,
+        patch(
+            "lanonna_api.domain.account_delete.soft_delete_account_rows",
+        ) as soft_delete,
+    ):
+        delete_account("uid-retry")
+    list_sole.assert_not_called()
     soft_delete.assert_not_called()
+    delete_user.assert_called_once_with("uid-retry")
 
 
 def test_delete_account_continues_when_firebase_user_missing():
     with (
+        patch(
+            "lanonna_api.domain.account_delete.account_is_tombstoned",
+            return_value=False,
+        ),
         patch(
             "lanonna_api.domain.account_delete.list_sole_owned_baby_ids",
             return_value=[],

@@ -51,13 +51,15 @@ def test_send_invite_email_raises_when_mailjet_not_configured(mock_settings):
 
 
 @patch("lanonna_worker.invite_email.settings")
-def test_send_invite_email_skips_when_not_pending(mock_settings):
+def test_send_invite_email_skips_when_not_claimable(mock_settings):
     mock_settings.mailjet_api_key = "key"
     mock_settings.mailjet_api_secret = "secret"
+    conn = MagicMock()
+    conn.execute.return_value.fetchone.return_value = None
     with patch(
-        "lanonna_worker.invite_email._fetch_email_context",
-        return_value=None,
-    ), patch("lanonna_worker.invite_email.httpx.post") as post:
+        "lanonna_worker.invite_email.get_connection"
+    ) as mock_conn_ctx, patch("lanonna_worker.invite_email.httpx.post") as post:
+        mock_conn_ctx.return_value.__enter__.return_value = conn
         send_invite_email(uuid.uuid4(), "token")
     post.assert_not_called()
 
@@ -80,13 +82,26 @@ def test_send_invite_email_sends_and_marks_sent(mock_settings):
         "inviter_display_name": "Alex",
     }
     conn = MagicMock()
-    conn.execute.return_value.fetchone.return_value = {"id": inv_id}
+    call_count = 0
+
+    def execute(sql, params=None):
+        nonlocal call_count
+        call_count += 1
+        result = MagicMock()
+        if "UPDATE invitations" in sql and "email_send_claimed_at = now()" in sql:
+            result.fetchone.return_value = {"id": inv_id}
+        elif "SELECT" in sql and "invitee_email" in sql:
+            result.fetchone.return_value = ctx
+        elif "email_sent_at = now()" in sql:
+            result.fetchone.return_value = {"id": inv_id}
+        else:
+            result.fetchone.return_value = None
+        return result
+
+    conn.execute.side_effect = execute
     mock_response = MagicMock()
     mock_response.status_code = 200
     with patch(
-        "lanonna_worker.invite_email._fetch_email_context",
-        return_value=ctx,
-    ), patch(
         "lanonna_worker.invite_email.httpx.post",
         return_value=mock_response,
     ), patch(
@@ -94,4 +109,4 @@ def test_send_invite_email_sends_and_marks_sent(mock_settings):
     ) as mock_conn_ctx:
         mock_conn_ctx.return_value.__enter__.return_value = conn
         send_invite_email(inv_id, "invite-token")
-    conn.execute.assert_called()
+    assert call_count >= 2

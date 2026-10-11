@@ -40,7 +40,7 @@ Related: [remediation-plan.md](remediation-plan.md) (earlier phased plan), [pre-
 - **Where:** `services/api/src/lanonna_api/domain/account_delete.py` (`delete_account`)
 - **Issue:** `firebase_auth.delete_user` runs first; `soft_delete_account_rows` second. If SQL fails, the user can no longer sign in but their profile/baby rows remain un-anonymized, and the client can’t retry (no auth).
 - **Fix:** Do SQL soft-delete/anonymize first (single transaction), then delete the Firebase user; on Firebase failure, leave a retryable state (e.g. flag + retry) or compensate.
-- **Status:** Open
+- **Status:** ✅ Fixed (SQL tombstone first; retry skips SQL when `deleted_at` set, retries Firebase only)
 
 ### H-04 Worker `/pubsub/push` has no in-app OIDC verification — Verified (grep) / Reported (impact)
 - **Where:** `services/worker/src/lanonna_worker/main.py` (push + cron routes); no `Authorization` / OIDC verification anywhere in `services/worker/src`
@@ -97,13 +97,13 @@ Related: [remediation-plan.md](remediation-plan.md) (earlier phased plan), [pre-
 
 | ID | Issue | Where | Fix | Status |
 |----|-------|-------|-----|--------|
-| M-11 | Export job can stick in `running` after a crash; retries exit as already-running; no reaper | `worker/baby_data_export.py` | Reclaim stale `running`; dedupe on message id; cap attempts | Open |
-| M-12 | Invite email: send-then-mark ordering can duplicate on crash; two workers can race on `email_sent_at IS NULL` | `worker/invite_email.py` | Claim row before send or use `worker_delivery_log` | Open |
+| M-11 | Export job can stick in `running` after a crash; retries exit as already-running; no reaper | `worker/baby_data_export.py` | Reclaim stale `running`; dedupe on message id; cap attempts | ✅ Fixed |
+| M-12 | Invite email: send-then-mark ordering can duplicate on crash; two workers can race on `email_sent_at IS NULL` | `worker/invite_email.py` | Claim row before send or use `worker_delivery_log` | ✅ Fixed |
 | M-13 | Missing Mailjet config logs and returns → handler 204 → message acked, invite never sent | `worker/invite_email.py`, `main.py` | Return 5xx or mark failed | ✅ Fixed |
 | M-14 | Weekly digest HTTP cron path has no batch dedupe (Pub/Sub path does) | `worker/notifications.py`, `main.py` | Prefer Scheduler→Pub/Sub only; fixed dedupe key | ✅ Fixed |
 | M-15 | Thumbnail download loads whole object in memory, no size/dimension cap | `worker/thumbnails.py` | Cap bytes/dimensions | Open |
 | M-16 | Worker config defaults to dev project/buckets if env unset | `worker/config.py` | Fail fast outside dev | Open |
-| M-17 | Migration `023` has **no `schema_migrations` insert** (021/022 do), so `apply_migrations.py` re-executes it every run. DDL uses `IF [NOT] EXISTS`, so re-run is harmless but untracked. It also **drops** `registry_shipping_address` with **no backfill** into the new `registry_shipping_*` columns | `infra/db/migrations/023_registry_shipping_structured.sql` | Add tracking insert; backfill legacy text (or confirm no data) before drop | Open |
+| M-17 | Migration `023` has **no `schema_migrations` insert** (021/022 do), so `apply_migrations.py` re-executes it every run. DDL uses `IF [NOT] EXISTS`, so re-run is harmless but untracked. It also **drops** `registry_shipping_address` with **no backfill** into the new `registry_shipping_*` columns | `infra/db/migrations/023_registry_shipping_structured.sql` | Add tracking insert; backfill legacy text (or confirm no data) before drop | ✅ Fixed |
 
 > Correction vs. initial review pass: the review first described 023 as non-idempotent on re-apply. On re-reading, the `DROP COLUMN IF EXISTS` / `ADD COLUMN IF NOT EXISTS` statements make re-runs safe; the real defects are the missing tracking row and the lossy drop.
 
@@ -111,7 +111,7 @@ Related: [remediation-plan.md](remediation-plan.md) (earlier phased plan), [pre-
 
 | ID | Issue | Where | Fix | Status |
 |----|-------|-------|-----|--------|
-| M-18 | No dead-letter / retry policy on push subscriptions; upload topic also has a pull sub nothing consumes (backlog grows) | `infra/terraform/modules/platform/pubsub.tf` | DLQ + max delivery attempts; drop pull sub or document | Open |
+| M-18 | No dead-letter / retry policy on push subscriptions; upload topic also has a pull sub nothing consumes (backlog grows) | `infra/terraform/modules/platform/pubsub.tf` | DLQ + max delivery attempts; drop pull sub or document | ✅ Fixed |
 | M-19 | Prod env lacks push-subscription / Cloud Build wiring present in dev; dev hardcodes worker URL; Run invoker IAM is script-managed, not Terraform | `environments/prod/main.tf`, `dev/main.tf`, `run_iam.tf` | Parameterize endpoint; manage invoker in TF | Open |
 | M-20 | Secret accessor granted to API and worker for all secrets (incl. `admin-api-key`) | `modules/platform/iam.tf` | Per-secret bindings | Open |
 | M-21 | Dev automation SA has `editor`, `serviceAccountAdmin`, `projectIamAdmin` | `iam.tf` | Keep dev-only; narrow roles | Open |
@@ -185,8 +185,8 @@ Related: [remediation-plan.md](remediation-plan.md) (earlier phased plan), [pre-
 
 ## Suggested fix order
 
-1. **Correctness / data safety:** H-03, M-17 (H-02, H-07, H-08 ✅)
+1. **Correctness / data safety:** M-17 (H-02, H-03, H-07, H-08 ✅)
 2. **Pre-beta security:** H-01, H-04, H-05, H-06, M-27
-3. **Validation + races:** M-11–M-13 (M-02–M-06 ✅)
-4. **Infra + docs + CI:** M-18–M-22, M-32–M-35
+3. **Validation + races:** M-13 (M-02–M-06, M-11–M-12 ✅)
+4. **Infra + docs + CI:** M-19–M-22, M-32–M-35 (M-18 ✅)
 5. **Mobile UX polish + lint:** M-31, remaining Low (M-23–M-30 largely ✅)

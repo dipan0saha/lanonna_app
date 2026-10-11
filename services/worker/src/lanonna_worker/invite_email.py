@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import uuid
 from datetime import datetime, timezone
+from typing import Any
 from pathlib import Path
 from urllib.parse import quote
 
@@ -19,6 +20,8 @@ from lanonna_worker.invite_email_copy import (
 logger = logging.getLogger("lanonna.worker.invite_email")
 
 _TEMPLATE_DIR = Path(__file__).resolve().parents[2] / "email_templates"
+
+_CLAIM_STALE_MINUTES = 15
 
 
 def _load_template(name: str) -> str:
@@ -39,28 +42,78 @@ def build_invite_url(invite_token: str, invited_role: str) -> str:
     return f"{base}/invite-accept?token={token}{role_param}"
 
 
-def _fetch_email_context(invitation_id: uuid.UUID) -> dict | None:
-    with get_connection() as conn:
-        row = conn.execute(
-            """
-            SELECT
-                i.invitee_email,
-                i.role,
-                i.relationship_label,
-                i.expires_at,
-                b.name AS baby_name,
-                COALESCE(u.display_name, 'A family member') AS inviter_display_name
-            FROM invitations i
-            JOIN baby_profiles b ON b.id = i.baby_profile_id AND b.deleted_at IS NULL
-            JOIN app_users u ON u.firebase_uid = i.inviter_firebase_uid
-            WHERE i.id = %s
-              AND i.status = 'pending'
-              AND i.email_sent_at IS NULL
-            LIMIT 1
-            """,
-            (invitation_id,),
-        ).fetchone()
-    return dict(row) if row else None
+def _claim_invitation_for_send(
+    conn: Any,
+    invitation_id: uuid.UUID,
+) -> dict | None:
+    claimed = conn.execute(
+        """
+        UPDATE invitations
+        SET email_send_claimed_at = now(),
+            updated_at = now()
+        WHERE id = %s
+          AND status = 'pending'
+          AND email_sent_at IS NULL
+          AND (
+            email_send_claimed_at IS NULL
+            OR email_send_claimed_at < now() - make_interval(mins => %s)
+          )
+        RETURNING id
+        """,
+        (invitation_id, _CLAIM_STALE_MINUTES),
+    ).fetchone()
+    if claimed is None:
+        return None
+    row = conn.execute(
+        """
+        SELECT
+            i.invitee_email,
+            i.role,
+            i.relationship_label,
+            i.expires_at,
+            b.name AS baby_name,
+            COALESCE(u.display_name, 'A family member') AS inviter_display_name
+        FROM invitations i
+        JOIN baby_profiles b ON b.id = i.baby_profile_id AND b.deleted_at IS NULL
+        JOIN app_users u ON u.firebase_uid = i.inviter_firebase_uid
+        WHERE i.id = %s
+        """,
+        (invitation_id,),
+    ).fetchone()
+    if row is None:
+        _release_invite_send_claim(conn, invitation_id)
+        return None
+    return dict(row)
+
+
+def _release_invite_send_claim(conn: Any, invitation_id: uuid.UUID) -> None:
+    conn.execute(
+        """
+        UPDATE invitations
+        SET email_send_claimed_at = NULL,
+            updated_at = now()
+        WHERE id = %s
+          AND email_sent_at IS NULL
+        """,
+        (invitation_id,),
+    )
+
+
+def _mark_invite_email_sent(conn: Any, invitation_id: uuid.UUID) -> bool:
+    row = conn.execute(
+        """
+        UPDATE invitations
+        SET email_sent_at = now(),
+            email_send_claimed_at = NULL,
+            updated_at = now()
+        WHERE id = %s
+          AND email_sent_at IS NULL
+          AND status = 'pending'
+        RETURNING id
+        """,
+        (invitation_id,),
+    ).fetchone()
+    return row is not None
 
 
 def _render_invite_email(ctx: dict, invite_url: str) -> tuple[str, str, str]:
@@ -106,9 +159,13 @@ def send_invite_email(invitation_id: uuid.UUID, invite_token: str) -> None:
         )
         raise RuntimeError("Mailjet is not configured; cannot send invite email")
 
-    ctx = _fetch_email_context(invitation_id)
+    with get_connection() as conn:
+        ctx = _claim_invitation_for_send(conn, invitation_id)
     if ctx is None:
-        logger.info("invite_email_skip invitation_id=%s not pending", invitation_id)
+        logger.info(
+            "invite_email_skip invitation_id=%s not claimable",
+            invitation_id,
+        )
         return
 
     invite_url = build_invite_url(invite_token, ctx["role"])
@@ -129,38 +186,32 @@ def send_invite_email(invitation_id: uuid.UUID, invite_token: str) -> None:
         ]
     }
 
-    response = httpx.post(
-        "https://api.mailjet.com/v3.1/send",
-        auth=(settings.mailjet_api_key, settings.mailjet_api_secret),
-        json=payload,
-        timeout=30.0,
-    )
-    if response.status_code >= 300:
-        logger.error(
-            "mailjet_send_failed invitation_id=%s status=%s body=%s",
-            invitation_id,
-            response.status_code,
-            response.text[:500],
+    try:
+        response = httpx.post(
+            "https://api.mailjet.com/v3.1/send",
+            auth=(settings.mailjet_api_key, settings.mailjet_api_secret),
+            json=payload,
+            timeout=30.0,
         )
-        raise RuntimeError(f"Mailjet send failed ({response.status_code})")
+        if response.status_code >= 300:
+            logger.error(
+                "mailjet_send_failed invitation_id=%s status=%s body=%s",
+                invitation_id,
+                response.status_code,
+                response.text[:500],
+            )
+            raise RuntimeError(f"Mailjet send failed ({response.status_code})")
+    except Exception:
+        with get_connection() as conn:
+            _release_invite_send_claim(conn, invitation_id)
+        raise
 
     with get_connection() as conn:
-        updated = conn.execute(
-            """
-            UPDATE invitations
-            SET email_sent_at = now(), updated_at = now()
-            WHERE id = %s
-              AND email_sent_at IS NULL
-              AND status = 'pending'
-            RETURNING id
-            """,
-            (invitation_id,),
-        ).fetchone()
-    if updated is None:
-        logger.info(
-            "invite_email_skip_already_sent invitation_id=%s",
-            invitation_id,
-        )
-        return
+        if not _mark_invite_email_sent(conn, invitation_id):
+            logger.info(
+                "invite_email_skip_already_sent invitation_id=%s",
+                invitation_id,
+            )
+            return
 
     logger.info("invite_email_sent invitation_id=%s", invitation_id)

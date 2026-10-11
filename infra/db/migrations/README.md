@@ -30,6 +30,9 @@ Apply in **lexicographic order** (filename prefix):
 | `022_user_profile_demographics.sql` | `app_users` phone, birth_date, country_code, postal_code, terms_accepted_at |
 | `023_registry_shipping_structured.sql` | Structured registry shipping columns on `baby_profiles` (#408) |
 | `024_baby_created_by.sql` | `baby_profiles.created_by_firebase_uid` + backfill for owner-onboarding gating (#31) |
+| `025_track_migration_023_registry_shipping.sql` | Record `023` in `schema_migrations` for DBs that ran 023 before tracking insert |
+| `026_export_job_started_at.sql` | `baby_data_export_jobs.started_at` + stale `running` reclaim (M-11) |
+| `027_invite_email_send_claim.sql` | `invitations.email_send_claimed_at` (M-12) |
 
 ## Apply (dev)
 

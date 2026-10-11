@@ -182,7 +182,7 @@ Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps:
 | PATCH | `/v1/me/notifications/{id}/read` | Mark notification read |
 | PUT, DELETE | `/v1/me/device-tokens` | Register or remove FCM device token (`platform`: `ios` \| `android`) |
 | GET | `/v1/me/delete-account/eligibility` | Account deletion preflight (`allowed: true` in v1; mobile calls before delete) |
-| POST | `/v1/me/delete-account` | Delete Firebase user; soft-delete sole-owned baby profiles; remove user memberships; anonymize SQL profile |
+| POST | `/v1/me/delete-account` | Soft-delete SQL first (sole-owned babies, memberships, `app_users.deleted_at`), then Firebase `delete_user` (#H-03). If Firebase fails after SQL, retry POST (skips SQL when already tombstoned). |
 | GET | `/v1/babies/{baby_profile_id}/search?q=` | Cross-feature search (member) |
 | POST | `/v1/babies/{baby_profile_id}/data-export` | Queue baby JSON export (owner) |
 | GET | `/v1/babies/{baby_profile_id}/data-export/latest` | Export job status + signed download URL |
@@ -280,7 +280,7 @@ Preview includes `lifecycle_status` and birth dates for invite subtitles and car
 
 ## Database
 
-Apply SQL files in order from `infra/db/migrations/` (`001`–`023`; see [migrations/README.md](../../infra/db/migrations/README.md)). Cloud SQL Auth Proxy may use port **5432** or **5433** — set `DB_PORT` consistently (`apply_migrations.py` defaults to **5432**; Maestro, `clear_dev_test_data.py`, and `verify-dev-migrations.sh` default to **5433**). Cloud SQL via Auth Proxy + `infra/db/apply_migrations.py` or `psql -f` per file. Use the venv under `infra/db/.venv` (`pip install psycopg`) or any environment with `psycopg` installed.
+Apply SQL files in order from `infra/db/migrations/` (`001`–`027`; see [migrations/README.md](../../infra/db/migrations/README.md)). Cloud SQL Auth Proxy may use port **5432** or **5433** — set `DB_PORT` consistently (`apply_migrations.py` defaults to **5432**; Maestro, `clear_dev_test_data.py`, and `verify-dev-migrations.sh` default to **5433**). Cloud SQL via Auth Proxy + `infra/db/apply_migrations.py` or `psql -f` per file. Use the venv under `infra/db/.venv` (`pip install psycopg`) or any environment with `psycopg` installed.
 
 | Script | Purpose |
 |--------|---------|

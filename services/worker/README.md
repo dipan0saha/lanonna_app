@@ -6,7 +6,7 @@ Non-2xx responses on `/pubsub/push` cause Pub/Sub to retry; monitor `thumbnail_p
 
 **Layout:** `src/lanonna_worker/` — `main.py`, `thumbnails.py`, `notifications.py`, `invite_email.py`, `invite_cleanup.py`, `baby_data_export.py`, `idempotency.py`, `db.py`, `config.py`.
 
-Pub/Sub handlers are **idempotent** (migration `021`): `worker_delivery_log`, `photo_ready_notification_log`, and `invitations.email_sent_at`. Duplicate push deliveries return **204** without duplicate inbox rows or Mailjet sends.
+Pub/Sub handlers are **idempotent** (migration `021`+): `worker_delivery_log`, `photo_ready_notification_log`, `invitations.email_sent_at` / `email_send_claimed_at` (M-12), and export jobs (`started_at` + stale `running` reclaim, M-11). Duplicate push deliveries return **204** without duplicate inbox rows or Mailjet sends.
 
 ## Deploy
 

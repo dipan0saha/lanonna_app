@@ -16,6 +16,8 @@ from lanonna_worker.notifications import (
     process_weekly_notification_digest,
 )
 from lanonna_worker.invite_cleanup import expire_stale_pending_invitations
+from lanonna_worker.db import get_connection
+from lanonna_worker.idempotency import try_claim_delivery
 from lanonna_worker.thumbnails import process_gcs_finalize
 
 logging.basicConfig(level=logging.INFO)
@@ -117,6 +119,16 @@ async def pubsub_push(request: Request) -> Response:
         if not job_id_raw:
             logger.warning("baby_data_export missing job_id message_id=%s", message.get("messageId"))
             return Response(status_code=204)
+        pubsub_message_id = message.get("messageId")
+        if pubsub_message_id:
+            with get_connection() as conn:
+                if not try_claim_delivery(conn, f"pubsub:{pubsub_message_id}"):
+                    logger.info(
+                        "baby_data_export_duplicate_message job_id=%s message_id=%s",
+                        job_id_raw,
+                        pubsub_message_id,
+                    )
+                    return Response(status_code=204)
         try:
             run_baby_data_export(uuid.UUID(str(job_id_raw)))
         except Exception:

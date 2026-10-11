@@ -6,6 +6,7 @@ import firebase_admin
 from firebase_admin import auth as firebase_auth
 
 from lanonna_api.repositories.account_delete import (
+    account_is_tombstoned,
     list_sole_owned_baby_ids,
     soft_delete_account_rows,
 )
@@ -16,9 +17,7 @@ def delete_account_eligibility(firebase_uid: str) -> dict[str, Any]:
     return {"allowed": True, "blockers": []}
 
 
-def delete_account(firebase_uid: str) -> None:
-    sole_owned = list_sole_owned_baby_ids(firebase_uid)
-
+def _delete_firebase_user(firebase_uid: str) -> None:
     if not firebase_admin._apps:
         firebase_admin.initialize_app()
     try:
@@ -28,4 +27,11 @@ def delete_account(firebase_uid: str) -> None:
     except Exception as exc:
         raise RuntimeError("Could not delete Firebase user") from exc
 
-    soft_delete_account_rows(firebase_uid, sole_owned)
+
+def delete_account(firebase_uid: str) -> None:
+    """Soft-delete SQL first, then Firebase. Retry-safe if SQL already tombstoned."""
+    already_deleted = account_is_tombstoned(firebase_uid)
+    if not already_deleted:
+        sole_owned = list_sole_owned_baby_ids(firebase_uid)
+        soft_delete_account_rows(firebase_uid, sole_owned)
+    _delete_firebase_user(firebase_uid)

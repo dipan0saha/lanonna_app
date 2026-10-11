@@ -9,6 +9,19 @@ from lanonna_api.repositories.memberships import (
 )
 
 
+def account_is_tombstoned(firebase_uid: str) -> bool:
+    with get_connection() as conn:
+        row = conn.execute(
+            """
+            SELECT deleted_at
+            FROM app_users
+            WHERE firebase_uid = %s
+            """,
+            (firebase_uid,),
+        ).fetchone()
+    return row is not None and row["deleted_at"] is not None
+
+
 def list_sole_owned_baby_ids(firebase_uid: str) -> list[uuid.UUID]:
     with get_connection() as conn:
         rows = conn.execute(
