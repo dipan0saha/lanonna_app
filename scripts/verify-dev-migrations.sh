@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Verify dev Cloud SQL has migrations 001–023 applied (when proxy + PGPASSWORD are set).
+# Verify dev Cloud SQL has every migration file in infra/db/migrations recorded in
+# schema_migrations (when proxy + PGPASSWORD are set).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -35,7 +36,8 @@ if [[ "${count}" != "${expected}" ]]; then
   exit 1
 fi
 
-for ver in 017_registry_catalog_suggestion_id 018_events_catalog_suggestion_id 019_photo_baby_tags 020_app_versions 021_worker_idempotency 022_user_profile_demographics 023_registry_shipping_structured 024_baby_created_by 025_track_migration_023_registry_shipping 026_export_job_started_at 027_invite_email_send_claim; do
+for file in "${MIG_DIR}"/*.sql; do
+  ver="$(basename "${file}" .sql)"
   psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" -tAc \
     "SELECT 1 FROM schema_migrations WHERE version = '${ver}'" | grep -q 1 || {
     echo "Missing migration row: ${ver}"

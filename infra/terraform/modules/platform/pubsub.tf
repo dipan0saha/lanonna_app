@@ -132,22 +132,8 @@ resource "google_pubsub_subscription" "worker_push_commands" {
   }
 }
 
-resource "google_pubsub_subscription_iam_member" "worker_commands_subscriber" {
-  count        = var.enable_worker_push_subscription ? 1 : 0
-  project      = var.project_id
-  subscription = google_pubsub_subscription.worker_push_commands[0].name
-  role         = "roles/pubsub.subscriber"
-  member       = "serviceAccount:${google_service_account.worker.email}"
-}
-
-resource "google_pubsub_subscription_iam_member" "worker_push_subscriber" {
-  count        = var.enable_worker_push_subscription ? 1 : 0
-  project      = var.project_id
-  subscription = google_pubsub_subscription.worker_push[0].name
-  role         = "roles/pubsub.subscriber"
-  member       = "serviceAccount:${google_service_account.worker.email}"
-}
-
+# The worker receives HTTP push (OIDC) and never pulls, so it needs no subscriber role.
+# Dead-lettering needs the Pub/Sub service agent to be a subscriber on each push subscription.
 resource "google_pubsub_subscription_iam_member" "dead_letter_agent_subscriber_upload" {
   count        = var.enable_worker_push_subscription ? 1 : 0
   project      = var.project_id

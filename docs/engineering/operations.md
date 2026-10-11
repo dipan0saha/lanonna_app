@@ -52,7 +52,7 @@ Path B platform: **`infra/terraform/`** — one **`platform`** module, **`dev`**
 | **dev** | `lanonna-dev` | Now — limited testers |
 | **prod** | `lanonna-prod` | Real users (**not created yet**) |
 
-**Terraform manages:** APIs, GCS (+ upload notification), Pub/Sub (**push** subs + DLQ topic, retention subscription, and service-agent IAM), Cloud SQL, Artifact Registry, Secret Manager **containers**, IAM, Firebase project attachment. Legacy **`infra/gcp/bootstrap.sh`** is deprecated.
+**Terraform manages:** APIs, GCS (+ upload notification), Pub/Sub (**push** subs + DLQ topic, retention subscription, and service-agent IAM), Cloud SQL, Artifact Registry, Secret Manager **containers**, IAM, Firebase project attachment. The legacy `infra/gcp/bootstrap.sh` has been removed.
 
 **Dev extras:** push subscription **`photo-upload-finalized-push-dev`** (OIDC), display bucket **CORS**, API **TokenCreator** IAM. **Run invoker** on `worker`: `./scripts/apply-dev-run-iam.sh` (gcloud; TF may **403** on `setIamPolicy` — use owner account).
 

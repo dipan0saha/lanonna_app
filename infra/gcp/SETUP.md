@@ -72,7 +72,7 @@ Prefer **`lanonnaapp@gmail.com`** for Cloud Build / `deploy.sh` (automation SA o
 
 ## Infrastructure as code
 
-**Terraform:** `infra/terraform/` — see [operations.md](../../docs/engineering/operations.md). Legacy `bootstrap.sh` is deprecated.
+**Terraform:** `infra/terraform/` — see [operations.md](../../docs/engineering/operations.md). The legacy `bootstrap.sh` has been removed; Terraform is the only provisioning path.
 
 ## Cloud SQL access from laptop
 

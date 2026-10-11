@@ -157,6 +157,19 @@ DB_PASSWORD="$PGPASSWORD" DB_PORT=5433 python clear_dev_test_data.py \\
 
 Clears babies and related rows for that user and clears `owner_onboarding_completed_at` so you can run owner onboarding again. Use `--dry-run` first; `--verbose` lists GCS `display/` paths (objects are not deleted from GCS).
 
+### Helper scripts (`scripts/`)
+
+| Script | Purpose |
+|--------|---------|
+| `verify-dev-prerequisites.sh`, `verify-dev-migrations.sh`, `apply-dev-run-iam.sh`, `infra-smoke-display-upload.sh`, `run-beta-gate.sh` | Dev readiness, schema gate, worker Run IAM, upload smoke, beta gate — see [operations.md](operations.md) |
+| `ship_release_apk_to_drive.sh`, `ship_release_apk_x86_64_to_drive.sh`, `copy_release_apk_to_drive.sh` | Build the release APK (universal / x86_64 emulator) and copy it to Drive; the copy script takes an optional destination file name |
+| `setup-weekly-digest-scheduler.sh`, `setup-expired-invites-scheduler.sh` | Create the Cloud Scheduler jobs (weekly digest, expired-invite cleanup) |
+| `sync-email-templates.sh`, `sync-firebase-auth-templates.sh`, `configure-firebase-auth-email-project.sh` | Mailjet template mirror check/apply; Firebase auth email templates and quota project |
+| `hard_delete_user.sh <email>` | Hard-delete a dev user (SQL + GCS + Firebase); use `--dry-run` first |
+| `provision_qa_validation_accounts.sh`, `seed_qa_gallery_photo.sh` | Provision QA owner/follower accounts and seed a gallery photo for Maestro/manual QA |
+| `mark_firebase_email_verified.py <email>` | Mark a dev Firebase user email-verified when the inbox cannot receive mail (`@test.com`) |
+| `configure-android-google-sign-in.sh` | One-time dev setup: Android debug SHA + refresh `google-services.json` for Google Sign-In |
+
 ## API rate limiting
 
 Sensitive routes (`POST /v1/photos/init`, `POST …/invitations/batch`) use an **in-process** per-IP sliding window in `middleware/rate_limit.py` (30 requests / 60s per path per instance). Cloud Run scales horizontally, so the **effective** cap is roughly `30 × instance count` until you add a shared limiter (e.g. Cloud Armor, Redis/Memorystore) at the edge. No shared limiter is deployed in v1; document and monitor before wide public beta.
