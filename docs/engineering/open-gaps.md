@@ -12,16 +12,12 @@ Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [op
 
 | Check | Result |
 |-------|--------|
-| API `pytest` (`services/api`) | **187 passed, 3 failed** — `test_invitation_accept_race.py` (2), `test_onboarding_domain.py::test_complete_owner_onboarding_requires_email_verified` (stale mock) |
-| Worker `pytest` | 26 passed |
-| `flutter test` | **211 passed, 5 failed** — `home_screen_first_run_test.dart` (2), `gallery_list_refresh_test.dart` (2), `calendar_event_refresh_test.dart` (1); all missing `Provider<ConnectivityService>` in the test harness |
-| `flutter analyze` | 0 errors, 0 warnings, 48 infos |
+| API `pytest` (`services/api`) | 191 passed |
+| Worker `pytest` | 36 passed |
+| `flutter test` | 216 passed |
+| `flutter analyze` | 0 errors, 0 warnings, 48 infos (L-26) |
 
-**Reopened / regressions found in this review**
-
-- **M-02 (co-owner accept race) is not actually fixed.** Commit `5b1b678` added the import and `lock_baby_profile_for_update()` but the accept path never calls it; the new tests fail. Tracked as **M-36**.
-- **M-11 (export retry) fix introduced H-09:** the Pub/Sub `messageId` dedupe added in `main.py` drops the redelivery that the reclaim/failed logic depends on.
-- **M-18 (DLQ) fix introduced H-13:** the dead-letter topic has no subscription, so dead-lettered messages are not retained.
+Run all three suites before every ship; the suites are the only automated gate (no CI).
 
 ---
 
@@ -29,9 +25,9 @@ Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [op
 
 | Severity | Open | Themes |
 |----------|------|--------|
-| High | 11 | Release signing, worker OIDC, App Check enforce, admin surface; export retry regression, broken search, sign-out data leakage, lost photo notifications, DLQ black hole, iOS privacy strings, gallery truncation |
-| Medium | 36 | Co-owner race, ended-member 500s, races/N+1, Pub/Sub robustness, export limits, invite token/HTML hygiene, infra/IAM/prod parity, mobile error/async/date handling, red test suite |
-| Low | 17 | Input caps, dead config, logging, infra hygiene, docs drift, lint/conventions |
+| High | 7 | Release signing, worker OIDC, App Check enforce, admin surface; sign-out data leakage, iOS privacy strings, gallery truncation |
+| Medium | 34 | Ended-member 500s, races/N+1, Pub/Sub robustness, export limits, invite token/HTML hygiene, infra/IAM/prod parity, mobile error/async/date handling |
+| Low | 18 | Input caps, dead config, logging, infra hygiene, docs drift, lint/conventions |
 
 ---
 
@@ -57,30 +53,10 @@ Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [op
 - **Issue:** `/v1/admin/system-announcements` protected only by `X-Admin-Key`; no rate limit, no IP/IAM restriction; comparison is `!=` (not constant-time).
 - **Fix:** `secrets.compare_digest`; rate-limit admin paths; consider IAP/IAM or a private admin surface; rotate key via Secret Manager.
 
-### H-09 Export Pub/Sub dedupe drops the retries that recovery depends on — Verified
-- **Where:** `services/worker/src/lanonna_worker/main.py:123-137`, `services/worker/src/lanonna_worker/db.py:37-39`, `services/worker/src/lanonna_worker/baby_data_export.py`
-- **Issue:** `try_claim_delivery(conn, f"pubsub:{messageId}")` runs in its own `get_connection()` block, which **commits on exit**, before `run_baby_data_export()` runs. If the export fails (or the instance dies after the job is set to `running`), the handler returns 500; Pub/Sub redelivers the **same** `messageId`, the claim already exists, and the redelivery is acked with **204** without running. The stale-`running` reclaim and failure handling added for M-11 are unreachable via Pub/Sub retry; the job stays `running`/`failed` until the user creates a new export.
-- **Fix:** Drop the message-id claim for exports (the job row status/`started_at` is already the idempotency guard), or release the claim on failure / key it on a successful terminal state.
-
-### H-10 Baby search fails: queries a non-existent column — Verified
-- **Where:** `services/api/src/lanonna_api/repositories/search.py:85-90` (`SELECT id, name … name ILIKE`) vs `infra/db/migrations/004_onboarding_first_moment.sql:33` (`suggested_name`); caller `domain/search.py:57-59`
-- **Issue:** `name_suggestions` has `suggested_name`, not `name`, so the name-suggestion leg of `GET /v1/babies/{id}/search` raises Postgres `undefined_column` and fails the whole search response for any non-empty query that reaches it. Domain tests mock the repository, so this is untested.
-- **Fix:** `SELECT id, suggested_name AS name … WHERE suggested_name ILIKE …`; add a repository-level SQL test.
-
 ### H-11 Sign-out and account delete leave cross-user local state — Verified
 - **Where:** `apps/mobile/lib/features/account/presentation/account_screen.dart:66-71`, `delete_account_screen.dart:64`, `core/auth/user_deleted_session_handler.dart:21-23`, `features/home/data/home_repository.dart:15-34`, `features/onboarding/presentation/app_session.dart:110-122`
 - **Issue:** Normal sign-out and delete-account only call `resetOwnerCompletionForSignOut()`. They do **not** clear `pending_invite_token` / invite preview JSON (contains invitee email), `selected_baby_id`, onboarding drafts, `HomeRepository._cachedBabies` (`clearCachedBabies()` has no callers; `listBabies()` serves the cache on **any** error), or the image disk cache. Only the `user_deleted` 401 path clears the invite. On a shared device the next user can be redirected into the previous user's invite flow and see their cached babies/avatars when offline.
 - **Fix:** One `SessionCleanup` used by every sign-out path: clear pending invite, selected baby, home cache, onboarding state, push token, and evict the image cache; key cached data by uid.
-
-### H-12 Photo-ready notification lost if fan-out fails after the claim — Verified
-- **Where:** `services/worker/src/lanonna_worker/thumbnails.py:96-127`, `idempotency.py:22-39`
-- **Issue:** `try_claim_photo_ready_notify` commits in its own transaction, **then** `process_notify_fan_out` runs. If fan-out raises, the GCS message returns 500 and is retried, but the retry sees the claim and skips notify permanently; members never get the "new photo" notification.
-- **Fix:** Claim after a successful fan-out, delete the claim on failure, or enqueue fan-out as its own Pub/Sub command with retry/DLQ.
-
-### H-13 Dead-letter topic has no subscription — Verified
-- **Where:** `infra/terraform/modules/platform/pubsub.tf:23-32` (topic), `:73-76` and `:100-103` (both push subs dead-letter to it); no `google_pubsub_subscription` targets the DLQ topic
-- **Issue:** After 5 failed deliveries messages are published to a topic with no subscriber, so they are not retained and cannot be inspected or replayed. Poison or persistently failing invite/notification/export messages are silently lost.
-- **Fix:** Add a pull subscription on the DLQ topic (with message retention) and a Cloud Monitoring alert on DLQ publish/oldest-unacked age; document replay.
 
 ### H-14 iOS camera/photo-library usage descriptions are missing — Verified
 - **Where:** `apps/mobile/ios/Runner/Info.plist` (no `NSCameraUsageDescription` / `NSPhotoLibraryUsageDescription`); `image_picker` is used in account edit, create-baby, and onboarding
@@ -101,7 +77,6 @@ Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [op
 | ID | Issue | Where | Fix |
 |----|-------|-------|-----|
 | M-09 | Rate limiting only on photo init and batch invite; per-instance buckets | `middleware/rate_limit.py` | Edge limiter for preview/admin; document scaling caveat |
-| M-36 | **Co-owner accept race still open (M-02 reopened):** `lock_baby_profile_for_update` is imported but never called; `count_active_owners` runs unlocked, so two concurrent accepts can exceed the 2-owner cap. Both tests in `test_invitation_accept_race.py` fail | `repositories/invitations.py:11-12,232`, `repositories/memberships.py:47-62` | Call the lock (and `FOR UPDATE`) before counting owners inside the accept transaction; get the tests green |
 | M-37 | Ended (removed) members get **500** instead of `403 membership_ended` on `GET /search`, all invitation owner routes (list/revoke/batch/membership-check), `GET /members`, and first-moment seed — routers catch only `PermissionError`, not `MemberLifecycleError` | `routers/search.py:24-27`, `routers/invitations.py:50-108`, `routers/members.py:41-44`, `routers/babies.py:172-181` | Use `except Exception as exc: raise map_domain_errors(exc)` like `home-summary`; add router tests |
 | M-38 | Concurrent registry purchase claims: check-then-insert on `purchase_id`; the loser hits the `registry_item_id` unique violation and returns 500 (winner may still notify) | `domain/registry.py:167-175`, `repositories/registry.py:258-270`, migration `008` | Single `INSERT … ON CONFLICT DO NOTHING RETURNING`, map conflict to 409 |
 | M-39 | Fun: one-like-per-gender is not atomic (separate transactions); follower name cap (count then insert) is racy with no unique index; `list_names` does an N+1 `user_has_like` per suggestion | `domain/fun.py:46-139`, `repositories/fun.py:63-216` | Single transaction + row lock / partial unique index; fetch liked ids in one query |
@@ -151,12 +126,6 @@ Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [op
 | M-60 | Date handling violates the documented UTC-in/local-out rule: photo `created_at` formatted in UTC (wrong day for evening uploads); date-only API fields parsed with `DateTime.tryParse` instead of `tryParseApiCalendarDate` | `gallery/data/models/photo_models.dart:27`, `photo_detail_screen.dart:399,659-664`, `home_screen.dart:123-130`, `announcement_create_screen.dart:63-65` | Use `parseApiInstant` / `tryParseApiCalendarDate` helpers |
 | M-61 | Event form has no owner guard (followers reaching the route see a full form that fails on save); cover thumbnail lacks `onSignedUrlError` so it breaks after the 900 s URL TTL | `calendar/presentation/event_form_screen.dart:106-116,413-418`, `widgets/event_form_widgets.dart:43-48` | Gate by role; pass a refresh callback |
 
-### Tests
-
-| ID | Issue | Where | Fix |
-|----|-------|-------|-----|
-| M-62 | Test suite is red: 3 API tests (M-36 lock + a stale onboarding test that mocks `user_has_owner_baby` while code calls `user_has_self_created_baby`) and 5 Flutter tests (harness lacks `Provider<ConnectivityService>`) | `services/api/tests/test_invitation_accept_race.py`, `test_onboarding_domain.py:28-37`, `apps/mobile/test/{home_screen_first_run,gallery_list_refresh,calendar_event_refresh}_test.dart` | Fix the code (M-36) and update the stale tests/harnesses; run all suites before every ship |
-
 ---
 
 ## Low
@@ -167,35 +136,35 @@ Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [op
 | L-08 | Accessibility: semantics labels concentrated in shell/onboarding; many controls unlabeled (WCAG AA is the PRD baseline) | mobile |
 | L-09 | Hardcoded UI strings vs `app_en.arb` (FR-SET-002) | e.g. `account_edit_screen.dart`, `home_screen.dart` |
 | L-10 | No CORS middleware (fine for mobile-only; needs policy if a web client is added) | `services/api/main.py` |
-| L-14 | Poison/unknown Pub/Sub messages are logged and acked (204) with no metric | `worker/main.py` |
+| L-14 | Poison/unknown Pub/Sub messages are logged and acked (204) with no metric; no alert on DLQ depth (the `…-dlq-pull` subscription retains messages, but nobody is notified) | `worker/main.py`, `modules/platform/pubsub.tf` |
 | L-15 | Dockerfiles run as root; Cloud Build only builds/pushes (no tests); base images use floating `python:3.12-slim` tags | `services/*/Dockerfile`, `cloudbuild.yaml` |
 | L-16 | Duplicate email template trees (intentional); run `scripts/sync-email-templates.sh check` locally before commit | `packages/email-templates`, `services/worker/email_templates` |
 | L-17 | Unbounded inputs: photo caption PATCH (init caps 2000), photo tags list, fun name `suggested_name`, event/registry title/description/location, membership-check `email` query | `routers/photos.py:17-37`, `routers/fun.py:21-22`, `routers/events.py:18-36`, `routers/registry.py:21-33`, `routers/invitations.py:76-79` |
 | L-18 | Search `q` is not escaped for `ILIKE` wildcards (`%`, `_`); `PermissionError` returns a plain string `detail` while lifecycle errors return `{error,message}` | `domain/search.py:22-33`, `http_errors.py:42-47` |
 | L-19 | Calendar `list_events` has no `LIMIT` when no month/upcoming filter; storage usage counts soft-deleted babies | `repositories/events.py:13-46`, `repositories/user_engagement.py:71-81` |
-| L-20 | Dead config: API `invite_deep_link_base` (worker-only), Terraform `var.pubsub_subscription_worker` + deprecated null output, stale `project.env` keys for the removed pull sub | `config.py:31-32`, `modules/platform/variables.tf:43-46`, `outputs.tf:25-27`, `infra/gcp/project.env` |
+| L-20 | Dead config: API `invite_deep_link_base` (worker-only); stale `PUBSUB_SUBSCRIPTION_WORKER` in `project.env`/`bootstrap.sh` for the removed pull sub | `config.py:31-32`, `infra/gcp/project.env`, `infra/gcp/bootstrap.sh` |
 | L-21 | Worker hygiene: unknown messages log the full payload (PII/token risk); export uses `SELECT *` (internal columns) and silently truncates activity to 500 rows | `worker/main.py:154-158`, `worker/baby_data_export.py:96-137` |
 | L-22 | Infra hygiene: GCS buckets lack `public_access_prevention`/versioning/lifecycle; `import-dev.sh` omits the `admin-api-key` secret; `infra/gcp/project.env` commits the billing account id (not a credential) | `modules/platform/storage.tf`, `scripts/import-dev.sh:40-41`, `infra/gcp/project.env` |
-| L-23 | Docs drift: `development.md` mobile module table omits `fun/`, `search/`, `settings/`, `legal/`, `/home/activity`, `/notifications/inbox`; `/health` undocumented; `services/worker/README.md` omits export in the intro and says a DLQ is future work; `infra/gcp/SETUP.md` still lists the pull sub and manual TokenCreator; `operations.md` migration block mixes `cd infra/db` with a repo-root script path; `verify-dev-migrations.sh` header says 001–023; helper scripts (`provision_qa_validation_accounts.sh`, `seed_qa_gallery_photo.sh`, `configure-android-google-sign-in.sh`, `copy_release_apk_to_drive.sh`) are undocumented | see list |
+| L-23 | Docs drift: `development.md` mobile module table omits `fun/`, `search/`, `settings/`, `legal/`, `/home/activity`, `/notifications/inbox`; `/health` undocumented; `infra/gcp/SETUP.md` still lists the pull sub and manual TokenCreator; `operations.md` migration block mixes `cd infra/db` with a repo-root script path; `verify-dev-migrations.sh` header says 001–023; helper scripts (`provision_qa_validation_accounts.sh`, `seed_qa_gallery_photo.sh`, `configure-android-google-sign-in.sh`, `copy_release_apk_to_drive.sh`) are undocumented | see list |
 | L-24 | Mobile hygiene: FCM unregister failures swallowed; `RouterRefreshListenable` auth stream subscription never cancelled; Android release has no R8/minify rules | `core/notifications/push_notification_service.dart:118-127`, `core/router/router_refresh.dart:13-16`, `android/app/build.gradle.kts:37-42` |
 | L-25 | Convention violations: ~13 hardcoded hex colors in `features/` (e.g. `onboarding_buttons.dart:108`, `batch_invite_screen.dart:296`, `event_form_widgets.dart:38-39`); hardcoded strings in `batch_invite_screen.dart`, `onboarding_wrong_email_screen.dart`, `app.dart`; batch invite submit bypasses `runMutation`; hand-rolled count strings in `predictions_tab.dart:399`, `names_tab.dart:328`, `gallery_photo_grid.dart:109` | mobile |
 | L-26 | `flutter analyze`: 48 infos — `use_null_aware_elements` (registry/home/onboarding repositories), `unnecessary_underscores`, 4 `use_build_context_synchronously` in login/signup screens, deprecated `value` on a form field | mobile `lib/`, `test/` |
+| L-27 | `photo_ready_notification_log` is no longer written (photo-ready idempotency moved to the fan-out `dedupe_key`); drop the table in the next migration | `infra/db/migrations/021_worker_idempotency.sql` |
 
 ---
 
 ## Test coverage gaps (still thin)
 
-- **API:** No router/HTTP tests for `events`, `fun`, `registry`, `invitations`, `notifications`, `search`, `admin_system_announcements`, baby photo routes, and `/v1/uploads/display/signed-url`; only domain-level mocks for `onboarding`. Repositories have no direct SQL tests (this is how H-10 shipped); also untested: `account`, `pubsub`, `storage`, `media_urls`, `membership`.
+- **API:** No router/HTTP tests for `events`, `fun`, `registry`, `invitations`, `notifications`, `search`, `admin_system_announcements`, baby photo routes, and `/v1/uploads/display/signed-url`; only domain-level mocks for `onboarding`. Repositories have almost no direct SQL tests (`search_name_suggestions` now has a column-conformance test; the rest are exposed to the same class of bug as the earlier name-search column mismatch); also untested: `account`, `pubsub`, `storage`, `media_urls`, `membership`.
 - **Mobile:** Untested core modules: `api_client`, `auth_repository`, `user_deleted_session_handler`, `push_notification_service`, `app_router`, `app_link_bootstrap`, `onboarding_storage`, `onboarding_coordinator`, `shell/`. No tests for `search/`, `settings/`, `legal/`, `home_activity_screen`, `calendar_upcoming_screen`, wrong-email and invite-bootstrap screens. `integration_test/` has only `home_summary_load_test.dart` and `smoke_sign_in_test.dart`. Existing tests like `delete_account_screen_test.dart` only check copy.
-- **Worker:** No tests for `main.py` (push routing, dedupe, status codes), `config.py`, weekly digest, photo-ready notify failure ordering (H-12), export reclaim/dedupe interaction (H-09), invite-email Mailjet failure/claim release and HTML escaping. Tests are mock-heavy (SQL string matching), so idempotency regressions would not fail.
+- **Worker:** `main.py` is only covered for export dispatch (`test_main_export_dispatch.py`); no tests for the other push routes/status codes, `config.py`, weekly digest, invite-email Mailjet failure/claim release and HTML escaping. Tests are mock-heavy (SQL string matching), so idempotency regressions are easy to miss.
 
 ---
 
 ## Suggested fix order
 
-1. **Regressions and broken behavior:** H-09, H-10, M-36, M-62 (get all suites green), H-12, H-13
-2. **Pre-beta security:** H-01, H-04, H-05, H-06, M-27, M-41, M-42, M-57
-3. **Mobile correctness:** H-11, H-14, H-15, M-54–M-61
-4. **API/worker robustness:** M-37–M-40, M-43–M-46
-5. **Infra + prod parity:** M-19–M-22, M-47–M-53
-6. **Ops / polish:** M-09, M-15, M-16, M-31, L-07–L-26
+1. **Pre-beta security:** H-01, H-04, H-05, H-06, M-27, M-41, M-42, M-57
+2. **Mobile correctness:** H-11, H-14, H-15, M-54–M-61
+3. **API/worker robustness:** M-37–M-40, M-43–M-46
+4. **Infra + prod parity:** M-19–M-22, M-47–M-53
+5. **Ops / polish:** M-09, M-15, M-16, M-31, L-07–L-27

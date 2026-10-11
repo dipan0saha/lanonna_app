@@ -29,7 +29,7 @@ def test_complete_owner_onboarding_requires_email_verified():
         "lanonna_api.domain.onboarding.get_app_user",
         return_value={"display_name": "Alex"},
     ), patch(
-        "lanonna_api.domain.onboarding.user_has_owner_baby",
+        "lanonna_api.domain.onboarding.user_has_self_created_baby",
         return_value=True,
     ):
         with pytest.raises(ValueError, match="Verify your email"):

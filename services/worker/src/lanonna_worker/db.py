@@ -12,10 +12,14 @@ from lanonna_activity_copy import EVENT_PHOTO_SHARED, photo_shared_summary
 from lanonna_worker.config import settings
 
 
+class DatabaseNotConfiguredError(RuntimeError):
+    """Raised when the worker runs without database credentials (e.g. local thumbnail-only runs)."""
+
+
 @contextmanager
 def get_connection() -> Iterator[psycopg.Connection[Any]]:
     if not settings.db_password:
-        raise RuntimeError("Database is not configured (missing DB_PASSWORD).")
+        raise DatabaseNotConfiguredError("Database is not configured (missing DB_PASSWORD).")
     if settings.cloud_sql_connection_name:
         host = f"/cloudsql/{settings.cloud_sql_connection_name}"
         conn = psycopg.connect(

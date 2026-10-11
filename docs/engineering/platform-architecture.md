@@ -216,7 +216,7 @@ sequenceDiagram
 | **Observability** | Crashlytics, Analytics, Performance | Crashes, product analytics, screen/network perf |
 | **API** | Cloud Run (`api`) | JWT + App Check; authorization; CRUD; signed GCS URLs; publish async messages |
 | **Worker** | Cloud Run (`worker`) | Pub/Sub push: **thumb from display** (light CPU), Mailjet, FCM; separate memory from `api` |
-| **Messaging** | Pub/Sub | **Two topics:** GCS finalize → `photo-upload-finalized`; API/Scheduler jobs → `lanonna-async-commands`. **Dev:** push-only delivery (no pull consumer); dead-letter topic + max delivery attempts on push subs ([operations.md](operations.md)) |
+| **Messaging** | Pub/Sub | **Two topics:** GCS finalize → `photo-upload-finalized`; API/Scheduler jobs → `lanonna-async-commands`. **Dev:** push-only delivery (no pull consumer); dead-letter topic (retained 7 days on a pull subscription) + max delivery attempts on push subs ([operations.md](operations.md#dead-letter-queue)) |
 | **Database** | Cloud SQL PostgreSQL (zonal) | Schema, migrations, FKs, transactions; connection pool on Run |
 | **Media** | GCS | `display/`, `thumbnails/`; uniform bucket-level access; lifecycle to Nearline only if long-term archive tier added later |
 | **Email (product)** | **Mailjet** (API/SMTP) | Invitations and app transactional mail — [GCP-documented option](https://cloud.google.com/compute/docs/tutorials/sending-mail) |

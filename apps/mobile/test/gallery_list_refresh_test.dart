@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/domain/baby_summary.dart';
+import 'package:lanonna/core/network/connectivity_service.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
+import 'package:lanonna/features/account/data/notifications_repository.dart';
 import 'package:lanonna/features/gallery/data/gallery_repository.dart';
 import 'package:lanonna/features/gallery/data/models/photo_models.dart';
 import 'package:lanonna/features/gallery/presentation/gallery_screen.dart';
@@ -11,6 +13,8 @@ import 'package:lanonna/features/home/data/home_refresh_signal.dart';
 import 'package:lanonna/features/home/data/selected_baby_store.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'support/fake_notifications_repository.dart';
 
 class _FakeHomeRepository extends HomeRepository {
   _FakeHomeRepository(this.baby) : super(ApiClient(idTokenProvider: () async => null));
@@ -67,7 +71,13 @@ Future<void> _pumpGallery(WidgetTester tester, {
         ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
         ChangeNotifierProvider<GalleryRepository>.value(value: galleryRepo),
         ChangeNotifierProvider<HomeRefreshSignal>.value(value: homeRefresh),
+        ChangeNotifierProvider<ConnectivityService>(
+          create: (_) => ConnectivityService.forTesting(),
+        ),
         Provider<HomeRepository>(create: (_) => _FakeHomeRepository(baby)),
+        Provider<NotificationsRepository>(
+          create: (_) => FakeNotificationsRepository(),
+        ),
       ],
       child: MaterialApp(
         theme: AppTheme.light,

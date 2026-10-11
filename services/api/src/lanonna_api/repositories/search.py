@@ -82,10 +82,10 @@ def search_name_suggestions(
     with get_connection() as conn:
         rows = conn.execute(
             """
-            SELECT id, name
+            SELECT id, suggested_name AS name
             FROM name_suggestions
             WHERE baby_profile_id = %s
-              AND name ILIKE %s
+              AND suggested_name ILIKE %s
             ORDER BY created_at DESC
             LIMIT %s
             """,

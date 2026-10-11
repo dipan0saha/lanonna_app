@@ -46,11 +46,36 @@ resource "google_pubsub_topic_iam_member" "api_commands_publisher" {
   member  = "serviceAccount:${google_service_account.api.email}"
 }
 
+locals {
+  pubsub_service_agent = "serviceAccount:service-${data.google_project.current.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+}
+
+# Dead-lettering needs the Pub/Sub service agent to publish to the DLQ topic and to
+# acknowledge (subscribe on) each source subscription.
 resource "google_pubsub_topic_iam_member" "pubsub_dead_letter_publisher" {
   project = var.project_id
   topic   = google_pubsub_topic.dead_letter.name
   role    = "roles/pubsub.publisher"
-  member  = "serviceAccount:service-${data.google_project.current.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+  member  = local.pubsub_service_agent
+}
+
+# Without a subscription, dead-lettered messages are not retained (they cannot be inspected
+# or replayed). Retain for 7 days; pull with `gcloud pubsub subscriptions pull` (operations.md).
+resource "google_pubsub_subscription" "dead_letter_pull" {
+  name    = "${google_pubsub_topic.dead_letter.name}-pull"
+  project = var.project_id
+  topic   = google_pubsub_topic.dead_letter.name
+
+  ack_deadline_seconds       = 60
+  message_retention_duration = "604800s"
+
+  expiration_policy {
+    ttl = "" # never expire
+  }
+
+  labels = {
+    environment = var.environment
+  }
 }
 
 resource "google_pubsub_subscription" "worker_push" {
@@ -121,4 +146,20 @@ resource "google_pubsub_subscription_iam_member" "worker_push_subscriber" {
   subscription = google_pubsub_subscription.worker_push[0].name
   role         = "roles/pubsub.subscriber"
   member       = "serviceAccount:${google_service_account.worker.email}"
+}
+
+resource "google_pubsub_subscription_iam_member" "dead_letter_agent_subscriber_upload" {
+  count        = var.enable_worker_push_subscription ? 1 : 0
+  project      = var.project_id
+  subscription = google_pubsub_subscription.worker_push[0].name
+  role         = "roles/pubsub.subscriber"
+  member       = local.pubsub_service_agent
+}
+
+resource "google_pubsub_subscription_iam_member" "dead_letter_agent_subscriber_commands" {
+  count        = var.enable_worker_push_subscription ? 1 : 0
+  project      = var.project_id
+  subscription = google_pubsub_subscription.worker_push_commands[0].name
+  role         = "roles/pubsub.subscriber"
+  member       = local.pubsub_service_agent
 }

@@ -51,7 +51,37 @@ def _mark_export_failed(conn: Any, job_id: uuid.UUID) -> None:
     )
 
 
-def run_baby_data_export(job_id: uuid.UUID) -> None:
+def _release_export_claim(conn: Any, job_id: uuid.UUID) -> None:
+    """Return a claimed job to ``pending`` so the next Pub/Sub delivery can run it."""
+    conn.execute(
+        """
+        UPDATE baby_data_export_jobs
+        SET status = 'pending',
+            started_at = NULL
+        WHERE id = %s
+          AND status = 'running'
+        """,
+        (job_id,),
+    )
+
+
+def run_baby_data_export(
+    job_id: uuid.UUID,
+    *,
+    redelivery: bool = False,
+    final_attempt: bool = True,
+) -> None:
+    """Build and upload a baby data export for ``job_id``.
+
+    The job row is the idempotency guard (``pending`` -> ``running`` -> ``ready``/``failed``).
+
+    ``redelivery``: Pub/Sub is redelivering after an earlier attempt that did not ack. A job
+    still ``running`` then belongs to a crashed or timed-out attempt, so it is taken over
+    (the export is idempotent: it overwrites the same object path).
+
+    ``final_attempt``: only the last delivery attempt marks the job ``failed`` (user-visible).
+    Earlier failures release the claim back to ``pending`` and re-raise so Pub/Sub retries.
+    """
     baby_id: uuid.UUID | None = None
     claimed = False
     try:
@@ -81,10 +111,10 @@ def run_baby_data_export(job_id: uuid.UUID) -> None:
                 SET status = 'running',
                     started_at = now()
                 WHERE id = %s
-                  AND status = 'pending'
+                  AND (status = 'pending' OR (status = 'running' AND %s))
                 RETURNING baby_profile_id
                 """,
-                (job_id,),
+                (job_id, redelivery),
             ).fetchone()
             if row is None:
                 if job["status"] == "running":
@@ -151,13 +181,21 @@ def run_baby_data_export(job_id: uuid.UUID) -> None:
                     object_path = %s,
                     completed_at = now()
                 WHERE id = %s
+                  AND status = 'running'
                 """,
                 (object_path, job_id),
             )
         logger.info("baby_data_export_ready job_id=%s path=%s", job_id, object_path)
     except Exception:
-        logger.exception("baby_data_export_failed job_id=%s", job_id)
+        logger.exception(
+            "baby_data_export_failed job_id=%s final_attempt=%s",
+            job_id,
+            final_attempt,
+        )
         if claimed:
             with get_connection() as conn:
-                _mark_export_failed(conn, job_id)
+                if final_attempt:
+                    _mark_export_failed(conn, job_id)
+                else:
+                    _release_export_claim(conn, job_id)
         raise

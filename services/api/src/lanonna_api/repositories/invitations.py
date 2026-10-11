@@ -229,8 +229,13 @@ def accept_invitation_by_token(
             return {"error": "expired"}
 
         invited_role = inv["role"]
-        if invited_role == "owner" and count_active_owners(baby_profile_id, conn) >= 2:
-            return {"error": "max_owners"}
+        if invited_role == "owner":
+            # Serialize concurrent co-owner accepts per baby: the lock is held until this
+            # transaction commits, so the owner count below cannot go stale (M-02).
+            if lock_baby_profile_for_update(baby_profile_id, conn) is None:
+                return {"error": "not_found"}
+            if count_active_owners(baby_profile_id, conn) >= 2:
+                return {"error": "max_owners"}
 
         removed_row = conn.execute(
             """

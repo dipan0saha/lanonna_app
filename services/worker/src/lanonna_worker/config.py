@@ -23,5 +23,8 @@ class Settings(BaseSettings):
     mailjet_from_name: str = "La Nonna"  # MAILJET_FROM_NAME
     invite_deep_link_base: str = "lanonna://app"  # INVITE_DEEP_LINK_BASE
 
+    # Must match dead_letter_policy.max_delivery_attempts in infra/terraform/modules/platform/pubsub.tf.
+    pubsub_max_delivery_attempts: int = 5  # PUBSUB_MAX_DELIVERY_ATTEMPTS
+
 
 settings = Settings()

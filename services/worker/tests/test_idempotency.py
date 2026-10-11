@@ -5,7 +5,6 @@ import uuid
 from lanonna_worker.idempotency import (
     resolve_delivery_key,
     try_claim_delivery,
-    try_claim_photo_ready_notify,
 )
 from lanonna_worker.notifications import process_notify_fan_out, process_notify_user
 
@@ -33,13 +32,6 @@ def test_try_claim_delivery_duplicate():
     conn = MagicMock()
     conn.execute.return_value.fetchone.return_value = None
     assert try_claim_delivery(conn, "k1") is False
-
-
-def test_try_claim_photo_ready_notify():
-    conn = MagicMock()
-    conn.execute.return_value.fetchone.return_value = {"photo_id": uuid.uuid4()}
-    photo_id = uuid.uuid4()
-    assert try_claim_photo_ready_notify(conn, photo_id, 42) is True
 
 
 @patch("lanonna_worker.notifications.get_connection")

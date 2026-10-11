@@ -22,9 +22,9 @@ output "pubsub_topic_commands" {
   value = google_pubsub_topic.async_commands.name
 }
 
-output "pubsub_subscription_worker" {
-  description = "Deprecated pull subscription removed; upload uses push subscription."
-  value       = null
+output "pubsub_dead_letter_subscription" {
+  description = "Pull subscription that retains dead-lettered Pub/Sub messages (7 days)."
+  value       = google_pubsub_subscription.dead_letter_pull.name
 }
 
 output "pubsub_subscription_worker_push" {

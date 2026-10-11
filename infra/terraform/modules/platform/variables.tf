@@ -40,11 +40,6 @@ variable "pubsub_topic_commands" {
   description = "API and Scheduler async job messages (invite email, notify, export, cron payloads)."
 }
 
-variable "pubsub_subscription_worker" {
-  type    = string
-  default = "photo-upload-finalized-worker"
-}
-
 variable "enable_worker_push_subscription" {
   type        = bool
   default     = false

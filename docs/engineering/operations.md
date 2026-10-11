@@ -149,6 +149,17 @@ cd infra/terraform/environments/dev && terraform apply
 - **Push auth:** OIDC; Run invoker via `apply-dev-run-iam.sh` after each worker deploy
 - **FCM:** Worker SA may need **`roles/firebasecloudmessaging.admin`**
 
+#### Dead-letter queue
+
+Both push subscriptions dead-letter after **5** delivery attempts to topic `lanonna-async-commands-dlq`. Terraform also creates the retention subscription **`lanonna-async-commands-dlq-pull`** (7 days) and grants the Pub/Sub service agent `roles/pubsub.subscriber` on each push subscription (required for dead-lettering). There is no alert on DLQ depth yet ([open-gaps.md](open-gaps.md) L-14) — check it after deploys and incidents:
+
+```bash
+gcloud pubsub subscriptions pull lanonna-async-commands-dlq-pull \
+  --project=lanonna-dev --limit=10 --format=json          # peek; messages are redelivered unless acked
+# Replay after fixing the cause: republish the decoded `data` to the original topic
+gcloud pubsub topics publish lanonna-async-commands --project=lanonna-dev --message="$(…)"
+```
+
 **Infra smoke:**
 
 ```bash

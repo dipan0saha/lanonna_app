@@ -11,11 +11,10 @@ from PIL import Image
 
 from lanonna_worker.config import settings
 from lanonna_worker.db import (
-    get_connection,
+    DatabaseNotConfiguredError,
     get_ready_photo_by_display_path,
     mark_photo_ready,
 )
-from lanonna_worker.idempotency import try_claim_photo_ready_notify
 from lanonna_worker.notifications import process_notify_fan_out
 
 logger = logging.getLogger("lanonna.worker")
@@ -85,7 +84,7 @@ def process_gcs_finalize(payload: dict[str, Any]) -> None:
 
         if ready_row:
             _maybe_notify_photo_ready(ready_row, object_generation=gen_int)
-    except RuntimeError:
+    except DatabaseNotConfiguredError:
         logger.warning("DB not configured; thumb uploaded without SQL update path=%s", name)
 
 
@@ -101,15 +100,9 @@ def _maybe_notify_photo_ready(
     if gen is None:
         gen = ready_row.get("display_object_generation")
 
-    with get_connection() as conn:
-        if not try_claim_photo_ready_notify(conn, photo_uuid, gen):
-            logger.info(
-                "photo_ready_notify_skip_duplicate photo_id=%s generation=%s",
-                photo_uuid,
-                gen,
-            )
-            return
-
+    # Idempotency lives in the fan-out itself: it claims ``dedupe_key`` in the same
+    # transaction as the inbox inserts, so a failed fan-out rolls the claim back and the
+    # Pub/Sub retry re-notifies (a separate pre-claim would be committed first and lose it).
     dedupe_key = f"photo_ready:{photo_uuid}:{gen if gen is not None else 0}"
     process_notify_fan_out(
         {

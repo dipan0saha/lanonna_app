@@ -16,14 +16,18 @@ from lanonna_worker.notifications import (
     process_weekly_notification_digest,
 )
 from lanonna_worker.invite_cleanup import expire_stale_pending_invitations
-from lanonna_worker.db import get_connection
-from lanonna_worker.idempotency import try_claim_delivery
 from lanonna_worker.thumbnails import process_gcs_finalize
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("lanonna.worker")
 
 app = FastAPI(title="La Nonna Worker", version="0.1.0")
+
+
+def _delivery_attempt(body: dict[str, Any]) -> int | None:
+    """Pub/Sub ``deliveryAttempt`` (1-based); present when the subscription has a DLQ policy."""
+    raw = body.get("deliveryAttempt")
+    return raw if isinstance(raw, int) and not isinstance(raw, bool) and raw > 0 else None
 
 
 @app.get("/health")
@@ -119,18 +123,18 @@ async def pubsub_push(request: Request) -> Response:
         if not job_id_raw:
             logger.warning("baby_data_export missing job_id message_id=%s", message.get("messageId"))
             return Response(status_code=204)
-        pubsub_message_id = message.get("messageId")
-        if pubsub_message_id:
-            with get_connection() as conn:
-                if not try_claim_delivery(conn, f"pubsub:{pubsub_message_id}"):
-                    logger.info(
-                        "baby_data_export_duplicate_message job_id=%s message_id=%s",
-                        job_id_raw,
-                        pubsub_message_id,
-                    )
-                    return Response(status_code=204)
+        # The job row is the idempotency guard; do not dedupe on messageId or retries
+        # after a failure would be acked without running (H-09).
+        delivery_attempt = _delivery_attempt(body)
         try:
-            run_baby_data_export(uuid.UUID(str(job_id_raw)))
+            run_baby_data_export(
+                uuid.UUID(str(job_id_raw)),
+                redelivery=delivery_attempt is not None and delivery_attempt > 1,
+                final_attempt=(
+                    delivery_attempt is None
+                    or delivery_attempt >= settings.pubsub_max_delivery_attempts
+                ),
+            )
         except Exception:
             logger.exception("baby_data_export_failed job_id=%s", job_id_raw)
             return Response(status_code=500)

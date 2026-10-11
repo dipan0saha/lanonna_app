@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/domain/baby_summary.dart';
+import 'package:lanonna/core/network/connectivity_service.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/features/calendar/data/calendar_repository.dart';
 import 'package:lanonna/features/calendar/data/models/calendar_models.dart';
@@ -13,12 +14,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lanonna/features/calendar/presentation/calendar_screen.dart';
 
-class _FakeNotificationsRepository extends NotificationsRepository {
-  _FakeNotificationsRepository() : super(ApiClient(idTokenProvider: () async => null));
-
-  @override
-  Future<int> unreadCount() async => 0;
-}
+import 'support/fake_notifications_repository.dart';
 
 class _FakeHomeRepository extends HomeRepository {
   _FakeHomeRepository(this.baby) : super(ApiClient(idTokenProvider: () async => null));
@@ -67,9 +63,12 @@ void main() {
           ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
           ChangeNotifierProvider<CalendarRepository>.value(value: calRepo),
           ChangeNotifierProvider<HomeRefreshSignal>(create: (_) => HomeRefreshSignal()),
+          ChangeNotifierProvider<ConnectivityService>(
+            create: (_) => ConnectivityService.forTesting(),
+          ),
           Provider<HomeRepository>(create: (_) => _FakeHomeRepository(baby)),
           Provider<NotificationsRepository>(
-            create: (_) => _FakeNotificationsRepository(),
+            create: (_) => FakeNotificationsRepository(),
           ),
         ],
         child: MaterialApp(

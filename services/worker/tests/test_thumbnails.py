@@ -1,12 +1,12 @@
 import uuid
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from lanonna_worker.thumbnails import process_gcs_finalize
 
 
 @patch("lanonna_worker.thumbnails.process_notify_fan_out")
-@patch("lanonna_worker.thumbnails.try_claim_photo_ready_notify", return_value=True)
-@patch("lanonna_worker.thumbnails.get_connection")
 @patch("lanonna_worker.thumbnails.mark_photo_ready")
 @patch("lanonna_worker.thumbnails.storage.Client")
 @patch("lanonna_worker.thumbnails.settings")
@@ -14,8 +14,6 @@ def test_process_gcs_finalize_happy_path(
     mock_settings,
     mock_client_cls,
     mock_mark_ready,
-    mock_conn_ctx,
-    _claim,
     mock_fan_out,
 ):
     photo_id = uuid.uuid4()
@@ -31,9 +29,6 @@ def test_process_gcs_finalize_happy_path(
         "uploader_firebase_uid": "uploader-1",
     }
     mock_mark_ready.return_value = ready_row
-
-    conn = MagicMock()
-    mock_conn_ctx.return_value.__enter__.return_value = conn
 
     display_blob = MagicMock()
     display_blob.exists.return_value = True
@@ -83,8 +78,6 @@ def test_process_gcs_finalize_skips_wrong_bucket_or_path(
 
 
 @patch("lanonna_worker.thumbnails.process_notify_fan_out")
-@patch("lanonna_worker.thumbnails.try_claim_photo_ready_notify", return_value=True)
-@patch("lanonna_worker.thumbnails.get_connection")
 @patch("lanonna_worker.thumbnails.get_ready_photo_by_display_path")
 @patch("lanonna_worker.thumbnails.mark_photo_ready", return_value=None)
 @patch("lanonna_worker.thumbnails.storage.Client")
@@ -94,8 +87,6 @@ def test_process_gcs_finalize_idempotent_ready_still_notifies(
     mock_client_cls,
     mock_mark_ready,
     mock_get_ready,
-    mock_conn_ctx,
-    _claim,
     mock_fan_out,
 ):
     photo_id = uuid.uuid4()
@@ -104,9 +95,6 @@ def test_process_gcs_finalize_idempotent_ready_still_notifies(
     mock_settings.display_bucket = "display-bucket"
     mock_settings.thumbnails_bucket = "thumb-bucket"
     mock_settings.gcp_project_id = "proj"
-
-    conn = MagicMock()
-    mock_conn_ctx.return_value.__enter__.return_value = conn
 
     mock_get_ready.return_value = {
         "id": photo_id,
@@ -133,6 +121,47 @@ def test_process_gcs_finalize_idempotent_ready_still_notifies(
 
     mock_get_ready.assert_called_once_with(display_name)
     mock_fan_out.assert_called_once()
+    assert mock_fan_out.call_args[0][0]["dedupe_key"] == f"photo_ready:{photo_id}:7"
+
+
+@patch("lanonna_worker.thumbnails.process_notify_fan_out")
+@patch("lanonna_worker.thumbnails.get_ready_photo_by_display_path")
+@patch("lanonna_worker.thumbnails.mark_photo_ready", return_value=None)
+@patch("lanonna_worker.thumbnails.storage.Client")
+@patch("lanonna_worker.thumbnails.settings")
+def test_fan_out_failure_propagates_and_retry_renotifies(
+    mock_settings,
+    mock_client_cls,
+    _mark_ready,
+    mock_get_ready,
+    mock_fan_out,
+):
+    """H-12: a failed fan-out must not consume the notification (retry re-runs it)."""
+    photo_id = uuid.uuid4()
+    display_name = f"display/{photo_id}.jpg"
+    mock_settings.display_bucket = "display-bucket"
+    mock_settings.thumbnails_bucket = "thumb-bucket"
+    mock_settings.gcp_project_id = "proj"
+    mock_get_ready.return_value = {
+        "id": photo_id,
+        "baby_profile_id": uuid.uuid4(),
+        "uploader_firebase_uid": "uploader-1",
+        "display_object_generation": 7,
+    }
+    display_blob = MagicMock()
+    display_blob.exists.return_value = True
+    display_blob.download_as_bytes.return_value = _minimal_jpeg_bytes()
+    bucket = MagicMock()
+    bucket.blob.side_effect = lambda name: display_blob if name == display_name else MagicMock()
+    mock_client_cls.return_value.bucket.return_value = bucket
+    mock_fan_out.side_effect = [RuntimeError("db down"), None]
+    event = {"bucket": "display-bucket", "name": display_name, "generation": "7"}
+
+    with pytest.raises(RuntimeError, match="db down"):
+        process_gcs_finalize(event)
+    process_gcs_finalize(event)
+
+    assert mock_fan_out.call_count == 2
 
 
 def _minimal_jpeg_bytes() -> bytes:
