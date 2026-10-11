@@ -100,9 +100,9 @@ def create_invitation(
             INSERT INTO invitations (
                 id, baby_profile_id, inviter_firebase_uid,
                 invitee_email, role, relationship_label,
-                token_hash, expires_at
+                token_hash, expires_at, email_invite_token
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id, invitee_email, role, status, expires_at, created_at
             """,
             (
@@ -114,12 +114,13 @@ def create_invitation(
                 relationship_label,
                 token_hash,
                 expires_at,
+                token,
             ),
         ).fetchone()
     if row is None:
         raise RuntimeError("create_invitation returned no row")
     result = dict(row)
-    result["invite_token"] = token  # returned once for email worker; not stored plain
+    result["invite_token"] = token  # in-process callers; worker reads email_invite_token from DB
     return result
 
 

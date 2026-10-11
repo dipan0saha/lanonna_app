@@ -7,7 +7,9 @@ from fastapi import FastAPI, Request, Response
 
 import uuid
 
-from lanonna_worker.config import settings
+from lanonna_worker.config import settings, validate_worker_settings
+
+validate_worker_settings()
 from lanonna_worker.baby_data_export import run_baby_data_export
 from lanonna_worker.invite_email import send_invite_email
 from lanonna_worker.notifications import (
@@ -22,6 +24,13 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("lanonna.worker")
 
 app = FastAPI(title="La Nonna Worker", version="0.1.0")
+
+
+def _safe_payload_summary(payload: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "type": payload.get("type"),
+        "keys": sorted(payload.keys()),
+    }
 
 
 def _delivery_attempt(body: dict[str, Any]) -> int | None:
@@ -72,12 +81,11 @@ async def pubsub_push(request: Request) -> Response:
             payload = {"raw": raw}
     if payload.get("type") == "send_invite_email":
         invitation_id_raw = payload.get("invitation_id")
-        invite_token = payload.get("invite_token")
-        if not invitation_id_raw or not invite_token:
+        if not invitation_id_raw:
             logger.warning("send_invite_email missing fields message_id=%s", message.get("messageId"))
             return Response(status_code=204)
         try:
-            send_invite_email(uuid.UUID(str(invitation_id_raw)), str(invite_token))
+            send_invite_email(uuid.UUID(str(invitation_id_raw)))
         except Exception:
             logger.exception("send_invite_email_failed invitation_id=%s", invitation_id_raw)
             return Response(status_code=500)
@@ -159,6 +167,6 @@ async def pubsub_push(request: Request) -> Response:
             "pubsub message_id=%s subscription=%s payload=%s",
             message.get("messageId"),
             body.get("subscription"),
-            payload,
+            _safe_payload_summary(payload),
         )
     return Response(status_code=204)

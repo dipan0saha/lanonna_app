@@ -108,7 +108,7 @@ def batch_invite(
             row.relationship_label,
         )
         try:
-            publish_send_invite_email(created["id"], created["invite_token"])
+            publish_send_invite_email(created["id"])
         except Exception:
             logger.exception(
                 "invite_email_enqueue_failed invitation_id=%s",

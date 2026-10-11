@@ -30,9 +30,11 @@ def test_process_gcs_finalize_happy_path(
     }
     mock_mark_ready.return_value = ready_row
 
+    jpeg = _minimal_jpeg_bytes()
     display_blob = MagicMock()
     display_blob.exists.return_value = True
-    display_blob.download_as_bytes.return_value = _minimal_jpeg_bytes()
+    display_blob.size = len(jpeg)
+    display_blob.download_as_bytes.return_value = jpeg
 
     thumb_blob = MagicMock()
     bucket = MagicMock()
@@ -103,9 +105,11 @@ def test_process_gcs_finalize_idempotent_ready_still_notifies(
         "display_object_generation": 7,
     }
 
+    jpeg = _minimal_jpeg_bytes()
     display_blob = MagicMock()
     display_blob.exists.return_value = True
-    display_blob.download_as_bytes.return_value = _minimal_jpeg_bytes()
+    display_blob.size = len(jpeg)
+    display_blob.download_as_bytes.return_value = jpeg
     thumb_blob = MagicMock()
     bucket = MagicMock()
     bucket.blob.side_effect = lambda name: display_blob if name == display_name else thumb_blob
@@ -148,9 +152,11 @@ def test_fan_out_failure_propagates_and_retry_renotifies(
         "uploader_firebase_uid": "uploader-1",
         "display_object_generation": 7,
     }
+    jpeg = _minimal_jpeg_bytes()
     display_blob = MagicMock()
     display_blob.exists.return_value = True
-    display_blob.download_as_bytes.return_value = _minimal_jpeg_bytes()
+    display_blob.size = len(jpeg)
+    display_blob.download_as_bytes.return_value = jpeg
     bucket = MagicMock()
     bucket.blob.side_effect = lambda name: display_blob if name == display_name else MagicMock()
     mock_client_cls.return_value.bucket.return_value = bucket
@@ -162,6 +168,37 @@ def test_fan_out_failure_propagates_and_retry_renotifies(
     process_gcs_finalize(event)
 
     assert mock_fan_out.call_count == 2
+
+
+@patch("lanonna_worker.thumbnails.process_notify_fan_out")
+@patch("lanonna_worker.thumbnails.mark_photo_ready")
+@patch("lanonna_worker.thumbnails.storage.Client")
+@patch("lanonna_worker.thumbnails.settings")
+def test_process_gcs_finalize_skips_oversized_blob(
+    mock_settings,
+    mock_client_cls,
+    mock_mark_ready,
+    mock_fan_out,
+):
+    photo_id = uuid.uuid4()
+    display_name = f"display/{photo_id}.jpg"
+    mock_settings.display_bucket = "display-bucket"
+    mock_settings.gcp_project_id = "proj"
+
+    display_blob = MagicMock()
+    display_blob.exists.return_value = True
+    display_blob.size = 3_000_000
+    bucket = MagicMock()
+    bucket.blob.return_value = display_blob
+    mock_client_cls.return_value.bucket.return_value = bucket
+
+    process_gcs_finalize(
+        {"bucket": "display-bucket", "name": display_name, "generation": "1"}
+    )
+
+    display_blob.download_as_bytes.assert_not_called()
+    mock_mark_ready.assert_not_called()
+    mock_fan_out.assert_not_called()
 
 
 def _minimal_jpeg_bytes() -> bytes:

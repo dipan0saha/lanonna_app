@@ -47,7 +47,7 @@ def test_send_invite_email_raises_when_mailjet_not_configured(mock_settings):
     mock_settings.mailjet_api_key = ""
     mock_settings.mailjet_api_secret = ""
     with pytest.raises(RuntimeError, match="Mailjet is not configured"):
-        send_invite_email(uuid.uuid4(), "token")
+        send_invite_email(uuid.uuid4())
 
 
 @patch("lanonna_worker.invite_email.settings")
@@ -60,7 +60,7 @@ def test_send_invite_email_skips_when_not_claimable(mock_settings):
         "lanonna_worker.invite_email.get_connection"
     ) as mock_conn_ctx, patch("lanonna_worker.invite_email.httpx.post") as post:
         mock_conn_ctx.return_value.__enter__.return_value = conn
-        send_invite_email(uuid.uuid4(), "token")
+        send_invite_email(uuid.uuid4())
     post.assert_not_called()
 
 
@@ -78,6 +78,7 @@ def test_send_invite_email_sends_and_marks_sent(mock_settings):
         "expires_at": __import__("datetime").datetime(
             2026, 12, 1, tzinfo=__import__("datetime").timezone.utc
         ),
+        "email_invite_token": "invite-token",
         "baby_name": "Baby",
         "inviter_display_name": "Alex",
     }
@@ -108,5 +109,5 @@ def test_send_invite_email_sends_and_marks_sent(mock_settings):
         "lanonna_worker.invite_email.get_connection"
     ) as mock_conn_ctx:
         mock_conn_ctx.return_value.__enter__.return_value = conn
-        send_invite_email(inv_id, "invite-token")
+        send_invite_email(inv_id)
     assert call_count >= 2

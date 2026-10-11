@@ -21,6 +21,9 @@ logger = logging.getLogger("lanonna.worker")
 
 _DISPLAY_PATH = re.compile(r"^display/([0-9a-f-]{36})\.(jpg|jpeg|webp)$", re.I)
 _THUMB_WIDTH = 320
+# Match API photo init max (services/api routers/photos.py).
+MAX_DISPLAY_BYTES = 2_097_152
+MAX_IMAGE_PIXELS = 20_000_000
 
 
 def process_gcs_finalize(payload: dict[str, Any]) -> None:
@@ -47,10 +50,42 @@ def process_gcs_finalize(payload: dict[str, Any]) -> None:
         return
 
     display_blob.reload()
+    blob_size = display_blob.size
+    if blob_size is not None and blob_size > MAX_DISPLAY_BYTES:
+        logger.warning(
+            "display_object_too_large name=%s bytes=%s max=%s",
+            name,
+            blob_size,
+            MAX_DISPLAY_BYTES,
+        )
+        return
+
     data = display_blob.download_as_bytes()
-    image = Image.open(io.BytesIO(data))
-    image = image.convert("RGB")
+    if len(data) > MAX_DISPLAY_BYTES:
+        logger.warning(
+            "display_download_too_large name=%s bytes=%s max=%s",
+            name,
+            len(data),
+            MAX_DISPLAY_BYTES,
+        )
+        return
+
+    try:
+        with Image.open(io.BytesIO(data)) as opened:
+            opened.load()
+            image = opened.convert("RGB")
+    except Image.DecompressionBombError:
+        logger.warning("display_image_decompression_bomb name=%s", name)
+        return
     w, h = image.size
+    if w * h > MAX_IMAGE_PIXELS:
+        logger.warning(
+            "display_image_too_many_pixels name=%s pixels=%s max=%s",
+            name,
+            w * h,
+            MAX_IMAGE_PIXELS,
+        )
+        return
     if w > _THUMB_WIDTH:
         new_h = int(h * (_THUMB_WIDTH / w))
         image = image.resize((_THUMB_WIDTH, new_h), Image.Resampling.LANCZOS)

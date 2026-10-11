@@ -27,4 +27,35 @@ class Settings(BaseSettings):
     pubsub_max_delivery_attempts: int = 5  # PUBSUB_MAX_DELIVERY_ATTEMPTS
 
 
+_DEV_PROJECT_ID = "lanonna-dev"
+_DEV_DISPLAY_BUCKET = "lanonna-dev-display"
+_DEV_THUMBNAILS_BUCKET = "lanonna-dev-thumbnails"
+
+
+def validate_worker_settings(cfg: Settings | None = None) -> None:
+    """Refuse to start with dev defaults when ENVIRONMENT is not dev."""
+    cfg = cfg or settings
+    if cfg.environment.lower() == "dev":
+        return
+    errors: list[str] = []
+    if cfg.gcp_project_id == _DEV_PROJECT_ID:
+        errors.append("GCP_PROJECT_ID must not be the dev default outside dev")
+    if cfg.display_bucket == _DEV_DISPLAY_BUCKET:
+        errors.append("DISPLAY_BUCKET must not be the dev default outside dev")
+    if cfg.thumbnails_bucket == _DEV_THUMBNAILS_BUCKET:
+        errors.append("THUMBNAILS_BUCKET must not be the dev default outside dev")
+    expected_display = f"{cfg.gcp_project_id}-display"
+    expected_thumbs = f"{cfg.gcp_project_id}-thumbnails"
+    if cfg.display_bucket != expected_display:
+        errors.append(
+            f"DISPLAY_BUCKET must be {expected_display} (got {cfg.display_bucket})"
+        )
+    if cfg.thumbnails_bucket != expected_thumbs:
+        errors.append(
+            f"THUMBNAILS_BUCKET must be {expected_thumbs} (got {cfg.thumbnails_bucket})"
+        )
+    if errors:
+        raise RuntimeError("Invalid worker configuration: " + "; ".join(errors))
+
+
 settings = Settings()

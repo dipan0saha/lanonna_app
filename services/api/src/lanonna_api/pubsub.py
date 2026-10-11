@@ -30,11 +30,10 @@ def _publish_commands_payload(payload: dict) -> None:
     future.result(timeout=30)
 
 
-def publish_send_invite_email(invitation_id: uuid.UUID, invite_token: str) -> None:
+def publish_send_invite_email(invitation_id: uuid.UUID) -> None:
     payload = {
         "type": "send_invite_email",
         "invitation_id": str(invitation_id),
-        "invite_token": invite_token,
     }
     if settings.invite_email_publish_disabled:
         logger.info(

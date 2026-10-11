@@ -33,6 +33,7 @@ Apply in **lexicographic order** (filename prefix):
 | `025_track_migration_023_registry_shipping.sql` | Record `023` in `schema_migrations` for DBs that ran 023 before tracking insert |
 | `026_export_job_started_at.sql` | `baby_data_export_jobs.started_at` + stale `running` reclaim (M-11) |
 | `027_invite_email_send_claim.sql` | `invitations.email_send_claimed_at` (M-12) |
+| `028_invite_email_delivery_token.sql` | `invitations.email_invite_token` cleared on send (M-41) |
 
 ## Apply (dev)
 

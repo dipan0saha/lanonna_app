@@ -71,6 +71,7 @@ def _claim_invitation_for_send(
             i.role,
             i.relationship_label,
             i.expires_at,
+            i.email_invite_token,
             b.name AS baby_name,
             COALESCE(u.display_name, 'A family member') AS inviter_display_name
         FROM invitations i
@@ -105,6 +106,7 @@ def _mark_invite_email_sent(conn: Any, invitation_id: uuid.UUID) -> bool:
         UPDATE invitations
         SET email_sent_at = now(),
             email_send_claimed_at = NULL,
+            email_invite_token = NULL,
             updated_at = now()
         WHERE id = %s
           AND email_sent_at IS NULL
@@ -151,7 +153,7 @@ def _render_invite_email(ctx: dict, invite_url: str) -> tuple[str, str, str]:
     return subject, html, text
 
 
-def send_invite_email(invitation_id: uuid.UUID, invite_token: str) -> None:
+def send_invite_email(invitation_id: uuid.UUID) -> None:
     if not settings.mailjet_api_key or not settings.mailjet_api_secret:
         logger.error(
             "mailjet_not_configured invitation_id=%s",
@@ -168,7 +170,17 @@ def send_invite_email(invitation_id: uuid.UUID, invite_token: str) -> None:
         )
         return
 
-    invite_url = build_invite_url(invite_token, ctx["role"])
+    invite_token = ctx.get("email_invite_token")
+    if not invite_token:
+        logger.warning(
+            "invite_email_skip invitation_id=%s missing delivery token",
+            invitation_id,
+        )
+        with get_connection() as conn:
+            _release_invite_send_claim(conn, invitation_id)
+        return
+
+    invite_url = build_invite_url(str(invite_token), ctx["role"])
     subject, html, text = _render_invite_email(ctx, invite_url)
 
     payload = {
