@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
 import '../../../core/auth/auth_repository.dart';
+import '../../../core/auth/session_cleanup.dart';
 import '../../../core/presentation/display_initials.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/widgets/app_bordered_surface.dart';
@@ -21,7 +22,6 @@ import '../../../core/domain/baby_list_subtitle.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../home/domain/app_routes.dart';
 import '../../onboarding/domain/onboarding_routes.dart';
-import '../../onboarding/presentation/onboarding_coordinator.dart';
 import '../data/account_repository.dart';
 import 'widgets/account_engagement_stat_row.dart';
 import 'widgets/account_profile_card.dart';
@@ -66,7 +66,7 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Future<void> _signOut() async {
     // Push token cleanup is handled by PushNotificationService auth listener.
-    await context.read<OnboardingCoordinator>().resetOwnerCompletionForSignOut();
+    await context.read<SessionCleanup>().clearLocalUserData();
     if (!mounted) return;
     await context.read<AuthRepository>().signOut();
     if (mounted) context.go(OnboardingRoutes.ownerCarousel);

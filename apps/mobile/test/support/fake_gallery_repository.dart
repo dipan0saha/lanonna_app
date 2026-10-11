@@ -10,6 +10,21 @@ class FakeGalleryRepository extends GalleryRepository {
   List<PhotoSummary> photos = const [];
 
   @override
+  Future<PhotoListPage> listPhotosPage(
+    String babyId, {
+    String sort = 'default',
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    listCalls++;
+    final slice = photos.skip(offset).take(limit).toList();
+    return PhotoListPage(
+      items: slice,
+      hasMore: offset + slice.length < photos.length,
+    );
+  }
+
+  @override
   Future<List<PhotoSummary>> listPhotos(
     String babyId, {
     String sort = 'default',

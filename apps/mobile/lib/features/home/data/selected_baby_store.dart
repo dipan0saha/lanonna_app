@@ -13,4 +13,9 @@ class SelectedBabyStore extends ChangeNotifier {
     await _prefs.setString(_key, id);
     notifyListeners();
   }
+
+  Future<void> clearSelectedBabyId() async {
+    await _prefs.remove(_key);
+    notifyListeners();
+  }
 }

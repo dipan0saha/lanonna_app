@@ -7,16 +7,36 @@ import 'models/home_summary.dart';
 import 'selected_baby_store.dart';
 
 class HomeRepository {
-  HomeRepository(this._api);
+  HomeRepository(
+    this._api, {
+    String? Function()? currentUserId,
+  }) : _currentUserId = currentUserId;
 
   final ApiClient _api;
+  final String? Function()? _currentUserId;
   List<BabySummary>? _cachedBabies;
+  String? _cachedForUserId;
 
   void clearCachedBabies() {
     _cachedBabies = null;
+    _cachedForUserId = null;
+  }
+
+  static bool _shouldServeStaleBabyCache(Object error) {
+    if (error is ApiException) {
+      final code = error.statusCode;
+      if (code != null && code >= 400 && code < 500) {
+        return false;
+      }
+    }
+    return true;
   }
 
   Future<List<BabySummary>> listBabies() async {
+    final uid = _currentUserId?.call();
+    if (uid != _cachedForUserId) {
+      _cachedBabies = null;
+    }
     try {
       final list = await _api.getJsonList('/v1/babies');
       final babies = list
@@ -24,10 +44,15 @@ class HomeRepository {
           .map(BabySummary.fromJson)
           .toList();
       _cachedBabies = babies;
+      _cachedForUserId = uid;
       return babies;
     } catch (e) {
       final cached = _cachedBabies;
-      if (cached != null && cached.isNotEmpty) {
+      if (cached != null &&
+          cached.isNotEmpty &&
+          uid != null &&
+          uid == _cachedForUserId &&
+          _shouldServeStaleBabyCache(e)) {
         return cached;
       }
       rethrow;

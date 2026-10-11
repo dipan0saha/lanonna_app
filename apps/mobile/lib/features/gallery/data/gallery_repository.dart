@@ -13,18 +13,51 @@ class GalleryRepository extends ChangeNotifier {
   /// Uploads and other flows outside this repository call this after mutating gallery data.
   void markGalleryChanged() => _markGalleryChanged();
 
+  static const int _pageSize = 50;
+
+  Future<PhotoListPage> listPhotosPage(
+    String babyId, {
+    String sort = 'default',
+    int limit = _pageSize,
+    int offset = 0,
+  }) async {
+    final params = <String, String>{
+      'limit': '$limit',
+      'offset': '$offset',
+    };
+    if (sort != 'default') {
+      params['sort'] = sort;
+    }
+    final list = await _api.getJsonList(
+      '/v1/babies/$babyId/photos',
+      queryParameters: params,
+    );
+    final items = list
+        .whereType<Map<String, dynamic>>()
+        .map(PhotoSummary.fromJson)
+        .toList();
+    return PhotoListPage(items: items, hasMore: items.length >= limit);
+  }
+
+  /// Fetches every page (for pickers and upload polling).
   Future<List<PhotoSummary>> listPhotos(
     String babyId, {
     String sort = 'default',
   }) async {
-    final list = await _api.getJsonList(
-      '/v1/babies/$babyId/photos',
-      queryParameters: sort == 'default' ? null : <String, String>{'sort': sort},
-    );
-    return list
-        .whereType<Map<String, dynamic>>()
-        .map(PhotoSummary.fromJson)
-        .toList();
+    final all = <PhotoSummary>[];
+    var offset = 0;
+    while (true) {
+      final page = await listPhotosPage(
+        babyId,
+        sort: sort,
+        limit: 100,
+        offset: offset,
+      );
+      all.addAll(page.items);
+      if (!page.hasMore) break;
+      offset += page.items.length;
+    }
+    return all;
   }
 
   Future<PhotoDetail> fetchPhoto(String babyId, String photoId) async {
@@ -101,4 +134,11 @@ class GalleryRepository extends ChangeNotifier {
         .map(PhotoTaggedBaby.fromJson)
         .toList();
   }
+}
+
+class PhotoListPage {
+  PhotoListPage({required this.items, required this.hasMore});
+
+  final List<PhotoSummary> items;
+  final bool hasMore;
 }

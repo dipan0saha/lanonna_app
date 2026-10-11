@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../../core/auth/auth_repository.dart';
+import '../../../../../core/auth/session_cleanup.dart';
 import '../../../domain/onboarding_routes.dart';
 import '../../onboarding_coordinator.dart';
 import '../../widgets/onboarding_buttons.dart';
@@ -40,6 +41,8 @@ class OnboardingWrongEmailScreen extends StatelessWidget {
           OnboardingPrimaryButton(
             label: 'Switch account',
             onPressed: () async {
+              await context.read<SessionCleanup>().clearLocalUserData();
+              if (!context.mounted) return;
               await context.read<AuthRepository>().signOut();
               if (token == null || token.isEmpty) {
                 if (context.mounted) context.go(OnboardingRoutes.ownerCarousel);

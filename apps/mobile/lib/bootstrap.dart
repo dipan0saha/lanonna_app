@@ -10,6 +10,7 @@ import 'core/deep_links/auth_action_app_link.dart';
 import 'core/deep_links/invite_app_link.dart';
 import 'core/auth/auth_repository.dart';
 import 'core/auth/membership_access_handler.dart';
+import 'core/auth/session_cleanup.dart';
 import 'core/auth/user_deleted_session_handler.dart';
 import 'core/network/connectivity_service.dart';
 import 'core/router/router_refresh.dart';
@@ -49,16 +50,20 @@ Future<Widget> bootstrapLaNonnaApp() async {
   final prefs = onboardingStorage.sharedPreferences;
   final authRepository = AuthRepository();
   late final OnboardingCoordinator coordinator;
+  late final SessionCleanup sessionCleanup;
   final apiClient = ApiClient(
     idTokenProvider: authRepository.getIdToken,
     appCheckTokenProvider: appCheckTokenForApi,
     onSessionInvalidated: (_) => handleUserDeletedSession(
       authRepository: authRepository,
-      coordinator: coordinator,
+      sessionCleanup: sessionCleanup,
     ),
   );
   final onboardingRepository = OnboardingRepository(apiClient);
-  final homeRepository = HomeRepository(apiClient);
+  final homeRepository = HomeRepository(
+    apiClient,
+    currentUserId: () => authRepository.currentUser?.uid,
+  );
   final galleryRepository = GalleryRepository(apiClient);
   final calendarRepository = CalendarRepository(apiClient);
   final registryRepository = RegistryRepository(apiClient);
@@ -79,6 +84,11 @@ Future<Widget> bootstrapLaNonnaApp() async {
     coordinator: coordinator,
   );
   final selectedBabyStore = SelectedBabyStore(prefs);
+  sessionCleanup = SessionCleanup(
+    coordinator: coordinator,
+    homeRepository: homeRepository,
+    selectedBabyStore: selectedBabyStore,
+  );
   final homeRefreshSignal = HomeRefreshSignal();
   apiClient.registerMembershipEndedHandler(
     (exception) => handleMembershipEnded(
@@ -116,6 +126,7 @@ Future<Widget> bootstrapLaNonnaApp() async {
   return MultiProvider(
     providers: [
       Provider<AuthRepository>.value(value: authRepository),
+      Provider<SessionCleanup>.value(value: sessionCleanup),
       Provider<ApiClient>.value(value: apiClient),
       Provider<OnboardingRepository>.value(value: onboardingRepository),
       Provider<HomeRepository>.value(value: homeRepository),

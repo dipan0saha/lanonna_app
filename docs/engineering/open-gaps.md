@@ -1,8 +1,8 @@
 # Open gaps (pre-beta)
 
-Open engineering gaps for La Nonna. Seeded from the Oct 2026 full-stack review and extended by a second full code review on **2026-10-11** (API, data layer, worker, mobile, infra/docs) plus live test runs. Completed items are removed; see git history for the original audit.
+Open engineering gaps for La Nonna. Seeded from the Oct 2026 full-stack review and extended by a second full code review on **2026-10-11** (API, data layer, worker, mobile, infra/docs) plus live test runs.
 
-**Legend:** **Verified** — confirmed by reading the cited code and/or running the tests; **Reported** — suspected, not fully traced.
+**Legend:** ✅ **Resolved** (fixed in repo; detail in git history); **Verified** — open gap confirmed by code/tests; **Reported** — open gap suspected, not fully traced.
 
 Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [operations.md](operations.md).
 
@@ -14,7 +14,7 @@ Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [op
 |-------|--------|
 | API `pytest` (`services/api`) | 191 passed |
 | Worker `pytest` | 36 passed |
-| `flutter test` | 216 passed |
+| `flutter test` | 217 passed |
 | `flutter analyze` | 0 errors, 0 warnings, 48 infos (L-26) |
 
 Run all three suites before every ship; the suites are the only automated gate (no CI).
@@ -25,9 +25,31 @@ Run all three suites before every ship; the suites are the only automated gate (
 
 | Severity | Open | Themes |
 |----------|------|--------|
-| High | 7 | Release signing, worker OIDC, App Check enforce, admin surface; sign-out data leakage, iOS privacy strings, gallery truncation |
+| High | 4 | Release signing, worker OIDC, App Check enforce, admin surface |
 | Medium | 34 | Ended-member 500s, races/N+1, Pub/Sub robustness, export limits, invite token/HTML hygiene, infra/IAM/prod parity, mobile error/async/date handling |
 | Low | 19 | Input caps, dead config, logging, infra hygiene, docs drift, lint/conventions, deferred consolidation backlog |
+
+---
+
+## Resolved ✅
+
+| ID | Summary |
+|----|---------|
+| ✅ H-03 | Account delete: SQL tombstone before Firebase delete, idempotent retry when Firebase lags (`account_delete` domain + tests). |
+| ✅ H-09 | Export Pub/Sub retry: removed `messageId` dedupe that acked redeliveries; `deliveryAttempt`-aware claim/failure and stale-`running` takeover. |
+| ✅ H-10 | Baby search: `name_suggestions` query uses `suggested_name` (not missing `name` column). |
+| ✅ H-11 | Sign-out / delete / wrong-email / `user_deleted`: centralized `SessionCleanup` (invite, baby selection, home cache by uid, onboarding drafts, signed-image cache). |
+| ✅ H-12 | Photo-ready notify: idempotency inside fan-out transaction; removed pre-claim that blocked retries. |
+| ✅ H-13 | DLQ: pull subscription on dead-letter topic with retention + subscriber IAM (inspect/replay path). |
+| ✅ H-14 | iOS `Info.plist`: camera and photo-library usage descriptions. |
+| ✅ H-15 | Gallery: paginated `listPhotosPage`, infinite scroll, end-of-list copy; `listPhotos()` loads all pages for pickers. |
+| ✅ M-02 | Co-owner accept race (original): superseded by **M-36** fix below. |
+| ✅ M-11 | Export job reliability: `started_at`, stale-`running` reclaim, failure marking (paired with H-09 retry path). |
+| ✅ M-12 | Invite email send claim before Mailjet so duplicate Pub/Sub deliveries do not double-send. |
+| ✅ M-17 | Migration tracking / schema alignment (`025`–`027` for export and invite-claim columns). |
+| ✅ M-18 | Pub/Sub push dead-letter policy on worker subscriptions (push-only worker path). |
+| ✅ M-36 | Co-owner accept: `lock_baby_profile_for_update` before `count_active_owners` (race tests green). |
+| ✅ M-62 | Review regressions: API invitation-race + onboarding mock fixes; Flutter widget tests get `ConnectivityService` / notification fakes (full suites green). |
 
 ---
 
@@ -52,21 +74,6 @@ Run all three suites before every ship; the suites are the only automated gate (
 - **Where:** `services/api/scripts/deploy.sh` (`--allow-unauthenticated`), `admin_auth.py`, `routers/admin_system_announcements.py`
 - **Issue:** `/v1/admin/system-announcements` protected only by `X-Admin-Key`; no rate limit, no IP/IAM restriction; comparison is `!=` (not constant-time).
 - **Fix:** `secrets.compare_digest`; rate-limit admin paths; consider IAP/IAM or a private admin surface; rotate key via Secret Manager.
-
-### H-11 Sign-out and account delete leave cross-user local state — Verified
-- **Where:** `apps/mobile/lib/features/account/presentation/account_screen.dart:66-71`, `delete_account_screen.dart:64`, `core/auth/user_deleted_session_handler.dart:21-23`, `features/home/data/home_repository.dart:15-34`, `features/onboarding/presentation/app_session.dart:110-122`
-- **Issue:** Normal sign-out and delete-account only call `resetOwnerCompletionForSignOut()`. They do **not** clear `pending_invite_token` / invite preview JSON (contains invitee email), `selected_baby_id`, onboarding drafts, `HomeRepository._cachedBabies` (`clearCachedBabies()` has no callers; `listBabies()` serves the cache on **any** error), or the image disk cache. Only the `user_deleted` 401 path clears the invite. On a shared device the next user can be redirected into the previous user's invite flow and see their cached babies/avatars when offline.
-- **Fix:** One `SessionCleanup` used by every sign-out path: clear pending invite, selected baby, home cache, onboarding state, push token, and evict the image cache; key cached data by uid.
-
-### H-14 iOS camera/photo-library usage descriptions are missing — Verified
-- **Where:** `apps/mobile/ios/Runner/Info.plist` (no `NSCameraUsageDescription` / `NSPhotoLibraryUsageDescription`); `image_picker` is used in account edit, create-baby, and onboarding
-- **Issue:** On iOS, opening the camera or photo library without these keys crashes the app and fails App Store review.
-- **Fix:** Add accurate usage strings (and `NSPhotoLibraryAddUsageDescription` if saving images).
-
-### H-15 Gallery silently truncates after 50 photos — Verified
-- **Where:** `apps/mobile/lib/features/gallery/data/gallery_repository.dart:16-27` (never sends `limit`/`offset`); API `routers/photos.py:78-79` (`limit` default 50, max 100)
-- **Issue:** Babies with more than 50 photos get an incomplete grid with no pagination or end-of-list signal; newer photos silently hide older ones.
-- **Fix:** Paginate in the repository/UI (infinite scroll or loop with `offset`) and show an end-of-list state.
 
 ---
 
@@ -157,7 +164,7 @@ Run all three suites before every ship; the suites are the only automated gate (
 ## Test coverage gaps (still thin)
 
 - **API:** No router/HTTP tests for `events`, `fun`, `registry`, `invitations`, `notifications`, `search`, `admin_system_announcements`, baby photo routes, and `/v1/uploads/display/signed-url`; only domain-level mocks for `onboarding`. Repositories have almost no direct SQL tests (`search_name_suggestions` now has a column-conformance test; the rest are exposed to the same class of bug as the earlier name-search column mismatch); also untested: `account`, `pubsub`, `storage`, `media_urls`, `membership`.
-- **Mobile:** Untested core modules: `api_client`, `auth_repository`, `user_deleted_session_handler`, `push_notification_service`, `app_router`, `app_link_bootstrap`, `onboarding_storage`, `onboarding_coordinator`, `shell/`. No tests for `search/`, `settings/`, `legal/`, `home_activity_screen`, `calendar_upcoming_screen`, wrong-email and invite-bootstrap screens. `integration_test/` has only `home_summary_load_test.dart` and `smoke_sign_in_test.dart`. Existing tests like `delete_account_screen_test.dart` only check copy.
+- **Mobile:** Untested core modules: `api_client`, `auth_repository`, `user_deleted_session_handler`, `push_notification_service`, `app_router`, `app_link_bootstrap`, `onboarding_storage`, `onboarding_coordinator`, `shell/`. No tests for `search/`, `settings/`, `legal/`, `home_activity_screen`, `calendar_upcoming_screen`, wrong-email and invite-bootstrap screens. `integration_test/` has only `home_summary_load_test.dart` and `smoke_sign_in_test.dart`. `session_cleanup_test.dart` covers local wipe on sign-out; `delete_account_screen_test.dart` only checks copy.
 - **Worker:** `main.py` is only covered for export dispatch (`test_main_export_dispatch.py`); no tests for the other push routes/status codes, `config.py`, weekly digest, invite-email Mailjet failure/claim release and HTML escaping. Tests are mock-heavy (SQL string matching), so idempotency regressions are easy to miss.
 
 ---
@@ -165,7 +172,7 @@ Run all three suites before every ship; the suites are the only automated gate (
 ## Suggested fix order
 
 1. **Pre-beta security:** H-01, H-04, H-05, H-06, M-27, M-41, M-42, M-57
-2. **Mobile correctness:** H-11, H-14, H-15, M-54–M-61
+2. **Mobile correctness:** M-54–M-61
 3. **API/worker robustness:** M-37–M-40, M-43–M-46
 4. **Infra + prod parity:** M-19–M-22, M-47–M-53
 5. **Ops / polish:** M-09, M-15, M-16, M-31, L-07–L-27; then the L-28 consolidation backlog

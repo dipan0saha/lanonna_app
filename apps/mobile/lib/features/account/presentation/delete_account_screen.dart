@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
 import '../../../core/auth/auth_repository.dart';
+import '../../../core/auth/session_cleanup.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
@@ -60,6 +61,8 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
     setState(() => _deleting = true);
     try {
       await context.read<AccountRepository>().deleteAccount();
+      if (!mounted) return;
+      await context.read<SessionCleanup>().clearLocalUserData();
       if (!mounted) return;
       await context.read<AuthRepository>().signOut();
       if (mounted) context.go(OnboardingRoutes.ownerCarousel);

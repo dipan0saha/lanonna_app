@@ -43,8 +43,12 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
   List<HomeActivityItem> _activity = [];
   String? _error;
   var _loading = true;
+  var _loadingMore = false;
+  var _hasMorePhotos = true;
+  var _photoOffset = 0;
   var _uploading = false;
   GalleryRepository? _galleryRepo;
+  final _scrollController = ScrollController();
 
   bool get _isAllMode => widget.mode == GalleryViewMode.all;
 
@@ -71,7 +75,16 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
     super.initState();
     _galleryRepo = context.read<GalleryRepository>();
     _galleryRepo!.addListener(_onGalleryChanged);
+    _scrollController.addListener(_onScroll);
     _load();
+  }
+
+  void _onScroll() {
+    if (!_hasMorePhotos || _loadingMore || _loading) return;
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - 240) {
+      _loadMorePhotos();
+    }
   }
 
   void _onGalleryChanged() => _load();
@@ -85,6 +98,8 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
   @override
   void dispose() {
     _galleryRepo?.removeListener(_onGalleryChanged);
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     disposeBabyContextListeners();
     super.dispose();
   }
@@ -111,7 +126,7 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
         });
         return;
       }
-      final photosFuture = galleryRepo.listPhotos(baby.id, sort: _apiSort);
+      final photosFuture = galleryRepo.listPhotosPage(baby.id, sort: _apiSort);
       final activityFuture = _isAllMode
           ? homeRepo.fetchActivityPage(
               baby.id,
@@ -119,22 +134,50 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
               scope: 'gallery',
             )
           : Future.value(null);
-      final photos = await photosFuture;
+      final photoPage = await photosFuture;
       final activityPage = await activityFuture;
       final activity = activityPage == null
           ? <HomeActivityItem>[]
           : activityPage.items.take(6).toList();
+      if (!mounted) return;
       setState(() {
         _baby = baby;
-        _photos = photos;
+        _photos = photoPage.items;
+        _photoOffset = photoPage.items.length;
+        _hasMorePhotos = photoPage.hasMore;
         _activity = activity;
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = apiErrorMessage(e);
         _loading = false;
       });
+    }
+  }
+
+  Future<void> _loadMorePhotos() async {
+    final baby = _baby;
+    if (baby == null || !_hasMorePhotos || _loadingMore || _loading) return;
+    setState(() => _loadingMore = true);
+    try {
+      final page = await context.read<GalleryRepository>().listPhotosPage(
+        baby.id,
+        sort: _apiSort,
+        offset: _photoOffset,
+      );
+      if (!mounted) return;
+      setState(() {
+        _photos = [..._photos, ...page.items];
+        _photoOffset += page.items.length;
+        _hasMorePhotos = page.hasMore;
+        _loadingMore = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loadingMore = false);
+      AppSnackBar.showAlert(context, apiErrorMessage(e));
     }
   }
 
@@ -229,6 +272,7 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
       body: ShellTabLayout(
         onRefresh: _load,
         body: CustomScrollView(
+          controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverToBoxAdapter(
@@ -294,6 +338,32 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
                   onSignedUrlError: _load,
                 ),
               ),
+              if (_loadingMore)
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Center(
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                  ),
+                )
+              else if (!_hasMorePhotos)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    child: Text(
+                      'You\'ve reached the end of the gallery.',
+                      textAlign: TextAlign.center,
+                      style: context.textStyles.bodySmall?.copyWith(
+                        color: AppColors.muted,
+                      ),
+                    ),
+                  ),
+                ),
               if (_isAllMode) ...[
                 SliverToBoxAdapter(
                   child: Padding(

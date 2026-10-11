@@ -176,6 +176,17 @@ class OnboardingCoordinator extends ChangeNotifier {
     await _storage.setCompleted(false);
   }
 
+  /// Full local wipe for sign-out / account delete (invites, drafts, onboarding progress).
+  Future<void> clearLocalSessionForSignOut() async {
+    await _storage.setCompleted(false);
+    await _storage.setInviteOnboardingCompleted(false);
+    await clearPendingInvite();
+    await _storage.clearProgress();
+    _activeStep = null;
+    _createdBabyId = null;
+    notifyListeners();
+  }
+
   Future<void> completeInviteOnboarding() async {
     await _storage.setInviteOnboardingCompleted(true);
     _activeStep = null;

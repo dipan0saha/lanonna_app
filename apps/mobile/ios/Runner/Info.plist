@@ -45,6 +45,12 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>La Nonna uses the camera so you can add profile and baby photos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>La Nonna needs access to your photo library to upload baby moments and profile pictures.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>La Nonna saves photos you choose to share with your family.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
