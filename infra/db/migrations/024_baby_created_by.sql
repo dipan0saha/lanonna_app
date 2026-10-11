@@ -18,3 +18,5 @@ FROM (
 WHERE b.id = sub.baby_profile_id
   AND b.created_by_firebase_uid IS NULL
   AND b.deleted_at IS NULL;
+
+INSERT INTO schema_migrations (version) VALUES ('024_baby_created_by') ON CONFLICT DO NOTHING;
