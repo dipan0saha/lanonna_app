@@ -11,7 +11,6 @@ from lanonna_api.http_errors import map_domain_errors
 from lanonna_api.domain.home import announce_arrival, build_home_summary, list_activity_events
 from lanonna_api.repositories.babies import (
     create_baby_with_owner_membership,
-    get_baby_for_owner,
     list_babies_for_user,
     update_baby_for_owner,
 )

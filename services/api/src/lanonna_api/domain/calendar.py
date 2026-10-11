@@ -13,7 +13,7 @@ from lanonna_api.domain.content_permissions import (
     member_content_can_edit,
 )
 from lanonna_api.domain.gallery import require_membership
-from lanonna_api.domain.notification_copy import actor_display_name
+from lanonna_api.domain.users_display import actor_display_name
 from lanonna_api.domain.notifications import (
     FanOutSpec,
     NotificationChannel,

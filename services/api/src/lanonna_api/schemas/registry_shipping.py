@@ -1,16 +1,6 @@
 from pydantic import BaseModel, Field, field_validator
 
 
-class ShippingAddressResponse(BaseModel):
-    line1: str | None = None
-    line2: str | None = None
-    city: str | None = None
-    region: str | None = None
-    postal_code: str | None = None
-    country_code: str | None = None
-    formatted: str | None = None
-
-
 class ShippingAddressPatch(BaseModel):
     line1: str | None = Field(default=None, max_length=200)
     line2: str | None = Field(default=None, max_length=200)

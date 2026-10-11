@@ -37,7 +37,7 @@ from lanonna_api.domain.activity_copy import (
     photo_comment_summary,
     photo_squish_summary,
 )
-from lanonna_api.domain.notification_copy import actor_display_name
+from lanonna_api.domain.users_display import actor_display_name
 from lanonna_api.domain.users_display import (
     author_display_name_from_row,
     uploader_display_name_from_row,
@@ -46,7 +46,7 @@ from lanonna_api.domain.notifications import NotificationChannel, safe_enqueue_n
 from lanonna_api.repositories.activity_events import insert_activity_event
 from lanonna_api.repositories.users import upsert_app_user
 from lanonna_api.config import settings
-from lanonna_api.storage import mint_display_upload_for_object, mint_signed_read_url
+from lanonna_api.storage import mint_display_upload_for_object
 
 
 def _tagged_babies_json(

@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from lanonna_api.domain.membership import require_owner_baby
-from lanonna_api.domain.notification_copy import actor_display_name
+from lanonna_api.domain.users_display import actor_display_name
 from lanonna_api.domain.notifications import safe_enqueue_notify_user
 from lanonna_api.pubsub import publish_send_invite_email
 from lanonna_api.repositories.invitations import (

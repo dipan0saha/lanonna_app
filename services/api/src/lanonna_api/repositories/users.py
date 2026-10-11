@@ -57,54 +57,6 @@ def upsert_app_user(firebase_uid: str, email: str | None) -> dict[str, Any]:
     return dict(row)
 
 
-def update_profile(
-    firebase_uid: str,
-    display_name: str,
-    *,
-    avatar_url: str | None = None,
-    phone: str | None = None,
-    birth_date=None,
-    country_code: str | None = None,
-    postal_code: str | None = None,
-    accept_terms: bool | None = None,
-) -> dict[str, Any]:
-    terms_clause = ""
-    if accept_terms is True:
-        terms_clause = ", terms_accepted_at = COALESCE(terms_accepted_at, now())"
-    elif accept_terms is False:
-        raise ValueError("Terms acceptance cannot be revoked.")
-
-    with get_connection() as conn:
-        row = conn.execute(
-            f"""
-            UPDATE app_users
-            SET display_name = %s,
-                avatar_url = COALESCE(%s, avatar_url),
-                phone = %s,
-                birth_date = %s,
-                country_code = %s,
-                postal_code = %s,
-                updated_at = now()
-                {terms_clause}
-            WHERE firebase_uid = %s
-              AND deleted_at IS NULL
-            RETURNING {_PROFILE_COLUMNS}
-            """,
-            (
-                display_name.strip(),
-                avatar_url,
-                phone,
-                birth_date,
-                country_code,
-                postal_code,
-                firebase_uid,
-            ),
-        ).fetchone()
-    if row is None:
-        raise RuntimeError("update_profile returned no row")
-    return dict(row)
-
-
 def patch_profile_fields(
     firebase_uid: str,
     changes: dict[str, Any],

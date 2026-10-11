@@ -7,7 +7,7 @@ from lanonna_api.domain import assert_owner_membership
 from lanonna_api.domain.catalog_suggestion_ids import normalize_catalog_suggestion_id
 from lanonna_api.domain.url_validation import normalize_optional_http_url
 from lanonna_api.domain.gallery import require_membership
-from lanonna_api.domain.notification_copy import actor_display_name
+from lanonna_api.domain.users_display import actor_display_name
 from lanonna_api.domain.users_display import purchaser_display_name_from_row
 from lanonna_api.domain.notifications import (
     FanOutSpec,

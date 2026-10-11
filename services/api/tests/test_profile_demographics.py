@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from lanonna_api.domain.onboarding import onboarding_status_for_user
 from lanonna_api.repositories.babies import create_baby_with_owner_membership
+from support.fake_db import RecordingConnection
 
 
 def test_onboarding_profile_complete_requires_terms():
@@ -67,20 +68,9 @@ def test_create_baby_persists_relationship_label():
                 "created_at": datetime.now(timezone.utc),
             }
 
-    class FakeConn:
-        def execute(self, sql, params):
-            executed.append((sql.strip(), params))
-            return FakeCursor()
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *args):
-            return False
-
     with patch(
         "lanonna_api.repositories.babies.get_connection",
-        return_value=FakeConn(),
+        return_value=RecordingConnection(FakeCursor, executed),
     ):
         result = create_baby_with_owner_membership(
             "owner-uid",
@@ -152,11 +142,11 @@ def test_can_access_main_app_true_for_follower_with_membership():
     assert data["can_access_main_app"] is True
 
 
-def test_update_profile_rejects_terms_revocation():
-    from lanonna_api.repositories.users import update_profile
+def test_patch_profile_fields_rejects_terms_revocation():
+    from lanonna_api.repositories.users import patch_profile_fields
 
     try:
-        update_profile("uid", "Name", accept_terms=False)
+        patch_profile_fields("uid", {"display_name": "Name", "accept_terms": False})
     except ValueError as exc:
         assert "revoked" in str(exc).lower()
     else:

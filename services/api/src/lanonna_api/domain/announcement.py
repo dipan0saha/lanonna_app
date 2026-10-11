@@ -124,34 +124,6 @@ def _persist_announcement(
     return _serialize(ann, comments)
 
 
-def save_announcement(
-    firebase_uid: str,
-    baby_profile_id: uuid.UUID,
-    *,
-    first_name: str | None,
-    last_name: str | None,
-    gender: str | None,
-    birth_date: date | None,
-    birth_time: str | None,
-    weight_text: str | None,
-    length_text: str | None,
-    photo_id: uuid.UUID | None,
-) -> dict[str, Any]:
-    assert_owner_membership(firebase_uid, baby_profile_id)
-    return _persist_announcement(
-        firebase_uid,
-        baby_profile_id,
-        first_name=first_name,
-        last_name=last_name,
-        gender=gender,
-        birth_date=birth_date,
-        birth_time=birth_time,
-        weight_text=weight_text,
-        length_text=length_text,
-        photo_id=photo_id,
-    )
-
-
 def patch_announcement(
     firebase_uid: str,
     baby_profile_id: uuid.UUID,
