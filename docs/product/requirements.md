@@ -18,7 +18,7 @@ This document defines **what** La Nonna must do for end users on the **Path B GC
 | Document | Role |
 |----------|------|
 | [platform-architecture.md](../engineering/platform-architecture.md) | Target stack, media pipeline, security, ops |
-| [building-the-app.md](../engineering/building-the-app.md) | Engineering prerequisite gate and build order |
+| [operations.md](../engineering/operations.md) | Dev readiness gate, deploy, and ship |
 | [development.md](../engineering/development.md) | Repo layout and conventions |
 | [product/README.md](README.md) | Index for this folder |
 
@@ -466,7 +466,7 @@ Firebase Auth holds identity; link `user_id` to Firebase UID in SQL.
 - Display encode + worker thumbnails.
 - English UI copy via localization files.
 
-Engineering status aligns with [building-the-app.md](../engineering/building-the-app.md): §6.2 home hub (teasers, birth welcome, system announcements, registry highlights/purchases, activity paginated route, owner invite/followers) is **implemented on dev**; owner storage meter on My Account (`GET /v1/me/account`); remaining v1 polish: App Check and device QA for push.
+Engineering status aligns with [development.md](../engineering/development.md) and [operations.md](../engineering/operations.md): §6.2 home hub (teasers, birth welcome, system announcements, registry highlights/purchases, activity paginated route, owner invite/followers) is **implemented on dev**; owner storage meter on My Account (`GET /v1/me/account`); remaining v1 polish: App Check and device QA for push.
 
 ### 10.2 Later
 

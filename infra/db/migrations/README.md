@@ -73,4 +73,4 @@ For disposable QA accounts (not Maestro smoke / `lanonna.dev.qa.*` fixtures):
 
 Sole-owned baby profiles and media are removed from Cloud SQL and GCS; co-owned babies stay; Firebase Auth user is deleted. Use `--dry-run`, `--skip-gcs`, or `--skip-firebase` as needed.
 
-See also [docs/engineering/initial-setup.md](../../docs/engineering/initial-setup.md) and [building-the-app.md](../../docs/engineering/building-the-app.md).
+See also [docs/engineering/operations.md](../../docs/engineering/operations.md).

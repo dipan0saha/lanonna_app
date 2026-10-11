@@ -1,6 +1,6 @@
 # GCP setup — La Nonna (`lanonna-dev`)
 
-Resource inventory for Path B. **Deploy, endpoints, smoke tests, and runbooks:** [docs/engineering/initial-setup.md](../../docs/engineering/initial-setup.md).
+Resource inventory for Path B. **Deploy, smoke tests, and runbooks:** [docs/engineering/operations.md](../../docs/engineering/operations.md).
 
 ## Project
 
@@ -70,7 +70,7 @@ Prefer **`lanonnaapp@gmail.com`** for Cloud Build / `deploy.sh` (automation SA o
 
 ## Infrastructure as code
 
-**Terraform:** `infra/terraform/` — see [initial-setup.md](../../docs/engineering/initial-setup.md). Legacy `bootstrap.sh` is deprecated.
+**Terraform:** `infra/terraform/` — see [operations.md](../../docs/engineering/operations.md). Legacy `bootstrap.sh` is deprecated.
 
 ## Cloud SQL access from laptop
 

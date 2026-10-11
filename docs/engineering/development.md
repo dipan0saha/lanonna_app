@@ -17,12 +17,12 @@ lanonna_app/
 │   ├── terraform/           # GCP platform (dev/prod)
 │   └── gcp/                 # Resource inventory (SETUP.md)
 ├── docs/                    # product/ + engineering/ documentation
-└── .github/workflows/       # CI: Flutter analyze/test, API pytest, worker compileall
+└── .github/workflows/       # CI workflow disabled — run verify-dev-prerequisites.sh locally
 ```
 
 **Deploy model:** `api` and `worker` ship as **two Cloud Run services** — see [platform-architecture.md](platform-architecture.md).
 
-**Before main product work:** [building-the-app.md](building-the-app.md) and `./scripts/verify-dev-prerequisites.sh`.
+**Before main product work:** [operations.md](operations.md#dev-readiness-gate) and `./scripts/verify-dev-prerequisites.sh`.
 
 ### Mobile feature modules (`apps/mobile/lib/features/`)
 
@@ -49,12 +49,13 @@ Repositories are registered in `bootstrap.dart`; routes in `core/router/app_rout
 | `repositories/` | Parameterized SQL only |
 
 **Member display names (#7):** Family-visible labels come from `app_users.display_name` only. Use [`domain/users_display.py`](../../services/api/src/lanonna_api/domain/users_display.py) (`author_display_name_from_row`, `uploader_display_name_from_row`, `purchaser_display_name_from_row`, `rsvp_display_name_from_row`) — never derive labels from email. SQL should alias `u.display_name` as the matching `*_display_name` (RSVP rows use unaliased `display_name` read by `rsvp_display_name_from_row`). Empty/null → **Family member**; activity/notification actor without profile → **Someone** (`actor_display_name`).
+
 | `storage.py` | V4 signed PUT (upload) and GET (thumb/display read) |
 
 ## Prerequisites
 
 - Flutter SDK (see `apps/mobile`)
-- GCP `lanonna-dev` on Blaze, `us-central1` — [initial-setup.md](initial-setup.md)
+- GCP `lanonna-dev` on Blaze, `us-central1` — [operations.md](operations.md)
 - Docker optional (deploy uses Cloud Build)
 
 ## Mobile app
@@ -75,12 +76,12 @@ Transient feedback uses [`AppSnackBar`](../../apps/mobile/lib/core/widgets/app_s
 
 ### Automated tests
 
-| Layer | Command | CI (`main`) |
-|-------|---------|-------------|
-| Mobile unit/widget | `cd apps/mobile && flutter test` | Yes |
-| Mobile integration | `flutter test integration_test/home_summary_load_test.dart` (device/emulator) | No — run locally before release |
-| Maestro (Android) | `./maestro/scripts/run-maestro-smoke.sh` after proxy + deploy | No — see [maestro/README.md](../../apps/mobile/maestro/README.md) |
-| API | `PYTHONPATH=services/api/src services/api/.venv/bin/pytest -q services/api/tests` | Yes |
+| Layer | Command | Notes |
+|-------|---------|--------|
+| Mobile unit/widget | `cd apps/mobile && flutter test` | Part of `verify-dev-prerequisites.sh` |
+| Mobile integration | `flutter test integration_test/home_summary_load_test.dart` (device/emulator) | Run locally before release |
+| Maestro (Android) | `./maestro/scripts/run-maestro-smoke.sh` after proxy + deploy | See [maestro/README.md](../../apps/mobile/maestro/README.md) |
+| API | `PYTHONPATH=services/api/src services/api/.venv/bin/pytest -q services/api/tests` | Run when touching API; GitHub Actions CI disabled ([open-gaps.md](open-gaps.md) M-32) |
 
 **Signed read URLs** expire after **900s** ([`storage.py`](../../services/api/src/lanonna_api/storage.py)). `CachedSignedImage` accepts optional `onSignedUrlError` (one callback per widget mount) so parents can refresh API data (home teasers, photo detail).
 
@@ -238,7 +239,7 @@ cd services/api
 PYTHONPATH=src .venv/bin/pytest -q
 ```
 
-Covers gallery/calendar/registry/fun domain rules (`services/api/tests/`). CI runs the same suite on push/PR to `main`.
+Covers gallery/calendar/registry/fun domain rules (`services/api/tests/`).
 
 **Auth verification email (FR-AUTH-002):** Firebase sends verify-mail from templates in `packages/firebase-auth-email-templates` (apply: `bash scripts/sync-firebase-auth-templates.sh apply` with `GCP_PROJECT_ID=lanonna-dev`). Mobile uses `ActionCodeSettings` (`handleCodeInApp`, continue URL `https://{project}.firebaseapp.com/`) and handles `https://lanonna-dev.firebaseapp.com/__/auth/action?mode=verifyEmail&oobCode=…` via `core/deep_links/auth_action_app_link.dart` + Android/iOS link config. Custom sender domain (SPF/DKIM) is deferred.
 
@@ -290,9 +291,51 @@ Apply SQL files in order from `infra/db/migrations/` (`001`–`027`; see [migrat
 
 Set `DB_HOST`, `DB_PORT` (e.g. `5433` if 5432 is in use), `DB_PASSWORD`, and `DB_USER` / `DB_NAME` as needed (defaults match dev Cloud SQL via proxy).
 
+## Performance
+
+How to measure performance, what is already optimized, and a prioritized backlog. Manual encode/cache checks: [pre-beta-qa.md](pre-beta-qa.md). Offline expectations: [requirements.md](../product/requirements.md) (NFR-OFFLINE-001, FR-GAL-002).
+
+### Goals
+
+- Fast tab switches; gallery thumbs from disk cache; responsive home after baby switch (`HomeRepository.resolveSelectedBaby`).
+- Paginated API reads, thumb-first feeds, FCM instead of polling ([platform-architecture.md](platform-architecture.md) principles 3–4 and 9).
+
+### How to measure
+
+| Layer | Tool | Watch |
+|-------|------|--------|
+| Flutter | DevTools; `flutter run --profile` | Gallery jank; home rebuild scope |
+| API | Cloud Run latency/5xx; request ID logs | p95 on `home-summary`, gallery list, `photos/init` |
+| DB | Query Insights; `EXPLAIN` | Scans on `activity_events`, `photos` |
+| GCS | Billing egress | Thumb vs display read ratio |
+
+Baseline on **profile/release** build (`flavors/dev.json`): cold start → home → scroll gallery → calendar month change.
+
+### Already optimized
+
+| Area | Implementation |
+|------|----------------|
+| Upload | `display_encode.dart`; ~2 MB cap in `storage.py` |
+| Feed/detail | Worker thumbs; signed read URLs (900s TTL); `CachedSignedImage` + optional `onSignedUrlError` |
+| Pagination | Gallery list; home activity limits; capped `home-summary` teasers |
+| Notify | `safe_enqueue_fan_out` after DB commit |
+| Rate limits | Photo init + invite batch (`rate_limit.py`) — per-instance; see [open-gaps.md](open-gaps.md) M-09 |
+
+### Backlog (pick one per cycle)
+
+1. **P0:** Stable `cacheKey` on all `CachedSignedImage`; reduce redundant tab reloads; calendar AI dedupe without full event history; trim `home-summary` if profiling shows bloat.
+2. **P1:** ListView.builder for long lists; batch signed URL work in `build_home_summary` if needed.
+3. **P2:** Offline banner + coalesced fetches (`ConnectivityService`, `BabyContextReload`).
+4. **P3:** CDN at scale; optional archive tier for originals.
+
+```bash
+cd apps/mobile && flutter run --profile --dart-define-from-file=flavors/dev.json
+./scripts/verify-dev-prerequisites.sh
+```
+
 ## Related reading
 
-- [code-review-findings-2026-10.md](code-review-findings-2026-10.md) — prioritized open gaps and fix status
-- [building-the-app.md](building-the-app.md) — prerequisite gate
-- [initial-setup.md](initial-setup.md) — Terraform, deploy, secrets
-- [platform-architecture.md](platform-architecture.md) — media flow, costs, playbook
+- [operations.md](operations.md) — Terraform, deploy, migrations, dev gate, ship APK
+- [open-gaps.md](open-gaps.md) — pre-beta blockers
+- [platform-architecture.md](platform-architecture.md) — principles, flows, cost
+- [pre-beta-qa.md](pre-beta-qa.md) — device QA checklist

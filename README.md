@@ -11,7 +11,7 @@
 | GCP | [`infra/gcp`](infra/gcp) | Deploy & cloud config |
 | Docs | [`docs`](docs) | Architecture & development |
 
-**Docs:** [docs/](docs/) · **Architecture:** [docs/engineering/platform-architecture.md](docs/engineering/platform-architecture.md) · **GCP setup:** [docs/engineering/initial-setup.md](docs/engineering/initial-setup.md) · **Local dev:** [docs/engineering/development.md](docs/engineering/development.md)
+**Docs:** [docs/](docs/) · **Architecture:** [docs/engineering/platform-architecture.md](docs/engineering/platform-architecture.md) · **Operations:** [docs/engineering/operations.md](docs/engineering/operations.md) · **Local dev:** [docs/engineering/development.md](docs/engineering/development.md)
 
 ## Quick start (mobile)
 
@@ -21,7 +21,7 @@ cd apps/mobile && flutter pub get && flutter run
 
 ## Status
 
-Active monorepo: Flutter client, FastAPI on Cloud Run, worker for Pub/Sub jobs, PostgreSQL migrations, and CI (API/worker tests, mobile analyze/test, email template sync). See [docs/engineering/development.md](docs/engineering/development.md).
+Active monorepo: Flutter client, FastAPI on Cloud Run, worker for Pub/Sub jobs, PostgreSQL migrations. Local gate: `./scripts/verify-dev-prerequisites.sh`. See [docs/engineering/development.md](docs/engineering/development.md).
 
 ## License
 

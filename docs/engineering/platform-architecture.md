@@ -5,7 +5,7 @@
 **Location:** `docs/engineering/platform-architecture.md` (this repository)  
 **Status:** Target platform architecture for greenfield build
 
-**Dev implementation status:** Operational gate and what is already running on `lanonna-dev` are in [building-the-app.md](building-the-app.md) and [initial-setup.md](initial-setup.md). This doc stays the long-term design reference; the playbook below mixes **done (dev)** and **still to build**.
+**Dev implementation status:** [operations.md](operations.md) (deploy, migrations, readiness). **Routes and mobile conventions:** [development.md](development.md). **Pre-beta blockers:** [open-gaps.md](open-gaps.md). This doc is the long-term design reference (principles, flows, cost).
 
 ---
 
@@ -37,7 +37,7 @@
 8. **Region discipline** — primary **`us-central1`** (free-tier eligible for Run; co-locate SQL, GCS, Run, Pub/Sub).
 9. **Notify, don’t poll** — **FCM** for new content; batch/paginate API reads to stay within Run free tier.
 
-**Implemented on dev (2026):** separate **Cloud Run `api`** and **`worker`**; GCS display + thumbnails; Pub/Sub finalize → worker thumb + `photo_shared` activity + **member notify** on photo ready; API JWT, signed upload/read URLs, baby-scoped CRUD for gallery (comments PATCH, photo baby tags), calendar, registry, and fun; SQL migrations through **`027`** ([migrations/README.md](../../infra/db/migrations/README.md)); Flutter owner/follower home (teasers incl. recent/favorite photos), gallery sub-routes, baby **avatar_url**, account (export/delete/notifications inbox), search, birth announcement; **FCM** device tokens + worker notification writers + weekly digest Scheduler (Pub/Sub). See [development.md](development.md) for route list and [building-the-app.md](building-the-app.md) for the prerequisite gate.
+**Implemented on dev (2026):** separate **Cloud Run `api`** and **`worker`**; GCS display + thumbnails; Pub/Sub finalize → worker thumb + `photo_shared` activity + **member notify** on photo ready; API JWT, signed upload/read URLs, baby-scoped CRUD for gallery (comments PATCH, photo baby tags), calendar, registry, and fun; SQL migrations through **`027`** ([migrations/README.md](../../infra/db/migrations/README.md)); Flutter owner/follower home (teasers incl. recent/favorite photos), gallery sub-routes, baby **avatar_url**, account (export/delete/notifications inbox), search, birth announcement; **FCM** device tokens + worker notification writers + weekly digest Scheduler (Pub/Sub). See [development.md](development.md) for the route list and [operations.md](operations.md) for the dev readiness gate.
 
 **Deferred (initial years):**
 
@@ -302,58 +302,9 @@ Isolates **storage + egress** if behavior drifts from §2.5 (SQL/Run/email held 
 
 ---
 
-## 6. First 90 days playbook
+## 6. Operations and security
 
-### Month 1 — Foundation
-
-- [x] GCP project + **Blaze**; billing alerts; **`us-central1`** (`lanonna-dev`)
-- [x] Enable APIs: Run, SQL, Storage, Pub/Sub, Secret Manager, Artifact Registry, Cloud Build (+ Scheduler in TF)
-- [x] Firebase: **FCM** in app + worker; [ ] Crashlytics, Analytics, Remote Config; plan **App Check** enforcement on API (Auth enabled on dev)
-- [x] Cloud SQL: zonal Postgres; Run connects via Cloud SQL socket + proxy for laptops
-- [x] GCS buckets (`display`, `thumbnails`); display **CORS** (dev origins); uniform access
-- [x] Secret Manager: DB + Mailjet secret containers (values in SM)
-- [x] Cloud Run **api**: health, JWT, `app_users` profile, signed display upload URL
-- [x] Flutter: Auth login dev screen; call API with ID token
-- [x] Flutter: **display encode** helper (resize, WebP/JPEG, max bytes) for gallery; onboarding/profile uses `display_photo_upload.dart` (signed PUT)
-- [x] POC: signed upload → `display/` → Pub/Sub → worker finalize
-- [x] Worker **thumbnail** generation from `display/` (see `lanonna_worker/thumbnails.py`)
-
-### Month 2 — Core product
-
-- [x] SQL migrations **`001`–`008`** (core domain, invitations, first-moment tables, avatars, `activity_events`, gallery/calendar social **`007`**, registry/fun social **`008`**)
-- [x] API **repositories** + **`domain/`** (home, gallery, calendar, registry, fun); membership + owner checks on baby routes
-- [x] **Mailjet** invite emails: API publishes `send_invite_email`; worker + `packages/email-templates`
-- [x] Flutter **owner onboarding** (carousel → auth → profile → baby → first moment → invites → shell home)
-- [x] Flutter **owner home** (expecting/born, announce arrival PATCH, `home-summary`, `/invite-family`); follower/co-owner invite onboarding
-- [x] Onboarding **display photo** signed PUT (`display_photo_upload.dart` + API signed URL headers)
-- [x] **Gallery + calendar** API and Flutter tabs (list/detail, squish, comments, RSVP; static calendar AI JSON)
-- [x] **Registry + fun** API and Flutter tabs (purchases, votes, name likes; static registry AI JSON)
-- [x] Signed **read** URLs for gallery thumbs/display (`mint_signed_read_url`)
-- [x] Worker **thumbnail** from `display/`; **`photo_shared`** `activity_events` when photo becomes ready (named summary); API **`photo_squish`** / **`photo_comment`** on gallery social actions
-- [x] Worker `send_invite_email` handler (Mailjet)
-- [x] Gallery list + detail with pagination params; detail returns **display** signed URL
-- [x] SQL migrations **`009`–`027`** (through **invite send claim** / **export job `started_at`** (`026`–`027`), **baby `created_by`** (`024`), **structured registry shipping** (`023`), **photo_baby_tags**, **app_versions**, **worker idempotency**, **profile demographics**; see `infra/db/migrations/README.md`)
-- [x] `device_tokens` + mobile FCM registration; API notify publishers; worker in-app + **realtime FCM**; **push on new photo** and social events (see [development.md](development.md))
-- [x] Weekly digest push job (Scheduler → Pub/Sub → worker)
-- [ ] Worker thumb path hardened for gallery-scale volume (monitoring, backoff, dead-letter policy)
-- [x] Flutter: **image disk cache** for thumb/display bytes (`CachedSignedImage`)
-- [ ] Firebase Emulator Suite for local Auth/API dev
-- [ ] Closed beta: consistent **display encode** on all gallery uploads; stay within GCS/Mailjet free caps
-
-### Month 3 — Hardening
-
-- [ ] Enable **App Check** on API
-- [ ] Load test API + pool sizing; tune SQL if needed
-- [ ] **Restore drill** (PITR); document RTO/RPO
-- [x] Scheduler: weekly notification digest (dev)
-- [x] Scheduler jobs (cleanup expired invites) — `setup-expired-invites-scheduler.sh` + worker `expire_pending_invitations`
-- [ ] Forecast post-trial bill (section **5.1** default profile)
-
----
-
-## 7. Operations and security
-
-### 7.1 Operational minimums
+### 6.1 Operational minimums
 
 - [ ] Cloud SQL: automated backups + PITR; least-privilege DB user for Run
 - [ ] IAM: separate service accounts for **api** vs **worker**; minimal roles (SQL client, GCS object admin scoped per bucket, Pub/Sub publisher/subscriber)
@@ -363,7 +314,7 @@ Isolates **storage + egress** if behavior drifts from §2.5 (SQL/Run/email held 
 
 **Zonal outage:** manual restore or PITR to a new instance; plan for **hours** of DB unavailability ([availability](https://cloud.google.com/sql/docs/postgres/availability)). **HA** adds failover + [SLA](https://cloud.google.com/sql/sla).
 
-### 7.2 Security checklist
+### 6.2 Security checklist
 
 **Identity and API**
 
@@ -389,7 +340,7 @@ Isolates **storage + egress** if behavior drifts from §2.5 (SQL/Run/email held 
 
 **Async and email**
 
-- [ ] Pub/Sub push authenticated to worker; worker validates message shape before side effects
+- [ ] Pub/Sub push: Run invoker + OIDC at edge; worker should validate OIDC JWT in-app ([open-gaps.md](open-gaps.md) H-04); validate message shape before side effects
 - [ ] Thumbnail handler idempotent on `bucket/object/generation` to prevent duplicate rows on retry
 - [ ] Invite tokens: high entropy, single-use or expiring; hash at rest if stored for lookup
 
@@ -401,7 +352,7 @@ Isolates **storage + egress** if behavior drifts from §2.5 (SQL/Run/email held 
 
 ---
 
-## 8. Evolution triggers
+## 7. Evolution triggers
 
 | Trigger | Action |
 |---------|--------|
@@ -414,7 +365,7 @@ Isolates **storage + egress** if behavior drifts from §2.5 (SQL/Run/email held 
 
 ---
 
-## 9. References
+## 8. References
 
 | Topic | Link |
 |-------|------|

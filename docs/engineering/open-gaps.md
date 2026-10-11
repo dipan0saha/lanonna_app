@@ -1,10 +1,10 @@
-# Code review findings — October 2026 (open items)
+# Open gaps (pre-beta)
 
-Pending gaps from the Oct 2026 full-stack review. Completed items were removed; see git history for the original list.
+Pending items from the Oct 2026 full-stack review. Completed items were removed; see git history for the original audit.
 
 **Legend:** **Verified** — confirmed in code; **Reported** — from review pass, not re-read.
 
-Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md).
+Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [operations.md](operations.md).
 
 ---
 
