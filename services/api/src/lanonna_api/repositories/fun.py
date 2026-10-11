@@ -65,10 +65,12 @@ def insert_name_suggestion(
     firebase_uid: str,
     suggested_name: str,
     gender: str,
+    conn=None,
 ) -> dict[str, Any]:
     suggestion_id = uuid.uuid4()
-    with get_connection() as conn:
-        row = conn.execute(
+
+    def _run(connection):
+        return connection.execute(
             """
             INSERT INTO name_suggestions (
                 id, baby_profile_id, suggested_by_firebase_uid,
@@ -79,6 +81,12 @@ def insert_name_suggestion(
             """,
             (suggestion_id, baby_profile_id, firebase_uid, suggested_name.strip(), gender),
         ).fetchone()
+
+    if conn is not None:
+        row = _run(conn)
+    else:
+        with get_connection() as connection:
+            row = _run(connection)
     if row is None:
         raise RuntimeError("insert_name_suggestion failed")
     return dict(row)
@@ -88,18 +96,21 @@ def count_suggestions_by_author_gender(
     baby_profile_id: uuid.UUID,
     firebase_uid: str,
     gender: str,
+    conn=None,
 ) -> int:
-    with get_connection() as conn:
-        row = conn.execute(
-            """
+    sql = """
             SELECT COUNT(*)::int AS count
             FROM name_suggestions
             WHERE baby_profile_id = %s
               AND suggested_by_firebase_uid = %s
               AND gender = %s
-            """,
-            (baby_profile_id, firebase_uid, gender),
-        ).fetchone()
+            """
+    params = (baby_profile_id, firebase_uid, gender)
+    if conn is not None:
+        row = conn.execute(sql, params).fetchone()
+    else:
+        with get_connection() as connection:
+            row = connection.execute(sql, params).fetchone()
     return int(row["count"]) if row else 0
 
 
@@ -156,6 +167,23 @@ def caller_liked_suggestion_ids(
     return out
 
 
+def liked_suggestion_id_set(
+    baby_profile_id: uuid.UUID,
+    firebase_uid: str,
+) -> set[uuid.UUID]:
+    with get_connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT l.name_suggestion_id
+            FROM name_suggestion_likes l
+            JOIN name_suggestions n ON n.id = l.name_suggestion_id
+            WHERE n.baby_profile_id = %s AND l.firebase_uid = %s
+            """,
+            (baby_profile_id, firebase_uid),
+        ).fetchall()
+    return {row["name_suggestion_id"] for row in rows}
+
+
 def remove_likes_for_user_gender(
     baby_profile_id: uuid.UUID,
     firebase_uid: str,
@@ -182,38 +210,48 @@ def remove_likes_for_user_gender(
             _run(connection)
 
 
-def add_like(suggestion_id: uuid.UUID, firebase_uid: str) -> None:
-    with get_connection() as conn:
-        conn.execute(
-            """
+def add_like(suggestion_id: uuid.UUID, firebase_uid: str, conn=None) -> None:
+    sql = """
             INSERT INTO name_suggestion_likes (name_suggestion_id, firebase_uid)
             VALUES (%s, %s)
             ON CONFLICT DO NOTHING
-            """,
-            (suggestion_id, firebase_uid),
-        )
-
-
-def remove_like(suggestion_id: uuid.UUID, firebase_uid: str) -> None:
-    with get_connection() as conn:
-        conn.execute(
             """
+    params = (suggestion_id, firebase_uid)
+    if conn is not None:
+        conn.execute(sql, params)
+    else:
+        with get_connection() as connection:
+            connection.execute(sql, params)
+
+
+def remove_like(suggestion_id: uuid.UUID, firebase_uid: str, conn=None) -> None:
+    sql = """
             DELETE FROM name_suggestion_likes
             WHERE name_suggestion_id = %s AND firebase_uid = %s
-            """,
-            (suggestion_id, firebase_uid),
-        )
-
-
-def user_has_like(suggestion_id: uuid.UUID, firebase_uid: str) -> bool:
-    with get_connection() as conn:
-        row = conn.execute(
             """
+    params = (suggestion_id, firebase_uid)
+    if conn is not None:
+        conn.execute(sql, params)
+    else:
+        with get_connection() as connection:
+            connection.execute(sql, params)
+
+
+def user_has_like(
+    suggestion_id: uuid.UUID,
+    firebase_uid: str,
+    conn=None,
+) -> bool:
+    sql = """
             SELECT 1 FROM name_suggestion_likes
             WHERE name_suggestion_id = %s AND firebase_uid = %s
-            """,
-            (suggestion_id, firebase_uid),
-        ).fetchone()
+            """
+    params = (suggestion_id, firebase_uid)
+    if conn is not None:
+        row = conn.execute(sql, params).fetchone()
+    else:
+        with get_connection() as connection:
+            row = connection.execute(sql, params).fetchone()
     return row is not None
 
 

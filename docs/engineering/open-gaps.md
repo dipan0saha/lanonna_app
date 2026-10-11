@@ -12,7 +12,7 @@ Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [op
 
 | Check | Result |
 |-------|--------|
-| API `pytest` (`services/api`) | 191 passed |
+| API `pytest` (`services/api`) | 198 passed |
 | Worker `pytest` | 36 passed |
 | `flutter test` | 217 passed |
 | `flutter analyze` | 0 errors, 0 warnings, 48 infos (L-26) |
@@ -26,7 +26,7 @@ Run all three suites before every ship; the suites are the only automated gate (
 | Severity | Open | Themes |
 |----------|------|--------|
 | High | 4 | Release signing, worker OIDC, App Check enforce, admin surface |
-| Medium | 34 | Ended-member 500s, races/N+1, Pub/Sub robustness, export limits, invite token/HTML hygiene, infra/IAM/prod parity, mobile error/async/date handling |
+| Medium | 30 | Pub/Sub robustness, export limits, invite token/HTML hygiene, infra/IAM/prod parity, mobile error/async/date handling |
 | Low | 19 | Input caps, dead config, logging, infra hygiene, docs drift, lint/conventions, deferred consolidation backlog |
 
 ---
@@ -112,10 +112,10 @@ Run all three suites before every ship; the suites are the only automated gate (
 | ✅ M-02 | Co-owner accept race: two concurrent accepts could exceed two owners | `repositories/invitations.py`, `memberships.py` | Row lock baby profile before owner count (see **M-36**) |
 | M-09 | Rate limiting only on photo init and batch invite; per-instance buckets | `middleware/rate_limit.py` | Edge limiter for preview/admin; document scaling caveat |
 | ✅ M-36 | Co-owner accept race (M-02 reopened): `lock_baby_profile_for_update` not called before `count_active_owners` | `repositories/invitations.py`, `repositories/memberships.py` | Lock baby row inside accept transaction; race tests green |
-| M-37 | Ended (removed) members get **500** instead of `403 membership_ended` on `GET /search`, all invitation owner routes (list/revoke/batch/membership-check), `GET /members`, and first-moment seed — routers catch only `PermissionError`, not `MemberLifecycleError` | `routers/search.py:24-27`, `routers/invitations.py:50-108`, `routers/members.py:41-44`, `routers/babies.py:172-181` | Use `except Exception as exc: raise map_domain_errors(exc)` like `home-summary`; add router tests |
-| M-38 | Concurrent registry purchase claims: check-then-insert on `purchase_id`; the loser hits the `registry_item_id` unique violation and returns 500 (winner may still notify) | `domain/registry.py:167-175`, `repositories/registry.py:258-270`, migration `008` | Single `INSERT … ON CONFLICT DO NOTHING RETURNING`, map conflict to 409 |
-| M-39 | Fun: one-like-per-gender is not atomic (separate transactions); follower name cap (count then insert) is racy with no unique index; `list_names` does an N+1 `user_has_like` per suggestion | `domain/fun.py:46-139`, `repositories/fun.py:63-216` | Single transaction + row lock / partial unique index; fetch liked ids in one query |
-| M-40 | Photo `tagged_babies` join ignores `removed_at` and `deleted_at`, so removed members' or soft-deleted babies' names can still appear | `repositories/photo_tags.py:15-27` | Add `m.removed_at IS NULL AND b.deleted_at IS NULL` |
+| ✅ M-37 | Ended (removed) members get **500** instead of `403 membership_ended` on search, invitation owner routes, members list, and first-moment seed | `routers/search.py`, `invitations.py`, `members.py`, `babies.py` | Routers use `except Exception` + `map_domain_errors`; `test_router_membership_ended.py` |
+| ✅ M-38 | Concurrent registry purchase claims: check-then-insert race on `registry_item_id` unique | `domain/registry.py`, `repositories/registry.py` | `ON CONFLICT DO NOTHING RETURNING`; loser gets `PermissionError` (403), no 500 |
+| ✅ M-39 | Fun: non-atomic like toggle, racy follower name cap, N+1 `user_has_like` in `list_names` | `domain/fun.py`, `repositories/fun.py`, `memberships.py` | Single-transaction `toggle_like`; locked follower suggest; `liked_suggestion_id_set` |
+| ✅ M-40 | Photo `tagged_babies` join ignores `removed_at` and `deleted_at` | `repositories/photo_tags.py` | Filter `m.removed_at IS NULL` and `b.deleted_at IS NULL` in tag list SQL |
 
 ### Worker / data
 
@@ -211,6 +211,6 @@ Run all three suites before every ship; the suites are the only automated gate (
 
 1. **Pre-beta security:** H-01, H-04, H-05, H-06, M-27, M-41, M-42, M-57
 2. **Mobile correctness:** M-54–M-61
-3. **API/worker robustness:** M-37–M-40, M-43–M-46
+3. **API/worker robustness:** M-43–M-46
 4. **Infra + prod parity:** M-19–M-22, M-47–M-53
 5. **Ops / polish:** M-09, M-15, M-16, M-31, L-07–L-27; then the L-28 consolidation backlog

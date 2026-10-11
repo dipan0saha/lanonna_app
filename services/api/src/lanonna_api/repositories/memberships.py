@@ -44,6 +44,25 @@ def owner_membership_exists(firebase_uid: str, baby_profile_id: uuid.UUID) -> bo
     return row is not None
 
 
+def lock_membership_for_user_for_update(
+    baby_profile_id: uuid.UUID,
+    firebase_uid: str,
+    conn: Any,
+) -> dict[str, Any] | None:
+    row = conn.execute(
+        """
+        SELECT role
+        FROM baby_memberships
+        WHERE baby_profile_id = %s
+          AND firebase_uid = %s
+          AND removed_at IS NULL
+        FOR UPDATE
+        """,
+        (baby_profile_id, firebase_uid),
+    ).fetchone()
+    return dict(row) if row else None
+
+
 def lock_baby_profile_for_update(
     baby_profile_id: uuid.UUID,
     conn: Any,

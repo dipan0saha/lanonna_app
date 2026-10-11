@@ -172,7 +172,9 @@ def claim_purchase(
             return {"status": "already_claimed"}
         raise PermissionError("This item is already purchased.")
     upsert_app_user(firebase_uid, None)
-    create_purchase(item_id, firebase_uid)
+    purchase = create_purchase(item_id, firebase_uid)
+    if purchase["purchased_by_firebase_uid"] != firebase_uid:
+        raise PermissionError("This item is already purchased.")
     item_name = item["name"]
     if is_owner:
         activity_text = f'Marked "{item_name}" as purchased'

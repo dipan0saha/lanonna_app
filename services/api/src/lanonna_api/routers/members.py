@@ -40,7 +40,7 @@ def list_members(
     upsert_app_user(user["uid"], user.get("email"))
     try:
         members = list_members_for_owner(user["uid"], baby_profile_id)
-    except PermissionError as exc:
+    except Exception as exc:
         raise map_domain_errors(exc) from exc
     return [_member_json(m) for m in members]
 

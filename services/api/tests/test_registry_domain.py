@@ -102,6 +102,12 @@ def test_claim_purchase_follower_notifies_owners():
         "lanonna_api.domain.registry.upsert_app_user",
     ), patch(
         "lanonna_api.domain.registry.create_purchase",
+        return_value={
+            "id": uuid.uuid4(),
+            "registry_item_id": item_id,
+            "purchased_by_firebase_uid": "follower_uid",
+            "created_at": None,
+        },
     ), patch(
         "lanonna_api.domain.registry.insert_activity_event",
     ) as activity_mock, patch(
@@ -134,6 +140,12 @@ def test_claim_purchase_owner_notifies_members():
         "lanonna_api.domain.registry.upsert_app_user",
     ), patch(
         "lanonna_api.domain.registry.create_purchase",
+        return_value={
+            "id": uuid.uuid4(),
+            "registry_item_id": item_id,
+            "purchased_by_firebase_uid": "owner_uid",
+            "created_at": None,
+        },
     ), patch(
         "lanonna_api.domain.registry.insert_activity_event",
     ) as activity_mock, patch(
@@ -148,6 +160,39 @@ def test_claim_purchase_owner_notifies_members():
         spec = fan_out_mock.call_args[0][0]
         assert spec.recipient_mode == "baby_members"
         assert spec.body == 'Mom marked "Car seat" as purchased'
+
+
+def test_claim_purchase_rejects_when_another_user_won_race():
+    baby_id = uuid.uuid4()
+    item_id = uuid.uuid4()
+    item_row = {"id": item_id, "name": "Car seat", "purchase_id": None}
+    with patch(
+        "lanonna_api.domain.registry.require_membership",
+    ), patch(
+        "lanonna_api.domain.registry.get_baby_membership",
+        return_value={"role": "follower"},
+    ), patch(
+        "lanonna_api.domain.registry.get_registry_item",
+        return_value=item_row,
+    ), patch(
+        "lanonna_api.domain.registry.upsert_app_user",
+    ), patch(
+        "lanonna_api.domain.registry.create_purchase",
+        return_value={
+            "id": uuid.uuid4(),
+            "registry_item_id": item_id,
+            "purchased_by_firebase_uid": "other_uid",
+            "created_at": None,
+        },
+    ), patch(
+        "lanonna_api.domain.registry.insert_activity_event",
+    ) as activity_mock, patch(
+        "lanonna_api.domain.registry.safe_enqueue_fan_out",
+    ) as fan_out_mock:
+        with pytest.raises(PermissionError, match="already purchased"):
+            claim_purchase("follower_uid", baby_id, item_id)
+        activity_mock.assert_not_called()
+        fan_out_mock.assert_not_called()
 
 
 def test_patch_purchased_item_denied():

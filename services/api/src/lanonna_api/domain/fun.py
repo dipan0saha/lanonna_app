@@ -15,6 +15,7 @@ from lanonna_api.domain.users_display import (
 )
 from lanonna_api.repositories.activity_events import insert_activity_event
 from lanonna_api.repositories.babies import get_baby_membership
+from lanonna_api.db import get_connection
 from lanonna_api.repositories.fun import (
     add_like,
     birthdate_vote_histogram,
@@ -26,6 +27,7 @@ from lanonna_api.repositories.fun import (
     get_caller_votes,
     get_name_suggestion,
     insert_name_suggestion,
+    liked_suggestion_id_set,
     list_gender_voters,
     list_name_suggestions,
     remove_like,
@@ -34,6 +36,7 @@ from lanonna_api.repositories.fun import (
     upsert_gender_vote,
     user_has_like,
 )
+from lanonna_api.repositories.memberships import lock_membership_for_user_for_update
 from lanonna_api.domain.content_permissions import member_content_can_delete
 from lanonna_api.repositories.users import upsert_app_user
 
@@ -42,6 +45,7 @@ def list_names(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, Any]:
     require_membership(firebase_uid, baby_profile_id)
     membership = get_baby_membership(firebase_uid, baby_profile_id)
     liked = caller_liked_suggestion_ids(baby_profile_id, firebase_uid)
+    liked_ids = liked_suggestion_id_set(baby_profile_id, firebase_uid)
     suggestions = []
     for row in list_name_suggestions(baby_profile_id):
         sid = row["id"]
@@ -57,7 +61,7 @@ def list_names(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, Any]:
                 "can_delete": member_content_can_delete(
                     firebase_uid, membership, author_uid
                 ),
-                "viewer_has_liked": user_has_like(sid, firebase_uid),
+                "viewer_has_liked": sid in liked_ids,
             }
         )
     return {
@@ -81,15 +85,31 @@ def suggest_name(
     if not suggested_name:
         raise ValueError("Name is required.")
     membership = get_baby_membership(firebase_uid, baby_profile_id)
-    if membership and membership["role"] != "owner":
-        if count_suggestions_by_author_gender(baby_profile_id, firebase_uid, gender) >= 1:
-            raise PermissionError("You already suggested a name for this gender.")
     if find_name_suggestion_case_insensitive(baby_profile_id, suggested_name, gender):
         raise ValueError("That name is already on the list for this gender.")
     upsert_app_user(firebase_uid, None)
-    row = insert_name_suggestion(
-        baby_profile_id, firebase_uid, suggested_name, gender
-    )
+    if membership and membership["role"] != "owner":
+        with get_connection() as conn:
+            locked = lock_membership_for_user_for_update(
+                baby_profile_id, firebase_uid, conn
+            )
+            if locked is None:
+                raise PermissionError("Baby membership required.")
+            if count_suggestions_by_author_gender(
+                baby_profile_id, firebase_uid, gender, conn
+            ) >= 1:
+                raise PermissionError("You already suggested a name for this gender.")
+            row = insert_name_suggestion(
+                baby_profile_id,
+                firebase_uid,
+                suggested_name,
+                gender,
+                conn,
+            )
+    else:
+        row = insert_name_suggestion(
+            baby_profile_id, firebase_uid, suggested_name, gender
+        )
     insert_activity_event(
         baby_profile_id,
         firebase_uid,
@@ -132,11 +152,12 @@ def toggle_like(
     if row is None:
         raise LookupError("Suggestion not found.")
     gender = row["gender"]
-    if user_has_like(suggestion_id, firebase_uid):
-        remove_like(suggestion_id, firebase_uid)
-        return {"liked": False}
-    remove_likes_for_user_gender(baby_profile_id, firebase_uid, gender)
-    add_like(suggestion_id, firebase_uid)
+    with get_connection() as conn:
+        if user_has_like(suggestion_id, firebase_uid, conn):
+            remove_like(suggestion_id, firebase_uid, conn)
+            return {"liked": False}
+        remove_likes_for_user_gender(baby_profile_id, firebase_uid, gender, conn)
+        add_like(suggestion_id, firebase_uid, conn)
     return {"liked": True}
 
 

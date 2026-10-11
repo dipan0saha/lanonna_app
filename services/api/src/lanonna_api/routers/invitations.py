@@ -49,7 +49,7 @@ def list_invitations(
     upsert_app_user(user["uid"], user.get("email"))
     try:
         rows = list_invitations_for_owner(user["uid"], baby_profile_id)
-    except PermissionError as exc:
+    except Exception as exc:
         raise map_domain_errors(exc) from exc
     return [_invitation_json(r) for r in rows]
 
@@ -66,9 +66,7 @@ def delete_invitation(
     upsert_app_user(user["uid"], user.get("email"))
     try:
         revoke_invitation_for_owner(user["uid"], baby_profile_id, invitation_id)
-    except PermissionError as exc:
-        raise map_domain_errors(exc) from exc
-    except LookupError as exc:
+    except Exception as exc:
         raise map_domain_errors(exc) from exc
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -82,7 +80,7 @@ def membership_check(
     upsert_app_user(user["uid"], user.get("email"))
     try:
         result = membership_check_for_owner(user["uid"], baby_profile_id, email)
-    except PermissionError as exc:
+    except Exception as exc:
         raise map_domain_errors(exc) from exc
     return MembershipCheckResponse(**result)
 
@@ -104,9 +102,7 @@ def batch_invite_route(
     ]
     try:
         results = batch_invite(user["uid"], baby_profile_id, invite_rows)
-    except PermissionError as exc:
-        raise map_domain_errors(exc) from exc
-    except RuntimeError as exc:
+    except Exception as exc:
         raise map_domain_errors(exc) from exc
     return BatchInviteResponse(
         results=[

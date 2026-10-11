@@ -23,5 +23,5 @@ def search_baby(
     upsert_app_user(user["uid"], user.get("email"))
     try:
         return search_baby_content(user["uid"], baby_profile_id, q, limit=limit)
-    except PermissionError as exc:
+    except Exception as exc:
         raise map_domain_errors(exc) from exc

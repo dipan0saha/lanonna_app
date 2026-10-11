@@ -264,13 +264,24 @@ def create_purchase(item_id: uuid.UUID, firebase_uid: str) -> dict[str, Any]:
                 id, registry_item_id, purchased_by_firebase_uid
             )
             VALUES (%s, %s, %s)
+            ON CONFLICT (registry_item_id) DO NOTHING
             RETURNING id, registry_item_id, purchased_by_firebase_uid, created_at
             """,
             (purchase_id, item_id, firebase_uid),
         ).fetchone()
-    if row is None:
+        if row is not None:
+            return dict(row)
+        existing = conn.execute(
+            """
+            SELECT id, registry_item_id, purchased_by_firebase_uid, created_at
+            FROM registry_purchases
+            WHERE registry_item_id = %s
+            """,
+            (item_id,),
+        ).fetchone()
+    if existing is None:
         raise RuntimeError("create_purchase failed")
-    return dict(row)
+    return dict(existing)
 
 
 def delete_purchase(item_id: uuid.UUID) -> bool:

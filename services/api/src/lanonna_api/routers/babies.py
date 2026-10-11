@@ -176,6 +176,6 @@ def first_moment_seed(
             body.registry_preset_ids,
             [{"name": r.name, "gender": r.gender} for r in body.name_suggestions],
         )
-    except PermissionError as exc:
+    except Exception as exc:
         raise map_domain_errors(exc) from exc
     return FirstMomentSeedResponse(**counts)
