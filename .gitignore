@@ -59,3 +59,4 @@ apps/mobile/maestro/.qa-fixtures.env
 
 # Test / coverage
 **/coverage/
+**/tfplan
