@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/domain/baby_summary.dart';
 import 'package:lanonna/core/network/connectivity_service.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
@@ -14,15 +13,13 @@ import 'package:lanonna/features/home/data/selected_baby_store.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'support/fake_gallery_repository.dart';
+import 'support/fake_home_repository.dart';
 import 'support/fake_notifications_repository.dart';
 
-class _FakeHomeRepository extends HomeRepository {
-  _FakeHomeRepository(this.baby) : super(ApiClient(idTokenProvider: () async => null));
-
-  final BabySummary baby;
-
-  @override
-  Future<BabySummary?> resolveSelectedBaby(SelectedBabyStore store) async => baby;
+/// Gallery also loads the recent-activity strip; stub it empty.
+class _GalleryHomeRepository extends FakeHomeRepository {
+  _GalleryHomeRepository(super.baby);
 
   @override
   Future<ActivityPage> fetchActivityPage(
@@ -34,24 +31,8 @@ class _FakeHomeRepository extends HomeRepository {
       ActivityPage(items: const [], hasMore: false);
 }
 
-class _FakeGalleryRepository extends GalleryRepository {
-  _FakeGalleryRepository() : super(ApiClient(idTokenProvider: () async => null));
-
-  int listCalls = 0;
-  List<PhotoSummary> photos = const [];
-
-  @override
-  Future<List<PhotoSummary>> listPhotos(
-    String babyId, {
-    String sort = 'default',
-  }) async {
-    listCalls++;
-    return photos;
-  }
-}
-
 Future<void> _pumpGallery(WidgetTester tester, {
-  required _FakeGalleryRepository galleryRepo,
+  required FakeGalleryRepository galleryRepo,
   required HomeRefreshSignal homeRefresh,
 }) async {
   SharedPreferences.setMockInitialValues({});
@@ -74,7 +55,7 @@ Future<void> _pumpGallery(WidgetTester tester, {
         ChangeNotifierProvider<ConnectivityService>(
           create: (_) => ConnectivityService.forTesting(),
         ),
-        Provider<HomeRepository>(create: (_) => _FakeHomeRepository(baby)),
+        Provider<HomeRepository>(create: (_) => _GalleryHomeRepository(baby)),
         Provider<NotificationsRepository>(
           create: (_) => FakeNotificationsRepository(),
         ),
@@ -97,7 +78,7 @@ Future<void> _pumpGallery(WidgetTester tester, {
 
 void main() {
   testWidgets('GalleryRepository notifyListeners reloads photo grid', (tester) async {
-    final galleryRepo = _FakeGalleryRepository();
+    final galleryRepo = FakeGalleryRepository();
     final homeRefresh = HomeRefreshSignal();
     await _pumpGallery(tester, galleryRepo: galleryRepo, homeRefresh: homeRefresh);
 
@@ -128,7 +109,7 @@ void main() {
   });
 
   testWidgets('HomeRefreshSignal reloads gallery list', (tester) async {
-    final galleryRepo = _FakeGalleryRepository();
+    final galleryRepo = FakeGalleryRepository();
     final homeRefresh = HomeRefreshSignal();
     await _pumpGallery(tester, galleryRepo: galleryRepo, homeRefresh: homeRefresh);
 

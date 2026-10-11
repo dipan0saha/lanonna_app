@@ -9,9 +9,3 @@ String inviteBabyDateSubtitle(InvitationPreview preview, [String? localeName]) {
   final formatted = formatApiCalendarDate(preview.expectedBirthDate, localeName);
   return formatted.isEmpty ? 'On the way' : 'Arriving $formatted';
 }
-
-String inviteBabyHeroTitle(InvitationPreview preview) {
-  final name = preview.babyName ?? 'Baby';
-  if (preview.isBorn) return name;
-  return 'Waiting for $name';
-}

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
 import '../../../core/auth/auth_repository.dart';
+import '../../../core/presentation/display_initials.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/widgets/app_bordered_surface.dart';
 import '../../../core/widgets/app_snackbar.dart';
@@ -71,17 +72,6 @@ class _AccountScreenState extends State<AccountScreen> {
     if (mounted) context.go(OnboardingRoutes.ownerCarousel);
   }
 
-  String _initials(String? name, String? email) {
-    final source = (name != null && name.trim().isNotEmpty)
-        ? name.trim()
-        : (email ?? 'A');
-    final parts = source.split(RegExp(r'\s+'));
-    if (parts.length >= 2) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    }
-    return source[0].toUpperCase();
-  }
-
   String _babySubtitle(BabySummary baby) => babyListSubtitle(
         baby,
         localeNameForFormatting(context),
@@ -143,7 +133,11 @@ class _AccountScreenState extends State<AccountScreen> {
                 padding: AppMetrics.subpageScrollPadding,
                 children: [
                   AccountProfileCard(
-                    initials: _initials(payload?.displayName, email),
+                    initials: displayInitials(
+                      payload?.displayName,
+                      fallbackText: email,
+                      emptyFallback: 'A',
+                    ),
                     displayName: displayName,
                     email: email,
                     onEdit: () => context.push('/account/edit'),

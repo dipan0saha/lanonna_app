@@ -1,40 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/domain/baby_summary.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/features/calendar/data/calendar_repository.dart';
 import 'package:lanonna/features/calendar/presentation/event_form_screen.dart';
 import 'package:lanonna/features/gallery/data/gallery_repository.dart';
-import 'package:lanonna/features/gallery/data/models/photo_models.dart';
 import 'package:lanonna/features/home/data/home_repository.dart';
 import 'package:lanonna/features/home/data/selected_baby_store.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class _FakeHomeRepository extends HomeRepository {
-  _FakeHomeRepository(this.baby) : super(ApiClient(idTokenProvider: () async => null));
-
-  final BabySummary baby;
-
-  @override
-  Future<BabySummary?> resolveSelectedBaby(SelectedBabyStore store) async => baby;
-}
-
-class _FakeCalendarRepository extends CalendarRepository {
-  _FakeCalendarRepository() : super(ApiClient(idTokenProvider: () async => null));
-}
-
-class _FakeGalleryRepository extends GalleryRepository {
-  _FakeGalleryRepository() : super(ApiClient(idTokenProvider: () async => null));
-
-  @override
-  Future<List<PhotoSummary>> listPhotos(
-    String babyId, {
-    String sort = 'default',
-  }) async =>
-      [];
-}
+import 'support/fake_calendar_repository.dart';
+import 'support/fake_gallery_repository.dart';
+import 'support/fake_home_repository.dart';
 
 void main() {
   testWidgets('event form shows prototype labels and save button', (tester) async {
@@ -53,9 +31,9 @@ void main() {
       MultiProvider(
         providers: [
           ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
-          Provider<HomeRepository>(create: (_) => _FakeHomeRepository(baby)),
-          ChangeNotifierProvider<CalendarRepository>(create: (_) => _FakeCalendarRepository()),
-          ChangeNotifierProvider<GalleryRepository>(create: (_) => _FakeGalleryRepository()),
+          Provider<HomeRepository>(create: (_) => FakeHomeRepository(baby)),
+          ChangeNotifierProvider<CalendarRepository>(create: (_) => FakeCalendarRepository()),
+          ChangeNotifierProvider<GalleryRepository>(create: (_) => FakeGalleryRepository()),
         ],
         child: MaterialApp(
           theme: AppTheme.light,

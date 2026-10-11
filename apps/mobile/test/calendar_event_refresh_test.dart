@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/domain/baby_summary.dart';
 import 'package:lanonna/core/network/connectivity_service.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
@@ -14,33 +13,9 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lanonna/features/calendar/presentation/calendar_screen.dart';
 
+import 'support/fake_calendar_repository.dart';
+import 'support/fake_home_repository.dart';
 import 'support/fake_notifications_repository.dart';
-
-class _FakeHomeRepository extends HomeRepository {
-  _FakeHomeRepository(this.baby) : super(ApiClient(idTokenProvider: () async => null));
-
-  final BabySummary baby;
-
-  @override
-  Future<BabySummary?> resolveSelectedBaby(SelectedBabyStore store) async => baby;
-}
-
-class _FakeCalendarRepository extends CalendarRepository {
-  _FakeCalendarRepository() : super(ApiClient(idTokenProvider: () async => null));
-
-  int listCalls = 0;
-  List<CalendarEvent> upcomingEvents = const [];
-
-  @override
-  Future<List<CalendarEvent>> listEvents(
-    String babyId, {
-    String? month,
-    bool upcoming = false,
-  }) async {
-    listCalls++;
-    return upcomingEvents;
-  }
-}
 
 void main() {
   testWidgets('CalendarRepository notifyListeners reloads upcoming list', (tester) async {
@@ -49,7 +24,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final prefs = await SharedPreferences.getInstance();
     final store = SelectedBabyStore(prefs);
-    final calRepo = _FakeCalendarRepository();
+    final calRepo = FakeCalendarRepository();
     final baby = BabySummary(
       id: 'baby-1',
       name: 'Test Baby',
@@ -66,7 +41,7 @@ void main() {
           ChangeNotifierProvider<ConnectivityService>(
             create: (_) => ConnectivityService.forTesting(),
           ),
-          Provider<HomeRepository>(create: (_) => _FakeHomeRepository(baby)),
+          Provider<HomeRepository>(create: (_) => FakeHomeRepository(baby)),
           Provider<NotificationsRepository>(
             create: (_) => FakeNotificationsRepository(),
           ),

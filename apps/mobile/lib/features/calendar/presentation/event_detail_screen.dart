@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/presentation/detail_screen_load.dart';
+import '../../../core/presentation/display_initials.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/media/cached_signed_image.dart';
 import '../../../core/widgets/app_snackbar.dart';
@@ -143,14 +144,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   }
 
   bool get _isOwner => _baby?.role == 'owner';
-
-  String _initials(String name) {
-    final parts = name.trim().split(RegExp(r'\s+'));
-    if (parts.length >= 2) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    }
-    return name.isNotEmpty ? name[0].toUpperCase() : '?';
-  }
 
   Future<void> _openVideo(String url) async {
     final uri = Uri.tryParse(url);
@@ -439,7 +432,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                     radius: 14,
                                     backgroundColor: AppColors.sageTint,
                                     child: Text(
-                                      _initials(detail.rsvpAttendees[i].displayName),
+                                      displayInitials(detail.rsvpAttendees[i].displayName),
                                       style: const TextStyle(fontSize: 10),
                                     ),
                                   ),

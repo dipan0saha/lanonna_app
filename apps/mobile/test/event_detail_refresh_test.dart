@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/domain/baby_summary.dart';
 import 'package:lanonna/core/presentation/detail_screen_load.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
@@ -13,28 +12,8 @@ import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class _FakeHomeRepository extends HomeRepository {
-  _FakeHomeRepository(this.baby) : super(ApiClient(idTokenProvider: () async => null));
-
-  final BabySummary baby;
-
-  @override
-  Future<BabySummary?> resolveSelectedBaby(SelectedBabyStore store) async => baby;
-}
-
-class _FakeCalendarRepository extends CalendarRepository {
-  _FakeCalendarRepository(this._detailByFetch)
-      : super(ApiClient(idTokenProvider: () async => null));
-
-  final EventDetail Function() _detailByFetch;
-  int fetchCalls = 0;
-
-  @override
-  Future<EventDetail> fetchEvent(String babyId, String eventId) async {
-    fetchCalls++;
-    return _detailByFetch();
-  }
-}
+import 'support/fake_calendar_repository.dart';
+import 'support/fake_home_repository.dart';
 
 EventDetail _eventDetail({required String title}) {
   return EventDetail(
@@ -69,7 +48,9 @@ void main() {
       (tester) async {
     SharedPreferences.setMockInitialValues({});
     var title = 'Before edit';
-    final calRepo = _FakeCalendarRepository(() => _eventDetail(title: title));
+    final calRepo = FakeCalendarRepository(
+      detailByFetch: () => _eventDetail(title: title),
+    );
     final baby = BabySummary(
       id: 'baby-1',
       name: 'Test Baby',
@@ -84,7 +65,7 @@ void main() {
         providers: [
           ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
           ChangeNotifierProvider<CalendarRepository>.value(value: calRepo),
-          Provider<HomeRepository>(create: (_) => _FakeHomeRepository(baby)),
+          Provider<HomeRepository>(create: (_) => FakeHomeRepository(baby)),
         ],
         child: MaterialApp(
           theme: AppTheme.light,

@@ -5,8 +5,6 @@ import 'app_text_theme.dart';
 
 /// Access the single app theme from any widget under [MaterialApp].
 extension LaNonnaTheme on BuildContext {
-  ThemeData get laTheme => Theme.of(this);
-
   TextTheme get textStyles => Theme.of(this).textTheme;
 
   /// Label above text fields (onboarding and inputs); PRD §5.1 Inter semibold on surface.

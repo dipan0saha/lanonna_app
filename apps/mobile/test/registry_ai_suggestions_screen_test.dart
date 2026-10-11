@@ -12,11 +12,20 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:lanonna/core/domain/baby_summary.dart';
 
+import 'support/fake_home_repository.dart';
+
 void main() {
   testWidgets('registry AI suggestions shows snackbar when list fails', (tester) async {
     SharedPreferences.setMockInitialValues({'selected_baby_id': 'baby-1'});
 
-    final homeRepo = _FakeHomeRepository();
+    final homeRepo = FakeHomeRepository(
+      const BabySummary(
+        id: 'baby-1',
+        name: 'Test',
+        lifecycleStatus: 'expecting',
+        role: 'owner',
+      ),
+    );
     final regRepo = _FailingRegistryRepository();
     final store = SelectedBabyStore(await SharedPreferences.getInstance());
 
@@ -38,20 +47,6 @@ void main() {
     expect(find.textContaining('Could not load suggestions'), findsOneWidget);
     expect(find.textContaining('network down'), findsOneWidget);
   });
-}
-
-class _FakeHomeRepository extends HomeRepository {
-  _FakeHomeRepository() : super(ApiClient(idTokenProvider: () async => 't'));
-
-  @override
-  Future<BabySummary?> resolveSelectedBaby(SelectedBabyStore store) async {
-    return const BabySummary(
-      id: 'baby-1',
-      name: 'Test',
-      lifecycleStatus: 'expecting',
-      role: 'owner',
-    );
-  }
 }
 
 class _FailingRegistryRepository extends RegistryRepository {
