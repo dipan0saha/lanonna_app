@@ -27,7 +27,7 @@ Run all three suites before every ship; the suites are the only automated gate (
 |----------|------|--------|
 | High | 7 | Release signing, worker OIDC, App Check enforce, admin surface; sign-out data leakage, iOS privacy strings, gallery truncation |
 | Medium | 34 | Ended-member 500s, races/N+1, Pub/Sub robustness, export limits, invite token/HTML hygiene, infra/IAM/prod parity, mobile error/async/date handling |
-| Low | 18 | Input caps, dead config, logging, infra hygiene, docs drift, lint/conventions |
+| Low | 19 | Input caps, dead config, logging, infra hygiene, docs drift, lint/conventions, deferred consolidation backlog |
 
 ---
 
@@ -107,7 +107,7 @@ Run all three suites before every ship; the suites are the only automated gate (
 | M-48 | No repo-root `.gcloudignore`/`.dockerignore`; deploys upload the whole monorepo (~13k files / ~680 MB per build); service-level `.dockerignore` files are ignored with a repo-root context | `services/*/scripts/deploy.sh`, `services/*/cloudbuild.yaml` | Add root `.gcloudignore` and `.dockerignore` limited to `services/`, `packages/`, Dockerfiles |
 | M-49 | Dev Cloud SQL has no deletion protection (`deletion_protection = var.environment == "prod"`) and no `prevent_destroy` | `modules/platform/sql.tf:30` | Enable for dev or add `lifecycle { prevent_destroy }` |
 | M-50 | Worker FCM permission (`roles/firebasecloudmessaging.admin`) is documented but not in Terraform; a fresh environment silently fails to push | `docs/engineering/operations.md`, `modules/platform/iam.tf` | Codify the role binding |
-| M-51 | `run-beta-gate.sh` needs `services/api/.venv`, deploys API only (no worker/IAM), and prints a stale "migration 020" hint | `scripts/run-beta-gate.sh:11-21` | Reuse the `verify-dev-prerequisites.sh` venv pattern; match the documented deploy order |
+| M-51 | `run-beta-gate.sh` needs `services/api/.venv` and deploys API only (no worker/IAM) | `scripts/run-beta-gate.sh:11-21` | Reuse the `verify-dev-prerequisites.sh` venv pattern; match the documented deploy order |
 | M-52 | Deploy scripts hardcode `ENVIRONMENT=dev` even if `GCP_PROJECT_ID` points elsewhere | `services/api/scripts/deploy.sh:44`, `services/worker/scripts/deploy.sh:38` | Derive from project id or require an explicit override |
 | M-53 | Dev maintenance scripts are unsafe: `clear_dev_test_data.py --email` hard-deletes **every** baby the user has any membership row for (including followed and tombstoned) and fails on `votes` FK; no environment guard on `--email`/`hard_delete_user`; `hard_delete_user.py` inits Firebase with the default ADC project | `infra/db/clear_dev_test_data.py:36-44,89-97,122-160`, `infra/db/hard_delete_user.py:523,531-544` | Limit to active, sole-owned babies; delete `votes`; require an explicit dev env/project guard |
 
@@ -142,14 +142,15 @@ Run all three suites before every ship; the suites are the only automated gate (
 | L-17 | Unbounded inputs: photo caption PATCH (init caps 2000), photo tags list, fun name `suggested_name`, event/registry title/description/location, membership-check `email` query | `routers/photos.py:17-37`, `routers/fun.py:21-22`, `routers/events.py:18-36`, `routers/registry.py:21-33`, `routers/invitations.py:76-79` |
 | L-18 | Search `q` is not escaped for `ILIKE` wildcards (`%`, `_`); `PermissionError` returns a plain string `detail` while lifecycle errors return `{error,message}` | `domain/search.py:22-33`, `http_errors.py:42-47` |
 | L-19 | Calendar `list_events` has no `LIMIT` when no month/upcoming filter; storage usage counts soft-deleted babies | `repositories/events.py:13-46`, `repositories/user_engagement.py:71-81` |
-| L-20 | Dead config: API `invite_deep_link_base` (worker-only); stale `PUBSUB_SUBSCRIPTION_WORKER` in `project.env`/`bootstrap.sh` for the removed pull sub | `config.py:31-32`, `infra/gcp/project.env`, `infra/gcp/bootstrap.sh` |
+| L-20 | Dead config: API `invite_deep_link_base` is read only by the worker | `services/api/src/lanonna_api/config.py:31-32` |
 | L-21 | Worker hygiene: unknown messages log the full payload (PII/token risk); export uses `SELECT *` (internal columns) and silently truncates activity to 500 rows | `worker/main.py:154-158`, `worker/baby_data_export.py:96-137` |
-| L-22 | Infra hygiene: GCS buckets lack `public_access_prevention`/versioning/lifecycle; `import-dev.sh` omits the `admin-api-key` secret; `infra/gcp/project.env` commits the billing account id (not a credential) | `modules/platform/storage.tf`, `scripts/import-dev.sh:40-41`, `infra/gcp/project.env` |
-| L-23 | Docs drift: `development.md` mobile module table omits `fun/`, `search/`, `settings/`, `legal/`, `/home/activity`, `/notifications/inbox`; `/health` undocumented; `operations.md` migration block mixes `cd infra/db` with a repo-root script path; `verify-dev-migrations.sh` header says 001–023; helper scripts (`provision_qa_validation_accounts.sh`, `seed_qa_gallery_photo.sh`, `configure-android-google-sign-in.sh`, `copy_release_apk_to_drive.sh`) are undocumented | see list |
+| L-22 | Infra hygiene: GCS buckets lack `public_access_prevention`/versioning/lifecycle; `import-dev.sh` omits the `admin-api-key` secret | `modules/platform/storage.tf`, `infra/terraform/scripts/import-dev.sh:40-41` |
+| L-23 | Docs drift: `development.md` mobile module table omits `fun/`, `search/`, `settings/`, `legal/`, `/home/activity`, `/notifications/inbox`; `/health` undocumented; `operations.md` migration block mixes `cd infra/db` with a repo-root script path | see list |
 | L-24 | Mobile hygiene: FCM unregister failures swallowed; `RouterRefreshListenable` auth stream subscription never cancelled; Android release has no R8/minify rules | `core/notifications/push_notification_service.dart:118-127`, `core/router/router_refresh.dart:13-16`, `android/app/build.gradle.kts:37-42` |
 | L-25 | Convention violations: ~13 hardcoded hex colors in `features/` (e.g. `onboarding_buttons.dart:108`, `batch_invite_screen.dart:296`, `event_form_widgets.dart:38-39`); hardcoded strings in `batch_invite_screen.dart`, `onboarding_wrong_email_screen.dart`, `app.dart`; batch invite submit bypasses `runMutation`; hand-rolled count strings in `predictions_tab.dart:399`, `names_tab.dart:328`, `gallery_photo_grid.dart:109` | mobile |
 | L-26 | `flutter analyze`: 48 infos — `use_null_aware_elements` (registry/home/onboarding repositories), `unnecessary_underscores`, 4 `use_build_context_synchronously` in login/signup screens, deprecated `value` on a form field | mobile `lib/`, `test/` |
 | L-27 | `photo_ready_notification_log` is no longer written (photo-ready idempotency moved to the fan-out `dedupe_key`); drop the table in the next migration | `infra/db/migrations/021_worker_idempotency.sql` |
+| L-28 | **Consolidation backlog (deferred, medium risk — live request paths):** gallery vs calendar comment domain logic and photo/event comment SQL; router `try/except map_domain_errors` boilerplate and the repeated `upsert_app_user` first line; dynamic `UPDATE … SET` builders; mobile comment composer, tab empty states, AI-suggestions screen state machine, labeled-field shell, wider `runMutation` use; shared `get_connection` for API + worker, `infra/db` shared `connect()` and invite-hash helper; Terraform push-subscription `for_each` and dev/prod API-list dedupe; scheduler script merge; PUT/PATCH announcement alias | `services/api`, `apps/mobile`, `infra/` |
 
 ---
 
@@ -167,4 +168,4 @@ Run all three suites before every ship; the suites are the only automated gate (
 2. **Mobile correctness:** H-11, H-14, H-15, M-54–M-61
 3. **API/worker robustness:** M-37–M-40, M-43–M-46
 4. **Infra + prod parity:** M-19–M-22, M-47–M-53
-5. **Ops / polish:** M-09, M-15, M-16, M-31, L-07–L-27
+5. **Ops / polish:** M-09, M-15, M-16, M-31, L-07–L-27; then the L-28 consolidation backlog

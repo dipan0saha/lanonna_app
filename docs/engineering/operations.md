@@ -30,7 +30,7 @@ export SMOKE_TEST_PASSWORD='…'
 | Terraform `lanonna-dev` | `terraform validate` passes; `terraform apply` when module changes — push subs (upload + async commands), **DLQ** on push, CORS, API/worker TokenCreator |
 | Cloud Run `api` / `worker` | `services/*/scripts/deploy.sh` |
 | Auth + API | Flutter dev or curl with Firebase JWT; `GET /health` |
-| Cloud SQL | Migrations through **`027`** — proxy + `apply_migrations.py`; optional `./scripts/verify-dev-migrations.sh` |
+| Cloud SQL | All migrations applied — proxy + `apply_migrations.py`; `./scripts/verify-dev-migrations.sh` checks every file in `infra/db/migrations/` is recorded |
 | GCS → Pub/Sub → worker | `./scripts/infra-smoke-display-upload.sh` (set `SMOKE_TEST_PASSWORD`) |
 | Worker security | **No** `allUsers` on `worker`; Run invoker via `apply-dev-run-iam.sh` |
 | Quality gate | `verify-dev-prerequisites.sh` (Flutter analyze/test, API/worker compile); run `pytest` when you touch Python |
@@ -172,7 +172,7 @@ export SMOKE_TEST_PASSWORD='…'
 
 ## Database migrations
 
-Schema: **`infra/db/migrations/`** (`001`–`027`). See [migrations/README.md](../../infra/db/migrations/README.md).
+Schema: **`infra/db/migrations/`** — the [migrations README](../../infra/db/migrations/README.md) lists every migration (single source for the current set).
 
 ```bash
 cloud-sql-proxy lanonna-dev:us-central1:lanonna-db --port 5432   # or 5433

@@ -10,4 +10,4 @@
 
 Product scope: [../product/requirements.md](../product/requirements.md).
 
-**Dev snapshot:** `lanonna-dev` on Cloud Run; SQL migrations through **`027`**; local quality gate **`./scripts/verify-dev-prerequisites.sh`**; pre-beta blockers in [open-gaps.md](open-gaps.md).
+**Dev snapshot:** `lanonna-dev` on Cloud Run; SQL schema per the [migrations README](../../infra/db/migrations/README.md); local quality gate **`./scripts/verify-dev-prerequisites.sh`**; pre-beta blockers in [open-gaps.md](open-gaps.md).

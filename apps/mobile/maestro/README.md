@@ -99,7 +99,7 @@ flutter test integration_test/home_summary_load_test.dart -d emulator-5554 \
 | Flow | Purpose |
 |------|---------|
 | `flows/smoke/auth_sign_in.yaml` | `clearState` → sign in → home |
-| `flows/smoke/shell_navigation.yaml` | All five bottom tabs via `nav_*` ids |
+| `flows/smoke/shell_navigation.yaml` | All five bottom tabs via the `Tab N of 5` accessibility labels (the `nav_*` ids below are also set but this flow does not use them) |
 | `flows/smoke/open_search.yaml` | `shell_search` → `search_field` |
 | `flows/smoke/open_notifications.yaml` | `shell_notifications` → inbox |
 
