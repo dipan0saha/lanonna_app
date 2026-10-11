@@ -1,0 +1,25 @@
+---
+description: La Nonna project agent standards (quality, architecture, dev ship)
+alwaysApply: true
+---
+
+# Project agent standards
+
+## Code quality
+
+- Before calling work done, **review the latest diff** (scope, edge cases, tests, docs, migrations, deploy impact). Fix gaps you find; don't hand off “probably fine.”
+- Prefer **sound, graceful, maintainable design** aligned with existing patterns in this lanonna_app repo. Avoid one-off patches, commented-out hacks, or “we'll fix later” unless the user explicitly chooses a short-term path.
+- After changes, **remove dead or unused code** tied to the work (imports, helpers, flags, tests for deleted behavior, stale comments)—don't leave orphans behind.
+- **Update `docs/engineering/`** when the change affects behavior, APIs, migrations, deploy/infra, or how developers run or verify the app. Skip doc edits only when the diff is truly internal with no outward effect.
+
+## Dev ship workflow
+
+When you finish **substantive code changes** (API, worker, DB migrations, or mobile behavior that needs a fresh build), complete the dev pipeline unless the user opts out.
+
+**Run in order:**
+
+1. **Commit + push** — logical commit(s) on `main` (or the branch the user named); do not commit secrets or `tfplan` artifacts.
+2. **Migrations (dev)** — Cloud SQL Auth Proxy + `infra/db/apply_migrations.py` with `DB_PASSWORD` from Secret Manager `db-lanonna-app-password` (`lanonna-dev`). Set `DB_PORT` to match the proxy (often `5433`). Run `./scripts/verify-dev-migrations.sh` when migrations changed.
+3. **Deploy** — `services/api/scripts/deploy.sh`, then `services/worker/scripts/deploy.sh`, then repo root `./scripts/apply-dev-run-iam.sh` after worker deploy.
+
+Skip migration/deploy when the change is docs-only or cannot affect dev runtime.

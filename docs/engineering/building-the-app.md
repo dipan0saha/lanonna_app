@@ -19,13 +19,13 @@ export SMOKE_TEST_PASSWORD='…'
 
 | Area | Status | Notes |
 |------|--------|--------|
-| Terraform `lanonna-dev` | `terraform validate` passes; apply when module changes | Push sub, CORS, API/worker TokenCreator in `modules/platform` |
+| Terraform `lanonna-dev` | `terraform validate` passes; apply when module changes | Push subs (upload + async commands), **DLQ** on push, CORS, API/worker TokenCreator in `modules/platform` |
 | Cloud Run `api` / `worker` | Deployed | `services/*/scripts/deploy.sh` |
 | Auth + API | Smoke-tested | Flutter dev screen or curl with Firebase JWT |
-| Cloud SQL | Migrations through **`023`** applied on dev | Proxy + `apply_migrations.py`; retest cleanup: `clear_dev_test_data.py` — [migrations/README.md](../../infra/db/migrations/README.md) |
+| Cloud SQL | Migrations through **`027`** applied on dev | Proxy + `apply_migrations.py`; optional `./scripts/verify-dev-migrations.sh`; retest cleanup: `clear_dev_test_data.py` — [migrations/README.md](../../infra/db/migrations/README.md) |
 | GCS → Pub/Sub → worker | `./scripts/infra-smoke-display-upload.sh` | Signed PUT + worker `gcs_object_finalized` log |
 | Worker security (dev) | **No** `allUsers` on `worker` | Push sub + OIDC in Terraform; **Run invoker** via `apply-dev-run-iam.sh` |
-| CI | Green on `main` | `flutter analyze` + `flutter test`; API + worker `pytest` — see [development.md](development.md) |
+| Quality gate | Local checks green | `./scripts/verify-dev-prerequisites.sh` (Flutter analyze/test, API/worker compile); run `pytest` when you touch Python. **GitHub Actions CI is disabled** — see [code-review-findings-2026-10.md](code-review-findings-2026-10.md) (M-32) |
 | Firebase config | Local plist/json + `firebase_options.dart` | [initial-setup.md](initial-setup.md) |
 | Mailjet | Secrets set on worker | Invite emails via worker `send_invite_email` (batch invite from onboarding or home) |
 | App Check | **Code ready** — deploy API with `APP_CHECK_ENFORCE=true`; register debug tokens | [pre-beta-qa.md](pre-beta-qa.md), [initial-setup.md](initial-setup.md) |
@@ -35,7 +35,7 @@ export SMOKE_TEST_PASSWORD='…'
 
 Follow [platform-architecture.md](platform-architecture.md) Month 1–2:
 
-1. SQL migrations: keep dev current per [migrations/README.md](../../infra/db/migrations/README.md) (through `023`)
+1. SQL migrations: keep dev current per [migrations/README.md](../../infra/db/migrations/README.md) (through **`027`**)
 2. **Done:** **Gallery** + **Calendar** — social API (`007`), Flutter tabs, signed read URLs, squish/RSVP/comments; worker `photo_shared` on thumb ready
 3. **Done:** **Registry** + **Fun** — social API (`008`), Flutter tabs, purchase/votes/likes; static AI suggestion JSON (calendar + registry)
 4. **Done:** app shell + **owner onboarding** (carousel → auth → profile → baby → first moment → invites → home)
@@ -51,8 +51,10 @@ Follow [platform-architecture.md](platform-architecture.md) Month 1–2:
 14. **Done (gallery refresh):** `GalleryRepository` + `notifyGalleryDataChanged` + `BabyContextReload` — gallery grid, sub-routes, and home photo teasers refresh after upload/delete/squish/comment without manual pull-to-refresh (FR-GAL-013)
 15. **Done (unified create baby):** `CreateBabyScreen` — onboarding + `/baby/create` share one form/submit pipeline (`CreateBabyMode`)
 16. **Done (#410 account surfaces):** `AppBorderedSurface` + `subpageScrollPadding` — My Account and home owner/teaser tiles align to 26px content width; `CardTheme` horizontal margin removed
-16. **Release APK to Drive:** `./scripts/ship_release_apk_to_drive.sh` (dev flavor; universal APK → `lanonna_app.apk`). **Emulator (x86_64):** `./scripts/ship_release_apk_x86_64_to_drive.sh` → `lanonna_app_x86_64.apk` (smaller, one ABI).
-17. **Beta gate:** `./scripts/run-beta-gate.sh` (tests + optional API deploy); `./scripts/setup-expired-invites-scheduler.sh`; force-update via `app_versions` + `GET /v1/app/version` (Flutter `AppVersionGate`)
+17. **Release APK to Drive:** `./scripts/ship_release_apk_to_drive.sh` (dev flavor; universal APK → `lanonna_app.apk`). **Emulator (x86_64):** `./scripts/ship_release_apk_x86_64_to_drive.sh` → `lanonna_app_x86_64.apk` (smaller, one ABI).
+18. **Beta gate:** `./scripts/run-beta-gate.sh` (tests + optional API deploy); `./scripts/setup-expired-invites-scheduler.sh`; force-update via `app_versions` + `GET /v1/app/version` (Flutter `AppVersionGate`)
+
+**Pre-beta backlog:** open review items (release signing, worker OIDC, App Check enforce, infra parity, CI) — [code-review-findings-2026-10.md](code-review-findings-2026-10.md).
 
 ## If worker URL changes
 
@@ -73,3 +75,4 @@ cd infra/terraform/environments/dev && terraform apply
 - [initial-setup.md](initial-setup.md) — GCP, deploy, secrets
 - [development.md](development.md) — repo layout
 - [performance.md](performance.md) — measurement and performance improvement backlog
+- [code-review-findings-2026-10.md](code-review-findings-2026-10.md) — open gaps before beta

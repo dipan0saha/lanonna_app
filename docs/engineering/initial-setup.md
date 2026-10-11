@@ -137,7 +137,7 @@ export SMOKE_TEST_PASSWORD='…'   # Firebase test user
 
 ## Database migrations
 
-Schema lives in **`infra/db/migrations/`** (`001`–`023`). See [infra/db/migrations/README.md](../../infra/db/migrations/README.md) (latest: `023_registry_shipping_structured`; `022_user_profile_demographics`; `021_worker_idempotency`; `app_versions` force-update in `020`; `photo_baby_tags` in `019`).
+Schema lives in **`infra/db/migrations/`** (`001`–`027`). See [infra/db/migrations/README.md](../../infra/db/migrations/README.md) (latest: `027_invite_email_send_claim`, `026_export_job_started_at`, `025_track_migration_023_registry_shipping`, `024_baby_created_by`, `023_registry_shipping_structured`; `021_worker_idempotency`; `app_versions` in `020`).
 
 From a laptop (with [Cloud SQL Auth Proxy](https://cloud.google.com/sql/docs/postgres/connect-auth-proxy)):
 

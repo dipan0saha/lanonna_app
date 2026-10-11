@@ -292,7 +292,7 @@ Set `DB_HOST`, `DB_PORT` (e.g. `5433` if 5432 is in use), `DB_PASSWORD`, and `DB
 
 ## Related reading
 
-- [remediation-plan.md](remediation-plan.md) — codebase gap remediation (phased)
+- [code-review-findings-2026-10.md](code-review-findings-2026-10.md) — prioritized open gaps and fix status
 - [building-the-app.md](building-the-app.md) — prerequisite gate
 - [initial-setup.md](initial-setup.md) — Terraform, deploy, secrets
 - [platform-architecture.md](platform-architecture.md) — media flow, costs, playbook

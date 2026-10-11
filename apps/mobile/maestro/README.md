@@ -103,7 +103,7 @@ flutter test integration_test/home_summary_load_test.dart -d emulator-5554 \
 | `flows/smoke/open_search.yaml` | `shell_search` → `search_field` |
 | `flows/smoke/open_notifications.yaml` | `shell_notifications` → inbox |
 
-**Features** (`flows/features/`), **roles** (`flows/roles/`), and **onboarding** (`flows/onboarding/`) are included in `run-maestro-full.sh` (see script `FLOWS` array). Additional YAML files may exist on disk before they are added to the full suite — see [remediation-plan.md](../../../docs/engineering/remediation-plan.md) Phase 5.
+**Features** (`flows/features/`), **roles** (`flows/roles/`), and **onboarding** (`flows/onboarding/`) are included in `run-maestro-full.sh` (see script `FLOWS` array). Additional YAML files may exist on disk before they are added to the full suite — add them to the `FLOWS` array in `run-maestro-full.sh` when ready.
 
 Subflows live under `flows/subflows/`.
 
