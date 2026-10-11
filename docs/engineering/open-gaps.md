@@ -2,7 +2,7 @@
 
 Open engineering gaps for La Nonna. Seeded from the Oct 2026 full-stack review and extended by a second full code review on **2026-10-11** (API, data layer, worker, mobile, infra/docs) plus live test runs.
 
-**Legend:** ✅ **Resolved** (fixed in repo; detail in git history); **Verified** — open gap confirmed by code/tests; **Reported** — open gap suspected, not fully traced.
+**Legend:** **✅** on an ID = fixed in repo (entry kept for audit); **Verified** — gap confirmed by code/tests; **Reported** — suspected, not fully traced.
 
 Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [operations.md](operations.md).
 
@@ -31,34 +31,18 @@ Run all three suites before every ship; the suites are the only automated gate (
 
 ---
 
-## Resolved ✅
-
-| ID | Summary |
-|----|---------|
-| ✅ H-03 | Account delete: SQL tombstone before Firebase delete, idempotent retry when Firebase lags (`account_delete` domain + tests). |
-| ✅ H-09 | Export Pub/Sub retry: removed `messageId` dedupe that acked redeliveries; `deliveryAttempt`-aware claim/failure and stale-`running` takeover. |
-| ✅ H-10 | Baby search: `name_suggestions` query uses `suggested_name` (not missing `name` column). |
-| ✅ H-11 | Sign-out / delete / wrong-email / `user_deleted`: centralized `SessionCleanup` (invite, baby selection, home cache by uid, onboarding drafts, signed-image cache). |
-| ✅ H-12 | Photo-ready notify: idempotency inside fan-out transaction; removed pre-claim that blocked retries. |
-| ✅ H-13 | DLQ: pull subscription on dead-letter topic with retention + subscriber IAM (inspect/replay path). |
-| ✅ H-14 | iOS `Info.plist`: camera and photo-library usage descriptions. |
-| ✅ H-15 | Gallery: paginated `listPhotosPage`, infinite scroll, end-of-list copy; `listPhotos()` loads all pages for pickers. |
-| ✅ M-02 | Co-owner accept race (original): superseded by **M-36** fix below. |
-| ✅ M-11 | Export job reliability: `started_at`, stale-`running` reclaim, failure marking (paired with H-09 retry path). |
-| ✅ M-12 | Invite email send claim before Mailjet so duplicate Pub/Sub deliveries do not double-send. |
-| ✅ M-17 | Migration tracking / schema alignment (`025`–`027` for export and invite-claim columns). |
-| ✅ M-18 | Pub/Sub push dead-letter policy on worker subscriptions (push-only worker path). |
-| ✅ M-36 | Co-owner accept: `lock_baby_profile_for_update` before `count_active_owners` (race tests green). |
-| ✅ M-62 | Review regressions: API invitation-race + onboarding mock fixes; Flutter widget tests get `ConnectivityService` / notification fakes (full suites green). |
-
----
-
 ## High
 
 ### H-01 Android release is signed with debug keys — Verified
 - **Where:** `apps/mobile/android/app/build.gradle.kts` (release `signingConfig = signingConfigs.getByName("debug")`)
 - **Issue:** Release APK/AAB uses the debug keystore (TODO left in file). Not acceptable for Play upload or any distribution you intend to update in place.
 - **Fix:** Add an upload keystore + `signingConfigs.release` read from `key.properties` / release signing secrets; keep debug signing only for local `flutter run --release`.
+
+### ✅ H-03 Account delete must tombstone SQL before Firebase — Verified
+- **Where:** `services/api/src/lanonna_api/domain/account_delete.py`, `repositories/account_delete.py`
+- **Issue:** Deleting the Firebase user before the SQL tombstone (or without idempotent retry) could strand auth vs `app_users` state.
+- **Fix:** Soft-delete in SQL first, then `delete_user`; retry POST skips SQL when already tombstoned.
+- **Status:** ✅ Fixed
 
 ### H-04 Worker `/pubsub/push` has no in-app OIDC verification — Verified (grep) / Reported (impact)
 - **Where:** `services/worker/src/lanonna_worker/main.py` (push + cron routes); no `Authorization` / OIDC verification anywhere in `services/worker/src`
@@ -75,6 +59,48 @@ Run all three suites before every ship; the suites are the only automated gate (
 - **Issue:** `/v1/admin/system-announcements` protected only by `X-Admin-Key`; no rate limit, no IP/IAM restriction; comparison is `!=` (not constant-time).
 - **Fix:** `secrets.compare_digest`; rate-limit admin paths; consider IAP/IAM or a private admin surface; rotate key via Secret Manager.
 
+### ✅ H-09 Export Pub/Sub dedupe drops the retries that recovery depends on — Verified
+- **Where:** `services/worker/src/lanonna_worker/main.py`, `baby_data_export.py`
+- **Issue:** `messageId` delivery dedupe committed before export ran, so Pub/Sub redeliveries were acked without retrying failed/stale-`running` jobs.
+- **Fix:** Drop export message-id dedupe; use job row + `deliveryAttempt`-aware claim/failure and stale-`running` takeover.
+- **Status:** ✅ Fixed
+
+### ✅ H-10 Baby search fails: queries a non-existent column — Verified
+- **Where:** `services/api/src/lanonna_api/repositories/search.py`; migration `004` (`suggested_name`)
+- **Issue:** Name-suggestion leg of baby search referenced column `name` instead of `suggested_name`.
+- **Fix:** Query `suggested_name AS name` with `suggested_name ILIKE`; repository test added.
+- **Status:** ✅ Fixed
+
+### ✅ H-11 Sign-out and account delete leave cross-user local state — Verified
+- **Where:** `core/auth/session_cleanup.dart`, account/delete screens, `user_deleted_session_handler.dart`, `home_repository.dart`
+- **Issue:** Sign-out left invite preview, selected baby, home cache, onboarding drafts, and signed-image disk cache on shared devices.
+- **Fix:** `SessionCleanup` on every sign-out path; uid-scoped home cache with safe offline fallback.
+- **Status:** ✅ Fixed
+
+### ✅ H-12 Photo-ready notification lost if fan-out fails after the claim — Verified
+- **Where:** `services/worker/src/lanonna_worker/thumbnails.py`, `idempotency.py`
+- **Issue:** Pre-claim committed before fan-out; retries skipped notify permanently after a transient failure.
+- **Fix:** Idempotency via fan-out `dedupe_key` in the same transaction; removed pre-claim.
+- **Status:** ✅ Fixed
+
+### ✅ H-13 Dead-letter topic has no subscription — Verified
+- **Where:** `infra/terraform/modules/platform/pubsub.tf`
+- **Issue:** DLQ topic had no pull subscription; dead-lettered messages were not retained for inspection/replay.
+- **Fix:** DLQ pull subscription (7-day retention) and subscriber IAM; documented in operations.
+- **Status:** ✅ Fixed
+
+### ✅ H-14 iOS camera/photo-library usage descriptions are missing — Verified
+- **Where:** `apps/mobile/ios/Runner/Info.plist`; `image_picker` in onboarding and profile flows
+- **Issue:** Missing usage keys crash camera/library on iOS and block App Store review.
+- **Fix:** `NSCameraUsageDescription`, `NSPhotoLibraryUsageDescription`, `NSPhotoLibraryAddUsageDescription`.
+- **Status:** ✅ Fixed
+
+### ✅ H-15 Gallery silently truncates after 50 photos — Verified
+- **Where:** `gallery_repository.dart`, `gallery_screen.dart`; API `routers/photos.py` (`limit`/`offset`)
+- **Issue:** Default API page size hid photos beyond 50 with no UI signal.
+- **Fix:** `listPhotosPage`, infinite scroll, end-of-list copy; `listPhotos()` loads all pages for pickers.
+- **Status:** ✅ Fixed
+
 ---
 
 ## Medium
@@ -83,7 +109,9 @@ Run all three suites before every ship; the suites are the only automated gate (
 
 | ID | Issue | Where | Fix |
 |----|-------|-------|-----|
+| ✅ M-02 | Co-owner accept race: two concurrent accepts could exceed two owners | `repositories/invitations.py`, `memberships.py` | Row lock baby profile before owner count (see **M-36**) |
 | M-09 | Rate limiting only on photo init and batch invite; per-instance buckets | `middleware/rate_limit.py` | Edge limiter for preview/admin; document scaling caveat |
+| ✅ M-36 | Co-owner accept race (M-02 reopened): `lock_baby_profile_for_update` not called before `count_active_owners` | `repositories/invitations.py`, `repositories/memberships.py` | Lock baby row inside accept transaction; race tests green |
 | M-37 | Ended (removed) members get **500** instead of `403 membership_ended` on `GET /search`, all invitation owner routes (list/revoke/batch/membership-check), `GET /members`, and first-moment seed — routers catch only `PermissionError`, not `MemberLifecycleError` | `routers/search.py:24-27`, `routers/invitations.py:50-108`, `routers/members.py:41-44`, `routers/babies.py:172-181` | Use `except Exception as exc: raise map_domain_errors(exc)` like `home-summary`; add router tests |
 | M-38 | Concurrent registry purchase claims: check-then-insert on `purchase_id`; the loser hits the `registry_item_id` unique violation and returns 500 (winner may still notify) | `domain/registry.py:167-175`, `repositories/registry.py:258-270`, migration `008` | Single `INSERT … ON CONFLICT DO NOTHING RETURNING`, map conflict to 409 |
 | M-39 | Fun: one-like-per-gender is not atomic (separate transactions); follower name cap (count then insert) is racy with no unique index; `list_names` does an N+1 `user_has_like` per suggestion | `domain/fun.py:46-139`, `repositories/fun.py:63-216` | Single transaction + row lock / partial unique index; fetch liked ids in one query |
@@ -93,6 +121,8 @@ Run all three suites before every ship; the suites are the only automated gate (
 
 | ID | Issue | Where | Fix |
 |----|-------|-------|-----|
+| ✅ M-11 | Export jobs: stale `running`, missing failure path, retry not wired to Pub/Sub | `worker/baby_data_export.py`, migrations `026` | `started_at`, reclaim stale runs, mark failed; pairs with **H-09** |
+| ✅ M-12 | Duplicate Pub/Sub invite deliveries could double-send email | `worker/invite_email.py`, migration `027` | Claim invite send in DB before Mailjet |
 | M-15 | Thumbnail download loads whole object in memory, no size/dimension cap | `worker/thumbnails.py` | Cap bytes/dimensions |
 | M-16 | Worker config defaults to dev project/buckets if env unset | `worker/config.py` | Fail fast outside dev |
 | M-41 | Raw `invite_token` is published in the Pub/Sub command payload; unknown-message branch logs the whole payload. Anyone with subscribe/log access can accept invites | `api/pubsub.py:33-38`, `worker/main.py:69-76,154-158` | Publish only `invitation_id`; worker reads a single-use send secret from DB; redact logs |
@@ -106,6 +136,8 @@ Run all three suites before every ship; the suites are the only automated gate (
 
 | ID | Issue | Where | Fix |
 |----|-------|-------|-----|
+| ✅ M-17 | Migration set drift: `023` not tracked; export/invite schema needed follow-on migrations | `infra/db/migrations/025`–`027` | Track `023`; add export `started_at` and invite send-claim columns |
+| ✅ M-18 | Pub/Sub push had no dead-letter path; pull worker path obsolete | `infra/terraform/modules/platform/pubsub.tf` | Dead-letter policy on push subs; push-only worker; DLQ pull sub (**H-13**) |
 | M-19 | Prod env lacks push-subscription / Cloud Build wiring present in dev; dev hardcodes worker URL; Run invoker IAM is script-managed, not Terraform | `environments/prod/main.tf`, `dev/main.tf`, `run_iam.tf` | Parameterize endpoint; manage invoker in TF |
 | M-20 | Secret accessor granted to API and worker for all secrets (incl. `admin-api-key`) | `modules/platform/iam.tf` | Per-secret bindings |
 | M-21 | Dev automation SA has `editor`, `serviceAccountAdmin`, `projectIamAdmin` | `iam.tf` | Keep dev-only; narrow roles |
@@ -132,6 +164,12 @@ Run all three suites before every ship; the suites are the only automated gate (
 | M-59 | Async hygiene: no `mounted` check before `setState` after awaits (gallery, home, names tab); global search swallows API errors; registry delete bypasses `runMutation`; gallery upload polling ends silently after ~24 s | `gallery_screen.dart:114-132,178-196`, `home_screen.dart:85-103`, `names_tab.dart:54-58`, `global_search_screen.dart:54-69`, `registry_screen.dart:298-303` | Guard with `mounted`; show errors; use `runMutation`; surface poll timeout |
 | M-60 | Date handling violates the documented UTC-in/local-out rule: photo `created_at` formatted in UTC (wrong day for evening uploads); date-only API fields parsed with `DateTime.tryParse` instead of `tryParseApiCalendarDate` | `gallery/data/models/photo_models.dart:27`, `photo_detail_screen.dart:399,659-664`, `home_screen.dart:123-130`, `announcement_create_screen.dart:63-65` | Use `parseApiInstant` / `tryParseApiCalendarDate` helpers |
 | M-61 | Event form has no owner guard (followers reaching the route see a full form that fails on save); cover thumbnail lacks `onSignedUrlError` so it breaks after the 900 s URL TTL | `calendar/presentation/event_form_screen.dart:106-116,413-418`, `widgets/event_form_widgets.dart:43-48` | Gate by role; pass a refresh callback |
+
+### Tests
+
+| ID | Issue | Where | Fix |
+|----|-------|-------|-----|
+| ✅ M-62 | Test suite red after review: invitation accept race, stale onboarding mock, Flutter harness missing providers | `test_invitation_accept_race.py`, `test_onboarding_domain.py`, mobile widget tests | Fix **M-36**; update mocks; add `ConnectivityService` / notification fakes |
 
 ---
 
