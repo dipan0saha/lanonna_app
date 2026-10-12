@@ -39,6 +39,7 @@ Apply in **lexicographic order** (filename prefix):
 | `031_membership_joined_via.sql` | `baby_memberships.joined_via` (`created` \| `invite`) and creator backfill repair (#31) |
 | `032_drop_tombstoned_participation.sql` | Delete RSVPs, votes, name loves, and squishes for already-tombstoned accounts (FR-SET-005) |
 | `033_drop_ended_membership_participation.sql` | Delete those same presence rows when the person is no longer a current member (FR-INV-009 / FR-INV-010) |
+| `034_invitation_email_delivery_status.sql` | `email_delivery_status`, `email_last_error`, `email_send_attempts` on invitations (#62) |
 
 ## Apply (dev)
 

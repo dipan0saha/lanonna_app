@@ -12,17 +12,18 @@ from lanonna_api.pubsub import publish_send_invite_email
 from lanonna_api.repositories.invitations import (
     accept_invitation_by_token,
     create_invitation,
-    email_has_pending_invite,
     email_is_member,
     fetch_invitation_preview_row,
+    fetch_pending_invitation_by_email,
     list_invitations_for_baby,
+    prepare_invitation_for_resend,
     revoke_invitation,
 )
 logger = logging.getLogger("lanonna.api.invitations")
 
 EMAIL_QUEUE_FAILED_MESSAGE = (
     "Invitation saved; email could not be queued. "
-    "Try again from Manage followers, or revoke and re-invite."
+    "Use Resend on Manage followers, or revoke and invite again."
 )
 
 
@@ -71,6 +72,29 @@ class BatchInviteRow:
         self.relationship_label = relationship_label
 
 
+def _enqueue_invite_email(invitation_id: uuid.UUID) -> None:
+    publish_send_invite_email(invitation_id)
+
+
+def resend_invitation_for_owner(
+    firebase_uid: str,
+    baby_profile_id: uuid.UUID,
+    invitation_id: uuid.UUID,
+) -> None:
+    require_owner_baby(firebase_uid, baby_profile_id)
+    prepared = prepare_invitation_for_resend(baby_profile_id, invitation_id)
+    if prepared is None:
+        raise LookupError("Invitation not found")
+    try:
+        _enqueue_invite_email(prepared["id"])
+    except Exception:
+        logger.exception(
+            "invite_email_enqueue_failed invitation_id=%s resend=true",
+            prepared["id"],
+        )
+        raise RuntimeError(EMAIL_QUEUE_FAILED_MESSAGE) from None
+
+
 def batch_invite(
     firebase_uid: str,
     baby_profile_id: uuid.UUID,
@@ -90,13 +114,54 @@ def batch_invite(
                 }
             )
             continue
-        if email_has_pending_invite(baby_profile_id, email):
+        pending = fetch_pending_invitation_by_email(baby_profile_id, email)
+        if pending is not None:
+            if pending.get("email_sent_at") is not None:
+                results.append(
+                    {
+                        "email": email,
+                        "status": "skipped_duplicate",
+                        "message": "Invitation already pending",
+                        "invitation_id": pending["id"],
+                    }
+                )
+                continue
+            prepared = prepare_invitation_for_resend(
+                baby_profile_id,
+                pending["id"],
+            )
+            if prepared is None:
+                results.append(
+                    {
+                        "email": email,
+                        "status": "skipped_duplicate",
+                        "message": "Invitation already pending",
+                        "invitation_id": pending["id"],
+                    }
+                )
+                continue
+            try:
+                _enqueue_invite_email(prepared["id"])
+            except Exception:
+                logger.exception(
+                    "invite_email_enqueue_failed invitation_id=%s resend=true",
+                    prepared["id"],
+                )
+                results.append(
+                    {
+                        "email": email,
+                        "status": "email_queue_failed",
+                        "message": EMAIL_QUEUE_FAILED_MESSAGE,
+                        "invitation_id": prepared["id"],
+                    }
+                )
+                continue
             results.append(
                 {
                     "email": email,
-                    "status": "skipped_duplicate",
-                    "message": "Invitation already pending",
-                    "invitation_id": None,
+                    "status": "resent",
+                    "message": None,
+                    "invitation_id": prepared["id"],
                 }
             )
             continue
@@ -108,7 +173,7 @@ def batch_invite(
             row.relationship_label,
         )
         try:
-            publish_send_invite_email(created["id"])
+            _enqueue_invite_email(created["id"])
         except Exception:
             logger.exception(
                 "invite_email_enqueue_failed invitation_id=%s",

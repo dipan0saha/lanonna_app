@@ -7,7 +7,7 @@ from lanonna_worker.config import settings, validate_worker_settings
 
 validate_worker_settings()
 from lanonna_worker.baby_data_export import run_baby_data_export
-from lanonna_worker.invite_email import send_invite_email
+from lanonna_worker.invite_email import InviteSendOutcome, send_invite_email
 from lanonna_worker.notifications import (
     process_notify_fan_out,
     process_notify_user,
@@ -87,10 +87,23 @@ async def pubsub_push(request: Request) -> Response:
         invitation_id = parse_uuid_field("invitation_id", invitation_id_raw)
         if invitation_id is None:
             return Response(status_code=204)
+        delivery_attempt = _delivery_attempt(body)
         try:
-            send_invite_email(invitation_id)
+            outcome = send_invite_email(
+                invitation_id,
+                delivery_attempt=delivery_attempt,
+                final_attempt=(
+                    delivery_attempt is None
+                    or delivery_attempt >= settings.pubsub_max_delivery_attempts
+                ),
+            )
         except Exception:
-            logger.exception("send_invite_email_failed invitation_id=%s", invitation_id_raw)
+            logger.exception(
+                "send_invite_email_failed invitation_id=%s",
+                invitation_id_raw,
+            )
+            return Response(status_code=500)
+        if outcome == InviteSendOutcome.RETRY:
             return Response(status_code=500)
         return Response(status_code=204)
 

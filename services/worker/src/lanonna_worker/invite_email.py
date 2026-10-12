@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import logging
+import random
+import time
 import uuid
+from enum import Enum
 from html import escape
 from datetime import datetime, timezone
 from typing import Any
@@ -23,6 +26,15 @@ logger = logging.getLogger("lanonna.worker.invite_email")
 _TEMPLATE_DIR = Path(__file__).resolve().parents[2] / "email_templates"
 
 _CLAIM_STALE_MINUTES = 15
+_MAILJET_IN_PROCESS_RETRIES = 3
+_ERROR_MAX_LEN = 500
+
+
+class InviteSendOutcome(str, Enum):
+    SENT = "sent"
+    SKIPPED = "skipped"
+    RETRY = "retry"
+    FAILED = "failed"
 
 
 def _load_template(name: str) -> str:
@@ -59,6 +71,7 @@ def _claim_invitation_for_send(
         """
         UPDATE invitations
         SET email_send_claimed_at = now(),
+            email_send_attempts = email_send_attempts + 1,
             updated_at = now()
         WHERE id = %s
           AND status = 'pending'
@@ -114,6 +127,8 @@ def _mark_invite_email_sent(conn: Any, invitation_id: uuid.UUID) -> bool:
         """
         UPDATE invitations
         SET email_sent_at = now(),
+            email_delivery_status = 'sent',
+            email_last_error = NULL,
             email_send_claimed_at = NULL,
             email_invite_token = NULL,
             updated_at = now()
@@ -125,6 +140,42 @@ def _mark_invite_email_sent(conn: Any, invitation_id: uuid.UUID) -> bool:
         (invitation_id,),
     ).fetchone()
     return row is not None
+
+
+def _mark_invite_email_failed(
+    conn: Any,
+    invitation_id: uuid.UUID,
+    error: str,
+) -> None:
+    trimmed = error.strip()[:_ERROR_MAX_LEN]
+    conn.execute(
+        """
+        UPDATE invitations
+        SET email_delivery_status = 'failed',
+            email_last_error = %s,
+            email_send_claimed_at = NULL,
+            updated_at = now()
+        WHERE id = %s
+          AND email_sent_at IS NULL
+          AND status = 'pending'
+        """,
+        (trimmed, invitation_id),
+    )
+
+
+def _record_transient_error(conn: Any, invitation_id: uuid.UUID, error: str) -> None:
+    trimmed = error.strip()[:_ERROR_MAX_LEN]
+    conn.execute(
+        """
+        UPDATE invitations
+        SET email_last_error = %s,
+            updated_at = now()
+        WHERE id = %s
+          AND email_sent_at IS NULL
+          AND status = 'pending'
+        """,
+        (trimmed, invitation_id),
+    )
 
 
 def _render_invite_email(ctx: dict, invite_url: str) -> tuple[str, str, str]:
@@ -184,13 +235,70 @@ def _mailjet_message_error(response: httpx.Response) -> str | None:
     return f"Mailjet message status={status} error_code={code}"
 
 
-def send_invite_email(invitation_id: uuid.UUID) -> None:
+def _is_transient_http_status(status_code: int) -> bool:
+    return status_code == 429 or status_code >= 500
+
+
+def _is_transient_exception(exc: BaseException) -> bool:
+    return isinstance(
+        exc,
+        (
+            httpx.ConnectError,
+            httpx.ReadTimeout,
+            httpx.WriteTimeout,
+            httpx.ConnectTimeout,
+            httpx.PoolTimeout,
+            httpx.NetworkError,
+        ),
+    )
+
+
+def _post_mailjet(payload: dict[str, Any]) -> httpx.Response:
+    last_exc: BaseException | None = None
+    for attempt in range(1, _MAILJET_IN_PROCESS_RETRIES + 1):
+        try:
+            response = httpx.post(
+                "https://api.mailjet.com/v3.1/send",
+                auth=(settings.mailjet_api_key, settings.mailjet_api_secret),
+                json=payload,
+                timeout=30.0,
+            )
+        except Exception as exc:
+            last_exc = exc
+            if not _is_transient_exception(exc) or attempt >= _MAILJET_IN_PROCESS_RETRIES:
+                raise
+            time.sleep(random.uniform(0.2, 0.8) * attempt)
+            continue
+        if _is_transient_http_status(response.status_code):
+            if attempt >= _MAILJET_IN_PROCESS_RETRIES:
+                return response
+            time.sleep(random.uniform(0.2, 0.8) * attempt)
+            continue
+        return response
+    if last_exc is not None:
+        raise last_exc
+    raise RuntimeError("Mailjet send failed without response")
+
+
+def send_invite_email(
+    invitation_id: uuid.UUID,
+    *,
+    delivery_attempt: int | None = None,
+    final_attempt: bool = False,
+) -> InviteSendOutcome:
     if not settings.mailjet_api_key or not settings.mailjet_api_secret:
         logger.error(
             "mailjet_not_configured invitation_id=%s",
             invitation_id,
         )
-        raise RuntimeError("Mailjet is not configured; cannot send invite email")
+        with get_connection() as conn:
+            _mark_invite_email_failed(
+                conn,
+                invitation_id,
+                "Mailjet is not configured; cannot send invite email",
+            )
+        return InviteSendOutcome.FAILED
+
     sender_error = mailjet_sender_error(settings.mailjet_from_email)
     if sender_error:
         logger.error(
@@ -198,7 +306,9 @@ def send_invite_email(invitation_id: uuid.UUID) -> None:
             invitation_id,
             sender_error,
         )
-        raise RuntimeError(sender_error)
+        with get_connection() as conn:
+            _mark_invite_email_failed(conn, invitation_id, sender_error)
+        return InviteSendOutcome.FAILED
 
     with get_connection() as conn:
         ctx = _claim_invitation_for_send(conn, invitation_id)
@@ -207,7 +317,7 @@ def send_invite_email(invitation_id: uuid.UUID) -> None:
             "invite_email_skip invitation_id=%s not claimable",
             invitation_id,
         )
-        return
+        return InviteSendOutcome.SKIPPED
 
     invite_token = ctx.get("email_invite_token")
     if not invite_token:
@@ -216,8 +326,12 @@ def send_invite_email(invitation_id: uuid.UUID) -> None:
             invitation_id,
         )
         with get_connection() as conn:
-            _release_invite_send_claim(conn, invitation_id)
-        return
+            _mark_invite_email_failed(
+                conn,
+                invitation_id,
+                "Invite email delivery token missing",
+            )
+        return InviteSendOutcome.FAILED
 
     invite_url = build_invite_url(str(invite_token), ctx["role"])
     subject, html, text = _render_invite_email(ctx, invite_url)
@@ -238,32 +352,51 @@ def send_invite_email(invitation_id: uuid.UUID) -> None:
     }
 
     try:
-        response = httpx.post(
-            "https://api.mailjet.com/v3.1/send",
-            auth=(settings.mailjet_api_key, settings.mailjet_api_secret),
-            json=payload,
-            timeout=30.0,
+        response = _post_mailjet(payload)
+    except Exception as exc:
+        transient = _is_transient_exception(exc)
+        message = f"{type(exc).__name__}: {exc}"
+        logger.error(
+            "mailjet_send_failed invitation_id=%s transient=%s error=%s",
+            invitation_id,
+            transient,
+            message,
         )
-        if response.status_code >= 300:
-            logger.error(
-                "mailjet_send_failed invitation_id=%s status=%s body=%s",
-                invitation_id,
-                response.status_code,
-                response.text[:500],
-            )
-            raise RuntimeError(f"Mailjet send failed ({response.status_code})")
-        message_error = _mailjet_message_error(response)
-        if message_error:
-            logger.error(
-                "mailjet_send_failed invitation_id=%s %s",
-                invitation_id,
-                message_error,
-            )
-            raise RuntimeError(message_error)
-    except Exception:
         with get_connection() as conn:
-            _release_invite_send_claim(conn, invitation_id)
-        raise
+            if transient and not final_attempt:
+                _record_transient_error(conn, invitation_id, message)
+                _release_invite_send_claim(conn, invitation_id)
+                return InviteSendOutcome.RETRY
+            _mark_invite_email_failed(conn, invitation_id, message)
+        return InviteSendOutcome.FAILED
+
+    if response.status_code >= 300:
+        transient = _is_transient_http_status(response.status_code)
+        message = f"Mailjet HTTP {response.status_code}"
+        logger.error(
+            "mailjet_send_failed invitation_id=%s status=%s body=%s",
+            invitation_id,
+            response.status_code,
+            response.text[:500],
+        )
+        with get_connection() as conn:
+            if transient and not final_attempt:
+                _record_transient_error(conn, invitation_id, message)
+                _release_invite_send_claim(conn, invitation_id)
+                return InviteSendOutcome.RETRY
+            _mark_invite_email_failed(conn, invitation_id, message)
+        return InviteSendOutcome.FAILED
+
+    message_error = _mailjet_message_error(response)
+    if message_error:
+        logger.error(
+            "mailjet_send_failed invitation_id=%s %s",
+            invitation_id,
+            message_error,
+        )
+        with get_connection() as conn:
+            _mark_invite_email_failed(conn, invitation_id, message_error)
+        return InviteSendOutcome.FAILED
 
     with get_connection() as conn:
         if not _mark_invite_email_sent(conn, invitation_id):
@@ -271,6 +404,11 @@ def send_invite_email(invitation_id: uuid.UUID) -> None:
                 "invite_email_skip_already_sent invitation_id=%s",
                 invitation_id,
             )
-            return
+            return InviteSendOutcome.SKIPPED
 
-    logger.info("invite_email_sent invitation_id=%s", invitation_id)
+    logger.info(
+        "invite_email_sent invitation_id=%s delivery_attempt=%s",
+        invitation_id,
+        delivery_attempt,
+    )
+    return InviteSendOutcome.SENT

@@ -44,7 +44,8 @@ def list_invitations_for_baby(baby_profile_id: uuid.UUID) -> list[dict[str, Any]
         rows = conn.execute(
             """
             SELECT id, invitee_email, role, relationship_label, status,
-                   expires_at, created_at
+                   expires_at, created_at, email_sent_at,
+                   email_delivery_status, email_last_error, email_send_attempts
             FROM invitations
             WHERE baby_profile_id = %s
             ORDER BY created_at DESC
@@ -81,6 +82,49 @@ def email_has_pending_invite(baby_profile_id: uuid.UUID, email: str) -> bool:
             (baby_profile_id, email),
         ).fetchone()
     return row is not None
+
+
+def fetch_pending_invitation_by_email(
+    baby_profile_id: uuid.UUID,
+    email: str,
+) -> dict[str, Any] | None:
+    with get_connection() as conn:
+        row = conn.execute(
+            """
+            SELECT id, invitee_email, email_sent_at, email_delivery_status
+            FROM invitations
+            WHERE baby_profile_id = %s
+              AND lower(invitee_email) = lower(%s)
+              AND status = 'pending'
+            LIMIT 1
+            """,
+            (baby_profile_id, email.strip().lower()),
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def prepare_invitation_for_resend(
+    baby_profile_id: uuid.UUID,
+    invitation_id: uuid.UUID,
+) -> dict[str, Any] | None:
+    """Clear a stale send claim and allow another delivery attempt."""
+    with get_connection() as conn:
+        row = conn.execute(
+            """
+            UPDATE invitations
+            SET email_send_claimed_at = NULL,
+                email_delivery_status = 'pending',
+                email_last_error = NULL,
+                updated_at = now()
+            WHERE id = %s
+              AND baby_profile_id = %s
+              AND status = 'pending'
+              AND email_sent_at IS NULL
+            RETURNING id, invitee_email
+            """,
+            (invitation_id, baby_profile_id),
+        ).fetchone()
+    return dict(row) if row else None
 
 
 def create_invitation(

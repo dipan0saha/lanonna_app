@@ -11,6 +11,7 @@ from lanonna_api.domain.invitations import (
     batch_invite,
     list_invitations_for_owner,
     membership_check_for_owner,
+    resend_invitation_for_owner,
     revoke_invitation_for_owner,
 )
 from lanonna_api.http_errors import map_domain_errors
@@ -38,6 +39,9 @@ def _invitation_json(r: dict[str, Any]) -> dict[str, Any]:
         "created_at": r["created_at"].isoformat()
         if hasattr(r["created_at"], "isoformat")
         else str(r["created_at"]),
+        "email_delivery_status": r.get("email_delivery_status"),
+        "email_last_error": r.get("email_last_error"),
+        "email_send_attempts": r.get("email_send_attempts"),
     }
 
 
@@ -51,6 +55,22 @@ def list_invitations(
     except Exception as exc:
         raise map_domain_errors(exc) from exc
     return [_invitation_json(r) for r in rows]
+
+
+@router.post(
+    "/{baby_profile_id}/invitations/{invitation_id}/resend",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def resend_invitation(
+    baby_profile_id: uuid.UUID,
+    invitation_id: uuid.UUID,
+    user: dict[str, Any] = Depends(current_app_user),
+) -> Response:
+    try:
+        resend_invitation_for_owner(user["uid"], baby_profile_id, invitation_id)
+    except Exception as exc:
+        raise map_domain_errors(exc) from exc
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.delete(

@@ -178,13 +178,13 @@ cd infra/terraform/environments/dev && terraform apply
 - Weekly digest: `./scripts/setup-weekly-digest-scheduler.sh` (Sunday 14:00 UTC)
 - Expired invites: `./scripts/setup-expired-invites-scheduler.sh`
 - **Push auth:** OIDC; Run invoker via `apply-dev-run-iam.sh` after each worker deploy
-- **Retry config:** worker env `PUBSUB_MAX_DELIVERY_ATTEMPTS` (default 5) must match `dead_letter_policy.max_delivery_attempts` in `pubsub.tf`; the export handler uses it to decide which attempt is final
+- **Retry config:** both push subscriptions use exponential backoff (`10s`–`600s`) and dead-letter after **12** attempts (`local.pubsub_max_delivery_attempts` in `pubsub.tf`). Worker env `PUBSUB_MAX_DELIVERY_ATTEMPTS` (default **12**) must match; invite email and export handlers use it to decide which Pub/Sub attempt is final.
 - **Timeouts:** push subscriptions use **`ack_deadline_seconds = 300`**; worker deploy sets **`--timeout=300`**. After changing ack deadline in `pubsub.tf`, run **`terraform apply`** in the target environment (deploy alone does not update Pub/Sub).
 - **FCM:** Worker SA may need **`roles/firebasecloudmessaging.admin`**
 
 #### Dead-letter queue
 
-Both push subscriptions dead-letter after **5** delivery attempts to topic `lanonna-async-commands-dlq`. Terraform also creates the retention subscription **`lanonna-async-commands-dlq-pull`** (7 days) and grants the Pub/Sub service agent `roles/pubsub.subscriber` on each push subscription (required for dead-lettering). There is no alert on DLQ depth yet ([open-gaps.md](open-gaps.md) L-14) — check it after deploys and incidents:
+Both push subscriptions dead-letter after **12** delivery attempts (with exponential backoff between tries) to topic `lanonna-async-commands-dlq`. Terraform also creates the retention subscription **`lanonna-async-commands-dlq-pull`** (7 days), a Monitoring alert when undelivered DLQ messages stay above zero for five minutes (`monitoring.tf`), and grants the Pub/Sub service agent `roles/pubsub.subscriber` on each push subscription (required for dead-lettering). Wire a notification channel in Cloud Console when ready; until then, check the DLQ after deploys and incidents:
 
 ```bash
 gcloud pubsub subscriptions pull lanonna-async-commands-dlq-pull \

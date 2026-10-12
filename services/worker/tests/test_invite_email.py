@@ -4,7 +4,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+import httpx
+
 from lanonna_worker.invite_email import (
+    InviteSendOutcome,
     _render_invite_email,
     build_invite_url,
     send_invite_email,
@@ -108,8 +111,17 @@ def test_render_invite_email_owner_uses_coowner_copy():
 def test_send_invite_email_raises_when_mailjet_not_configured(mock_settings):
     mock_settings.mailjet_api_key = ""
     mock_settings.mailjet_api_secret = ""
-    with pytest.raises(RuntimeError, match="Mailjet is not configured"):
-        send_invite_email(uuid.uuid4())
+    conn = MagicMock()
+    with patch("lanonna_worker.invite_email.get_connection") as mock_conn_ctx:
+        mock_conn_ctx.return_value.__enter__.return_value = conn
+        outcome = send_invite_email(uuid.uuid4())
+    assert outcome == InviteSendOutcome.FAILED
+    failed = [
+        call
+        for call in conn.execute.call_args_list
+        if "email_delivery_status = 'failed'" in call[0][0]
+    ]
+    assert failed
 
 
 @patch("lanonna_worker.invite_email.settings")
@@ -122,8 +134,9 @@ def test_send_invite_email_skips_when_not_claimable(mock_settings):
         "lanonna_worker.invite_email.get_connection"
     ) as mock_conn_ctx, patch("lanonna_worker.invite_email.httpx.post") as post:
         mock_conn_ctx.return_value.__enter__.return_value = conn
-        send_invite_email(uuid.uuid4())
+        outcome = send_invite_email(uuid.uuid4())
     post.assert_not_called()
+    assert outcome == InviteSendOutcome.SKIPPED
 
 
 @patch("lanonna_worker.invite_email.settings")
@@ -175,7 +188,8 @@ def test_send_invite_email_sends_and_marks_sent(mock_settings):
         "lanonna_worker.invite_email.logger"
     ) as log:
         mock_conn_ctx.return_value.__enter__.return_value = conn
-        send_invite_email(inv_id)
+        outcome = send_invite_email(inv_id)
+    assert outcome == InviteSendOutcome.SENT
     sent = post.call_args.kwargs["json"]
     html = sent["Messages"][0]["HTMLPart"]
     assert "https://lanonna-dev.firebaseapp.com/invite?token=invite-token" in html
@@ -189,6 +203,110 @@ def test_send_invite_email_sends_and_marks_sent(mock_settings):
         if "email_sent_at = now()" in call[0][0]
     ]
     assert marked
+
+
+@patch("lanonna_worker.invite_email.settings")
+def test_send_invite_email_connect_error_retries_then_sends(mock_settings):
+    mock_settings.mailjet_api_key = "key"
+    mock_settings.mailjet_api_secret = "secret"
+    mock_settings.mailjet_from_email = "lanonnaapp@gmail.com"
+    mock_settings.mailjet_from_name = "La Nonna"
+    mock_settings.invite_deep_link_base = "https://lanonna-dev.firebaseapp.com"
+    inv_id = uuid.uuid4()
+    ctx = {
+        "invitee_email": "guest@test.com",
+        "role": "follower",
+        "relationship_label": None,
+        "expires_at": datetime(2026, 12, 1, tzinfo=timezone.utc),
+        "email_invite_token": "invite-token",
+        "baby_name": "Baby",
+        "inviter_display_name": "Alex",
+    }
+    conn = MagicMock()
+
+    def execute(sql, params=None):
+        result = MagicMock()
+        if "email_send_claimed_at = now()" in sql:
+            result.fetchone.return_value = {"id": inv_id}
+        elif "invitee_email" in sql:
+            result.fetchone.return_value = ctx
+        elif "email_sent_at = now()" in sql:
+            result.fetchone.return_value = {"id": inv_id}
+        else:
+            result.fetchone.return_value = None
+        return result
+
+    conn.execute.side_effect = execute
+    ok_response = MagicMock()
+    ok_response.status_code = 200
+    ok_response.json.return_value = {"Messages": [{"Status": "success"}]}
+    with patch(
+        "lanonna_worker.invite_email.httpx.post",
+        side_effect=[httpx.ConnectError("reset"), ok_response],
+    ) as post, patch(
+        "lanonna_worker.invite_email.get_connection"
+    ) as mock_conn_ctx, patch("lanonna_worker.invite_email.time.sleep"):
+        mock_conn_ctx.return_value.__enter__.return_value = conn
+        outcome = send_invite_email(inv_id, delivery_attempt=1, final_attempt=False)
+    assert outcome == InviteSendOutcome.SENT
+    assert post.call_count == 2
+
+
+@patch("lanonna_worker.invite_email.settings")
+def test_send_invite_email_permanent_http_400_marks_failed(mock_settings):
+    mock_settings.mailjet_api_key = "key"
+    mock_settings.mailjet_api_secret = "secret"
+    mock_settings.mailjet_from_email = "lanonnaapp@gmail.com"
+    mock_settings.mailjet_from_name = "La Nonna"
+    mock_settings.invite_deep_link_base = "https://lanonna-dev.firebaseapp.com"
+    inv_id = uuid.uuid4()
+    ctx = {
+        "invitee_email": "guest@test.com",
+        "role": "follower",
+        "relationship_label": None,
+        "expires_at": datetime(2026, 12, 1, tzinfo=timezone.utc),
+        "email_invite_token": "invite-token",
+        "baby_name": "Baby",
+        "inviter_display_name": "Alex",
+    }
+    conn = MagicMock()
+
+    def execute(sql, params=None):
+        result = MagicMock()
+        if "email_send_claimed_at = now()" in sql:
+            result.fetchone.return_value = {"id": inv_id}
+        elif "invitee_email" in sql:
+            result.fetchone.return_value = ctx
+        else:
+            result.fetchone.return_value = None
+        return result
+
+    conn.execute.side_effect = execute
+    bad_response = MagicMock()
+    bad_response.status_code = 400
+    bad_response.text = "bad request"
+    with patch(
+        "lanonna_worker.invite_email.httpx.post",
+        return_value=bad_response,
+    ), patch(
+        "lanonna_worker.invite_email.get_connection"
+    ) as mock_conn_ctx:
+        mock_conn_ctx.return_value.__enter__.return_value = conn
+        outcome = send_invite_email(inv_id, final_attempt=True)
+    assert outcome == InviteSendOutcome.FAILED
+    failed = [
+        call
+        for call in conn.execute.call_args_list
+        if "email_delivery_status = 'failed'" in call[0][0]
+    ]
+    assert failed
+    released = [
+        call
+        for call in conn.execute.call_args_list
+        if "email_send_claimed_at = NULL" in call[0][0]
+        and "email_delivery_status = 'failed'" not in call[0][0]
+    ]
+    assert released == []
 
 
 @patch("lanonna_worker.invite_email.settings")
@@ -238,17 +356,17 @@ def test_send_invite_email_raises_on_mailjet_message_error(mock_settings):
         "lanonna_worker.invite_email.get_connection"
     ) as mock_conn_ctx:
         mock_conn_ctx.return_value.__enter__.return_value = conn
-        with pytest.raises(RuntimeError, match="mj-0013"):
-            send_invite_email(inv_id)
+        outcome = send_invite_email(inv_id, final_attempt=True)
+    assert outcome == InviteSendOutcome.FAILED
     marked = [
         call
         for call in conn.execute.call_args_list
         if "email_sent_at = now()" in call[0][0]
     ]
     assert marked == []
-    released = [
+    failed = [
         call
         for call in conn.execute.call_args_list
-        if "email_send_claimed_at = NULL" in call[0][0]
+        if "email_delivery_status = 'failed'" in call[0][0]
     ]
-    assert released
+    assert failed
