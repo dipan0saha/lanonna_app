@@ -22,9 +22,7 @@ def as_user(uid: str, email: str = "o@test.com"):
 def test_list_members_includes_can_remove():
     baby_id = uuid.uuid4()
     with (
-        as_user("owner-1"),
-        patch("lanonna_api.routers.members.upsert_app_user"),
-        patch(
+        as_user("owner-1"),        patch(
             "lanonna_api.routers.members.list_members_for_owner",
             return_value=[
                 {
@@ -46,9 +44,7 @@ def test_list_members_includes_can_remove():
 def test_delete_member_returns_204():
     baby_id = uuid.uuid4()
     with (
-        as_user("owner-1"),
-        patch("lanonna_api.routers.members.upsert_app_user"),
-        patch("lanonna_api.routers.members.remove_member"),
+        as_user("owner-1"),        patch("lanonna_api.routers.members.remove_member"),
     ):
         resp = client.delete(f"/v1/babies/{baby_id}/members/follower-1")
     assert resp.status_code == 204
@@ -57,9 +53,7 @@ def test_delete_member_returns_204():
 def test_leave_returns_204():
     baby_id = uuid.uuid4()
     with (
-        as_user("follower-1"),
-        patch("lanonna_api.routers.members.upsert_app_user"),
-        patch("lanonna_api.routers.members.leave_baby_profile"),
+        as_user("follower-1"),        patch("lanonna_api.routers.members.leave_baby_profile"),
     ):
         resp = client.post(f"/v1/babies/{baby_id}/leave")
     assert resp.status_code == 204

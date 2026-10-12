@@ -23,9 +23,7 @@ def _auth_as(uid: str = "member-1"):
 def test_home_summary_membership_ended_returns_403():
     baby_id = uuid.uuid4()
     with (
-        _auth_as(),
-        patch("lanonna_api.routers.babies.upsert_app_user"),
-        patch(
+        _auth_as(),        patch(
             "lanonna_api.routers.babies.build_home_summary",
             side_effect=MemberLifecycleError(
                 "membership_ended",
@@ -41,9 +39,7 @@ def test_home_summary_membership_ended_returns_403():
 def test_activity_events_membership_ended_returns_403():
     baby_id = uuid.uuid4()
     with (
-        _auth_as(),
-        patch("lanonna_api.routers.babies.upsert_app_user"),
-        patch(
+        _auth_as(),        patch(
             "lanonna_api.routers.babies.list_activity_events",
             side_effect=MemberLifecycleError(
                 "membership_ended",

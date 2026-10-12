@@ -22,9 +22,7 @@ def _auth_as(uid: str = "invitee-1", email: str = "invitee@test.com"):
 def test_invitation_accept_success():
     baby_id = uuid.uuid4()
     with (
-        _auth_as(),
-        patch("lanonna_api.routers.invitation_accept.upsert_app_user"),
-        patch(
+        _auth_as(),        patch(
             "lanonna_api.domain.invitations.accept_invitation_by_token",
             return_value={
                 "already_member": False,
@@ -60,9 +58,7 @@ def test_invitation_preview_not_found_returns_structured_detail():
 
 def test_invitation_accept_not_found_returns_404():
     with (
-        _auth_as(),
-        patch("lanonna_api.routers.invitation_accept.upsert_app_user"),
-        patch(
+        _auth_as(),        patch(
             "lanonna_api.domain.invitations.accept_invitation_by_token",
             return_value={"error": "not_found"},
         ),
@@ -77,9 +73,7 @@ def test_invitation_accept_not_found_returns_404():
 
 def test_invitation_accept_email_mismatch_returns_403_with_emails():
     with (
-        _auth_as(),
-        patch("lanonna_api.routers.invitation_accept.upsert_app_user"),
-        patch(
+        _auth_as(),        patch(
             "lanonna_api.domain.invitations.accept_invitation_by_token",
             return_value={
                 "error": "email_mismatch",
@@ -102,9 +96,7 @@ def test_invitation_accept_email_mismatch_returns_403_with_emails():
 def test_invitation_accept_notify_enqueue_failure_still_200():
     baby_id = uuid.uuid4()
     with (
-        _auth_as(),
-        patch("lanonna_api.routers.invitation_accept.upsert_app_user"),
-        patch(
+        _auth_as(),        patch(
             "lanonna_api.domain.invitations.accept_invitation_by_token",
             return_value={
                 "already_member": False,

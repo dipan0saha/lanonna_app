@@ -1,3 +1,5 @@
+from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 import firebase_admin
@@ -6,7 +8,8 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from lanonna_api.config import settings
-from lanonna_api.domain.auth_session import UserDeletedError, assert_active_user
+from lanonna_api.domain.user_errors import UserDeletedError
+from lanonna_api.repositories.users import resolve_app_user
 
 _bearer = HTTPBearer(auto_error=False)
 _app_initialized = False
@@ -51,23 +54,87 @@ def verify_firebase_token(id_token: str) -> dict[str, Any]:
     return claims
 
 
+def _user_deleted_http() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail={
+            "error": "user_deleted",
+            "message": "This account was deleted.",
+        },
+    )
+
+
+class AppUser(Mapping[str, Any]):
+    """Request-scoped app user. Claim keys stay readable for existing handlers."""
+
+    def __init__(
+        self,
+        *,
+        uid: str,
+        email: str | None,
+        display_name: str | None,
+        claims: Mapping[str, Any],
+        row: Mapping[str, Any],
+    ) -> None:
+        self.uid = uid
+        self.email = email
+        self.display_name = display_name
+        self.claims = MappingProxyType(dict(claims))
+        self.row = dict(row)
+
+    def __getitem__(self, key: str) -> Any:
+        if key == "uid":
+            return self.uid
+        if key == "email":
+            return self.email
+        if key == "display_name":
+            return self.display_name
+        if key in self.claims:
+            return self.claims[key]
+        raise KeyError(key)
+
+    def get(self, key: str, default: Any = None) -> Any:
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
+    def __iter__(self):
+        yield "uid"
+        yield "email"
+        yield from self.claims
+
+    def __len__(self) -> int:
+        return 2 + len(self.claims)
+
+
 async def current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
 ) -> dict[str, Any]:
+    """Verify the Firebase ID token. Does not read or write ``app_users``.
+
+    Account deletion retry (``POST /v1/me/delete-account``) uses this directly
+    so a tombstoned row can finish Firebase deletion. Every other authenticated
+    route depends on ``current_app_user``.
+    """
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authorization bearer token required",
         )
-    claims = verify_firebase_token(credentials.credentials)
+    return verify_firebase_token(credentials.credentials)
+
+
+def current_app_user(claims: dict[str, Any] = Depends(current_user)) -> AppUser:
+    """Resolve the app user once per request and reject tombstoned accounts."""
     try:
-        assert_active_user(claims["uid"])
+        row = resolve_app_user(claims["uid"], claims.get("email"))
     except UserDeletedError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={
-                "error": "user_deleted",
-                "message": "This account was deleted.",
-            },
-        ) from None
-    return claims
+        raise _user_deleted_http() from None
+    return AppUser(
+        uid=str(row["firebase_uid"]),
+        email=row.get("email"),
+        display_name=row.get("display_name"),
+        claims=claims,
+        row=row,
+    )

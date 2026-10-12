@@ -18,44 +18,62 @@ _PROFILE_COLUMNS = """
 """
 
 
-def upsert_app_user(firebase_uid: str, email: str | None) -> dict[str, Any]:
+# last_seen_at is refreshed at most this often. Email and updated_at change
+# only when the Firebase email claim actually changes.
+LAST_SEEN_THROTTLE_MINUTES = 15
+
+_RESOLVE_COLUMNS = _PROFILE_COLUMNS + ", deleted_at, last_seen_at"
+
+
+def resolve_app_user(firebase_uid: str, email: str | None) -> dict[str, Any]:
+    """Provision the app user once per request.
+
+    Never writes a tombstoned row. Never replaces a stored email with NULL.
+    ``updated_at`` moves only when the email changes. ``last_seen_at`` writes
+    are throttled so a steady-state request is a single read.
+    """
     with get_connection() as conn:
         row = conn.execute(
             f"""
-            INSERT INTO app_users (firebase_uid, email)
-            VALUES (%s, %s)
+            INSERT INTO app_users (firebase_uid, email, last_seen_at)
+            VALUES (%s, %s, now())
             ON CONFLICT (firebase_uid) DO UPDATE
-              SET email = EXCLUDED.email,
-                  updated_at = now()
+              SET email = COALESCE(EXCLUDED.email, app_users.email),
+                  last_seen_at = now(),
+                  updated_at = CASE
+                    WHEN EXCLUDED.email IS NOT NULL
+                     AND EXCLUDED.email IS DISTINCT FROM app_users.email
+                    THEN now()
+                    ELSE app_users.updated_at
+                  END
               WHERE app_users.deleted_at IS NULL
-            RETURNING {_PROFILE_COLUMNS}
+                AND (
+                  (
+                    EXCLUDED.email IS NOT NULL
+                    AND EXCLUDED.email IS DISTINCT FROM app_users.email
+                  )
+                  OR app_users.last_seen_at IS NULL
+                  OR app_users.last_seen_at < now() - make_interval(mins => %s)
+                )
+            RETURNING {_RESOLVE_COLUMNS}
             """,
-            (firebase_uid, email),
+            (firebase_uid, email, LAST_SEEN_THROTTLE_MINUTES),
         ).fetchone()
         if row is None:
             row = conn.execute(
                 f"""
-                SELECT {_PROFILE_COLUMNS}
+                SELECT {_RESOLVE_COLUMNS}
                 FROM app_users
                 WHERE firebase_uid = %s
-                  AND deleted_at IS NULL
                 """,
                 (firebase_uid,),
             ).fetchone()
-            if row is None:
-                tombstone = conn.execute(
-                    """
-                    SELECT deleted_at
-                    FROM app_users
-                    WHERE firebase_uid = %s
-                    """,
-                    (firebase_uid,),
-                ).fetchone()
-                if tombstone is not None and tombstone.get("deleted_at") is not None:
-                    raise UserDeletedError()
     if row is None:
-        raise RuntimeError("upsert_app_user returned no row")
-    return dict(row)
+        raise RuntimeError("resolve_app_user returned no row")
+    result = dict(row)
+    if result.get("deleted_at") is not None:
+        raise UserDeletedError()
+    return result
 
 
 def patch_profile_fields(
@@ -227,10 +245,10 @@ def user_has_self_created_baby(firebase_uid: str) -> bool:
               AND m.role = 'owner'
               AND m.removed_at IS NULL
               AND b.deleted_at IS NULL
-              AND b.created_by_firebase_uid = %s
+              AND m.joined_via = 'created'
             LIMIT 1
             """,
-            (firebase_uid, firebase_uid),
+            (firebase_uid,),
         ).fetchone()
     return row is not None
 
@@ -247,11 +265,11 @@ def self_created_owner_baby_profile_id(firebase_uid: str) -> uuid.UUID | None:
               AND m.role = 'owner'
               AND m.removed_at IS NULL
               AND b.deleted_at IS NULL
-              AND b.created_by_firebase_uid = %s
+              AND m.joined_via = 'created'
             ORDER BY b.created_at DESC
             LIMIT 1
             """,
-            (firebase_uid, firebase_uid),
+            (firebase_uid,),
         ).fetchone()
     if row is None:
         return None

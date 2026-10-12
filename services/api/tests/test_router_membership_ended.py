@@ -28,9 +28,7 @@ def _auth_as(uid: str = "member-1"):
 def test_search_membership_ended_returns_403():
     baby_id = uuid.uuid4()
     with (
-        _auth_as(),
-        patch("lanonna_api.routers.search.upsert_app_user"),
-        patch(
+        _auth_as(),        patch(
             "lanonna_api.routers.search.search_baby_content",
             side_effect=_ENDED,
         ),
@@ -43,9 +41,7 @@ def test_search_membership_ended_returns_403():
 def test_list_invitations_membership_ended_returns_403():
     baby_id = uuid.uuid4()
     with (
-        _auth_as(),
-        patch("lanonna_api.routers.invitations.upsert_app_user"),
-        patch(
+        _auth_as(),        patch(
             "lanonna_api.routers.invitations.list_invitations_for_owner",
             side_effect=_ENDED,
         ),
@@ -58,9 +54,7 @@ def test_list_invitations_membership_ended_returns_403():
 def test_list_members_membership_ended_returns_403():
     baby_id = uuid.uuid4()
     with (
-        _auth_as(),
-        patch("lanonna_api.routers.members.upsert_app_user"),
-        patch(
+        _auth_as(),        patch(
             "lanonna_api.routers.members.list_members_for_owner",
             side_effect=_ENDED,
         ),
@@ -73,9 +67,7 @@ def test_list_members_membership_ended_returns_403():
 def test_first_moment_seed_membership_ended_returns_403():
     baby_id = uuid.uuid4()
     with (
-        _auth_as(),
-        patch("lanonna_api.routers.babies.upsert_app_user"),
-        patch(
+        _auth_as(),        patch(
             "lanonna_api.routers.babies.seed_first_moment",
             side_effect=_ENDED,
         ),

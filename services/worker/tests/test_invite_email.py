@@ -30,6 +30,23 @@ def test_render_invite_email_follower_uses_follow_copy():
     assert "co-owner" not in html.lower()
 
 
+def test_render_invite_email_escapes_markup_names_for_both_roles():
+    for role in ("follower", "owner"):
+        ctx = _sample_ctx(role)
+        ctx["inviter_display_name"] = '<a href="https://evil.example">Click</a>'
+        ctx["baby_name"] = "A & B"
+        ctx["relationship_label"] = 'Aunt "Bee"'
+        _, html, text = _render_invite_email(
+            ctx, "lanonna://app/invite-accept?token=abc"
+        )
+        assert '<a href="https://evil.example">' not in html
+        assert "&lt;a href=&quot;https://evil.example&quot;&gt;" in html
+        assert "A &amp; B" in html
+        assert '<a href="https://evil.example">Click</a>' in text
+        assert "A & B" in text
+        assert 'Aunt "Bee"' in text
+
+
 def test_render_invite_email_escapes_user_fields_in_html():
     ctx = _sample_ctx("follower")
     ctx["inviter_display_name"] = '<img src=x onerror="alert(1)">'
@@ -117,6 +134,7 @@ def test_send_invite_email_sends_and_marks_sent(mock_settings):
     conn.execute.side_effect = execute
     mock_response = MagicMock()
     mock_response.status_code = 200
+    mock_response.json.return_value = {"Messages": [{"Status": "success"}]}
     with patch(
         "lanonna_worker.invite_email.httpx.post",
         return_value=mock_response,
@@ -126,3 +144,71 @@ def test_send_invite_email_sends_and_marks_sent(mock_settings):
         mock_conn_ctx.return_value.__enter__.return_value = conn
         send_invite_email(inv_id)
     assert call_count >= 2
+    marked = [
+        call
+        for call in conn.execute.call_args_list
+        if "email_sent_at = now()" in call[0][0]
+    ]
+    assert marked
+
+
+@patch("lanonna_worker.invite_email.settings")
+def test_send_invite_email_raises_on_mailjet_message_error(mock_settings):
+    mock_settings.mailjet_api_key = "key"
+    mock_settings.mailjet_api_secret = "secret"
+    mock_settings.mailjet_from_email = "lanonnaapp@gmail.com"
+    mock_settings.mailjet_from_name = "La Nonna"
+    inv_id = uuid.uuid4()
+    ctx = {
+        "invitee_email": "guest@test.com",
+        "role": "follower",
+        "relationship_label": None,
+        "expires_at": datetime(2026, 12, 1, tzinfo=timezone.utc),
+        "email_invite_token": "invite-token",
+        "baby_name": "Baby",
+        "inviter_display_name": "Alex",
+    }
+    conn = MagicMock()
+
+    def execute(sql, params=None):
+        result = MagicMock()
+        if "email_send_claimed_at = now()" in sql and "UPDATE" in sql:
+            result.fetchone.return_value = {"id": inv_id}
+        elif "invitee_email" in sql:
+            result.fetchone.return_value = ctx
+        else:
+            result.fetchone.return_value = None
+        return result
+
+    conn.execute.side_effect = execute
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "Messages": [
+            {
+                "Status": "error",
+                "Errors": [{"ErrorCode": "mj-0013", "ErrorMessage": "sender"}],
+            }
+        ]
+    }
+    with patch(
+        "lanonna_worker.invite_email.httpx.post",
+        return_value=mock_response,
+    ), patch(
+        "lanonna_worker.invite_email.get_connection"
+    ) as mock_conn_ctx:
+        mock_conn_ctx.return_value.__enter__.return_value = conn
+        with pytest.raises(RuntimeError, match="mj-0013"):
+            send_invite_email(inv_id)
+    marked = [
+        call
+        for call in conn.execute.call_args_list
+        if "email_sent_at = now()" in call[0][0]
+    ]
+    assert marked == []
+    released = [
+        call
+        for call in conn.execute.call_args_list
+        if "email_send_claimed_at = NULL" in call[0][0]
+    ]
+    assert released

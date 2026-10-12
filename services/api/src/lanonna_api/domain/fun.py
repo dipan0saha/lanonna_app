@@ -38,7 +38,6 @@ from lanonna_api.repositories.fun import (
 )
 from lanonna_api.repositories.memberships import lock_membership_for_user_for_update
 from lanonna_api.domain.content_permissions import member_content_can_delete
-from lanonna_api.repositories.users import upsert_app_user
 
 
 def list_names(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, Any]:
@@ -87,7 +86,6 @@ def suggest_name(
     membership = get_baby_membership(firebase_uid, baby_profile_id)
     if find_name_suggestion_case_insensitive(baby_profile_id, suggested_name, gender):
         raise ValueError("That name is already on the list for this gender.")
-    upsert_app_user(firebase_uid, None)
     if membership and membership["role"] != "owner":
         with get_connection() as conn:
             locked = lock_membership_for_user_for_update(
@@ -206,7 +204,6 @@ def set_gender_vote(
     require_membership(firebase_uid, baby_profile_id)
     if gender_value not in ("male", "female"):
         raise ValueError("Invalid gender vote.")
-    upsert_app_user(firebase_uid, None)
     upsert_gender_vote(baby_profile_id, firebase_uid, gender_value, False)
     insert_activity_event(
         baby_profile_id,
@@ -224,6 +221,5 @@ def set_birthdate_vote(
     predicted_birth_date: date,
 ) -> dict[str, Any]:
     require_membership(firebase_uid, baby_profile_id)
-    upsert_app_user(firebase_uid, None)
     upsert_birthdate_vote(baby_profile_id, firebase_uid, predicted_birth_date, False)
     return {"date": predicted_birth_date.isoformat()}

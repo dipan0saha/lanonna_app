@@ -15,9 +15,18 @@ def test_follower_name_limit_per_gender():
         "lanonna_api.domain.fun.get_baby_membership",
         return_value={"role": "follower"},
     ), patch(
+        "lanonna_api.domain.fun.find_name_suggestion_case_insensitive",
+        return_value=None,
+    ), patch(
+        "lanonna_api.domain.fun.get_connection",
+    ) as get_conn, patch(
+        "lanonna_api.domain.fun.lock_membership_for_user_for_update",
+        return_value={"role": "follower"},
+    ), patch(
         "lanonna_api.domain.fun.count_suggestions_by_author_gender",
         return_value=1,
     ):
+        get_conn.return_value.__enter__.return_value = object()
         with pytest.raises(PermissionError):
             suggest_name("uid", baby_id, "Alex", "male")
 

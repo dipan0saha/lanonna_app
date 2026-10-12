@@ -74,6 +74,19 @@ def onboarding_status_for_user(
     *,
     email_verified: bool,
 ) -> dict[str, Any]:
+    """Owner-onboarding gate (#31).
+
+    ``needs_owner_onboarding`` is true only when the user has an active owner
+    membership they created (``baby_memberships.joined_via = 'created'``) and
+    has not finished owner onboarding. An invited co-owner
+    (``joined_via = 'invite'``) is not sent through owner onboarding.
+
+    ``can_access_main_app`` is true when the profile is complete and any of:
+    owner onboarding is finished, the user has an active follower membership,
+    or the user has an active owner membership that is not a self-created baby.
+    ``has_owner_baby`` remains "any active owner role" and is not itself a
+    reason to block the main app.
+    """
     row = get_app_user(firebase_uid)
     if row is None:
         raise LookupError("User not found")

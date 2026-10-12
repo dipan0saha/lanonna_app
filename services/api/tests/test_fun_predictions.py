@@ -11,7 +11,7 @@ def test_set_gender_vote_always_identified():
     with patch(
         "lanonna_api.domain.fun.require_membership",
         return_value={"role": "follower"},
-    ), patch("lanonna_api.domain.fun.upsert_app_user"), patch(
+    ), patch(
         "lanonna_api.domain.fun.upsert_gender_vote"
     ) as upsert, patch("lanonna_api.domain.fun.insert_activity_event"):
         set_gender_vote("uid1", _BABY, "male")
@@ -23,7 +23,7 @@ def test_set_birthdate_vote_always_identified():
     with patch(
         "lanonna_api.domain.fun.require_membership",
         return_value={"role": "follower"},
-    ), patch("lanonna_api.domain.fun.upsert_app_user"), patch(
+    ), patch(
         "lanonna_api.domain.fun.upsert_birthdate_vote"
     ) as upsert:
         set_birthdate_vote("uid1", _BABY, d)

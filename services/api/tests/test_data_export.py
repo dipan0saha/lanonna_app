@@ -23,9 +23,7 @@ def _auth_as(uid: str = "owner-1", email: str = "owner@test.com"):
 def test_data_export_forbidden_for_non_owner():
     baby_id = uuid.uuid4()
     with (
-        _auth_as(),
-        patch("lanonna_api.routers.data_export.upsert_app_user"),
-        patch(
+        _auth_as(),        patch(
             "lanonna_api.domain.data_export.get_baby_for_owner",
             return_value=None,
         ),
@@ -39,9 +37,7 @@ def test_data_export_happy_path():
     job_id = uuid.uuid4()
     created = datetime(2026, 10, 1, tzinfo=timezone.utc)
     with (
-        _auth_as(),
-        patch("lanonna_api.routers.data_export.upsert_app_user"),
-        patch(
+        _auth_as(),        patch(
             "lanonna_api.domain.data_export.get_baby_for_owner",
             return_value={"id": baby_id},
         ),
@@ -71,9 +67,7 @@ def test_data_export_pubsub_failure_marks_failed():
     job_id = uuid.uuid4()
     created = datetime(2026, 10, 1, tzinfo=timezone.utc)
     with (
-        _auth_as(),
-        patch("lanonna_api.routers.data_export.upsert_app_user"),
-        patch(
+        _auth_as(),        patch(
             "lanonna_api.domain.data_export.get_baby_for_owner",
             return_value={"id": baby_id},
         ),
@@ -103,9 +97,7 @@ def test_data_export_pubsub_failure_marks_failed():
 def test_data_export_latest_not_found():
     baby_id = uuid.uuid4()
     with (
-        _auth_as(),
-        patch("lanonna_api.routers.data_export.upsert_app_user"),
-        patch(
+        _auth_as(),        patch(
             "lanonna_api.domain.data_export.get_baby_for_owner",
             return_value={"id": baby_id},
         ),
@@ -123,9 +115,7 @@ def test_data_export_latest_ready_includes_download_url():
     job_id = uuid.uuid4()
     created = datetime(2026, 10, 1, tzinfo=timezone.utc)
     with (
-        _auth_as(),
-        patch("lanonna_api.routers.data_export.upsert_app_user"),
-        patch(
+        _auth_as(),        patch(
             "lanonna_api.domain.data_export.get_baby_for_owner",
             return_value={"id": baby_id},
         ),

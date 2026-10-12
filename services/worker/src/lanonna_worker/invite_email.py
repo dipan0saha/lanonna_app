@@ -10,7 +10,7 @@ from urllib.parse import quote
 
 import httpx
 
-from lanonna_worker.config import settings
+from lanonna_worker.config import mailjet_sender_error, settings
 from lanonna_worker.db import get_connection
 from lanonna_worker.invite_email_copy import (
     invite_email_intro_html,
@@ -154,6 +154,28 @@ def _render_invite_email(ctx: dict, invite_url: str) -> tuple[str, str, str]:
     return subject, html, text
 
 
+def _mailjet_message_error(response: httpx.Response) -> str | None:
+    """Mailjet can return HTTP 200 with Messages[0].Status == error (#43)."""
+    try:
+        body = response.json()
+    except Exception:
+        return "Mailjet response was not JSON"
+    messages = body.get("Messages") if isinstance(body, dict) else None
+    if not isinstance(messages, list) or not messages or not isinstance(messages[0], dict):
+        return "Mailjet response missing Messages"
+    status = messages[0].get("Status")
+    if status == "success":
+        return None
+    codes: list[str] = []
+    errors = messages[0].get("Errors") or []
+    if isinstance(errors, list):
+        for err in errors:
+            if isinstance(err, dict) and err.get("ErrorCode"):
+                codes.append(str(err["ErrorCode"]))
+    code = ",".join(codes) if codes else "unknown"
+    return f"Mailjet message status={status} error_code={code}"
+
+
 def send_invite_email(invitation_id: uuid.UUID) -> None:
     if not settings.mailjet_api_key or not settings.mailjet_api_secret:
         logger.error(
@@ -161,6 +183,14 @@ def send_invite_email(invitation_id: uuid.UUID) -> None:
             invitation_id,
         )
         raise RuntimeError("Mailjet is not configured; cannot send invite email")
+    sender_error = mailjet_sender_error(settings.mailjet_from_email)
+    if sender_error:
+        logger.error(
+            "mailjet_sender_rejected invitation_id=%s reason=%s",
+            invitation_id,
+            sender_error,
+        )
+        raise RuntimeError(sender_error)
 
     with get_connection() as conn:
         ctx = _claim_invitation_for_send(conn, invitation_id)
@@ -214,6 +244,14 @@ def send_invite_email(invitation_id: uuid.UUID) -> None:
                 response.text[:500],
             )
             raise RuntimeError(f"Mailjet send failed ({response.status_code})")
+        message_error = _mailjet_message_error(response)
+        if message_error:
+            logger.error(
+                "mailjet_send_failed invitation_id=%s %s",
+                invitation_id,
+                message_error,
+            )
+            raise RuntimeError(message_error)
     except Exception:
         with get_connection() as conn:
             _release_invite_send_claim(conn, invitation_id)

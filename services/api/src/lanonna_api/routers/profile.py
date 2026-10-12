@@ -2,7 +2,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from lanonna_api.auth import current_user
+from lanonna_api.auth import AppUser, current_app_user, current_user
 from lanonna_api.domain.date_validation import validate_user_birth_date
 from lanonna_api.domain.avatar_urls import normalize_avatar_for_storage, signed_avatar_url
 from lanonna_api.http_errors import map_domain_errors
@@ -12,7 +12,6 @@ from lanonna_api.repositories.babies import list_babies_for_user
 from lanonna_api.repositories.users import (
     patch_profile_fields,
     update_notification_preferences,
-    upsert_app_user,
 )
 from pydantic import BaseModel
 from lanonna_api.schemas.babies import baby_summary_from_row
@@ -41,8 +40,8 @@ def _to_profile_response(row: dict[str, Any]) -> ProfileResponse:
 
 
 @router.get("/me/account")
-def get_account(user: dict[str, Any] = Depends(current_user)) -> dict[str, Any]:
-    row = upsert_app_user(user["uid"], user.get("email"))
+def get_account(user: AppUser = Depends(current_app_user)) -> dict[str, Any]:
+    row = dict(user.row)
     babies = list_babies_for_user(user["uid"])
     extensions = build_account_extensions(user["uid"])
     return {
@@ -58,9 +57,8 @@ def get_account(user: dict[str, Any] = Depends(current_user)) -> dict[str, Any]:
 @router.patch("/profile", response_model=ProfileResponse)
 def patch_profile(
     body: ProfileUpdateRequest,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> ProfileResponse:
-    upsert_app_user(user["uid"], user.get("email"))
     changes = body.model_dump(exclude_unset=True)
     if "birth_date" in changes and changes["birth_date"] is not None:
         try:
@@ -114,18 +112,16 @@ def _notification_preferences_payload(row: dict[str, Any]) -> dict[str, Any]:
 
 @router.get("/me/notification-preferences")
 def get_notification_preferences(
-    user: dict[str, Any] = Depends(current_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, Any]:
-    row = upsert_app_user(user["uid"], user.get("email"))
-    return _notification_preferences_payload(row)
+    return _notification_preferences_payload(dict(user.row))
 
 
 @router.patch("/me/notification-preferences")
 def patch_notification_preferences(
     body: NotificationPreferencesUpdate,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> dict[str, Any]:
-    upsert_app_user(user["uid"], user.get("email"))
     if body.notification_digest is not None and body.notification_digest not in (
         "realtime",
         "daily",
@@ -154,9 +150,8 @@ class DeleteAccountBody(BaseModel):
 
 @router.get("/me/delete-account/eligibility")
 def get_delete_account_eligibility(
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> dict[str, Any]:
-    upsert_app_user(user["uid"], user.get("email"))
     return delete_account_eligibility(user["uid"])
 
 

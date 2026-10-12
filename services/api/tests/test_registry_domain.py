@@ -58,8 +58,6 @@ def test_create_item_passes_catalog_suggestion_id():
         "lanonna_api.domain.registry.catalog_suggestion_claimed",
         return_value=False,
     ), patch(
-        "lanonna_api.domain.registry.upsert_app_user",
-    ), patch(
         "lanonna_api.domain.registry.insert_activity_event",
     ), patch(
         "lanonna_api.domain.registry.create_registry_item",
@@ -99,8 +97,6 @@ def test_claim_purchase_follower_notifies_owners():
         "lanonna_api.domain.registry.get_registry_item",
         return_value=item_row,
     ), patch(
-        "lanonna_api.domain.registry.upsert_app_user",
-    ), patch(
         "lanonna_api.domain.registry.create_purchase",
         return_value={
             "id": uuid.uuid4(),
@@ -137,8 +133,6 @@ def test_claim_purchase_owner_notifies_members():
         "lanonna_api.domain.registry.get_registry_item",
         return_value=item_row,
     ), patch(
-        "lanonna_api.domain.registry.upsert_app_user",
-    ), patch(
         "lanonna_api.domain.registry.create_purchase",
         return_value={
             "id": uuid.uuid4(),
@@ -174,8 +168,6 @@ def test_claim_purchase_rejects_when_another_user_won_race():
     ), patch(
         "lanonna_api.domain.registry.get_registry_item",
         return_value=item_row,
-    ), patch(
-        "lanonna_api.domain.registry.upsert_app_user",
     ), patch(
         "lanonna_api.domain.registry.create_purchase",
         return_value={

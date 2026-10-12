@@ -45,9 +45,8 @@ def _profile_row(**overrides):
     return base
 
 
-@patch("lanonna_api.routers.profile.upsert_app_user")
 @patch("lanonna_api.routers.profile.patch_profile_fields")
-def test_patch_profile_birth_date_only(mock_patch, _upsert):
+def test_patch_profile_birth_date_only(mock_patch):
     mock_patch.return_value = _profile_row(birth_date=date(1991, 1, 1))
     with _auth_as():
         response = client.patch("/v1/profile", json={"birth_date": "1991-01-01"})
@@ -58,9 +57,8 @@ def test_patch_profile_birth_date_only(mock_patch, _upsert):
     assert response.json()["phone"] == "5550100"
 
 
-@patch("lanonna_api.routers.profile.upsert_app_user")
 @patch("lanonna_api.routers.profile.patch_profile_fields")
-def test_patch_profile_without_display_name(mock_patch, _upsert):
+def test_patch_profile_without_display_name(mock_patch):
     mock_patch.return_value = _profile_row()
     with _auth_as():
         response = client.patch("/v1/profile", json={"phone": "5559999"})
@@ -69,25 +67,22 @@ def test_patch_profile_without_display_name(mock_patch, _upsert):
     assert "display_name" not in changes
 
 
-@patch("lanonna_api.routers.profile.upsert_app_user")
-def test_patch_profile_rejects_future_birth_date(_upsert):
+def test_patch_profile_rejects_future_birth_date():
     with _auth_as():
         response = client.patch("/v1/profile", json={"birth_date": "2030-01-01"})
     assert response.status_code == 400
     assert "future" in response.json()["detail"].lower()
 
 
-@patch("lanonna_api.routers.profile.upsert_app_user")
-def test_patch_profile_rejects_implausibly_old_birth_date(_upsert):
+def test_patch_profile_rejects_implausibly_old_birth_date():
     with _auth_as():
         response = client.patch("/v1/profile", json={"birth_date": "1800-01-01"})
     assert response.status_code == 400
     assert "valid date of birth" in response.json()["detail"].lower()
 
 
-@patch("lanonna_api.routers.profile.upsert_app_user")
 @patch("lanonna_api.routers.profile.patch_profile_fields")
-def test_patch_profile_explicit_null_clears_birth_date(mock_patch, _upsert):
+def test_patch_profile_explicit_null_clears_birth_date(mock_patch):
     mock_patch.return_value = _profile_row(birth_date=None)
     with _auth_as():
         response = client.patch("/v1/profile", json={"birth_date": None})
@@ -95,9 +90,8 @@ def test_patch_profile_explicit_null_clears_birth_date(mock_patch, _upsert):
     assert mock_patch.call_args[0][1]["birth_date"] is None
 
 
-@patch("lanonna_api.routers.profile.upsert_app_user")
 @patch("lanonna_api.routers.profile.patch_profile_fields")
-def test_patch_profile_explicit_null_clears_phone(mock_patch, _upsert):
+def test_patch_profile_explicit_null_clears_phone(mock_patch):
     mock_patch.return_value = _profile_row(phone=None)
     with _auth_as():
         response = client.patch("/v1/profile", json={"phone": None})
