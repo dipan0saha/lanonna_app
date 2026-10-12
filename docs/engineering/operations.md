@@ -119,7 +119,7 @@ Scripts use **Cloud Build** → `us-central1-docker.pkg.dev/lanonna-dev/lanonna/
 
 **Deploy order when both change:** apply **migrations** first if needed → **worker** → `apply-dev-run-iam.sh` → **API**. Email templates: `bash scripts/sync-email-templates.sh apply` before worker deploy when templates changed.
 
-**Worker sender (#43):** `MAILJET_FROM_EMAIL` is configuration, not a secret. `services/worker/scripts/deploy.sh` uses the environment variable when it is set, otherwise sources `infra/env/dev.worker.env` (`lanonnaapp@gmail.com` for dev). Deploy and worker startup both refuse an empty sender and `hello@lanonna.app` (Mailjet returns HTTP 200 for that address and drops the message). A Mailjet HTTP 200 whose `Messages[0].Status` is not `success` is a send failure: the invite claim is released and `email_sent_at` is not set.
+**Worker sender (#43):** `MAILJET_FROM_EMAIL` is configuration, not a secret. `services/worker/scripts/deploy.sh` uses the environment variable when it is set, otherwise reads `infra/env/dev.worker.env` (`lanonnaapp@gmail.com`, display name `La Nonna`) without executing it. Values with spaces in that file are quoted. The sender check runs before Cloud Build. Deploy and worker startup both refuse an empty sender and `hello@lanonna.app` (Mailjet returns HTTP 200 for that address and drops the message). A Mailjet HTTP 200 whose `Messages[0].Status` is not `success` is a send failure: the invite claim is released and `email_sent_at` is not set.
 
 **URLs:**
 
