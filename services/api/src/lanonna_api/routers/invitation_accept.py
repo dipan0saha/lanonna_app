@@ -6,13 +6,12 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from lanonna_api.app_check import require_app_check
-from lanonna_api.auth import current_user
+from lanonna_api.auth import current_app_user
 from lanonna_api.domain.invitations import (
     accept_invitation,
     format_preview_expires,
     preview_invitation,
 )
-from lanonna_api.repositories.users import upsert_app_user
 from lanonna_api.schemas.invitations import (
     InvitationAcceptRequest,
     InvitationAcceptResponse,
@@ -83,9 +82,8 @@ def invitation_preview(
 )
 def invitation_accept(
     body: InvitationAcceptRequest,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> InvitationAcceptResponse:
-    upsert_app_user(user["uid"], user.get("email"))
     result = accept_invitation(body.token, user["uid"], user.get("email"))
     if "error" in result:
         _raise_invitation_accept_error(result)

@@ -38,9 +38,7 @@ def test_eligibility_allowed_even_with_sole_owned_babies():
 
 def test_delete_account_eligibility_route():
     with (
-        _auth_as(),
-        patch("lanonna_api.routers.profile.upsert_app_user"),
-        patch(
+        _auth_as(),        patch(
             "lanonna_api.domain.account_delete.delete_account_eligibility",
             return_value={"allowed": True, "blockers": []},
         ),

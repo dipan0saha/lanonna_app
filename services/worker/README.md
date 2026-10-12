@@ -28,6 +28,8 @@ Before deploy, if you edited [packages/email-templates](../../packages/email-tem
 
 `ENVIRONMENT=dev` allows default GCP project/bucket names for local runs; non-dev startup fails if those dev defaults are still configured (see `validate_worker_settings` in `config.py`).
 
+`MAILJET_FROM_EMAIL` has no placeholder default (#43). Deploy sources `infra/env/dev.worker.env` when the variable is unset, then refuses an empty value or `hello@lanonna.app`. Startup uses the same check in every environment. Dev's validated sender is `lanonnaapp@gmail.com`.
+
 See [docs/engineering/development.md](../../docs/engineering/development.md) and [platform-architecture.md](../../docs/engineering/platform-architecture.md).
 
 ## Tests

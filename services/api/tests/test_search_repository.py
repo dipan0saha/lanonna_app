@@ -49,4 +49,6 @@ def test_search_name_suggestions_uses_existing_column():
     sql = " ".join(conn.execute.call_args[0][0].split())
     assert "suggested_name ILIKE" in sql
     assert "suggested_name AS name" in sql
+    # Python source must keep a one-character ESCAPE (backslash), not an empty string.
+    assert "ESCAPE '\\'" in sql
     assert rows == [{"id": rows[0]["id"], "name": "Liam"}]

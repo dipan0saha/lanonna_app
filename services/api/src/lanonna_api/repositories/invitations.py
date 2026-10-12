@@ -261,9 +261,9 @@ def accept_invitation_by_token(
             conn.execute(
                 """
                 INSERT INTO baby_memberships (
-                    baby_profile_id, firebase_uid, role, relationship_label
+                    baby_profile_id, firebase_uid, role, relationship_label, joined_via
                 )
-                VALUES (%s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, 'invite')
                 """,
                 (
                     baby_profile_id,

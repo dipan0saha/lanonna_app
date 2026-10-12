@@ -14,7 +14,7 @@ Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [op
 |-------|--------|
 | API `pytest` (`services/api`) | 209 passed |
 | Worker `pytest` | 56 passed |
-| `flutter test` | 256 passed |
+| `flutter test` | 257 passed |
 | `flutter analyze` | 0 errors, 0 warnings, 47 infos (L-26) |
 
 Run all three suites before every ship; the suites are the only automated gate (no CI).
@@ -195,13 +195,13 @@ Run all three suites before every ship; the suites are the only automated gate (
 | ✅ L-25 | Mobile convention: hex colors, ARB strings, `runMutation`, count/plural hygiene | `AppColors` tokens; `app_en.arb`; batch invite, wrong-email, gallery semantics, fun/account counts |
 | L-26 | `flutter analyze` infos — `use_null_aware_elements`, `unnecessary_underscores`, deprecated form `value` (**partial:** login/signup `mounted` guards; `home_repository` null-aware map) | mobile `lib/`, `test/` |
 | ✅ L-27 | Legacy `photo_ready_notification_log` unused after fan-out `dedupe_key` | migration `029` — `DROP TABLE photo_ready_notification_log` |
-| L-28 | **Consolidation backlog (deferred, medium risk — live request paths):** gallery vs calendar comment domain logic and photo/event comment SQL; router `try/except map_domain_errors` boilerplate and the repeated `upsert_app_user` first line; dynamic `UPDATE … SET` builders; mobile comment composer, tab empty states, AI-suggestions screen state machine, labeled-field shell, wider `runMutation` use; shared `get_connection` for API + worker, `infra/db` shared `connect()` and invite-hash helper; Terraform push-subscription `for_each` and dev/prod API-list dedupe; scheduler script merge; PUT/PATCH announcement alias | `services/api`, `apps/mobile`, `infra/` |
+| L-28 | **Consolidation backlog (deferred, medium risk — live request paths):** gallery vs calendar comment domain logic and photo/event comment SQL; router `try/except map_domain_errors` boilerplate; dynamic `UPDATE … SET` builders; mobile comment composer, tab empty states, AI-suggestions screen state machine, labeled-field shell, wider `runMutation` use; shared `get_connection` for API + worker, `infra/db` shared `connect()` and invite-hash helper; Terraform push-subscription `for_each` and dev/prod API-list dedupe; scheduler script merge; PUT/PATCH announcement alias. Request-scoped `upsert_app_user` calls were replaced by `current_app_user` (#36). | `services/api`, `apps/mobile`, `infra/` |
 
 ---
 
 ## Test coverage gaps (still thin)
 
-- **API:** No router/HTTP tests for `events`, `fun`, `registry`, `invitations`, `notifications`, `search`, `admin_system_announcements`, baby photo routes, and `/v1/uploads/display/signed-url`; only domain-level mocks for `onboarding`. Repositories have almost no direct SQL tests (`search_name_suggestions` now has a column-conformance test; the rest are exposed to the same class of bug as the earlier name-search column mismatch); also untested: `account`, `pubsub`, `storage`, `media_urls`, `membership`.
+- **API:** No router/HTTP tests for `fun`, `registry`, `invitations`, `notifications`, `search`, `admin_system_announcements`, baby photo routes, and `/v1/uploads/display/signed-url`; only domain-level mocks for `onboarding`. Event create/update time-range validation has an HTTP test. Repositories have almost no direct SQL tests (`search_name_suggestions` has a column-conformance test, and `tests/integration/` runs search, provisioning, and the onboarding gate on Postgres); also untested: `account`, `pubsub`, `storage`, `media_urls`, `membership`.
 - **Mobile:** Untested core modules: `api_client`, `auth_repository`, `user_deleted_session_handler`, `push_notification_service`, `app_router`, `app_link_bootstrap`, `onboarding_storage`, `onboarding_coordinator`, `shell/`. No tests for `search/`, `settings/`, `legal/`, `home_activity_screen`, `calendar_upcoming_screen`, wrong-email and invite-bootstrap screens. `integration_test/` has only `home_summary_load_test.dart` and `smoke_sign_in_test.dart`. `session_cleanup_test.dart` covers local wipe on sign-out; `delete_account_screen_test.dart` only checks copy.
 - **Worker:** Push routes now have poison-payload and export-dispatch tests (`test_main_pubsub_payload.py`, `test_main_export_dispatch.py`); invite HTML escaping, FCM chunking, and `pubsub_payload` have unit tests. Still thin: weekly digest, Mailjet claim-release edge cases, `config.py`. Tests are mock-heavy (SQL string matching), so idempotency regressions are easy to miss.
 

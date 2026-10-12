@@ -127,7 +127,11 @@ class AppSession extends ChangeNotifier {
     }
 
     if (canAccessMainApp) {
-      if (OnboardingRoutes.isOnboardingPath(path) &&
+      // Both flags can be true: a follower who also created a baby
+      // (joined_via = created) may use Home and still finish owner onboarding.
+      final keepOwnerOnboarding = _status?.needsOwnerOnboarding == true;
+      if (!keepOwnerOnboarding &&
+          OnboardingRoutes.isOnboardingPath(path) &&
           path != OnboardingRoutes.inviteAccept &&
           !_inviteSignedIn.contains(path)) {
         return '/home';

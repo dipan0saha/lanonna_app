@@ -5,7 +5,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Query, Response, status
 
-from lanonna_api.auth import current_user
+from lanonna_api.auth import current_app_user
 from lanonna_api.domain.invitations import (
     BatchInviteRow,
     batch_invite,
@@ -15,7 +15,6 @@ from lanonna_api.domain.invitations import (
 )
 from lanonna_api.http_errors import map_domain_errors
 from lanonna_api.input_limits import MAX_MEMBERSHIP_CHECK_EMAIL_LEN
-from lanonna_api.repositories.users import upsert_app_user
 from lanonna_api.schemas.invitations import (
     BatchInviteRequest,
     BatchInviteResponse,
@@ -45,9 +44,8 @@ def _invitation_json(r: dict[str, Any]) -> dict[str, Any]:
 @router.get("/{baby_profile_id}/invitations")
 def list_invitations(
     baby_profile_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> list[dict[str, Any]]:
-    upsert_app_user(user["uid"], user.get("email"))
     try:
         rows = list_invitations_for_owner(user["uid"], baby_profile_id)
     except Exception as exc:
@@ -62,9 +60,8 @@ def list_invitations(
 def delete_invitation(
     baby_profile_id: uuid.UUID,
     invitation_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> Response:
-    upsert_app_user(user["uid"], user.get("email"))
     try:
         revoke_invitation_for_owner(user["uid"], baby_profile_id, invitation_id)
     except Exception as exc:
@@ -76,9 +73,8 @@ def delete_invitation(
 def membership_check(
     baby_profile_id: uuid.UUID,
     email: str = Query(min_length=3, max_length=MAX_MEMBERSHIP_CHECK_EMAIL_LEN),
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> MembershipCheckResponse:
-    upsert_app_user(user["uid"], user.get("email"))
     try:
         result = membership_check_for_owner(user["uid"], baby_profile_id, email)
     except Exception as exc:
@@ -90,9 +86,8 @@ def membership_check(
 def batch_invite_route(
     baby_profile_id: uuid.UUID,
     body: BatchInviteRequest,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> BatchInviteResponse:
-    upsert_app_user(user["uid"], user.get("email"))
     invite_rows = [
         BatchInviteRow(
             email=row.email,

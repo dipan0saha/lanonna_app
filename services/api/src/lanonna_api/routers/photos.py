@@ -6,11 +6,10 @@ from typing import Any, Literal
 from fastapi import APIRouter, Depends, Query, Response, status
 from pydantic import BaseModel, Field
 
-from lanonna_api.auth import current_user
+from lanonna_api.auth import current_app_user
 from lanonna_api.domain import gallery as gallery_domain
 from lanonna_api.http_errors import map_domain_errors
 from lanonna_api.input_limits import MAX_CAPTION_LEN, MAX_PHOTO_TAGGED_BABIES
-from lanonna_api.repositories.users import upsert_app_user
 
 router = APIRouter(tags=["photos"])
 
@@ -44,7 +43,7 @@ class PhotoTagsBody(BaseModel):
 @router.post("/v1/photos/init")
 def photos_init(
     body: PhotoInitRequest,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
         caption = body.caption.strip() if body.caption else None
@@ -82,9 +81,8 @@ def list_photos(
     limit: int = Query(default=50, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     sort: Literal["default", "recent", "favorites"] = Query(default="default"),
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> list[dict[str, Any]]:
-    upsert_app_user(user["uid"], user.get("email"))
     try:
         return gallery_domain.list_gallery(
             user["uid"], baby_profile_id, limit, offset, sort=sort
@@ -97,7 +95,7 @@ def list_photos(
 def photo_detail(
     baby_profile_id: uuid.UUID,
     photo_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
         return gallery_domain.get_photo_detail(user["uid"], baby_profile_id, photo_id)
@@ -110,7 +108,7 @@ def patch_photo(
     baby_profile_id: uuid.UUID,
     photo_id: uuid.UUID,
     body: CaptionPatch,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
         return gallery_domain.patch_caption(
@@ -124,7 +122,7 @@ def patch_photo(
 def delete_photo_route(
     baby_profile_id: uuid.UUID,
     photo_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> Response:
     try:
         gallery_domain.remove_photo(user["uid"], baby_profile_id, photo_id)
@@ -137,7 +135,7 @@ def delete_photo_route(
 def squish(
     baby_profile_id: uuid.UUID,
     photo_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
         return gallery_domain.squish_photo(user["uid"], baby_profile_id, photo_id)
@@ -151,7 +149,7 @@ def patch_comment(
     photo_id: uuid.UUID,
     comment_id: uuid.UUID,
     body: CommentPatch,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
         return gallery_domain.edit_comment(
@@ -166,7 +164,7 @@ def put_photo_tags(
     baby_profile_id: uuid.UUID,
     photo_id: uuid.UUID,
     body: PhotoTagsBody,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
         return gallery_domain.set_photo_baby_tags(
@@ -184,7 +182,7 @@ def create_comment(
     baby_profile_id: uuid.UUID,
     photo_id: uuid.UUID,
     body: CommentBody,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
         return gallery_domain.add_comment(
@@ -202,7 +200,7 @@ def delete_comment_route(
     baby_profile_id: uuid.UUID,
     photo_id: uuid.UUID,
     comment_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> Response:
     try:
         gallery_domain.delete_comment(

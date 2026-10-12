@@ -30,6 +30,7 @@ firebase-debug.*.log
 **/__pycache__/
 **/*.py[cod]
 **/*.egg-info/
+**/.venv/
 
 # Node / backend (when added under services/)
 **/node_modules/

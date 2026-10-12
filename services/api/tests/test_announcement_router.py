@@ -19,13 +19,11 @@ def _auth_as(uid: str = "owner-1"):
         app.dependency_overrides.pop(current_user, None)
 
 
-@patch("lanonna_api.routers.announcements.upsert_app_user")
 @patch("lanonna_api.domain.announcement.get_announcement")
 @patch("lanonna_api.domain.announcement.assert_owner_membership")
 def test_patch_announcement_rejects_invalid_birth_time(
     _owner,
     mock_get_ann,
-    _upsert,
 ):
     mock_get_ann.return_value = {
         "first_name": "Baby",
@@ -47,9 +45,8 @@ def test_patch_announcement_rejects_invalid_birth_time(
     assert "HH:MM" in response.json()["detail"]
 
 
-@patch("lanonna_api.routers.announcements.upsert_app_user")
 @patch("lanonna_api.domain.announcement.assert_owner_membership")
-def test_patch_announcement_rejects_long_weight_text(_owner, _upsert):
+def test_patch_announcement_rejects_long_weight_text(_owner):
     baby_id = uuid.uuid4()
     with _auth_as():
         response = client.patch(
