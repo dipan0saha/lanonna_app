@@ -6,6 +6,7 @@ from typing import Any, Literal
 PhotoListSort = Literal["default", "recent", "favorites"]
 
 from lanonna_api.db import get_connection
+from lanonna_api.repositories.active_participants import active_participant_join
 
 
 def get_photo_for_baby(
@@ -42,8 +43,12 @@ def list_photos_for_baby(
         "AND p.created_at >= now() - interval '30 days'" if sort == "recent" else ""
     )
     favorites_clause = (
-        """
-            AND (SELECT COUNT(*)::int FROM photo_squishes s WHERE s.photo_id = p.id) > 0
+        f"""
+            AND (
+                SELECT COUNT(*)::int FROM photo_squishes s
+                {active_participant_join("s.firebase_uid")}
+                WHERE s.photo_id = p.id
+            ) > 0
         """
         if sort == "favorites"
         else ""
@@ -59,7 +64,9 @@ def list_photos_for_baby(
                 p.id, p.status, p.caption, p.created_at, p.thumb_path,
                 p.uploader_firebase_uid,
                 u.display_name AS uploader_display_name,
-                (SELECT COUNT(*)::int FROM photo_squishes s WHERE s.photo_id = p.id) AS squish_count,
+                (SELECT COUNT(*)::int FROM photo_squishes s
+                 {active_participant_join("s.firebase_uid")}
+                 WHERE s.photo_id = p.id) AS squish_count,
                 (SELECT COUNT(*)::int FROM photo_comments c
                  WHERE c.photo_id = p.id AND c.deleted_at IS NULL) AS comment_count
             FROM photos p
@@ -109,7 +116,12 @@ def delete_photo(baby_profile_id: uuid.UUID, photo_id: uuid.UUID) -> bool:
 def squish_count(photo_id: uuid.UUID) -> int:
     with get_connection() as conn:
         row = conn.execute(
-            "SELECT COUNT(*)::int AS c FROM photo_squishes WHERE photo_id = %s",
+            f"""
+            SELECT COUNT(*)::int AS c
+            FROM photo_squishes s
+            {active_participant_join("s.firebase_uid")}
+            WHERE s.photo_id = %s
+            """,
             (photo_id,),
         ).fetchone()
     return row["c"] if row else 0
