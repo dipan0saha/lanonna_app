@@ -132,7 +132,12 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
         _networkPhotoUrl = account.avatarUrl;
         _photoLabel = 'Change photo';
       }
-      if (mounted) setState(() {});
+      if (mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          setState(() {});
+        });
+      }
     } catch (_) {
       // Offline or first sign-up; form stays empty.
     }
@@ -140,7 +145,20 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
 
   Future<void> _loadCountries() async {
     final list = await IsoCountries.load();
-    if (mounted) setState(() => _countries = list);
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() => _countries = list);
+    });
+  }
+
+  void _applyHydratedState(VoidCallback apply) {
+    apply();
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() {});
+    });
   }
 
   @override
@@ -154,27 +172,28 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
       final coordinator = context.read<OnboardingCoordinator>();
       final draft = coordinator.completeProfileDraft;
       if (draft != null) {
-        _firstNameController.text = draft.firstName;
-        _lastNameController.text = draft.lastName;
-        _phoneController.text = draft.phone;
-        _postalController.text = draft.postalCode;
-        _countryCode = draft.countryCode;
-        _relationshipLabel = draft.relationshipLabel;
-        _acceptedTerms = draft.termsAccepted;
-        if (draft.birthDateIso != null && draft.birthDateIso!.isNotEmpty) {
-          _birthDate = DateTime.tryParse(draft.birthDateIso!);
-        }
-        if (draft.photoPath != null) {
-          _photoFile = XFile(draft.photoPath!);
-          _photoLabel = 'Change photo';
-        }
-        if (draft.networkPhotoUrl != null && draft.networkPhotoUrl!.isNotEmpty) {
-          _networkPhotoUrl = draft.networkPhotoUrl;
-          if (_photoFile == null) {
+        _applyHydratedState(() {
+          _firstNameController.text = draft.firstName;
+          _lastNameController.text = draft.lastName;
+          _phoneController.text = draft.phone;
+          _postalController.text = draft.postalCode;
+          _countryCode = draft.countryCode;
+          _relationshipLabel = draft.relationshipLabel;
+          _acceptedTerms = draft.termsAccepted;
+          if (draft.birthDateIso != null && draft.birthDateIso!.isNotEmpty) {
+            _birthDate = DateTime.tryParse(draft.birthDateIso!);
+          }
+          if (draft.photoPath != null) {
+            _photoFile = XFile(draft.photoPath!);
             _photoLabel = 'Change photo';
           }
-        }
-        setState(() {});
+          if (draft.networkPhotoUrl != null && draft.networkPhotoUrl!.isNotEmpty) {
+            _networkPhotoUrl = draft.networkPhotoUrl;
+            if (_photoFile == null) {
+              _photoLabel = 'Change photo';
+            }
+          }
+        });
         if (draft.firstName.isNotEmpty || draft.lastName.isNotEmpty) return;
       }
       await _hydrateFromServerProfile();
@@ -183,22 +202,23 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
         final user = FirebaseAuth.instance.currentUser;
         final usedOAuth = coordinator.skipEmailVerify;
         if (usedOAuth && user != null) {
-          final display = user.displayName ?? '';
-          final parts = display.trim().split(RegExp(r'\s+'));
-          if (parts.isNotEmpty && parts.first.isNotEmpty) {
-            _firstNameController.text = parts.first;
-            if (parts.length > 1) {
-              _lastNameController.text = parts.sublist(1).join(' ');
+          _applyHydratedState(() {
+            final display = user.displayName ?? '';
+            final parts = display.trim().split(RegExp(r'\s+'));
+            if (parts.isNotEmpty && parts.first.isNotEmpty) {
+              _firstNameController.text = parts.first;
+              if (parts.length > 1) {
+                _lastNameController.text = parts.sublist(1).join(' ');
+              }
             }
-          }
-          final googlePhoto = user.photoURL;
-          if (googlePhoto != null && googlePhoto.isNotEmpty) {
-            _networkPhotoUrl = googlePhoto;
-            _photoLabel = 'Change photo';
-          }
-          _subtext =
-              "We pulled in your details. Add a photo so family knows who's who.";
-          setState(() {});
+            final googlePhoto = user.photoURL;
+            if (googlePhoto != null && googlePhoto.isNotEmpty) {
+              _networkPhotoUrl = googlePhoto;
+              _photoLabel = 'Change photo';
+            }
+            _subtext =
+                "We pulled in your details. Add a photo so family knows who's who.";
+          });
         }
       } on FirebaseException {
         return;
