@@ -37,7 +37,9 @@ void main() {
     expect(find.text('2'), findsOneWidget);
     expect(find.byType(GalleryCommentGlyph), findsOneWidget);
     expect(find.byType(GallerySquishGlyph), findsOneWidget);
-    expect(find.bySemanticsLabel('Nap time'), findsOneWidget);
+    // Badge counts and the placeholder merge into the button label.
+    expect(find.bySemanticsLabel(RegExp('Nap time')), findsOneWidget);
+    expect(find.bySemanticsIdentifier('gallery_photo_first'), findsOneWidget);
   });
 
   testWidgets('GalleryPhotoGrid hides badges when counts are zero', (
@@ -67,6 +69,7 @@ void main() {
 
     expect(find.byType(GalleryCommentGlyph), findsNothing);
     expect(find.byType(GallerySquishGlyph), findsNothing);
-    expect(find.bySemanticsLabel('Photo'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('Photo')), findsOneWidget);
+    expect(find.bySemanticsIdentifier('gallery_photo_first'), findsOneWidget);
   });
 }
