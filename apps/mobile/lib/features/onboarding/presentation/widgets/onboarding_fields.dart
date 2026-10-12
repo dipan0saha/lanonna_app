@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/input/app_text_input_kind.dart';
+import '../../../../core/widgets/app_icon_button.dart';
 import '../../../../core/widgets/app_semantics.dart';
 import '../../../../core/widgets/app_text_form_field.dart';
 import '../../../../core/theme/app_brand_theme.dart';
@@ -104,7 +105,8 @@ class OnboardingTermsFormField extends StatefulWidget {
   final bool enabled;
 
   @override
-  State<OnboardingTermsFormField> createState() => _OnboardingTermsFormFieldState();
+  State<OnboardingTermsFormField> createState() =>
+      _OnboardingTermsFormFieldState();
 }
 
 class _OnboardingTermsFormFieldState extends State<OnboardingTermsFormField> {
@@ -158,7 +160,9 @@ class _OnboardingTermsFormFieldState extends State<OnboardingTermsFormField> {
               const SizedBox(height: 4),
               Text(
                 field.errorText!,
-                style: TextStyle(color: Theme.of(field.context).colorScheme.error),
+                style: TextStyle(
+                  color: Theme.of(field.context).colorScheme.error,
+                ),
               ),
             ],
           ],
@@ -188,7 +192,8 @@ class OnboardingRelationshipFormField extends StatefulWidget {
       _OnboardingRelationshipFormFieldState();
 }
 
-class _OnboardingRelationshipFormFieldState extends State<OnboardingRelationshipFormField> {
+class _OnboardingRelationshipFormFieldState
+    extends State<OnboardingRelationshipFormField> {
   final _fieldKey = GlobalKey<FormFieldState<String>>();
 
   @override
@@ -246,7 +251,9 @@ class _OnboardingRelationshipFormFieldState extends State<OnboardingRelationship
               const SizedBox(height: 4),
               Text(
                 field.errorText!,
-                style: TextStyle(color: Theme.of(field.context).colorScheme.error),
+                style: TextStyle(
+                  color: Theme.of(field.context).colorScheme.error,
+                ),
               ),
             ],
           ],
@@ -273,7 +280,9 @@ class OnboardingTermsAgreementCheckbox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final muted = context.textStyles.bodySmall?.copyWith(color: AppColors.muted);
+    final muted = context.textStyles.bodySmall?.copyWith(
+      color: AppColors.muted,
+    );
     final link = context.textStyles.bodySmall?.copyWith(
       color: AppColors.primaryDark,
       fontWeight: FontWeight.w600,
@@ -336,7 +345,8 @@ class OnboardingPasswordField extends StatefulWidget {
   final AutovalidateMode? autovalidateMode;
 
   @override
-  State<OnboardingPasswordField> createState() => _OnboardingPasswordFieldState();
+  State<OnboardingPasswordField> createState() =>
+      _OnboardingPasswordFieldState();
 }
 
 class _OnboardingPasswordFieldState extends State<OnboardingPasswordField> {
@@ -361,9 +371,15 @@ class _OnboardingPasswordFieldState extends State<OnboardingPasswordField> {
             autovalidateMode: widget.autovalidateMode,
             decoration: InputDecoration(
               hintText: widget.hint,
-              suffixIcon: IconButton(
+              suffixIcon: AppIconButton(
+                semanticsId: widget.semanticsId == null
+                    ? 'password_visibility'
+                    : '${widget.semanticsId}_visibility',
+                label: _obscure ? 'Show password' : 'Hide password',
                 icon: Icon(
-                  _obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                  _obscure
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
                   color: AppColors.muted,
                 ),
                 onPressed: () => setState(() => _obscure = !_obscure),
@@ -415,10 +431,9 @@ class OnboardingHelperText extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: AppColors.muted,
-            height: 1.4,
-          ),
+      style: Theme.of(
+        context,
+      ).textTheme.bodySmall?.copyWith(color: AppColors.muted, height: 1.4),
     );
   }
 }
@@ -447,7 +462,9 @@ class OnboardingBottomLink extends StatelessWidget {
         child: RichText(
           textAlign: TextAlign.center,
           text: TextSpan(
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.muted),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.muted),
             children: [
               TextSpan(text: prefix),
               TextSpan(
@@ -480,7 +497,7 @@ class OnboardingSegmentedControlStyle {
     this.duration = const Duration(milliseconds: 200),
     this.thumbShadow,
   }) : unselectedLabelColor =
-            unselectedLabelColor ?? AppBrandTheme.light.segmentUnselectedLabel;
+           unselectedLabelColor ?? AppBrandTheme.light.segmentUnselectedLabel;
 
   static final standard = OnboardingSegmentedControlStyle();
 
@@ -552,7 +569,9 @@ class OnboardingSegmentedControl extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final segmentWidth = (constraints.maxWidth - style.segmentGap) / 2;
-          final thumbLeft = isLeftSelected ? 0.0 : segmentWidth + style.segmentGap;
+          final thumbLeft = isLeftSelected
+              ? 0.0
+              : segmentWidth + style.segmentGap;
 
           return SizedBox(
             height: style.height,
@@ -570,7 +589,8 @@ class OnboardingSegmentedControl extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: AppColors.surface,
                       borderRadius: BorderRadius.circular(style.thumbRadius),
-                      boxShadow: style.thumbShadow ??
+                      boxShadow:
+                          style.thumbShadow ??
                           [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.08),
@@ -648,7 +668,9 @@ class _SegmentLabel extends StatelessWidget {
               fontWeight: style.fontWeight,
               fontSize: style.fontSize,
               height: 1.2,
-              color: selected ? style.selectedLabelColor : style.unselectedLabelColor,
+              color: selected
+                  ? style.selectedLabelColor
+                  : style.unselectedLabelColor,
             ),
             child: Text(label),
           ),

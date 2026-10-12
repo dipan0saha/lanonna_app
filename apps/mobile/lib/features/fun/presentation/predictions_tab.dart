@@ -8,6 +8,7 @@ import '../../../core/time/app_date_time.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/widgets/app_section_title.dart';
 import '../../../core/widgets/vote_count_pill.dart';
@@ -48,9 +49,9 @@ class _PredictionsTabState extends State<PredictionsTab> {
       _error = null;
     });
     try {
-      final payload = await context
-          .read<FunRepository>()
-          .fetchPredictions(widget.baby.id);
+      final payload = await context.read<FunRepository>().fetchPredictions(
+        widget.baby.id,
+      );
       if (!mounted) return;
       final due = babyExpectedDueDate(widget.baby);
       setState(() {
@@ -73,10 +74,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
 
   Future<void> _voteGender(String gender) async {
     try {
-      await context.read<FunRepository>().setGenderVote(
-        widget.baby.id,
-        gender,
-      );
+      await context.read<FunRepository>().setGenderVote(widget.baby.id, gender);
       await _load();
     } catch (e) {
       if (mounted) AppSnackBar.showAlert(context, apiErrorMessage(e));
@@ -261,7 +259,10 @@ class _PredictionsTabState extends State<PredictionsTab> {
                 style: context.textStyles.bodySmall,
               ),
             ),
-          TextButton(onPressed: _showVoters, child: const Text('View who voted')),
+          TextButton(
+            onPressed: _showVoters,
+            child: const Text('View who voted'),
+          ),
           const SizedBox(height: AppMetrics.sectionBlockSpacing),
           const AppSectionTitle(title: 'Birthdate guesses'),
           Card(
@@ -272,7 +273,9 @@ class _PredictionsTabState extends State<PredictionsTab> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      IconButton(
+                      AppIconButton(
+                        semanticsId: 'predictions_previous_month',
+                        label: 'Previous month',
                         onPressed: () => _shiftMonth(-1),
                         icon: const Icon(Icons.chevron_left),
                       ),
@@ -280,7 +283,9 @@ class _PredictionsTabState extends State<PredictionsTab> {
                         '${_monthName(_visibleMonth.month)} ${_visibleMonth.year}',
                         style: context.textStyles.titleMedium,
                       ),
-                      IconButton(
+                      AppIconButton(
+                        semanticsId: 'predictions_next_month',
+                        label: 'Next month',
                         onPressed: () => _shiftMonth(1),
                         icon: const Icon(Icons.chevron_right),
                       ),
@@ -367,8 +372,18 @@ class _PredictionsTabState extends State<PredictionsTab> {
 
   String _monthName(int m) {
     const names = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return names[m - 1];
   }
@@ -397,7 +412,9 @@ class _PredictionsTabState extends State<PredictionsTab> {
           children: [
             Text(label, style: context.textStyles.titleSmall),
             Text(
-              AppLocalizations.of(context)!.predictionGenderVoteShare(pct, count),
+              AppLocalizations.of(
+                context,
+              )!.predictionGenderVoteShare(pct, count),
             ),
           ],
         ),
@@ -442,12 +459,14 @@ class _PredictionsMonthGrid extends StatelessWidget {
     for (var day = 1; day <= daysInMonth; day++) {
       final iso = birthdateGuessIso(DateTime(month.year, month.month, day));
       final count = voteCountsByDate[iso] ?? 0;
-      final isDue = dueDate != null &&
+      final isDue =
+          dueDate != null &&
           dueDate!.year == month.year &&
           dueDate!.month == month.month &&
           dueDate!.day == day;
       final isMine = viewerGuess == iso;
-      final isPending = pendingGuess != null &&
+      final isPending =
+          pendingGuess != null &&
           pendingGuess!.year == month.year &&
           pendingGuess!.month == month.month &&
           pendingGuess!.day == day;
@@ -459,8 +478,8 @@ class _PredictionsMonthGrid extends StatelessWidget {
               color: isDue
                   ? AppColors.peachTint
                   : isMine || isPending
-                      ? AppColors.sageTint
-                      : null,
+                  ? AppColors.sageTint
+                  : null,
               borderRadius: BorderRadius.circular(6),
               border: isDue || isPending
                   ? Border.all(color: AppColors.primaryDark)

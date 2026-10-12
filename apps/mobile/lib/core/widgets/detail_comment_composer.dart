@@ -3,6 +3,7 @@ import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../comments/comment_composer_controller.dart';
 import '../input/app_text_input_kind.dart';
+import 'app_icon_button.dart';
 import 'app_semantics.dart';
 import 'app_text_field.dart';
 
@@ -51,14 +52,11 @@ class DetailCommentComposer extends StatelessWidget {
                     ),
                   ),
                 ),
-                AppSemantics.button(
-                  sendId,
-                  IconButton(
-                    onPressed: canSend ? controller.submit : null,
-                    tooltip: l10n.commentSend,
-                    icon: const Icon(Icons.send),
-                  ),
+                AppIconButton(
+                  semanticsId: sendId,
                   label: l10n.commentSend,
+                  onPressed: canSend ? controller.submit : null,
+                  icon: const Icon(Icons.send),
                 ),
               ],
             ),

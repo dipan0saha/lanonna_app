@@ -19,7 +19,9 @@ class InviteLandingHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final inviter = preview.inviterDisplayName ?? 'A family member';
-    final line = isCoOwner
+    final line = preview.isAccepted
+        ? "You're already a member"
+        : isCoOwner
         ? '$inviter invited you to co-own'
         : '$inviter invited you to follow';
     return Padding(
@@ -64,10 +66,7 @@ class InviteBabyCard extends StatelessWidget {
             style: text.titleMedium?.copyWith(color: AppColors.textPrimary),
           ),
           const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: text.bodyMedium?.copyWith(fontSize: 13),
-          ),
+          Text(subtitle, style: text.bodyMedium?.copyWith(fontSize: 13)),
         ],
       ),
     );
@@ -89,7 +88,11 @@ class InviteReassureRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.verified_user_outlined, color: AppColors.primaryDark, size: 20),
+          const Icon(
+            Icons.verified_user_outlined,
+            color: AppColors.primaryDark,
+            size: 20,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -146,10 +149,7 @@ class RelationshipConfirmChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: AppColors.primaryDark, width: 1.5),
       ),
-      child: Text(
-        label,
-        style: context.textStyles.titleMedium,
-      ),
+      child: Text(label, style: context.textStyles.titleMedium),
     );
   }
 }

@@ -32,7 +32,9 @@ Future<OnboardingCoordinator> _coordinatorWithPreview() async {
   final storage = OnboardingStorage(await SharedPreferences.getInstance());
   final coordinator = OnboardingCoordinator(
     storage: storage,
-    repository: OnboardingRepository(ApiClient(idTokenProvider: () async => null)),
+    repository: OnboardingRepository(
+      ApiClient(idTokenProvider: () async => null),
+    ),
   );
   await coordinator.hydrate();
   await coordinator.bindInviteFromPreview('test-token', _preview);
@@ -40,7 +42,9 @@ Future<OnboardingCoordinator> _coordinatorWithPreview() async {
 }
 
 void main() {
-  testWidgets('follower invite landing shows inviter and baby name', (tester) async {
+  testWidgets('follower invite landing shows inviter and baby name', (
+    tester,
+  ) async {
     final coordinator = await _coordinatorWithPreview();
     await tester.pumpWidget(
       ChangeNotifierProvider.value(
@@ -55,6 +59,50 @@ void main() {
     expect(find.textContaining('Alex invited you to follow'), findsOneWidget);
     expect(find.text('Liam'), findsOneWidget);
     expect(find.text('Accept Invitation'), findsOneWidget);
+  });
+
+  testWidgets('accepted invite preview offers Open instead of Accept', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final storage = OnboardingStorage(await SharedPreferences.getInstance());
+    final coordinator = OnboardingCoordinator(
+      storage: storage,
+      repository: OnboardingRepository(
+        ApiClient(idTokenProvider: () async => null),
+      ),
+    );
+    await coordinator.hydrate();
+    await coordinator.bindInviteFromPreview(
+      'test-token',
+      const InvitationPreview(
+        status: 'accepted',
+        babyName: 'Liam',
+        inviterDisplayName: 'Alex',
+        inviteeEmail: 'grandma@test.com',
+        relationshipLabel: 'Grandma',
+        invitedRole: 'follower',
+        babyProfileId: 'baby-1',
+        lifecycleStatus: 'expecting',
+        expectedBirthDate: '2026-06-01',
+      ),
+    );
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider.value(
+        value: coordinator,
+        child: MaterialApp(
+          theme: AppTheme.light,
+          home: const OnboardingFollowerInviteScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text("You're already a member"), findsOneWidget);
+    expect(find.text('Liam'), findsOneWidget);
+    expect(find.text('Open'), findsOneWidget);
+    expect(find.text('Accept Invitation'), findsNothing);
   });
 
   testWidgets('follower carousel has five dot indicators', (tester) async {
@@ -78,7 +126,9 @@ void main() {
     final storage = OnboardingStorage(await SharedPreferences.getInstance());
     final coordinator = OnboardingCoordinator(
       storage: storage,
-      repository: OnboardingRepository(ApiClient(idTokenProvider: () async => null)),
+      repository: OnboardingRepository(
+        ApiClient(idTokenProvider: () async => null),
+      ),
     );
     await coordinator.hydrate();
 

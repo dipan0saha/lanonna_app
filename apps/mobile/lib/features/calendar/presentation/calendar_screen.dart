@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../core/presentation/tab_load_failure.dart';
 import '../../../core/presentation/tab_load_kind.dart';
 import '../../../core/time/app_date_time.dart';
+import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/widgets/async_tab_body.dart';
 import '../../../core/theme/app_colors.dart';
@@ -29,7 +30,8 @@ class CalendarScreen extends StatefulWidget {
   State<CalendarScreen> createState() => _CalendarScreenState();
 }
 
-class _CalendarScreenState extends State<CalendarScreen> with BabyContextReload {
+class _CalendarScreenState extends State<CalendarScreen>
+    with BabyContextReload {
   BabySummary? _baby;
   DateTime _visibleMonth = DateTime(DateTime.now().year, DateTime.now().month);
   List<CalendarEvent> _monthEvents = [];
@@ -87,7 +89,10 @@ class _CalendarScreenState extends State<CalendarScreen> with BabyContextReload 
         });
         return;
       }
-      final month = await calRepo.listEvents(baby.id, month: _monthKey(_visibleMonth));
+      final month = await calRepo.listEvents(
+        baby.id,
+        month: _monthKey(_visibleMonth),
+      );
       final upcoming = await calRepo.listEvents(baby.id, upcoming: true);
       if (!mounted) return;
       setState(() {
@@ -123,11 +128,7 @@ class _CalendarScreenState extends State<CalendarScreen> with BabyContextReload 
     final created = await context.push<bool>(
       CalendarRoutes.createEvent,
       extra: onDate != null
-          ? EventFormPrefill(
-              title: '',
-              description: '',
-              initialDate: onDate,
-            )
+          ? EventFormPrefill(title: '', description: '', initialDate: onDate)
           : null,
     );
     if (created == true && mounted) {
@@ -211,157 +212,154 @@ class _CalendarScreenState extends State<CalendarScreen> with BabyContextReload 
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  AppMetrics.horizontalPadding,
+                  0,
+                  AppMetrics.horizontalPadding,
+                  10,
+                ),
+                child: Text('Calendar', style: styles.headlineSmall),
+              ),
+            ),
+            if (kind == TabLoadKind.loading)
+              const SliverFillRemaining(
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (kind == TabLoadKind.error)
+              SliverFillRemaining(
+                child: AsyncTabBody(
+                  loading: false,
+                  error: _loadError,
+                  onRetry: _load,
+                  child: const SizedBox.shrink(),
+                ),
+              )
+            else if (kind == TabLoadKind.empty)
+              const SliverFillRemaining(
+                child: Center(child: Text('No baby profile yet.')),
+              )
+            else ...[
+              SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    AppMetrics.horizontalPadding,
-                    0,
-                    AppMetrics.horizontalPadding,
-                    10,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              AppIconButton(
+                                semanticsId: 'calendar_previous_month',
+                                label: 'Previous month',
+                                onPressed: () => _shiftMonth(-1),
+                                icon: const Icon(Icons.chevron_left),
+                              ),
+                              Text(monthLabel, style: styles.titleMedium),
+                              AppIconButton(
+                                semanticsId: 'calendar_next_month',
+                                label: 'Next month',
+                                onPressed: () => _shiftMonth(1),
+                                icon: const Icon(Icons.chevron_right),
+                              ),
+                            ],
+                          ),
+                          _MonthGrid(
+                            month: _visibleMonth,
+                            daysWithEvents: daysWithEvents,
+                            onDayTap: _onMonthDayTap,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  child: Text('Calendar', style: styles.headlineSmall),
                 ),
               ),
-              if (kind == TabLoadKind.loading)
-                const SliverFillRemaining(
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              else if (kind == TabLoadKind.error)
-                SliverFillRemaining(
-                  child: AsyncTabBody(
-                    loading: false,
-                    error: _loadError,
-                    onRetry: _load,
-                    child: const SizedBox.shrink(),
-                  ),
-                )
-              else if (kind == TabLoadKind.empty)
-                const SliverFillRemaining(
-                  child: Center(child: Text('No baby profile yet.')),
-                )
-              else ...[
+              if (_isOwner)
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
+                    padding: const EdgeInsets.all(16),
+                    child: InkWell(
+                      onTap: () => context.push(CalendarRoutes.aiSuggestions),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.peachTint,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                IconButton(
-                                  onPressed: () => _shiftMonth(-1),
-                                  icon: const Icon(Icons.chevron_left),
-                                ),
-                                Text(monthLabel, style: styles.titleMedium),
-                                IconButton(
-                                  onPressed: () => _shiftMonth(1),
-                                  icon: const Icon(Icons.chevron_right),
-                                ),
-                              ],
+                            const Icon(Icons.auto_awesome_outlined),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Not sure where to start? See AI-suggested events by stage and age.',
+                                style: styles.bodyMedium,
+                              ),
                             ),
-                            _MonthGrid(
-                              month: _visibleMonth,
-                              daysWithEvents: daysWithEvents,
-                              onDayTap: _onMonthDayTap,
-                            ),
+                            const Icon(Icons.chevron_right),
                           ],
                         ),
                       ),
                     ),
                   ),
                 ),
-                if (_isOwner)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: InkWell(
-                        onTap: () => context.push(CalendarRoutes.aiSuggestions),
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: AppColors.peachTint,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.auto_awesome_outlined),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  'Not sure where to start? See AI-suggested events by stage and age.',
-                                  style: styles.bodyMedium,
-                                ),
-                              ),
-                              const Icon(Icons.chevron_right),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                    child: Text(
-                      'Upcoming',
-                      style: styles.labelLarge?.copyWith(color: AppColors.muted),
-                    ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: Text(
+                    'Upcoming',
+                    style: styles.labelLarge?.copyWith(color: AppColors.muted),
                   ),
                 ),
-                if (_upcoming.isEmpty)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        children: [
-                          Text(
-                            'No events yet',
-                            style: styles.titleMedium,
+              ),
+              if (_upcoming.isEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      children: [
+                        Text('No events yet', style: styles.titleMedium),
+                        const SizedBox(height: 8),
+                        Text(
+                          _isOwner
+                              ? 'Add ultrasounds, showers, or the gender reveal so family knows when to celebrate.'
+                              : 'Nothing on the calendar yet - check back soon.',
+                          textAlign: TextAlign.center,
+                          style: styles.bodyMedium?.copyWith(
+                            color: AppColors.muted,
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _isOwner
-                                ? 'Add ultrasounds, showers, or the gender reveal so family knows when to celebrate.'
-                                : 'Nothing on the calendar yet - check back soon.',
-                            textAlign: TextAlign.center,
-                            style: styles.bodyMedium?.copyWith(
-                              color: AppColors.muted,
-                            ),
-                          ),
-                        ],
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                SliverList(
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final event = _upcoming[index];
+                    return ListTile(
+                      leading: EventDateChip(startsAt: event.startsAt),
+                      title: Text(event.title),
+                      subtitle: Text(
+                        formatEventListDateTime(
+                          event.startsAt,
+                          Localizations.localeOf(context).toString(),
+                        ),
                       ),
-                    ),
-                  )
-                else
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final event = _upcoming[index];
-                        return ListTile(
-                          leading: EventDateChip(startsAt: event.startsAt),
-                          title: Text(event.title),
-                          subtitle: Text(
-                    formatEventListDateTime(
-                      event.startsAt,
-                      Localizations.localeOf(context).toString(),
-                    ),
-                  ),
-                          onTap: () => context.push(
-                            CalendarRoutes.eventDetail(event.id),
-                          ),
-                        );
-                      },
-                      childCount: _upcoming.length,
-                    ),
-                  ),
-                const SliverToBoxAdapter(child: SizedBox(height: 96)),
-              ],
+                      onTap: () =>
+                          context.push(CalendarRoutes.eventDetail(event.id)),
+                    );
+                  }, childCount: _upcoming.length),
+                ),
+              const SliverToBoxAdapter(child: SizedBox(height: 96)),
             ],
-          ),
+          ],
         ),
+      ),
       floatingActionButton: _isOwner && _baby != null
           ? AppSemantics.button(
               'calendar_create_fab',
@@ -376,12 +374,21 @@ class _CalendarScreenState extends State<CalendarScreen> with BabyContextReload 
 
   String _monthName(int m) {
     const names = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return names[m - 1];
   }
-
 }
 
 class _MonthGrid extends StatelessWidget {
@@ -411,9 +418,8 @@ class _MonthGrid extends StatelessWidget {
     }
     for (var day = 1; day <= daysInMonth; day++) {
       final hasEvent = daysWithEvents.contains(day);
-      final isToday = now.year == month.year &&
-          now.month == month.month &&
-          now.day == day;
+      final isToday =
+          now.year == month.year && now.month == month.month && now.day == day;
       cells.add(
         Material(
           color: Colors.transparent,

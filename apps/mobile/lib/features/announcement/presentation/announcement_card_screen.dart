@@ -209,10 +209,12 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
                         onSubmitted: (_) => _sendComment(),
                       ),
                     ),
-                    IconButton(
+                    AppIconButton(
+                      semanticsId: 'announcement_comment_send',
+                      label: 'Send comment',
                       onPressed: _sendComment,
-                      icon: const Icon(Icons.send),
                       color: context.colors.primary,
+                      icon: const Icon(Icons.send),
                     ),
                   ],
                 ),

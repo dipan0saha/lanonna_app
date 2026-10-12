@@ -18,7 +18,9 @@ import 'support/fake_home_repository.dart';
 import 'support/fake_notifications_repository.dart';
 
 void main() {
-  testWidgets('CalendarRepository notifyListeners reloads upcoming list', (tester) async {
+  testWidgets('CalendarRepository notifyListeners reloads upcoming list', (
+    tester,
+  ) async {
     SharedPreferences.setMockInitialValues({});
     await tester.binding.setSurfaceSize(const Size(800, 2400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -37,7 +39,9 @@ void main() {
         providers: [
           ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
           ChangeNotifierProvider<CalendarRepository>.value(value: calRepo),
-          ChangeNotifierProvider<HomeRefreshSignal>(create: (_) => HomeRefreshSignal()),
+          ChangeNotifierProvider<HomeRefreshSignal>(
+            create: (_) => HomeRefreshSignal(),
+          ),
           ChangeNotifierProvider<ConnectivityService>(
             create: (_) => ConnectivityService.forTesting(),
           ),
@@ -46,10 +50,7 @@ void main() {
             create: (_) => FakeNotificationsRepository(),
           ),
         ],
-        child: MaterialApp(
-          theme: AppTheme.light,
-          home: const CalendarScreen(),
-        ),
+        child: MaterialApp(theme: AppTheme.light, home: const CalendarScreen()),
       ),
     );
     await tester.pump();
@@ -59,6 +60,8 @@ void main() {
     }
     expect(find.byType(CircularProgressIndicator), findsNothing);
     expect(find.text('Calendar'), findsOneWidget);
+    expect(find.byTooltip('Previous month'), findsOneWidget);
+    expect(find.byTooltip('Next month'), findsOneWidget);
     await tester.drag(find.byType(CustomScrollView), const Offset(0, -400));
     await tester.pump();
     expect(find.text('No events yet'), findsOneWidget);

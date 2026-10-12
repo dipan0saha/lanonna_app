@@ -4,7 +4,9 @@ import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/core/widgets/prototype_subpage_scaffold.dart';
 
 void main() {
-  testWidgets('subpage scaffold shows title and no home top bar', (tester) async {
+  testWidgets('subpage scaffold shows title and no home top bar', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
@@ -18,10 +20,9 @@ void main() {
     expect(find.text('Settings'), findsOneWidget);
     expect(find.text('Body'), findsOneWidget);
     expect(find.byIcon(Icons.arrow_back_ios_new), findsOneWidget);
+    expect(find.byTooltip('Back'), findsOneWidget);
 
-    final search = tester.widgetList<Semantics>(
-      find.byType(Semantics),
-    );
+    final search = tester.widgetList<Semantics>(find.byType(Semantics));
     expect(
       search.any((s) => s.properties.identifier == 'shell_search'),
       isFalse,

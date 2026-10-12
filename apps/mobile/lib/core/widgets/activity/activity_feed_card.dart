@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../features/gallery/domain/gallery_routes.dart';
 import '../../../features/home/data/models/home_summary.dart';
+import '../app_semantics.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/la_nonna_theme.dart';
 import 'activity_event_icon.dart';
@@ -59,8 +60,8 @@ class ActivityFeedCard extends StatelessWidget {
                         onTap: items[i].photoId == null
                             ? null
                             : () => context.push(
-                                  GalleryRoutes.photoDetail(items[i].photoId!),
-                                ),
+                                GalleryRoutes.photoDetail(items[i].photoId!),
+                              ),
                       ),
                       if (i < items.length - 1)
                         const Divider(height: 1, color: AppColors.border),
@@ -74,11 +75,7 @@ class ActivityFeedCard extends StatelessWidget {
 }
 
 class _ActivityRow extends StatelessWidget {
-  const _ActivityRow({
-    required this.item,
-    required this.timeStyle,
-    this.onTap,
-  });
+  const _ActivityRow({required this.item, required this.timeStyle, this.onTap});
 
   final HomeActivityItem item;
   final TextStyle? timeStyle;
@@ -102,10 +99,7 @@ class _ActivityRow extends StatelessWidget {
                   actorDisplayName: item.actorDisplayName,
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  formatActivityWhen(item.createdAt),
-                  style: timeStyle,
-                ),
+                Text(formatActivityWhen(item.createdAt), style: timeStyle),
               ],
             ),
           ),
@@ -113,10 +107,15 @@ class _ActivityRow extends StatelessWidget {
       ),
     );
     if (onTap == null) return content;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: content,
+    final summary = item.summary.trim();
+    return AppSemantics.button(
+      'activity_${item.id}',
+      InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: content,
+      ),
+      label: summary.isEmpty ? 'Activity' : summary,
     );
   }
 }

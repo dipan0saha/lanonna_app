@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/input/app_text_input_kind.dart';
+import '../../../../core/widgets/app_icon_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
@@ -39,9 +40,18 @@ class OnboardingInviteRow extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
         border: Border(
-          top: BorderSide(color: showOwnerBadge ? AppColors.secondaryDark : AppColors.border, width: 1.5),
-          right: BorderSide(color: showOwnerBadge ? AppColors.secondaryDark : AppColors.border, width: 1.5),
-          bottom: BorderSide(color: showOwnerBadge ? AppColors.secondaryDark : AppColors.border, width: 1.5),
+          top: BorderSide(
+            color: showOwnerBadge ? AppColors.secondaryDark : AppColors.border,
+            width: 1.5,
+          ),
+          right: BorderSide(
+            color: showOwnerBadge ? AppColors.secondaryDark : AppColors.border,
+            width: 1.5,
+          ),
+          bottom: BorderSide(
+            color: showOwnerBadge ? AppColors.secondaryDark : AppColors.border,
+            width: 1.5,
+          ),
           left: BorderSide(
             color: showOwnerBadge ? AppColors.secondaryDark : AppColors.border,
             width: showOwnerBadge ? 3 : 1.5,
@@ -55,12 +65,14 @@ class OnboardingInviteRow extends StatelessWidget {
           if (onRemove != null)
             Align(
               alignment: Alignment.centerRight,
-              child: IconButton(
+              child: AppIconButton(
+                semanticsId: 'invite_row_remove',
+                label: 'Remove invite',
                 onPressed: onRemove,
-                icon: const Icon(Icons.close, size: 18),
                 color: AppColors.muted,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
+                icon: const Icon(Icons.close, size: 18),
               ),
             ),
           AppTextField(
@@ -70,7 +82,10 @@ class OnboardingInviteRow extends StatelessWidget {
             decoration: const InputDecoration(
               hintText: 'Name',
               isDense: true,
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
             ),
           ),
           const SizedBox(height: 8),
@@ -83,7 +98,10 @@ class OnboardingInviteRow extends StatelessWidget {
             decoration: const InputDecoration(
               hintText: 'Email or phone',
               isDense: true,
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
             ),
           ),
           if (membershipHint != null && membershipHint!.isNotEmpty) ...[
@@ -101,14 +119,14 @@ class OnboardingInviteRow extends StatelessWidget {
             value: relationship,
             isExpanded: true,
             decoration: const InputDecoration(
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
             ),
             items: relationshipOptions
                 .map(
-                  (o) => DropdownMenuItem(
-                    value: o,
-                    child: Text(o.pickerLabel),
-                  ),
+                  (o) => DropdownMenuItem(value: o, child: Text(o.pickerLabel)),
                 )
                 .toList(),
             onChanged: (v) {

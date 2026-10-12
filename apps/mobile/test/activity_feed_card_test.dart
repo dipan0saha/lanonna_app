@@ -5,7 +5,9 @@ import 'package:lanonna/core/widgets/activity/activity_feed_card.dart';
 import 'package:lanonna/features/home/data/models/home_summary.dart';
 
 void main() {
-  testWidgets('ActivityFeedCard shows icon, actor bold, and timestamp', (tester) async {
+  testWidgets('ActivityFeedCard shows icon, actor bold, and timestamp', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
@@ -18,6 +20,7 @@ void main() {
                 summary: 'Grandma Sue commented on "Bump update"',
                 createdAt: DateTime.now().toUtc().toIso8601String(),
                 actorDisplayName: 'Grandma Sue',
+                photoId: 'photo-1',
               ),
             ],
           ),
@@ -28,9 +31,15 @@ void main() {
     expect(find.byIcon(Icons.chat_bubble_outline), findsOneWidget);
     expect(find.textContaining('Grandma Sue'), findsOneWidget);
     expect(find.textContaining('commented on'), findsOneWidget);
+    expect(
+      find.bySemanticsLabel(RegExp('Grandma Sue commented on')),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('ActivityFeedCard shows empty state when requested', (tester) async {
+  testWidgets('ActivityFeedCard shows empty state when requested', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
