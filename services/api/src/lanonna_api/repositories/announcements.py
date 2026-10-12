@@ -14,7 +14,7 @@ def get_announcement(baby_profile_id: uuid.UUID) -> dict[str, Any] | None:
             f"""
             SELECT a.*,
                    (SELECT COUNT(*)::int FROM announcement_squishes s
-                    {active_participant_join("s.firebase_uid")}
+                    {active_participant_join("s.firebase_uid", "a.baby_profile_id")}
                     WHERE s.announcement_id = a.id) AS squish_count,
                    (SELECT COUNT(*)::int FROM announcement_comments c
                     WHERE c.announcement_id = a.id AND c.deleted_at IS NULL) AS comment_count
