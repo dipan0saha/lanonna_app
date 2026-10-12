@@ -7,11 +7,10 @@ from typing import Any
 from fastapi import APIRouter, Depends, Response, status
 from pydantic import BaseModel, Field
 
-from lanonna_api.auth import current_user
+from lanonna_api.auth import current_app_user
 from lanonna_api.http_errors import map_domain_errors
 from lanonna_api.domain import fun as fun_domain
 from lanonna_api.input_limits import MAX_FUN_SUGGESTED_NAME_LEN
-from lanonna_api.repositories.users import upsert_app_user
 
 router = APIRouter(
     prefix="/v1/babies/{baby_profile_id}/fun",
@@ -35,9 +34,8 @@ class BirthdateVoteBody(BaseModel):
 @router.get("/names")
 def list_names(
     baby_profile_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> dict[str, Any]:
-    upsert_app_user(user["uid"], user.get("email"))
     try:
         return fun_domain.list_names(user["uid"], baby_profile_id)
     except Exception as exc:
@@ -48,7 +46,7 @@ def list_names(
 def create_name(
     baby_profile_id: uuid.UUID,
     body: NameCreate,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
         return fun_domain.suggest_name(
@@ -65,7 +63,7 @@ def create_name(
 def delete_name(
     baby_profile_id: uuid.UUID,
     suggestion_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> Response:
     try:
         fun_domain.remove_suggestion(user["uid"], baby_profile_id, suggestion_id)
@@ -78,7 +76,7 @@ def delete_name(
 def like_name(
     baby_profile_id: uuid.UUID,
     suggestion_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
         return fun_domain.toggle_like(user["uid"], baby_profile_id, suggestion_id)
@@ -89,7 +87,7 @@ def like_name(
 @router.get("/predictions")
 def get_predictions(
     baby_profile_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
         return fun_domain.get_predictions(user["uid"], baby_profile_id)
@@ -101,7 +99,7 @@ def get_predictions(
 def put_gender_vote(
     baby_profile_id: uuid.UUID,
     body: GenderVoteBody,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
         return fun_domain.set_gender_vote(
@@ -117,7 +115,7 @@ def put_gender_vote(
 def put_birthdate_vote(
     baby_profile_id: uuid.UUID,
     body: BirthdateVoteBody,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
         return fun_domain.set_birthdate_vote(

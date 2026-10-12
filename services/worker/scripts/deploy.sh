@@ -27,6 +27,30 @@ fi
 SQL_INSTANCE="${SQL_INSTANCE_NAME:-lanonna-db}"
 CONN="${PROJECT_ID}:${REGION}:${SQL_INSTANCE}"
 
+# Sender is configuration, not a secret. Dev's validated address lives in
+# infra/env/dev.worker.env. A missing value or hello@lanonna.app must not deploy:
+# Mailjet returns HTTP 200 for that sender and then drops the message (#43).
+WORKER_ENV_FILE="${REPO_ROOT}/infra/env/dev.worker.env"
+if [[ -z "${MAILJET_FROM_EMAIL:-}" ]]; then
+  if [[ ! -f "${WORKER_ENV_FILE}" ]]; then
+    echo "MAILJET_FROM_EMAIL is required. Set it or add ${WORKER_ENV_FILE}." >&2
+    exit 1
+  fi
+  set -a
+  # shellcheck disable=SC1090
+  source "${WORKER_ENV_FILE}"
+  set +a
+fi
+if [[ -z "${MAILJET_FROM_EMAIL:-}" ]]; then
+  echo "MAILJET_FROM_EMAIL is required." >&2
+  exit 1
+fi
+FROM_EMAIL_NORMALIZED="$(printf '%s' "${MAILJET_FROM_EMAIL}" | tr '[:upper:]' '[:lower:]')"
+if [[ "${FROM_EMAIL_NORMALIZED}" == "hello@lanonna.app" ]]; then
+  echo "MAILJET_FROM_EMAIL=${MAILJET_FROM_EMAIL} is not a validated Mailjet sender." >&2
+  exit 1
+fi
+
 gcloud run deploy "${SERVICE}" \
   --image="${IMAGE}" \
   --region="${REGION}" \
@@ -35,7 +59,7 @@ gcloud run deploy "${SERVICE}" \
   --no-allow-unauthenticated \
   --add-cloudsql-instances="${CONN}" \
   --set-secrets="DB_PASSWORD=db-lanonna-app-password:latest,MAILJET_API_KEY=mailjet-api-key:latest,MAILJET_API_SECRET=mailjet-api-secret:latest" \
-  --set-env-vars="ENVIRONMENT=dev,GCP_PROJECT_ID=${PROJECT_ID},CLOUD_SQL_CONNECTION_NAME=${CONN},DB_USER=lanonna_app,DB_NAME=lanonna,DISPLAY_BUCKET=${PROJECT_ID}-display,THUMBNAILS_BUCKET=${PROJECT_ID}-thumbnails,INVITE_DEEP_LINK_BASE=lanonna://app,MAILJET_FROM_EMAIL=${MAILJET_FROM_EMAIL:-hello@lanonna.app},MAILJET_FROM_NAME=La Nonna" \
+  --set-env-vars="ENVIRONMENT=dev,GCP_PROJECT_ID=${PROJECT_ID},CLOUD_SQL_CONNECTION_NAME=${CONN},DB_USER=lanonna_app,DB_NAME=lanonna,DISPLAY_BUCKET=${PROJECT_ID}-display,THUMBNAILS_BUCKET=${PROJECT_ID}-thumbnails,INVITE_DEEP_LINK_BASE=lanonna://app,MAILJET_FROM_EMAIL=${MAILJET_FROM_EMAIL},MAILJET_FROM_NAME=${MAILJET_FROM_NAME:-La Nonna}" \
   --min-instances=0 \
   --max-instances=5 \
   --memory=512Mi \

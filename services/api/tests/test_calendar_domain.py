@@ -85,8 +85,6 @@ def test_create_event_passes_catalog_suggestion_id():
         "lanonna_api.domain.calendar.catalog_suggestion_claimed",
         return_value=False,
     ), patch(
-        "lanonna_api.domain.calendar.upsert_app_user",
-    ), patch(
         "lanonna_api.domain.calendar.insert_activity_event",
     ), patch(
         "lanonna_api.domain.calendar.safe_enqueue_fan_out",
@@ -128,8 +126,6 @@ def test_set_rsvp_succeeds_when_notify_enqueue_fails():
         "lanonna_api.domain.calendar.get_event",
         return_value=event,
     ), patch(
-        "lanonna_api.domain.calendar.upsert_app_user",
-    ), patch(
         "lanonna_api.domain.calendar.upsert_rsvp",
     ), patch(
         "lanonna_api.domain.calendar.actor_display_name",
@@ -152,8 +148,6 @@ def test_add_event_comment_succeeds_when_notify_enqueue_fails():
     with patch("lanonna_api.domain.calendar.require_membership"), patch(
         "lanonna_api.domain.calendar.get_event",
         return_value=event,
-    ), patch(
-        "lanonna_api.domain.calendar.upsert_app_user",
     ), patch(
         "lanonna_api.domain.calendar.insert_event_comment",
         return_value={
@@ -217,5 +211,97 @@ def test_get_event_detail_rsvp_uses_display_name_column():
         detail = get_event_detail("viewer", baby_id, event_id)
 
     assert detail["rsvp_attendees"][0]["display_name"] == "Alex QA"
+
+
+def test_create_event_rejects_end_before_start():
+    baby_id = uuid.uuid4()
+    starts = datetime(2026, 6, 1, 12, 0, tzinfo=timezone.utc)
+    ends = datetime(2026, 6, 1, 11, 0, tzinfo=timezone.utc)
+    with patch("lanonna_api.domain.calendar.assert_owner_membership"), patch(
+        "lanonna_api.domain.calendar.create_event",
+    ) as create_mock:
+        with pytest.raises(ValueError, match="End time must be at or after"):
+            create_calendar_event(
+                "uid",
+                baby_id,
+                title="Shower",
+                starts_at=starts,
+                ends_at=ends,
+                description=None,
+                location=None,
+                video_call_url=None,
+                cover_photo_id=None,
+            )
+        create_mock.assert_not_called()
+
+
+def test_create_event_allows_end_equal_to_start():
+    baby_id = uuid.uuid4()
+    starts = datetime(2026, 6, 1, 12, 0, tzinfo=timezone.utc)
+    with patch("lanonna_api.domain.calendar.assert_owner_membership"), patch(
+        "lanonna_api.domain.calendar.insert_activity_event",
+    ), patch(
+        "lanonna_api.domain.calendar.safe_enqueue_fan_out",
+    ), patch(
+        "lanonna_api.domain.calendar.create_event",
+        return_value={"id": uuid.uuid4(), "title": "Shower", "starts_at": starts},
+    ) as create_mock, patch(
+        "lanonna_api.domain.calendar._event_row_to_json",
+        return_value={"id": "x"},
+    ):
+        create_calendar_event(
+            "uid",
+            baby_id,
+            title="Shower",
+            starts_at=starts,
+            ends_at=starts,
+            description=None,
+            location=None,
+            video_call_url=None,
+            cover_photo_id=None,
+        )
+    assert create_mock.call_args.kwargs["ends_at"] == starts
+
+
+def test_update_event_rejects_end_before_existing_start():
+    from lanonna_api.domain.calendar import update_calendar_event
+
+    baby_id = uuid.uuid4()
+    event_id = uuid.uuid4()
+    starts = datetime(2026, 6, 1, 12, 0, tzinfo=timezone.utc)
+    with patch("lanonna_api.domain.calendar.assert_owner_membership"), patch(
+        "lanonna_api.domain.calendar.get_event",
+        return_value={"starts_at": starts, "ends_at": None},
+    ), patch(
+        "lanonna_api.domain.calendar.update_event",
+    ) as update_mock:
+        with pytest.raises(ValueError, match="End time must be at or after"):
+            update_calendar_event(
+                "uid",
+                baby_id,
+                event_id,
+                {"ends_at": datetime(2026, 6, 1, 11, 0)},
+            )
+        update_mock.assert_not_called()
+
+
+def test_update_event_allows_clearing_end():
+    from lanonna_api.domain.calendar import update_calendar_event
+
+    baby_id = uuid.uuid4()
+    event_id = uuid.uuid4()
+    starts = datetime(2026, 6, 1, 12, 0, tzinfo=timezone.utc)
+    with patch("lanonna_api.domain.calendar.assert_owner_membership"), patch(
+        "lanonna_api.domain.calendar.get_event",
+        return_value={"starts_at": starts, "ends_at": starts},
+    ), patch(
+        "lanonna_api.domain.calendar.update_event",
+        return_value={"id": event_id, "title": "Shower", "starts_at": starts, "ends_at": None},
+    ) as update_mock, patch(
+        "lanonna_api.domain.calendar._event_row_to_json",
+        return_value={"id": "x"},
+    ):
+        update_calendar_event("uid", baby_id, event_id, {"ends_at": None})
+    update_mock.assert_called_once()
 
 

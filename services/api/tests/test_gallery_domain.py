@@ -139,8 +139,6 @@ def test_add_comment_inserts_activity():
         "lanonna_api.domain.gallery.get_photo_for_baby",
         return_value=photo_row,
     ), patch(
-        "lanonna_api.domain.gallery.upsert_app_user",
-    ), patch(
         "lanonna_api.domain.gallery.insert_photo_comment",
         return_value={
             "id": uuid.uuid4(),

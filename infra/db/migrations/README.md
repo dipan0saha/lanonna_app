@@ -35,6 +35,8 @@ Apply in **lexicographic order** (filename prefix):
 | `027_invite_email_send_claim.sql` | `invitations.email_send_claimed_at` (M-12) |
 | `028_invite_email_delivery_token.sql` | `invitations.email_invite_token` cleared on send (M-41) |
 | `029_drop_photo_ready_notification_log.sql` | Drop unused `photo_ready_notification_log` (L-27) |
+| `030_app_users_last_seen.sql` | `app_users.last_seen_at` for throttled provisioning (#36) |
+| `031_membership_joined_via.sql` | `baby_memberships.joined_via` (`created` \| `invite`) and creator backfill repair (#31) |
 
 ## Apply (dev)
 

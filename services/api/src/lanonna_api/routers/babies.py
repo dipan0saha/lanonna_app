@@ -5,7 +5,7 @@ from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from lanonna_api.auth import current_user
+from lanonna_api.auth import current_app_user
 from lanonna_api.domain.avatar_urls import normalize_avatar_for_storage
 from lanonna_api.http_errors import map_domain_errors
 from lanonna_api.domain.home import announce_arrival, build_home_summary, list_activity_events
@@ -17,7 +17,6 @@ from lanonna_api.repositories.babies import (
 from lanonna_api.domain.member_lifecycle import can_leave_baby
 from lanonna_api.domain.onboarding import seed_expecting_profile_name_suggestions, seed_first_moment
 from lanonna_api.repositories.memberships import count_active_owners
-from lanonna_api.repositories.users import upsert_app_user
 from lanonna_api.schemas.babies import (
     BabyCreateRequest,
     BabySummary,
@@ -34,8 +33,7 @@ router = APIRouter(prefix="/v1/babies", tags=["babies"])
 
 
 @router.get("", response_model=list[BabySummary])
-def list_babies(user: dict[str, Any] = Depends(current_user)) -> list[BabySummary]:
-    upsert_app_user(user["uid"], user.get("email"))
+def list_babies(user: dict[str, Any] = Depends(current_app_user)) -> list[BabySummary]:
     summaries: list[BabySummary] = []
     for row in list_babies_for_user(user["uid"]):
         owner_count = count_active_owners(row["id"])
@@ -47,9 +45,8 @@ def list_babies(user: dict[str, Any] = Depends(current_user)) -> list[BabySummar
 @router.post("", response_model=BabySummary, status_code=status.HTTP_201_CREATED)
 def create_baby(
     body: BabyCreateRequest,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> BabySummary:
-    upsert_app_user(user["uid"], user.get("email"))
     if body.profile_name_suggestions and body.lifecycle_status != "expecting":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -81,9 +78,8 @@ def create_baby(
 def patch_baby(
     baby_profile_id: uuid.UUID,
     body: BabyUpdateRequest,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> BabySummary:
-    upsert_app_user(user["uid"], user.get("email"))
     fields: dict[str, Any] = {}
     if body.name is not None:
         fields["name"] = body.name.strip()
@@ -127,9 +123,8 @@ def patch_baby(
 @router.get("/{baby_profile_id}/home-summary", response_model=HomeSummaryResponse)
 def home_summary(
     baby_profile_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> HomeSummaryResponse:
-    upsert_app_user(user["uid"], user.get("email"))
     try:
         data = build_home_summary(user["uid"], baby_profile_id)
     except Exception as exc:
@@ -140,12 +135,11 @@ def home_summary(
 @router.get("/{baby_profile_id}/activity-events")
 def activity_events(
     baby_profile_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
     limit: int = Query(default=20, ge=1, le=50),
     offset: int = Query(default=0, ge=0),
     scope: Literal["all", "gallery"] = Query(default="all"),
 ) -> dict[str, Any]:
-    upsert_app_user(user["uid"], user.get("email"))
     try:
         return list_activity_events(
             user["uid"],
@@ -165,9 +159,8 @@ def activity_events(
 def first_moment_seed(
     baby_profile_id: uuid.UUID,
     body: FirstMomentSeedRequest,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> FirstMomentSeedResponse:
-    upsert_app_user(user["uid"], user.get("email"))
     try:
         counts = seed_first_moment(
             user["uid"],

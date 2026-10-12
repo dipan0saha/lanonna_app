@@ -119,6 +119,8 @@ Scripts use **Cloud Build** → `us-central1-docker.pkg.dev/lanonna-dev/lanonna/
 
 **Deploy order when both change:** apply **migrations** first if needed → **worker** → `apply-dev-run-iam.sh` → **API**. Email templates: `bash scripts/sync-email-templates.sh apply` before worker deploy when templates changed.
 
+**Worker sender (#43):** `MAILJET_FROM_EMAIL` is configuration, not a secret. `services/worker/scripts/deploy.sh` uses the environment variable when it is set, otherwise sources `infra/env/dev.worker.env` (`lanonnaapp@gmail.com` for dev). Deploy and worker startup both refuse an empty sender and `hello@lanonna.app` (Mailjet returns HTTP 200 for that address and drops the message). A Mailjet HTTP 200 whose `Messages[0].Status` is not `success` is a send failure: the invite claim is released and `email_sent_at` is not set.
+
 **URLs:**
 
 ```bash
@@ -187,6 +189,8 @@ cd ../.. && ./scripts/verify-dev-migrations.sh   # repo root; PGPASSWORD set
 ```
 
 Secrets (values in Secret Manager only): `db-lanonna-app-password`, `database-url`, `db-postgres-root-password`, `admin-api-key` (add version via `gcloud` after first apply if empty).
+
+After migration `030` is applied, null emails on active users can be restored from Firebase Auth with `DB_PORT=5433 python infra/db/backfill_null_user_emails.py` (dry-run), then the same command with `--apply`. `--report-orphans` prints read-only counts and does not delete rows. The script needs Application Default Credentials that can call Firebase Auth `get_user`.
 
 **Retest onboarding:** `clear_dev_test_data.py --email you@example.com --reset-onboarding` — [development.md](development.md).
 

@@ -6,10 +6,9 @@ from typing import Any
 from fastapi import APIRouter, Depends, Response, status
 from pydantic import BaseModel, Field
 
-from lanonna_api.auth import current_user
+from lanonna_api.auth import current_app_user
 from lanonna_api.http_errors import map_domain_errors
 from lanonna_api.domain import registry as registry_domain
-from lanonna_api.repositories.users import upsert_app_user
 from lanonna_api.input_limits import (
     MAX_PRODUCT_URL_LEN,
     MAX_REGISTRY_NAME_LEN,
@@ -41,9 +40,8 @@ class ItemUpdate(BaseModel):
 @router.get("/items")
 def list_items(
     baby_profile_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> list[dict[str, Any]]:
-    upsert_app_user(user["uid"], user.get("email"))
     try:
         return registry_domain.list_items(user["uid"], baby_profile_id)
     except Exception as exc:
@@ -54,7 +52,7 @@ def list_items(
 def create_item(
     baby_profile_id: uuid.UUID,
     body: ItemCreate,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
         return registry_domain.create_item(
@@ -74,7 +72,7 @@ def create_item(
 def get_item(
     baby_profile_id: uuid.UUID,
     item_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
         return registry_domain.get_item(user["uid"], baby_profile_id, item_id)
@@ -87,7 +85,7 @@ def patch_item(
     baby_profile_id: uuid.UUID,
     item_id: uuid.UUID,
     body: ItemUpdate,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
         return registry_domain.patch_item(
@@ -104,7 +102,7 @@ def patch_item(
 def delete_item(
     baby_profile_id: uuid.UUID,
     item_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> Response:
     try:
         registry_domain.remove_item(user["uid"], baby_profile_id, item_id)
@@ -117,7 +115,7 @@ def delete_item(
 def claim_purchase(
     baby_profile_id: uuid.UUID,
     item_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
         return registry_domain.claim_purchase(user["uid"], baby_profile_id, item_id)
@@ -129,7 +127,7 @@ def claim_purchase(
 def undo_purchase(
     baby_profile_id: uuid.UUID,
     item_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> Response:
     try:
         registry_domain.undo_purchase(user["uid"], baby_profile_id, item_id)
@@ -141,9 +139,8 @@ def undo_purchase(
 @router.get("/shipping-address")
 def get_shipping(
     baby_profile_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> dict[str, Any]:
-    upsert_app_user(user["uid"], user.get("email"))
     try:
         return registry_domain.read_shipping(user["uid"], baby_profile_id)
     except Exception as exc:
@@ -154,9 +151,8 @@ def get_shipping(
 def patch_shipping(
     baby_profile_id: uuid.UUID,
     body: ShippingAddressPatch,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> dict[str, Any]:
-    upsert_app_user(user["uid"], user.get("email"))
     try:
         return registry_domain.patch_shipping(
             user["uid"],

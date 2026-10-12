@@ -32,7 +32,7 @@ def test_init_photo_upload_passes_caption_to_create_pending_photo():
     user = {"uid": "uid1", "email": "a@b.com"}
     with patch(
         "lanonna_api.domain.gallery.assert_owner_membership",
-    ), patch("lanonna_api.domain.gallery.upsert_app_user"), patch(
+    ), patch(
         "lanonna_api.domain.gallery.create_pending_photo"
     ) as create, patch(
         "lanonna_api.domain.gallery.mint_display_upload_for_object",

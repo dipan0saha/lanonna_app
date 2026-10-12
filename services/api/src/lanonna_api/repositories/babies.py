@@ -67,9 +67,9 @@ def create_baby_with_owner_membership(
         conn.execute(
             """
             INSERT INTO baby_memberships (
-                baby_profile_id, firebase_uid, role, relationship_label
+                baby_profile_id, firebase_uid, role, relationship_label, joined_via
             )
-            VALUES (%s, %s, 'owner', %s)
+            VALUES (%s, %s, 'owner', %s, 'created')
             """,
             (baby_id, firebase_uid, relationship_label),
         )

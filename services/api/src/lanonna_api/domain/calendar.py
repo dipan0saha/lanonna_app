@@ -43,8 +43,8 @@ from lanonna_api.repositories.events import (
     update_event_comment,
     upsert_rsvp,
 )
+from lanonna_api.domain.date_validation import validate_event_time_range
 from lanonna_api.repositories.photos import get_photo_for_baby
-from lanonna_api.repositories.users import upsert_app_user
 
 
 def _require_baby_cover_photo(
@@ -161,7 +161,7 @@ def create_calendar_event(
         raise ValueError("This suggestion is already on the calendar.")
     video_call_url = normalize_optional_http_url(video_call_url)
     _require_baby_cover_photo(baby_profile_id, cover_photo_id)
-    upsert_app_user(firebase_uid, None)
+    validate_event_time_range(starts_at, ends_at)
     row = create_event(
         baby_profile_id,
         firebase_uid,
@@ -207,6 +207,13 @@ def update_calendar_event(
         )
     if "cover_photo_id" in fields:
         _require_baby_cover_photo(baby_profile_id, fields.get("cover_photo_id"))
+    if "starts_at" in fields or "ends_at" in fields:
+        existing = get_event(baby_profile_id, event_id)
+        if existing is None:
+            raise LookupError("Event not found.")
+        starts_at = fields["starts_at"] if "starts_at" in fields else existing["starts_at"]
+        ends_at = fields["ends_at"] if "ends_at" in fields else existing.get("ends_at")
+        validate_event_time_range(starts_at, ends_at)
     row = update_event(baby_profile_id, event_id, fields)
     if row is None:
         raise LookupError("Event not found.")
@@ -235,7 +242,6 @@ def set_rsvp(
     event = get_event(baby_profile_id, event_id)
     if event is None:
         raise LookupError("Event not found.")
-    upsert_app_user(firebase_uid, None)
     upsert_rsvp(event_id, firebase_uid, status)
     creator = event.get("created_by_firebase_uid")
     if creator and creator != firebase_uid:
@@ -263,7 +269,6 @@ def add_event_comment(
         raise LookupError("Event not found.")
     if not body.strip():
         raise ValueError("Comment body required.")
-    upsert_app_user(firebase_uid, None)
     c = insert_event_comment(event_id, firebase_uid, body)
     creator = event.get("created_by_firebase_uid")
     if creator and creator != firebase_uid:

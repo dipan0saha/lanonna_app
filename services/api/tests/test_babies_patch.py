@@ -35,9 +35,7 @@ def test_patch_baby_born_invokes_announce_arrival():
         "avatar_url": None,
     }
     with (
-        _auth_as(),
-        patch("lanonna_api.routers.babies.upsert_app_user"),
-        patch("lanonna_api.routers.babies.announce_arrival", return_value=row) as announce,
+        _auth_as(),        patch("lanonna_api.routers.babies.announce_arrival", return_value=row) as announce,
     ):
         response = client.patch(
             f"/v1/babies/{baby_id}",

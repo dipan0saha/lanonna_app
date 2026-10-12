@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from unittest.mock import patch
 
 import pytest
@@ -6,6 +6,7 @@ import pytest
 from lanonna_api.domain.date_validation import (
     USER_BIRTH_DATE_MIN,
     validate_actual_birth_date,
+    validate_event_time_range,
     validate_user_birth_date,
 )
 
@@ -32,3 +33,16 @@ def test_validate_actual_birth_date_allows_one_day_slack():
     today = date(2026, 10, 10)
     with patch("lanonna_api.domain.date_validation.utc_today", return_value=today):
         validate_actual_birth_date(today + timedelta(days=1))
+
+
+def test_validate_event_time_range_rejects_end_before_start():
+    starts = datetime(2026, 6, 1, 12, 0, tzinfo=timezone.utc)
+    ends = datetime(2026, 6, 1, 11, 0)
+    with pytest.raises(ValueError, match="End time must be at or after"):
+        validate_event_time_range(starts, ends)
+
+
+def test_validate_event_time_range_allows_equal_and_open_ended():
+    starts = datetime(2026, 6, 1, 12, 0, tzinfo=timezone.utc)
+    validate_event_time_range(starts, starts)
+    validate_event_time_range(starts, None)

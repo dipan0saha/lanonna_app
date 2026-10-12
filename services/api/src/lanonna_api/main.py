@@ -10,7 +10,7 @@ from lanonna_api.middleware.request_context import RequestContextMiddleware
 from pydantic import BaseModel, Field, model_validator
 
 from lanonna_api.app_check import require_app_check
-from lanonna_api.auth import current_user
+from lanonna_api.auth import current_app_user
 from lanonna_api.config import settings
 from lanonna_api.routers import (
     admin_system_announcements,
@@ -131,7 +131,7 @@ class DisplayUploadSignResponse(BaseModel):
 )
 def sign_display_upload(
     body: DisplayUploadSignRequest,
-    user: dict[str, Any] = Depends(current_user),
+    user: dict[str, Any] = Depends(current_app_user),
 ) -> DisplayUploadSignResponse:
     try:
         if body.scope == "baby":

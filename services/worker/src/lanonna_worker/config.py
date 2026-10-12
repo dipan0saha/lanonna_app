@@ -19,7 +19,8 @@ class Settings(BaseSettings):
 
     mailjet_api_key: str = ""  # MAILJET_API_KEY
     mailjet_api_secret: str = ""  # MAILJET_API_SECRET
-    mailjet_from_email: str = "hello@lanonna.app"  # MAILJET_FROM_EMAIL
+    # No placeholder default. hello@lanonna.app is not a validated Mailjet sender (#43).
+    mailjet_from_email: str = ""  # MAILJET_FROM_EMAIL
     mailjet_from_name: str = "La Nonna"  # MAILJET_FROM_NAME
     invite_deep_link_base: str = "lanonna://app"  # INVITE_DEEP_LINK_BASE
 
@@ -31,29 +32,46 @@ _DEV_PROJECT_ID = "lanonna-dev"
 _DEV_DISPLAY_BUCKET = "lanonna-dev-display"
 _DEV_THUMBNAILS_BUCKET = "lanonna-dev-thumbnails"
 
+# Accepted by Mailjet with HTTP 200, then never delivered (#43).
+UNVALIDATED_MAILJET_FROM_EMAIL = "hello@lanonna.app"
+
+
+def mailjet_sender_error(from_email: str) -> str | None:
+    """Return a configuration error when the sender is missing or known-unvalidated."""
+    normalized = from_email.strip().lower()
+    if not normalized:
+        return "MAILJET_FROM_EMAIL is required"
+    if normalized == UNVALIDATED_MAILJET_FROM_EMAIL:
+        return (
+            "MAILJET_FROM_EMAIL hello@lanonna.app is not a validated Mailjet sender"
+        )
+    return None
+
 
 def validate_worker_settings(cfg: Settings | None = None) -> None:
-    """Refuse to start with dev defaults when ENVIRONMENT is not dev."""
+    """Refuse to start with a missing sender, or with dev defaults outside dev."""
     cfg = cfg or settings
-    if cfg.environment.lower() == "dev":
-        return
     errors: list[str] = []
-    if cfg.gcp_project_id == _DEV_PROJECT_ID:
-        errors.append("GCP_PROJECT_ID must not be the dev default outside dev")
-    if cfg.display_bucket == _DEV_DISPLAY_BUCKET:
-        errors.append("DISPLAY_BUCKET must not be the dev default outside dev")
-    if cfg.thumbnails_bucket == _DEV_THUMBNAILS_BUCKET:
-        errors.append("THUMBNAILS_BUCKET must not be the dev default outside dev")
-    expected_display = f"{cfg.gcp_project_id}-display"
-    expected_thumbs = f"{cfg.gcp_project_id}-thumbnails"
-    if cfg.display_bucket != expected_display:
-        errors.append(
-            f"DISPLAY_BUCKET must be {expected_display} (got {cfg.display_bucket})"
-        )
-    if cfg.thumbnails_bucket != expected_thumbs:
-        errors.append(
-            f"THUMBNAILS_BUCKET must be {expected_thumbs} (got {cfg.thumbnails_bucket})"
-        )
+    sender_error = mailjet_sender_error(cfg.mailjet_from_email)
+    if sender_error:
+        errors.append(sender_error)
+    if cfg.environment.lower() != "dev":
+        if cfg.gcp_project_id == _DEV_PROJECT_ID:
+            errors.append("GCP_PROJECT_ID must not be the dev default outside dev")
+        if cfg.display_bucket == _DEV_DISPLAY_BUCKET:
+            errors.append("DISPLAY_BUCKET must not be the dev default outside dev")
+        if cfg.thumbnails_bucket == _DEV_THUMBNAILS_BUCKET:
+            errors.append("THUMBNAILS_BUCKET must not be the dev default outside dev")
+        expected_display = f"{cfg.gcp_project_id}-display"
+        expected_thumbs = f"{cfg.gcp_project_id}-thumbnails"
+        if cfg.display_bucket != expected_display:
+            errors.append(
+                f"DISPLAY_BUCKET must be {expected_display} (got {cfg.display_bucket})"
+            )
+        if cfg.thumbnails_bucket != expected_thumbs:
+            errors.append(
+                f"THUMBNAILS_BUCKET must be {expected_thumbs} (got {cfg.thumbnails_bucket})"
+            )
     if errors:
         raise RuntimeError("Invalid worker configuration: " + "; ".join(errors))
 

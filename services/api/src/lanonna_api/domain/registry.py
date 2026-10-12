@@ -35,7 +35,6 @@ from lanonna_api.repositories.registry import (
     update_registry_item,
     update_shipping_address_fields,
 )
-from lanonna_api.repositories.users import upsert_app_user
 
 
 def _item_json(row: dict[str, Any]) -> dict[str, Any]:
@@ -96,7 +95,6 @@ def create_item(
     catalog_id = normalize_catalog_suggestion_id(catalog_suggestion_id)
     if catalog_id and catalog_suggestion_claimed(baby_profile_id, catalog_id):
         raise ValueError("This suggestion is already on the registry.")
-    upsert_app_user(firebase_uid, None)
     row = create_registry_item(
         baby_profile_id,
         firebase_uid,
@@ -171,7 +169,6 @@ def claim_purchase(
         if item.get("purchased_by_firebase_uid") == firebase_uid:
             return {"status": "already_claimed"}
         raise PermissionError("This item is already purchased.")
-    upsert_app_user(firebase_uid, None)
     purchase = create_purchase(item_id, firebase_uid)
     if purchase["purchased_by_firebase_uid"] != firebase_uid:
         raise PermissionError("This item is already purchased.")
