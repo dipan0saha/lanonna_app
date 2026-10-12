@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../../../core/auth/auth_repository.dart';
 import '../../../../invitations/data/models/invitation_preview.dart';
 import '../../../../invitations/presentation/invite_accept_messages.dart';
+import '../../../../invitations/presentation/invite_flow_state.dart';
 import '../../../../invitations/presentation/invite_landing_helpers.dart';
 import '../../../../invitations/presentation/widgets/invite_landing_state_views.dart';
 import '../../../../invitations/presentation/widgets/invite_landing_widgets.dart';
@@ -90,13 +91,8 @@ class _OnboardingCoOwnerInviteScreenState extends State<OnboardingCoOwnerInviteS
       }
       return;
     }
-    context.go(
-      OnboardingRoutes.signupWithInvite(
-        path: OnboardingPath.coOwner.signupQueryValue,
-        inviteToken: token,
-        email: preview.inviteeEmail,
-      ),
-    );
+    context.read<InviteFlowState>().setSignupPrefillEmail(preview.inviteeEmail);
+    context.go(OnboardingRoutes.signup);
   }
 
   @override

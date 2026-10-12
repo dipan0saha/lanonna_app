@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../home/data/selected_baby_store.dart';
 import '../../../invitations/presentation/invite_accept_messages.dart';
+import '../../../invitations/presentation/invite_flow_state.dart';
 import '../../../invitations/data/invitations_repository.dart';
 import '../../domain/onboarding_path.dart';
 import '../../domain/onboarding_routes.dart';
@@ -20,11 +21,11 @@ Future<void> navigateAfterCompleteProfile(BuildContext context) async {
     if (!context.mounted) return;
 
     if (result.error == 'email_mismatch') {
-      final invitee = Uri.encodeComponent(result.inviteeEmail ?? '');
-      final signedIn = Uri.encodeComponent(result.signedInEmail ?? '');
-      context.go(
-        '${OnboardingRoutes.wrongEmail}?invitee=$invitee&signed_in=$signedIn&invite_token=${Uri.encodeComponent(token)}',
+      context.read<InviteFlowState>().setEmailMismatch(
+        inviteeEmail: result.inviteeEmail ?? '',
+        signedInEmail: result.signedInEmail ?? '',
       );
+      context.go(OnboardingRoutes.wrongEmail);
       return;
     }
     if (result.error != null) {
@@ -71,11 +72,11 @@ Future<void> acceptSignedInInviteAndContinue(
   if (!context.mounted) return;
 
   if (result.error == 'email_mismatch') {
-    final invitee = Uri.encodeComponent(result.inviteeEmail ?? '');
-    final signedIn = Uri.encodeComponent(result.signedInEmail ?? '');
-    context.go(
-      '${OnboardingRoutes.wrongEmail}?invitee=$invitee&signed_in=$signedIn&invite_token=${Uri.encodeComponent(token)}',
+    context.read<InviteFlowState>().setEmailMismatch(
+      inviteeEmail: result.inviteeEmail ?? '',
+      signedInEmail: result.signedInEmail ?? '',
     );
+    context.go(OnboardingRoutes.wrongEmail);
     return;
   }
   if (result.error != null) {

@@ -26,6 +26,7 @@ import 'features/home/data/home_refresh_signal.dart';
 import 'features/home/data/home_repository.dart';
 import 'features/home/data/selected_baby_store.dart';
 import 'features/invitations/data/invitations_repository.dart';
+import 'features/invitations/presentation/invite_flow_state.dart';
 import 'features/onboarding/data/onboarding_repository.dart';
 import 'features/onboarding/data/onboarding_storage.dart';
 import 'features/onboarding/presentation/app_session.dart';
@@ -78,6 +79,7 @@ Future<Widget> bootstrapLaNonnaApp() async {
     repository: onboardingRepository,
   );
   await coordinator.hydrate();
+  final inviteFlowState = InviteFlowState();
   final session = AppSession(
     repository: onboardingRepository,
     storage: onboardingStorage,
@@ -88,6 +90,7 @@ Future<Widget> bootstrapLaNonnaApp() async {
     coordinator: coordinator,
     homeRepository: homeRepository,
     selectedBabyStore: selectedBabyStore,
+    inviteFlowState: inviteFlowState,
   );
   final homeRefreshSignal = HomeRefreshSignal();
   apiClient.registerMembershipEndedHandler(
@@ -149,6 +152,7 @@ Future<Widget> bootstrapLaNonnaApp() async {
         value: connectivityService,
       ),
       ChangeNotifierProvider<OnboardingCoordinator>.value(value: coordinator),
+      ChangeNotifierProvider<InviteFlowState>.value(value: inviteFlowState),
       ChangeNotifierProvider<AppSession>.value(value: session),
     ],
     child: LaNonnaApp(

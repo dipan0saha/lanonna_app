@@ -46,26 +46,6 @@ Future<void> goBackFromInviteAuth(
   );
 }
 
-String loginRouteForContext(BuildContext context) {
-  final coordinator = context.read<OnboardingCoordinator>();
-  final token = coordinator.pendingInviteToken;
-  if (coordinator.isInvitePath && token != null && token.isNotEmpty) {
-    return OnboardingRoutes.loginWithInvite(
-      path: coordinator.onboardingPath.signupQueryValue,
-      inviteToken: token,
-    );
-  }
-  return OnboardingRoutes.login;
-}
+String loginRouteForContext(BuildContext context) => OnboardingRoutes.login;
 
-String signupRouteForContext(BuildContext context) {
-  final coordinator = context.read<OnboardingCoordinator>();
-  final token = coordinator.pendingInviteToken;
-  if (coordinator.isInvitePath && token != null && token.isNotEmpty) {
-    return OnboardingRoutes.signupWithInvite(
-      path: coordinator.onboardingPath.signupQueryValue,
-      inviteToken: token,
-    );
-  }
-  return OnboardingRoutes.signup;
-}
+String signupRouteForContext(BuildContext context) => OnboardingRoutes.signup;

@@ -102,7 +102,6 @@ class OnboardingCoordinator extends ChangeNotifier {
       'status': preview.status,
       'baby_name': preview.babyName,
       'inviter_display_name': preview.inviterDisplayName,
-      'invitee_email': preview.inviteeEmail,
       'relationship_label': preview.relationshipLabel,
       'invited_role': preview.invitedRole,
       'baby_profile_id': preview.babyProfileId,

@@ -1,0 +1,57 @@
+# Cloud Build upload context (M-48). Deploy: gcloud builds submit from repo root.
+# Only packages/ and services/ are needed for API/worker Dockerfiles.
+# Replaces default .gitignore fallback — keep secret/cache rules in sync with .gitignore.
+
+# Deny repo root by default
+*
+
+# Allow API / worker build trees
+!packages/
+!packages/**
+!services/
+!services/**
+
+# --- Secrets (never upload) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+credentials.json
+service-account*.json
+**/google-services.json
+**/GoogleService-Info.plist
+firebase-debug.log
+firebase-debug.*.log
+
+# --- Tooling / caches ---
+**/.venv/
+**/venv/
+**/__pycache__/
+**/*.py[cod]
+**/*.egg-info/
+**/.pytest_cache/
+**/node_modules/
+**/dist/
+**/coverage/
+**/.dart_tool/
+**/.packages
+**/build/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.pub-cache/
+.terraform/
+**/.terraform/
+*.tfstate
+*.tfstate.*
+**/tfplan
+
+# --- OS / editors ---
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# --- Not needed in images (smaller context) ---
+services/**/tests/
+packages/**/tests/

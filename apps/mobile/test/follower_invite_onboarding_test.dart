@@ -10,6 +10,7 @@ import 'package:lanonna/features/onboarding/domain/onboarding_routes.dart';
 import 'package:lanonna/features/onboarding/presentation/onboarding_coordinator.dart';
 import 'package:lanonna/features/onboarding/presentation/screens/follower/follower_carousel_screen.dart';
 import 'package:lanonna/features/onboarding/presentation/screens/follower/onboarding_follower_invite_screen.dart';
+import 'package:lanonna/features/invitations/presentation/invite_flow_state.dart';
 import 'package:lanonna/features/onboarding/presentation/screens/shared/onboarding_wrong_email_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -80,9 +81,14 @@ void main() {
     );
     await coordinator.hydrate();
 
+    final inviteFlowState = InviteFlowState();
+    inviteFlowState.setEmailMismatch(
+      inviteeEmail: 'grandma@test.com',
+      signedInEmail: 'other@test.com',
+    );
+
     final router = GoRouter(
-      initialLocation:
-          '${OnboardingRoutes.wrongEmail}?invitee=grandma@test.com&signed_in=other@test.com',
+      initialLocation: OnboardingRoutes.wrongEmail,
       routes: [
         GoRoute(
           path: OnboardingRoutes.wrongEmail,
@@ -92,8 +98,11 @@ void main() {
     );
 
     await tester.pumpWidget(
-      ChangeNotifierProvider.value(
-        value: coordinator,
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: coordinator),
+          ChangeNotifierProvider.value(value: inviteFlowState),
+        ],
         child: MaterialApp.router(theme: AppTheme.light, routerConfig: router),
       ),
     );

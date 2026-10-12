@@ -51,6 +51,7 @@ adb shell am start -a android.intent.action.VIEW \
 
 - [ ] Lands on invite accept / preview flow.
 - [ ] Kill app; relaunch **without** link → stored `pendingInviteToken` resumes (see [development.md](development.md)).
+- [ ] Accept while signed in as a **different** email → **Wrong account** shows both addresses; **Switch account** prefills login (no emails in the route URL).
 
 ## 7. Gallery comments and baby tags
 

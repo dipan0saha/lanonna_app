@@ -42,33 +42,4 @@ abstract final class OnboardingRoutes {
     };
   }
 
-  static String signupWithInvite({
-    required String path,
-    required String inviteToken,
-    String? email,
-  }) {
-    final params = <String, String>{
-      'path': path,
-      'invite_token': inviteToken,
-    };
-    if (email != null && email.isNotEmpty) {
-      params['email'] = email;
-    }
-    return '$signup?${Uri(queryParameters: params).query}';
-  }
-
-  static String loginWithInvite({
-    required String path,
-    required String inviteToken,
-    String? email,
-  }) {
-    final params = <String, String>{
-      'path': path,
-      'invite_token': inviteToken,
-    };
-    if (email != null && email.isNotEmpty) {
-      params['email'] = email;
-    }
-    return '$login?${Uri(queryParameters: params).query}';
-  }
 }

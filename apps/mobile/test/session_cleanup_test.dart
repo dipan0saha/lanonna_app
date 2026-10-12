@@ -3,6 +3,7 @@ import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/auth/session_cleanup.dart';
 import 'package:lanonna/features/home/data/home_repository.dart';
 import 'package:lanonna/features/home/data/selected_baby_store.dart';
+import 'package:lanonna/features/invitations/presentation/invite_flow_state.dart';
 import 'package:lanonna/features/onboarding/data/onboarding_repository.dart';
 import 'package:lanonna/features/onboarding/data/onboarding_storage.dart';
 import 'package:lanonna/features/onboarding/presentation/onboarding_coordinator.dart';
@@ -28,10 +29,14 @@ void main() {
     final homeRepo = HomeRepository(_StubApi(), currentUserId: () => 'user-a');
     await homeRepo.listBabies();
 
+    final inviteFlowState = InviteFlowState();
+    inviteFlowState.setEmailMismatch(inviteeEmail: 'a', signedInEmail: 'b');
+
     final cleanup = SessionCleanup(
       coordinator: coordinator,
       homeRepository: homeRepo,
       selectedBabyStore: store,
+      inviteFlowState: inviteFlowState,
     );
     await cleanup.clearLocalUserData();
 
@@ -40,6 +45,7 @@ void main() {
     expect(prefs.getString(OnboardingStorageKeys.invitePreviewJson), isNull);
     expect(storage.isCompleted, isFalse);
     expect(storage.inviteOnboardingCompleted, isFalse);
+    expect(inviteFlowState.emailMismatch, isNull);
   });
 }
 
