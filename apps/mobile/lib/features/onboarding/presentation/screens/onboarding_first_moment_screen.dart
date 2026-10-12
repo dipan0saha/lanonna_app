@@ -19,6 +19,8 @@ import '../../domain/baby_gender.dart';
 import '../../domain/baby_lifecycle.dart';
 import '../../domain/onboarding_routes.dart';
 import '../../domain/onboarding_step.dart';
+import '../../domain/owner_onboarding_baby_resolver.dart';
+import '../app_session.dart';
 import '../onboarding_coordinator.dart';
 import '../utils/onboarding_back_navigation.dart';
 import '../widgets/onboarding_buttons.dart';
@@ -144,12 +146,35 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
     await _syncDraft();
   }
 
+  Future<String?> _resolveOwnerBabyId() {
+    final coordinator = context.read<OnboardingCoordinator>();
+    final session = context.read<AppSession>();
+    return OwnerOnboardingBabyResolver.resolve(
+      coordinator: coordinator,
+      readStatus: () => session.status,
+      refreshStatus: session.refreshFromApi,
+    );
+  }
+
+  void _handleMissingOwnerBabyId(AppSession session) {
+    if (session.status?.needsOwnerOnboarding == true ||
+        session.status?.hasOwnerBaby == true) {
+      setState(() {
+        _error =
+            "We couldn't load your baby profile. Check your connection and try again.";
+      });
+      return;
+    }
+    context.go(OnboardingRoutes.ownerCreateBaby);
+  }
+
   Future<void> _advance({required bool seed}) async {
     await _syncDraft();
     if (!mounted) return;
-    final babyId = context.read<OnboardingCoordinator>().createdBabyId;
+    final session = context.read<AppSession>();
+    final babyId = await _resolveOwnerBabyId();
     if (babyId == null) {
-      setState(() => _error = 'Baby profile missing.');
+      _handleMissingOwnerBabyId(session);
       return;
     }
     setState(() {

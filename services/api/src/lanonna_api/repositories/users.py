@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from typing import Any
 
 from lanonna_api.db import get_connection
@@ -232,6 +233,29 @@ def user_has_self_created_baby(firebase_uid: str) -> bool:
             (firebase_uid, firebase_uid),
         ).fetchone()
     return row is not None
+
+
+def self_created_owner_baby_profile_id(firebase_uid: str) -> uuid.UUID | None:
+    """Newest self-created owner baby profile for this user, if any."""
+    with get_connection() as conn:
+        row = conn.execute(
+            """
+            SELECT b.id
+            FROM baby_memberships m
+            JOIN baby_profiles b ON b.id = m.baby_profile_id
+            WHERE m.firebase_uid = %s
+              AND m.role = 'owner'
+              AND m.removed_at IS NULL
+              AND b.deleted_at IS NULL
+              AND b.created_by_firebase_uid = %s
+            ORDER BY b.created_at DESC
+            LIMIT 1
+            """,
+            (firebase_uid, firebase_uid),
+        ).fetchone()
+    if row is None:
+        return None
+    return uuid.UUID(str(row["id"]))
 
 
 def update_notification_preferences(

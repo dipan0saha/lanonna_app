@@ -27,6 +27,10 @@ def test_onboarding_profile_complete_requires_terms():
             "lanonna_api.domain.onboarding.user_has_follower_membership",
             return_value=False,
         ),
+        patch(
+            "lanonna_api.domain.onboarding.self_created_owner_baby_profile_id",
+            return_value=None,
+        ),
     ):
         data = onboarding_status_for_user("uid", email_verified=True)
     assert data["profile_complete"] is False
@@ -46,6 +50,10 @@ def test_onboarding_profile_complete_requires_terms():
         patch(
             "lanonna_api.domain.onboarding.user_has_follower_membership",
             return_value=False,
+        ),
+        patch(
+            "lanonna_api.domain.onboarding.self_created_owner_baby_profile_id",
+            return_value=None,
         ),
     ):
         data = onboarding_status_for_user("uid", email_verified=True)
@@ -109,6 +117,10 @@ def test_can_access_main_app_false_for_owner_mid_onboarding():
             "lanonna_api.domain.onboarding.user_has_follower_membership",
             return_value=False,
         ),
+        patch(
+            "lanonna_api.domain.onboarding.self_created_owner_baby_profile_id",
+            return_value=None,
+        ),
     ):
         data = onboarding_status_for_user("uid", email_verified=True)
     assert data["profile_complete"] is True
@@ -136,6 +148,10 @@ def test_can_access_main_app_true_for_follower_with_membership():
         patch(
             "lanonna_api.domain.onboarding.user_has_follower_membership",
             return_value=True,
+        ),
+        patch(
+            "lanonna_api.domain.onboarding.self_created_owner_baby_profile_id",
+            return_value=None,
         ),
     ):
         data = onboarding_status_for_user("uid", email_verified=True)

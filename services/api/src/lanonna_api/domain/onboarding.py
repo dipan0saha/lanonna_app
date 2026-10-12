@@ -22,6 +22,7 @@ from lanonna_api.repositories.first_moment import (
 from lanonna_api.repositories.users import (
     complete_owner_onboarding,
     get_app_user,
+    self_created_owner_baby_profile_id,
     user_has_baby_membership,
     user_has_follower_membership,
     user_has_owner_baby,
@@ -94,6 +95,7 @@ def onboarding_status_for_user(
         or has_follower_membership
         or (has_owner_baby and not has_self_created_baby)
     )
+    owner_baby_id = self_created_owner_baby_profile_id(firebase_uid)
     return {
         "email_verified": email_verified,
         "profile_complete": profile_complete,
@@ -102,6 +104,7 @@ def onboarding_status_for_user(
         "owner_onboarding_completed": owner_onboarding_completed,
         "needs_owner_onboarding": needs_owner_onboarding,
         "can_access_main_app": can_access_main_app,
+        "owner_onboarding_baby_profile_id": owner_baby_id,
     }
 
 

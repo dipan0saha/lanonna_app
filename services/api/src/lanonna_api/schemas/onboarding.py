@@ -1,3 +1,5 @@
+import uuid
+
 from pydantic import BaseModel
 
 
@@ -9,3 +11,4 @@ class OnboardingStatusResponse(BaseModel):
     owner_onboarding_completed: bool
     needs_owner_onboarding: bool
     can_access_main_app: bool
+    owner_onboarding_baby_profile_id: uuid.UUID | None = None

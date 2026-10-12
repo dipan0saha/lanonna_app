@@ -7,6 +7,7 @@ class OnboardingStatus {
     required this.ownerOnboardingCompleted,
     required this.needsOwnerOnboarding,
     required this.canAccessMainApp,
+    this.ownerOnboardingBabyProfileId,
   });
 
   final bool emailVerified;
@@ -16,6 +17,7 @@ class OnboardingStatus {
   final bool ownerOnboardingCompleted;
   final bool needsOwnerOnboarding;
   final bool canAccessMainApp;
+  final String? ownerOnboardingBabyProfileId;
 
   factory OnboardingStatus.fromJson(Map<String, dynamic> json) {
     final profileComplete = json['profile_complete'] as bool? ?? false;
@@ -27,6 +29,7 @@ class OnboardingStatus {
         (!ownerDone &&
             hasOwnerBaby &&
             canAccess != true);
+    final ownerBabyId = json['owner_onboarding_baby_profile_id']?.toString();
     return OnboardingStatus(
       emailVerified: json['email_verified'] as bool? ?? false,
       profileComplete: profileComplete,
@@ -38,6 +41,8 @@ class OnboardingStatus {
           (profileComplete &&
               (ownerDone ||
                   (hasMembership && !needsOwnerOnboarding))),
+      ownerOnboardingBabyProfileId:
+          ownerBabyId != null && ownerBabyId.isNotEmpty ? ownerBabyId : null,
     );
   }
 }

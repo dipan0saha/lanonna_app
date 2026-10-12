@@ -49,6 +49,10 @@ class AppSession extends ChangeNotifier {
     try {
       _status = await _repository.fetchStatus();
       await _coordinator.syncCompletedFromServer(_status!.ownerOnboardingCompleted);
+      final ownerBabyId = _status!.ownerOnboardingBabyProfileId;
+      if (ownerBabyId != null && ownerBabyId.isNotEmpty) {
+        await _coordinator.setCreatedBabyId(ownerBabyId);
+      }
     } catch (_) {
       _status = null;
     } finally {
@@ -229,6 +233,8 @@ class AppSession extends ChangeNotifier {
         : OnboardingRoutes.followerInvite;
   }
 
+  /// First-moment and batch-invite routes assume baby id is rehydrated via
+  /// [refreshFromApi] (status field) and [OwnerOnboardingBabyResolver].
   String _onboardingResumePath(OnboardingStatus? status) {
     if (status == null) return OnboardingRoutes.completeProfile;
     if (!status.profileComplete) return OnboardingRoutes.completeProfile;

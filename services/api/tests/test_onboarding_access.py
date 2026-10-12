@@ -1,5 +1,6 @@
 """Onboarding main-app access (#31): creator vs invited owner vs follower."""
 
+import uuid
 from datetime import datetime, timezone
 from unittest.mock import patch
 
@@ -19,6 +20,7 @@ def _status(
     has_self_created_baby: bool = False,
     has_follower_membership: bool = False,
     owner_onboarding_completed_at=None,
+    owner_onboarding_baby_profile_id=None,
 ):
     row = {**_USER_ROW, "owner_onboarding_completed_at": owner_onboarding_completed_at}
     with (
@@ -39,6 +41,10 @@ def _status(
             "lanonna_api.domain.onboarding.user_has_follower_membership",
             return_value=has_follower_membership,
         ),
+        patch(
+            "lanonna_api.domain.onboarding.self_created_owner_baby_profile_id",
+            return_value=owner_onboarding_baby_profile_id,
+        ),
     ):
         return onboarding_status_for_user("uid", email_verified=True)
 
@@ -50,13 +56,16 @@ def test_follower_only_can_access_main_app():
 
 
 def test_creator_mid_onboarding_blocked():
+    baby_id = uuid.uuid4()
     data = _status(
         has_owner_baby=True,
         has_baby_membership=True,
         has_self_created_baby=True,
+        owner_onboarding_baby_profile_id=baby_id,
     )
     assert data["needs_owner_onboarding"] is True
     assert data["can_access_main_app"] is False
+    assert data["owner_onboarding_baby_profile_id"] == baby_id
 
 
 def test_co_owner_via_invite_can_access_without_creator_onboarding():
@@ -65,9 +74,11 @@ def test_co_owner_via_invite_can_access_without_creator_onboarding():
         has_baby_membership=True,
         has_self_created_baby=False,
         has_follower_membership=True,
+        owner_onboarding_baby_profile_id=None,
     )
     assert data["needs_owner_onboarding"] is False
     assert data["can_access_main_app"] is True
+    assert data["owner_onboarding_baby_profile_id"] is None
 
 
 def test_invited_owner_only_without_follower_role_can_access():
