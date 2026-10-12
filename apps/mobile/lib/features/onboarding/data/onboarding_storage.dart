@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../domain/onboarding_path.dart';
 import '../domain/onboarding_step.dart';
 import 'create_baby_draft.dart';
+import 'models/onboarding_status.dart';
 import 'onboarding_form_drafts.dart';
 
 abstract final class OnboardingStorageKeys {
@@ -24,6 +25,7 @@ abstract final class OnboardingStorageKeys {
   static const inviteOnboardingCompleted = 'invite_onboarding_completed';
   static const invitedBabyId = 'invited_baby_id';
   static const invitePreviewJson = 'invite_preview_json';
+  static const cachedOnboardingStatusPrefix = 'cached_onboarding_status_v1_';
 }
 
 class OnboardingStorage {
@@ -38,7 +40,8 @@ class OnboardingStorage {
     return OnboardingStorage(prefs);
   }
 
-  bool get isCompleted => _prefs.getBool(OnboardingStorageKeys.completed) ?? false;
+  bool get isCompleted =>
+      _prefs.getBool(OnboardingStorageKeys.completed) ?? false;
 
   Future<void> setCompleted(bool value) async {
     await _prefs.setBool(OnboardingStorageKeys.completed, value);
@@ -47,26 +50,30 @@ class OnboardingStorage {
     }
   }
 
-  OnboardingStep? get savedStep =>
-      OnboardingStepStorage.fromStorage(_prefs.getString(OnboardingStorageKeys.step));
+  OnboardingStep? get savedStep => OnboardingStepStorage.fromStorage(
+    _prefs.getString(OnboardingStorageKeys.step),
+  );
 
   Future<void> saveStep(OnboardingStep step) async {
     await _prefs.setString(OnboardingStorageKeys.step, step.storageKey);
   }
 
-  String? get createdBabyId => _prefs.getString(OnboardingStorageKeys.createdBabyId);
+  String? get createdBabyId =>
+      _prefs.getString(OnboardingStorageKeys.createdBabyId);
 
   Future<void> saveCreatedBabyId(String id) async {
     await _prefs.setString(OnboardingStorageKeys.createdBabyId, id);
   }
 
-  bool get usedOAuth => _prefs.getBool(OnboardingStorageKeys.usedOAuth) ?? false;
+  bool get usedOAuth =>
+      _prefs.getBool(OnboardingStorageKeys.usedOAuth) ?? false;
 
   Future<void> setUsedOAuth(bool value) async {
     await _prefs.setBool(OnboardingStorageKeys.usedOAuth, value);
   }
 
-  String? get babyLifecycle => _prefs.getString(OnboardingStorageKeys.babyLifecycle);
+  String? get babyLifecycle =>
+      _prefs.getString(OnboardingStorageKeys.babyLifecycle);
 
   Future<void> saveBabyLifecycle(String value) async {
     await _prefs.setString(OnboardingStorageKeys.babyLifecycle, value);
@@ -101,7 +108,9 @@ class OnboardingStorage {
   CompleteProfileDraft? get completeProfileDraft {
     final raw = _prefs.getString(OnboardingStorageKeys.completeProfileDraft);
     if (raw == null) return null;
-    return CompleteProfileDraft.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+    return CompleteProfileDraft.fromJson(
+      jsonDecode(raw) as Map<String, dynamic>,
+    );
   }
 
   Future<void> saveCompleteProfileDraft(CompleteProfileDraft draft) async {
@@ -111,13 +120,15 @@ class OnboardingStorage {
     );
   }
 
-  AuthEmailDraft? get signupEmailDraft => _readEmailDraft(OnboardingStorageKeys.signupEmailDraft);
+  AuthEmailDraft? get signupEmailDraft =>
+      _readEmailDraft(OnboardingStorageKeys.signupEmailDraft);
 
   Future<void> saveSignupEmailDraft(AuthEmailDraft draft) async {
     await _saveEmailDraft(OnboardingStorageKeys.signupEmailDraft, draft);
   }
 
-  AuthEmailDraft? get loginEmailDraft => _readEmailDraft(OnboardingStorageKeys.loginEmailDraft);
+  AuthEmailDraft? get loginEmailDraft =>
+      _readEmailDraft(OnboardingStorageKeys.loginEmailDraft);
 
   Future<void> saveLoginEmailDraft(AuthEmailDraft draft) async {
     await _saveEmailDraft(OnboardingStorageKeys.loginEmailDraft, draft);
@@ -129,13 +140,17 @@ class OnboardingStorage {
     return BatchInviteDraft.fromJson(jsonDecode(raw) as Map<String, dynamic>);
   }
 
-  String? get pendingInviteToken => _prefs.getString(OnboardingStorageKeys.pendingInviteToken);
+  String? get pendingInviteToken =>
+      _prefs.getString(OnboardingStorageKeys.pendingInviteToken);
 
   bool get inviteOnboardingCompleted =>
       _prefs.getBool(OnboardingStorageKeys.inviteOnboardingCompleted) ?? false;
 
   Future<void> setInviteOnboardingCompleted(bool value) async {
-    await _prefs.setBool(OnboardingStorageKeys.inviteOnboardingCompleted, value);
+    await _prefs.setBool(
+      OnboardingStorageKeys.inviteOnboardingCompleted,
+      value,
+    );
     if (value) {
       await _prefs.remove(OnboardingStorageKeys.step);
       await _prefs.remove(OnboardingStorageKeys.pendingInviteToken);
@@ -143,18 +158,23 @@ class OnboardingStorage {
     }
   }
 
-  OnboardingPath? get onboardingPath =>
-      OnboardingPath.fromStorage(_prefs.getString(OnboardingStorageKeys.onboardingPath));
+  OnboardingPath? get onboardingPath => OnboardingPath.fromStorage(
+    _prefs.getString(OnboardingStorageKeys.onboardingPath),
+  );
 
   Future<void> saveOnboardingPath(OnboardingPath? path) async {
     if (path == null) {
       await _prefs.remove(OnboardingStorageKeys.onboardingPath);
     } else {
-      await _prefs.setString(OnboardingStorageKeys.onboardingPath, path.storageKey);
+      await _prefs.setString(
+        OnboardingStorageKeys.onboardingPath,
+        path.storageKey,
+      );
     }
   }
 
-  String? get invitedBabyId => _prefs.getString(OnboardingStorageKeys.invitedBabyId);
+  String? get invitedBabyId =>
+      _prefs.getString(OnboardingStorageKeys.invitedBabyId);
 
   Future<void> saveInvitedBabyId(String? id) async {
     if (id == null || id.isEmpty) {
@@ -164,7 +184,8 @@ class OnboardingStorage {
     }
   }
 
-  String? get invitePreviewJson => _prefs.getString(OnboardingStorageKeys.invitePreviewJson);
+  String? get invitePreviewJson =>
+      _prefs.getString(OnboardingStorageKeys.invitePreviewJson);
 
   Future<void> saveInvitePreviewJson(String? json) async {
     if (json == null || json.isEmpty) {
@@ -197,6 +218,45 @@ class OnboardingStorage {
 
   Future<void> _saveEmailDraft(String key, AuthEmailDraft draft) async {
     await _prefs.setString(key, jsonEncode(draft.toJson()));
+  }
+
+  String _cachedStatusKey(String uid) =>
+      '${OnboardingStorageKeys.cachedOnboardingStatusPrefix}$uid';
+
+  OnboardingStatus? readCachedOnboardingStatus(String uid) {
+    if (uid.isEmpty) return null;
+    final raw = _prefs.getString(_cachedStatusKey(uid));
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return null;
+      return OnboardingStatus.fromJson(Map<String, dynamic>.from(decoded));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Last successful `/v1/onboarding/status` for [uid]. Server-derived only.
+  Future<void> saveCachedOnboardingStatus(
+    String uid,
+    OnboardingStatus status,
+  ) async {
+    if (uid.isEmpty) return;
+    await _prefs.setString(_cachedStatusKey(uid), jsonEncode(status.toJson()));
+  }
+
+  Future<void> clearCachedOnboardingStatuses() async {
+    final keys = _prefs
+        .getKeys()
+        .where(
+          (key) => key.startsWith(
+            OnboardingStorageKeys.cachedOnboardingStatusPrefix,
+          ),
+        )
+        .toList();
+    for (final key in keys) {
+      await _prefs.remove(key);
+    }
   }
 
   Future<void> clearProgress() async {

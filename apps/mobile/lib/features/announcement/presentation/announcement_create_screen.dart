@@ -9,7 +9,9 @@ import '../../../core/api/api_client.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/input/app_text_input_kind.dart';
+import '../../../core/validation/form_validators.dart';
 import '../../../core/widgets/app_labeled_text_field.dart';
+import '../../../core/widgets/app_labeled_text_form_field.dart';
 import '../../../core/api/display_photo_upload.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/theme/app_colors.dart';
@@ -27,10 +29,13 @@ class AnnouncementCreateScreen extends StatefulWidget {
   final String babyId;
 
   @override
-  State<AnnouncementCreateScreen> createState() => _AnnouncementCreateScreenState();
+  State<AnnouncementCreateScreen> createState() =>
+      _AnnouncementCreateScreenState();
 }
 
 class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
+  final _formKey = GlobalKey<FormState>();
+  var _autovalidateMode = AutovalidateMode.disabled;
   final _first = TextEditingController();
   final _last = TextEditingController();
   final _weight = TextEditingController();
@@ -52,8 +57,9 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
   }
 
   Future<void> _prefill() async {
-    final detail =
-        await context.read<AnnouncementRepository>().fetch(widget.babyId);
+    final detail = await context.read<AnnouncementRepository>().fetch(
+      widget.babyId,
+    );
     if (detail != null) {
       _first.text = detail.firstName ?? '';
       _last.text = detail.lastName ?? '';
@@ -130,6 +136,11 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
   }
 
   Future<void> _save() async {
+    final valid = _formKey.currentState?.validate() ?? false;
+    if (!valid) {
+      setState(() => _autovalidateMode = AutovalidateMode.onUserInteraction);
+      return;
+    }
     final firstName = AppTextInputPolicy.normalizeForSubmit(
       AppTextInputKind.personName,
       _first.text,
@@ -153,9 +164,9 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
       if (_photo != null && !kIsWeb) {
         photoId = await DisplayPhotoUpload(context.read<ApiClient>())
             .uploadGalleryPhoto(
-          babyProfileId: widget.babyId,
-          imageFile: File(_photo!.path),
-        );
+              babyProfileId: widget.babyId,
+              imageFile: File(_photo!.path),
+            );
         if (mounted) notifyGalleryDataChanged(context);
       }
       if (!mounted) return;
@@ -207,78 +218,87 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
     }
     return PrototypeSubpageScaffold(
       title: 'Announce Arrival',
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-        children: [
-          Text(
-            'Share the news with family. They will see a keepsake card with photo and details.',
-            style: context.textStyles.bodyMedium?.copyWith(color: AppColors.muted),
-          ),
-          const SizedBox(height: 20),
-          Center(
-            child: PrototypePhotoUpload(
-              imageFile: _photo,
-              imageUrl: _existingPhotoUrl,
-              onTap: _pickPhoto,
-              label: 'Baby photo',
-              size: 100,
+      body: Form(
+        key: _formKey,
+        autovalidateMode: _autovalidateMode,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          children: [
+            Text(
+              'Share the news with family. They will see a keepsake card with photo and details.',
+              style: context.textStyles.bodyMedium?.copyWith(
+                color: AppColors.muted,
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          AppLabeledTextField(
-            key: const Key('announcement_first_name'),
-            label: 'First name',
-            kind: AppTextInputKind.personName,
-            controller: _first,
-            maxLength: 50,
-          ),
-          AppLabeledTextField(
-            label: 'Last name',
-            kind: AppTextInputKind.personName,
-            controller: _last,
-            maxLength: 50,
-          ),
-          const OnboardingFieldLabel('Gender'),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _genderSegment('Boy', 'male'),
-              _genderSegment('Girl', 'female'),
-            ],
-          ),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Date of birth'),
-            subtitle: Text(_birthDateDisplay(context) ?? 'Tap to choose'),
-            trailing: const Icon(Icons.calendar_today_outlined, size: 20),
-            onTap: _pickDate,
-          ),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Time of birth'),
-            subtitle: Text(_birthTimeLabel(context) ?? 'Optional'),
-            trailing: const Icon(Icons.schedule_outlined, size: 20),
-            onTap: _pickTime,
-          ),
-          AppLabeledTextField(
-            label: 'Weight',
-            kind: AppTextInputKind.prose,
-            controller: _weight,
-            maxLength: 40,
-          ),
-          AppLabeledTextField(
-            label: 'Length',
-            kind: AppTextInputKind.prose,
-            controller: _length,
-            maxLength: 40,
-            spacingAfter: 0,
-          ),
-          const SizedBox(height: 20),
-          FilledButton(
-            onPressed: _saving ? null : _save,
-            child: Text(_saving ? 'Saving…' : 'Save Announcement'),
-          ),
-        ],
+            const SizedBox(height: 20),
+            Center(
+              child: PrototypePhotoUpload(
+                imageFile: _photo,
+                imageUrl: _existingPhotoUrl,
+                onTap: _pickPhoto,
+                label: 'Baby photo',
+                size: 100,
+              ),
+            ),
+            const SizedBox(height: 16),
+            AppLabeledTextFormField(
+              key: const Key('announcement_first_name'),
+              semanticsId: 'announcement_first_name',
+              label: 'First name',
+              kind: AppTextInputKind.personName,
+              controller: _first,
+              maxLength: 50,
+              validator: validateOnboardingFirstName,
+              autovalidateMode: _autovalidateMode,
+            ),
+            AppLabeledTextField(
+              label: 'Last name',
+              kind: AppTextInputKind.personName,
+              controller: _last,
+              maxLength: 50,
+            ),
+            const OnboardingFieldLabel('Gender'),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                _genderSegment('Boy', 'male'),
+                _genderSegment('Girl', 'female'),
+              ],
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Date of birth'),
+              subtitle: Text(_birthDateDisplay(context) ?? 'Tap to choose'),
+              trailing: const Icon(Icons.calendar_today_outlined, size: 20),
+              onTap: _pickDate,
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Time of birth'),
+              subtitle: Text(_birthTimeLabel(context) ?? 'Optional'),
+              trailing: const Icon(Icons.schedule_outlined, size: 20),
+              onTap: _pickTime,
+            ),
+            AppLabeledTextField(
+              label: 'Weight',
+              kind: AppTextInputKind.prose,
+              controller: _weight,
+              maxLength: 40,
+            ),
+            AppLabeledTextField(
+              label: 'Length',
+              kind: AppTextInputKind.prose,
+              controller: _length,
+              maxLength: 40,
+              spacingAfter: 0,
+            ),
+            const SizedBox(height: 20),
+            FilledButton(
+              onPressed: _saving ? null : _save,
+              child: Text(_saving ? 'Saving…' : 'Save Announcement'),
+            ),
+          ],
+        ),
       ),
     );
   }

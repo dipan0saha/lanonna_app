@@ -7,11 +7,14 @@ import 'package:lanonna/features/gallery/data/models/photo_models.dart';
 import 'package:lanonna/features/gallery/presentation/widgets/gallery_photo_grid.dart';
 
 void main() {
-  testWidgets('GalleryPhotoGrid shows comment and squish badges', (tester) async {
+  testWidgets('GalleryPhotoGrid shows comment and squish badges', (
+    tester,
+  ) async {
     final photos = [
       PhotoSummary(
         id: 'p1',
         status: 'ready',
+        caption: 'Nap time',
         createdAt: DateTime(2026, 10, 1),
         squishCount: 3,
         commentCount: 2,
@@ -25,10 +28,7 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
-          body: GalleryPhotoGrid(
-            photos: photos,
-            onPhotoTap: (_) {},
-          ),
+          body: GalleryPhotoGrid(photos: photos, onPhotoTap: (_) {}),
         ),
       ),
     );
@@ -37,9 +37,14 @@ void main() {
     expect(find.text('2'), findsOneWidget);
     expect(find.byType(GalleryCommentGlyph), findsOneWidget);
     expect(find.byType(GallerySquishGlyph), findsOneWidget);
+    // Badge counts and the placeholder merge into the button label.
+    expect(find.bySemanticsLabel(RegExp('Nap time')), findsOneWidget);
+    expect(find.bySemanticsIdentifier('gallery_photo_first'), findsOneWidget);
   });
 
-  testWidgets('GalleryPhotoGrid hides badges when counts are zero', (tester) async {
+  testWidgets('GalleryPhotoGrid hides badges when counts are zero', (
+    tester,
+  ) async {
     final photos = [
       PhotoSummary(
         id: 'p2',
@@ -57,15 +62,14 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
-          body: GalleryPhotoGrid(
-            photos: photos,
-            onPhotoTap: (_) {},
-          ),
+          body: GalleryPhotoGrid(photos: photos, onPhotoTap: (_) {}),
         ),
       ),
     );
 
     expect(find.byType(GalleryCommentGlyph), findsNothing);
     expect(find.byType(GallerySquishGlyph), findsNothing);
+    expect(find.bySemanticsLabel(RegExp('Photo')), findsOneWidget);
+    expect(find.bySemanticsIdentifier('gallery_photo_first'), findsOneWidget);
   });
 }

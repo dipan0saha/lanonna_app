@@ -7,10 +7,8 @@ import 'models/home_summary.dart';
 import 'selected_baby_store.dart';
 
 class HomeRepository {
-  HomeRepository(
-    this._api, {
-    String? Function()? currentUserId,
-  }) : _currentUserId = currentUserId;
+  HomeRepository(this._api, {String? Function()? currentUserId})
+    : _currentUserId = currentUserId;
 
   final ApiClient _api;
   final String? Function()? _currentUserId;
@@ -92,8 +90,8 @@ class HomeRepository {
         ? babies.where((b) => b.id == selectedId).firstOrNull
         : null;
     final resolved = match ?? babies.first;
-    if (selectedId != resolved.id) {
-      await store.setSelectedBabyId(resolved.id);
+    if (selectedId != resolved.id || store.selectedBabyName != resolved.name) {
+      await store.rememberResolvedBaby(resolved.id, resolved.name);
     }
     return resolved;
   }
@@ -125,14 +123,17 @@ class HomeRepository {
     String? lifecycleStatus,
     String? avatarUrl,
   }) async {
-    final json = await _api.patchJson('/v1/babies/$babyId', body: {
-      'name': name,
-      'gender': gender,
-      'expected_birth_date': expectedBirthDate,
-      'actual_birth_date': actualBirthDate,
-      'lifecycle_status': lifecycleStatus,
-      'avatar_url': avatarUrl,
-    });
+    final json = await _api.patchJson(
+      '/v1/babies/$babyId',
+      body: {
+        'name': name,
+        'gender': gender,
+        'expected_birth_date': expectedBirthDate,
+        'actual_birth_date': actualBirthDate,
+        'lifecycle_status': lifecycleStatus,
+        'avatar_url': avatarUrl,
+      },
+    );
     return BabySummary.fromJson(json);
   }
 
@@ -143,9 +144,7 @@ class HomeRepository {
     } on ApiException catch (e) {
       return HomeSummaryFailed(e);
     } catch (e) {
-      return HomeSummaryFailed(
-        ApiException(apiErrorMessage(e)),
-      );
+      return HomeSummaryFailed(ApiException(apiErrorMessage(e)));
     }
   }
 

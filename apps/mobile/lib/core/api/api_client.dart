@@ -11,10 +11,12 @@ typedef IdTokenProvider = Future<String?> Function();
 typedef AppCheckTokenProvider = Future<String?> Function();
 
 /// Invoked when the API rejects the session (e.g. deleted account, NFR-DATA-001).
-typedef ApiSessionInvalidatedHandler = Future<void> Function(ApiException exception);
+typedef ApiSessionInvalidatedHandler =
+    Future<void> Function(ApiException exception);
 
 /// Invoked when baby membership was ended (removed or left) while the app is open.
-typedef ApiMembershipEndedHandler = Future<void> Function(ApiException exception);
+typedef ApiMembershipEndedHandler =
+    Future<void> Function(ApiException exception);
 
 String formatApiErrorDetail(Object? detail) {
   if (detail == null) return '';
@@ -36,22 +38,42 @@ String formatApiErrorDetail(Object? detail) {
   return detail.toString();
 }
 
+/// How long one token read or HTTP call may run before [TimeoutException].
+const Duration apiRequestTimeout = Duration(seconds: 20);
+
 class ApiClient {
   ApiClient({
     required IdTokenProvider idTokenProvider,
     AppCheckTokenProvider? appCheckTokenProvider,
     ApiSessionInvalidatedHandler? onSessionInvalidated,
     http.Client? httpClient,
-  })  : _idTokenProvider = idTokenProvider,
-        _appCheckTokenProvider = appCheckTokenProvider,
-        _onSessionInvalidated = onSessionInvalidated,
-        _http = httpClient ?? http.Client();
+    Duration? timeout,
+    bool Function()? isOffline,
+  }) : _idTokenProvider = idTokenProvider,
+       _appCheckTokenProvider = appCheckTokenProvider,
+       _onSessionInvalidated = onSessionInvalidated,
+       _http = httpClient ?? http.Client(),
+       _timeout = timeout ?? apiRequestTimeout,
+       _isOffline = isOffline;
 
   final IdTokenProvider _idTokenProvider;
   final AppCheckTokenProvider? _appCheckTokenProvider;
   final ApiSessionInvalidatedHandler? _onSessionInvalidated;
   ApiMembershipEndedHandler? _onMembershipEnded;
   final http.Client _http;
+  final Duration _timeout;
+  final bool Function()? _isOffline;
+
+  ApiException get _offlineException => ApiException(
+    'network_unavailable',
+    detail: const {'error': 'network_unavailable'},
+  );
+
+  void _throwIfOffline() {
+    if (_isOffline?.call() == true) {
+      throw _offlineException;
+    }
+  }
 
   void registerMembershipEndedHandler(ApiMembershipEndedHandler handler) {
     _onMembershipEnded = handler;
@@ -103,10 +125,7 @@ class ApiClient {
     return _decodeObject(response);
   }
 
-  Future<void> deleteJson(
-    String path, {
-    Map<String, dynamic>? body,
-  }) async {
+  Future<void> deleteJson(String path, {Map<String, dynamic>? body}) async {
     final response = await _authorizedRequest('DELETE', path, body: body);
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return;
@@ -119,17 +138,37 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? body,
   }) async {
+    _throwIfOffline();
     final uri = Uri.parse('${AppConfig.apiBaseUrl}$path');
     final headers = {'Content-Type': 'application/json'};
-    final response = await switch (method) {
-      'GET' => _http.get(uri, headers: headers),
-      'POST' => _http.post(uri, headers: headers, body: jsonEncode(body ?? {})),
-      _ => throw ApiException('Unsupported method $method'),
-    };
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      return response;
+    try {
+      final response = await switch (method) {
+        'GET' => _http.get(uri, headers: headers),
+        'POST' => _http.post(
+          uri,
+          headers: headers,
+          body: jsonEncode(body ?? {}),
+        ),
+        _ => throw ApiException('Unsupported method $method'),
+      }.timeout(_timeout);
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return response;
+      }
+      throw _apiExceptionFromResponse(response);
+    } on ApiException {
+      rethrow;
+    } on SocketException {
+      throw _offlineException;
+    } on TimeoutException {
+      throw ApiException(
+        'network_timeout',
+        detail: const {'error': 'network_timeout'},
+      );
+    } on http.ClientException {
+      throw _offlineException;
+    } on HandshakeException {
+      throw _offlineException;
     }
-    throw _apiExceptionFromResponse(response);
   }
 
   Future<http.Response> _authorizedRequest(
@@ -138,35 +177,47 @@ class ApiClient {
     Map<String, dynamic>? body,
     Map<String, String>? queryParameters,
   }) async {
-    final token = await _idTokenProvider();
-    if (token == null || token.isEmpty) {
-      throw ApiException('Not signed in');
-    }
-    var uri = Uri.parse('${AppConfig.apiBaseUrl}$path');
-    if (queryParameters != null && queryParameters.isNotEmpty) {
-      uri = uri.replace(queryParameters: queryParameters);
-    }
-    final headers = {
-      'Authorization': 'Bearer $token',
-      'Content-Type': 'application/json',
-    };
-    final appCheck = await _appCheckTokenProvider?.call();
-    if (appCheck != null && appCheck.isNotEmpty) {
-      headers['X-Firebase-AppCheck'] = appCheck;
-    }
+    _throwIfOffline();
     try {
+      final token = await _idTokenProvider().timeout(_timeout);
+      if (token == null || token.isEmpty) {
+        throw ApiException('Not signed in');
+      }
+      var uri = Uri.parse('${AppConfig.apiBaseUrl}$path');
+      if (queryParameters != null && queryParameters.isNotEmpty) {
+        uri = uri.replace(queryParameters: queryParameters);
+      }
+      final headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      };
+      final appCheckFuture = _appCheckTokenProvider?.call();
+      final appCheck = appCheckFuture == null
+          ? null
+          : await appCheckFuture.timeout(_timeout);
+      if (appCheck != null && appCheck.isNotEmpty) {
+        headers['X-Firebase-AppCheck'] = appCheck;
+      }
       final response = await switch (method) {
         'GET' => _http.get(uri, headers: headers),
-        'POST' => _http.post(uri, headers: headers, body: jsonEncode(body ?? {})),
-        'PATCH' => _http.patch(uri, headers: headers, body: jsonEncode(body ?? {})),
+        'POST' => _http.post(
+          uri,
+          headers: headers,
+          body: jsonEncode(body ?? {}),
+        ),
+        'PATCH' => _http.patch(
+          uri,
+          headers: headers,
+          body: jsonEncode(body ?? {}),
+        ),
         'PUT' => _http.put(uri, headers: headers, body: jsonEncode(body ?? {})),
         'DELETE' => _http.delete(
-            uri,
-            headers: headers,
-            body: body != null ? jsonEncode(body) : null,
-          ),
+          uri,
+          headers: headers,
+          body: body != null ? jsonEncode(body) : null,
+        ),
         _ => throw ApiException('Unsupported method $method'),
-      };
+      }.timeout(_timeout);
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return response;
       }
@@ -174,10 +225,7 @@ class ApiClient {
     } on ApiException {
       rethrow;
     } on SocketException {
-      throw ApiException(
-        'network_unavailable',
-        detail: const {'error': 'network_unavailable'},
-      );
+      throw _offlineException;
     } on TimeoutException {
       throw ApiException(
         'network_timeout',
@@ -233,7 +281,11 @@ class ApiClient {
         }
       }
     } catch (_) {}
-    return ApiException(message, statusCode: response.statusCode, detail: detail);
+    return ApiException(
+      message,
+      statusCode: response.statusCode,
+      detail: detail,
+    );
   }
 
   Map<String, dynamic> _decodeObject(http.Response response) {

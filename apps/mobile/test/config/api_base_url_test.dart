@@ -22,22 +22,25 @@ void main() {
     );
   });
 
-  test('release or profile without API_BASE_URL fails with the build message', () {
-    expect(
-      () => resolveApiBaseUrl(fromEnvironment: '', releaseOrProfile: true),
-      throwsA(
-        isA<StateError>().having(
-          (error) => error.message,
-          'message',
-          releaseApiBaseUrlMissingMessage,
+  test(
+    'release or profile without API_BASE_URL fails with the build message',
+    () {
+      expect(
+        () => resolveApiBaseUrl(fromEnvironment: '', releaseOrProfile: true),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            releaseApiBaseUrlMissingMessage,
+          ),
         ),
-      ),
-    );
-  });
+      );
+    },
+  );
 
   test('AppConfig compiles with a non-empty https origin', () {
     // Touches the const release check so an empty release/profile define
-    // fails this library at compile time (see _ApiBaseUrl).
+    // fails this library at compile time (see releaseApiBaseUrlGuard).
     expect(releaseApiBaseUrlCheck, isNotNull);
     expect(AppConfig.apiBaseUrl, isNotEmpty);
     expect(AppConfig.apiBaseUrl, startsWith('https://'));

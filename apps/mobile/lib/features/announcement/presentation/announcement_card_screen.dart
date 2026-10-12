@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/theme/la_nonna_theme.dart';
+import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import 'announcement_share.dart';
@@ -46,8 +47,9 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
     final homeRepo = context.read<HomeRepository>();
     final routeBaby = await homeRepo.babyById(widget.babyId);
     if (!mounted) return;
-    final detail =
-        await context.read<AnnouncementRepository>().fetch(widget.babyId);
+    final detail = await context.read<AnnouncementRepository>().fetch(
+      widget.babyId,
+    );
     setState(() {
       _detail = detail;
       _isOwner = routeBaby?.role == 'owner';
@@ -69,7 +71,10 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
       _comment.text,
     );
     if (text.isEmpty) return;
-    await context.read<AnnouncementRepository>().addComment(widget.babyId, text);
+    await context.read<AnnouncementRepository>().addComment(
+      widget.babyId,
+      text,
+    );
     _comment.clear();
     await _load();
   }
@@ -92,13 +97,17 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
     return PrototypeSubpageScaffold(
       title: 'Announcement',
       actions: [
-        IconButton(
+        AppIconButton(
+          semanticsId: 'announcement_share',
+          label: 'Share announcement',
           icon: const Icon(Icons.share_outlined, size: 20),
           onPressed: () =>
               AnnouncementShare.shareBabyAnnouncement(context, widget.babyId),
         ),
         if (_isOwner)
-          IconButton(
+          AppIconButton(
+            semanticsId: 'announcement_edit',
+            label: 'Edit announcement',
             icon: const Icon(Icons.edit_outlined, size: 20),
             onPressed: () async {
               final saved = await context.push<bool>(
@@ -114,21 +123,29 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               children: [
-                AnnouncementKeepsakeCard(
-                  detail: d,
-                  onSignedUrlError: _load,
-                ),
-                if (d.birthTime != null || d.weightText != null || d.lengthText != null)
+                AnnouncementKeepsakeCard(detail: d, onSignedUrlError: _load),
+                if (d.birthTime != null ||
+                    d.weightText != null ||
+                    d.lengthText != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Column(
                       children: [
                         if (birthTimeLabel.isNotEmpty)
-                          _StatRow(icon: Icons.schedule_outlined, label: birthTimeLabel),
+                          _StatRow(
+                            icon: Icons.schedule_outlined,
+                            label: birthTimeLabel,
+                          ),
                         if (d.weightText != null)
-                          _StatRow(icon: Icons.monitor_weight_outlined, label: d.weightText!),
+                          _StatRow(
+                            icon: Icons.monitor_weight_outlined,
+                            label: d.weightText!,
+                          ),
                         if (d.lengthText != null)
-                          _StatRow(icon: Icons.straighten, label: d.lengthText!),
+                          _StatRow(
+                            icon: Icons.straighten,
+                            label: d.lengthText!,
+                          ),
                       ],
                     ),
                   ),

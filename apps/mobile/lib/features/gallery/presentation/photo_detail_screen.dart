@@ -9,6 +9,8 @@ import '../../../core/comments/comment_actions.dart';
 import '../../../core/comments/comment_composer_controller.dart';
 import '../../../core/presentation/detail_screen_load.dart';
 import '../../../core/input/app_text_input_kind.dart';
+import '../../../core/input/dismiss_text_input.dart';
+import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/media/cached_signed_image.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_text_field.dart';
@@ -43,6 +45,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
   var _initialLoadInFlight = true;
   final _scrollController = ScrollController();
   var _editingCaption = false;
+  final _captionFocus = FocusNode();
   var _signedUrlRetried = false;
   var _savingTags = false;
   List<BabySummary> _memberBabies = [];
@@ -74,6 +77,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
   void didUpdateWidget(covariant PhotoDetailScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.photoId != widget.photoId) {
+      dismissTextInputFocus(_captionFocus);
       _editingCaption = false;
       _signedUrlRetried = false;
       _comments.textController.clear();
@@ -89,6 +93,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _captionFocus.dispose();
     _captionController.dispose();
     _comments.dispose();
     super.dispose();
@@ -137,9 +142,10 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     final baby = _baby;
     if (baby == null) return;
     try {
-      final detail = await context
-          .read<GalleryRepository>()
-          .fetchPhoto(baby.id, widget.photoId);
+      final detail = await context.read<GalleryRepository>().fetchPhoto(
+        baby.id,
+        widget.photoId,
+      );
       if (!mounted) return;
       setState(() {
         _detail = detail;
@@ -167,6 +173,14 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     });
   }
 
+  void _beginCaptionEdit() {
+    setState(() => _editingCaption = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_editingCaption) return;
+      _captionFocus.requestFocus();
+    });
+  }
+
   bool get _isOwner => _baby?.role == 'owner';
 
   void _showApiError(Object e) {
@@ -188,11 +202,10 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
         detail.id,
         caption.isEmpty ? null : caption,
       );
+      dismissTextInputFocus(_captionFocus);
       setState(() {
         _editingCaption = false;
-        _detail = detail.copyWith(
-          caption: caption.isEmpty ? null : caption,
-        );
+        _detail = detail.copyWith(caption: caption.isEmpty ? null : caption);
       });
     } catch (e) {
       _showApiError(e);
@@ -205,15 +218,16 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     if (baby == null || detail == null) return;
     final wasSquished = detail.viewerHasSquished;
     try {
-      final squished = await context
-          .read<GalleryRepository>()
-          .toggleSquish(baby.id, detail.id);
+      final squished = await context.read<GalleryRepository>().toggleSquish(
+        baby.id,
+        detail.id,
+      );
       if (!mounted) return;
       final delta = squished == wasSquished
           ? 0
           : squished
-              ? 1
-              : -1;
+          ? 1
+          : -1;
       setState(() {
         _detail = detail.copyWith(
           viewerHasSquished: squished,
@@ -345,9 +359,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       hasContent: _detail != null,
       initialLoadInFlight: _initialLoadInFlight,
     )) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     final detail = _detail;
     if (detail == null) {
@@ -363,19 +375,29 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       title: 'Photo',
       actions: [
         if (_photoIds.length > 1) ...[
-          IconButton(
+          AppIconButton(
+            semanticsId: 'photo_previous',
+            label: 'Previous photo',
             onPressed: () => _goAdjacent(-1),
             icon: const Icon(Icons.chevron_left, size: 20),
           ),
-          IconButton(
+          AppIconButton(
+            semanticsId: 'photo_next',
+            label: 'Next photo',
             onPressed: () => _goAdjacent(1),
             icon: const Icon(Icons.chevron_right, size: 20),
           ),
         ],
         if (_isOwner)
-          IconButton(
+          AppIconButton(
+            semanticsId: 'photo_delete',
+            label: 'Delete photo',
             onPressed: _deletePhoto,
-            icon: const Icon(Icons.delete_outline, color: AppColors.error, size: 20),
+            icon: const Icon(
+              Icons.delete_outline,
+              color: AppColors.error,
+              size: 20,
+            ),
           ),
       ],
       body: Column(
@@ -419,6 +441,8 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                                 child: AppTextField(
                                   kind: AppTextInputKind.prose,
                                   controller: _captionController,
+                                  focusNode: _captionFocus,
+                                  autofocus: false,
                                   decoration: const InputDecoration(
                                     hintText: 'Add a caption…',
                                   ),
@@ -440,10 +464,14 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                                 ),
                               ),
                               if (_isOwner)
-                                IconButton(
-                                  onPressed: () =>
-                                      setState(() => _editingCaption = true),
-                                  icon: const Icon(Icons.edit_outlined, size: 18),
+                                AppIconButton(
+                                  semanticsId: 'photo_caption_edit',
+                                  label: 'Edit caption',
+                                  onPressed: _beginCaptionEdit,
+                                  icon: const Icon(
+                                    Icons.edit_outlined,
+                                    size: 18,
+                                  ),
                                 ),
                             ],
                           ),
@@ -465,16 +493,22 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                                       ? Icons.favorite
                                       : Icons.favorite_border,
                                 ),
-                                label: Text(l10n.photoSquishCount(detail.squishCount)),
+                                label: Text(
+                                  l10n.photoSquishCount(detail.squishCount),
+                                ),
                               ),
                             ),
                             const SizedBox(width: 8),
-                            Text(l10n.photoCommentCount(detail.comments.length)),
+                            Text(
+                              l10n.photoCommentCount(detail.comments.length),
+                            ),
                           ],
                         ),
                         if (_isOwner &&
                             currentBabyId != null &&
-                            _memberBabies.any((b) => b.id != currentBabyId)) ...[
+                            _memberBabies.any(
+                              (b) => b.id != currentBabyId,
+                            )) ...[
                           const SizedBox(height: 16),
                           Text(
                             'IN THIS PHOTO',
@@ -510,7 +544,9 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                           const SizedBox(height: 16),
                           Text(
                             'In this photo: ${detail.taggedBabies.map((t) => t.name).join(', ')}',
-                            style: styles.bodySmall?.copyWith(color: AppColors.muted),
+                            style: styles.bodySmall?.copyWith(
+                              color: AppColors.muted,
+                            ),
                           ),
                         ],
                         const SizedBox(height: 16),
@@ -529,7 +565,8 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                               children: [
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         detail.comments[i].authorDisplayName,
@@ -558,16 +595,27 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       if (detail.comments[i].canEdit)
-                                        IconButton(
-                                          icon: const Icon(Icons.edit_outlined, size: 18),
+                                        AppIconButton(
+                                          semanticsId: 'photo_comment_edit',
+                                          label: 'Edit comment',
+                                          icon: const Icon(
+                                            Icons.edit_outlined,
+                                            size: 18,
+                                          ),
                                           onPressed: () =>
                                               _editComment(detail.comments[i]),
                                         ),
                                       if (detail.comments[i].canDelete)
-                                        IconButton(
-                                          icon: const Icon(Icons.delete_outline, size: 18),
-                                          onPressed: () =>
-                                              _deleteComment(detail.comments[i]),
+                                        AppIconButton(
+                                          semanticsId: 'photo_comment_delete',
+                                          label: 'Delete comment',
+                                          icon: const Icon(
+                                            Icons.delete_outline,
+                                            size: 18,
+                                          ),
+                                          onPressed: () => _deleteComment(
+                                            detail.comments[i],
+                                          ),
                                         ),
                                     ],
                                   ),
@@ -593,8 +641,18 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
 
   static String _formatDate(DateTime dt) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[dt.month - 1]} ${dt.day}, ${dt.year}';
   }
