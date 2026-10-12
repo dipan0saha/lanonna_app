@@ -4,6 +4,11 @@ import uuid
 from typing import Any
 
 from lanonna_api.db import get_connection
+from lanonna_api.repositories.active_participants import (
+    purge_participation,
+    purge_participation_on_baby,
+    purge_participation_on_babies,
+)
 
 
 def list_baby_members(baby_profile_id: uuid.UUID) -> list[dict[str, Any]]:
@@ -146,6 +151,7 @@ def soft_remove_membership(
     firebase_uid: str,
     conn=None,
 ) -> bool:
+    """End one membership and drop that person's presence on this baby."""
     sql = """
         UPDATE baby_memberships
         SET removed_at = now(), updated_at = now()
@@ -153,18 +159,25 @@ def soft_remove_membership(
           AND firebase_uid = %s
           AND removed_at IS NULL
     """
-    if conn is not None:
-        cur = conn.execute(sql, (baby_profile_id, firebase_uid))
-        return cur.rowcount > 0
-    with get_connection() as connection:
+
+    def _run(connection) -> bool:
         cur = connection.execute(sql, (baby_profile_id, firebase_uid))
-        return cur.rowcount > 0
+        if cur.rowcount == 0:
+            return False
+        purge_participation_on_baby(connection, baby_profile_id, firebase_uid)
+        return True
+
+    if conn is not None:
+        return _run(conn)
+    with get_connection() as connection:
+        return _run(connection)
 
 
 def soft_remove_memberships_on_babies(
     baby_profile_ids: list[uuid.UUID],
     conn=None,
 ) -> None:
+    """End every membership on these babies and drop presence on them."""
     if not baby_profile_ids:
         return
     sql = """
@@ -172,24 +185,35 @@ def soft_remove_memberships_on_babies(
         SET removed_at = now(), updated_at = now()
         WHERE baby_profile_id = ANY(%s::uuid[]) AND removed_at IS NULL
     """
+
+    def _run(connection) -> None:
+        connection.execute(sql, (baby_profile_ids,))
+        purge_participation_on_babies(connection, baby_profile_ids)
+
     if conn is not None:
-        conn.execute(sql, (baby_profile_ids,))
+        _run(conn)
     else:
         with get_connection() as connection:
-            connection.execute(sql, (baby_profile_ids,))
+            _run(connection)
 
 
 def soft_remove_all_memberships_for_user(firebase_uid: str, conn=None) -> None:
+    """End every membership for one account and drop their presence everywhere."""
     sql = """
         UPDATE baby_memberships
         SET removed_at = now(), updated_at = now()
         WHERE firebase_uid = %s AND removed_at IS NULL
     """
+
+    def _run(connection) -> None:
+        connection.execute(sql, (firebase_uid,))
+        purge_participation(connection, firebase_uid)
+
     if conn is not None:
-        conn.execute(sql, (firebase_uid,))
+        _run(conn)
     else:
         with get_connection() as connection:
-            connection.execute(sql, (firebase_uid,))
+            _run(connection)
 
 
 def reactivate_membership(

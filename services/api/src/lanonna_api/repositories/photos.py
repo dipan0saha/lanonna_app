@@ -46,7 +46,7 @@ def list_photos_for_baby(
         f"""
             AND (
                 SELECT COUNT(*)::int FROM photo_squishes s
-                {active_participant_join("s.firebase_uid")}
+                {active_participant_join("s.firebase_uid", "p.baby_profile_id")}
                 WHERE s.photo_id = p.id
             ) > 0
         """
@@ -65,7 +65,7 @@ def list_photos_for_baby(
                 p.uploader_firebase_uid,
                 u.display_name AS uploader_display_name,
                 (SELECT COUNT(*)::int FROM photo_squishes s
-                 {active_participant_join("s.firebase_uid")}
+                 {active_participant_join("s.firebase_uid", "p.baby_profile_id")}
                  WHERE s.photo_id = p.id) AS squish_count,
                 (SELECT COUNT(*)::int FROM photo_comments c
                  WHERE c.photo_id = p.id AND c.deleted_at IS NULL) AS comment_count
@@ -119,7 +119,8 @@ def squish_count(photo_id: uuid.UUID) -> int:
             f"""
             SELECT COUNT(*)::int AS c
             FROM photo_squishes s
-            {active_participant_join("s.firebase_uid")}
+            JOIN photos p ON p.id = s.photo_id
+            {active_participant_join("s.firebase_uid", "p.baby_profile_id")}
             WHERE s.photo_id = %s
             """,
             (photo_id,),

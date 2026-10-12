@@ -5,10 +5,7 @@ from datetime import datetime
 from typing import Any
 
 from lanonna_api.db import get_connection
-from lanonna_api.repositories.active_participants import (
-    active_participant_join,
-    active_user_predicate,
-)
+from lanonna_api.repositories.active_participants import active_participant_join
 from lanonna_api.repositories.catalog_suggestions import (
     catalog_suggestion_claimed_on_table,
 )
@@ -221,11 +218,11 @@ def list_rsvps_for_event(event_id: uuid.UUID) -> list[dict[str, Any]]:
             SELECT
                 r.firebase_uid,
                 r.status,
-                u.display_name
+                participant.display_name
             FROM event_rsvps r
-            JOIN app_users u ON u.firebase_uid = r.firebase_uid
+            JOIN events e ON e.id = r.event_id
+            {active_participant_join("r.firebase_uid", "e.baby_profile_id")}
             WHERE r.event_id = %s
-              AND {active_user_predicate("u")}
             ORDER BY r.updated_at DESC
             """,
             (event_id,),
@@ -239,7 +236,8 @@ def rsvp_summary(event_id: uuid.UUID) -> dict[str, int]:
             f"""
             SELECT r.status, COUNT(*)::int AS cnt
             FROM event_rsvps r
-            {active_participant_join("r.firebase_uid")}
+            JOIN events e ON e.id = r.event_id
+            {active_participant_join("r.firebase_uid", "e.baby_profile_id")}
             WHERE r.event_id = %s
             GROUP BY r.status
             """,

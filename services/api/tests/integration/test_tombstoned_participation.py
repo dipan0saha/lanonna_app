@@ -56,6 +56,17 @@ def _tombstone_keep_rows(uid: str) -> None:
         )
 
 
+def _member(baby_id: uuid.UUID, uid: str) -> None:
+    with get_connection() as conn:
+        conn.execute(
+            """
+            INSERT INTO baby_memberships (baby_profile_id, firebase_uid, role, joined_via)
+            VALUES (%s, %s, 'follower', 'invite')
+            """,
+            (baby_id, uid),
+        )
+
+
 def _baby(owner: str) -> uuid.UUID:
     baby_id = uuid.uuid4()
     with get_connection() as conn:
@@ -93,6 +104,8 @@ def test_reads_skip_tombstoned_participation_and_keep_authored_comments():
     _user(active, "active@example.com", "Aunt May")
     _user(gone, "gone@example.com", "Uncle Dan")
     baby_id = _baby(owner)
+    _member(baby_id, active)
+    _member(baby_id, gone)
     starts = datetime(2026, 8, 1, tzinfo=timezone.utc)
     event_id = uuid.uuid4()
     photo_id = uuid.uuid4()

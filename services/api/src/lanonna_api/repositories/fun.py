@@ -5,10 +5,7 @@ from datetime import date
 from typing import Any
 
 from lanonna_api.db import get_connection
-from lanonna_api.repositories.active_participants import (
-    active_participant_join,
-    active_user_predicate,
-)
+from lanonna_api.repositories.active_participants import active_participant_join
 
 
 def count_gender_votes(baby_profile_id: uuid.UUID) -> int:
@@ -17,7 +14,7 @@ def count_gender_votes(baby_profile_id: uuid.UUID) -> int:
             f"""
             SELECT COUNT(*)::int AS count
             FROM votes v
-            {active_participant_join("v.firebase_uid")}
+            {active_participant_join("v.firebase_uid", "v.baby_profile_id")}
             WHERE v.baby_profile_id = %s AND v.vote_type = 'gender'
             """,
             (baby_profile_id,),
@@ -34,7 +31,7 @@ def list_name_suggestions(baby_profile_id: uuid.UUID) -> list[dict[str, Any]]:
                 n.created_at,
                 u.display_name AS author_display_name,
                 (SELECT COUNT(*)::int FROM name_suggestion_likes l
-                 {active_participant_join("l.firebase_uid")}
+                 {active_participant_join("l.firebase_uid", "n.baby_profile_id")}
                  WHERE l.name_suggestion_id = n.id) AS like_count
             FROM name_suggestions n
             JOIN app_users u ON u.firebase_uid = n.suggested_by_firebase_uid
@@ -346,7 +343,7 @@ def gender_vote_totals(baby_profile_id: uuid.UUID) -> dict[str, int]:
             f"""
             SELECT v.gender_value, COUNT(*)::int AS count
             FROM votes v
-            {active_participant_join("v.firebase_uid")}
+            {active_participant_join("v.firebase_uid", "v.baby_profile_id")}
             WHERE v.baby_profile_id = %s AND v.vote_type = 'gender'
             GROUP BY v.gender_value
             """,
@@ -364,11 +361,10 @@ def list_gender_voters(baby_profile_id: uuid.UUID) -> list[dict[str, Any]]:
         rows = conn.execute(
             f"""
             SELECT v.gender_value, v.is_anonymous, v.firebase_uid,
-                   u.display_name
+                   participant.display_name
             FROM votes v
-            JOIN app_users u ON u.firebase_uid = v.firebase_uid
+            {active_participant_join("v.firebase_uid", "v.baby_profile_id")}
             WHERE v.baby_profile_id = %s AND v.vote_type = 'gender'
-              AND {active_user_predicate("u")}
             ORDER BY v.created_at ASC
             """,
             (baby_profile_id,),
@@ -382,7 +378,7 @@ def birthdate_vote_histogram(baby_profile_id: uuid.UUID) -> list[dict[str, Any]]
             f"""
             SELECT v.predicted_birth_date, COUNT(*)::int AS count
             FROM votes v
-            {active_participant_join("v.firebase_uid")}
+            {active_participant_join("v.firebase_uid", "v.baby_profile_id")}
             WHERE v.baby_profile_id = %s
               AND v.vote_type = 'birthdate'
               AND v.predicted_birth_date IS NOT NULL
