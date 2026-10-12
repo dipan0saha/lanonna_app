@@ -25,27 +25,33 @@ String resolveApiBaseUrl({
   return fromEnvironment;
 }
 
-/// Const-evaluated so a missing release/profile URL fails compilation.
-///
-/// `bool.hasEnvironment` is only reliable as `const`. A non-const call is
-/// false in AOT release builds even when `--dart-define-from-file` set the
-/// value, which crashed the splash screen (issue #44).
-class _ApiBaseUrl {
-  const _ApiBaseUrl(String fromEnvironment, bool releaseOrProfile)
-    : assert(
-        !releaseOrProfile || fromEnvironment != '',
-        releaseApiBaseUrlMissingMessage,
-      ),
-      url = fromEnvironment != '' ? fromEnvironment : devApiBaseUrl;
-
-  final String url;
-}
-
-const _apiBaseUrl = _ApiBaseUrl(
-  String.fromEnvironment('API_BASE_URL'),
-  bool.fromEnvironment('dart.vm.product') ||
-      bool.fromEnvironment('dart.vm.profile'),
+const String _apiBaseUrlFromEnvironment = String.fromEnvironment(
+  'API_BASE_URL',
 );
+
+const bool _releaseOrProfile =
+    bool.fromEnvironment('dart.vm.product') ||
+    bool.fromEnvironment('dart.vm.profile');
+
+/// True when a release or profile build omitted `API_BASE_URL`.
+///
+/// An `assert` is not enough: release and profile compilation disables
+/// asserts, so a const assert would be skipped and [devApiBaseUrl] would ship.
+const bool _releaseMissingApiBaseUrl =
+    _releaseOrProfile && _apiBaseUrlFromEnvironment == '';
+
+const String _resolvedApiBaseUrl = _apiBaseUrlFromEnvironment != ''
+    ? _apiBaseUrlFromEnvironment
+    : devApiBaseUrl;
+
+/// Compile-time failure for a release/profile build with no API URL.
+///
+/// Integer division by zero is a constant-evaluation error in every build
+/// mode, including release where asserts are stripped. The compiler prints
+/// this line, which includes [releaseApiBaseUrlMissingMessage].
+// dart format off
+const int releaseApiBaseUrlGuard = 1 ~/ (_releaseMissingApiBaseUrl ? 0 : 1); // Release builds must set API_BASE_URL via --dart-define-from-file=flavors/dev.json
+// dart format on
 
 /// Runtime config (dev defaults; override with --dart-define / flavors).
 class AppConfig {
@@ -58,7 +64,13 @@ class AppConfig {
   static const bool apiBaseUrlConfigured =
       String.fromEnvironment('API_BASE_URL') != '';
 
-  static String get apiBaseUrl => _apiBaseUrl.url;
+  static String get apiBaseUrl {
+    // Referenced so release compilation always evaluates [releaseApiBaseUrlGuard].
+    if (releaseApiBaseUrlGuard != 1) {
+      throw StateError(releaseApiBaseUrlMissingMessage);
+    }
+    return _resolvedApiBaseUrl;
+  }
 
   static const String environment = String.fromEnvironment(
     'APP_ENV',
@@ -71,6 +83,6 @@ class AppConfig {
   );
 }
 
-/// Referenced so release/profile compilation always evaluates [_apiBaseUrl].
+/// Referenced so release/profile compilation always evaluates [releaseApiBaseUrlGuard].
 @visibleForTesting
-const Object releaseApiBaseUrlCheck = _apiBaseUrl;
+const Object releaseApiBaseUrlCheck = releaseApiBaseUrlGuard;

@@ -85,10 +85,13 @@ class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
   Future<void> _refresh() async {
     try {
       final store = context.read<SelectedBabyStore>();
-      final resolved =
-          await context.read<HomeRepository>().resolveSelectedBaby(store);
+      final resolved = await context.read<HomeRepository>().resolveSelectedBaby(
+        store,
+      );
       if (!mounted) return;
-      final unread = await context.read<NotificationsRepository>().unreadCount();
+      final unread = await context
+          .read<NotificationsRepository>()
+          .unreadCount();
       if (mounted) {
         setState(() {
           if (resolved != null) _centerTitle = resolved.name;
@@ -100,10 +103,17 @@ class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
     }
   }
 
+  String get _title {
+    if (_centerTitle != 'La Nonna') return _centerTitle;
+    final cached = _babyStore?.selectedBabyName;
+    if (cached != null && cached.isNotEmpty) return cached;
+    return _centerTitle;
+  }
+
   @override
   Widget build(BuildContext context) {
     return HomeTopBar(
-      centerTitle: _centerTitle,
+      centerTitle: _title,
       showUnreadDot: _unreadCount > 0,
       onProfileTap: () async {
         await showBabySwitcherSheet(context);

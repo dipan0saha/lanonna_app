@@ -14,8 +14,8 @@ class OnboardingCoordinator extends ChangeNotifier {
   OnboardingCoordinator({
     required OnboardingStorage storage,
     required OnboardingRepository repository,
-  })  : _storage = storage,
-        _repository = repository;
+  }) : _storage = storage,
+       _repository = repository;
 
   final OnboardingStorage _storage;
   final OnboardingRepository _repository;
@@ -28,10 +28,12 @@ class OnboardingCoordinator extends ChangeNotifier {
   String? get createdBabyId => _createdBabyId ?? _storage.createdBabyId;
   bool get isHydrated => _hydrated;
 
-  OnboardingPath get onboardingPath => _storage.onboardingPath ?? OnboardingPath.owner;
+  OnboardingPath get onboardingPath =>
+      _storage.onboardingPath ?? OnboardingPath.owner;
 
   bool get isInvitePath =>
-      onboardingPath == OnboardingPath.follower || onboardingPath == OnboardingPath.coOwner;
+      onboardingPath == OnboardingPath.follower ||
+      onboardingPath == OnboardingPath.coOwner;
 
   bool get inviteOnboardingCompleted => _storage.inviteOnboardingCompleted;
 
@@ -65,7 +67,8 @@ class OnboardingCoordinator extends ChangeNotifier {
   String? get babyLifecycle => _storage.babyLifecycle;
   CreateBabyDraft? get createBabyDraft => _storage.createBabyDraft;
   FirstMomentDraft? get firstMomentDraft => _storage.firstMomentDraft;
-  CompleteProfileDraft? get completeProfileDraft => _storage.completeProfileDraft;
+  CompleteProfileDraft? get completeProfileDraft =>
+      _storage.completeProfileDraft;
   AuthEmailDraft? get signupEmailDraft => _storage.signupEmailDraft;
   AuthEmailDraft? get loginEmailDraft => _storage.loginEmailDraft;
   BatchInviteDraft? get batchInviteDraft => _storage.batchInviteDraft;
@@ -75,7 +78,9 @@ class OnboardingCoordinator extends ChangeNotifier {
     final raw = _storage.invitePreviewJson;
     if (raw == null) return null;
     try {
-      return InvitationPreview.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+      return InvitationPreview.fromJson(
+        jsonDecode(raw) as Map<String, dynamic>,
+      );
     } catch (_) {
       return null;
     }
@@ -86,7 +91,9 @@ class OnboardingCoordinator extends ChangeNotifier {
     InvitationPreview preview,
   ) async {
     await _storage.savePendingInviteToken(token.trim());
-    await _storage.saveOnboardingPath(OnboardingPath.fromInvitedRole(preview.invitedRole));
+    await _storage.saveOnboardingPath(
+      OnboardingPath.fromInvitedRole(preview.invitedRole),
+    );
     await _storage.saveInvitePreviewJson(jsonEncode(_previewToJson(preview)));
     if (preview.babyProfileId != null) {
       await _storage.saveInvitedBabyId(preview.babyProfileId);
@@ -181,6 +188,7 @@ class OnboardingCoordinator extends ChangeNotifier {
     await _storage.setInviteOnboardingCompleted(false);
     await clearPendingInvite();
     await _storage.clearProgress();
+    await _storage.clearCachedOnboardingStatuses();
     _activeStep = null;
     _createdBabyId = null;
     notifyListeners();

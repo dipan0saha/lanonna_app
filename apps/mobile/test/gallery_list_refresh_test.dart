@@ -28,11 +28,11 @@ class _GalleryHomeRepository extends FakeHomeRepository {
     int limit = 20,
     int offset = 0,
     String? scope,
-  }) async =>
-      ActivityPage(items: const [], hasMore: false);
+  }) async => ActivityPage(items: const [], hasMore: false);
 }
 
-Future<void> _pumpGallery(WidgetTester tester, {
+Future<void> _pumpGallery(
+  WidgetTester tester, {
   required FakeGalleryRepository galleryRepo,
   required HomeRefreshSignal homeRefresh,
 }) async {
@@ -80,10 +80,16 @@ Future<void> _pumpGallery(WidgetTester tester, {
 }
 
 void main() {
-  testWidgets('GalleryRepository notifyListeners reloads photo grid', (tester) async {
+  testWidgets('GalleryRepository notifyListeners reloads photo grid', (
+    tester,
+  ) async {
     final galleryRepo = FakeGalleryRepository();
     final homeRefresh = HomeRefreshSignal();
-    await _pumpGallery(tester, galleryRepo: galleryRepo, homeRefresh: homeRefresh);
+    await _pumpGallery(
+      tester,
+      galleryRepo: galleryRepo,
+      homeRefresh: homeRefresh,
+    );
 
     expect(find.byType(CircularProgressIndicator), findsNothing);
     expect(find.text('No photos yet'), findsOneWidget);
@@ -108,13 +114,19 @@ void main() {
     }
 
     expect(find.text('All Photos'), findsOneWidget);
+    expect(find.byTooltip('Add photo'), findsOneWidget);
+    expect(find.bySemanticsLabel('Refresh test caption'), findsOneWidget);
     expect(galleryRepo.listCalls, greaterThan(callsAfterLoad));
   });
 
   testWidgets('HomeRefreshSignal reloads gallery list', (tester) async {
     final galleryRepo = FakeGalleryRepository();
     final homeRefresh = HomeRefreshSignal();
-    await _pumpGallery(tester, galleryRepo: galleryRepo, homeRefresh: homeRefresh);
+    await _pumpGallery(
+      tester,
+      galleryRepo: galleryRepo,
+      homeRefresh: homeRefresh,
+    );
 
     expect(find.text('No photos yet'), findsOneWidget);
     final callsAfterLoad = galleryRepo.listCalls;

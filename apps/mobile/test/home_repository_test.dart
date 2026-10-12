@@ -39,6 +39,7 @@ void main() {
     expect(baby?.id, 'baby-a');
     expect(baby?.name, 'Alpha');
     expect(store.selectedBabyId, 'baby-a');
+    expect(store.selectedBabyName, 'Alpha');
   });
 
   test('in-flight resolve does not overwrite a newer selection', () async {
@@ -108,8 +109,18 @@ class _MixedBabiesApi extends ApiClient {
     Map<String, String>? queryParameters,
   }) async {
     return [
-      {'id': 'baby-o', 'name': 'Owned', 'role': 'owner', 'lifecycle_status': 'expecting'},
-      {'id': 'baby-f', 'name': 'Followed', 'role': 'follower', 'lifecycle_status': 'expecting'},
+      {
+        'id': 'baby-o',
+        'name': 'Owned',
+        'role': 'owner',
+        'lifecycle_status': 'expecting',
+      },
+      {
+        'id': 'baby-f',
+        'name': 'Followed',
+        'role': 'follower',
+        'lifecycle_status': 'expecting',
+      },
     ];
   }
 }
@@ -128,8 +139,18 @@ class _FlakyBabiesApi extends ApiClient {
       throw const SocketException('failed host lookup');
     }
     return [
-      {'id': 'baby-a', 'name': 'Alpha', 'role': 'owner', 'lifecycle_status': 'expecting'},
-      {'id': 'baby-b', 'name': 'Beta', 'role': 'owner', 'lifecycle_status': 'expecting'},
+      {
+        'id': 'baby-a',
+        'name': 'Alpha',
+        'role': 'owner',
+        'lifecycle_status': 'expecting',
+      },
+      {
+        'id': 'baby-b',
+        'name': 'Beta',
+        'role': 'owner',
+        'lifecycle_status': 'expecting',
+      },
     ];
   }
 }
@@ -152,8 +173,18 @@ class _GatedBabiesApi extends ApiClient {
     if (!started.isCompleted) started.complete();
     await _gate.future;
     return [
-      {'id': 'baby-a', 'name': 'Alpha', 'role': 'owner', 'lifecycle_status': 'expecting'},
-      {'id': 'baby-b', 'name': 'Beta', 'role': 'owner', 'lifecycle_status': 'expecting'},
+      {
+        'id': 'baby-a',
+        'name': 'Alpha',
+        'role': 'owner',
+        'lifecycle_status': 'expecting',
+      },
+      {
+        'id': 'baby-b',
+        'name': 'Beta',
+        'role': 'owner',
+        'lifecycle_status': 'expecting',
+      },
     ];
   }
 }
@@ -168,8 +199,18 @@ class _BabiesApi extends ApiClient {
   }) async {
     expect(path, '/v1/babies');
     return [
-      {'id': 'baby-a', 'name': 'Alpha', 'role': 'owner', 'lifecycle_status': 'expecting'},
-      {'id': 'baby-b', 'name': 'Beta', 'role': 'owner', 'lifecycle_status': 'expecting'},
+      {
+        'id': 'baby-a',
+        'name': 'Alpha',
+        'role': 'owner',
+        'lifecycle_status': 'expecting',
+      },
+      {
+        'id': 'baby-b',
+        'name': 'Beta',
+        'role': 'owner',
+        'lifecycle_status': 'expecting',
+      },
     ];
   }
 }

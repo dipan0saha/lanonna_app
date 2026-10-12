@@ -55,22 +55,22 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
   bool get _isAllMode => widget.mode == GalleryViewMode.all;
 
   String get _apiSort => switch (widget.mode) {
-        GalleryViewMode.all => 'default',
-        GalleryViewMode.recent => 'recent',
-        GalleryViewMode.favorites => 'favorites',
-      };
+    GalleryViewMode.all => 'default',
+    GalleryViewMode.recent => 'recent',
+    GalleryViewMode.favorites => 'favorites',
+  };
 
   String get _pageTitle => switch (widget.mode) {
-        GalleryViewMode.all => 'Gallery',
-        GalleryViewMode.recent => 'Recent Photos',
-        GalleryViewMode.favorites => 'Favorites',
-      };
+    GalleryViewMode.all => 'Gallery',
+    GalleryViewMode.recent => 'Recent Photos',
+    GalleryViewMode.favorites => 'Favorites',
+  };
 
   String get _sectionLabel => switch (widget.mode) {
-        GalleryViewMode.all => 'All Photos',
-        GalleryViewMode.recent => 'Last 30 days',
-        GalleryViewMode.favorites => 'Most squished',
-      };
+    GalleryViewMode.all => 'All Photos',
+    GalleryViewMode.recent => 'Last 30 days',
+    GalleryViewMode.favorites => 'Most squished',
+  };
 
   @override
   void initState() {
@@ -130,11 +130,7 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
       }
       final photosFuture = galleryRepo.listPhotosPage(baby.id, sort: _apiSort);
       final activityFuture = _isAllMode
-          ? homeRepo.fetchActivityPage(
-              baby.id,
-              limit: 20,
-              scope: 'gallery',
-            )
+          ? homeRepo.fetchActivityPage(baby.id, limit: 20, scope: 'gallery')
           : Future.value(null);
       final photoPage = await photosFuture;
       final activityPage = await activityFuture;
@@ -221,10 +217,7 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
       }
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showAlert(
-          context,
-          'Upload failed: ${apiErrorMessage(e)}',
-        );
+        AppSnackBar.showAlert(context, 'Upload failed: ${apiErrorMessage(e)}');
       }
     } finally {
       if (mounted) setState(() => _uploading = false);
@@ -244,9 +237,7 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
           break;
         }
       }
-      if (match != null &&
-          match.status == 'ready' &&
-          match.thumbUrl != null) {
+      if (match != null && match.status == 'ready' && match.thumbUrl != null) {
         return;
       }
     }
@@ -266,16 +257,16 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
         child: Text(
           message,
           textAlign: TextAlign.center,
-          style: context.textStyles.bodyMedium?.copyWith(color: AppColors.muted),
+          style: context.textStyles.bodyMedium?.copyWith(
+            color: AppColors.muted,
+          ),
         ),
       ),
     );
   }
 
   bool get _showFab =>
-      _isOwner &&
-      _baby != null &&
-      (_isAllMode ? _photos.isNotEmpty : true);
+      _isOwner && _baby != null && (_isAllMode ? _photos.isNotEmpty : true);
 
   @override
   Widget build(BuildContext context) {
@@ -411,6 +402,7 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
           ? AppSemantics.button(
               'gallery_upload_fab',
               FloatingActionButton(
+                tooltip: 'Add photo',
                 key: const Key('upload_photo_fab'),
                 onPressed: _uploading ? null : _onAddPhoto,
                 child: _uploading
@@ -421,6 +413,7 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
                       )
                     : const Icon(Icons.add),
               ),
+              label: 'Add photo',
             )
           : null,
     );

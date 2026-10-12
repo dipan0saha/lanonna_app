@@ -13,10 +13,14 @@ abstract final class OnboardingRoutes {
   static const inviteAccept = '/invite-accept';
   static const followerInvite = '/onboarding/follower/invite';
   static const coOwnerInvite = '/onboarding/coowner/invite';
-  static const confirmRelationship = '/onboarding/follower/confirm-relationship';
+  static const confirmRelationship =
+      '/onboarding/follower/confirm-relationship';
   static const followerCarousel = '/onboarding/follower/carousel';
   static const coOwnerWelcome = '/onboarding/coowner/welcome';
   static const wrongEmail = '/onboarding/wrong-email';
+
+  /// Shown when onboarding status could not be loaded and nothing is cached.
+  static const sessionOffline = '/session-offline';
 
   static bool isOnboardingPath(String location) {
     return location.startsWith('/onboarding') ||
@@ -41,5 +45,4 @@ abstract final class OnboardingRoutes {
       OnboardingStep.coOwnerWelcome => coOwnerWelcome,
     };
   }
-
 }

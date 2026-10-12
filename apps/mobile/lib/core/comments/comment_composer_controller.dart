@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../input/app_text_input_kind.dart';
+import '../input/dismiss_text_input.dart';
 import 'comment_thread_port.dart';
 
 /// Owns the detail-screen comment field, its focus, and a single in-flight send.
@@ -9,8 +10,8 @@ class CommentComposerController extends ChangeNotifier {
     required CommentThreadPort port,
     required Future<void> Function() onPosted,
     this.onError,
-  })  : _port = port,
-        _onPosted = onPosted {
+  }) : _port = port,
+       _onPosted = onPosted {
     textController.addListener(_onTextChanged);
   }
 
@@ -28,14 +29,7 @@ class CommentComposerController extends ChangeNotifier {
 
   /// Drops focus before a sub-route is pushed and again when it returns,
   /// so route restoration cannot open the keyboard on the comment field.
-  void unfocus() {
-    focusNode.unfocus();
-    final scopeContext = focusNode.context;
-    if (scopeContext != null) {
-      FocusScope.of(scopeContext).unfocus();
-    }
-    FocusManager.instance.primaryFocus?.unfocus();
-  }
+  void unfocus() => dismissTextInputFocus(focusNode);
 
   Future<void> submit() async {
     if (sending || _disposed) return;

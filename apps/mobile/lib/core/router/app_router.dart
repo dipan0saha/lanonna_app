@@ -25,6 +25,7 @@ import '../../features/onboarding/presentation/screens/onboarding_email_verify_s
 import '../../features/onboarding/presentation/screens/onboarding_first_moment_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_login_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_signup_screen.dart';
+import '../../features/onboarding/presentation/screens/session_offline_screen.dart';
 import '../../features/invitations/presentation/invite_accept_bootstrap_screen.dart';
 import '../../features/onboarding/presentation/screens/coowner/onboarding_coowner_invite_screen.dart';
 import '../../features/onboarding/presentation/screens/coowner/onboarding_coowner_welcome_screen.dart';
@@ -81,10 +82,7 @@ GoRouter createAppRouter(
         path: OnboardingRoutes.roleSelection,
         redirect: (_, __) => OnboardingRoutes.ownerCarousel,
       ),
-      GoRoute(
-        path: '/login',
-        redirect: (_, __) => OnboardingRoutes.login,
-      ),
+      GoRoute(path: '/login', redirect: (_, __) => OnboardingRoutes.login),
       GoRoute(
         path: OnboardingRoutes.ownerCarousel,
         builder: (context, state) => const OwnerCarouselScreen(),
@@ -104,6 +102,10 @@ GoRouter createAppRouter(
       GoRoute(
         path: OnboardingRoutes.completeProfile,
         builder: (context, state) => const OnboardingCompleteProfileScreen(),
+      ),
+      GoRoute(
+        path: OnboardingRoutes.sessionOffline,
+        builder: (context, state) => const SessionOfflineScreen(),
       ),
       GoRoute(
         path: '/legal/terms',
@@ -145,7 +147,8 @@ GoRouter createAppRouter(
       ),
       GoRoute(
         path: OnboardingRoutes.confirmRelationship,
-        builder: (context, state) => const OnboardingConfirmRelationshipScreen(),
+        builder: (context, state) =>
+            const OnboardingConfirmRelationshipScreen(),
       ),
       GoRoute(
         path: OnboardingRoutes.followerCarousel,
@@ -202,40 +205,38 @@ GoRouter createAppRouter(
       GoRoute(
         path: '/baby/create',
         parentNavigatorKey: appRootNavigatorKey,
-        builder: (context, state) => const CreateBabyScreen(mode: CreateBabyMode.inApp),
+        builder: (context, state) =>
+            const CreateBabyScreen(mode: CreateBabyMode.inApp),
       ),
       GoRoute(
         path: '/baby/:babyId/edit',
         parentNavigatorKey: appRootNavigatorKey,
-        builder: (context, state) => BabyEditScreen(
-          babyId: state.pathParameters['babyId']!,
-        ),
+        builder: (context, state) =>
+            BabyEditScreen(babyId: state.pathParameters['babyId']!),
       ),
       GoRoute(
         path: '/baby/:babyId/followers',
         parentNavigatorKey: appRootNavigatorKey,
-        builder: (context, state) => FollowersScreen(
-          babyId: state.pathParameters['babyId']!,
-        ),
+        builder: (context, state) =>
+            FollowersScreen(babyId: state.pathParameters['babyId']!),
       ),
       GoRoute(
         path: '/baby/:babyId/announcement',
         parentNavigatorKey: appRootNavigatorKey,
-        builder: (context, state) => AnnouncementCardScreen(
-          babyId: state.pathParameters['babyId']!,
-        ),
+        builder: (context, state) =>
+            AnnouncementCardScreen(babyId: state.pathParameters['babyId']!),
       ),
       GoRoute(
         path: '/baby/:babyId/announcement/create',
         parentNavigatorKey: appRootNavigatorKey,
-        builder: (context, state) => AnnouncementCreateScreen(
-          babyId: state.pathParameters['babyId']!,
-        ),
+        builder: (context, state) =>
+            AnnouncementCreateScreen(babyId: state.pathParameters['babyId']!),
       ),
       GoRoute(
         path: AppRoutes.inviteFamily,
         parentNavigatorKey: appRootNavigatorKey,
-        builder: (context, state) => const BatchInviteScreen(mode: BatchInviteMode.fromHome),
+        builder: (context, state) =>
+            const BatchInviteScreen(mode: BatchInviteMode.fromHome),
       ),
       GoRoute(
         path: '/home/activity',
@@ -297,7 +298,8 @@ GoRouter createAppRouter(
                         return EventFormScreen(
                           initialTitle: prefill.title,
                           initialDescription: prefill.description,
-                          initialCatalogSuggestionId: prefill.catalogSuggestionId,
+                          initialCatalogSuggestionId:
+                              prefill.catalogSuggestionId,
                           initialDate: prefill.initialDate,
                         );
                       }
@@ -345,7 +347,8 @@ GoRouter createAppRouter(
                         return RegistryItemFormScreen(
                           initialName: prefill.name,
                           initialDescription: prefill.description,
-                          initialCatalogSuggestionId: prefill.catalogSuggestionId,
+                          initialCatalogSuggestionId:
+                              prefill.catalogSuggestionId,
                         );
                       }
                       return const RegistryItemFormScreen();

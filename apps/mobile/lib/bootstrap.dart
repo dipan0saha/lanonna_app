@@ -52,9 +52,12 @@ Future<Widget> bootstrapLaNonnaApp() async {
   final authRepository = AuthRepository();
   late final OnboardingCoordinator coordinator;
   late final SessionCleanup sessionCleanup;
+  final connectivityService = ConnectivityService();
+  await connectivityService.init();
   final apiClient = ApiClient(
     idTokenProvider: authRepository.getIdToken,
     appCheckTokenProvider: appCheckTokenForApi,
+    isOffline: () => !connectivityService.isOnline,
     onSessionInvalidated: (_) => handleUserDeletedSession(
       authRepository: authRepository,
       sessionCleanup: sessionCleanup,
@@ -84,7 +87,9 @@ Future<Widget> bootstrapLaNonnaApp() async {
     repository: onboardingRepository,
     storage: onboardingStorage,
     coordinator: coordinator,
+    currentUserId: () => authRepository.currentUser?.uid,
   );
+  session.bindConnectivity(connectivityService);
   final selectedBabyStore = SelectedBabyStore(prefs);
   sessionCleanup = SessionCleanup(
     coordinator: coordinator,
@@ -101,8 +106,6 @@ Future<Widget> bootstrapLaNonnaApp() async {
       exception: exception,
     ),
   );
-  final connectivityService = ConnectivityService();
-  await connectivityService.init();
   final routerRefresh = RouterRefreshListenable(
     authRepository: authRepository,
     coordinator: coordinator,
@@ -133,9 +136,7 @@ Future<Widget> bootstrapLaNonnaApp() async {
       Provider<ApiClient>.value(value: apiClient),
       Provider<OnboardingRepository>.value(value: onboardingRepository),
       Provider<HomeRepository>.value(value: homeRepository),
-      ChangeNotifierProvider<GalleryRepository>.value(
-        value: galleryRepository,
-      ),
+      ChangeNotifierProvider<GalleryRepository>.value(value: galleryRepository),
       ChangeNotifierProvider<CalendarRepository>.value(
         value: calendarRepository,
       ),

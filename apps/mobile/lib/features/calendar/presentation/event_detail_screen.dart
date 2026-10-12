@@ -10,6 +10,7 @@ import '../../../core/time/app_date_time.dart';
 import '../../../core/presentation/detail_screen_load.dart';
 import '../../../core/presentation/display_initials.dart';
 import '../../../core/media/cached_signed_image.dart';
+import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/detail_comment_composer.dart';
 
@@ -99,9 +100,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         return;
       }
       if (!mounted) return;
-      final detail = await context
-          .read<CalendarRepository>()
-          .fetchEvent(baby.id, widget.eventId);
+      final detail = await context.read<CalendarRepository>().fetchEvent(
+        baby.id,
+        widget.eventId,
+      );
       if (!mounted) return;
       setState(() {
         _baby = baby;
@@ -123,9 +125,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       _comments.unfocus();
     }
     try {
-      final detail = await context
-          .read<CalendarRepository>()
-          .fetchEvent(baby.id, widget.eventId);
+      final detail = await context.read<CalendarRepository>().fetchEvent(
+        baby.id,
+        widget.eventId,
+      );
       if (!mounted) return;
       setState(() => _detail = detail);
       if (scrollToComments) {
@@ -254,7 +257,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     );
     if (confirmed != true) return;
     if (!mounted) return;
-    await context.read<CalendarRepository>().deleteEvent(baby.id, widget.eventId);
+    await context.read<CalendarRepository>().deleteEvent(
+      baby.id,
+      widget.eventId,
+    );
     if (mounted) returnToCalendar(context);
   }
 
@@ -278,14 +284,22 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       title: 'Event',
       actions: [
         if (_isOwner)
-          IconButton(
+          AppIconButton(
+            semanticsId: 'event_edit',
+            label: 'Edit event',
             onPressed: _openEdit,
             icon: const Icon(Icons.edit_outlined, size: 20),
           ),
         if (_isOwner)
-          IconButton(
+          AppIconButton(
+            semanticsId: 'event_delete',
+            label: 'Delete event',
             onPressed: _deleteEvent,
-            icon: const Icon(Icons.delete_outline, color: AppColors.error, size: 20),
+            icon: const Icon(
+              Icons.delete_outline,
+              color: AppColors.error,
+              size: 20,
+            ),
           ),
       ],
       body: Column(
@@ -296,7 +310,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               controller: _scrollController,
               padding: const EdgeInsets.all(16),
               children: [
-                Text(detail.title, style: Theme.of(context).textTheme.headlineSmall),
+                Text(
+                  detail.title,
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
                 const SizedBox(height: 12),
                 Text('When', style: Theme.of(context).textTheme.labelLarge),
                 Text(
@@ -307,12 +324,18 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 ),
                 if (detail.location != null) ...[
                   const SizedBox(height: 12),
-                  Text('Location', style: Theme.of(context).textTheme.labelLarge),
+                  Text(
+                    'Location',
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
                   Text('📍 ${detail.location}'),
                 ],
                 if (detail.videoCallUrl != null) ...[
                   const SizedBox(height: 12),
-                  Text('Video Call', style: Theme.of(context).textTheme.labelLarge),
+                  Text(
+                    'Video Call',
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
                   TextButton(
                     onPressed: () => _openVideo(detail.videoCallUrl!),
                     child: const Text('Join video call'),
@@ -337,11 +360,17 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 ],
                 if (detail.description != null) ...[
                   const SizedBox(height: 12),
-                  Text('Details', style: Theme.of(context).textTheme.labelLarge),
+                  Text(
+                    'Details',
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
                   Text(detail.description!),
                 ],
                 const SizedBox(height: 16),
-                Text('Your RSVP', style: Theme.of(context).textTheme.labelLarge),
+                Text(
+                  'Your RSVP',
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -371,17 +400,25 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       if (detail.rsvpAttendees.isNotEmpty)
                         SizedBox(
                           height: 28,
-                          width: (detail.rsvpAttendees.length.clamp(0, 4) * 18.0) + 10,
+                          width:
+                              (detail.rsvpAttendees.length.clamp(0, 4) * 18.0) +
+                              10,
                           child: Stack(
                             children: [
-                              for (var i = 0; i < detail.rsvpAttendees.length && i < 4; i++)
+                              for (
+                                var i = 0;
+                                i < detail.rsvpAttendees.length && i < 4;
+                                i++
+                              )
                                 Positioned(
                                   left: i * 18.0,
                                   child: CircleAvatar(
                                     radius: 14,
                                     backgroundColor: AppColors.sageTint,
                                     child: Text(
-                                      displayInitials(detail.rsvpAttendees[i].displayName),
+                                      displayInitials(
+                                        detail.rsvpAttendees[i].displayName,
+                                      ),
                                       style: const TextStyle(fontSize: 10),
                                     ),
                                   ),
@@ -402,7 +439,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   ),
                 ),
                 const Divider(height: 24),
-                const Text('Comments', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text(
+                  'Comments',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 for (final c in detail.comments)
                   ListTile(
                     title: Text(c.authorDisplayName),
@@ -412,13 +452,23 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               if (c.canEdit)
-                                IconButton(
-                                  icon: const Icon(Icons.edit_outlined, size: 20),
+                                AppIconButton(
+                                  semanticsId: 'event_comment_edit',
+                                  label: 'Edit comment',
+                                  icon: const Icon(
+                                    Icons.edit_outlined,
+                                    size: 20,
+                                  ),
                                   onPressed: () => _editComment(c),
                                 ),
                               if (c.canDelete)
-                                IconButton(
-                                  icon: const Icon(Icons.delete_outline, size: 20),
+                                AppIconButton(
+                                  semanticsId: 'event_comment_delete',
+                                  label: 'Delete comment',
+                                  icon: const Icon(
+                                    Icons.delete_outline,
+                                    size: 20,
+                                  ),
                                   onPressed: () => _deleteComment(c),
                                 ),
                             ],

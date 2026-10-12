@@ -42,10 +42,7 @@ class GalleryPhotoGrid extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                _GalleryThumb(
-                  photo: photo,
-                  onSignedUrlError: onSignedUrlError,
-                ),
+                _GalleryThumb(photo: photo, onSignedUrlError: onSignedUrlError),
                 if (photo.status == 'pending')
                   Container(
                     color: Colors.black38,
@@ -63,7 +60,9 @@ class GalleryPhotoGrid extends StatelessWidget {
                       child: _GalleryTileBadge(
                         glyph: const GalleryCommentGlyph(),
                         count: photo.commentCount,
-                        semanticsLabel: l10n.photoCommentCount(photo.commentCount),
+                        semanticsLabel: l10n.photoCommentCount(
+                          photo.commentCount,
+                        ),
                       ),
                     ),
                   if (photo.squishCount > 0)
@@ -73,7 +72,9 @@ class GalleryPhotoGrid extends StatelessWidget {
                       child: _GalleryTileBadge(
                         glyph: const GallerySquishGlyph(),
                         count: photo.squishCount,
-                        semanticsLabel: l10n.photoSquishCount(photo.squishCount),
+                        semanticsLabel: l10n.photoSquishCount(
+                          photo.squishCount,
+                        ),
                       ),
                     ),
                 ],
@@ -81,10 +82,15 @@ class GalleryPhotoGrid extends StatelessWidget {
             ),
           ),
         );
-        if (index == 0) {
-          return AppSemantics.button('gallery_photo_first', tile);
-        }
-        return tile;
+        final label =
+            (photo.caption != null && photo.caption!.trim().isNotEmpty)
+            ? photo.caption!.trim()
+            : 'Photo';
+        return AppSemantics.button(
+          index == 0 ? 'gallery_photo_first' : 'gallery_photo_${photo.id}',
+          tile,
+          label: label,
+        );
       },
     );
   }
@@ -106,37 +112,34 @@ class _GalleryTileBadge extends StatelessWidget {
     return Semantics(
       label: semanticsLabel,
       child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.45),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          glyph,
-          const SizedBox(width: 3),
-          Text(
-            '$count',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              height: 1,
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.45),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            glyph,
+            const SizedBox(width: 3),
+            Text(
+              '$count',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                height: 1,
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _GalleryThumb extends StatelessWidget {
-  const _GalleryThumb({
-    required this.photo,
-    this.onSignedUrlError,
-  });
+  const _GalleryThumb({required this.photo, this.onSignedUrlError});
 
   final PhotoSummary photo;
   final VoidCallback? onSignedUrlError;

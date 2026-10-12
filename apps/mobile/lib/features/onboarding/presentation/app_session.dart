@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../core/network/connectivity_service.dart';
 import '../data/models/onboarding_status.dart';
 import '../data/onboarding_repository.dart';
 import '../data/onboarding_storage.dart';
@@ -9,23 +10,46 @@ import '../domain/onboarding_routes.dart';
 import '../domain/onboarding_step.dart';
 import 'onboarding_coordinator.dart';
 
+/// Whether the latest onboarding status is usable for routing.
+enum OnboardingStatusPhase {
+  /// No fetch has finished and nothing is cached.
+  unknown,
+
+  /// [_status] is a server payload, possibly the last cached one.
+  loaded,
+
+  /// The status fetch failed and there is no cached server payload.
+  unavailable,
+}
+
 class AppSession extends ChangeNotifier {
   AppSession({
     required OnboardingRepository repository,
     required OnboardingStorage storage,
     required OnboardingCoordinator coordinator,
-  })  : _repository = repository,
-        _storage = storage,
-        _coordinator = coordinator;
+    String? Function()? currentUserId,
+  }) : _repository = repository,
+       _storage = storage,
+       _coordinator = coordinator,
+       _currentUserId = currentUserId;
 
   final OnboardingRepository _repository;
   final OnboardingStorage _storage;
   final OnboardingCoordinator _coordinator;
+  final String? Function()? _currentUserId;
 
   OnboardingStatus? _status;
+  var _phase = OnboardingStatusPhase.unknown;
+  var _statusStale = false;
   bool _loading = false;
+  ConnectivityService? _connectivity;
+  var _wasOffline = false;
 
   OnboardingStatus? get status => _status;
+  OnboardingStatusPhase get statusPhase => _phase;
+
+  /// Cached server status used because the latest fetch failed.
+  bool get statusStale => _statusStale;
   bool get isLoading => _loading;
 
   bool get ownerOnboardingComplete =>
@@ -40,24 +64,94 @@ class AppSession extends ChangeNotifier {
   @visibleForTesting
   void debugSetStatus(OnboardingStatus? status) {
     _status = status;
+    _statusStale = false;
+    _phase = status == null
+        ? OnboardingStatusPhase.unknown
+        : OnboardingStatusPhase.loaded;
+  }
+
+  /// Re-fetches status when connectivity returns while the last result is
+  /// missing or stale. Does not grant access from a device-local flag.
+  void bindConnectivity(ConnectivityService connectivity) {
+    if (_connectivity == connectivity) return;
+    _connectivity?.removeListener(_onConnectivity);
+    _connectivity = connectivity;
+    _wasOffline = !connectivity.isOnline;
+    connectivity.addListener(_onConnectivity);
+  }
+
+  void _onConnectivity() {
+    final online = _connectivity?.isOnline ?? true;
+    if (online && _wasOffline) {
+      _wasOffline = false;
+      if (_phase == OnboardingStatusPhase.unavailable || _statusStale) {
+        refreshFromApi();
+      }
+    } else if (!online) {
+      _wasOffline = true;
+    }
+  }
+
+  void _restoreCachedStatus() {
+    if (_status != null) return;
+    final uid = _currentUserId?.call();
+    if (uid == null || uid.isEmpty) return;
+    final cached = _storage.readCachedOnboardingStatus(uid);
+    if (cached == null) return;
+    _status = cached;
+    _phase = OnboardingStatusPhase.loaded;
+    _statusStale = true;
+  }
+
+  Future<void> _applyLoadedStatus(
+    OnboardingStatus status, {
+    required bool fresh,
+  }) async {
+    if (fresh) {
+      await _coordinator.syncCompletedFromServer(
+        status.ownerOnboardingCompleted,
+      );
+    }
+    final ownerBabyId = status.ownerOnboardingBabyProfileId;
+    if (ownerBabyId != null && ownerBabyId.isNotEmpty) {
+      await _coordinator.setCreatedBabyId(ownerBabyId);
+    }
   }
 
   Future<void> refreshFromApi() async {
     _loading = true;
+    if (_status == null) _restoreCachedStatus();
     notifyListeners();
     try {
-      _status = await _repository.fetchStatus();
-      await _coordinator.syncCompletedFromServer(_status!.ownerOnboardingCompleted);
-      final ownerBabyId = _status!.ownerOnboardingBabyProfileId;
-      if (ownerBabyId != null && ownerBabyId.isNotEmpty) {
-        await _coordinator.setCreatedBabyId(ownerBabyId);
+      final fresh = await _repository.fetchStatus();
+      _status = fresh;
+      _phase = OnboardingStatusPhase.loaded;
+      _statusStale = false;
+      final uid = _currentUserId?.call();
+      if (uid != null && uid.isNotEmpty) {
+        await _storage.saveCachedOnboardingStatus(uid, fresh);
       }
+      await _applyLoadedStatus(fresh, fresh: true);
     } catch (_) {
-      _status = null;
+      if (_status == null) _restoreCachedStatus();
+      if (_status == null) {
+        _phase = OnboardingStatusPhase.unavailable;
+        _statusStale = false;
+      } else {
+        _phase = OnboardingStatusPhase.loaded;
+        _statusStale = true;
+        await _applyLoadedStatus(_status!, fresh: false);
+      }
     } finally {
       _loading = false;
       notifyListeners();
     }
+  }
+
+  @override
+  void dispose() {
+    _connectivity?.removeListener(_onConnectivity);
+    super.dispose();
   }
 
   static const _invitePublic = {
@@ -124,6 +218,20 @@ class AppSession extends ChangeNotifier {
             : OnboardingRoutes.followerInvite;
       }
       return OnboardingRoutes.ownerCarousel;
+    }
+
+    // A failed status fetch is not an incomplete profile. Never resume
+    // owner onboarding until a loaded server status says to.
+    if (path == OnboardingRoutes.sessionOffline) {
+      if (_phase == OnboardingStatusPhase.unavailable) return null;
+      if (canAccessMainApp && _status?.needsOwnerOnboarding != true) {
+        return '/home';
+      }
+      if (_status != null) return _onboardingResumePath(_status);
+      return null;
+    }
+    if (_phase == OnboardingStatusPhase.unavailable) {
+      return OnboardingRoutes.sessionOffline;
     }
 
     if (canAccessMainApp) {
