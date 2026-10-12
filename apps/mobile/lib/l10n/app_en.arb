@@ -128,6 +128,7 @@
     }
   },
   "funBirthdateConfirmAction": "Save",
+  "predictionsClosedNote": "Predictions closed — baby has arrived",
   "rsvpStatusGoing": "Going",
   "rsvpStatusMaybe": "Maybe",
   "rsvpStatusCantGo": "Can't go",

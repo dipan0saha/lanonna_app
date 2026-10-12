@@ -61,10 +61,14 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
   BabyGender get _selectedGender => babyGenderFromPill(_genderPill);
 
   OnboardingBabyNameFieldsMode get _nameFieldsMode =>
-      onboardingBabyNameFieldsMode(status: _babyStatus, gender: _selectedGender);
+      onboardingBabyNameFieldsMode(
+        status: _babyStatus,
+        gender: _selectedGender,
+      );
 
-  String get _dateLabel =>
-      _babyStatus == BabyLifecycle.expecting ? 'Expected Due Date' : 'Date of birth';
+  String get _dateLabel => _babyStatus == BabyLifecycle.expecting
+      ? 'Expected Due Date'
+      : 'Date of birth';
 
   String get _primaryButtonLabel => _isOnboarding ? 'Continue' : 'Create Baby';
 
@@ -98,6 +102,14 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
     _synced = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      // Widget tests mount this screen without a router. Once a router is
+      // present, skip the step write if an invite link already left this route.
+      final router = GoRouter.maybeOf(context);
+      if (router != null &&
+          GoRouterState.of(context).uri.path !=
+              OnboardingRoutes.ownerCreateBaby) {
+        return;
+      }
       context.read<OnboardingCoordinator>().setStep(OnboardingStep.createBaby);
       final draft = context.read<OnboardingCoordinator>().createBabyDraft;
       if (draft != null) {
@@ -167,7 +179,10 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
   }
 
   Future<void> _pickPhoto() async {
-    final file = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    final file = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
     if (file == null) return;
     setState(() {
       _selectedImage = file;
@@ -189,7 +204,10 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
     if (_babyStatus == BabyLifecycle.expecting &&
         _selectedDate != null &&
         onboardingDueDateIsBeforeToday(_selectedDate!)) {
-      AppSnackBar.showAlert(context, 'Expected due date cannot be in the past.');
+      AppSnackBar.showAlert(
+        context,
+        'Expected due date cannot be in the past.',
+      );
       return;
     }
 
@@ -303,7 +321,9 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
           child: PrototypePhotoUpload(
             imageFile: _selectedImage,
             onTap: _busy ? null : _pickPhoto,
-            label: _selectedImage != null ? 'Change profile photo' : 'Add profile photo',
+            label: _selectedImage != null
+                ? 'Change profile photo'
+                : 'Add profile photo',
             showLabel: false,
           ),
         ),
@@ -405,7 +425,10 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
           const SizedBox(height: 16),
           Text(
             _error!,
-            style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 13),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.error,
+              fontSize: 13,
+            ),
             textAlign: TextAlign.center,
           ),
           if (_isOnboarding)

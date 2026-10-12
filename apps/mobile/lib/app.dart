@@ -70,13 +70,17 @@ class _LaNonnaAppState extends State<LaNonnaApp> {
     }
     final location = inviteAppLinkToRouterLocation(uri);
     if (location == null) return;
-    final current = _router.routerDelegate.currentConfiguration.uri;
-    if (current.path == OnboardingRoutes.inviteAccept &&
-        current.queryParameters['token'] ==
-            Uri.parse(location).queryParameters['token']) {
-      return;
-    }
-    _router.go(location);
+    // Post-frame so a link that arrives during create-baby's build is not dropped.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final current = _router.routerDelegate.currentConfiguration.uri;
+      if (current.path == OnboardingRoutes.inviteAccept &&
+          current.queryParameters['token'] ==
+              Uri.parse(location).queryParameters['token']) {
+        return;
+      }
+      _router.go(location);
+    });
   }
 
   Future<void> _handleEmailVerificationLink(Uri uri) async {
@@ -156,9 +160,7 @@ class _LaNonnaAppState extends State<LaNonnaApp> {
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: _router,
       builder: (context, child) => AppVersionGate(
-        child: AppOfflineWrapper(
-          child: child ?? const SizedBox.shrink(),
-        ),
+        child: AppOfflineWrapper(child: child ?? const SizedBox.shrink()),
       ),
     );
   }

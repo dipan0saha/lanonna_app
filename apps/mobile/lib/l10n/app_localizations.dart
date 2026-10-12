@@ -400,6 +400,12 @@ abstract class AppLocalizations {
   /// **'Save'**
   String get funBirthdateConfirmAction;
 
+  /// No description provided for @predictionsClosedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Predictions closed — baby has arrived'**
+  String get predictionsClosedNote;
+
   /// No description provided for @rsvpStatusGoing.
   ///
   /// In en, this message translates to:

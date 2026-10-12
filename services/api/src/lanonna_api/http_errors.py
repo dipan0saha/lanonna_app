@@ -5,6 +5,7 @@ import logging
 from fastapi import HTTPException, status
 
 from lanonna_api.domain.member_errors import MemberLifecycleError
+from lanonna_api.domain.prediction_errors import PredictionsClosedError
 from lanonna_api.domain.user_errors import UserDeletedError
 from lanonna_api.request_context import get_request_id
 
@@ -28,6 +29,11 @@ def map_domain_errors(exc: Exception) -> HTTPException:
                 "error": "user_deleted",
                 "message": "This account was deleted.",
             },
+        )
+    if isinstance(exc, PredictionsClosedError):
+        return HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"error": exc.code, "message": exc.message},
         )
     if isinstance(exc, MemberLifecycleError):
         status_code = status.HTTP_400_BAD_REQUEST

@@ -12,9 +12,9 @@ Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [op
 
 | Check | Result |
 |-------|--------|
-| API `pytest` (`services/api`) | 209 passed |
+| API `pytest` (`services/api`, `-m "not integration"`) | 230 passed (13 integration tests deselected; they need Postgres) |
 | Worker `pytest` | 56 passed |
-| `flutter test` | 289 passed |
+| `flutter test` | 292 passed |
 | `flutter analyze` | 0 errors, 0 warnings, 47 infos (L-26) |
 
 Run all three suites before every ship; the suites are the only automated gate (no CI).

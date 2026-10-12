@@ -74,7 +74,7 @@ GoRouter createAppRouter(
       return session.redirectFor(
         isSignedIn: user != null,
         emailVerified: user?.emailVerified ?? false,
-        location: state.matchedLocation,
+        location: state.uri.toString(),
       );
     },
     routes: [

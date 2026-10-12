@@ -68,6 +68,7 @@ class PredictionsPayload {
     this.viewerBirthdateVote,
     required this.birthdateHistogram,
     required this.genderVoters,
+    this.predictionsClosed = false,
   });
 
   final int maleVotes;
@@ -76,6 +77,9 @@ class PredictionsPayload {
   final String? viewerBirthdateVote;
   final List<BirthdateVoteCount> birthdateHistogram;
   final List<GenderVoterRow> genderVoters;
+
+  /// True when the baby is born and votes can no longer be cast or changed.
+  final bool predictionsClosed;
 
   factory PredictionsPayload.fromJson(Map<String, dynamic> json) {
     final totals = json['gender_totals'] as Map<String, dynamic>? ?? {};
@@ -94,6 +98,7 @@ class PredictionsPayload {
           .whereType<Map<String, dynamic>>()
           .map(GenderVoterRow.fromJson)
           .toList(),
+      predictionsClosed: json['predictions_closed'] as bool? ?? false,
     );
   }
 }
@@ -113,10 +118,7 @@ class BirthdateVoteCount {
 }
 
 class GenderVoterRow {
-  GenderVoterRow({
-    required this.gender,
-    required this.displayName,
-  });
+  GenderVoterRow({required this.gender, required this.displayName});
 
   final String gender;
   final String displayName;
