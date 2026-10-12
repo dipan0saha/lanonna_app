@@ -8,13 +8,18 @@ from firebase_admin import auth as firebase_auth
 from lanonna_api.repositories.account_delete import (
     account_is_tombstoned,
     list_sole_owned_baby_ids,
+    list_sole_owned_baby_names,
     soft_delete_account_rows,
 )
 
 
 def delete_account_eligibility(firebase_uid: str) -> dict[str, Any]:
-    """v1: always allowed; mobile calls GET …/eligibility before delete (see product requirements)."""
-    return {"allowed": True, "blockers": []}
+    """Always allowed in v1. ``sole_owned_babies`` names the profiles delete will remove."""
+    return {
+        "allowed": True,
+        "blockers": [],
+        "sole_owned_babies": list_sole_owned_baby_names(firebase_uid),
+    }
 
 
 def _delete_firebase_user(firebase_uid: str) -> None:

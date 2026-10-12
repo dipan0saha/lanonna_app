@@ -25,27 +25,33 @@ def _auth_as(uid: str = "uid-1", email: str = "user@test.com"):
         app.dependency_overrides.pop(current_user, None)
 
 
-def test_eligibility_allowed_even_with_sole_owned_babies():
-    baby_id = uuid.uuid4()
+def test_eligibility_lists_sole_owned_babies():
     with patch(
-        "lanonna_api.domain.account_delete.list_sole_owned_baby_ids",
-        return_value=[baby_id],
+        "lanonna_api.domain.account_delete.list_sole_owned_baby_names",
+        return_value=[{"id": "baby-1", "name": "Liam"}],
     ):
         result = delete_account_eligibility("uid")
     assert result["allowed"] is True
     assert result["blockers"] == []
+    assert result["sole_owned_babies"] == [{"id": "baby-1", "name": "Liam"}]
 
 
 def test_delete_account_eligibility_route():
+    babies = [{"id": "baby-1", "name": "Liam"}]
     with (
-        _auth_as(),        patch(
-            "lanonna_api.domain.account_delete.delete_account_eligibility",
-            return_value={"allowed": True, "blockers": []},
+        _auth_as(),
+        patch(
+            "lanonna_api.domain.account_delete.list_sole_owned_baby_names",
+            return_value=babies,
         ),
     ):
         response = client.get("/v1/me/delete-account/eligibility")
     assert response.status_code == 200
-    assert response.json() == {"allowed": True, "blockers": []}
+    assert response.json() == {
+        "allowed": True,
+        "blockers": [],
+        "sole_owned_babies": babies,
+    }
 
 
 def test_delete_account_sql_before_firebase():

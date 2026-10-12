@@ -14,7 +14,7 @@ Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [op
 |-------|--------|
 | API `pytest` (`services/api`) | 209 passed |
 | Worker `pytest` | 56 passed |
-| `flutter test` | 275 passed |
+| `flutter test` | 289 passed |
 | `flutter analyze` | 0 errors, 0 warnings, 47 infos (L-26) |
 
 Run all three suites before every ship; the suites are the only automated gate (no CI).
@@ -178,7 +178,7 @@ Run all three suites before every ship; the suites are the only automated gate (
 | ID | Issue | Where |
 |----|-------|-------|
 | ✅ L-07 | Default API base URL baked in source; release builds must use `--dart-define-from-file` | `app_config.dart` — const `String.fromEnvironment('API_BASE_URL')`; release/profile compilation fails with a const integer-division error when it is empty (asserts are stripped from those builds). Debug omits the define and uses the dev URL. |
-| L-08 | Accessibility: icon-only `IconButton`s go through `AppIconButton` (required label). Subpage Back, calendar month arrows, home photo thumbnails, and tappable activity rows are labeled (#49). Other controls can still be unlabeled (WCAG AA is the PRD baseline) | mobile |
+| L-08 | Accessibility: icon-only `IconButton`s go through `AppIconButton` (required label). Subpage Back, calendar and prediction month arrows, home photo thumbnails, tappable activity rows, registry edit/delete/add, name love/remove, notification rows, and password show/hide are labeled (#49). Other controls can still be unlabeled (WCAG AA is the PRD baseline) | mobile |
 | L-09 | Hardcoded UI strings vs `app_en.arb` (FR-SET-002) | e.g. `account_edit_screen.dart`, `home_screen.dart` |
 | ✅ L-10 | No CORS middleware (fine for mobile-only; needs policy if a web client is added) | `main.py`, `config.py` — `CORS_ALLOW_ORIGINS` comma-list; off when empty |
 | L-14 | Poison/unknown Pub/Sub messages are logged and acked (204) with no metric; permanent rejects log `pubsub_payload_permanent_reject` (**M-46**); no alert on DLQ depth (the `…-dlq-pull` subscription retains messages, but nobody is notified) | `worker/main.py`, `worker/pubsub_payload.py`, `modules/platform/pubsub.tf` |

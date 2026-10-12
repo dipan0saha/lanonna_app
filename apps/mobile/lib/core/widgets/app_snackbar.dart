@@ -16,6 +16,23 @@ abstract final class AppSnackBar {
     _show(context, message, alertDuration);
   }
 
+  static ScaffoldFeatureController<SnackBar, SnackBarClosedReason>
+  showAlertWithAction(
+    BuildContext context,
+    String message, {
+    required String actionLabel,
+    required VoidCallback onAction,
+  }) {
+    return ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: alertDuration,
+        persist: false,
+        action: SnackBarAction(label: actionLabel, onPressed: onAction),
+      ),
+    );
+  }
+
   static void showInfoWithMessenger(
     ScaffoldMessengerState? messenger,
     String message,
@@ -37,10 +54,6 @@ abstract final class AppSnackBar {
   }
 
   static SnackBar _bar(String message, Duration duration) {
-    return SnackBar(
-      content: Text(message),
-      duration: duration,
-      persist: false,
-    );
+    return SnackBar(content: Text(message), duration: duration, persist: false);
   }
 }

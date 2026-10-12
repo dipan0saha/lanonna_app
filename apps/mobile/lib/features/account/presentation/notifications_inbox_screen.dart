@@ -11,7 +11,8 @@ class NotificationsInboxScreen extends StatefulWidget {
   const NotificationsInboxScreen({super.key});
 
   @override
-  State<NotificationsInboxScreen> createState() => _NotificationsInboxScreenState();
+  State<NotificationsInboxScreen> createState() =>
+      _NotificationsInboxScreenState();
 }
 
 class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
@@ -53,33 +54,38 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
       PrototypeSubpageScaffold(
         title: 'Notifications',
         body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _loadError != null
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(_loadError!, textAlign: TextAlign.center),
-                        const SizedBox(height: 12),
-                        FilledButton(
-                          onPressed: _load,
-                          child: const Text('Retry'),
-                        ),
-                      ],
-                    ),
+            ? const Center(child: CircularProgressIndicator())
+            : _loadError != null
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(_loadError!, textAlign: TextAlign.center),
+                      const SizedBox(height: 12),
+                      FilledButton(
+                        onPressed: _load,
+                        child: const Text('Retry'),
+                      ),
+                    ],
                   ),
-                )
-          : _items.isEmpty
-              ? const Center(child: Text('No notifications yet'))
-              : RefreshIndicator(
-                  onRefresh: _load,
-                  child: ListView.builder(
-                    itemCount: _items.length,
-                    itemBuilder: (context, i) {
-                      final n = _items[i];
-                      return ListTile(
+                ),
+              )
+            : _items.isEmpty
+            ? const Center(child: Text('No notifications yet'))
+            : RefreshIndicator(
+                onRefresh: _load,
+                child: ListView.builder(
+                  itemCount: _items.length,
+                  itemBuilder: (context, i) {
+                    final n = _items[i];
+                    final label = n.title.trim().isEmpty
+                        ? 'Notification'
+                        : n.title.trim();
+                    return AppSemantics.button(
+                      'notification_${n.id}',
+                      ListTile(
                         title: Text(n.title),
                         subtitle: Text(n.body),
                         trailing: n.readAt == null
@@ -101,10 +107,12 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
                           }
                           await _load();
                         },
-                      );
-                    },
-                  ),
+                      ),
+                      label: label,
+                    );
+                  },
                 ),
+              ),
       ),
     );
   }

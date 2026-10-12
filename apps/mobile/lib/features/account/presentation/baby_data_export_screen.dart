@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/api/api_error_message.dart';
+import '../../../core/platform/external_link_launcher.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/widgets/app_section_title.dart';
 import '../../../core/theme/la_nonna_theme.dart';
@@ -45,7 +45,9 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
     }
     setState(() => _loading = true);
     try {
-      final job = await context.read<AccountRepository>().fetchLatestExport(babyId);
+      final job = await context.read<AccountRepository>().fetchLatestExport(
+        babyId,
+      );
       if (mounted) setState(() => _job = job);
     } catch (e) {
       if (mounted) {
@@ -80,7 +82,13 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
   Future<void> _openDownload() async {
     final url = _job?.downloadUrl;
     if (url == null) return;
-    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    await openExternalLink(
+      context,
+      uri,
+      failureMessage: "Couldn't open the download. Copy link?",
+    );
   }
 
   @override
@@ -96,7 +104,7 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Download a JSON copy of photos metadata, calendar, registry, and activity for your selected baby.',
+                    'Download a JSON copy of this baby\'s profile, members, photos and comments, calendar and RSVPs, registry and purchases, name ideas, predictions, the birth announcement, and recent activity.',
                     style: context.textStyles.bodyMedium,
                   ),
                   const SizedBox(height: 16),
@@ -113,7 +121,9 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
                   ],
                   FilledButton(
                     onPressed: _requesting ? null : _requestExport,
-                    child: Text(_requesting ? 'Requesting…' : 'Request new export'),
+                    child: Text(
+                      _requesting ? 'Requesting…' : 'Request new export',
+                    ),
                   ),
                   const SizedBox(height: 8),
                   OutlinedButton(
@@ -121,7 +131,10 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
                     child: const Text('Download export'),
                   ),
                   const SizedBox(height: 8),
-                  TextButton(onPressed: _refresh, child: const Text('Refresh status')),
+                  TextButton(
+                    onPressed: _refresh,
+                    child: const Text('Refresh status'),
+                  ),
                 ],
               ),
       ),

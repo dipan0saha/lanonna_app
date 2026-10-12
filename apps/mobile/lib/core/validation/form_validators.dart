@@ -29,9 +29,29 @@ String? validateOnboardingLastName(String? value) =>
     validateRequiredTrimmed(value, fieldLabel: 'Last name');
 
 /// Full profile display name from first + last (length cap via [validateDisplayName]).
-String? validateOnboardingProfileDisplayName(String firstName, String lastName) {
+String? validateOnboardingProfileDisplayName(
+  String firstName,
+  String lastName,
+) {
   final combined = '${firstName.trim()} ${lastName.trim()}'.trim();
   return validateDisplayName(combined);
+}
+
+const invalidOptionalPhone = 'Enter a valid phone number';
+
+final _optionalPhoneAllowed = RegExp(r'^[0-9+\-() ]+$');
+
+/// Empty is allowed. Otherwise digits, spaces, and `+ - ( )`, with 7–20 digits.
+/// A `+` may appear only once, at the start (same rule as the profile API).
+String? validateOptionalPhone(String? value) {
+  final raw = value?.trim() ?? '';
+  if (raw.isEmpty) return null;
+  if (!_optionalPhoneAllowed.hasMatch(raw)) return invalidOptionalPhone;
+  if (raw.contains('+') && !raw.startsWith('+')) return invalidOptionalPhone;
+  if ('+'.allMatches(raw).length > 1) return invalidOptionalPhone;
+  final digits = raw.replaceAll(RegExp(r'\D'), '');
+  if (digits.length < 7 || digits.length > 20) return invalidOptionalPhone;
+  return null;
 }
 
 String? validateTermsAccepted(bool? value) {

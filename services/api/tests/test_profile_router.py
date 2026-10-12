@@ -91,6 +91,31 @@ def test_patch_profile_explicit_null_clears_birth_date(mock_patch):
 
 
 @patch("lanonna_api.routers.profile.patch_profile_fields")
+def test_patch_profile_normalizes_phone(mock_patch):
+    mock_patch.return_value = _profile_row(phone="+15550101234")
+    with _auth_as():
+        response = client.patch(
+            "/v1/profile",
+            json={"phone": "+1 (555) 010-1234"},
+        )
+    assert response.status_code == 200
+    assert mock_patch.call_args[0][1]["phone"] == "+15550101234"
+    assert response.json()["phone"] == "+15550101234"
+
+
+def test_patch_profile_rejects_invalid_phone():
+    with _auth_as():
+        response = client.patch("/v1/profile", json={"phone": "abc"})
+    assert response.status_code == 422
+
+
+def test_patch_profile_rejects_blank_display_name():
+    with _auth_as():
+        response = client.patch("/v1/profile", json={"display_name": "   "})
+    assert response.status_code == 422
+
+
+@patch("lanonna_api.routers.profile.patch_profile_fields")
 def test_patch_profile_explicit_null_clears_phone(mock_patch):
     mock_patch.return_value = _profile_row(phone=None)
     with _auth_as():

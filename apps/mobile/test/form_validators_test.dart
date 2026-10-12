@@ -18,10 +18,7 @@ void main() {
     expect(validateOptionalHttpUrl(''), isNull);
     expect(validateOptionalHttpUrl('not-a-url'), isNotNull);
     expect(validateOptionalHttpUrl('https://example.com'), isNull);
-    expect(
-      normalizeOptionalHttpUrl('amazon.com/x'),
-      'https://amazon.com/x',
-    );
+    expect(normalizeOptionalHttpUrl('amazon.com/x'), 'https://amazon.com/x');
   });
 
   test('registry item and fun name validators', () {
@@ -36,6 +33,17 @@ void main() {
     expect(validateRegistryShippingLine1(' Main '), isNull);
     expect(validateCountryCode(null), isNotNull);
     expect(validateCountryCode('US'), isNull);
+  });
+
+  test('optional phone matches the profile API rules', () {
+    expect(validateOptionalPhone(''), isNull);
+    expect(validateOptionalPhone('   '), isNull);
+    expect(validateOptionalPhone('abc'), invalidOptionalPhone);
+    expect(validateOptionalPhone('123'), invalidOptionalPhone);
+    expect(validateOptionalPhone('5550100'), isNull);
+    expect(validateOptionalPhone('+1 (555) 010-1234'), isNull);
+    expect(validateOptionalPhone('555-0100'), isNull);
+    expect(validateOptionalPhone('+123+4567'), invalidOptionalPhone);
   });
 
   test('onboarding profile validators', () {

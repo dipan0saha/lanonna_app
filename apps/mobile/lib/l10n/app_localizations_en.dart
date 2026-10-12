@@ -79,6 +79,34 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your account cannot be deleted right now.';
 
   @override
+  String get deleteAccountConfirmTitle => 'Delete your account permanently?';
+
+  @override
+  String get deleteAccountConfirmBody =>
+      'This permanently deletes your La Nonna account. Any Baby Profiles solely owned by your account will also be deleted. Baby Profiles with a co owner will not be deleted; ownership will transfer fully to the co owner.';
+
+  @override
+  String get deleteAccountConfirmAction => 'Delete account';
+
+  @override
+  String get deleteAccountSoleOwnedHeading =>
+      'These baby profiles will be deleted:';
+
+  @override
+  String get deleteAccountReauthPasswordTitle => 'Confirm your password';
+
+  @override
+  String get deleteAccountReauthPasswordBody =>
+      'Enter your password to delete your account.';
+
+  @override
+  String get deleteAccountReauthPasswordAction => 'Continue';
+
+  @override
+  String get deleteAccountReauthFailed =>
+      'Please sign in again to delete your account.';
+
+  @override
   String get emailVerifyHeadline => 'Check your email';
 
   @override

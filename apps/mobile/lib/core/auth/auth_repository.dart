@@ -7,11 +7,12 @@ import 'email_verify_link_result.dart';
 
 class AuthRepository {
   AuthRepository({FirebaseAuth? firebaseAuth, GoogleSignIn? googleSignIn})
-      : _auth = firebaseAuth ?? FirebaseAuth.instance,
-        _googleSignIn = googleSignIn ??
-            GoogleSignIn(
-              serverClientId: GoogleSignInConfig.optionalServerClientId,
-            );
+    : _auth = firebaseAuth ?? FirebaseAuth.instance,
+      _googleSignIn =
+          googleSignIn ??
+          GoogleSignIn(
+            serverClientId: GoogleSignInConfig.optionalServerClientId,
+          );
 
   final FirebaseAuth _auth;
   final GoogleSignIn _googleSignIn;
@@ -33,7 +34,51 @@ class AuthRepository {
   }
 
   Future<void> signInWithEmail(String email, String password) async {
-    await _auth.signInWithEmailAndPassword(email: email.trim(), password: password);
+    await _auth.signInWithEmailAndPassword(
+      email: email.trim(),
+      password: password,
+    );
+  }
+
+  bool get usesPasswordProvider => _hasProvider('password');
+
+  bool get usesGoogleProvider => _hasProvider('google.com');
+
+  bool _hasProvider(String providerId) {
+    final user = currentUser;
+    if (user == null) return false;
+    return user.providerData.any((info) => info.providerId == providerId);
+  }
+
+  /// Re-check the password before a sensitive action such as account deletion.
+  Future<void> reauthenticateWithPassword(String password) async {
+    final user = _auth.currentUser;
+    final email = user?.email;
+    if (user == null || email == null || email.isEmpty) {
+      throw FirebaseAuthException(code: 'requires-recent-login');
+    }
+    await user.reauthenticateWithCredential(
+      EmailAuthProvider.credential(email: email, password: password),
+    );
+  }
+
+  /// Fresh Google sign-in, then reauthenticate the current user.
+  /// A dismissed picker throws [FirebaseAuthException] with code `cancelled`.
+  Future<void> reauthenticateWithGoogle() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw FirebaseAuthException(code: 'requires-recent-login');
+    }
+    final googleUser = await _googleSignIn.signIn();
+    if (googleUser == null) {
+      throw FirebaseAuthException(code: 'cancelled');
+    }
+    final googleAuth = await googleUser.authentication;
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+    await user.reauthenticateWithCredential(credential);
   }
 
   Future<void> sendPasswordResetEmail(String email) async {
@@ -41,7 +86,10 @@ class AuthRepository {
   }
 
   Future<void> signUpWithEmail(String email, String password) async {
-    await _auth.createUserWithEmailAndPassword(email: email.trim(), password: password);
+    await _auth.createUserWithEmailAndPassword(
+      email: email.trim(),
+      password: password,
+    );
     await sendEmailVerification();
   }
 
