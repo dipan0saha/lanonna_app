@@ -120,10 +120,14 @@ class PushNotificationService {
     if (token != null && token.isNotEmpty) {
       try {
         await _notificationsRepo.unregisterDeviceToken(token);
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('push_token_unregister_failed: $e');
+      }
       try {
         await FirebaseMessaging.instance.deleteToken();
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('push_token_delete_failed: $e');
+      }
     }
     _lastRegisteredToken = null;
   }

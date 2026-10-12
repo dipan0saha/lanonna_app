@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from lanonna_api.auth import current_user
 from lanonna_api.http_errors import map_domain_errors
 from lanonna_api.domain import fun as fun_domain
+from lanonna_api.input_limits import MAX_FUN_SUGGESTED_NAME_LEN
 from lanonna_api.repositories.users import upsert_app_user
 
 router = APIRouter(
@@ -19,7 +20,7 @@ router = APIRouter(
 
 
 class NameCreate(BaseModel):
-    suggested_name: str = Field(min_length=1)
+    suggested_name: str = Field(min_length=1, max_length=MAX_FUN_SUGGESTED_NAME_LEN)
     gender: str = Field(pattern="^(male|female)$")
 
 

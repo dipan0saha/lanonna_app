@@ -14,6 +14,7 @@ from lanonna_api.domain.invitations import (
     revoke_invitation_for_owner,
 )
 from lanonna_api.http_errors import map_domain_errors
+from lanonna_api.input_limits import MAX_MEMBERSHIP_CHECK_EMAIL_LEN
 from lanonna_api.repositories.users import upsert_app_user
 from lanonna_api.schemas.invitations import (
     BatchInviteRequest,
@@ -74,7 +75,7 @@ def delete_invitation(
 @router.get("/{baby_profile_id}/membership-check", response_model=MembershipCheckResponse)
 def membership_check(
     baby_profile_id: uuid.UUID,
-    email: str = Query(min_length=3),
+    email: str = Query(min_length=3, max_length=MAX_MEMBERSHIP_CHECK_EMAIL_LEN),
     user: dict[str, Any] = Depends(current_user),
 ) -> MembershipCheckResponse:
     upsert_app_user(user["uid"], user.get("email"))

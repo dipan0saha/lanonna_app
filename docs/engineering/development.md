@@ -73,6 +73,8 @@ Repositories are registered in `bootstrap.dart`; routes in `core/router/app_rout
 cd apps/mobile
 flutter pub get
 flutter run --dart-define-from-file=flavors/dev.json
+
+Release/profile store builds must pass `API_BASE_URL` (see `flavors/*.json`); `main.dart` fails fast in release if the dart-define is missing (L-07).
 ```
 
 `google-services.json` / `GoogleService-Info.plist` are local (gitignored). Dev flavor: `apps/mobile/flavors/dev.json`. iOS: minimum **15.0**, run `cd ios && pod install` once.
@@ -144,6 +146,8 @@ Product UI tokens live under `apps/mobile/lib/core/theme/` (see also PRD §5.1):
 **Member lifecycle (FR-INV-009 / FR-INV-010 / #25):** Remove and leave in [`member_lifecycle.py`](../../services/api/src/lanonna_api/domain/member_lifecycle.py); routes in [`routers/members.py`](../../services/api/src/lanonna_api/routers/members.py). Mobile: [`followers_screen.dart`](../../apps/mobile/lib/features/account/presentation/followers_screen.dart), leave in [`baby_switcher_sheet.dart`](../../apps/mobile/lib/features/shell/presentation/baby_switcher_sheet.dart). Re-invite reactivates tombstoned `baby_memberships` rows on accept. Ended membership on baby-scoped routes: API `403` with `detail.error == membership_ended` from [`membership_access.py`](../../services/api/src/lanonna_api/domain/membership_access.py) (`require_active_membership` / `require_membership`, home, search); client refreshes selection via [`membership_access_handler.dart`](../../apps/mobile/lib/core/auth/membership_access_handler.dart) (`ApiClient.registerMembershipEndedHandler`).
 
 **Invite accept policy (FR-INV-002 / #26):** Product rules live in [`services/api/src/lanonna_api/domain/invitations.py`](../../services/api/src/lanonna_api/domain/invitations.py) (preview `accepted`/`revoked`; accept checks membership before non-pending status). **Co-owner (`role=owner`) accepts** lock the baby row (`lock_baby_profile_for_update`) before counting active owners, so concurrent accepts cannot exceed the 2-owner cap (`409 max_owners`). Mobile treats `InvitationPreview.canContinueInviteFlow` (`pending` or `accepted`) as routable — not “expired”.
+
+**Invite flow privacy (M-54):** Do not put invitee/signed-in emails or invite tokens in internal GoRouter query strings. Use in-memory [`InviteFlowState`](../../apps/mobile/lib/features/invitations/presentation/invite_flow_state.dart) for email-mismatch UI, login/signup prefill, and invite resume after switch-account. External deep links may still use `/invite-accept?token=…`. Persisted invite preview JSON omits `invitee_email`; `pending_invite_token` stays in `SharedPreferences` until sign-out. Android: `allowBackup=false` in `AndroidManifest.xml`.
 
 **Deleted account sessions (#30 / NFR-DATA-001):** [`current_user`](../../services/api/src/lanonna_api/auth.py) calls [`assert_active_user`](../../services/api/src/lanonna_api/domain/auth_session.py) after Firebase JWT verify. Tombstoned `app_users` → **401** `detail.error = user_deleted`. [`upsert_app_user`](../../services/api/src/lanonna_api/repositories/users.py) skips email updates when `deleted_at` is set. Mobile [`ApiClient`](../../apps/mobile/lib/core/api/api_client.dart) invokes [`handleUserDeletedSession`](../../apps/mobile/lib/core/auth/user_deleted_session_handler.dart) (sign out + login route).
 

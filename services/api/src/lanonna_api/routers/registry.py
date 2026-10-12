@@ -10,6 +10,11 @@ from lanonna_api.auth import current_user
 from lanonna_api.http_errors import map_domain_errors
 from lanonna_api.domain import registry as registry_domain
 from lanonna_api.repositories.users import upsert_app_user
+from lanonna_api.input_limits import (
+    MAX_PRODUCT_URL_LEN,
+    MAX_REGISTRY_NAME_LEN,
+    MAX_REGISTRY_TEXT_LEN,
+)
 from lanonna_api.schemas.registry_shipping import ShippingAddressPatch
 
 router = APIRouter(
@@ -19,17 +24,17 @@ router = APIRouter(
 
 
 class ItemCreate(BaseModel):
-    name: str = Field(min_length=1)
-    description: str | None = None
-    product_url: str | None = None
+    name: str = Field(min_length=1, max_length=MAX_REGISTRY_NAME_LEN)
+    description: str | None = Field(default=None, max_length=MAX_REGISTRY_TEXT_LEN)
+    product_url: str | None = Field(default=None, max_length=MAX_PRODUCT_URL_LEN)
     priority: int = Field(default=3, ge=1, le=5)
     catalog_suggestion_id: str | None = Field(default=None, max_length=64)
 
 
 class ItemUpdate(BaseModel):
-    name: str | None = None
-    description: str | None = None
-    product_url: str | None = None
+    name: str | None = Field(default=None, max_length=MAX_REGISTRY_NAME_LEN)
+    description: str | None = Field(default=None, max_length=MAX_REGISTRY_TEXT_LEN)
+    product_url: str | None = Field(default=None, max_length=MAX_PRODUCT_URL_LEN)
     priority: int | None = Field(default=None, ge=1, le=5)
 
 

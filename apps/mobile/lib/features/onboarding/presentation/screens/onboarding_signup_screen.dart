@@ -9,7 +9,7 @@ import '../../../../core/auth/auth_repository.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../core/validation/form_validators.dart';
 import '../../data/onboarding_form_drafts.dart';
-import '../../domain/onboarding_path.dart';
+import '../../../invitations/presentation/invite_flow_state.dart';
 import '../../domain/onboarding_step.dart';
 import '../onboarding_coordinator.dart';
 import '../utils/onboarding_auth_navigation.dart';
@@ -63,18 +63,9 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
       final coordinator = context.read<OnboardingCoordinator>();
       await coordinator.setStep(OnboardingStep.signup);
       if (!mounted) return;
-      final params = GoRouterState.of(context).uri.queryParameters;
-      final inviteToken = params['invite_token'];
-      if (inviteToken != null && inviteToken.isNotEmpty) {
-        await coordinator.setPendingInviteToken(inviteToken);
-      }
-      final path = OnboardingPath.fromSignupQuery(params['path']);
-      if (path != null && path != OnboardingPath.owner) {
-        await coordinator.saveOnboardingPath(path);
-      }
-      final invitedEmail = params['email'];
-      if (invitedEmail != null && invitedEmail.isNotEmpty) {
-        _emailController.text = Uri.decodeComponent(invitedEmail);
+      final prefill = context.read<InviteFlowState>().takeSignupPrefillEmail();
+      if (prefill != null && prefill.isNotEmpty) {
+        _emailController.text = prefill;
       } else {
         final draft = coordinator.signupEmailDraft;
         if (draft != null && draft.email.isNotEmpty) {
@@ -102,6 +93,7 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
       if (!mounted) return;
       await navigateAfterOnboardingAuth(context, isSignUp: true, usedOAuth: false);
     } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
       final l10n = AppLocalizations.of(context)!;
       setState(
         () => _error = authErrorMessage(e, l10n, flow: AuthFlow.signUp),
@@ -121,11 +113,13 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
       if (!mounted) return;
       await navigateAfterOnboardingAuth(context, isSignUp: true, usedOAuth: true);
     } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
       final l10n = AppLocalizations.of(context)!;
       setState(
         () => _error = authErrorMessage(e, l10n, flow: AuthFlow.signUp),
       );
     } catch (e) {
+      if (!mounted) return;
       setState(() => _error = apiErrorMessage(e));
     } finally {
       if (mounted) setState(() => _busy = false);

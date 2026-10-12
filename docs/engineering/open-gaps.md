@@ -12,10 +12,10 @@ Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [op
 
 | Check | Result |
 |-------|--------|
-| API `pytest` (`services/api`) | 208 passed |
+| API `pytest` (`services/api`) | 209 passed |
 | Worker `pytest` | 56 passed |
 | `flutter test` | 217 passed |
-| `flutter analyze` | 0 errors, 0 warnings, 48 infos (L-26) |
+| `flutter analyze` | 0 errors, 0 warnings, 47 infos (L-26) |
 
 Run all three suites before every ship; the suites are the only automated gate (no CI).
 
@@ -26,8 +26,8 @@ Run all three suites before every ship; the suites are the only automated gate (
 | Severity | Open | Themes |
 |----------|------|--------|
 | High | 4 | Release signing, worker OIDC, App Check enforce, admin surface |
-| Medium | 21 | Export memory limits (beta), infra/IAM/prod parity, mobile error/async/date handling |
-| Low | 11 | Input caps, logging, infra hygiene (GCS), lint/conventions, deferred consolidation backlog |
+| Medium | 20 | Export memory limits (beta), infra/IAM/prod parity, mobile error/async/date handling |
+| Low | 6 | Accessibility/i18n, infra GCS, Docker, lint remainder, deferred consolidation backlog |
 
 ---
 
@@ -156,7 +156,7 @@ Run all three suites before every ship; the suites are the only automated gate (
 |----|-------|-------|-----|
 | M-27 | App Check token silently omitted when `getToken` fails | `core/app_check/app_check_bootstrap.dart`, `core/api/api_client.dart` | Retry/backoff or visible warning |
 | M-31 | Biometric unlock (PRD §5.3) not implemented — no `local_auth` usage | n/a | Implement or mark deferred in PRD |
-| M-54 | Invite-mismatch emails (invitee + signed-in) are embedded in GoRouter query strings; invite token/preview JSON sit in plaintext `SharedPreferences` and Android backup is not disabled | `features/onboarding/.../invite_flow_navigation.dart:73-78`, `onboarding_wrong_email_screen.dart:18-22`, `onboarding_storage.dart:22-26,177-183`, `AndroidManifest.xml` | Pass mismatch state via an in-memory store; `allowBackup="false"` / exclude prefs |
+| ✅ M-54 | Invite-mismatch PII in GoRouter query strings; invitee email in persisted preview JSON; Android Auto Backup of prefs | `InviteFlowState`, `invite_flow_navigation.dart`, `onboarding_wrong_email_screen.dart`, `AndroidManifest.xml` | In-memory mismatch/prefill/resume; preview JSON omits `invitee_email`; `allowBackup=false` + `backup_rules.xml` |
 | M-55 | Signed-in invite accept screens show `e.toString()` of an `Exception` instead of mapped copy | `onboarding_follower_invite_screen.dart:82-88`, `onboarding_coowner_invite_screen.dart:82-88` | Use `inviteAcceptUserMessage` / `apiErrorMessage` / `runMutation` |
 | M-56 | `AppSession.refreshFromApi` swallows all errors (`catch (_)`), so a failed status fetch can misroute (onboarding vs home) with no feedback | `onboarding/presentation/app_session.dart:46-57` | Surface an error/retry state or redirect conservatively |
 | M-57 | Non-debug builds built with `MAESTRO_SEMANTICS=true` use the App Check debug provider and log the debug token | `core/app_check/app_check_bootstrap.dart:4-27`, `main.dart:18-24` | Restrict the debug provider to `kDebugMode`; guard token logging |
@@ -177,23 +177,23 @@ Run all three suites before every ship; the suites are the only automated gate (
 
 | ID | Issue | Where |
 |----|-------|-------|
-| L-07 | Default API base URL baked in source; release builds must use `--dart-define-from-file` | `config/app_config.dart` |
+| ✅ L-07 | Default API base URL baked in source; release builds must use `--dart-define-from-file` | `app_config.dart`, `main.dart` — release throws if `API_BASE_URL` dart-define missing |
 | L-08 | Accessibility: semantics labels concentrated in shell/onboarding; many controls unlabeled (WCAG AA is the PRD baseline) | mobile |
 | L-09 | Hardcoded UI strings vs `app_en.arb` (FR-SET-002) | e.g. `account_edit_screen.dart`, `home_screen.dart` |
 | ✅ L-10 | No CORS middleware (fine for mobile-only; needs policy if a web client is added) | `main.py`, `config.py` — `CORS_ALLOW_ORIGINS` comma-list; off when empty |
 | L-14 | Poison/unknown Pub/Sub messages are logged and acked (204) with no metric; permanent rejects log `pubsub_payload_permanent_reject` (**M-46**); no alert on DLQ depth (the `…-dlq-pull` subscription retains messages, but nobody is notified) | `worker/main.py`, `worker/pubsub_payload.py`, `modules/platform/pubsub.tf` |
 | L-15 | Dockerfiles run as root; Cloud Build only builds/pushes (no tests); base images use floating `python:3.12-slim` tags | `services/*/Dockerfile`, `cloudbuild.yaml` |
 | L-16 | Duplicate email template trees (intentional); run `scripts/sync-email-templates.sh check` locally before commit | `packages/email-templates`, `services/worker/email_templates` |
-| L-17 | Unbounded inputs: photo caption PATCH (init caps 2000), photo tags list, fun name `suggested_name`, event/registry title/description/location, membership-check `email` query | `routers/photos.py:17-37`, `routers/fun.py:21-22`, `routers/events.py:18-36`, `routers/registry.py:21-33`, `routers/invitations.py:76-79` |
+| ✅ L-17 | Unbounded inputs on PATCH/list routes | `input_limits.py` + router `Field(max_length=…)` on photos, fun, events, registry, invitations |
 | ✅ L-18 | Search `q` is not escaped for `ILIKE` wildcards (`%`, `_`); `PermissionError` returned plain string `detail` | `text_ilike.py`, `repositories/search.py`, `http_errors.py` — `ilike_substring_pattern` + `ESCAPE '\'`; `PermissionError` → `{error,message}` |
 | ✅ L-19 | Calendar `list_events` unbounded; storage usage counted soft-deleted babies | `events.py` `LIST_EVENTS_MAX_ROWS`; `user_engagement.py` joins `baby_profiles.deleted_at` |
 | ✅ L-20 | Dead config: API `invite_deep_link_base` was unused (worker-only) | `services/api/config.py` — removed from API `Settings` |
-| L-21 | Worker hygiene: unknown messages log the full payload (PII/token risk); export uses `SELECT *` (internal columns) and silently truncates activity to 500 rows | `worker/main.py:154-158`, `worker/baby_data_export.py:96-137` |
+| ✅ L-21 | Worker hygiene: export `SELECT *` / silent activity cap; unknown Pub/Sub payloads logged in full | `worker/baby_data_export.py` — explicit column lists, `export_activity_truncated` when activity exceeds `ACTIVITY_EXPORT_MAX_ROWS` (500); `worker/main.py` — `_safe_payload_summary` + unknown-type log (type/keys only; **M-41**) |
 | L-22 | Infra hygiene: GCS buckets lack `public_access_prevention`/versioning/lifecycle (**open**); `import-dev.sh` omitted `admin-api-key` | `storage.tf` — **fixed:** `admin-api-key` in `import-dev.sh` secret loop |
 | ✅ L-23 | Docs drift: mobile module table, `/health`, migration verify path | `development.md`, `operations.md` |
-| L-24 | Mobile hygiene: FCM unregister failures swallowed; Android release has no R8/minify rules (**open**). `RouterRefreshListenable` auth subscription | `push_notification_service.dart`, `android/.../build.gradle.kts` — **fixed:** `router_refresh.dart` + `app.dart` dispose |
+| L-24 | Android release has no R8/minify rules (**open**). FCM unregister / router refresh | `android/.../build.gradle.kts` — **fixed:** unregister/delete token logs; `router_refresh` dispose |
 | L-25 | Convention violations: ~13 hardcoded hex colors in `features/` (e.g. `onboarding_buttons.dart:108`, `batch_invite_screen.dart:296`, `event_form_widgets.dart:38-39`); hardcoded strings in `batch_invite_screen.dart`, `onboarding_wrong_email_screen.dart`, `app.dart`; batch invite submit bypasses `runMutation`; hand-rolled count strings in `predictions_tab.dart:399`, `names_tab.dart:328`, `gallery_photo_grid.dart:109` | mobile |
-| L-26 | `flutter analyze`: 48 infos — `use_null_aware_elements` (registry/home/onboarding repositories), `unnecessary_underscores`, 4 `use_build_context_synchronously` in login/signup screens, deprecated `value` on a form field | mobile `lib/`, `test/` |
+| L-26 | `flutter analyze` infos — `use_null_aware_elements`, `unnecessary_underscores`, deprecated form `value` (**partial:** login/signup `mounted` guards; `home_repository` null-aware map) | mobile `lib/`, `test/` |
 | ✅ L-27 | Legacy `photo_ready_notification_log` unused after fan-out `dedupe_key` | migration `029` — `DROP TABLE photo_ready_notification_log` |
 | L-28 | **Consolidation backlog (deferred, medium risk — live request paths):** gallery vs calendar comment domain logic and photo/event comment SQL; router `try/except map_domain_errors` boilerplate and the repeated `upsert_app_user` first line; dynamic `UPDATE … SET` builders; mobile comment composer, tab empty states, AI-suggestions screen state machine, labeled-field shell, wider `runMutation` use; shared `get_connection` for API + worker, `infra/db` shared `connect()` and invite-hash helper; Terraform push-subscription `for_each` and dev/prod API-list dedupe; scheduler script merge; PUT/PATCH announcement alias | `services/api`, `apps/mobile`, `infra/` |
 
@@ -212,4 +212,4 @@ Run all three suites before every ship; the suites are the only automated gate (
 1. **Pre-beta security:** H-01, H-04, H-05, H-06, M-27, M-57
 2. **Mobile correctness:** M-54–M-61
 3. **Infra + prod parity:** M-19–M-22, M-47–M-53
-4. **Ops / polish:** M-09, M-31, L-07–L-17, L-21–L-22, L-24–L-26; then the L-28 consolidation backlog
+4. **Ops / polish:** M-09, M-31, L-08–L-09, L-14–L-16, L-22, L-24–L-26, L-25; then the L-28 consolidation backlog

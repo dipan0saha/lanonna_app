@@ -10,28 +10,33 @@ from pydantic import BaseModel, Field
 from lanonna_api.auth import current_user
 from lanonna_api.http_errors import map_domain_errors
 from lanonna_api.domain import calendar as calendar_domain
+from lanonna_api.input_limits import (
+    MAX_EVENT_LOCATION_LEN,
+    MAX_EVENT_TEXT_LEN,
+    MAX_EVENT_TITLE_LEN,
+)
 from lanonna_api.repositories.users import upsert_app_user
 
 router = APIRouter(prefix="/v1/babies/{baby_profile_id}/events", tags=["events"])
 
 
 class EventCreate(BaseModel):
-    title: str = Field(min_length=1)
+    title: str = Field(min_length=1, max_length=MAX_EVENT_TITLE_LEN)
     starts_at: datetime
     ends_at: datetime | None = None
-    description: str | None = None
-    location: str | None = None
+    description: str | None = Field(default=None, max_length=MAX_EVENT_TEXT_LEN)
+    location: str | None = Field(default=None, max_length=MAX_EVENT_LOCATION_LEN)
     video_call_url: str | None = None
     cover_photo_id: uuid.UUID | None = None
     catalog_suggestion_id: str | None = Field(default=None, max_length=64)
 
 
 class EventUpdate(BaseModel):
-    title: str | None = None
+    title: str | None = Field(default=None, max_length=MAX_EVENT_TITLE_LEN)
     starts_at: datetime | None = None
     ends_at: datetime | None = None
-    description: str | None = None
-    location: str | None = None
+    description: str | None = Field(default=None, max_length=MAX_EVENT_TEXT_LEN)
+    location: str | None = Field(default=None, max_length=MAX_EVENT_LOCATION_LEN)
     video_call_url: str | None = None
     cover_photo_id: uuid.UUID | None = None
 

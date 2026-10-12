@@ -29,6 +29,8 @@ def _make_conn(job_status: str, baby_id: uuid.UUID):
             result.fetchone.return_value = None
         elif "FROM baby_profiles" in sql_text:
             result.fetchone.return_value = {"id": baby_id, "name": "Baby"}
+        elif "COUNT(*)::int AS n" in sql_text and "activity_events" in sql_text:
+            result.fetchone.return_value = {"n": 0}
         else:
             result.fetchone.return_value = None
             result.fetchall.return_value = []

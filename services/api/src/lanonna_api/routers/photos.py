@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from lanonna_api.auth import current_user
 from lanonna_api.domain import gallery as gallery_domain
 from lanonna_api.http_errors import map_domain_errors
+from lanonna_api.input_limits import MAX_CAPTION_LEN, MAX_PHOTO_TAGGED_BABIES
 from lanonna_api.repositories.users import upsert_app_user
 
 router = APIRouter(tags=["photos"])
@@ -22,7 +23,7 @@ class PhotoInitRequest(BaseModel):
 
 
 class CaptionPatch(BaseModel):
-    caption: str | None = None
+    caption: str | None = Field(default=None, max_length=MAX_CAPTION_LEN)
 
 
 class CommentBody(BaseModel):
@@ -34,7 +35,10 @@ class CommentPatch(BaseModel):
 
 
 class PhotoTagsBody(BaseModel):
-    tagged_baby_profile_ids: list[uuid.UUID] = Field(default_factory=list)
+    tagged_baby_profile_ids: list[uuid.UUID] = Field(
+        default_factory=list,
+        max_length=MAX_PHOTO_TAGGED_BABIES,
+    )
 
 
 @router.post("/v1/photos/init")

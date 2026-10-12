@@ -14,6 +14,33 @@ from lanonna_worker.db import get_connection
 logger = logging.getLogger("lanonna.worker.export")
 
 _EXPORT_FAILED_MESSAGE = "Export could not be completed. Please try again."
+ACTIVITY_EXPORT_MAX_ROWS = 500
+
+_BABY_PROFILE_EXPORT_COLUMNS = """
+    id, name, expected_birth_date, actual_birth_date, gender, lifecycle_status,
+    avatar_url, created_at, updated_at, created_by_firebase_uid,
+    registry_shipping_line1, registry_shipping_line2, registry_shipping_city,
+    registry_shipping_region, registry_shipping_postal_code, registry_shipping_country_code
+"""
+
+_EVENT_EXPORT_COLUMNS = """
+    id, baby_profile_id, created_by_firebase_uid, title, starts_at, ends_at,
+    description, location, video_call_url, cover_photo_id, catalog_suggestion_id,
+    created_at, updated_at
+"""
+
+_REGISTRY_EXPORT_COLUMNS = """
+    id, baby_profile_id, created_by_firebase_uid, name, priority, description,
+    product_url, catalog_suggestion_id, created_at, updated_at
+"""
+
+_NAME_SUGGESTION_EXPORT_COLUMNS = """
+    id, baby_profile_id, suggested_by_firebase_uid, suggested_name, gender, created_at
+"""
+
+_ACTIVITY_EXPORT_COLUMNS = """
+    id, baby_profile_id, actor_firebase_uid, event_type, summary, payload, created_at
+"""
 
 
 def _json_default(value: Any) -> Any:
@@ -149,7 +176,7 @@ def run_baby_data_export(
             _touch_export_running(conn, job_id)
 
             baby = conn.execute(
-                "SELECT * FROM baby_profiles WHERE id = %s",
+                f"SELECT {_BABY_PROFILE_EXPORT_COLUMNS} FROM baby_profiles WHERE id = %s",
                 (baby_id,),
             ).fetchone()
             photos = conn.execute(
@@ -161,25 +188,51 @@ def run_baby_data_export(
                 (baby_id,),
             ).fetchall()
             events = conn.execute(
-                "SELECT * FROM events WHERE baby_profile_id = %s ORDER BY starts_at",
+                f"""
+                SELECT {_EVENT_EXPORT_COLUMNS}
+                FROM events WHERE baby_profile_id = %s ORDER BY starts_at
+                """,
                 (baby_id,),
             ).fetchall()
             registry = conn.execute(
-                "SELECT * FROM registry_items WHERE baby_profile_id = %s ORDER BY created_at",
+                f"""
+                SELECT {_REGISTRY_EXPORT_COLUMNS}
+                FROM registry_items WHERE baby_profile_id = %s ORDER BY created_at
+                """,
                 (baby_id,),
             ).fetchall()
             names = conn.execute(
-                "SELECT * FROM name_suggestions WHERE baby_profile_id = %s ORDER BY created_at",
-                (baby_id,),
-            ).fetchall()
-            activity = conn.execute(
-                """
-                SELECT * FROM activity_events
-                WHERE baby_profile_id = %s
-                ORDER BY created_at DESC
-                LIMIT 500
+                f"""
+                SELECT {_NAME_SUGGESTION_EXPORT_COLUMNS}
+                FROM name_suggestions WHERE baby_profile_id = %s ORDER BY created_at
                 """,
                 (baby_id,),
+            ).fetchall()
+            activity_count_row = conn.execute(
+                """
+                SELECT COUNT(*)::int AS n
+                FROM activity_events
+                WHERE baby_profile_id = %s
+                """,
+                (baby_id,),
+            ).fetchone()
+            activity_total = int(activity_count_row["n"]) if activity_count_row else 0
+            if activity_total > ACTIVITY_EXPORT_MAX_ROWS:
+                logger.warning(
+                    "export_activity_truncated baby_id=%s total=%s max=%s",
+                    baby_id,
+                    activity_total,
+                    ACTIVITY_EXPORT_MAX_ROWS,
+                )
+            activity = conn.execute(
+                f"""
+                SELECT {_ACTIVITY_EXPORT_COLUMNS}
+                FROM activity_events
+                WHERE baby_profile_id = %s
+                ORDER BY created_at DESC
+                LIMIT %s
+                """,
+                (baby_id, ACTIVITY_EXPORT_MAX_ROWS),
             ).fetchall()
             _touch_export_running(conn, job_id)
 

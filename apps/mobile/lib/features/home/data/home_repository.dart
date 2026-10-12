@@ -103,12 +103,12 @@ class HomeRepository {
     String? avatarUrl,
   }) async {
     final json = await _api.patchJson('/v1/babies/$babyId', body: {
-      if (name != null) 'name': name,
-      if (gender != null) 'gender': gender,
-      if (expectedBirthDate != null) 'expected_birth_date': expectedBirthDate,
-      if (actualBirthDate != null) 'actual_birth_date': actualBirthDate,
-      if (lifecycleStatus != null) 'lifecycle_status': lifecycleStatus,
-      if (avatarUrl != null) 'avatar_url': avatarUrl,
+      ?'name': name,
+      ?'gender': gender,
+      ?'expected_birth_date': expectedBirthDate,
+      ?'actual_birth_date': actualBirthDate,
+      ?'lifecycle_status': lifecycleStatus,
+      ?'avatar_url': avatarUrl,
     });
     return BabySummary.fromJson(json);
   }
