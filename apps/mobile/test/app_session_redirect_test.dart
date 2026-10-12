@@ -463,6 +463,38 @@ void main() {
     },
   );
 
+  test('invite preview stays available from the create-baby step', () async {
+    final f = await _fixtures();
+    f.session.debugSetStatus(
+      const OnboardingStatus(
+        emailVerified: true,
+        profileComplete: true,
+        hasOwnerBaby: false,
+        hasBabyMembership: false,
+        ownerOnboardingCompleted: false,
+        needsOwnerOnboarding: false,
+        canAccessMainApp: false,
+      ),
+    );
+    await f.coordinator.setStep(OnboardingStep.createBaby);
+    expect(
+      f.session.redirectFor(
+        isSignedIn: true,
+        emailVerified: true,
+        location: OnboardingRoutes.ownerCreateBaby,
+      ),
+      isNull,
+    );
+    expect(
+      f.session.redirectFor(
+        isSignedIn: true,
+        emailVerified: true,
+        location: '${OnboardingRoutes.inviteAccept}?token=abc123',
+      ),
+      isNull,
+    );
+  });
+
   test(
     'owner with baby redirects create-baby to first moment by default',
     () async {

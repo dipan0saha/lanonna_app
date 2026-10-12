@@ -72,7 +72,12 @@ class _PredictionsTabState extends State<PredictionsTab> {
     }
   }
 
+  bool get _predictionsClosed =>
+      widget.baby.lifecycleStatus == 'born' ||
+      (_payload?.predictionsClosed ?? false);
+
   Future<void> _voteGender(String gender) async {
+    if (_predictionsClosed) return;
     try {
       await context.read<FunRepository>().setGenderVote(widget.baby.id, gender);
       await _load();
@@ -82,6 +87,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
   }
 
   Future<void> _submitBirthdateGuess() async {
+    if (_predictionsClosed) return;
     final l10n = AppLocalizations.of(context)!;
     final saved = _payload?.viewerBirthdateVote;
     final date = birthdateGuessToSubmit(pendingSelection: _pendingGuess);
@@ -128,6 +134,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
   }
 
   Future<void> _pickDate() async {
+    if (_predictionsClosed) return;
     final due = babyExpectedDueDate(widget.baby);
     final picked = await showDatePicker(
       context: context,
@@ -176,6 +183,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
   }
 
   void _selectCalendarDay(DateTime day) {
+    if (_predictionsClosed) return;
     setState(() => _pendingGuess = day);
   }
 
@@ -200,16 +208,27 @@ class _PredictionsTabState extends State<PredictionsTab> {
     final total = genderVotes.total;
     final savedBirthdate = p?.viewerBirthdateVote;
     final due = babyExpectedDueDate(widget.baby);
-    final submitEnabled = birthdateGuessSubmitEnabled(
-      pendingSelection: _pendingGuess,
-      savedVoteIso: savedBirthdate,
-    );
+    final closed = _predictionsClosed;
+    final submitEnabled =
+        !closed &&
+        birthdateGuessSubmitEnabled(
+          pendingSelection: _pendingGuess,
+          savedVoteIso: savedBirthdate,
+        );
 
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          if (closed)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(
+                l10n.predictionsClosedNote,
+                style: context.textStyles.bodyMedium,
+              ),
+            ),
           AppSectionTitle(
             title: 'Boy or Girl?',
             action: total > 0 ? VoteCountPill(total: total) : null,
@@ -220,7 +239,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
                 child: _genderBox(
                   'Boy',
                   p?.viewerGenderVote == 'male',
-                  () => _voteGender('male'),
+                  closed ? null : () => _voteGender('male'),
                   genderVotes.displayPercentForMale(),
                   p?.maleVotes ?? 0,
                   semanticsId: 'fun_vote_boy',
@@ -231,7 +250,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
                 child: _genderBox(
                   'Girl',
                   p?.viewerGenderVote == 'female',
-                  () => _voteGender('female'),
+                  closed ? null : () => _voteGender('female'),
                   genderVotes.displayPercentForFemale(),
                   p?.femaleVotes ?? 0,
                   semanticsId: 'fun_vote_girl',
@@ -296,8 +315,8 @@ class _PredictionsTabState extends State<PredictionsTab> {
                     voteCountsByDate: _voteCountByDate(),
                     dueDate: due,
                     viewerGuess: savedBirthdate,
-                    pendingGuess: _pendingGuess,
-                    onDayTap: _selectCalendarDay,
+                    pendingGuess: closed ? null : _pendingGuess,
+                    onDayTap: closed ? null : _selectCalendarDay,
                   ),
                   if (due != null &&
                       due.year == _visibleMonth.year &&
@@ -320,9 +339,11 @@ class _PredictionsTabState extends State<PredictionsTab> {
           const SizedBox(height: AppMetrics.sectionBlockSpacing),
           const AppSectionTitle(title: 'Popular Dates'),
           if (p == null || p.birthdateHistogram.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: Text('No guesses yet - be the first!'),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                closed ? 'No guesses yet' : 'No guesses yet - be the first!',
+              ),
             )
           else
             for (final row in p.birthdateHistogram)
@@ -341,7 +362,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
                 style: context.textStyles.bodySmall,
               ),
             ),
-          if (_pendingGuess != null && submitEnabled)
+          if (!closed && _pendingGuess != null && submitEnabled)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Text(
@@ -351,20 +372,22 @@ class _PredictionsTabState extends State<PredictionsTab> {
                 style: context.textStyles.bodySmall,
               ),
             ),
-          FilledButton(
-            key: const Key('lockPredictionBtn'),
-            onPressed: submitEnabled ? _submitBirthdateGuess : null,
-            child: Text(
-              savedBirthdate == null
-                  ? l10n.funBirthdateSaveGuess
-                  : l10n.funBirthdateUpdateGuess,
+          if (!closed) ...[
+            FilledButton(
+              key: const Key('lockPredictionBtn'),
+              onPressed: submitEnabled ? _submitBirthdateGuess : null,
+              child: Text(
+                savedBirthdate == null
+                    ? l10n.funBirthdateSaveGuess
+                    : l10n.funBirthdateUpdateGuess,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          OutlinedButton(
-            onPressed: _pickDate,
-            child: Text(l10n.funBirthdatePickDate),
-          ),
+            const SizedBox(height: 8),
+            OutlinedButton(
+              onPressed: _pickDate,
+              child: Text(l10n.funBirthdatePickDate),
+            ),
+          ],
         ],
       ),
     );
@@ -391,7 +414,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
   Widget _genderBox(
     String label,
     bool selected,
-    VoidCallback onTap,
+    VoidCallback? onTap,
     int pct,
     int count, {
     String? semanticsId,
@@ -420,7 +443,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
         ),
       ),
     );
-    if (semanticsId != null) {
+    if (semanticsId != null && onTap != null) {
       return AppSemantics.button(semanticsId, child, label: label);
     }
     return child;
@@ -434,7 +457,7 @@ class _PredictionsMonthGrid extends StatelessWidget {
     this.dueDate,
     this.viewerGuess,
     this.pendingGuess,
-    required this.onDayTap,
+    this.onDayTap,
   });
 
   final DateTime month;
@@ -442,7 +465,7 @@ class _PredictionsMonthGrid extends StatelessWidget {
   final DateTime? dueDate;
   final String? viewerGuess;
   final DateTime? pendingGuess;
-  final void Function(DateTime day) onDayTap;
+  final void Function(DateTime day)? onDayTap;
 
   @override
   Widget build(BuildContext context) {
@@ -472,7 +495,9 @@ class _PredictionsMonthGrid extends StatelessWidget {
           pendingGuess!.day == day;
       cells.add(
         GestureDetector(
-          onTap: () => onDayTap(DateTime(month.year, month.month, day)),
+          onTap: onDayTap == null
+              ? null
+              : () => onDayTap!(DateTime(month.year, month.month, day)),
           child: Container(
             decoration: BoxDecoration(
               color: isDue

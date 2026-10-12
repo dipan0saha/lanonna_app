@@ -231,6 +231,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get funBirthdateConfirmAction => 'Save';
 
   @override
+  String get predictionsClosedNote => 'Predictions closed — baby has arrived';
+
+  @override
   String get rsvpStatusGoing => 'Going';
 
   @override

@@ -5,6 +5,7 @@ from datetime import date
 from typing import Any
 
 from lanonna_api.domain.gallery import require_membership
+from lanonna_api.domain.prediction_errors import PredictionsClosedError
 from lanonna_api.domain.name_suggestions import (
     normalize_gender_for_fun,
     normalize_suggested_name,
@@ -159,8 +160,18 @@ def toggle_like(
     return {"liked": True}
 
 
+def _predictions_closed(membership: dict[str, Any]) -> bool:
+    """Born is ``baby_profiles.lifecycle_status`` (announce-arrival and create-as-born)."""
+    return (membership.get("lifecycle_status") or "expecting") == "born"
+
+
+def _ensure_predictions_open(membership: dict[str, Any]) -> None:
+    if _predictions_closed(membership):
+        raise PredictionsClosedError()
+
+
 def get_predictions(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, Any]:
-    require_membership(firebase_uid, baby_profile_id)
+    membership = require_membership(firebase_uid, baby_profile_id)
     totals = gender_vote_totals(baby_profile_id)
     caller = get_caller_votes(baby_profile_id, firebase_uid)
     voters = []
@@ -193,6 +204,7 @@ def get_predictions(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, 
             }
             for row in hist
         ],
+        "predictions_closed": _predictions_closed(membership),
     }
 
 
@@ -201,7 +213,8 @@ def set_gender_vote(
     baby_profile_id: uuid.UUID,
     gender_value: str,
 ) -> dict[str, Any]:
-    require_membership(firebase_uid, baby_profile_id)
+    membership = require_membership(firebase_uid, baby_profile_id)
+    _ensure_predictions_open(membership)
     if gender_value not in ("male", "female"):
         raise ValueError("Invalid gender vote.")
     upsert_gender_vote(baby_profile_id, firebase_uid, gender_value, False)
@@ -220,6 +233,7 @@ def set_birthdate_vote(
     baby_profile_id: uuid.UUID,
     predicted_birth_date: date,
 ) -> dict[str, Any]:
-    require_membership(firebase_uid, baby_profile_id)
+    membership = require_membership(firebase_uid, baby_profile_id)
+    _ensure_predictions_open(membership)
     upsert_birthdate_vote(baby_profile_id, firebase_uid, predicted_birth_date, False)
     return {"date": predicted_birth_date.isoformat()}
