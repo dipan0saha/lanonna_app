@@ -85,7 +85,7 @@ resource "google_pubsub_subscription" "worker_push" {
   project = var.project_id
   topic   = google_pubsub_topic.upload.name
 
-  ack_deadline_seconds = 120
+  ack_deadline_seconds = 300
 
   push_config {
     push_endpoint = var.worker_push_endpoint
@@ -112,7 +112,7 @@ resource "google_pubsub_subscription" "worker_push_commands" {
   project = var.project_id
   topic   = google_pubsub_topic.async_commands.name
 
-  ack_deadline_seconds = 120
+  ack_deadline_seconds = 300
 
   push_config {
     push_endpoint = var.worker_push_endpoint

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import uuid
+from collections.abc import Callable
 from datetime import date
 from typing import Any
 
@@ -21,6 +22,7 @@ _CHANNEL_COLUMNS: dict[str, str] = {
 }
 
 _fcm_initialized = False
+_FCM_MULTICAST_LIMIT = 500
 
 
 def _should_delete_fcm_token(exc: BaseException | None) -> bool:
@@ -165,6 +167,54 @@ def _delete_fcm_token(conn: Any, token: str) -> None:
     conn.execute("DELETE FROM device_tokens WHERE fcm_token = %s", (token,))
 
 
+def _chunk_tokens(tokens: list[str], size: int = _FCM_MULTICAST_LIMIT) -> list[list[str]]:
+    return [tokens[i : i + size] for i in range(0, len(tokens), size)]
+
+
+def _prune_fcm_token_responses(
+    conn: Any,
+    tokens: list[str],
+    response: messaging.BatchResponse,
+    *,
+    log_uid: str | None = None,
+) -> None:
+    for idx, send_response in enumerate(response.responses):
+        if send_response.success:
+            continue
+        exc = send_response.exception
+        if exc is not None:
+            logger.warning(
+                "fcm_token_failed uid=%s error=%s",
+                log_uid or "-",
+                exc,
+            )
+        if idx < len(tokens) and _should_delete_fcm_token(exc):
+            _delete_fcm_token(conn, tokens[idx])
+
+
+def _send_multicast_and_prune_tokens(
+    conn: Any,
+    tokens: list[str],
+    build_message: Callable[[list[str]], messaging.MulticastMessage],
+    *,
+    log_uid: str | None = None,
+) -> None:
+    if not tokens:
+        return
+    _ensure_fcm()
+    for chunk in _chunk_tokens(tokens):
+        message = build_message(chunk)
+        try:
+            response = messaging.send_each_for_multicast(message)
+        except Exception:
+            if log_uid:
+                logger.exception("fcm_send_failed uid=%s", log_uid)
+            else:
+                logger.exception("fcm_send_failed")
+            continue
+        _prune_fcm_token_responses(conn, chunk, response, log_uid=log_uid)
+
+
 def _send_fcm(
     conn: Any,
     *,
@@ -190,29 +240,17 @@ def _send_fcm(
     }
     if baby_profile_id is not None:
         data["baby_profile_id"] = str(baby_profile_id)
-    message = messaging.MulticastMessage(
-        notification=messaging.Notification(title=title, body=body),
-        data=data,
-        tokens=tokens,
-    )
-    try:
-        response = messaging.send_each_for_multicast(message)
-    except Exception:
-        logger.exception("fcm_send_failed uid=%s", firebase_uid)
-        return
 
-    for idx, send_response in enumerate(response.responses):
-        if send_response.success:
-            continue
-        exc = send_response.exception
-        if exc is not None:
-            logger.warning(
-                "fcm_token_failed uid=%s error=%s",
-                firebase_uid,
-                exc,
-            )
-        if idx < len(tokens) and _should_delete_fcm_token(exc):
-            _delete_fcm_token(conn, tokens[idx])
+    def build_message(chunk: list[str]) -> messaging.MulticastMessage:
+        return messaging.MulticastMessage(
+            notification=messaging.Notification(title=title, body=body),
+            data=data,
+            tokens=chunk,
+        )
+
+    _send_multicast_and_prune_tokens(
+        conn, tokens, build_message, log_uid=firebase_uid
+    )
 
 
 def process_notify_fan_out(
@@ -356,21 +394,18 @@ def process_weekly_notification_digest(
             if not tokens:
                 continue
 
-            _ensure_fcm()
             data = {"deep_link": deep_link, "notification_id": ""}
-            message = messaging.MulticastMessage(
-                notification=messaging.Notification(title=title, body=body),
-                data=data,
-                tokens=tokens,
+
+            def build_digest_message(chunk: list[str]) -> messaging.MulticastMessage:
+                return messaging.MulticastMessage(
+                    notification=messaging.Notification(title=title, body=body),
+                    data=data,
+                    tokens=chunk,
+                )
+
+            _send_multicast_and_prune_tokens(
+                conn, tokens, build_digest_message, log_uid=uid
             )
-            try:
-                response = messaging.send_each_for_multicast(message)
-                for idx, send_response in enumerate(response.responses):
-                    if not send_response.success and idx < len(tokens):
-                        _delete_fcm_token(conn, tokens[idx])
-            except Exception:
-                logger.exception("weekly_digest_fcm_failed uid=%s", uid)
-                continue
 
             conn.execute(
                 """

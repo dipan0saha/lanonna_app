@@ -13,7 +13,7 @@ Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [op
 | Check | Result |
 |-------|--------|
 | API `pytest` (`services/api`) | 199 passed |
-| Worker `pytest` | 39 passed |
+| Worker `pytest` | 56 passed |
 | `flutter test` | 217 passed |
 | `flutter analyze` | 0 errors, 0 warnings, 48 infos (L-26) |
 
@@ -26,7 +26,7 @@ Run all three suites before every ship; the suites are the only automated gate (
 | Severity | Open | Themes |
 |----------|------|--------|
 | High | 4 | Release signing, worker OIDC, App Check enforce, admin surface |
-| Medium | 27 | Pub/Sub robustness, export limits, invite HTML hygiene, infra/IAM/prod parity, mobile error/async/date handling |
+| Medium | 22 | Export memory limits (beta), infra/IAM/prod parity, mobile error/async/date handling |
 | Low | 19 | Input caps, dead config, logging, infra hygiene, docs drift, lint/conventions, deferred consolidation backlog |
 
 ---
@@ -126,11 +126,11 @@ Run all three suites before every ship; the suites are the only automated gate (
 | ✅ M-15 | Thumbnail download loads whole object in memory, no size/dimension cap | `worker/thumbnails.py` | `MAX_DISPLAY_BYTES` / pixel cap; skip oversize or decompression bombs |
 | ✅ M-16 | Worker config defaults to dev project/buckets if env unset | `worker/config.py` | `validate_worker_settings()` at startup; non-dev rejects dev defaults |
 | ✅ M-41 | Raw `invite_token` on Pub/Sub + full payload logging | `api/pubsub.py`, `worker/main.py`, migration `028` | Publish `invitation_id` only; `email_invite_token` in DB until send; safe payload summary in logs |
-| M-42 | Invite HTML email interpolates `inviter_display_name`, `baby_name`, `relationship_label` unescaped (HTML injection into the invitee's mail client) | `worker/invite_email_copy.py:23-33`, `worker/invite_email.py:126-133` | `html.escape()` all user-derived fields; test it |
-| M-43 | Export robustness: stale-`running` reclaim at 30 min can overlap a slow run (no lease/heartbeat, `ready` update unguarded); whole bundle built in memory at 512 Mi; GCS upload success + DB failure leaves a `failed` job and an orphan object | `worker/baby_data_export.py:27-37,96-163`, `worker/scripts/deploy.sh` | Heartbeat or guard `UPDATE … WHERE status='running'`; stream/paginate; delete object on failed finalize |
-| M-44 | Weekly digest deletes FCM tokens on **any** failure (not only permanent ones) and FCM multicast is not chunked at 500 tokens | `worker/notifications.py:182-199,355-370` | Reuse `_should_delete_fcm_token`; chunk sends |
-| M-45 | Subscription ack deadline is 120 s but the worker Cloud Run request timeout is the 300 s default, so slow handlers get redelivered while still running | `pubsub.tf:63,90`, `worker/scripts/deploy.sh` | Set worker `--timeout` ≤ 120 s or raise ack deadline; align with export/thumbnail time |
-| M-46 | Permanent bad payloads (malformed base64, non-UUID `job_id`/`invitation_id`) return 500 and retry to the DLQ instead of being acked | `worker/main.py:64-68,76,133-136` | Validate and return 204 with a log/metric for permanent errors (ties to L-14) |
+| ✅ M-42 | Invite HTML email interpolated user fields unescaped | `worker/invite_email_copy.py`, `worker/invite_email.py` | `html.escape()` on HTML paths; tests |
+| ✅ M-43 | Export: stale reclaim vs slow run; orphan GCS on failed finalize | `worker/baby_data_export.py` | `started_at` heartbeat during export; delete blob on failed finalize / lost `ready` claim (in-memory JSON at 512 Mi remains a beta limit — stream later if needed) |
+| ✅ M-44 | Weekly digest deleted FCM tokens on any failure; no 500-token chunking | `worker/notifications.py` | Shared `_send_multicast_and_prune_tokens`; `_should_delete_fcm_token` |
+| ✅ M-45 | Pub/Sub ack 120 s vs Cloud Run 300 s default | `pubsub.tf`, `worker/scripts/deploy.sh` | Push subs `ack_deadline_seconds = 300`; worker `--timeout=300` |
+| ✅ M-46 | Permanent bad Pub/Sub payloads retried to DLQ | `worker/pubsub_payload.py`, `worker/main.py` | Decode/validate; ack 204 with `pubsub_payload_permanent_reject` logs |
 
 ### Infra
 
@@ -181,7 +181,7 @@ Run all three suites before every ship; the suites are the only automated gate (
 | L-08 | Accessibility: semantics labels concentrated in shell/onboarding; many controls unlabeled (WCAG AA is the PRD baseline) | mobile |
 | L-09 | Hardcoded UI strings vs `app_en.arb` (FR-SET-002) | e.g. `account_edit_screen.dart`, `home_screen.dart` |
 | L-10 | No CORS middleware (fine for mobile-only; needs policy if a web client is added) | `services/api/main.py` |
-| L-14 | Poison/unknown Pub/Sub messages are logged and acked (204) with no metric; no alert on DLQ depth (the `…-dlq-pull` subscription retains messages, but nobody is notified) | `worker/main.py`, `modules/platform/pubsub.tf` |
+| L-14 | Poison/unknown Pub/Sub messages are logged and acked (204) with no metric; permanent rejects log `pubsub_payload_permanent_reject` (**M-46**); no alert on DLQ depth (the `…-dlq-pull` subscription retains messages, but nobody is notified) | `worker/main.py`, `worker/pubsub_payload.py`, `modules/platform/pubsub.tf` |
 | L-15 | Dockerfiles run as root; Cloud Build only builds/pushes (no tests); base images use floating `python:3.12-slim` tags | `services/*/Dockerfile`, `cloudbuild.yaml` |
 | L-16 | Duplicate email template trees (intentional); run `scripts/sync-email-templates.sh check` locally before commit | `packages/email-templates`, `services/worker/email_templates` |
 | L-17 | Unbounded inputs: photo caption PATCH (init caps 2000), photo tags list, fun name `suggested_name`, event/registry title/description/location, membership-check `email` query | `routers/photos.py:17-37`, `routers/fun.py:21-22`, `routers/events.py:18-36`, `routers/registry.py:21-33`, `routers/invitations.py:76-79` |
@@ -203,14 +203,13 @@ Run all three suites before every ship; the suites are the only automated gate (
 
 - **API:** No router/HTTP tests for `events`, `fun`, `registry`, `invitations`, `notifications`, `search`, `admin_system_announcements`, baby photo routes, and `/v1/uploads/display/signed-url`; only domain-level mocks for `onboarding`. Repositories have almost no direct SQL tests (`search_name_suggestions` now has a column-conformance test; the rest are exposed to the same class of bug as the earlier name-search column mismatch); also untested: `account`, `pubsub`, `storage`, `media_urls`, `membership`.
 - **Mobile:** Untested core modules: `api_client`, `auth_repository`, `user_deleted_session_handler`, `push_notification_service`, `app_router`, `app_link_bootstrap`, `onboarding_storage`, `onboarding_coordinator`, `shell/`. No tests for `search/`, `settings/`, `legal/`, `home_activity_screen`, `calendar_upcoming_screen`, wrong-email and invite-bootstrap screens. `integration_test/` has only `home_summary_load_test.dart` and `smoke_sign_in_test.dart`. `session_cleanup_test.dart` covers local wipe on sign-out; `delete_account_screen_test.dart` only checks copy.
-- **Worker:** `main.py` is only covered for export dispatch (`test_main_export_dispatch.py`); no tests for the other push routes/status codes, `config.py`, weekly digest, invite-email Mailjet failure/claim release and HTML escaping. Tests are mock-heavy (SQL string matching), so idempotency regressions are easy to miss.
+- **Worker:** Push routes now have poison-payload and export-dispatch tests (`test_main_pubsub_payload.py`, `test_main_export_dispatch.py`); invite HTML escaping, FCM chunking, and `pubsub_payload` have unit tests. Still thin: weekly digest, Mailjet claim-release edge cases, `config.py`. Tests are mock-heavy (SQL string matching), so idempotency regressions are easy to miss.
 
 ---
 
 ## Suggested fix order
 
-1. **Pre-beta security:** H-01, H-04, H-05, H-06, M-27, M-42, M-57
+1. **Pre-beta security:** H-01, H-04, H-05, H-06, M-27, M-57
 2. **Mobile correctness:** M-54–M-61
-3. **API/worker robustness:** M-43–M-46
-4. **Infra + prod parity:** M-19–M-22, M-47–M-53
-5. **Ops / polish:** M-09, M-31, L-07–L-27; then the L-28 consolidation backlog
+3. **Infra + prod parity:** M-19–M-22, M-47–M-53
+4. **Ops / polish:** M-09, M-31, L-07–L-27; then the L-28 consolidation backlog

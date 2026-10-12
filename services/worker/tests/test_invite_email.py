@@ -30,6 +30,21 @@ def test_render_invite_email_follower_uses_follow_copy():
     assert "co-owner" not in html.lower()
 
 
+def test_render_invite_email_escapes_user_fields_in_html():
+    ctx = _sample_ctx("follower")
+    ctx["inviter_display_name"] = '<img src=x onerror="alert(1)">'
+    ctx["baby_name"] = "<script>evil</script>"
+    ctx["relationship_label"] = "<b>hack</b>"
+    ctx["invitee_email"] = 'a"<@test.com'
+    _, html, text = _render_invite_email(ctx, "lanonna://app/invite-accept?token=abc")
+    assert "<img" not in html
+    assert "<script>" not in html
+    assert "&lt;img" in html
+    assert "Relationship: &lt;b&gt;hack&lt;/b&gt;" in html
+    assert 'a"&lt;@test.com' in html or "a&quot;&lt;@test.com" in html
+    assert "<img" in text
+
+
 def test_render_invite_email_owner_uses_coowner_copy():
     subject, html, text = _render_invite_email(
         _sample_ctx("owner"),

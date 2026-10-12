@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import uuid
+from html import escape
 from datetime import datetime, timezone
 from typing import Any
 from pathlib import Path
@@ -129,7 +130,7 @@ def _render_invite_email(ctx: dict, invite_url: str) -> tuple[str, str, str]:
         f"You're listed as: {relationship}." if relationship else ""
     )
     relationship_block = (
-        f'<p style="margin:0 0 20px;font-size:15px;color:#6b5b57;">Relationship: {relationship}</p>'
+        f'<p style="margin:0 0 20px;font-size:15px;color:#6b5b57;">Relationship: {escape(relationship)}</p>'
         if relationship
         else ""
     )
@@ -138,7 +139,7 @@ def _render_invite_email(ctx: dict, invite_url: str) -> tuple[str, str, str]:
     text = _load_template("invite_v1.txt")
     replacements = {
         "{{invite_url}}": invite_url,
-        "{{invitee_email}}": invitee,
+        "{{invitee_email}}": escape(invitee),
         "{{expires_at}}": expires,
         "{{relationship_block}}": relationship_block,
         "{{relationship_line}}": relationship_line,

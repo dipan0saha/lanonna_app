@@ -39,7 +39,8 @@ gcloud run deploy "${SERVICE}" \
   --min-instances=0 \
   --max-instances=5 \
   --memory=512Mi \
-  --cpu=1
+  --cpu=1 \
+  --timeout=300
 
 WORKER_URL="$(gcloud run services describe "${SERVICE}" --region="${REGION}" --format='value(status.url)')"
 echo "Worker URL: ${WORKER_URL}"

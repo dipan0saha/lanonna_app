@@ -148,6 +148,7 @@ cd infra/terraform/environments/dev && terraform apply
 - Expired invites: `./scripts/setup-expired-invites-scheduler.sh`
 - **Push auth:** OIDC; Run invoker via `apply-dev-run-iam.sh` after each worker deploy
 - **Retry config:** worker env `PUBSUB_MAX_DELIVERY_ATTEMPTS` (default 5) must match `dead_letter_policy.max_delivery_attempts` in `pubsub.tf`; the export handler uses it to decide which attempt is final
+- **Timeouts:** push subscriptions use **`ack_deadline_seconds = 300`**; worker deploy sets **`--timeout=300`**. After changing ack deadline in `pubsub.tf`, run **`terraform apply`** in the target environment (deploy alone does not update Pub/Sub).
 - **FCM:** Worker SA may need **`roles/firebasecloudmessaging.admin`**
 
 #### Dead-letter queue

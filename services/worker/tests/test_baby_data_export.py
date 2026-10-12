@@ -21,10 +21,12 @@ def _make_conn(job_status: str, baby_id: uuid.UUID):
                 "baby_profile_id": baby_id,
                 "status": job_status,
             }
-        elif "SET status = 'running'" in sql_text:
+        elif "SET status = 'running'" in sql_text and "started_at = now()" in sql_text:
             redelivery = params[1]
             claimable = job_status == "pending" or (job_status == "running" and redelivery)
             result.fetchone.return_value = {"baby_profile_id": baby_id} if claimable else None
+        elif "SET started_at = now()" in sql_text and "status = 'running'" in sql_text:
+            result.fetchone.return_value = None
         elif "FROM baby_profiles" in sql_text:
             result.fetchone.return_value = {"id": baby_id, "name": "Baby"}
         else:
@@ -110,6 +112,86 @@ def test_redelivery_takes_over_a_running_job(mock_conn_ctx, mock_storage_cls):
 
     blob.upload_from_string.assert_called_once()
     assert _statuses_set(calls) == {"ready"}
+
+
+@patch("lanonna_worker.baby_data_export.storage.Client")
+@patch("lanonna_worker.baby_data_export.get_connection")
+def test_happy_path_touches_export_heartbeat(mock_conn_ctx, mock_storage_cls):
+    job_id, baby_id = uuid.uuid4(), uuid.uuid4()
+    conn, calls = _make_conn("pending", baby_id)
+    mock_conn_ctx.return_value.__enter__.return_value = conn
+    blob = MagicMock()
+    mock_storage_cls.return_value.bucket.return_value.blob.return_value = blob
+
+    run_baby_data_export(job_id)
+
+    heartbeat_sql = [
+        sql for sql, _ in calls if "SET started_at = now()" in sql and "status = 'running'" in sql
+    ]
+    assert len(heartbeat_sql) >= 2
+
+
+@patch("lanonna_worker.baby_data_export.storage.Client")
+@patch("lanonna_worker.baby_data_export.get_connection")
+def test_ready_update_zero_rows_deletes_uploaded_blob(mock_conn_ctx, mock_storage_cls):
+    job_id, baby_id = uuid.uuid4(), uuid.uuid4()
+    conn, calls = _make_conn("pending", baby_id)
+
+    def execute(sql, params=None):
+        sql_text = " ".join(sql.split())
+        calls.append((sql_text, tuple(params or ())))
+        result = MagicMock()
+        if sql_text.startswith("SELECT id, baby_profile_id, status FROM baby_data_export_jobs"):
+            result.fetchone.return_value = {
+                "id": params[0],
+                "baby_profile_id": baby_id,
+                "status": "pending",
+            }
+        elif "SET status = 'running'" in sql_text and "started_at = now()" in sql_text:
+            result.fetchone.return_value = {"baby_profile_id": baby_id}
+        elif "SET status = 'ready'" in sql_text:
+            result.rowcount = 0
+        elif "FROM baby_profiles" in sql_text:
+            result.fetchone.return_value = {"id": baby_id, "name": "Baby"}
+        else:
+            result.fetchone.return_value = None
+            result.fetchall.return_value = []
+        return result
+
+    conn.execute.side_effect = execute
+    mock_conn_ctx.return_value.__enter__.return_value = conn
+    blob = MagicMock()
+    mock_storage_cls.return_value.bucket.return_value.blob.return_value = blob
+
+    run_baby_data_export(job_id)
+
+    blob.delete.assert_called_once()
+
+
+@patch("lanonna_worker.baby_data_export.storage.Client")
+@patch("lanonna_worker.baby_data_export.get_connection")
+def test_upload_then_ready_failure_deletes_blob_and_marks_failed(mock_conn_ctx, mock_storage_cls):
+    job_id, baby_id = uuid.uuid4(), uuid.uuid4()
+    conn, calls = _make_conn("pending", baby_id)
+    mock_conn_ctx.return_value.__enter__.return_value = conn
+    blob = MagicMock()
+    mock_storage_cls.return_value.bucket.return_value.blob.return_value = blob
+
+    original_execute = conn.execute.side_effect
+
+    def execute(sql, params=None):
+        sql_text = " ".join(sql.split())
+        if "SET status = 'ready'" in sql_text:
+            raise RuntimeError("db down")
+        return original_execute(sql, params)
+
+    conn.execute.side_effect = execute
+
+    with pytest.raises(RuntimeError, match="db down"):
+        run_baby_data_export(job_id, final_attempt=True)
+
+    blob.delete.assert_called_once()
+    assert _statuses_set(calls) == {"failed"}
 
 
 @patch("lanonna_worker.baby_data_export.storage.Client")

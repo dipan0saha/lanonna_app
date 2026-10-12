@@ -1,11 +1,7 @@
-import base64
-import json
 import logging
 from typing import Any
 
 from fastapi import FastAPI, Request, Response
-
-import uuid
 
 from lanonna_worker.config import settings, validate_worker_settings
 
@@ -18,6 +14,12 @@ from lanonna_worker.notifications import (
     process_weekly_notification_digest,
 )
 from lanonna_worker.invite_cleanup import expire_stale_pending_invitations
+from lanonna_worker.pubsub_payload import (
+    decode_pubsub_data,
+    parse_uuid_field,
+    validate_notify_fan_out_payload,
+    validate_notify_user_payload,
+)
 from lanonna_worker.thumbnails import process_gcs_finalize
 
 logging.basicConfig(level=logging.INFO)
@@ -72,26 +74,29 @@ async def pubsub_push(request: Request) -> Response:
     body: dict[str, Any] = await request.json()
     message = body.get("message", {})
     pubsub_message_id = message.get("messageId")
-    raw = message.get("data", "")
-    payload: dict[str, Any] = {}
-    if raw:
-        try:
-            payload = json.loads(base64.b64decode(raw).decode("utf-8"))
-        except (json.JSONDecodeError, UnicodeDecodeError):
-            payload = {"raw": raw}
+    payload = decode_pubsub_data(message.get("data", ""))
+
     if payload.get("type") == "send_invite_email":
         invitation_id_raw = payload.get("invitation_id")
         if not invitation_id_raw:
-            logger.warning("send_invite_email missing fields message_id=%s", message.get("messageId"))
+            logger.warning(
+                "send_invite_email missing fields message_id=%s",
+                message.get("messageId"),
+            )
+            return Response(status_code=204)
+        invitation_id = parse_uuid_field("invitation_id", invitation_id_raw)
+        if invitation_id is None:
             return Response(status_code=204)
         try:
-            send_invite_email(uuid.UUID(str(invitation_id_raw)))
+            send_invite_email(invitation_id)
         except Exception:
             logger.exception("send_invite_email_failed invitation_id=%s", invitation_id_raw)
             return Response(status_code=500)
         return Response(status_code=204)
 
     if payload.get("type") == "notify_fan_out":
+        if not validate_notify_fan_out_payload(payload):
+            return Response(status_code=204)
         try:
             process_notify_fan_out(payload, pubsub_message_id=pubsub_message_id)
         except Exception:
@@ -100,6 +105,8 @@ async def pubsub_push(request: Request) -> Response:
         return Response(status_code=204)
 
     if payload.get("type") == "notify_user":
+        if not validate_notify_user_payload(payload):
+            return Response(status_code=204)
         try:
             process_notify_user(payload, pubsub_message_id=pubsub_message_id)
         except Exception:
@@ -129,14 +136,20 @@ async def pubsub_push(request: Request) -> Response:
     if payload.get("type") == "baby_data_export":
         job_id_raw = payload.get("job_id")
         if not job_id_raw:
-            logger.warning("baby_data_export missing job_id message_id=%s", message.get("messageId"))
+            logger.warning(
+                "baby_data_export missing job_id message_id=%s",
+                message.get("messageId"),
+            )
+            return Response(status_code=204)
+        job_id = parse_uuid_field("job_id", job_id_raw)
+        if job_id is None:
             return Response(status_code=204)
         # The job row is the idempotency guard; do not dedupe on messageId or retries
         # after a failure would be acked without running (H-09).
         delivery_attempt = _delivery_attempt(body)
         try:
             run_baby_data_export(
-                uuid.UUID(str(job_id_raw)),
+                job_id,
                 redelivery=delivery_attempt is not None and delivery_attempt > 1,
                 final_attempt=(
                     delivery_attempt is None
