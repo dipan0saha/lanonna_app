@@ -121,6 +121,33 @@ Scripts use **Cloud Build** → `us-central1-docker.pkg.dev/lanonna-dev/lanonna/
 
 **Worker sender (#43):** `MAILJET_FROM_EMAIL` is configuration, not a secret. `services/worker/scripts/deploy.sh` uses the environment variable when it is set, otherwise reads `infra/env/dev.worker.env` (`lanonnaapp@gmail.com`, display name `La Nonna`) without executing it. Values with spaces in that file are quoted. The sender check runs before Cloud Build. Deploy and worker startup both refuse an empty sender and `hello@lanonna.app` (Mailjet returns HTTP 200 for that address and drops the message). A Mailjet HTTP 200 whose `Messages[0].Status` is not `success` is a send failure: the invite claim is released and `email_sent_at` is not set.
 
+**Worker invite link and export signing:** `deploy.sh` sets `INVITE_DEEP_LINK_BASE=https://${project_id}.firebaseapp.com` and `GCS_SIGNING_SERVICE_ACCOUNT=lanonna-worker@${project_id}.iam.gserviceaccount.com`. Export media URLs need `lanonna-worker` to be `roles/iam.serviceAccountTokenCreator` on itself (`run_iam.tf` `worker_self_token_creator`, also granted by `./scripts/apply-dev-run-iam.sh`). Startup rejects an invite base that is not `https://`, and rejects a `lanonna-dev` host when `ENVIRONMENT` is not `dev`.
+
+**Invite landing (Firebase Hosting):** from the repo root, after the API is deployed (`--allow-unauthenticated`):
+
+```bash
+# Fingerprint of the cert that signs the Android app you install.
+# Omit ANDROID_SHA256 to read ~/.android/debug.keystore (alias androiddebugkey).
+# APPLE_TEAM_ID is optional; without it iOS stays on the web fallback.
+ANDROID_SHA256='AA:BB:…' APPLE_TEAM_ID='XXXXXXXXXX' \
+  bash scripts/deploy-invite-hosting.sh
+```
+
+The script enables `firebasehosting.googleapis.com`, renders `assetlinks.json` and `apple-app-site-association`, runs `firebase deploy --only hosting` from `hosting/`, and grants `service-${PROJECT_NUMBER}@gcp-sa-firebasehosting.iam.gserviceaccount.com` `roles/run.invoker` on Cloud Run `api` so the `/v1/invitations/preview` rewrite works. `hosting/firebase.json` must not ignore `**/.*`: that default drops `.well-known`, so Android App Links and the Apple association file would never be published. That service account does not exist until Hosting is enabled, so it is not in `apply-dev-run-iam.sh`. Re-run is safe. Play Store `https://play.google.com/store/apps/details?id=com.lanonna.lanonna` may 404 until the listing exists; the page says to ask the inviter. After install, the person opens the **same email link** again (no install referrer). Prod later: point the Android manifest host, iOS entitlements, and `INVITE_DEEP_LINK_BASE` at the prod `firebaseapp.com` host.
+
+**Auth email branding:** from the repo root, with `gcloud` ADC for `lanonna-dev`:
+
+```bash
+bash scripts/configure-firebase-auth-email-project.sh apply
+bash scripts/configure-firebase-auth-email-project.sh check
+bash scripts/sync-firebase-auth-templates.sh apply
+bash scripts/sync-firebase-auth-templates.sh check-remote
+```
+
+`check` on the sync script is local files only. If configure exits because no OAuth brand exists: Firebase console → Authentication → Sign-in method → Google → Enable → public-facing name **La Nonna** and a support email → Save. Confirm Project settings → General → Public-facing name. Do not create the brand with the IAP API. If apply prints `EMAIL_TEMPLATE_UPDATE_NOT_ALLOWED`, file Firebase support using `scripts/firebase-auth-template-support-request.md` (verify and reset, subject and HTML). Public name plus sender still make the default subject say La Nonna while custom HTML stays locked.
+
+**Export / invite infra in Terraform:** `firebasehosting.googleapis.com`, the worker token-creator binding, and the logging exclusion for request URLs containing `/v1/invitations/preview` or `/invite?` are in `infra/terraform`. `terraform apply` in `environments/dev` (and later prod). The exclusion is not retroactive. No schema migration for these three changes.
+
 **URLs:**
 
 ```bash

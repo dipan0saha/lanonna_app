@@ -1,54 +1,21 @@
 from __future__ import annotations
 
-import json
 import logging
 import uuid
-from datetime import date, datetime
 from typing import Any
 
 from google.cloud import storage
 
 from lanonna_worker.config import settings
 from lanonna_worker.db import get_connection
+from lanonna_worker.export.build import build_baby_export_json
+from lanonna_worker.export.collect import ACTIVITY_EXPORT_MAX_ROWS
 
 logger = logging.getLogger("lanonna.worker.export")
 
 _EXPORT_FAILED_MESSAGE = "Export could not be completed. Please try again."
-ACTIVITY_EXPORT_MAX_ROWS = 500
 
-_BABY_PROFILE_EXPORT_COLUMNS = """
-    id, name, expected_birth_date, actual_birth_date, gender, lifecycle_status,
-    avatar_url, created_at, updated_at, created_by_firebase_uid,
-    registry_shipping_line1, registry_shipping_line2, registry_shipping_city,
-    registry_shipping_region, registry_shipping_postal_code, registry_shipping_country_code
-"""
-
-_EVENT_EXPORT_COLUMNS = """
-    id, baby_profile_id, created_by_firebase_uid, title, starts_at, ends_at,
-    description, location, video_call_url, cover_photo_id, catalog_suggestion_id,
-    created_at, updated_at
-"""
-
-_REGISTRY_EXPORT_COLUMNS = """
-    id, baby_profile_id, created_by_firebase_uid, name, priority, description,
-    product_url, catalog_suggestion_id, created_at, updated_at
-"""
-
-_NAME_SUGGESTION_EXPORT_COLUMNS = """
-    id, baby_profile_id, suggested_by_firebase_uid, suggested_name, gender, created_at
-"""
-
-_ACTIVITY_EXPORT_COLUMNS = """
-    id, baby_profile_id, actor_firebase_uid, event_type, summary, payload, created_at
-"""
-
-
-def _json_default(value: Any) -> Any:
-    if isinstance(value, (datetime, date)):
-        return value.isoformat()
-    if isinstance(value, uuid.UUID):
-        return str(value)
-    return str(value)
+__all__ = ["ACTIVITY_EXPORT_MAX_ROWS", "run_baby_data_export"]
 
 
 def _reclaim_stale_running_jobs(conn: Any) -> None:
@@ -163,7 +130,7 @@ def run_baby_data_export(
                     started_at = now()
                 WHERE id = %s
                   AND (status = 'pending' OR (status = 'running' AND %s))
-                RETURNING baby_profile_id
+                RETURNING baby_profile_id, requested_by_firebase_uid
                 """,
                 (job_id, redelivery),
             ).fetchone()
@@ -172,80 +139,16 @@ def run_baby_data_export(
                     logger.info("export_job_already_running job_id=%s", job_id)
                 return
             baby_id = row["baby_profile_id"]
+            requester_uid = row["requested_by_firebase_uid"]
             claimed = True
             _touch_export_running(conn, job_id)
-
-            baby = conn.execute(
-                f"SELECT {_BABY_PROFILE_EXPORT_COLUMNS} FROM baby_profiles WHERE id = %s",
-                (baby_id,),
-            ).fetchone()
-            photos = conn.execute(
-                """
-                SELECT id, caption, status, display_path, thumb_path, created_at
-                FROM photos WHERE baby_profile_id = %s
-                ORDER BY created_at
-                """,
-                (baby_id,),
-            ).fetchall()
-            events = conn.execute(
-                f"""
-                SELECT {_EVENT_EXPORT_COLUMNS}
-                FROM events WHERE baby_profile_id = %s ORDER BY starts_at
-                """,
-                (baby_id,),
-            ).fetchall()
-            registry = conn.execute(
-                f"""
-                SELECT {_REGISTRY_EXPORT_COLUMNS}
-                FROM registry_items WHERE baby_profile_id = %s ORDER BY created_at
-                """,
-                (baby_id,),
-            ).fetchall()
-            names = conn.execute(
-                f"""
-                SELECT {_NAME_SUGGESTION_EXPORT_COLUMNS}
-                FROM name_suggestions WHERE baby_profile_id = %s ORDER BY created_at
-                """,
-                (baby_id,),
-            ).fetchall()
-            activity_count_row = conn.execute(
-                """
-                SELECT COUNT(*)::int AS n
-                FROM activity_events
-                WHERE baby_profile_id = %s
-                """,
-                (baby_id,),
-            ).fetchone()
-            activity_total = int(activity_count_row["n"]) if activity_count_row else 0
-            if activity_total > ACTIVITY_EXPORT_MAX_ROWS:
-                logger.warning(
-                    "export_activity_truncated baby_id=%s total=%s max=%s",
-                    baby_id,
-                    activity_total,
-                    ACTIVITY_EXPORT_MAX_ROWS,
-                )
-            activity = conn.execute(
-                f"""
-                SELECT {_ACTIVITY_EXPORT_COLUMNS}
-                FROM activity_events
-                WHERE baby_profile_id = %s
-                ORDER BY created_at DESC
-                LIMIT %s
-                """,
-                (baby_id, ACTIVITY_EXPORT_MAX_ROWS),
-            ).fetchall()
+            body = build_baby_export_json(
+                conn,
+                baby_id=baby_id,
+                requester_uid=requester_uid,
+            )
             _touch_export_running(conn, job_id)
 
-        payload = {
-            "baby_profile": dict(baby) if baby else None,
-            "photos": [dict(p) for p in photos],
-            "events": [dict(e) for e in events],
-            "registry_items": [dict(r) for r in registry],
-            "name_suggestions": [dict(n) for n in names],
-            "activity_events": [dict(a) for a in activity],
-            "export_note": "Display assets are referenced by GCS paths; use signed URLs separately.",
-        }
-        body = json.dumps(payload, default=_json_default, indent=2).encode("utf-8")
         object_path = f"exports/{baby_id}/{job_id}/export.json"
         client = storage.Client()
         bucket = client.bucket(settings.display_bucket)

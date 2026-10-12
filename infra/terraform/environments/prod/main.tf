@@ -17,6 +17,7 @@ locals {
     "monitoring.googleapis.com",
     "cloudbilling.googleapis.com",
     "firebase.googleapis.com",
+    "firebasehosting.googleapis.com",
   ]
 }
 

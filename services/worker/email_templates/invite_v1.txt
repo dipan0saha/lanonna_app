@@ -3,7 +3,7 @@ La Nonna — You're invited
 {{invite_intro_text}}
 {{relationship_line}}
 
-Accept your invitation:
+Accept your invitation (opens the app if it is installed, otherwise a page with install steps):
 {{invite_url}}
 
 This invitation was sent to {{invitee_email}} and expires on {{expires_at}}.

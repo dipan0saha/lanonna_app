@@ -46,10 +46,13 @@ Kill app first (`adb shell am force-stop com.lanonna.lanonna`).
 
 ```bash
 adb shell am start -a android.intent.action.VIEW \
-  -d 'lanonna://app/invite-accept?token=VALID_TOKEN'
+  -d 'https://lanonna-dev.firebaseapp.com/invite?token=VALID_TOKEN'
 ```
 
+Custom scheme still works: `lanonna://app/invite-accept?token=VALID_TOKEN`.
+
 - [ ] Lands on invite accept / preview flow.
+- [ ] The invite email link is `https://lanonna-dev.firebaseapp.com/invite?token=…`. With the app installed it opens the accept flow. Without the app, the page names the inviter and baby and explains install; it does not show the token in the page source beyond the address bar.
 - [ ] Kill app; relaunch **without** link → stored `pendingInviteToken` resumes (see [development.md](development.md)).
 - [ ] Accept while signed in as a **different** email → **Wrong account** shows both addresses; **Switch account** prefills login (no emails in the route URL).
 
@@ -66,7 +69,7 @@ Requires migration **`019`** on dev (`photo_baby_tags` — [migrations/README.md
 Use a **real** inbox (not `@test.com` smoke addresses).
 
 - [ ] Sign up with email/password → verify screen copy mentions **Verify my email**.
-- [ ] Email is La Nonna–branded with a tappable verify button; not only a raw project ID subject.
+- [ ] Email subject is **Verify your email for La Nonna** (not `project-1008830071001`), sender display name **La Nonna**, body is the branded template with **Verify my email**. Password reset uses **Reset your password for La Nonna**.
 - [ ] Tap link → verified (in app or browser + **Continue**); user reaches complete profile.
 
 ## 9. Account delete (FR-SET-005)
@@ -79,7 +82,7 @@ Use a **throwaway** Firebase account (not Maestro smoke user).
 ## 10. Search, export, and co-owner invites
 
 - [ ] Search (magnifier in the top bar): a query that matches a **name suggestion** returns results (no error banner); photo captions, events, and registry items also appear.
-- [ ] My Account → **Export baby data** (owner): job reaches **ready** and **Download export** works. Check `lanonna-async-commands-dlq-pull` is empty afterward ([operations.md](operations.md#dead-letter-queue)).
+- [ ] My Account → **Export baby data** (owner): job reaches **ready** and **Download export** works. Open the JSON: comments, RSVPs, members (display names, no member emails), predictions, announcement, photo tags, and registry purchases are present; photo `download_url` values are `https://` and note a 7-day expiry. Check `lanonna-async-commands-dlq-pull` is empty afterward ([operations.md](operations.md#dead-letter-queue)).
 - [ ] Invite a second co-owner and accept → success; invite a **third** co-owner → "max owners" message, no extra membership.
 
 ## 11. Regression smoke

@@ -36,11 +36,19 @@ def _format_expires(expires_at: datetime) -> str:
     return expires_at.astimezone(timezone.utc).strftime("%B %d, %Y")
 
 
-def build_invite_url(invite_token: str, invited_role: str) -> str:
-    base = settings.invite_deep_link_base.rstrip("/")
+def build_invite_url(
+    invite_token: str,
+    invited_role: str,
+    *,
+    base: str | None = None,
+) -> str:
+    """HTTPS invite landing URL. The token is a query param and must not be logged."""
+    origin = (base if base is not None else settings.invite_deep_link_base).strip().rstrip("/")
     role_param = "&role=owner" if invited_role == "owner" else ""
     token = quote(invite_token, safe="")
-    return f"{base}/invite-accept?token={token}{role_param}"
+    if origin.startswith("https://"):
+        return f"{origin}/invite?token={token}{role_param}"
+    return f"{origin}/invite-accept?token={token}{role_param}"
 
 
 def _claim_invitation_for_send(

@@ -33,4 +33,11 @@ gcloud iam service-accounts add-iam-policy-binding "lanonna-worker@${PROJECT}.ia
   --role="roles/iam.serviceAccountTokenCreator" \
   --quiet
 
-echo "Worker Run IAM + Pub/Sub token creator applied."
+# Worker signs 7-day export media URLs with its own identity (no JSON key).
+gcloud iam service-accounts add-iam-policy-binding "lanonna-worker@${PROJECT}.iam.gserviceaccount.com" \
+  --project="${PROJECT}" \
+  --member="serviceAccount:lanonna-worker@${PROJECT}.iam.gserviceaccount.com" \
+  --role="roles/iam.serviceAccountTokenCreator" \
+  --quiet
+
+echo "Worker Run IAM + Pub/Sub and self token creator applied."

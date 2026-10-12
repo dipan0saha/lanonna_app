@@ -4,7 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from lanonna_worker.config import Settings, validate_worker_settings
+from lanonna_worker.config import (
+    Settings,
+    invite_link_base_error,
+    validate_worker_settings,
+)
 
 _DEPLOY = Path(__file__).resolve().parents[1] / "scripts" / "deploy.sh"
 _WORKER_ENV = Path(__file__).resolve().parents[3] / "infra" / "env" / "dev.worker.env"
@@ -144,6 +148,22 @@ def test_plain_deploy_loads_spaced_name_before_build(tmp_path: Path):
     recorded = log.read_text(encoding="utf-8")
     assert recorded.startswith("config set project")
     assert "builds submit" not in recorded
+
+
+def test_invite_link_base_rejects_custom_scheme_and_dev_host_outside_dev():
+    assert invite_link_base_error("lanonna://app", environment="dev") is not None
+    assert (
+        invite_link_base_error(
+            "https://lanonna-dev.firebaseapp.com", environment="prod"
+        )
+        is not None
+    )
+    assert (
+        invite_link_base_error(
+            "https://lanonna-prod.firebaseapp.com", environment="prod"
+        )
+        is None
+    )
 
 
 def test_validate_worker_settings_rejects_dev_project_outside_dev():

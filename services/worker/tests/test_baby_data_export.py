@@ -6,6 +6,14 @@ import pytest
 from lanonna_worker.baby_data_export import run_baby_data_export
 
 
+@pytest.fixture(autouse=True)
+def _stub_export_body(monkeypatch):
+    monkeypatch.setattr(
+        "lanonna_worker.baby_data_export.build_baby_export_json",
+        lambda *args, **kwargs: b'{"export_version": 2}\n',
+    )
+
+
 def _make_conn(job_status: str, baby_id: uuid.UUID):
     """Mock connection that records executed SQL; the claim honours the job status."""
     conn = MagicMock()
@@ -24,7 +32,14 @@ def _make_conn(job_status: str, baby_id: uuid.UUID):
         elif "SET status = 'running'" in sql_text and "started_at = now()" in sql_text:
             redelivery = params[1]
             claimable = job_status == "pending" or (job_status == "running" and redelivery)
-            result.fetchone.return_value = {"baby_profile_id": baby_id} if claimable else None
+            result.fetchone.return_value = (
+                {
+                    "baby_profile_id": baby_id,
+                    "requested_by_firebase_uid": "owner-1",
+                }
+                if claimable
+                else None
+            )
         elif "SET started_at = now()" in sql_text and "status = 'running'" in sql_text:
             result.fetchone.return_value = None
         elif "FROM baby_profiles" in sql_text:
@@ -150,7 +165,10 @@ def test_ready_update_zero_rows_deletes_uploaded_blob(mock_conn_ctx, mock_storag
                 "status": "pending",
             }
         elif "SET status = 'running'" in sql_text and "started_at = now()" in sql_text:
-            result.fetchone.return_value = {"baby_profile_id": baby_id}
+            result.fetchone.return_value = {
+                "baby_profile_id": baby_id,
+                "requested_by_firebase_uid": "owner-1",
+            }
         elif "SET status = 'ready'" in sql_text:
             result.rowcount = 0
         elif "FROM baby_profiles" in sql_text:

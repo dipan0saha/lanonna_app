@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>You're invited to La Nonna</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --sage: #7fae6e;
+      --sage-tint: #eaf3e4;
+      --peach: #c96b4a;
+      --ink: #2d2d2d;
+      --muted: #6b5b57;
+      --line: #e9e9ea;
+      --bg: #f6f6f7;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+    }
+    main {
+      max-width: 32rem;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 3rem;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 1.75rem 1.5rem;
+    }
+    .brand {
+      margin: 0 0 0.35rem;
+      font-family: Inter, "Segoe UI", sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--peach);
+    }
+    h1 {
+      margin: 0 0 0.75rem;
+      font-size: 1.7rem;
+      line-height: 1.25;
+    }
+    p { margin: 0 0 1rem; line-height: 1.5; font-size: 1.05rem; }
+    .muted { color: var(--muted); font-size: 0.95rem; }
+    .actions { display: flex; flex-direction: column; gap: 0.75rem; margin: 1.25rem 0; }
+    a.button, button.button {
+      display: block;
+      text-align: center;
+      text-decoration: none;
+      font-family: Inter, "Segoe UI", sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      border-radius: 999px;
+      padding: 0.9rem 1.25rem;
+      min-height: 3.25rem;
+    }
+    a.primary, button.primary {
+      background: #a8c99b;
+      color: #1c2e17;
+      border: 0;
+    }
+    a.secondary {
+      background: #fff;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+    .install {
+      background: var(--sage-tint);
+      border-radius: 12px;
+      padding: 1rem 1rem 0.25rem;
+      margin-top: 0.5rem;
+    }
+    #status[hidden], #install[hidden], #open-app[hidden] { display: none; }
+  </style>
+</head>
+<body>
+  <main>
+    <article class="card">
+      <p class="brand">La Nonna</p>
+      <h1 id="title">You're invited</h1>
+      <p id="status">Loading this invitation…</p>
+      <div class="actions">
+        <a id="open-app" class="button primary" hidden href="#invite">Open in La Nonna</a>
+        <a id="play-store" class="button secondary" href="https://play.google.com/store/apps/details?id=com.lanonna.lanonna">Get La Nonna on Google Play</a>
+      </div>
+      <div id="install" class="install" hidden>
+        <p class="muted" id="install-copy"></p>
+      </div>
+    </article>
+  </main>
+  <script>
+    // Never log the token, the page URL, or the preview request.
+    (function () {
+      var PACKAGE = "com.lanonna.lanonna";
+      var params = new URLSearchParams(window.location.search);
+      var token = (params.get("token") || "").trim();
+      var role = (params.get("role") || "").trim();
+      var title = document.getElementById("title");
+      var status = document.getElementById("status");
+      var openApp = document.getElementById("open-app");
+      var install = document.getElementById("install");
+      var installCopy = document.getElementById("install-copy");
+
+      function showInstall(expires) {
+        install.hidden = false;
+        var when = expires ? " It stays valid until " + expires + "." : "";
+        installCopy.textContent =
+          "If La Nonna is not installed yet, install it, then open the invitation email and tap the link again." +
+          when +
+          " On iPhone, that same link opens the app once it is installed. If Google Play does not list La Nonna yet, ask the person who invited you how they installed the app.";
+      }
+
+      if (!token) {
+        title.textContent = "Invitation link needed";
+        status.textContent = "Open the link from your La Nonna invitation email. This page does not work on its own.";
+        showInstall("");
+        return;
+      }
+
+      var landing = new URL("/invite", window.location.origin);
+      landing.searchParams.set("token", token);
+      if (role) landing.searchParams.set("role", role);
+      var scheme = "lanonna://app/invite-accept?token=" + encodeURIComponent(token);
+      if (role) scheme += "&role=" + encodeURIComponent(role);
+      var intent = "intent://" + landing.host + landing.pathname + landing.search +
+        "#Intent;scheme=https;package=" + PACKAGE + ";S.browser_fallback_url=" +
+        encodeURIComponent(landing.toString()) + ";end";
+      openApp.href = scheme;
+      openApp.hidden = false;
+      openApp.addEventListener("click", function (event) {
+        var android = /Android/i.test(navigator.userAgent || "");
+        if (android) {
+          event.preventDefault();
+          window.location.href = intent;
+        }
+      });
+
+      var preview = new URL("/v1/invitations/preview", window.location.origin);
+      preview.searchParams.set("token", token);
+      fetch(preview.toString(), { headers: { "Accept": "application/json" } })
+        .then(function (response) {
+          if (response.status === 404) return { status: "not_found" };
+          if (!response.ok) return { status: "error" };
+          return response.json();
+        })
+        .then(function (body) {
+          var state = body && body.status ? body.status : "error";
+          if (state === "pending" || state === "accepted") {
+            var inviter = body.inviter_display_name || "Someone";
+            var baby = body.baby_name || "a baby profile";
+            var roleLabel = body.invited_role === "owner" ? "co-owner" : "follower";
+            title.textContent = state === "accepted" ? "Invitation already accepted" : "You're invited";
+            status.textContent = inviter + " invited you to " + baby + " on La Nonna as a " + roleLabel + ".";
+            showInstall(body.expires_at || "");
+            return;
+          }
+          if (state === "revoked" || state === "expired") {
+            title.textContent = "This invitation is no longer available";
+            status.textContent = "Ask the person who invited you to send a new one.";
+            openApp.hidden = true;
+            return;
+          }
+          if (state === "not_found") {
+            title.textContent = "Invitation not found";
+            status.textContent = "This link does not match an invitation. Ask for a new email.";
+            openApp.hidden = true;
+            return;
+          }
+          title.textContent = "We couldn't open this invitation";
+          status.textContent = "Check your connection and try the link from the email again.";
+          showInstall("");
+        })
+        .catch(function () {
+          title.textContent = "We couldn't open this invitation";
+          status.textContent = "Check your connection and try the link from the email again.";
+          showInstall("");
+        });
+    })();
+  </script>
+</body>
+</html>
