@@ -12,7 +12,8 @@ import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/data/iso_countries.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/widgets/app_country_dropdown_field.dart';
-import '../../../core/widgets/app_labeled_text_field.dart';
+import '../../../core/validation/form_validators.dart';
+import '../../../core/widgets/app_labeled_text_form_field.dart';
 import '../../../core/api/display_photo_upload.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/theme/app_metrics.dart';
@@ -40,6 +41,12 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
   String? _countryCode;
   List<IsoCountry> _countries = const [];
   var _saving = false;
+  var _validateOnInteraction = false;
+  final _formKey = GlobalKey<FormState>();
+
+  AutovalidateMode get _autovalidateMode => _validateOnInteraction
+      ? AutovalidateMode.onUserInteraction
+      : AutovalidateMode.disabled;
 
   @override
   void initState() {
@@ -65,6 +72,7 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
 
   Future<void> _load() async {
     final account = await context.read<AccountRepository>().fetchAccount();
+    if (!mounted) return;
     final name = account.displayName ?? '';
     final parts = name.trim().split(RegExp(r'\s+'));
     if (parts.length >= 2) {
@@ -84,8 +92,17 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
     setState(() {});
   }
 
+  String? _validateLastName(String? value) {
+    final required = validateOnboardingLastName(value);
+    if (required != null) return required;
+    return validateOnboardingProfileDisplayName(_firstName.text, value ?? '');
+  }
+
   Future<void> _pickPhoto() async {
-    final file = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    final file = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
     if (file == null) return;
     setState(() => _photoFile = file);
   }
@@ -116,6 +133,10 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
   }
 
   Future<void> _save() async {
+    if (_formKey.currentState?.validate() != true) {
+      setState(() => _validateOnInteraction = true);
+      return;
+    }
     setState(() => _saving = true);
     try {
       final first = AppTextInputPolicy.normalizeForSubmit(
@@ -129,20 +150,20 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
       final displayName = '$first $last'.trim();
       String? avatarUrl = _networkAvatarUrl;
       if (_photoFile != null && !kIsWeb) {
-        avatarUrl = await DisplayPhotoUpload(context.read<ApiClient>()).uploadProfileAvatar(
-          imageFile: File(_photoFile!.path),
-        );
+        avatarUrl = await DisplayPhotoUpload(
+          context.read<ApiClient>(),
+        ).uploadProfileAvatar(imageFile: File(_photoFile!.path));
       }
       if (!mounted) return;
       await context.read<AccountRepository>().updateProfile(
-            displayName: displayName.isEmpty ? 'Account' : displayName,
-            avatarUrl: avatarUrl,
-            phone: _phone.text.trim(),
-            birthDate: _birthDateApi(),
-            countryCode: _countryCode,
-            postalCode: _postal.text.trim(),
-            sendExplicitNulls: true,
-          );
+        displayName: displayName,
+        avatarUrl: avatarUrl,
+        phone: _phone.text.trim(),
+        birthDate: _birthDateApi(),
+        countryCode: _countryCode,
+        postalCode: _postal.text.trim(),
+        sendExplicitNulls: true,
+      );
       if (mounted) context.pop();
     } catch (e) {
       if (mounted) {
@@ -159,68 +180,83 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
       title: 'Edit Profile',
       body: Padding(
         padding: AppMetrics.subpageScrollPadding,
-        child: ListView(
-          children: [
-            Center(
-              child: PrototypePhotoUpload(
-                imageFile: _photoFile,
-                imageUrl: _photoFile == null ? _networkAvatarUrl : null,
-                onTap: _saving ? null : _pickPhoto,
-                onSignedUrlError: _load,
+        child: Form(
+          key: _formKey,
+          autovalidateMode: _autovalidateMode,
+          child: ListView(
+            children: [
+              Center(
+                child: PrototypePhotoUpload(
+                  imageFile: _photoFile,
+                  imageUrl: _photoFile == null ? _networkAvatarUrl : null,
+                  onTap: _saving ? null : _pickPhoto,
+                  onSignedUrlError: _load,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            const Center(
-              child: Text('Tap to change photo', style: TextStyle(fontSize: 12)),
-            ),
-            const SizedBox(height: 16),
-            AppLabeledTextField(
-              label: 'First name',
-              kind: AppTextInputKind.personName,
-              controller: _firstName,
-            ),
-            AppLabeledTextField(
-              label: 'Last name',
-              kind: AppTextInputKind.personName,
-              controller: _lastName,
-            ),
-            AppLabeledTextField(
-              label: 'Email',
-              kind: AppTextInputKind.none,
-              controller: _email,
-              enabled: false,
-            ),
-            AppLabeledTextField(
-              label: 'Phone number (optional)',
-              controller: _phone,
-              keyboardType: TextInputType.phone,
-            ),
-            const SizedBox(height: 8),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Date of birth (optional)'),
-              subtitle: Text(_birthDateDisplay(context) ?? 'Select a date'),
-              trailing: const Icon(Icons.calendar_today_outlined),
-              onTap: _saving ? null : _pickBirthDate,
-            ),
-            const SizedBox(height: 8),
-            AppCountryDropdownField(
-              countries: _countries,
-              value: _countryCode,
-              enabled: !_saving,
-              decoration: const InputDecoration(labelText: 'Country (optional)'),
-              onChanged: (v) => setState(() => _countryCode = v),
-            ),
-            AppLabeledTextField(
-              label: 'Zip / Postal code (optional)',
-              controller: _postal,
-            ),
-            const SizedBox(height: 20),
-            FilledButton(
-              onPressed: _saving ? null : _save,
-              child: Text(_saving ? 'Saving…' : 'Save'),
-            ),
-          ],
+              const SizedBox(height: 8),
+              const Center(
+                child: Text(
+                  'Tap to change photo',
+                  style: TextStyle(fontSize: 12),
+                ),
+              ),
+              const SizedBox(height: 16),
+              AppLabeledTextFormField(
+                label: 'First name',
+                kind: AppTextInputKind.personName,
+                controller: _firstName,
+                autovalidateMode: _autovalidateMode,
+                validator: validateOnboardingFirstName,
+              ),
+              AppLabeledTextFormField(
+                label: 'Last name',
+                kind: AppTextInputKind.personName,
+                controller: _lastName,
+                autovalidateMode: _autovalidateMode,
+                validator: _validateLastName,
+              ),
+              AppLabeledTextFormField(
+                label: 'Email',
+                kind: AppTextInputKind.none,
+                controller: _email,
+                enabled: false,
+              ),
+              AppLabeledTextFormField(
+                label: 'Phone number (optional)',
+                controller: _phone,
+                keyboardType: TextInputType.phone,
+                autovalidateMode: _autovalidateMode,
+                validator: validateOptionalPhone,
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Date of birth (optional)'),
+                subtitle: Text(_birthDateDisplay(context) ?? 'Select a date'),
+                trailing: const Icon(Icons.calendar_today_outlined),
+                onTap: _saving ? null : _pickBirthDate,
+              ),
+              const SizedBox(height: 8),
+              AppCountryDropdownField(
+                countries: _countries,
+                value: _countryCode,
+                enabled: !_saving,
+                decoration: const InputDecoration(
+                  labelText: 'Country (optional)',
+                ),
+                onChanged: (v) => setState(() => _countryCode = v),
+              ),
+              AppLabeledTextFormField(
+                label: 'Zip / Postal code (optional)',
+                controller: _postal,
+              ),
+              const SizedBox(height: 20),
+              FilledButton(
+                onPressed: _saving ? null : _save,
+                child: Text(_saving ? 'Saving…' : 'Save'),
+              ),
+            ],
+          ),
         ),
       ),
     );

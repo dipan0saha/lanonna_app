@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../config/app_config.dart';
+import '../../../core/platform/external_link_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_semantics.dart';
-import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -18,14 +17,12 @@ class SettingsScreen extends StatelessWidget {
       path: AppConfig.supportEmail,
       queryParameters: const {'subject': 'La Nonna support'},
     );
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      if (context.mounted) {
-        AppSnackBar.showAlert(
-          context,
-          'Could not open email to ${AppConfig.supportEmail}',
-        );
-      }
-    }
+    await openExternalLink(
+      context,
+      uri,
+      failureMessage:
+          'Could not open email to ${AppConfig.supportEmail}. Copy link?',
+    );
   }
 
   @override

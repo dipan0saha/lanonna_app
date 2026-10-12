@@ -3,6 +3,7 @@ import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
+import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/async_tab_body.dart';
 import '../../../core/api/run_mutation.dart';
 import '../../../core/input/app_text_input_kind.dart';
@@ -52,8 +53,9 @@ class _NamesTabState extends State<NamesTab> {
       _error = null;
     });
     try {
-      final payload =
-          await context.read<FunRepository>().fetchNames(widget.baby.id);
+      final payload = await context.read<FunRepository>().fetchNames(
+        widget.baby.id,
+      );
       setState(() {
         _payload = payload;
         _loading = false;
@@ -103,9 +105,7 @@ class _NamesTabState extends State<NamesTab> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Remove name suggestion?'),
-        content: Text(
-          'Remove "${s.suggestedName}" from the list?',
-        ),
+        content: Text('Remove "${s.suggestedName}" from the list?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -122,7 +122,8 @@ class _NamesTabState extends State<NamesTab> {
     if (!mounted) return;
     final removed = await runMutation(
       context,
-      () => context.read<FunRepository>().deleteSuggestion(widget.baby.id, s.id),
+      () =>
+          context.read<FunRepository>().deleteSuggestion(widget.baby.id, s.id),
     );
     if (!removed) return;
     await _load();
@@ -148,7 +149,11 @@ class _NamesTabState extends State<NamesTab> {
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
             const SizedBox(height: 40),
-            const Icon(Icons.star_outline, size: 36, color: AppColors.primaryDark),
+            const Icon(
+              Icons.star_outline,
+              size: 36,
+              color: AppColors.primaryDark,
+            ),
             const SizedBox(height: 12),
             Text(
               'No name suggestions yet',
@@ -208,33 +213,34 @@ class _NamesTabState extends State<NamesTab> {
                 validator: validateFunNameSuggestion,
                 autovalidateMode: autovalidate,
               ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: SegmentedButton<String>(
-                    segments: const [
-                      ButtonSegment(value: 'male', label: Text('Boy')),
-                      ButtonSegment(value: 'female', label: Text('Girl')),
-                    ],
-                    selected: {_gender},
-                    onSelectionChanged: (s) => setState(() => _gender = s.first),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: SegmentedButton<String>(
+                      segments: const [
+                        ButtonSegment(value: 'male', label: Text('Boy')),
+                        ButtonSegment(value: 'female', label: Text('Girl')),
+                      ],
+                      selected: {_gender},
+                      onSelectionChanged: (s) =>
+                          setState(() => _gender = s.first),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                FilledButton(onPressed: _submit, child: const Text('Add')),
-              ],
-            ),
-            if (!_isOwner)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  'You can suggest 1 name per gender.',
-                  style: context.textStyles.bodySmall?.copyWith(
-                    color: AppColors.muted,
-                  ),
-                ),
+                  const SizedBox(width: 8),
+                  FilledButton(onPressed: _submit, child: const Text('Add')),
+                ],
               ),
+              if (!_isOwner)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    'You can suggest 1 name per gender.',
+                    style: context.textStyles.bodySmall?.copyWith(
+                      color: AppColors.muted,
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -252,7 +258,9 @@ class _NamesTabState extends State<NamesTab> {
               width: 8,
               height: 8,
               decoration: BoxDecoration(
-                color: title == 'Boys' ? AppColors.primaryDark : AppColors.secondaryDark,
+                color: title == 'Boys'
+                    ? AppColors.primaryDark
+                    : AppColors.secondaryDark,
                 shape: BoxShape.circle,
               ),
             ),
@@ -313,17 +321,26 @@ class _NameSuggestionCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                IconButton(
+                AppIconButton(
+                  semanticsId: 'name_like_${suggestion.id}',
+                  label: suggestion.viewerHasLiked
+                      ? 'Unlike ${suggestion.suggestedName}'
+                      : 'Love ${suggestion.suggestedName}',
                   onPressed: onLike,
                   visualDensity: VisualDensity.compact,
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                  constraints: const BoxConstraints(
+                    minWidth: 36,
+                    minHeight: 36,
+                  ),
                   icon: Icon(
                     suggestion.viewerHasLiked
                         ? Icons.favorite
                         : Icons.favorite_border,
                     size: 20,
-                    color: suggestion.viewerHasLiked ? AppColors.primaryDark : null,
+                    color: suggestion.viewerHasLiked
+                        ? AppColors.primaryDark
+                        : null,
                   ),
                 ),
                 Semantics(
@@ -334,11 +351,16 @@ class _NameSuggestionCard extends StatelessWidget {
                   ),
                 ),
                 if (suggestion.canDelete)
-                  IconButton(
+                  AppIconButton(
+                    semanticsId: 'name_remove_${suggestion.id}',
+                    label: 'Remove ${suggestion.suggestedName}',
                     onPressed: onDelete,
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                    constraints: const BoxConstraints(
+                      minWidth: 36,
+                      minHeight: 36,
+                    ),
                     icon: const Icon(Icons.close, size: 18),
                   ),
               ],

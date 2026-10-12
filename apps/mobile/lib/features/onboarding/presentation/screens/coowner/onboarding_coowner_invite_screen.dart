@@ -24,7 +24,8 @@ class OnboardingCoOwnerInviteScreen extends StatefulWidget {
       _OnboardingCoOwnerInviteScreenState();
 }
 
-class _OnboardingCoOwnerInviteScreenState extends State<OnboardingCoOwnerInviteScreen> {
+class _OnboardingCoOwnerInviteScreenState
+    extends State<OnboardingCoOwnerInviteScreen> {
   var _loading = true;
   String? _problemMessage;
   VoidCallback? _retryPrepare;
@@ -41,7 +42,9 @@ class _OnboardingCoOwnerInviteScreenState extends State<OnboardingCoOwnerInviteS
       _problemMessage = null;
       _retryPrepare = null;
     });
-    await context.read<OnboardingCoordinator>().setStep(OnboardingStep.coOwnerInvite);
+    await context.read<OnboardingCoordinator>().setStep(
+      OnboardingStep.coOwnerInvite,
+    );
     if (!mounted) return;
     final result = await ensureInvitePreviewLoaded(context);
     if (!mounted) return;
@@ -118,13 +121,15 @@ class _OnboardingCoOwnerInviteScreenState extends State<OnboardingCoOwnerInviteS
         children: [
           InviteLandingHeader(preview: preview, isCoOwner: true),
           InviteBabyCard(preview: preview),
-          InviteReassureRow(isCoOwner: true),
+          if (!preview.isAccepted) const InviteReassureRow(isCoOwner: true),
           const SizedBox(height: 24),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 22),
             child: OnboardingPrimaryButton(
-              label: 'Accept & Join as Owner',
-              onPressed: () => _accept(preview),
+              label: preview.isAccepted ? 'Open' : 'Accept & Join as Owner',
+              onPressed: () => preview.isAccepted
+                  ? openAcceptedInvitePreview(context)
+                  : _accept(preview),
             ),
           ),
           InviteNotForYouLink(onTap: () => leaveInvitationFlow(context)),

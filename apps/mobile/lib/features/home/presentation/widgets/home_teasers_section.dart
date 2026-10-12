@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../../../../core/media/cached_signed_image.dart';
+import '../../../../core/widgets/app_semantics.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/router/deep_link_navigation.dart';
@@ -40,14 +41,17 @@ class HomeTeasersSection extends StatelessWidget {
                     title: Text(n.title),
                     subtitle: Text(n.body),
                     trailing: n.deepLink != null && n.deepLink!.isNotEmpty
-                        ? const Icon(Icons.chevron_right, color: AppColors.muted)
+                        ? const Icon(
+                            Icons.chevron_right,
+                            color: AppColors.muted,
+                          )
                         : null,
                     onTap: n.deepLink != null && n.deepLink!.isNotEmpty
                         ? () => navigateAppDeepLink(
-                              context,
-                              n.deepLink,
-                              babyProfileId: n.babyProfileId,
-                            )
+                            context,
+                            n.deepLink,
+                            babyProfileId: n.babyProfileId,
+                          )
                         : null,
                   ),
                 )
@@ -71,7 +75,10 @@ class HomeTeasersSection extends StatelessWidget {
                 .map(
                   (e) => ListTile(
                     title: Text(e.title),
-                    trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
+                    trailing: const Icon(
+                      Icons.chevron_right,
+                      color: AppColors.muted,
+                    ),
                     onTap: () => context.push(CalendarRoutes.eventDetail(e.id)),
                   ),
                 )
@@ -122,7 +129,9 @@ class HomeTeasersSection extends StatelessWidget {
           title: 'Registry Highlights',
           padding: EdgeInsets.zero,
           child: ListTile(
-            title: Text(l10n.registryItemsStillNeeded(teasers.registryOpenCount)),
+            title: Text(
+              l10n.registryItemsStillNeeded(teasers.registryOpenCount),
+            ),
             trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
             onTap: () => context.go('/registry'),
           ),
@@ -131,7 +140,10 @@ class HomeTeasersSection extends StatelessWidget {
     }
 
     if (children.isEmpty) return const SizedBox.shrink();
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: children,
+    );
   }
 
   Widget _photoRow(
@@ -149,30 +161,40 @@ class HomeTeasersSection extends StatelessWidget {
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, i) {
           final p = photos[i];
-          return GestureDetector(
-            onTap: () => context.push(
-              favorites ? GalleryRoutes.photoDetail(p.id) : '/gallery/photo/${p.id}',
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: p.thumbUrl != null
-                  ? CachedSignedImage(
-                      imageUrl: p.thumbUrl,
-                      cacheKey: 'thumb-${p.id}',
-                      width: 88,
-                      height: 88,
-                      fit: BoxFit.cover,
-                      onSignedUrlError: onSignedUrlError,
-                    )
-                  : Container(
-                      width: 88,
-                      height: 88,
-                      color: fallback,
-                      child: Icon(
-                        favorites ? Icons.favorite_outline : Icons.photo_outlined,
+          return AppSemantics.button(
+            favorites
+                ? 'home_favorite_photo_${p.id}'
+                : 'home_recent_photo_${p.id}',
+            GestureDetector(
+              onTap: () => context.push(
+                favorites
+                    ? GalleryRoutes.photoDetail(p.id)
+                    : '/gallery/photo/${p.id}',
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: p.thumbUrl != null
+                    ? CachedSignedImage(
+                        imageUrl: p.thumbUrl,
+                        cacheKey: 'thumb-${p.id}',
+                        width: 88,
+                        height: 88,
+                        fit: BoxFit.cover,
+                        onSignedUrlError: onSignedUrlError,
+                      )
+                    : Container(
+                        width: 88,
+                        height: 88,
+                        color: fallback,
+                        child: Icon(
+                          favorites
+                              ? Icons.favorite_outline
+                              : Icons.photo_outlined,
+                        ),
                       ),
-                    ),
+              ),
             ),
+            label: 'Open photo',
           );
         },
       ),

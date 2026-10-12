@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
-
 import '../../../core/api/api_error_message.dart';
+import '../../../core/platform/external_link_launcher.dart';
 import '../../../core/comments/comment_actions.dart';
 import '../../../core/comments/comment_composer_controller.dart';
 import '../../../core/time/app_date_time.dart';
@@ -155,8 +154,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
   Future<void> _openVideo(String url) async {
     final uri = Uri.tryParse(url);
-    if (uri == null) return;
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (uri == null || !mounted) return;
+    await openExternalLink(context, uri);
   }
 
   void _showRsvpSheet(EventDetail detail) {

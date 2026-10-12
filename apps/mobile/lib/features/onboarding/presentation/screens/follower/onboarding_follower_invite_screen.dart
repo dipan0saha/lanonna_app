@@ -24,7 +24,8 @@ class OnboardingFollowerInviteScreen extends StatefulWidget {
       _OnboardingFollowerInviteScreenState();
 }
 
-class _OnboardingFollowerInviteScreenState extends State<OnboardingFollowerInviteScreen> {
+class _OnboardingFollowerInviteScreenState
+    extends State<OnboardingFollowerInviteScreen> {
   var _loading = true;
   String? _problemMessage;
   VoidCallback? _retryPrepare;
@@ -41,7 +42,9 @@ class _OnboardingFollowerInviteScreenState extends State<OnboardingFollowerInvit
       _problemMessage = null;
       _retryPrepare = null;
     });
-    await context.read<OnboardingCoordinator>().setStep(OnboardingStep.followerInvite);
+    await context.read<OnboardingCoordinator>().setStep(
+      OnboardingStep.followerInvite,
+    );
     if (!mounted) return;
     final result = await ensureInvitePreviewLoaded(context);
     if (!mounted) return;
@@ -118,13 +121,15 @@ class _OnboardingFollowerInviteScreenState extends State<OnboardingFollowerInvit
         children: [
           InviteLandingHeader(preview: preview, isCoOwner: false),
           InviteBabyCard(preview: preview),
-          InviteReassureRow(isCoOwner: false),
+          if (!preview.isAccepted) const InviteReassureRow(isCoOwner: false),
           const SizedBox(height: 24),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 22),
             child: OnboardingPrimaryButton(
-              label: 'Accept Invitation',
-              onPressed: () => _acceptInvitation(preview),
+              label: preview.isAccepted ? 'Open' : 'Accept Invitation',
+              onPressed: () => preview.isAccepted
+                  ? openAcceptedInvitePreview(context)
+                  : _acceptInvitation(preview),
             ),
           ),
           InviteNotForYouLink(onTap: () => leaveInvitationFlow(context)),

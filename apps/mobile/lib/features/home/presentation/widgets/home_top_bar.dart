@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
+import '../../../../core/widgets/app_icon_button.dart';
 import '../../../../core/widgets/app_semantics.dart';
 
 class HomeTopBar extends StatelessWidget {
@@ -34,13 +35,11 @@ class HomeTopBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          AppSemantics.button(
-            'shell_search',
-            IconButton(
-              onPressed: onSearchTap,
-              icon: const Icon(Icons.search, size: 20, color: AppColors.muted),
-              tooltip: 'Search',
-            ),
+          AppIconButton(
+            semanticsId: 'shell_search',
+            label: 'Search',
+            onPressed: onSearchTap,
+            icon: const Icon(Icons.search, size: 20, color: AppColors.muted),
           ),
           Expanded(
             child: AppSemantics.button(
@@ -64,16 +63,14 @@ class HomeTopBar extends StatelessWidget {
           Stack(
             clipBehavior: Clip.none,
             children: [
-              AppSemantics.button(
-                'shell_notifications',
-                IconButton(
-                  onPressed: onNotificationsTap,
-                  icon: Icon(
-                    Icons.notifications_outlined,
-                    size: 20,
-                    color: context.brand.shellIconMuted,
-                  ),
-                  tooltip: 'Notifications',
+              AppIconButton(
+                semanticsId: 'shell_notifications',
+                label: 'Notifications',
+                onPressed: onNotificationsTap,
+                icon: Icon(
+                  Icons.notifications_outlined,
+                  size: 20,
+                  color: context.brand.shellIconMuted,
                 ),
               ),
               if (showUnreadDot)

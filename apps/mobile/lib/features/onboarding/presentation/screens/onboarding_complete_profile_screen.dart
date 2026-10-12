@@ -43,7 +43,8 @@ class OnboardingCompleteProfileScreen extends StatefulWidget {
       _OnboardingCompleteProfileScreenState();
 }
 
-class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProfileScreen> {
+class _OnboardingCompleteProfileScreenState
+    extends State<OnboardingCompleteProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   var _validateOnInteraction = false;
   AutovalidateMode get _autovalidateMode => _validateOnInteraction
@@ -60,8 +61,7 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
   bool _acceptedTerms = false;
   XFile? _photoFile;
   String? _networkPhotoUrl;
-  String _subtext =
-      'Add your name and photo so family knows who\'s who.';
+  String _subtext = 'Add your name and photo so family knows who\'s who.';
   String _photoLabel = 'Add a photo';
   var _hydrated = false;
   List<IsoCountry> _countries = const [];
@@ -86,19 +86,19 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
   Future<void> _persistDraft() async {
     if (!mounted) return;
     await context.read<OnboardingCoordinator>().saveCompleteProfileDraft(
-          CompleteProfileDraft(
-            firstName: _firstNameController.text,
-            lastName: _lastNameController.text,
-            phone: _phoneController.text,
-            birthDateIso: _birthDate?.toIso8601String().split('T').first,
-            countryCode: _countryCode,
-            postalCode: _postalController.text,
-            relationshipLabel: _relationshipLabel,
-            termsAccepted: _acceptedTerms,
-            photoPath: _photoFile?.path,
-            networkPhotoUrl: _networkPhotoUrl,
-          ),
-        );
+      CompleteProfileDraft(
+        firstName: _firstNameController.text,
+        lastName: _lastNameController.text,
+        phone: _phoneController.text,
+        birthDateIso: _birthDate?.toIso8601String().split('T').first,
+        countryCode: _countryCode,
+        postalCode: _postalController.text,
+        relationshipLabel: _relationshipLabel,
+        termsAccepted: _acceptedTerms,
+        photoPath: _photoFile?.path,
+        networkPhotoUrl: _networkPhotoUrl,
+      ),
+    );
   }
 
   Future<void> _hydrateFromServerProfile() async {
@@ -187,7 +187,8 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
             _photoFile = XFile(draft.photoPath!);
             _photoLabel = 'Change photo';
           }
-          if (draft.networkPhotoUrl != null && draft.networkPhotoUrl!.isNotEmpty) {
+          if (draft.networkPhotoUrl != null &&
+              draft.networkPhotoUrl!.isNotEmpty) {
             _networkPhotoUrl = draft.networkPhotoUrl;
             if (_photoFile == null) {
               _photoLabel = 'Change photo';
@@ -227,7 +228,10 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
   }
 
   Future<void> _pickPhoto() async {
-    final file = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    final file = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
     if (file == null) return;
     setState(() {
       _photoFile = file;
@@ -293,20 +297,20 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
     try {
       String? avatarUrl = _networkPhotoUrl;
       if (_photoFile != null && !kIsWeb) {
-        avatarUrl = await DisplayPhotoUpload(context.read<ApiClient>()).uploadProfileAvatar(
-          imageFile: File(_photoFile!.path),
-        );
+        avatarUrl = await DisplayPhotoUpload(
+          context.read<ApiClient>(),
+        ).uploadProfileAvatar(imageFile: File(_photoFile!.path));
       }
       if (!mounted) return;
       await context.read<OnboardingRepository>().updateProfile(
-            displayName: displayName,
-            avatarUrl: avatarUrl,
-            phone: _phoneController.text.trim(),
-            birthDate: _birthDateForApi(),
-            countryCode: _countryCode,
-            postalCode: _postalController.text.trim(),
-            acceptTerms: true,
-          );
+        displayName: displayName,
+        avatarUrl: avatarUrl,
+        phone: _phoneController.text.trim(),
+        birthDate: _birthDateForApi(),
+        countryCode: _countryCode,
+        postalCode: _postalController.text.trim(),
+        acceptTerms: true,
+      );
       if (!mounted) return;
       await context.read<AppSession>().refreshFromApi();
       if (!mounted) return;
@@ -415,6 +419,7 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
                     hint: '(555) 555-5555',
                     keyboardType: TextInputType.phone,
                     autovalidateMode: _autovalidateMode,
+                    validator: validateOptionalPhone,
                     onChanged: (_) {
                       _clearApiError();
                       _persistDraft();
@@ -442,7 +447,10 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
                     child: InputDecorator(
                       decoration: const InputDecoration(
                         hintText: 'Select a date',
-                        suffixIcon: Icon(Icons.calendar_today_outlined, size: 18),
+                        suffixIcon: Icon(
+                          Icons.calendar_today_outlined,
+                          size: 18,
+                        ),
                       ),
                       child: Text(
                         _birthDateDisplay(context) ?? 'Select a date',
@@ -501,7 +509,10 @@ class _OnboardingCompleteProfileScreenState extends State<OnboardingCompleteProf
             ),
             if (_error != null) ...[
               const SizedBox(height: 12),
-              Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+              Text(
+                _error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
             ],
             const SizedBox(height: 26),
           ],

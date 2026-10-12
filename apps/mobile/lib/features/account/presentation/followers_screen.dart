@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/api/run_mutation.dart';
 import '../../../core/theme/app_metrics.dart';
+import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/app_bordered_surface.dart';
 import '../../../core/widgets/app_section_title.dart';
 import '../../../core/widgets/app_semantics.dart';
@@ -133,15 +134,18 @@ class _FollowersScreenState extends State<FollowersScreen> {
                     AppBorderedSurface(
                       child: ListTile(
                         title: Text(m.displayName),
-                        subtitle: Text(m.relationshipLabel ?? m.email ?? m.role),
+                        subtitle: Text(
+                          m.relationshipLabel ?? m.email ?? m.role,
+                        ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Chip(label: Text(m.role)),
                             if (m.canRemove)
-                              IconButton(
+                              AppIconButton(
+                                semanticsId: 'member_remove_${m.firebaseUid}',
+                                label: l10n.memberRemoveAction,
                                 icon: const Icon(Icons.person_remove_outlined),
-                                tooltip: l10n.memberRemoveAction,
                                 onPressed: () => _confirmRemove(m),
                               ),
                           ],
@@ -155,7 +159,9 @@ class _FollowersScreenState extends State<FollowersScreen> {
                       ListTile(
                         title: Text(inv.email),
                         subtitle: Text(inv.status),
-                        trailing: IconButton(
+                        trailing: AppIconButton(
+                          semanticsId: 'revoke_invite_${inv.id}',
+                          label: 'Revoke invitation',
                           icon: const Icon(Icons.close),
                           onPressed: () async {
                             try {

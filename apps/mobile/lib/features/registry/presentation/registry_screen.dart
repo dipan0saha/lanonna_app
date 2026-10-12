@@ -30,7 +30,8 @@ class RegistryScreen extends StatefulWidget {
   State<RegistryScreen> createState() => _RegistryScreenState();
 }
 
-class _RegistryScreenState extends State<RegistryScreen> with BabyContextReload {
+class _RegistryScreenState extends State<RegistryScreen>
+    with BabyContextReload {
   BabySummary? _baby;
   List<RegistryItem> _items = [];
   RegistryShippingAddress? _shipping;
@@ -232,145 +233,152 @@ class _RegistryScreenState extends State<RegistryScreen> with BabyContextReload 
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    AppMetrics.horizontalPadding,
-                    0,
-                    AppMetrics.horizontalPadding,
-                    8,
-                  ),
-                  child: Text('Registry', style: context.textStyles.headlineSmall),
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  AppMetrics.horizontalPadding,
+                  0,
+                  AppMetrics.horizontalPadding,
+                  8,
+                ),
+                child: Text(
+                  'Registry',
+                  style: context.textStyles.headlineSmall,
                 ),
               ),
-              if (kind == TabLoadKind.loading)
-                const SliverFillRemaining(
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              else if (kind == TabLoadKind.error)
-                SliverFillRemaining(
-                  child: AsyncTabBody(
-                    loading: false,
-                    error: _loadError,
-                    onRetry: _load,
-                    child: const SizedBox.shrink(),
+            ),
+            if (kind == TabLoadKind.loading)
+              const SliverFillRemaining(
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (kind == TabLoadKind.error)
+              SliverFillRemaining(
+                child: AsyncTabBody(
+                  loading: false,
+                  error: _loadError,
+                  onRetry: _load,
+                  child: const SizedBox.shrink(),
+                ),
+              )
+            else if (kind == TabLoadKind.empty)
+              const SliverFillRemaining(
+                child: Center(child: Text('No baby profile yet.')),
+              )
+            else ...[
+              if (_isOwner)
+                SliverToBoxAdapter(
+                  child: _AiBanner(
+                    onTap: () => context.push(RegistryRoutes.aiSuggestions),
                   ),
-                )
-              else if (kind == TabLoadKind.empty)
-                const SliverFillRemaining(
-                  child: Center(child: Text('No baby profile yet.')),
+                ),
+              SliverToBoxAdapter(child: _shippingSection()),
+              if (_items.isEmpty)
+                SliverFillRemaining(
+                  child: RegistryEmptyState(
+                    isOwner: _isOwner,
+                    onAddItem: _isOwner
+                        ? () => context.push(RegistryRoutes.createItem)
+                        : null,
+                  ),
                 )
               else ...[
-                if (_isOwner)
-                  SliverToBoxAdapter(
-                    child: _AiBanner(
-                      onTap: () => context.push(RegistryRoutes.aiSuggestions),
-                    ),
-                  ),
-                SliverToBoxAdapter(child: _shippingSection()),
-                if (_items.isEmpty)
-                  SliverFillRemaining(
-                    child: RegistryEmptyState(
-                      isOwner: _isOwner,
-                      onAddItem: _isOwner
-                          ? () => context.push(RegistryRoutes.createItem)
-                          : null,
-                    ),
-                  )
-                else ...[
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                      child: AppSectionTitle(
-                        title: 'Needed',
-                        action: Text(
-                          'Priority: High first',
-                          style: context.textStyles.labelSmall?.copyWith(
-                            color: AppColors.muted,
-                          ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                    child: AppSectionTitle(
+                      title: 'Needed',
+                      action: Text(
+                        'Priority: High first',
+                        style: context.textStyles.labelSmall?.copyWith(
+                          color: AppColors.muted,
                         ),
                       ),
                     ),
                   ),
-                  SliverToBoxAdapter(
-                    child: Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: _needed.isEmpty
-                            ? const Padding(
-                                padding: EdgeInsets.all(16),
-                                child: Text('All caught up!'),
-                              )
-                            : Column(
-                                children: [
-                                  for (final item in _needed)
-                                    RegistryNeededRow(
-                                      item: item,
-                                      isOwner: _isOwner,
-                                      currentUid: uid,
-                                      onClaim: () => _claim(item),
-                                      onEdit: () => context.push(
-                                        RegistryRoutes.itemEdit(item.id),
-                                      ),
-                                      onDelete: () async {
-                                        await context
-                                            .read<RegistryRepository>()
-                                            .deleteItem(_baby!.id, item.id);
-                                        await _load();
-                                      },
-                                    ),
-                                ],
-                              ),
-                      ),
-                    ),
-                  ),
-                  SliverToBoxAdapter(
+                ),
+                SliverToBoxAdapter(
+                  child: Card(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        16,
-                        AppMetrics.sectionBlockSpacing,
-                        16,
-                        0,
-                      ),
-                      child: const AppSectionTitle(title: 'Purchased'),
-                    ),
-                  ),
-                  SliverToBoxAdapter(
-                    child: Card(
-                      margin: const EdgeInsets.fromLTRB(16, 0, 16, 96),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: _purchased.isEmpty
-                            ? const Padding(
-                                padding: EdgeInsets.all(16),
-                                child: Text('Nothing purchased yet.'),
-                              )
-                            : Column(
-                                children: [
-                                  for (final item in _purchased)
-                                    RegistryPurchasedRow(
-                                      item: item,
-                                      canUndo: _isOwner ||
-                                          item.purchase?.purchasedByFirebaseUid == uid,
-                                      onUndo: () => _undo(item),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: _needed.isEmpty
+                          ? const Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Text('All caught up!'),
+                            )
+                          : Column(
+                              children: [
+                                for (final item in _needed)
+                                  RegistryNeededRow(
+                                    item: item,
+                                    isOwner: _isOwner,
+                                    currentUid: uid,
+                                    onClaim: () => _claim(item),
+                                    onEdit: () => context.push(
+                                      RegistryRoutes.itemEdit(item.id),
                                     ),
-                                ],
-                              ),
-                      ),
+                                    onDelete: () async {
+                                      await context
+                                          .read<RegistryRepository>()
+                                          .deleteItem(_baby!.id, item.id);
+                                      await _load();
+                                    },
+                                  ),
+                              ],
+                            ),
                     ),
                   ),
-                ],
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      16,
+                      AppMetrics.sectionBlockSpacing,
+                      16,
+                      0,
+                    ),
+                    child: const AppSectionTitle(title: 'Purchased'),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Card(
+                    margin: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: _purchased.isEmpty
+                          ? const Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Text('Nothing purchased yet.'),
+                            )
+                          : Column(
+                              children: [
+                                for (final item in _purchased)
+                                  RegistryPurchasedRow(
+                                    item: item,
+                                    canUndo:
+                                        _isOwner ||
+                                        item.purchase?.purchasedByFirebaseUid ==
+                                            uid,
+                                    onUndo: () => _undo(item),
+                                  ),
+                              ],
+                            ),
+                    ),
+                  ),
+                ),
               ],
             ],
-          ),
+          ],
         ),
+      ),
       floatingActionButton: _isOwner && _baby != null && _items.isNotEmpty
           ? AppSemantics.button(
               'registry_create_fab',
               FloatingActionButton(
+                tooltip: 'Add item',
                 onPressed: () => context.push(RegistryRoutes.createItem),
-                child: const Icon(Icons.add),
+                child: const ExcludeSemantics(child: Icon(Icons.add)),
               ),
+              label: 'Add item',
             )
           : null,
     );

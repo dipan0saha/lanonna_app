@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_icon_button.dart';
 import '../../../account/data/account_repository.dart';
 import '../../../registry/domain/registry_routes.dart';
 import '../../data/models/home_summary.dart';
@@ -65,12 +66,15 @@ class HomeInviteStatusSection extends StatelessWidget {
             ListTile(
               title: Text(inv.inviteeEmail),
               subtitle: Text(inv.status),
-              trailing: IconButton(
+              trailing: AppIconButton(
+                semanticsId: 'home_revoke_invite_${inv.id}',
+                label: 'Revoke invitation',
                 icon: const Icon(Icons.close),
                 onPressed: () async {
-                  await context
-                      .read<AccountRepository>()
-                      .revokeInvitation(babyId, inv.id);
+                  await context.read<AccountRepository>().revokeInvitation(
+                    babyId,
+                    inv.id,
+                  );
                   onChanged();
                 },
               ),
@@ -97,10 +101,11 @@ class HomeRegistryHighlightsList extends StatelessWidget {
             .map(
               (item) => ListTile(
                 title: Text(item.name),
-                trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
-                onTap: () => context.push(
-                  RegistryRoutes.itemEdit(item.id),
+                trailing: const Icon(
+                  Icons.chevron_right,
+                  color: AppColors.muted,
                 ),
+                onTap: () => context.push(RegistryRoutes.itemEdit(item.id)),
               ),
             )
             .toList(),

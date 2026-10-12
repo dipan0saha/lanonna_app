@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/domain/baby_summary.dart';
@@ -78,6 +80,29 @@ class AccountPayload {
 
   bool get hasOwnerBaby => babies.any((b) => b.role == 'owner');
 
+  AccountPayload copyWithProfile({
+    String? displayName,
+    String? email,
+    String? avatarUrl,
+    String? phone,
+    String? birthDate,
+    String? countryCode,
+    String? postalCode,
+  }) {
+    return AccountPayload(
+      displayName: displayName ?? this.displayName,
+      email: email ?? this.email,
+      babies: babies,
+      engagement: engagement,
+      storageUsage: storageUsage,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      phone: phone,
+      birthDate: birthDate,
+      countryCode: countryCode,
+      postalCode: postalCode,
+    );
+  }
+
   factory AccountPayload.fromJson(Map<String, dynamic> json) {
     final profile = json['profile'] as Map<String, dynamic>? ?? {};
     final babies = json['babies'] as List<dynamic>? ?? [];
@@ -97,7 +122,9 @@ class AccountPayload {
       engagement: UserEngagementStats.fromJson(
         json['engagement'] as Map<String, dynamic>?,
       ),
-      storageUsage: storageRaw != null ? StorageUsage.fromJson(storageRaw) : null,
+      storageUsage: storageRaw != null
+          ? StorageUsage.fromJson(storageRaw)
+          : null,
     );
   }
 }
@@ -168,21 +195,37 @@ class DataExportJob {
   final String? errorMessage;
 
   factory DataExportJob.fromJson(Map<String, dynamic> json) => DataExportJob(
-        id: json['id']?.toString() ?? '',
-        status: json['status'] as String? ?? 'pending',
-        downloadUrl: json['download_url'] as String?,
-        errorMessage: json['error_message'] as String?,
-      );
+    id: json['id']?.toString() ?? '',
+    status: json['status'] as String? ?? 'pending',
+    downloadUrl: json['download_url'] as String?,
+    errorMessage: json['error_message'] as String?,
+  );
+}
+
+/// Latest account payload. Profile saves notify listeners; fetches only store it.
+class AccountProfileUpdates extends ChangeNotifier {
+  AccountPayload? account;
+
+  void publish(AccountPayload? value) {
+    account = value;
+    notifyListeners();
+  }
 }
 
 class AccountRepository {
   AccountRepository(this._api);
 
   final ApiClient _api;
+  final AccountProfileUpdates profileUpdates = AccountProfileUpdates();
+
+  /// Last account payload from [fetchAccount] or a profile save.
+  AccountPayload? get cachedAccount => profileUpdates.account;
 
   Future<AccountPayload> fetchAccount() async {
     final json = await _api.getJson('/v1/me/account');
-    return AccountPayload.fromJson(json);
+    final payload = AccountPayload.fromJson(json);
+    profileUpdates.account = payload;
+    return payload;
   }
 
   Future<void> updateProfile({
@@ -194,33 +237,66 @@ class AccountRepository {
     String? postalCode,
     bool sendExplicitNulls = false,
   }) async {
+    final Map<String, dynamic> body;
     if (sendExplicitNulls) {
-      await _api.patchJson('/v1/profile', body: {
+      body = {
         'display_name': displayName,
         if (avatarUrl != null) 'avatar_url': avatarUrl,
         'phone': phone != null && phone.trim().isEmpty ? null : phone?.trim(),
-        'birth_date':
-            birthDate != null && birthDate.trim().isEmpty ? null : birthDate?.trim(),
-        'country_code':
-            countryCode != null && countryCode.trim().isEmpty ? null : countryCode?.trim(),
-        'postal_code':
-            postalCode != null && postalCode.trim().isEmpty ? null : postalCode?.trim(),
-      });
+        'birth_date': birthDate != null && birthDate.trim().isEmpty
+            ? null
+            : birthDate?.trim(),
+        'country_code': countryCode != null && countryCode.trim().isEmpty
+            ? null
+            : countryCode?.trim(),
+        'postal_code': postalCode != null && postalCode.trim().isEmpty
+            ? null
+            : postalCode?.trim(),
+      };
+    } else {
+      body = {
+        'display_name': displayName,
+        if (avatarUrl != null) 'avatar_url': avatarUrl,
+        if (phone != null && phone.isNotEmpty) 'phone': phone,
+        if (birthDate != null && birthDate.isNotEmpty) 'birth_date': birthDate,
+        if (countryCode != null && countryCode.isNotEmpty)
+          'country_code': countryCode,
+        if (postalCode != null && postalCode.isNotEmpty)
+          'postal_code': postalCode,
+      };
+    }
+    final json = await _api.patchJson('/v1/profile', body: body);
+    _rememberProfileResponse(json, fallbackDisplayName: displayName);
+  }
+
+  void _rememberProfileResponse(
+    Map<String, dynamic> json, {
+    required String fallbackDisplayName,
+  }) {
+    final current = profileUpdates.account;
+    if (current == null) {
+      profileUpdates.publish(null);
       return;
     }
-    await _api.patchJson('/v1/profile', body: {
-      'display_name': displayName,
-      if (avatarUrl != null) 'avatar_url': avatarUrl,
-      if (phone != null && phone.isNotEmpty) 'phone': phone,
-      if (birthDate != null && birthDate.isNotEmpty) 'birth_date': birthDate,
-      if (countryCode != null && countryCode.isNotEmpty) 'country_code': countryCode,
-      if (postalCode != null && postalCode.isNotEmpty) 'postal_code': postalCode,
-    });
+    profileUpdates.publish(
+      current.copyWithProfile(
+        displayName: json['display_name'] as String? ?? fallbackDisplayName,
+        email: json['email'] as String?,
+        avatarUrl: json['avatar_url'] as String?,
+        phone: json['phone'] as String?,
+        birthDate: json['birth_date'] as String?,
+        countryCode: json['country_code'] as String?,
+        postalCode: json['postal_code'] as String?,
+      ),
+    );
   }
 
   Future<List<MemberRow>> listMembers(String babyId) async {
     final list = await _api.getJsonList('/v1/babies/$babyId/members');
-    return list.whereType<Map<String, dynamic>>().map(MemberRow.fromJson).toList();
+    return list
+        .whereType<Map<String, dynamic>>()
+        .map(MemberRow.fromJson)
+        .toList();
   }
 
   Future<List<InvitationRow>> listInvitations(String babyId) async {
@@ -244,7 +320,10 @@ class AccountRepository {
   }
 
   Future<DataExportJob> requestExport(String babyId) async {
-    final json = await _api.postJson('/v1/babies/$babyId/data-export', body: {});
+    final json = await _api.postJson(
+      '/v1/babies/$babyId/data-export',
+      body: {},
+    );
     return DataExportJob.fromJson(json);
   }
 
@@ -268,21 +347,37 @@ class AccountRepository {
   }
 }
 
+class SoleOwnedBaby {
+  const SoleOwnedBaby({required this.id, required this.name});
+
+  final String id;
+  final String name;
+}
+
 class DeleteAccountEligibility {
   const DeleteAccountEligibility({
     required this.allowed,
     required this.blockers,
+    this.soleOwnedBabies = const [],
   });
 
   final bool allowed;
   final List<String> blockers;
+  final List<SoleOwnedBaby> soleOwnedBabies;
 
   factory DeleteAccountEligibility.fromJson(Map<String, dynamic> json) {
     final raw = json['blockers'];
+    final babies = json['sole_owned_babies'];
     return DeleteAccountEligibility(
       allowed: json['allowed'] as bool? ?? false,
-      blockers: raw is List
-          ? raw.map((e) => e.toString()).toList()
+      blockers: raw is List ? raw.map((e) => e.toString()).toList() : const [],
+      soleOwnedBabies: babies is List
+          ? babies.whereType<Map<String, dynamic>>().map((row) {
+              return SoleOwnedBaby(
+                id: row['id']?.toString() ?? '',
+                name: row['name']?.toString() ?? '',
+              );
+            }).toList()
           : const [],
     );
   }

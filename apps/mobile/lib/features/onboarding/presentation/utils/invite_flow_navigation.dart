@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/auth/auth_repository.dart';
 import '../../../home/data/home_repository.dart';
 import '../../../home/data/selected_baby_store.dart';
 import '../../../invitations/presentation/invite_accept_messages.dart';
@@ -87,6 +88,21 @@ Future<void> finishInviteOnboardingAndGoHome(BuildContext context) async {
   if (!context.mounted) return;
   await context.read<AppSession>().refreshFromApi();
   if (context.mounted) context.go('/home');
+}
+
+/// Preview status `accepted` means this invite was already used.
+///
+/// Signed-out visitors go to login. Signed-in visitors call accept, which
+/// returns `already_member` when they still belong to the baby.
+Future<void> openAcceptedInvitePreview(BuildContext context) async {
+  final auth = context.read<AuthRepository>();
+  if (auth.currentUser == null) {
+    context.go(OnboardingRoutes.login);
+    return;
+  }
+  final token = context.read<OnboardingCoordinator>().pendingInviteToken;
+  if (token == null || token.isEmpty) return;
+  await acceptSignedInInviteAndContinue(context, token);
 }
 
 /// Signed-in accept from invite landing screens (H-07): honor API result, not only throws.

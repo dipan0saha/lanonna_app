@@ -220,6 +220,54 @@ abstract class AppLocalizations {
   /// **'Your account cannot be deleted right now.'**
   String get deleteAccountBlocked;
 
+  /// No description provided for @deleteAccountConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete your account permanently?'**
+  String get deleteAccountConfirmTitle;
+
+  /// No description provided for @deleteAccountConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently deletes your La Nonna account. Any Baby Profiles solely owned by your account will also be deleted. Baby Profiles with a co owner will not be deleted; ownership will transfer fully to the co owner.'**
+  String get deleteAccountConfirmBody;
+
+  /// No description provided for @deleteAccountConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get deleteAccountConfirmAction;
+
+  /// No description provided for @deleteAccountSoleOwnedHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'These baby profiles will be deleted:'**
+  String get deleteAccountSoleOwnedHeading;
+
+  /// No description provided for @deleteAccountReauthPasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm your password'**
+  String get deleteAccountReauthPasswordTitle;
+
+  /// No description provided for @deleteAccountReauthPasswordBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your password to delete your account.'**
+  String get deleteAccountReauthPasswordBody;
+
+  /// No description provided for @deleteAccountReauthPasswordAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get deleteAccountReauthPasswordAction;
+
+  /// No description provided for @deleteAccountReauthFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in again to delete your account.'**
+  String get deleteAccountReauthFailed;
+
   /// No description provided for @emailVerifyHeadline.
   ///
   /// In en, this message translates to:

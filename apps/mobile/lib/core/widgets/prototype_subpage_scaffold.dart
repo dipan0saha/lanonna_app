@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../router/subpage_navigation.dart';
 import '../theme/app_colors.dart';
+import 'app_icon_button.dart';
 import '../theme/app_metrics.dart';
 import '../theme/la_nonna_theme.dart';
 
@@ -46,43 +47,45 @@ class PrototypeSubpageScaffold extends StatelessWidget {
         _handleBack(context);
       },
       child: Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                4,
-                4,
-                AppMetrics.horizontalPadding,
-                8,
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: () => _handleBack(context),
-                    icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-                  ),
-                  Expanded(
-                    child: Text(
-                      title,
-                      textAlign: TextAlign.center,
-                      style: context.textStyles.titleMedium,
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  4,
+                  4,
+                  AppMetrics.horizontalPadding,
+                  8,
+                ),
+                child: Row(
+                  children: [
+                    AppIconButton(
+                      semanticsId: 'subpage_back',
+                      label: 'Back',
+                      onPressed: () => _handleBack(context),
+                      icon: const Icon(Icons.arrow_back_ios_new, size: 20),
                     ),
-                  ),
-                  if (actions != null && actions!.isNotEmpty)
-                    Row(mainAxisSize: MainAxisSize.min, children: actions!)
-                  else
-                    const SizedBox(width: 48),
-                ],
+                    Expanded(
+                      child: Text(
+                        title,
+                        textAlign: TextAlign.center,
+                        style: context.textStyles.titleMedium,
+                      ),
+                    ),
+                    if (actions != null && actions!.isNotEmpty)
+                      Row(mainAxisSize: MainAxisSize.min, children: actions!)
+                    else
+                      const SizedBox(width: 48),
+                  ],
+                ),
               ),
-            ),
-            Expanded(child: body),
-          ],
+              Expanded(child: body),
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 }

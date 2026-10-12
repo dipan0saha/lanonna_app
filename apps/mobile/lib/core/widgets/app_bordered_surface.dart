@@ -29,7 +29,7 @@ class AppBorderedSurface extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppMetrics.surfaceRadius),
         border: Border.all(color: AppColors.border),
       ),
-      child: child,
+      child: Material(type: MaterialType.transparency, child: child),
     );
   }
 }

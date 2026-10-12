@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
-
 import '../api/api_client.dart';
+import '../platform/external_link_launcher.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_metrics.dart';
 import 'app_version_check.dart';
@@ -30,7 +29,9 @@ Future<AppVersionRequirement?> fetchAppVersionRequirement(
 ) async {
   final platform = platformKeyForVersionCheck();
   try {
-    final json = await client.getJsonPublic('/v1/app/version?platform=$platform');
+    final json = await client.getJsonPublic(
+      '/v1/app/version?platform=$platform',
+    );
     return AppVersionRequirement.fromJson(json);
   } catch (_) {
     return null;
@@ -50,11 +51,14 @@ class AppVersionBlockScreen extends StatelessWidget {
   final String installedVersion;
   final String minimumVersion;
 
-  Future<void> _openStore() async {
-    final uri = Uri.parse(storeUrl);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
+  Future<void> _openStore(BuildContext context) async {
+    final uri = Uri.tryParse(storeUrl);
+    if (uri == null) return;
+    await openExternalLink(
+      context,
+      uri,
+      failureMessage: "Couldn't open the store. Copy link?",
+    );
   }
 
   @override
@@ -81,7 +85,7 @@ class AppVersionBlockScreen extends StatelessWidget {
               ),
               const Spacer(),
               FilledButton(
-                onPressed: _openStore,
+                onPressed: () => _openStore(context),
                 child: const Text('Update in store'),
               ),
             ],
@@ -139,9 +143,7 @@ class _AppVersionGateState extends State<AppVersionGate> {
   @override
   Widget build(BuildContext context) {
     if (_checking) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     final block = _block;
     if (block != null && _installedVersion != null) {

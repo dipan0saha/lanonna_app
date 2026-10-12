@@ -2,6 +2,8 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, Field, field_validator
 
+from lanonna_api.domain.phone import normalize_optional_phone
+
 
 class ProfileResponse(BaseModel):
     firebase_uid: str
@@ -27,6 +29,13 @@ class ProfileUpdateRequest(BaseModel):
     postal_code: str | None = Field(default=None, max_length=32)
     accept_terms: bool | None = None
 
+    @field_validator("display_name", mode="before")
+    @classmethod
+    def strip_display_name(cls, value: object) -> object:
+        if isinstance(value, str):
+            return value.strip()
+        return value
+
     @field_validator("country_code")
     @classmethod
     def normalize_country(cls, value: str | None) -> str | None:
@@ -34,9 +43,14 @@ class ProfileUpdateRequest(BaseModel):
             return None
         return value.strip().upper()
 
-    @field_validator("phone", "postal_code")
+    @field_validator("phone")
     @classmethod
-    def strip_optional_text(cls, value: str | None) -> str | None:
+    def normalize_phone(cls, value: str | None) -> str | None:
+        return normalize_optional_phone(value)
+
+    @field_validator("postal_code")
+    @classmethod
+    def strip_postal_code(cls, value: str | None) -> str | None:
         if value is None:
             return None
         trimmed = value.strip()

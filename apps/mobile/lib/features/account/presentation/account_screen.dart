@@ -38,11 +38,39 @@ class _AccountScreenState extends State<AccountScreen> {
   AccountPayload? _payload;
   String? _loadError;
   var _loading = true;
+  AccountProfileUpdates? _profileUpdates;
 
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final updates = context.read<AccountRepository>().profileUpdates;
+    if (!identical(_profileUpdates, updates)) {
+      _profileUpdates?.removeListener(_onAccountUpdated);
+      _profileUpdates = updates;
+      _profileUpdates!.addListener(_onAccountUpdated);
+    }
+  }
+
+  @override
+  void dispose() {
+    _profileUpdates?.removeListener(_onAccountUpdated);
+    super.dispose();
+  }
+
+  void _onAccountUpdated() {
+    final cached = _profileUpdates?.account;
+    if (!mounted || cached == null) return;
+    setState(() {
+      _payload = cached;
+      _loading = false;
+      _loadError = null;
+    });
   }
 
   Future<void> _load() async {
@@ -72,10 +100,8 @@ class _AccountScreenState extends State<AccountScreen> {
     if (mounted) context.go(OnboardingRoutes.ownerCarousel);
   }
 
-  String _babySubtitle(BabySummary baby) => babyListSubtitle(
-        baby,
-        localeNameForFormatting(context),
-      );
+  String _babySubtitle(BabySummary baby) =>
+      babyListSubtitle(baby, localeNameForFormatting(context));
 
   Color _roleBadgeColor(String role) {
     return role == 'owner' ? AppColors.sageTint : AppColors.peachTint;
@@ -160,13 +186,18 @@ class _AccountScreenState extends State<AccountScreen> {
                         leading: CircleAvatar(
                           backgroundColor: AppColors.peachTint,
                           child: Text(
-                            baby.name.isNotEmpty ? baby.name[0].toUpperCase() : '?',
+                            baby.name.isNotEmpty
+                                ? baby.name[0].toUpperCase()
+                                : '?',
                           ),
                         ),
                         title: Text(baby.name),
                         subtitle: Text(_babySubtitle(baby)),
                         trailing: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: _roleBadgeColor(baby.role),
                             borderRadius: BorderRadius.circular(12),
@@ -194,8 +225,13 @@ class _AccountScreenState extends State<AccountScreen> {
                       children: [
                         ListTile(
                           title: const Text('Settings'),
-                          subtitle: const Text('Notifications, profile, and help'),
-                          trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
+                          subtitle: const Text(
+                            'Notifications, profile, and help',
+                          ),
+                          trailing: const Icon(
+                            Icons.chevron_right,
+                            color: AppColors.muted,
+                          ),
                           onTap: () => context.push('/settings'),
                         ),
                         if (showOwnerPrefs)
@@ -203,20 +239,29 @@ class _AccountScreenState extends State<AccountScreen> {
                             'account_manage_followers',
                             ListTile(
                               title: const Text('Manage Followers'),
-                              trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
+                              trailing: const Icon(
+                                Icons.chevron_right,
+                                color: AppColors.muted,
+                              ),
                               onTap: _openManageFollowers,
                             ),
                           ),
                         if (showOwnerPrefs)
                           ListTile(
                             title: const Text('Invite Family'),
-                            trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
+                            trailing: const Icon(
+                              Icons.chevron_right,
+                              color: AppColors.muted,
+                            ),
                             onTap: () => context.push(AppRoutes.inviteFamily),
                           ),
                         if (showOwnerPrefs)
                           ListTile(
                             title: const Text('Export baby data'),
-                            trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
+                            trailing: const Icon(
+                              Icons.chevron_right,
+                              color: AppColors.muted,
+                            ),
                             onTap: () => context.push('/account/export'),
                           ),
                       ],
@@ -230,7 +275,10 @@ class _AccountScreenState extends State<AccountScreen> {
                         'Delete account',
                         style: TextStyle(color: AppColors.error),
                       ),
-                      trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
+                      trailing: const Icon(
+                        Icons.chevron_right,
+                        color: AppColors.muted,
+                      ),
                       onTap: () => context.push('/account/delete'),
                     ),
                   ),

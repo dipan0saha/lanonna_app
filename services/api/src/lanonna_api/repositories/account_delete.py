@@ -23,28 +23,36 @@ def account_is_tombstoned(firebase_uid: str) -> bool:
     return row is not None and row["deleted_at"] is not None
 
 
+_SOLE_OWNED_BABIES_SQL = """
+SELECT b.id, b.name
+FROM baby_profiles b
+JOIN baby_memberships m ON m.baby_profile_id = b.id
+WHERE m.firebase_uid = %s
+  AND m.role = 'owner'
+  AND m.removed_at IS NULL
+  AND b.deleted_at IS NULL
+  AND (
+    SELECT COUNT(*)::int
+    FROM baby_memberships om
+    WHERE om.baby_profile_id = b.id
+      AND om.role = 'owner'
+      AND om.removed_at IS NULL
+  ) = 1
+ORDER BY b.name
+"""
+
+
 def list_sole_owned_baby_ids(firebase_uid: str) -> list[uuid.UUID]:
+    return [uuid.UUID(row["id"]) for row in list_sole_owned_baby_names(firebase_uid)]
+
+
+def list_sole_owned_baby_names(firebase_uid: str) -> list[dict[str, str]]:
     with get_connection() as conn:
-        rows = conn.execute(
-            """
-            SELECT b.id
-            FROM baby_profiles b
-            JOIN baby_memberships m ON m.baby_profile_id = b.id
-            WHERE m.firebase_uid = %s
-              AND m.role = 'owner'
-              AND m.removed_at IS NULL
-              AND b.deleted_at IS NULL
-              AND (
-                SELECT COUNT(*)::int
-                FROM baby_memberships om
-                WHERE om.baby_profile_id = b.id
-                  AND om.role = 'owner'
-                  AND om.removed_at IS NULL
-              ) = 1
-            """,
-            (firebase_uid,),
-        ).fetchall()
-    return [row["id"] for row in rows]
+        rows = conn.execute(_SOLE_OWNED_BABIES_SQL, (firebase_uid,)).fetchall()
+    return [
+        {"id": str(row["id"]), "name": (row["name"] or "").strip()}
+        for row in rows
+    ]
 
 
 def soft_delete_account_rows(
