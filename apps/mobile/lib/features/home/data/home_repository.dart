@@ -16,10 +16,24 @@ class HomeRepository {
   final String? Function()? _currentUserId;
   List<BabySummary>? _cachedBabies;
   String? _cachedForUserId;
+  var _listEpoch = 0;
 
   void clearCachedBabies() {
     _cachedBabies = null;
     _cachedForUserId = null;
+    _listEpoch += 1;
+  }
+
+  /// Drop the cached baby list and select [babyId] (invite accept).
+  ///
+  /// A list fetched before the membership existed must not overwrite this
+  /// selection or be served as the next offline snapshot.
+  Future<void> rememberJoinedBaby(
+    SelectedBabyStore store,
+    String babyId,
+  ) async {
+    clearCachedBabies();
+    await store.setSelectedBabyId(babyId);
   }
 
   static bool _shouldServeStaleBabyCache(Object error) {
@@ -37,14 +51,17 @@ class HomeRepository {
     if (uid != _cachedForUserId) {
       _cachedBabies = null;
     }
+    final epoch = _listEpoch;
     try {
       final list = await _api.getJsonList('/v1/babies');
       final babies = list
           .whereType<Map<String, dynamic>>()
           .map(BabySummary.fromJson)
           .toList();
-      _cachedBabies = babies;
-      _cachedForUserId = uid;
+      if (epoch == _listEpoch) {
+        _cachedBabies = babies;
+        _cachedForUserId = uid;
+      }
       return babies;
     } catch (e) {
       final cached = _cachedBabies;
@@ -62,7 +79,13 @@ class HomeRepository {
   /// Selected baby from [store], or first baby when none selected / id stale.
   /// Persists the resolved id when the stored selection was missing or invalid.
   Future<BabySummary?> resolveSelectedBaby(SelectedBabyStore store) async {
+    final generation = store.selectionGeneration;
     final babies = await listBabies();
+    if (store.selectionGeneration != generation) {
+      final current = store.selectedBabyId;
+      if (current == null) return null;
+      return babies.where((b) => b.id == current).firstOrNull;
+    }
     if (babies.isEmpty) return null;
     final selectedId = store.selectedBabyId;
     final match = selectedId != null
@@ -103,12 +126,12 @@ class HomeRepository {
     String? avatarUrl,
   }) async {
     final json = await _api.patchJson('/v1/babies/$babyId', body: {
-      ?'name': name,
-      ?'gender': gender,
-      ?'expected_birth_date': expectedBirthDate,
-      ?'actual_birth_date': actualBirthDate,
-      ?'lifecycle_status': lifecycleStatus,
-      ?'avatar_url': avatarUrl,
+      'name': name,
+      'gender': gender,
+      'expected_birth_date': expectedBirthDate,
+      'actual_birth_date': actualBirthDate,
+      'lifecycle_status': lifecycleStatus,
+      'avatar_url': avatarUrl,
     });
     return BabySummary.fromJson(json);
   }

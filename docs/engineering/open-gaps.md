@@ -14,7 +14,7 @@ Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [op
 |-------|--------|
 | API `pytest` (`services/api`) | 209 passed |
 | Worker `pytest` | 56 passed |
-| `flutter test` | 217 passed |
+| `flutter test` | 256 passed |
 | `flutter analyze` | 0 errors, 0 warnings, 47 infos (L-26) |
 
 Run all three suites before every ship; the suites are the only automated gate (no CI).
@@ -177,7 +177,7 @@ Run all three suites before every ship; the suites are the only automated gate (
 
 | ID | Issue | Where |
 |----|-------|-------|
-| ✅ L-07 | Default API base URL baked in source; release builds must use `--dart-define-from-file` | `app_config.dart`, `main.dart` — release throws if `API_BASE_URL` dart-define missing |
+| ✅ L-07 | Default API base URL baked in source; release builds must use `--dart-define-from-file` | `app_config.dart` — const `String.fromEnvironment('API_BASE_URL')`; release/profile compilation fails when it is empty. Debug omits the define and uses the dev URL. |
 | L-08 | Accessibility: semantics labels concentrated in shell/onboarding; many controls unlabeled (WCAG AA is the PRD baseline) | mobile |
 | L-09 | Hardcoded UI strings vs `app_en.arb` (FR-SET-002) | e.g. `account_edit_screen.dart`, `home_screen.dart` |
 | ✅ L-10 | No CORS middleware (fine for mobile-only; needs policy if a web client is added) | `main.py`, `config.py` — `CORS_ALLOW_ORIGINS` comma-list; off when empty |

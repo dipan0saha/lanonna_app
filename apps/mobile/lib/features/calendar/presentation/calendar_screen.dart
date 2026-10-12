@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/api/api_error_message.dart';
-import '../../../core/network/connectivity_service.dart';
+import '../../../core/presentation/tab_load_failure.dart';
+import '../../../core/presentation/tab_load_kind.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/widgets/app_semantics.dart';
+import '../../../core/widgets/async_tab_body.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
@@ -97,15 +98,24 @@ class _CalendarScreenState extends State<CalendarScreen> with BabyContextReload 
       });
     } catch (e) {
       if (!mounted) return;
-      final offline = !context.read<ConnectivityService>().isOnline;
-      setState(() {
-        _loading = false;
-        if (offline) {
-          _loadError = 'Connect to the internet to load your calendar.';
-        } else {
-          _loadError = apiErrorMessage(e);
-        }
-      });
+      final hadBaby = _baby != null;
+      reportTabLoadFailure(
+        context,
+        e,
+        hasPayload: hadBaby,
+        onBlockingError: (message) {
+          setState(() {
+            _loadError = message;
+            _loading = false;
+          });
+        },
+      );
+      if (hadBaby && mounted) {
+        setState(() {
+          _loadError = null;
+          _loading = false;
+        });
+      }
     }
   }
 
@@ -188,6 +198,11 @@ class _CalendarScreenState extends State<CalendarScreen> with BabyContextReload 
     final monthLabel =
         '${_monthName(_visibleMonth.month)} ${_visibleMonth.year}';
     final daysWithEvents = _eventDays();
+    final kind = resolveTabLoadKind(
+      loading: _loading,
+      hasError: _loadError != null,
+      hasPayload: _baby != null,
+    );
     return Scaffold(
       backgroundColor: AppColors.background,
       body: ShellTabLayout(
@@ -206,28 +221,22 @@ class _CalendarScreenState extends State<CalendarScreen> with BabyContextReload 
                   child: Text('Calendar', style: styles.headlineSmall),
                 ),
               ),
-              if (_loading)
+              if (kind == TabLoadKind.loading)
                 const SliverFillRemaining(
                   child: Center(child: CircularProgressIndicator()),
                 )
-              else if (_baby == null)
+              else if (kind == TabLoadKind.error)
+                SliverFillRemaining(
+                  child: AsyncTabBody(
+                    loading: false,
+                    error: _loadError,
+                    onRetry: _load,
+                    child: const SizedBox.shrink(),
+                  ),
+                )
+              else if (kind == TabLoadKind.empty)
                 const SliverFillRemaining(
                   child: Center(child: Text('No baby profile yet.')),
-                )
-              else if (_loadError != null)
-                SliverFillRemaining(
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text(
-                        _loadError!,
-                        textAlign: TextAlign.center,
-                        style: styles.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      ),
-                    ),
-                  ),
                 )
               else ...[
                 SliverToBoxAdapter(

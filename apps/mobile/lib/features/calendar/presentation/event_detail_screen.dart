@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/api/api_error_message.dart';
+import '../../../core/comments/comment_actions.dart';
+import '../../../core/comments/comment_composer_controller.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/presentation/detail_screen_load.dart';
 import '../../../core/presentation/display_initials.dart';
-import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/media/cached_signed_image.dart';
 import '../../../core/widgets/app_snackbar.dart';
-import '../../../core/widgets/app_text_field.dart';
+import '../../../core/widgets/detail_comment_composer.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
@@ -19,10 +19,10 @@ import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../data/calendar_repository.dart';
+import '../data/event_comment_thread.dart';
 import '../data/models/calendar_models.dart';
 import '../domain/calendar_navigation.dart';
 import '../domain/calendar_routes.dart';
-import '../domain/event_detail_focus.dart';
 import '../domain/rsvp_status_labels.dart';
 
 class EventDetailScreen extends StatefulWidget {
@@ -37,8 +37,7 @@ class EventDetailScreen extends StatefulWidget {
 class _EventDetailScreenState extends State<EventDetailScreen> {
   BabySummary? _baby;
   EventDetail? _detail;
-  final _commentController = TextEditingController();
-  final _commentFocusNode = FocusNode();
+  late final CommentComposerController _comments;
   final _scrollController = ScrollController();
   var _initialLoadInFlight = true;
   CalendarRepository? _calendarRepo;
@@ -48,6 +47,17 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     super.initState();
     _calendarRepo = context.read<CalendarRepository>();
     _calendarRepo!.addListener(_onCalendarRepositoryChanged);
+    _comments = CommentComposerController(
+      port: EventCommentThread(
+        repository: _calendarRepo!,
+        babyId: () => _baby?.id,
+        eventId: widget.eventId,
+      ),
+      onPosted: () => _refreshEventDetail(scrollToComments: true),
+      onError: (error) {
+        if (mounted) _showApiError(error);
+      },
+    );
     _loadInitial();
   }
 
@@ -55,8 +65,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   void dispose() {
     _calendarRepo?.removeListener(_onCalendarRepositoryChanged);
     _scrollController.dispose();
-    _commentFocusNode.dispose();
-    _commentController.dispose();
+    _comments.dispose();
     super.dispose();
   }
 
@@ -65,18 +74,14 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     _refreshEventDetail();
   }
 
-  void _unfocusCommentComposer() {
-    unfocusEventCommentComposer(_commentFocusNode);
-  }
-
   Future<void> _openEdit() async {
-    final saved = await context.push<bool>(
+    await pushAndRefresh<bool>(
+      context,
       CalendarRoutes.eventEdit(widget.eventId),
+      composer: _comments,
+      refresh: _refreshEventDetail,
+      shouldRefresh: (saved) => saved == true,
     );
-    if (saved == true && mounted) {
-      _unfocusCommentComposer();
-      await _refreshEventDetail();
-    }
   }
 
   void _onCoverUrlError() {
@@ -115,7 +120,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     final baby = _baby;
     if (baby == null) return;
     if (!scrollToComments) {
-      _unfocusCommentComposer();
+      _comments.unfocus();
     }
     try {
       final detail = await context
@@ -192,58 +197,12 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     }
   }
 
-  Future<void> _addComment() async {
-    final text = AppTextInputPolicy.normalizeForSubmit(
-      AppTextInputKind.prose,
-      _commentController.text,
-    );
-    final baby = _baby;
-    if (baby == null || text.isEmpty) return;
-    try {
-      await context.read<CalendarRepository>().addComment(
-        baby.id,
-        widget.eventId,
-        text,
-      );
-      _commentController.clear();
-      await _refreshEventDetail(scrollToComments: true);
-    } catch (e) {
-      _showApiError(e);
-    }
-  }
-
   Future<void> _editComment(EventComment comment) async {
     final baby = _baby;
     if (baby == null || !comment.canEdit) return;
-    final controller = TextEditingController(text: comment.body);
-    final saved = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Edit comment'),
-        content: AppTextField(
-          kind: AppTextInputKind.prose,
-          controller: controller,
-          maxLines: 4,
-          decoration: const InputDecoration(hintText: 'Comment'),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Save')),
-        ],
-      ),
-    );
-    if (saved != true) {
-      controller.dispose();
-      return;
-    }
-    final text = AppTextInputPolicy.normalizeForSubmit(
-      AppTextInputKind.prose,
-      controller.text,
-    );
-    controller.dispose();
-    if (text.isEmpty) return;
+    final text = await showEditCommentDialog(context, comment.body);
+    if (text == null || !mounted) return;
     try {
-      if (!mounted) return;
       await context.read<CalendarRepository>().updateComment(
         baby.id,
         widget.eventId,
@@ -252,26 +211,16 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       );
       await _refreshEventDetail();
     } catch (e) {
-      _showApiError(e);
+      if (mounted) showCommentError(context, e);
     }
   }
 
   Future<void> _deleteComment(EventComment comment) async {
     final baby = _baby;
     if (baby == null || !comment.canDelete) return;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete comment?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete')),
-        ],
-      ),
-    );
-    if (ok != true) return;
+    final ok = await confirmDeleteComment(context);
+    if (!ok || !mounted) return;
     try {
-      if (!mounted) return;
       await context.read<CalendarRepository>().deleteComment(
         baby.id,
         widget.eventId,
@@ -279,7 +228,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       );
       await _refreshEventDetail();
     } catch (e) {
-      _showApiError(e);
+      if (mounted) showCommentError(context, e);
     }
   }
 
@@ -479,24 +428,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               ],
             ),
           ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: AppTextField(
-                      kind: AppTextInputKind.prose,
-                      controller: _commentController,
-                      focusNode: _commentFocusNode,
-                      decoration: const InputDecoration(hintText: 'Add a comment…'),
-                      onSubmitted: (_) => _addComment(),
-                    ),
-                  ),
-                  IconButton(onPressed: _addComment, icon: const Icon(Icons.send)),
-                ],
-              ),
-            ),
+          DetailCommentComposer(
+            controller: _comments,
+            semanticsId: 'event_comment',
           ),
         ],
       ),

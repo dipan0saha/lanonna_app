@@ -5,12 +5,15 @@ import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
 import '../../../core/api/api_exception.dart';
+import '../../../core/comments/comment_actions.dart';
+import '../../../core/comments/comment_composer_controller.dart';
 import '../../../core/presentation/detail_screen_load.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/media/cached_signed_image.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/app_semantics.dart';
+import '../../../core/widgets/detail_comment_composer.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../../core/theme/la_nonna_theme.dart';
@@ -18,6 +21,7 @@ import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../data/gallery_repository.dart';
+import '../data/photo_comment_thread.dart';
 import '../data/models/photo_models.dart';
 import '../domain/gallery_navigation.dart';
 import '../domain/gallery_refresh.dart';
@@ -44,11 +48,25 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
   List<BabySummary> _memberBabies = [];
   Set<String> _taggedBabyIds = {};
   final _captionController = TextEditingController();
-  final _commentController = TextEditingController();
+  late final CommentComposerController _comments;
 
   @override
   void initState() {
     super.initState();
+    _comments = CommentComposerController(
+      port: PhotoCommentThread(
+        repository: context.read<GalleryRepository>(),
+        babyId: () => _baby?.id,
+        photoId: () => widget.photoId,
+      ),
+      onPosted: () async {
+        await _refreshPhotoDetail(scrollToComments: true);
+        if (mounted) notifyGalleryDataChanged(context);
+      },
+      onError: (error) {
+        if (mounted) _showApiError(error);
+      },
+    );
     _loadInitial();
   }
 
@@ -58,7 +76,8 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     if (oldWidget.photoId != widget.photoId) {
       _editingCaption = false;
       _signedUrlRetried = false;
-      _commentController.clear();
+      _comments.textController.clear();
+      _comments.unfocus();
       setState(() {
         _detail = null;
         _initialLoadInFlight = true;
@@ -71,7 +90,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
   void dispose() {
     _scrollController.dispose();
     _captionController.dispose();
-    _commentController.dispose();
+    _comments.dispose();
     super.dispose();
   }
 
@@ -207,62 +226,13 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     }
   }
 
-  Future<void> _addComment() async {
-    final text = AppTextInputPolicy.normalizeForSubmit(
-      AppTextInputKind.prose,
-      _commentController.text,
-    );
-    if (text.isEmpty) return;
-    final baby = _baby;
-    final detail = _detail;
-    if (baby == null || detail == null) return;
-    try {
-      await context.read<GalleryRepository>().addComment(
-        baby.id,
-        detail.id,
-        text,
-      );
-      _commentController.clear();
-      await _refreshPhotoDetail(scrollToComments: true);
-      if (mounted) notifyGalleryDataChanged(context);
-    } catch (e) {
-      _showApiError(e);
-    }
-  }
-
   Future<void> _editComment(PhotoComment comment) async {
     final baby = _baby;
     final detail = _detail;
     if (baby == null || detail == null || !comment.canEdit) return;
-    final controller = TextEditingController(text: comment.body);
-    final saved = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Edit comment'),
-        content: AppTextField(
-          kind: AppTextInputKind.prose,
-          controller: controller,
-          maxLines: 4,
-          decoration: const InputDecoration(hintText: 'Comment'),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Save')),
-        ],
-      ),
-    );
-    if (saved != true) {
-      controller.dispose();
-      return;
-    }
-    final text = AppTextInputPolicy.normalizeForSubmit(
-      AppTextInputKind.prose,
-      controller.text,
-    );
-    controller.dispose();
-    if (text.isEmpty) return;
+    final text = await showEditCommentDialog(context, comment.body);
+    if (text == null || !mounted) return;
     try {
-      if (!mounted) return;
       await context.read<GalleryRepository>().updateComment(
         baby.id,
         detail.id,
@@ -271,7 +241,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       );
       await _refreshPhotoDetail();
     } catch (e) {
-      _showApiError(e);
+      if (mounted) showCommentError(context, e);
     }
   }
 
@@ -308,19 +278,9 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     final baby = _baby;
     final detail = _detail;
     if (baby == null || detail == null || !comment.canDelete) return;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete comment?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete')),
-        ],
-      ),
-    );
-    if (ok != true) return;
+    final ok = await confirmDeleteComment(context);
+    if (!ok || !mounted) return;
     try {
-      if (!mounted) return;
       await context.read<GalleryRepository>().deleteComment(
         baby.id,
         detail.id,
@@ -329,7 +289,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       await _refreshPhotoDetail();
       if (mounted) notifyGalleryDataChanged(context);
     } catch (e) {
-      _showApiError(e);
+      if (mounted) showCommentError(context, e);
     }
   }
 
@@ -621,35 +581,10 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
               ),
             ),
           ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: AppSemantics.textField(
-                      'gallery_photo_comment',
-                      AppTextField(
-                        kind: AppTextInputKind.prose,
-                        controller: _commentController,
-                        decoration: const InputDecoration(
-                          hintText: 'Add a comment…',
-                        ),
-                        onSubmitted: (_) => _addComment(),
-                      ),
-                    ),
-                  ),
-                  AppSemantics.button(
-                    'gallery_comment_send',
-                    IconButton(
-                      onPressed: _addComment,
-                      icon: const Icon(Icons.send),
-                    ),
-                    label: 'Send comment',
-                  ),
-                ],
-              ),
-            ),
+          DetailCommentComposer(
+            controller: _comments,
+            semanticsId: 'gallery_photo_comment',
+            sendSemanticsId: 'gallery_comment_send',
           ),
         ],
       ),

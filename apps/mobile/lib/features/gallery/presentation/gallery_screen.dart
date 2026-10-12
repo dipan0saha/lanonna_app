@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_error_message.dart';
+import '../../../core/presentation/tab_load_failure.dart';
+import '../../../core/presentation/tab_load_kind.dart';
 import '../../../core/widgets/async_tab_body.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_semantics.dart';
@@ -150,10 +152,21 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _error = apiErrorMessage(e);
-        _loading = false;
-      });
+      final hadBaby = _baby != null;
+      reportTabLoadFailure(
+        context,
+        e,
+        hasPayload: hadBaby,
+        onBlockingError: (message) {
+          setState(() {
+            _error = message;
+            _loading = false;
+          });
+        },
+      );
+      if (hadBaby && mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
 
@@ -267,6 +280,11 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
   @override
   Widget build(BuildContext context) {
     final headline = context.textStyles.headlineSmall;
+    final kind = resolveTabLoadKind(
+      loading: _loading,
+      hasError: _error != null,
+      hasPayload: _baby != null,
+    );
     return Scaffold(
       backgroundColor: AppColors.background,
       body: ShellTabLayout(
@@ -286,11 +304,11 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
                 child: Text(_pageTitle, style: headline),
               ),
             ),
-            if (_loading)
+            if (kind == TabLoadKind.loading)
               const SliverFillRemaining(
                 child: Center(child: CircularProgressIndicator()),
               )
-            else if (_error != null)
+            else if (kind == TabLoadKind.error)
               SliverFillRemaining(
                 child: AsyncTabBody(
                   loading: false,

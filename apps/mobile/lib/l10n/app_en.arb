@@ -227,6 +227,14 @@
       }
     }
   },
+  "commentComposerHint": "Add a comment…",
+  "commentSend": "Send comment",
+  "commentEditTitle": "Edit comment",
+  "commentEditHint": "Comment",
+  "commentDeleteTitle": "Delete comment?",
+  "commentSave": "Save",
+  "commentCancel": "Cancel",
+  "commentDeleteAction": "Delete",
   "followerCount": "{count, plural, =0{0 followers} =1{1 follower} other{{count} followers}}",
   "@followerCount": {
     "placeholders": {

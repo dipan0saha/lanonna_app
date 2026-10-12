@@ -23,6 +23,14 @@ class ConnectivityService extends ChangeNotifier {
 
   bool get isOnline => _isOnline;
 
+  /// Test hook so tab screens can observe offline → online without the platform.
+  @visibleForTesting
+  void debugSetOnline(bool online) {
+    if (online == _isOnline) return;
+    _isOnline = online;
+    notifyListeners();
+  }
+
   @visibleForTesting
   static ConnectivityService forTesting({bool isOnline = true}) {
     return ConnectivityService._forTesting(isOnline: isOnline);

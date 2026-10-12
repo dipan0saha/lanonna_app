@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -20,6 +19,7 @@ import '../../onboarding/presentation/widgets/onboarding_prototype_widgets.dart'
 import '../../onboarding/presentation/widgets/onboarding_typography.dart';
 import '../../gallery/domain/gallery_refresh.dart';
 import '../data/announcement_repository.dart';
+import '../domain/announcement_navigation.dart';
 
 class AnnouncementCreateScreen extends StatefulWidget {
   const AnnouncementCreateScreen({super.key, required this.babyId});
@@ -113,6 +113,16 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
     );
   }
 
+  String? _birthTimeLabel(BuildContext context) {
+    final raw = _formatBirthTime();
+    if (raw == null) return null;
+    final formatted = formatApiClockTime(
+      raw,
+      Localizations.localeOf(context).toString(),
+    );
+    return formatted.isEmpty ? raw : formatted;
+  }
+
   String? _formatBirthTime() {
     if (_birthTime == null) return null;
     final t = _birthTime!;
@@ -160,7 +170,7 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
         lengthText: lengthText.isEmpty ? null : lengthText,
         photoId: photoId,
       );
-      if (mounted) context.go('/baby/${widget.babyId}/announcement');
+      if (mounted) showAnnouncementCardAfterSave(context, widget.babyId);
     } catch (e) {
       if (mounted) {
         AppSnackBar.showAlert(context, apiErrorMessage(e));
@@ -246,7 +256,7 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
           ListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Time of birth'),
-            subtitle: Text(_formatBirthTime() ?? 'Optional'),
+            subtitle: Text(_birthTimeLabel(context) ?? 'Optional'),
             trailing: const Icon(Icons.schedule_outlined, size: 20),
             onTap: _pickTime,
           ),
