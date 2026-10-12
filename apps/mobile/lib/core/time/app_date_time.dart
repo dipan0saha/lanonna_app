@@ -90,6 +90,25 @@ String formatApiCalendarDate(String? raw, [String? localeName]) {
   return formatApiCalendarDateFromParts(dt, localeName);
 }
 
+/// API birth times are `HH:MM` (24-hour). Display uses the same locale clock
+/// as event times (`DateFormat.jm` — `3:30 PM` for en-US).
+DateTime? tryParseApiClockTime(String? raw) {
+  if (raw == null || raw.trim().isEmpty) return null;
+  final match = RegExp(r'^(\d{1,2}):(\d{2})').firstMatch(raw.trim());
+  if (match == null) return null;
+  final hour = int.parse(match.group(1)!);
+  final minute = int.parse(match.group(2)!);
+  if (hour > 23 || minute > 59) return null;
+  return DateTime(2000, 1, 1, hour, minute);
+}
+
+/// Empty string when [raw] is null, blank, or not a clock time.
+String formatApiClockTime(String? raw, [String? localeName]) {
+  final parsed = tryParseApiClockTime(raw);
+  if (parsed == null) return '';
+  return DateFormat.jm(localeName).format(parsed);
+}
+
 /// Serialize a calendar date for API fields (`YYYY-MM-DD`). Not for UI display.
 String toApiCalendarDate(DateTime date) {
   return '${date.year.toString().padLeft(4, '0')}-'

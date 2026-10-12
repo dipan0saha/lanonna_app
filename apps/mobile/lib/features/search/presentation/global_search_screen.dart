@@ -1,8 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/api/api_error_message.dart';
 import '../../../core/time/app_date_time.dart';
+import '../../../core/widgets/app_snackbar.dart';
+import '../../../core/widgets/async_tab_body.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
@@ -30,6 +35,9 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
   SearchResults? _results;
   var _loading = false;
   String? _babyId;
+  String? _error;
+  Timer? _debounce;
+  var _requestId = 0;
 
   @override
   void initState() {
@@ -39,6 +47,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -51,21 +60,57 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     }
   }
 
-  Future<void> _runSearch(String q) async {
-    final babyId = _babyId;
-    if (babyId == null || q.trim().isEmpty) {
-      setState(() => _results = null);
+  void _onQueryChanged(String value) {
+    _debounce?.cancel();
+    if (value.trim().isEmpty) {
+      _requestId += 1;
+      setState(() {
+        _results = null;
+        _error = null;
+        _loading = false;
+      });
       return;
     }
-    setState(() => _loading = true);
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      _runSearch(value);
+    });
+  }
+
+  Future<void> _runSearch(String q) async {
+    final babyId = _babyId;
+    final query = q.trim();
+    if (babyId == null || query.isEmpty) {
+      setState(() {
+        _results = null;
+        _error = null;
+        _loading = false;
+      });
+      return;
+    }
+    final requestId = ++_requestId;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final results = await context.read<SearchRepository>().search(
         babyId: babyId,
-        query: q.trim(),
+        query: query,
       );
-      if (mounted) setState(() => _results = results);
+      if (!mounted || requestId != _requestId) return;
+      setState(() => _results = results);
+    } catch (e) {
+      if (!mounted || requestId != _requestId) return;
+      final message = apiErrorMessage(e);
+      setState(() {
+        _error = message;
+        _results = null;
+      });
+      AppSnackBar.showAlert(context, message);
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted && requestId == _requestId) {
+        setState(() => _loading = false);
+      }
     }
   }
 
@@ -84,16 +129,18 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               hintText: 'Search photos, events, registry…',
               border: InputBorder.none,
             ),
-            onChanged: (v) => _runSearch(v),
+            onChanged: _onQueryChanged,
             onSubmitted: _runSearch,
           ),
         ),
       ),
       body: _babyId == null
           ? const Center(child: Text('Select a baby profile to search'))
-          : _loading
-              ? const Center(child: CircularProgressIndicator())
-              : results == null
+          : AsyncTabBody(
+              loading: _loading && results == null && _error == null,
+              error: _error,
+              onRetry: () => _runSearch(_controller.text),
+              child: results == null
                   ? Center(
                       child: Text(
                         'Type to search',
@@ -171,6 +218,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                             ],
                           ],
                         ),
+            ),
     );
   }
 }

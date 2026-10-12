@@ -670,6 +670,54 @@ abstract class AppLocalizations {
   /// **'{pct}% ({count})'**
   String predictionGenderVoteShare(int pct, int count);
 
+  /// No description provided for @commentComposerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a comment…'**
+  String get commentComposerHint;
+
+  /// No description provided for @commentSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send comment'**
+  String get commentSend;
+
+  /// No description provided for @commentEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit comment'**
+  String get commentEditTitle;
+
+  /// No description provided for @commentEditHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Comment'**
+  String get commentEditHint;
+
+  /// No description provided for @commentDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete comment?'**
+  String get commentDeleteTitle;
+
+  /// No description provided for @commentSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get commentSave;
+
+  /// No description provided for @commentCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get commentCancel;
+
+  /// No description provided for @commentDeleteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get commentDeleteAction;
+
   /// No description provided for @followerCount.
   ///
   /// In en, this message translates to:

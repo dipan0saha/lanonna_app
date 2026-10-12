@@ -404,6 +404,30 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get commentComposerHint => 'Add a comment…';
+
+  @override
+  String get commentSend => 'Send comment';
+
+  @override
+  String get commentEditTitle => 'Edit comment';
+
+  @override
+  String get commentEditHint => 'Comment';
+
+  @override
+  String get commentDeleteTitle => 'Delete comment?';
+
+  @override
+  String get commentSave => 'Save';
+
+  @override
+  String get commentCancel => 'Cancel';
+
+  @override
+  String get commentDeleteAction => 'Delete';
+
+  @override
   String followerCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

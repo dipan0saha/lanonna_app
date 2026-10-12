@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../home/data/home_repository.dart';
 import '../../../home/data/selected_baby_store.dart';
 import '../../../invitations/presentation/invite_accept_messages.dart';
 import '../../../invitations/presentation/invite_flow_state.dart';
@@ -11,6 +12,28 @@ import '../../domain/onboarding_routes.dart';
 import '../../domain/onboarding_step.dart';
 import '../app_session.dart';
 import '../onboarding_coordinator.dart';
+
+/// Baby to select after a successful accept.
+///
+/// Prefer the accept response, then the coordinator's invited id, then the
+/// cached invite preview. An empty string is treated as missing.
+String? joinedBabyIdFromAccept({
+  String? acceptedBabyId,
+  String? invitedBabyId,
+  String? previewBabyId,
+}) {
+  for (final id in [acceptedBabyId, invitedBabyId, previewBabyId]) {
+    if (id != null && id.isNotEmpty) return id;
+  }
+  return null;
+}
+
+Future<void> _selectJoinedBaby(BuildContext context, String babyId) async {
+  await context.read<HomeRepository>().rememberJoinedBaby(
+    context.read<SelectedBabyStore>(),
+    babyId,
+  );
+}
 
 Future<void> navigateAfterCompleteProfile(BuildContext context) async {
   final coordinator = context.read<OnboardingCoordinator>();
@@ -32,11 +55,15 @@ Future<void> navigateAfterCompleteProfile(BuildContext context) async {
       throw Exception(inviteAcceptUserMessage(result.error!));
     }
 
-    final babyId = result.babyProfileId ?? coordinator.invitedBabyId;
+    final babyId = joinedBabyIdFromAccept(
+      acceptedBabyId: result.babyProfileId,
+      invitedBabyId: coordinator.invitedBabyId,
+      previewBabyId: coordinator.cachedInvitePreview?.babyProfileId,
+    );
     if (babyId != null) {
       await coordinator.setInvitedBabyId(babyId);
       if (!context.mounted) return;
-      await context.read<SelectedBabyStore>().setSelectedBabyId(babyId);
+      await _selectJoinedBaby(context, babyId);
     }
 
     if (coordinator.onboardingPath == OnboardingPath.coOwner) {
@@ -83,11 +110,15 @@ Future<void> acceptSignedInInviteAndContinue(
     throw Exception(inviteAcceptUserMessage(result.error!));
   }
 
-  final babyId = result.babyProfileId ?? coordinator.invitedBabyId;
+  final babyId = joinedBabyIdFromAccept(
+    acceptedBabyId: result.babyProfileId,
+    invitedBabyId: coordinator.invitedBabyId,
+    previewBabyId: coordinator.cachedInvitePreview?.babyProfileId,
+  );
   if (babyId != null) {
     await coordinator.setInvitedBabyId(babyId);
     if (!context.mounted) return;
-    await context.read<SelectedBabyStore>().setSelectedBabyId(babyId);
+    await _selectJoinedBaby(context, babyId);
   }
 
   if (!context.mounted) return;

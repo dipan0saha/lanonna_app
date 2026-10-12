@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -38,6 +39,20 @@ void main() {
     expect(baby?.id, 'baby-a');
     expect(baby?.name, 'Alpha');
     expect(store.selectedBabyId, 'baby-a');
+  });
+
+  test('in-flight resolve does not overwrite a newer selection', () async {
+    SharedPreferences.setMockInitialValues({'selected_baby_id': 'baby-a'});
+    final store = SelectedBabyStore(await SharedPreferences.getInstance());
+    final api = _GatedBabiesApi();
+    final repo = HomeRepository(api);
+    final pending = repo.resolveSelectedBaby(store);
+    await api.started.future;
+    await store.setSelectedBabyId('baby-b');
+    api.release();
+    final baby = await pending;
+    expect(store.selectedBabyId, 'baby-b');
+    expect(baby?.id, 'baby-b');
   });
 
   test('resolveSelectedBaby persists when stored id is stale', () async {
@@ -112,6 +127,30 @@ class _FlakyBabiesApi extends ApiClient {
     if (failRequests) {
       throw const SocketException('failed host lookup');
     }
+    return [
+      {'id': 'baby-a', 'name': 'Alpha', 'role': 'owner', 'lifecycle_status': 'expecting'},
+      {'id': 'baby-b', 'name': 'Beta', 'role': 'owner', 'lifecycle_status': 'expecting'},
+    ];
+  }
+}
+
+class _GatedBabiesApi extends ApiClient {
+  _GatedBabiesApi() : super(idTokenProvider: () async => 'token');
+
+  final started = Completer<void>();
+  final _gate = Completer<void>();
+
+  void release() {
+    if (!_gate.isCompleted) _gate.complete();
+  }
+
+  @override
+  Future<List<dynamic>> getJsonList(
+    String path, {
+    Map<String, String>? queryParameters,
+  }) async {
+    if (!started.isCompleted) started.complete();
+    await _gate.future;
     return [
       {'id': 'baby-a', 'name': 'Alpha', 'role': 'owner', 'lifecycle_status': 'expecting'},
       {'id': 'baby-b', 'name': 'Beta', 'role': 'owner', 'lifecycle_status': 'expecting'},

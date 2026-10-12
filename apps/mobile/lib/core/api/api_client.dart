@@ -170,7 +170,7 @@ class ApiClient {
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return response;
       }
-      return _failAuthorizedResponse(response);
+      return await _failAuthorizedResponse(response);
     } on ApiException {
       rethrow;
     } on SocketException {

@@ -9,7 +9,6 @@ import '../../../../invitations/presentation/invite_flow_state.dart';
 import '../../../../invitations/presentation/invite_landing_helpers.dart';
 import '../../../../invitations/presentation/widgets/invite_landing_state_views.dart';
 import '../../../../invitations/presentation/widgets/invite_landing_widgets.dart';
-import '../../../domain/onboarding_path.dart';
 import '../../../domain/onboarding_routes.dart';
 import '../../../domain/onboarding_step.dart';
 import '../../onboarding_coordinator.dart';

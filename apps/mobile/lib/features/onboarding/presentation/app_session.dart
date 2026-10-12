@@ -31,11 +31,10 @@ class AppSession extends ChangeNotifier {
   bool get ownerOnboardingComplete =>
       _storage.isCompleted || (_status?.ownerOnboardingCompleted ?? false);
 
-  bool get canAccessMainApp {
-    if (_status?.canAccessMainApp ?? false) return true;
-    if (ownerOnboardingComplete) return true;
-    return false;
-  }
+  /// Server contract only. Device-local onboarding completion must not
+  /// admit a co-owner or follower, or skip owner onboarding the server
+  /// still requires.
+  bool get canAccessMainApp => _status?.canAccessMainApp == true;
 
   /// Test-only hook to set onboarding status without calling the API.
   @visibleForTesting
@@ -128,7 +127,11 @@ class AppSession extends ChangeNotifier {
     }
 
     if (canAccessMainApp) {
-      if (OnboardingRoutes.isOnboardingPath(path) &&
+      // Both flags can be true: a follower who also created a baby
+      // (joined_via = created) may use Home and still finish owner onboarding.
+      final keepOwnerOnboarding = _status?.needsOwnerOnboarding == true;
+      if (!keepOwnerOnboarding &&
+          OnboardingRoutes.isOnboardingPath(path) &&
           path != OnboardingRoutes.inviteAccept &&
           !_inviteSignedIn.contains(path)) {
         return '/home';
@@ -195,9 +198,7 @@ class AppSession extends ChangeNotifier {
         if (allowed.contains(path)) return null;
         return OnboardingRoutes.ownerCreateBaby;
       }
-      if (!_coordinator.isInvitePath &&
-          !ownerOnboardingComplete &&
-          status.needsOwnerOnboarding) {
+      if (!_coordinator.isInvitePath && status.needsOwnerOnboarding) {
         if (_ownerPostBabyAllowed.contains(path)) return null;
         if (path == OnboardingRoutes.ownerCreateBaby) {
           return _onboardingResumePath(status);
@@ -248,7 +249,7 @@ class AppSession extends ChangeNotifier {
       }
       return OnboardingRoutes.ownerCreateBaby;
     }
-    if (!ownerOnboardingComplete && status.needsOwnerOnboarding) {
+    if (status.needsOwnerOnboarding) {
       final step = _coordinator.activeStep;
       if (step == OnboardingStep.batchInvite) {
         return OnboardingRoutes.ownerInvite;

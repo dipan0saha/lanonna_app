@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import 'bootstrap.dart';
-import 'config/app_config.dart';
 import 'core/app_check/app_check_bootstrap.dart';
 import 'firebase_options.dart';
 
@@ -16,11 +15,6 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (kReleaseMode && !AppConfig.apiBaseUrlConfigured) {
-    throw StateError(
-      'Release builds must set API_BASE_URL via --dart-define-from-file.',
-    );
-  }
   const maestroSemantics =
       kDebugMode || bool.fromEnvironment('MAESTRO_SEMANTICS');
   if (maestroSemantics) {

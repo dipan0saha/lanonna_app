@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/api/api_error_message.dart';
 import '../../../core/api/run_mutation.dart';
+import '../../../core/presentation/tab_load_failure.dart';
+import '../../../core/presentation/tab_load_kind.dart';
 import '../../../core/auth/auth_repository.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/widgets/async_tab_body.dart';
@@ -85,10 +86,21 @@ class _RegistryScreenState extends State<RegistryScreen> with BabyContextReload 
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _loadError = apiErrorMessage(e);
-        _loading = false;
-      });
+      final hadBaby = _baby != null;
+      reportTabLoadFailure(
+        context,
+        e,
+        hasPayload: hadBaby,
+        onBlockingError: (message) {
+          setState(() {
+            _loadError = message;
+            _loading = false;
+          });
+        },
+      );
+      if (hadBaby && mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
 
@@ -207,6 +219,11 @@ class _RegistryScreenState extends State<RegistryScreen> with BabyContextReload 
   @override
   Widget build(BuildContext context) {
     final uid = context.read<AuthRepository>().currentUser?.uid;
+    final kind = resolveTabLoadKind(
+      loading: _loading,
+      hasError: _loadError != null,
+      hasPayload: _baby != null,
+    );
     return Scaffold(
       backgroundColor: AppColors.background,
       body: ShellTabLayout(
@@ -225,11 +242,11 @@ class _RegistryScreenState extends State<RegistryScreen> with BabyContextReload 
                   child: Text('Registry', style: context.textStyles.headlineSmall),
                 ),
               ),
-              if (_loading)
+              if (kind == TabLoadKind.loading)
                 const SliverFillRemaining(
                   child: Center(child: CircularProgressIndicator()),
                 )
-              else if (_loadError != null)
+              else if (kind == TabLoadKind.error)
                 SliverFillRemaining(
                   child: AsyncTabBody(
                     loading: false,
@@ -238,7 +255,7 @@ class _RegistryScreenState extends State<RegistryScreen> with BabyContextReload 
                     child: const SizedBox.shrink(),
                   ),
                 )
-              else if (_baby == null)
+              else if (kind == TabLoadKind.empty)
                 const SliverFillRemaining(
                   child: Center(child: Text('No baby profile yet.')),
                 )

@@ -4,6 +4,7 @@ import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/input/app_text_input_kind.dart';
+import '../../../core/time/app_date_time.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
@@ -11,6 +12,7 @@ import 'announcement_share.dart';
 import 'widgets/announcement_keepsake_card.dart';
 import '../../home/data/home_repository.dart';
 import '../data/announcement_repository.dart';
+import '../domain/announcement_navigation.dart';
 
 class AnnouncementCardScreen extends StatefulWidget {
   const AnnouncementCardScreen({super.key, required this.babyId});
@@ -82,6 +84,10 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
     if (d == null) {
       return const Scaffold(body: Center(child: Text('No announcement yet')));
     }
+    final birthTimeLabel = formatApiClockTime(
+      d.birthTime,
+      Localizations.localeOf(context).toString(),
+    );
 
     return PrototypeSubpageScaffold(
       title: 'Announcement',
@@ -94,8 +100,12 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
         if (_isOwner)
           IconButton(
             icon: const Icon(Icons.edit_outlined, size: 20),
-            onPressed: () =>
-                context.push('/baby/${widget.babyId}/announcement/create'),
+            onPressed: () async {
+              final saved = await context.push<bool>(
+                announcementCreateLocation(widget.babyId),
+              );
+              if (saved == true && mounted) await _load();
+            },
           ),
       ],
       body: Column(
@@ -113,8 +123,8 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
                     padding: const EdgeInsets.only(top: 8),
                     child: Column(
                       children: [
-                        if (d.birthTime != null)
-                          _StatRow(icon: Icons.schedule_outlined, label: d.birthTime!),
+                        if (birthTimeLabel.isNotEmpty)
+                          _StatRow(icon: Icons.schedule_outlined, label: birthTimeLabel),
                         if (d.weightText != null)
                           _StatRow(icon: Icons.monitor_weight_outlined, label: d.weightText!),
                         if (d.lengthText != null)

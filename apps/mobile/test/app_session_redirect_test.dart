@@ -210,6 +210,112 @@ void main() {
     expect(redirect, isNull);
   });
 
+  test('local onboarding completion does not override the server gate', () async {
+    final f = await _fixtures(localOwnerCompleted: true);
+    f.session.debugSetStatus(
+      const OnboardingStatus(
+        emailVerified: true,
+        profileComplete: true,
+        hasOwnerBaby: true,
+        hasBabyMembership: true,
+        ownerOnboardingCompleted: false,
+        needsOwnerOnboarding: true,
+        canAccessMainApp: false,
+      ),
+    );
+    expect(f.session.canAccessMainApp, isFalse);
+    expect(
+      f.session.redirectFor(
+        isSignedIn: true,
+        emailVerified: true,
+        location: '/home',
+      ),
+      OnboardingRoutes.ownerFirstMoment,
+    );
+  });
+
+  test('server can_access_main_app admits a fresh-device co-owner', () async {
+    final f = await _fixtures();
+    f.session.debugSetStatus(
+      const OnboardingStatus(
+        emailVerified: true,
+        profileComplete: true,
+        hasOwnerBaby: true,
+        hasBabyMembership: true,
+        ownerOnboardingCompleted: false,
+        needsOwnerOnboarding: false,
+        canAccessMainApp: true,
+      ),
+    );
+    expect(f.session.canAccessMainApp, isTrue);
+    expect(
+      f.session.redirectFor(
+        isSignedIn: true,
+        emailVerified: true,
+        location: OnboardingRoutes.ownerCreateBaby,
+      ),
+      '/home',
+    );
+  });
+
+  test('follower who also created a baby keeps home and owner onboarding', () async {
+    final f = await _fixtures();
+    f.session.debugSetStatus(
+      const OnboardingStatus(
+        emailVerified: true,
+        profileComplete: true,
+        hasOwnerBaby: true,
+        hasBabyMembership: true,
+        ownerOnboardingCompleted: false,
+        needsOwnerOnboarding: true,
+        canAccessMainApp: true,
+      ),
+    );
+    expect(f.session.canAccessMainApp, isTrue);
+    expect(
+      f.session.redirectFor(
+        isSignedIn: true,
+        emailVerified: true,
+        location: '/home',
+      ),
+      isNull,
+    );
+    expect(
+      f.session.redirectFor(
+        isSignedIn: true,
+        emailVerified: true,
+        location: OnboardingRoutes.ownerFirstMoment,
+      ),
+      isNull,
+    );
+  });
+
+  test('fromJson keeps explicit onboarding flags', () {
+    final status = OnboardingStatus.fromJson({
+      'email_verified': true,
+      'profile_complete': true,
+      'has_owner_baby': true,
+      'has_baby_membership': true,
+      'owner_onboarding_completed': false,
+      'needs_owner_onboarding': false,
+      'can_access_main_app': true,
+    });
+    expect(status.needsOwnerOnboarding, isFalse);
+    expect(status.canAccessMainApp, isTrue);
+
+    final both = OnboardingStatus.fromJson({
+      'email_verified': true,
+      'profile_complete': true,
+      'has_owner_baby': true,
+      'has_baby_membership': true,
+      'owner_onboarding_completed': false,
+      'needs_owner_onboarding': true,
+      'can_access_main_app': true,
+    });
+    expect(both.needsOwnerOnboarding, isTrue);
+    expect(both.canAccessMainApp, isTrue);
+  });
+
   test('owner with baby redirects create-baby to first moment by default', () async {
     final f = await _fixtures();
     f.session.debugSetStatus(_ownerMidOnboarding());

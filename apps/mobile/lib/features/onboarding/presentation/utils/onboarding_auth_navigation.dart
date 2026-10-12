@@ -26,10 +26,6 @@ Future<void> navigateAfterOnboardingAuth(
     if (context.mounted) context.go('/home');
     return;
   }
-  if (session.ownerOnboardingComplete) {
-    if (context.mounted) context.go('/home');
-    return;
-  }
   final user = FirebaseAuth.instance.currentUser;
 
   if (user != null && !usedOAuth && isSignUp && !user.emailVerified) {

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/api/api_error_message.dart';
+import '../../../core/presentation/tab_load_failure.dart';
+import '../../../core/presentation/tab_load_kind.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/widgets/async_tab_body.dart';
 import '../../../core/theme/app_colors.dart';
@@ -67,10 +68,44 @@ class _FunScreenState extends State<FunScreen> with BabyContextReload {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _error = apiErrorMessage(e);
-      });
+      final hadBaby = _baby != null;
+      reportTabLoadFailure(
+        context,
+        e,
+        hasPayload: hadBaby,
+        onBlockingError: (message) {
+          setState(() {
+            _loading = false;
+            _error = message;
+          });
+        },
+      );
+      if (hadBaby && mounted) {
+        setState(() => _loading = false);
+      }
+    }
+  }
+
+  Widget _funBody() {
+    final kind = resolveTabLoadKind(
+      loading: _loading,
+      hasError: _error != null,
+      hasPayload: _baby != null,
+    );
+    switch (kind) {
+      case TabLoadKind.loading:
+        return const Center(child: CircularProgressIndicator());
+      case TabLoadKind.error:
+        return AsyncTabBody(
+          loading: false,
+          error: _error,
+          onRetry: _loadBaby,
+          child: const SizedBox.shrink(),
+        );
+      case TabLoadKind.empty:
+        return const Center(child: Text('No baby profile yet.'));
+      case TabLoadKind.content:
+        return _segment == 0 ? NamesTab(baby: _baby!) : PredictionsTab(baby: _baby!);
     }
   }
 
@@ -107,20 +142,7 @@ class _FunScreenState extends State<FunScreen> with BabyContextReload {
             ),
             const SizedBox(height: 8),
             Expanded(
-              child: _loading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _error != null
-                      ? AsyncTabBody(
-                          loading: false,
-                          error: _error,
-                          onRetry: _loadBaby,
-                          child: const SizedBox.shrink(),
-                        )
-                      : _baby == null
-                          ? const Center(child: Text('No baby profile yet.'))
-                          : _segment == 0
-                              ? NamesTab(baby: _baby!)
-                              : PredictionsTab(baby: _baby!),
+              child: _funBody(),
             ),
           ],
         ),

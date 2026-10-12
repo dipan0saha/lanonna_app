@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../router/subpage_navigation.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_metrics.dart';
 import '../theme/la_nonna_theme.dart';
@@ -20,9 +21,31 @@ class PrototypeSubpageScaffold extends StatelessWidget {
   final VoidCallback? onBack;
   final List<Widget>? actions;
 
+  bool _routeCanPop(BuildContext context) {
+    if (onBack != null) return false;
+    final router = GoRouter.maybeOf(context);
+    if (router != null) return router.canPop();
+    return Navigator.of(context).canPop();
+  }
+
+  void _handleBack(BuildContext context) {
+    final custom = onBack;
+    if (custom != null) {
+      custom();
+      return;
+    }
+    popOrGoHome(context);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: _routeCanPop(context),
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        _handleBack(context);
+      },
+      child: Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
@@ -38,7 +61,7 @@ class PrototypeSubpageScaffold extends StatelessWidget {
               child: Row(
                 children: [
                   IconButton(
-                    onPressed: onBack ?? () => context.pop(),
+                    onPressed: () => _handleBack(context),
                     icon: const Icon(Icons.arrow_back_ios_new, size: 20),
                   ),
                   Expanded(
@@ -59,6 +82,7 @@ class PrototypeSubpageScaffold extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }
