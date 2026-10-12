@@ -19,6 +19,7 @@ import '../../onboarding/presentation/app_session.dart';
 import '../../onboarding/presentation/models/invite_relationship_option.dart';
 import '../../onboarding/presentation/onboarding_coordinator.dart';
 import '../../onboarding/presentation/utils/onboarding_back_navigation.dart';
+import '../../onboarding/presentation/utils/owner_onboarding_baby_missing.dart';
 import '../../onboarding/presentation/widgets/onboarding_buttons.dart';
 import '../../onboarding/presentation/widgets/onboarding_invite_row.dart';
 import '../../onboarding/presentation/widgets/onboarding_prototype_widgets.dart';
@@ -124,18 +125,6 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
           context.read<SelectedBabyStore>(),
         );
     return baby?.id;
-  }
-
-  void _handleMissingOwnerBabyId(AppSession session) {
-    if (session.status?.needsOwnerOnboarding == true ||
-        session.status?.hasOwnerBaby == true) {
-      setState(() {
-        _error =
-            "We couldn't load your baby profile. Check your connection and try again.";
-      });
-      return;
-    }
-    context.go(OnboardingRoutes.ownerCreateBaby);
   }
 
   @override
@@ -254,7 +243,11 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
     final babyId = await _resolveBabyId();
     if (babyId == null) {
       if (!mounted) return;
-      _handleMissingOwnerBabyId(session);
+      handleOwnerOnboardingBabyMissing(
+        context,
+        session,
+        setError: (message) => setState(() => _error = message),
+      );
       return;
     }
     setState(() {

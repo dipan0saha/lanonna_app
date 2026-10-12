@@ -23,6 +23,7 @@ import '../../domain/owner_onboarding_baby_resolver.dart';
 import '../app_session.dart';
 import '../onboarding_coordinator.dart';
 import '../utils/onboarding_back_navigation.dart';
+import '../utils/owner_onboarding_baby_missing.dart';
 import '../widgets/onboarding_buttons.dart';
 import '../widgets/onboarding_prototype_widgets.dart';
 import '../widgets/onboarding_scaffold.dart';
@@ -156,25 +157,17 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
     );
   }
 
-  void _handleMissingOwnerBabyId(AppSession session) {
-    if (session.status?.needsOwnerOnboarding == true ||
-        session.status?.hasOwnerBaby == true) {
-      setState(() {
-        _error =
-            "We couldn't load your baby profile. Check your connection and try again.";
-      });
-      return;
-    }
-    context.go(OnboardingRoutes.ownerCreateBaby);
-  }
-
   Future<void> _advance({required bool seed}) async {
     await _syncDraft();
     if (!mounted) return;
     final session = context.read<AppSession>();
     final babyId = await _resolveOwnerBabyId();
     if (babyId == null) {
-      _handleMissingOwnerBabyId(session);
+      handleOwnerOnboardingBabyMissing(
+        context,
+        session,
+        setError: (message) => setState(() => _error = message),
+      );
       return;
     }
     setState(() {
