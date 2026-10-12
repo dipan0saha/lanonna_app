@@ -118,6 +118,7 @@ class _LaNonnaAppState extends State<LaNonnaApp> {
   void dispose() {
     _appLinkSub?.cancel();
     _pushService?.dispose();
+    widget.routerRefresh.dispose();
     super.dispose();
   }
 

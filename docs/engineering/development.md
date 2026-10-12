@@ -36,6 +36,12 @@ lanonna_app/
 | `announcement/` | `/baby/:id/announcement`, `/baby/:id/announcement/create` | Keepsake card (signed `photo_display_url` on GET) + create |
 | `shell/` | (sheet from tab `HomeTopBar`) | Baby switcher; **My Account** footer |
 | `onboarding/`, `invitations/` | Onboarding + deep links | Owner/follower/co-owner paths; owner create-baby route wraps shared `CreateBabyScreen` (`CreateBabyMode.onboarding`) |
+| `fun/` | `/gamification` (shell tab) | Names, gender/birthdate predictions |
+| `search/` | `/search` | Global baby-scoped search |
+| `settings/` | `/settings` | App settings |
+| `legal/` | `/legal/terms`, `/legal/privacy` | Static legal copy |
+| `home/` (activity) | `/home/activity` | Full home activity feed |
+| `account/` (inbox) | `/notifications/inbox` | Notification inbox |
 
 Repositories are registered in `bootstrap.dart`; routes in `core/router/app_router.dart`. Legacy redirects: `/login` → onboarding login, `/role-selection` → owner carousel. Shared API models (e.g. `BabySummary`) live under `apps/mobile/lib/core/domain/`. **Selected baby:** `HomeRepository.resolveSelectedBaby(SelectedBabyStore)` — use for baby-scoped loads (not raw `selectedBabyId` alone). After a successful `/v1/babies` fetch, the repo keeps an in-memory list for offline resolution; tab screens use `BabyContextReload` (selection, home refresh, reconnect) and `AsyncTabBody` for load errors. **Route-scoped baby:** `HomeRepository.babyById(id)` for deep links and screens keyed by `babyId` in the URL. Static catalogs: `assets/calendar/event_suggestions.json`, `assets/registry/registry_suggestions.json`.
 
@@ -46,6 +52,10 @@ Repositories are registered in `bootstrap.dart`; routes in `core/router/app_rout
 | `routers/` | HTTP handlers (`photos`, `events`, `registry`, `fun`, `babies`, …) |
 | `domain/` | Membership, permissions, activity + notify hooks (`gallery`, `calendar`, `registry`, `fun`, `home`, `notifications`, `invitations`, **`member_lifecycle`**, `onboarding`, `membership`, `name_suggestions`, `url_validation`, **`users_display`**) |
 | `repositories/` | Parameterized SQL only |
+
+**Liveness:** `GET /health` is public (no JWT / App Check) — see route table below.
+
+**CORS:** Mobile clients do not need CORS. For a future browser client, set API env `CORS_ALLOW_ORIGINS` to a comma-separated allowlist (empty = middleware off).
 
 **Member display names (#7):** Family-visible labels come from `app_users.display_name` only. Use [`domain/users_display.py`](../../services/api/src/lanonna_api/domain/users_display.py) (`author_display_name_from_row`, `uploader_display_name_from_row`, `purchaser_display_name_from_row`, `rsvp_display_name_from_row`) — never derive labels from email. SQL should alias `u.display_name` as the matching `*_display_name` (RSVP rows use unaliased `display_name` read by `rsvp_display_name_from_row`). Empty/null → **Family member**; activity/notification actor without profile → **Someone** (`actor_display_name`).
 
@@ -184,6 +194,8 @@ API verifies Firebase ID tokens with `firebase_admin.auth.verify_id_token`, then
 |--------|----------------|--------|
 | API | `api` | `services/api/scripts/deploy.sh` |
 | Worker | `worker` | `services/worker/scripts/deploy.sh` then `./scripts/apply-dev-run-iam.sh` |
+
+Cloud Build / local Docker use repo-root [`.gcloudignore`](../../.gcloudignore) and [`.dockerignore`](../../.dockerignore) so uploads include only `packages/` and `services/` ([operations.md](operations.md)).
 
 Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps: [flavors/README.md](../../apps/mobile/flavors/README.md); `gcloud run services describe api --region=us-central1 --format='value(status.url)'`)
 

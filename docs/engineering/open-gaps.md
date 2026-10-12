@@ -12,7 +12,7 @@ Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [op
 
 | Check | Result |
 |-------|--------|
-| API `pytest` (`services/api`) | 203 passed |
+| API `pytest` (`services/api`) | 208 passed |
 | Worker `pytest` | 56 passed |
 | `flutter test` | 217 passed |
 | `flutter analyze` | 0 errors, 0 warnings, 48 infos (L-26) |
@@ -26,8 +26,8 @@ Run all three suites before every ship; the suites are the only automated gate (
 | Severity | Open | Themes |
 |----------|------|--------|
 | High | 4 | Release signing, worker OIDC, App Check enforce, admin surface |
-| Medium | 22 | Export memory limits (beta), infra/IAM/prod parity, mobile error/async/date handling |
-| Low | 16 | Input caps, logging, infra hygiene, docs drift, lint/conventions, deferred consolidation backlog |
+| Medium | 21 | Export memory limits (beta), infra/IAM/prod parity, mobile error/async/date handling |
+| Low | 11 | Input caps, logging, infra hygiene (GCS), lint/conventions, deferred consolidation backlog |
 
 ---
 
@@ -143,7 +143,7 @@ Run all three suites before every ship; the suites are the only automated gate (
 | M-21 | Dev automation SA has `editor`, `serviceAccountAdmin`, `projectIamAdmin` | `iam.tf` | Keep dev-only; narrow roles |
 | M-22 | Cloud SQL public IPv4 enabled, no private IP / VPC connector | `modules/platform/sql.tf` | Private IP or documented restriction |
 | M-47 | Prod Terraform sets the SQL app password (`manage_sql_app_password = true`) but never writes it to Secret Manager; Cloud Run reads `db-lanonna-app-password:latest`, so a fresh prod apply can leave API/worker unable to connect | `environments/prod/main.tf:39`, `modules/platform/sql.tf:41-57`, `secrets.tf` | Add a `google_secret_manager_secret_version` from the generated password, or document a single bootstrap step |
-| M-48 | No repo-root `.gcloudignore`/`.dockerignore`; deploys upload the whole monorepo (~13k files / ~680 MB per build); service-level `.dockerignore` files are ignored with a repo-root context | `services/*/scripts/deploy.sh`, `services/*/cloudbuild.yaml` | Add root `.gcloudignore` and `.dockerignore` limited to `services/`, `packages/`, Dockerfiles |
+| ✅ M-48 | No repo-root `.gcloudignore`/`.dockerignore`; deploys uploaded the whole monorepo; service-level `.dockerignore` was ignored with repo-root context | repo-root `.gcloudignore`, `.dockerignore`; `services/*/scripts/deploy.sh` | Whitelist `packages/` + `services/`; removed `services/api/.dockerignore` and `services/worker/.dockerignore` |
 | M-49 | Dev Cloud SQL has no deletion protection (`deletion_protection = var.environment == "prod"`) and no `prevent_destroy` | `modules/platform/sql.tf:30` | Enable for dev or add `lifecycle { prevent_destroy }` |
 | M-50 | Worker FCM permission (`roles/firebasecloudmessaging.admin`) is documented but not in Terraform; a fresh environment silently fails to push | `docs/engineering/operations.md`, `modules/platform/iam.tf` | Codify the role binding |
 | M-51 | `run-beta-gate.sh` needs `services/api/.venv` and deploys API only (no worker/IAM) | `scripts/run-beta-gate.sh:11-21` | Reuse the `verify-dev-prerequisites.sh` venv pattern; match the documented deploy order |
@@ -180,18 +180,18 @@ Run all three suites before every ship; the suites are the only automated gate (
 | L-07 | Default API base URL baked in source; release builds must use `--dart-define-from-file` | `config/app_config.dart` |
 | L-08 | Accessibility: semantics labels concentrated in shell/onboarding; many controls unlabeled (WCAG AA is the PRD baseline) | mobile |
 | L-09 | Hardcoded UI strings vs `app_en.arb` (FR-SET-002) | e.g. `account_edit_screen.dart`, `home_screen.dart` |
-| L-10 | No CORS middleware (fine for mobile-only; needs policy if a web client is added) | `services/api/main.py` |
+| ✅ L-10 | No CORS middleware (fine for mobile-only; needs policy if a web client is added) | `main.py`, `config.py` — `CORS_ALLOW_ORIGINS` comma-list; off when empty |
 | L-14 | Poison/unknown Pub/Sub messages are logged and acked (204) with no metric; permanent rejects log `pubsub_payload_permanent_reject` (**M-46**); no alert on DLQ depth (the `…-dlq-pull` subscription retains messages, but nobody is notified) | `worker/main.py`, `worker/pubsub_payload.py`, `modules/platform/pubsub.tf` |
 | L-15 | Dockerfiles run as root; Cloud Build only builds/pushes (no tests); base images use floating `python:3.12-slim` tags | `services/*/Dockerfile`, `cloudbuild.yaml` |
 | L-16 | Duplicate email template trees (intentional); run `scripts/sync-email-templates.sh check` locally before commit | `packages/email-templates`, `services/worker/email_templates` |
 | L-17 | Unbounded inputs: photo caption PATCH (init caps 2000), photo tags list, fun name `suggested_name`, event/registry title/description/location, membership-check `email` query | `routers/photos.py:17-37`, `routers/fun.py:21-22`, `routers/events.py:18-36`, `routers/registry.py:21-33`, `routers/invitations.py:76-79` |
 | ✅ L-18 | Search `q` is not escaped for `ILIKE` wildcards (`%`, `_`); `PermissionError` returned plain string `detail` | `text_ilike.py`, `repositories/search.py`, `http_errors.py` — `ilike_substring_pattern` + `ESCAPE '\'`; `PermissionError` → `{error,message}` |
-| L-19 | Calendar `list_events` has no `LIMIT` when no month/upcoming filter; storage usage counts soft-deleted babies | `repositories/events.py:13-46`, `repositories/user_engagement.py:71-81` |
+| ✅ L-19 | Calendar `list_events` unbounded; storage usage counted soft-deleted babies | `events.py` `LIST_EVENTS_MAX_ROWS`; `user_engagement.py` joins `baby_profiles.deleted_at` |
 | ✅ L-20 | Dead config: API `invite_deep_link_base` was unused (worker-only) | `services/api/config.py` — removed from API `Settings` |
 | L-21 | Worker hygiene: unknown messages log the full payload (PII/token risk); export uses `SELECT *` (internal columns) and silently truncates activity to 500 rows | `worker/main.py:154-158`, `worker/baby_data_export.py:96-137` |
-| L-22 | Infra hygiene: GCS buckets lack `public_access_prevention`/versioning/lifecycle; `import-dev.sh` omits the `admin-api-key` secret | `modules/platform/storage.tf`, `infra/terraform/scripts/import-dev.sh:40-41` |
-| L-23 | Docs drift: `development.md` mobile module table omits `fun/`, `search/`, `settings/`, `legal/`, `/home/activity`, `/notifications/inbox`; `/health` undocumented; `operations.md` migration block mixes `cd infra/db` with a repo-root script path | see list |
-| L-24 | Mobile hygiene: FCM unregister failures swallowed; `RouterRefreshListenable` auth stream subscription never cancelled; Android release has no R8/minify rules | `core/notifications/push_notification_service.dart:118-127`, `core/router/router_refresh.dart:13-16`, `android/app/build.gradle.kts:37-42` |
+| L-22 | Infra hygiene: GCS buckets lack `public_access_prevention`/versioning/lifecycle (**open**); `import-dev.sh` omitted `admin-api-key` | `storage.tf` — **fixed:** `admin-api-key` in `import-dev.sh` secret loop |
+| ✅ L-23 | Docs drift: mobile module table, `/health`, migration verify path | `development.md`, `operations.md` |
+| L-24 | Mobile hygiene: FCM unregister failures swallowed; Android release has no R8/minify rules (**open**). `RouterRefreshListenable` auth subscription | `push_notification_service.dart`, `android/.../build.gradle.kts` — **fixed:** `router_refresh.dart` + `app.dart` dispose |
 | L-25 | Convention violations: ~13 hardcoded hex colors in `features/` (e.g. `onboarding_buttons.dart:108`, `batch_invite_screen.dart:296`, `event_form_widgets.dart:38-39`); hardcoded strings in `batch_invite_screen.dart`, `onboarding_wrong_email_screen.dart`, `app.dart`; batch invite submit bypasses `runMutation`; hand-rolled count strings in `predictions_tab.dart:399`, `names_tab.dart:328`, `gallery_photo_grid.dart:109` | mobile |
 | L-26 | `flutter analyze`: 48 infos — `use_null_aware_elements` (registry/home/onboarding repositories), `unnecessary_underscores`, 4 `use_build_context_synchronously` in login/signup screens, deprecated `value` on a form field | mobile `lib/`, `test/` |
 | ✅ L-27 | Legacy `photo_ready_notification_log` unused after fan-out `dedupe_key` | migration `029` — `DROP TABLE photo_ready_notification_log` |
@@ -212,4 +212,4 @@ Run all three suites before every ship; the suites are the only automated gate (
 1. **Pre-beta security:** H-01, H-04, H-05, H-06, M-27, M-57
 2. **Mobile correctness:** M-54–M-61
 3. **Infra + prod parity:** M-19–M-22, M-47–M-53
-4. **Ops / polish:** M-09, M-31, L-07–L-17, L-19–L-26; then the L-28 consolidation backlog
+4. **Ops / polish:** M-09, M-31, L-07–L-17, L-21–L-22, L-24–L-26; then the L-28 consolidation backlog

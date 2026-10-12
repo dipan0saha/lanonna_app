@@ -109,6 +109,8 @@ Real users on prod = **new Firebase project + prod flavor**, not renaming dev. S
 
 Scripts use **Cloud Build** → `us-central1-docker.pkg.dev/lanonna-dev/lanonna/…`. Optional: `USE_LOCAL_DOCKER=1`.
 
+**Build context (M-48):** `gcloud builds submit` uses the **repo root** as source. Root [`.gcloudignore`](../../.gcloudignore) whitelists only `packages/` and `services/` (plus secret/cache exclusions); root [`.dockerignore`](../../.dockerignore) matches for local Docker. To inspect what would upload: `gcloud meta list-files-for-upload .` from the repo root. If a Dockerfile starts `COPY`ing paths outside those trees, extend both ignore files.
+
 **API deploy wires:** Cloud SQL `lanonna-dev:us-central1:lanonna-db`, secret `db-lanonna-app-password` → `DB_PASSWORD`, `DISPLAY_BUCKET=lanonna-dev-display`, `GCS_SIGNING_SERVICE_ACCOUNT=lanonna-api@lanonna-dev.iam.gserviceaccount.com`.
 
 **GCS signed uploads:** `lanonna-api` needs `roles/iam.serviceAccountTokenCreator` on itself (`run_iam.tf` → `api_self_token_creator`).
@@ -181,7 +183,7 @@ export PGPASSWORD=$(gcloud secrets versions access latest --secret=db-lanonna-ap
 cd infra/db
 python3 -m venv .venv && .venv/bin/pip install 'psycopg[binary]'
 DB_PASSWORD="$PGPASSWORD" DB_PORT=5432 .venv/bin/python apply_migrations.py
-./scripts/verify-dev-migrations.sh   # from repo root, PGPASSWORD set
+cd ../.. && ./scripts/verify-dev-migrations.sh   # repo root; PGPASSWORD set
 ```
 
 Secrets (values in Secret Manager only): `db-lanonna-app-password`, `database-url`, `db-postgres-root-password`, `admin-api-key` (add version via `gcloud` after first apply if empty).

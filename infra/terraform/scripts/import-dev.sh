@@ -37,7 +37,7 @@ terraform import "${ROOT}.google_service_account.worker" "projects/${PROJECT}/se
 terraform import "${ROOT}.google_service_account.automation[0]" "projects/${PROJECT}/serviceAccounts/lanonna-automation@${PROJECT}.iam.gserviceaccount.com"
 
 echo "Importing Secret Manager containers..."
-for secret in database-url db-lanonna-app-password db-postgres-root-password mailjet-api-key mailjet-api-secret; do
+for secret in database-url db-lanonna-app-password db-postgres-root-password mailjet-api-key mailjet-api-secret admin-api-key; do
   terraform import "${ROOT}.google_secret_manager_secret.app[\"${secret}\"]" "projects/${PROJECT}/secrets/${secret}"
 done
 

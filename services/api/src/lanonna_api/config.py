@@ -34,6 +34,14 @@ class Settings(BaseSettings):
 
     admin_api_key: str = ""  # ADMIN_API_KEY — ops CRUD for system announcements
     app_check_enforce: bool = False  # APP_CHECK_ENFORCE — reject missing/invalid App Check (dev deploy: see deploy.sh TEMP note)
+    # Comma-separated browser origins; empty = no CORS (mobile-only default).
+    cors_allow_origins: str = ""  # CORS_ALLOW_ORIGINS
+
+    def cors_allow_origins_list(self) -> list[str]:
+        raw = self.cors_allow_origins.strip()
+        if not raw:
+            return []
+        return [part.strip() for part in raw.split(",") if part.strip()]
 
 
 settings = Settings()

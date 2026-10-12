@@ -4,6 +4,7 @@ from typing import Any, Literal, Self
 
 from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
+from starlette.middleware.cors import CORSMiddleware
 from lanonna_api.middleware.rate_limit import RateLimitMiddleware
 from lanonna_api.middleware.request_context import RequestContextMiddleware
 from pydantic import BaseModel, Field, model_validator
@@ -38,6 +39,15 @@ logger = logging.getLogger("lanonna.api")
 app = FastAPI(title="La Nonna API", version="0.1.0")
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(RequestContextMiddleware)
+_cors_origins = settings.cors_allow_origins_list()
+if _cors_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 
 @app.exception_handler(Exception)

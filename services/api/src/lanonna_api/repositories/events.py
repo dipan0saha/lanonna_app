@@ -9,6 +9,9 @@ from lanonna_api.repositories.catalog_suggestions import (
     catalog_suggestion_claimed_on_table,
 )
 
+# Safety cap when listing full event history (no month / upcoming filter).
+LIST_EVENTS_MAX_ROWS = 500
+
 
 def list_events(
     baby_profile_id: uuid.UUID,
@@ -28,6 +31,15 @@ def list_events(
         from datetime import timezone
 
         params.append(now or datetime.now(timezone.utc))
+    unscoped = (
+        month_start is None
+        and month_end is None
+        and not upcoming_only
+    )
+    limit_sql = ""
+    if unscoped:
+        limit_sql = " LIMIT %s"
+        params.append(LIST_EVENTS_MAX_ROWS)
     where = " AND ".join(clauses)
     with get_connection() as conn:
         rows = conn.execute(
@@ -39,7 +51,7 @@ def list_events(
                 e.created_by_firebase_uid, e.created_at
             FROM events e
             WHERE {where}
-            ORDER BY e.starts_at ASC
+            ORDER BY e.starts_at ASC{limit_sql}
             """,
             tuple(params),
         ).fetchall()
