@@ -11,6 +11,7 @@ from lanonna_api.repositories.search import (
     search_photos,
     search_registry_items,
 )
+from lanonna_api.text_ilike import ilike_substring_pattern
 def search_baby_content(
     firebase_uid: str,
     baby_profile_id: uuid.UUID,
@@ -29,7 +30,7 @@ def search_baby_content(
             "name_suggestions": [],
         }
 
-    pattern = f"%{q}%"
+    pattern = ilike_substring_pattern(q)
     per_type = max(1, min(limit, 20))
 
     photos = [

@@ -40,7 +40,10 @@ def map_domain_errors(exc: Exception) -> HTTPException:
             detail={"error": exc.code, "message": exc.message},
         )
     if isinstance(exc, PermissionError):
-        return HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc))
+        return HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"error": "forbidden", "message": str(exc)},
+        )
     if isinstance(exc, LookupError):
         return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
     if isinstance(exc, ValueError):

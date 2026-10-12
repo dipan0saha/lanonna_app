@@ -34,6 +34,7 @@ Apply in **lexicographic order** (filename prefix):
 | `026_export_job_started_at.sql` | `baby_data_export_jobs.started_at` + stale `running` reclaim (M-11) |
 | `027_invite_email_send_claim.sql` | `invitations.email_send_claimed_at` (M-12) |
 | `028_invite_email_delivery_token.sql` | `invitations.email_invite_token` cleared on send (M-41) |
+| `029_drop_photo_ready_notification_log.sql` | Drop unused `photo_ready_notification_log` (L-27) |
 
 ## Apply (dev)
 

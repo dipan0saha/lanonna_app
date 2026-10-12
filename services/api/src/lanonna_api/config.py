@@ -28,8 +28,6 @@ class Settings(BaseSettings):
     gcs_signing_service_account: str = "lanonna-api@lanonna-dev.iam.gserviceaccount.com"
 
     pubsub_topic_commands: str = "lanonna-async-commands"  # PUBSUB_TOPIC_COMMANDS
-    # Deep link base for invite emails (no trailing slash), e.g. lanonna://app
-    invite_deep_link_base: str = "lanonna://app"  # INVITE_DEEP_LINK_BASE
     # When true, API logs invite publish instead of calling Pub/Sub (local dev).
     invite_email_publish_disabled: bool = False  # INVITE_EMAIL_PUBLISH_DISABLED
     notify_publish_disabled: bool = False  # NOTIFY_PUBLISH_DISABLED
