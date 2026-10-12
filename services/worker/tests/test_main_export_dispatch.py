@@ -33,7 +33,8 @@ def client() -> TestClient:
         (1, False, False),
         (2, True, False),
         (4, True, False),
-        (5, True, True),
+        (11, True, False),
+        (12, True, True),
     ],
 )
 def test_export_dispatch_maps_delivery_attempt(client, attempt, redelivery, final_attempt):

@@ -47,7 +47,8 @@ resource "google_pubsub_topic_iam_member" "api_commands_publisher" {
 }
 
 locals {
-  pubsub_service_agent = "serviceAccount:service-${data.google_project.current.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+  pubsub_service_agent           = "serviceAccount:service-${data.google_project.current.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+  pubsub_max_delivery_attempts   = 12
 }
 
 # Dead-lettering needs the Pub/Sub service agent to publish to the DLQ topic and to
@@ -95,9 +96,14 @@ resource "google_pubsub_subscription" "worker_push" {
     }
   }
 
+  retry_policy {
+    minimum_backoff = "10s"
+    maximum_backoff = "600s"
+  }
+
   dead_letter_policy {
     dead_letter_topic     = google_pubsub_topic.dead_letter.id
-    max_delivery_attempts = 5
+    max_delivery_attempts = local.pubsub_max_delivery_attempts
   }
 
   labels = {
@@ -122,9 +128,14 @@ resource "google_pubsub_subscription" "worker_push_commands" {
     }
   }
 
+  retry_policy {
+    minimum_backoff = "10s"
+    maximum_backoff = "600s"
+  }
+
   dead_letter_policy {
     dead_letter_topic     = google_pubsub_topic.dead_letter.id
-    max_delivery_attempts = 5
+    max_delivery_attempts = local.pubsub_max_delivery_attempts
   }
 
   labels = {

@@ -22,6 +22,7 @@ class InviteRowResult(BaseModel):
     email: str
     status: Literal[
         "created",
+        "resent",
         "skipped_member",
         "skipped_invalid",
         "skipped_duplicate",

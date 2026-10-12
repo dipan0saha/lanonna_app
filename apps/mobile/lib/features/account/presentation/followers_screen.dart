@@ -61,6 +61,19 @@ class _FollowersScreenState extends State<FollowersScreen> {
     }
   }
 
+  String _inviteSubtitle(InvitationRow inv) {
+    if (inv.emailDeliveryStatus == 'failed') {
+      return inv.emailLastError ?? 'Email failed to send';
+    }
+    if (inv.emailDeliveryStatus == 'sent') {
+      return 'Email sent';
+    }
+    if (inv.emailDeliveryStatus == 'pending') {
+      return 'Pending — email sending';
+    }
+    return inv.status;
+  }
+
   Future<void> _confirmRemove(MemberRow member) async {
     final l10n = AppLocalizations.of(context)!;
     final ok = await showDialog<bool>(
@@ -158,25 +171,53 @@ class _FollowersScreenState extends State<FollowersScreen> {
                     for (final inv in _invites)
                       ListTile(
                         title: Text(inv.email),
-                        subtitle: Text(inv.status),
-                        trailing: AppIconButton(
-                          semanticsId: 'revoke_invite_${inv.id}',
-                          label: 'Revoke invitation',
-                          icon: const Icon(Icons.close),
-                          onPressed: () async {
-                            try {
-                              await context
-                                  .read<AccountRepository>()
-                                  .revokeInvitation(widget.babyId, inv.id);
-                              await _load();
-                            } catch (e) {
-                              if (!context.mounted) return;
-                              AppSnackBar.showAlert(
-                                context,
-                                apiErrorMessage(e),
-                              );
-                            }
-                          },
+                        subtitle: Text(_inviteSubtitle(inv)),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (inv.canResendEmail)
+                              AppIconButton(
+                                semanticsId: 'resend_invite_${inv.id}',
+                                label: 'Resend invitation',
+                                icon: const Icon(Icons.refresh),
+                                onPressed: () async {
+                                  final sent = await runMutation(
+                                    context,
+                                    () => context
+                                        .read<AccountRepository>()
+                                        .resendInvitation(
+                                          widget.babyId,
+                                          inv.id,
+                                        ),
+                                  );
+                                  if (!sent || !mounted) return;
+                                  AppSnackBar.showInfo(
+                                    context,
+                                    'Invite email queued',
+                                  );
+                                  await _load();
+                                },
+                              ),
+                            AppIconButton(
+                              semanticsId: 'revoke_invite_${inv.id}',
+                              label: 'Revoke invitation',
+                              icon: const Icon(Icons.close),
+                              onPressed: () async {
+                                try {
+                                  await context
+                                      .read<AccountRepository>()
+                                      .revokeInvitation(widget.babyId, inv.id);
+                                  await _load();
+                                } catch (e) {
+                                  if (!context.mounted) return;
+                                  AppSnackBar.showAlert(
+                                    context,
+                                    apiErrorMessage(e),
+                                  );
+                                }
+                              },
+                            ),
+                          ],
                         ),
                       ),
                   ],

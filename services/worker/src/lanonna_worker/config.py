@@ -27,8 +27,8 @@ class Settings(BaseSettings):
     # Empty uses lanonna-worker@GCP_PROJECT_ID.iam.gserviceaccount.com (export media URLs).
     gcs_signing_service_account: str = ""  # GCS_SIGNING_SERVICE_ACCOUNT
 
-    # Must match dead_letter_policy.max_delivery_attempts in infra/terraform/modules/platform/pubsub.tf.
-    pubsub_max_delivery_attempts: int = 5  # PUBSUB_MAX_DELIVERY_ATTEMPTS
+    # Must match local.pubsub_max_delivery_attempts in infra/terraform/modules/platform/pubsub.tf.
+    pubsub_max_delivery_attempts: int = 12  # PUBSUB_MAX_DELIVERY_ATTEMPTS
 
 
 _DEV_PROJECT_ID = "lanonna-dev"

@@ -38,8 +38,8 @@ def test_batch_invite_email_queue_failed_returns_row_not_raises():
         ),
         patch("lanonna_api.domain.invitations.email_is_member", return_value=False),
         patch(
-            "lanonna_api.domain.invitations.email_has_pending_invite",
-            return_value=False,
+            "lanonna_api.domain.invitations.fetch_pending_invitation_by_email",
+            return_value=None,
         ),
         patch(
             "lanonna_api.domain.invitations.create_invitation",

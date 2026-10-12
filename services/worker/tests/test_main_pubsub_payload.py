@@ -8,6 +8,7 @@ from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
 
+from lanonna_worker.invite_email import InviteSendOutcome
 from lanonna_worker.main import app
 
 
@@ -79,3 +80,37 @@ def test_send_invite_invalid_invitation_id_is_acked(client):
         )
     assert resp.status_code == 204
     send.assert_not_called()
+
+
+def test_send_invite_transient_failure_returns_500(client):
+    inv_id = uuid.uuid4()
+    with patch(
+        "lanonna_worker.main.send_invite_email",
+        return_value=InviteSendOutcome.RETRY,
+    ) as send:
+        resp = client.post(
+            "/pubsub/push",
+            json=_push(
+                {"type": "send_invite_email", "invitation_id": str(inv_id)},
+                delivery_attempt=2,
+            ),
+        )
+    assert resp.status_code == 500
+    send.assert_called_once()
+    assert send.call_args.kwargs["final_attempt"] is False
+
+
+def test_send_invite_permanent_failure_is_acked(client):
+    inv_id = uuid.uuid4()
+    with patch(
+        "lanonna_worker.main.send_invite_email",
+        return_value=InviteSendOutcome.FAILED,
+    ):
+        resp = client.post(
+            "/pubsub/push",
+            json=_push(
+                {"type": "send_invite_email", "invitation_id": str(inv_id)},
+                delivery_attempt=12,
+            ),
+        )
+    assert resp.status_code == 204

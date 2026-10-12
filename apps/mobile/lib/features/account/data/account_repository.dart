@@ -164,12 +164,19 @@ class InvitationRow {
     required this.email,
     required this.status,
     this.relationshipLabel,
+    this.emailDeliveryStatus,
+    this.emailLastError,
   });
 
   final String id;
   final String email;
   final String status;
   final String? relationshipLabel;
+  final String? emailDeliveryStatus;
+  final String? emailLastError;
+
+  bool get canResendEmail =>
+      status == 'pending' && emailDeliveryStatus != 'sent';
 
   factory InvitationRow.fromJson(Map<String, dynamic> json) {
     return InvitationRow(
@@ -177,6 +184,8 @@ class InvitationRow {
       email: json['invitee_email'] as String? ?? '',
       status: json['status'] as String? ?? '',
       relationshipLabel: json['relationship_label'] as String?,
+      emailDeliveryStatus: json['email_delivery_status'] as String?,
+      emailLastError: json['email_last_error'] as String?,
     );
   }
 }
@@ -309,6 +318,13 @@ class AccountRepository {
 
   Future<void> revokeInvitation(String babyId, String invitationId) async {
     await _api.deleteJson('/v1/babies/$babyId/invitations/$invitationId');
+  }
+
+  Future<void> resendInvitation(String babyId, String invitationId) async {
+    await _api.postJson(
+      '/v1/babies/$babyId/invitations/$invitationId/resend',
+      body: {},
+    );
   }
 
   Future<void> removeMember(String babyId, String firebaseUid) async {

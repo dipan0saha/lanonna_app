@@ -2,7 +2,7 @@
 
 Pub/Sub push handler: **thumbnails** from `display/` objects, **Mailjet** invite email, **notifications** inbox + FCM (including weekly digest), **baby data export**, **expire pending invitations**.
 
-Non-2xx responses on `/pubsub/push` cause Pub/Sub to retry. Both push subscriptions dead-letter after `max_delivery_attempts` (5, mirrored by `PUBSUB_MAX_DELIVERY_ATTEMPTS`) to `lanonna-async-commands-dlq`, which is retained 7 days on the `…-dlq-pull` subscription (inspect/replay: [operations.md](../../docs/engineering/operations.md#dead-letter-queue)). Monitor `thumbnail_processing_failed` / `expire_pending_invitations_failed` logs.
+Non-2xx responses on `/pubsub/push` cause Pub/Sub to retry with exponential backoff (`10s`–`600s` in `pubsub.tf`). Both push subscriptions dead-letter after `max_delivery_attempts` (**12**, mirrored by `PUBSUB_MAX_DELIVERY_ATTEMPTS`) to `lanonna-async-commands-dlq`, which is retained 7 days on the `…-dlq-pull` subscription (inspect/replay: [operations.md](../../docs/engineering/operations.md#dead-letter-queue)). Invite email records `email_delivery_status` / `email_last_error` on the invitation row; transient Mailjet errors return 500, permanent failures ack 204.
 
 **Layout:** `src/lanonna_worker/` — `main.py`, `pubsub_payload.py`, `thumbnails.py`, `notifications.py`, `invite_email.py`, `invite_cleanup.py`, `baby_data_export.py` (job lifecycle), `export/` (version 2 document), `idempotency.py`, `db.py`, `config.py`.
 
