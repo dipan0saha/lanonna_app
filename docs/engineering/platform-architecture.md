@@ -131,7 +131,7 @@ flowchart TB
 | **Photo upload** | Client **encodes display asset** (see §2.5) → `POST /photos/init` → API returns **v4 signed PUT** + `photo_id` → PUT to **`display/`** prefix only |
 | **Feed thumb** | GCS finalize → **Pub/Sub** → worker reads **display** object → writes **`thumbnails/`** + marks photo **ready** (**idempotent** on `object_generation`) |
 | **Photo view** | **Feed:** signed read URL for **thumb** only. **Detail:** signed URL for **display** asset. Read URLs TTL **900s** ([`storage.py`](../../services/api/src/lanonna_api/storage.py)); Flutter **disk cache** + optional refresh on image error after TTL |
-| **Invite** | API creates invite row + token → publishes `send_invite_email` (or sends inline under low volume) → worker calls **Mailjet** with HTML from repo templates |
+| **Invite** | API creates invite row + token → publishes `send_invite_email` → worker calls **Mailjet**. The link is `https://{project}.firebaseapp.com/invite?token=…` on **Firebase Hosting** (App Links / Universal Links, web fallback). The token stays out of application logs; a Cloud Logging exclusion drops request URLs that contain `/invite?` or `/v1/invitations/preview` |
 | **Push** | API or worker sends FCM using device tokens stored in SQL |
 | **Cron** | **Cloud Scheduler** → Pub/Sub (e.g. `weekly_notification_digest`) or OIDC **Run** routes for cleanup and digests |
 

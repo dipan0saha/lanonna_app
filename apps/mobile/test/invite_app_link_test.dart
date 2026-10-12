@@ -30,8 +30,35 @@ void main() {
     expect(inviteAppLinkToRouterLocation(uri), isNull);
   });
 
-  test('rejects https', () {
-    final uri = Uri.parse('https://app/invite-accept?token=x');
+  test('maps https invite landing url on the project host', () {
+    final uri = Uri.parse(
+      'https://lanonna-dev.firebaseapp.com/invite?token=abc123',
+    );
+    expect(
+      inviteAppLinkToRouterLocation(uri),
+      '/invite-accept?token=abc123',
+    );
+  });
+
+  test('https invite preserves role', () {
+    final uri = Uri.parse(
+      'https://lanonna-dev.firebaseapp.com/invite?token=tok&role=owner',
+    );
+    expect(
+      inviteAppLinkToRouterLocation(uri),
+      '/invite-accept?token=tok&role=owner',
+    );
+  });
+
+  test('rejects https on the wrong host', () {
+    final uri = Uri.parse('https://example.com/invite?token=x');
+    expect(inviteAppLinkToRouterLocation(uri), isNull);
+  });
+
+  test('rejects https auth action urls', () {
+    final uri = Uri.parse(
+      'https://lanonna-dev.firebaseapp.com/__/auth/action?token=x',
+    );
     expect(inviteAppLinkToRouterLocation(uri), isNull);
   });
 

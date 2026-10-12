@@ -61,10 +61,10 @@ Prefer **`lanonnaapp@gmail.com`** for Cloud Build / `deploy.sh` (automation SA o
 | Item | Notes |
 |------|--------|
 | Firebase Blaze, Email/Password Auth | Done on `lanonna-dev` |
-| Auth verify email templates | `bash scripts/configure-firebase-auth-email-project.sh` then `bash scripts/sync-firebase-auth-templates.sh apply` |
-| GCP / Firebase display name | **La Nonna** via configure script (`%APP_NAME%` in default subject) |
-| Auth verify template (subject/body) | **TODO:** Firebase Support escalation required — Console save failed; see `scripts/firebase-auth-template-support-request.md` ([#390](https://github.com/dipan0saha/nonna_app/issues/390)) |
-| iOS Associated Domains | `applinks:lanonna-dev.firebaseapp.com` in `Runner.entitlements` (+ Apple Developer capability when shipping to device) |
+| Auth email public-facing name | **La Nonna** via `bash scripts/configure-firebase-auth-email-project.sh apply` then `check`. `%APP_NAME%` is the OAuth brand `applicationTitle`. If no brand exists, enable Google sign-in in the Firebase console (do not use the IAP brands API) |
+| Auth verify + reset templates | `bash scripts/sync-firebase-auth-templates.sh apply` then `check-remote`. `check` is local files only. `EMAIL_TEMPLATE_UPDATE_NOT_ALLOWED` → `scripts/firebase-auth-template-support-request.md` |
+| Invite https landing | `bash scripts/deploy-invite-hosting.sh` (Firebase Hosting on `{project}.firebaseapp.com`, App Links, optional `APPLE_TEAM_ID`) |
+| iOS Associated Domains | `applinks:lanonna-dev.firebaseapp.com` in `Runner.entitlements`. Universal links for `/invite` need `APPLE_TEAM_ID` on the hosting deploy |
 | Billing budgets ($50 / $150 / $300) | Created |
 | Mailjet | Secret versions set — rotate if keys were ever exposed |
 | Flutter plist/json | Local under `apps/mobile` (gitignored); apps registered in Firebase |

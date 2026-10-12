@@ -98,7 +98,7 @@ deploy_worker() {
     --no-allow-unauthenticated \
     --add-cloudsql-instances="${conn}" \
     --set-secrets="DB_PASSWORD=db-lanonna-app-password:latest,MAILJET_API_KEY=mailjet-api-key:latest,MAILJET_API_SECRET=mailjet-api-secret:latest" \
-    --set-env-vars="ENVIRONMENT=dev,GCP_PROJECT_ID=${project_id},CLOUD_SQL_CONNECTION_NAME=${conn},DB_USER=lanonna_app,DB_NAME=lanonna,DISPLAY_BUCKET=${project_id}-display,THUMBNAILS_BUCKET=${project_id}-thumbnails,INVITE_DEEP_LINK_BASE=lanonna://app,MAILJET_FROM_EMAIL=${MAILJET_FROM_EMAIL},MAILJET_FROM_NAME=${MAILJET_FROM_NAME:-La Nonna}" \
+    --set-env-vars="ENVIRONMENT=dev,GCP_PROJECT_ID=${project_id},CLOUD_SQL_CONNECTION_NAME=${conn},DB_USER=lanonna_app,DB_NAME=lanonna,DISPLAY_BUCKET=${project_id}-display,THUMBNAILS_BUCKET=${project_id}-thumbnails,INVITE_DEEP_LINK_BASE=https://${project_id}.firebaseapp.com,GCS_SIGNING_SERVICE_ACCOUNT=lanonna-worker@${project_id}.iam.gserviceaccount.com,MAILJET_FROM_EMAIL=${MAILJET_FROM_EMAIL},MAILJET_FROM_NAME=${MAILJET_FROM_NAME:-La Nonna}" \
     --min-instances=0 \
     --max-instances=5 \
     --memory=512Mi \

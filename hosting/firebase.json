@@ -1,0 +1,43 @@
+{
+  "hosting": {
+    "public": "public",
+    "ignore": ["firebase.json", "**/node_modules/**"],
+    "rewrites": [
+      {
+        "source": "/v1/invitations/preview",
+        "run": {
+          "serviceId": "api",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/invite",
+        "destination": "/invite/index.html"
+      },
+      {
+        "source": "/invite/**",
+        "destination": "/invite/index.html"
+      }
+    ],
+    "headers": [
+      {
+        "source": "/.well-known/assetlinks.json",
+        "headers": [
+          {"key": "Content-Type", "value": "application/json"}
+        ]
+      },
+      {
+        "source": "/.well-known/apple-app-site-association",
+        "headers": [
+          {"key": "Content-Type", "value": "application/json"}
+        ]
+      },
+      {
+        "source": "/apple-app-site-association",
+        "headers": [
+          {"key": "Content-Type", "value": "application/json"}
+        ]
+      }
+    ]
+  }
+}

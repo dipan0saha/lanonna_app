@@ -22,7 +22,10 @@ class Settings(BaseSettings):
     # No placeholder default. hello@lanonna.app is not a validated Mailjet sender (#43).
     mailjet_from_email: str = ""  # MAILJET_FROM_EMAIL
     mailjet_from_name: str = "La Nonna"  # MAILJET_FROM_NAME
-    invite_deep_link_base: str = "lanonna://app"  # INVITE_DEEP_LINK_BASE
+    # HTTPS origin for invite links, no path. Example: https://lanonna-dev.firebaseapp.com
+    invite_deep_link_base: str = "https://lanonna-dev.firebaseapp.com"  # INVITE_DEEP_LINK_BASE
+    # Empty uses lanonna-worker@GCP_PROJECT_ID.iam.gserviceaccount.com (export media URLs).
+    gcs_signing_service_account: str = ""  # GCS_SIGNING_SERVICE_ACCOUNT
 
     # Must match dead_letter_policy.max_delivery_attempts in infra/terraform/modules/platform/pubsub.tf.
     pubsub_max_delivery_attempts: int = 5  # PUBSUB_MAX_DELIVERY_ATTEMPTS
@@ -48,6 +51,19 @@ def mailjet_sender_error(from_email: str) -> str | None:
     return None
 
 
+def invite_link_base_error(base: str, *, environment: str) -> str | None:
+    """Invite mail must use an https origin so mail clients can open it."""
+    normalized = base.strip().rstrip("/")
+    if not normalized.startswith("https://"):
+        return (
+            "INVITE_DEEP_LINK_BASE must be an https origin "
+            "(for example https://PROJECT_ID.firebaseapp.com)"
+        )
+    if environment.lower() != "dev" and "lanonna-dev" in normalized:
+        return "INVITE_DEEP_LINK_BASE must not use the dev host outside dev"
+    return None
+
+
 def validate_worker_settings(cfg: Settings | None = None) -> None:
     """Refuse to start with a missing sender, or with dev defaults outside dev."""
     cfg = cfg or settings
@@ -55,6 +71,11 @@ def validate_worker_settings(cfg: Settings | None = None) -> None:
     sender_error = mailjet_sender_error(cfg.mailjet_from_email)
     if sender_error:
         errors.append(sender_error)
+    link_error = invite_link_base_error(
+        cfg.invite_deep_link_base, environment=cfg.environment
+    )
+    if link_error:
+        errors.append(link_error)
     if cfg.environment.lower() != "dev":
         if cfg.gcp_project_id == _DEV_PROJECT_ID:
             errors.append("GCP_PROJECT_ID must not be the dev default outside dev")

@@ -4,7 +4,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from lanonna_worker.invite_email import _render_invite_email, send_invite_email
+from lanonna_worker.invite_email import (
+    _render_invite_email,
+    build_invite_url,
+    send_invite_email,
+)
 
 
 def _sample_ctx(role: str) -> dict:
@@ -16,6 +20,32 @@ def _sample_ctx(role: str) -> dict:
         "baby_name": "Baby",
         "inviter_display_name": "Alex",
     }
+
+
+def test_build_invite_url_uses_https_landing_path():
+    url = build_invite_url(
+        "raw token/plus",
+        "follower",
+        base="https://lanonna-dev.firebaseapp.com",
+    )
+    assert url == (
+        "https://lanonna-dev.firebaseapp.com/invite?token=raw%20token%2Fplus"
+    )
+    owner = build_invite_url(
+        "tok",
+        "owner",
+        base="https://lanonna-dev.firebaseapp.com/",
+    )
+    assert owner == (
+        "https://lanonna-dev.firebaseapp.com/invite?token=tok&role=owner"
+    )
+
+
+def test_build_invite_url_keeps_custom_scheme_for_explicit_override():
+    assert (
+        build_invite_url("abc", "follower", base="lanonna://app")
+        == "lanonna://app/invite-accept?token=abc"
+    )
 
 
 def test_render_invite_email_follower_uses_follow_copy():
@@ -102,6 +132,7 @@ def test_send_invite_email_sends_and_marks_sent(mock_settings):
     mock_settings.mailjet_api_secret = "secret"
     mock_settings.mailjet_from_email = "hello@test.com"
     mock_settings.mailjet_from_name = "La Nonna"
+    mock_settings.invite_deep_link_base = "https://lanonna-dev.firebaseapp.com"
     inv_id = uuid.uuid4()
     ctx = {
         "invitee_email": "guest@test.com",
@@ -138,11 +169,19 @@ def test_send_invite_email_sends_and_marks_sent(mock_settings):
     with patch(
         "lanonna_worker.invite_email.httpx.post",
         return_value=mock_response,
-    ), patch(
+    ) as post, patch(
         "lanonna_worker.invite_email.get_connection"
-    ) as mock_conn_ctx:
+    ) as mock_conn_ctx, patch(
+        "lanonna_worker.invite_email.logger"
+    ) as log:
         mock_conn_ctx.return_value.__enter__.return_value = conn
         send_invite_email(inv_id)
+    sent = post.call_args.kwargs["json"]
+    html = sent["Messages"][0]["HTMLPart"]
+    assert "https://lanonna-dev.firebaseapp.com/invite?token=invite-token" in html
+    assert "lanonna://" not in html
+    logged = " ".join(str(call) for call in log.method_calls)
+    assert "invite-token" not in logged
     assert call_count >= 2
     marked = [
         call
@@ -158,6 +197,7 @@ def test_send_invite_email_raises_on_mailjet_message_error(mock_settings):
     mock_settings.mailjet_api_secret = "secret"
     mock_settings.mailjet_from_email = "lanonnaapp@gmail.com"
     mock_settings.mailjet_from_name = "La Nonna"
+    mock_settings.invite_deep_link_base = "https://lanonna-dev.firebaseapp.com"
     inv_id = uuid.uuid4()
     ctx = {
         "invitee_email": "guest@test.com",
