@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_semantics.dart';
 
 class OnboardingPrimaryButton extends StatelessWidget {
@@ -105,7 +106,7 @@ class OnboardingGoogleButton extends StatelessWidget {
         style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w700,
-          color: Color(0xFF4285F4),
+          color: AppColors.googleSignInBlue,
         ),
       ),
     );

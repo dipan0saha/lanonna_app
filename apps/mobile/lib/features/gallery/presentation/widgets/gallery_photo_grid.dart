@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../../../../core/media/cached_signed_image.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -21,6 +22,7 @@ class GalleryPhotoGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -61,6 +63,7 @@ class GalleryPhotoGrid extends StatelessWidget {
                       child: _GalleryTileBadge(
                         glyph: const GalleryCommentGlyph(),
                         count: photo.commentCount,
+                        semanticsLabel: l10n.photoCommentCount(photo.commentCount),
                       ),
                     ),
                   if (photo.squishCount > 0)
@@ -70,6 +73,7 @@ class GalleryPhotoGrid extends StatelessWidget {
                       child: _GalleryTileBadge(
                         glyph: const GallerySquishGlyph(),
                         count: photo.squishCount,
+                        semanticsLabel: l10n.photoSquishCount(photo.squishCount),
                       ),
                     ),
                 ],
@@ -87,14 +91,21 @@ class GalleryPhotoGrid extends StatelessWidget {
 }
 
 class _GalleryTileBadge extends StatelessWidget {
-  const _GalleryTileBadge({required this.glyph, required this.count});
+  const _GalleryTileBadge({
+    required this.glyph,
+    required this.count,
+    required this.semanticsLabel,
+  });
 
   final Widget glyph;
   final int count;
+  final String semanticsLabel;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Semantics(
+      label: semanticsLabel,
+      child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.45),
@@ -115,6 +126,7 @@ class _GalleryTileBadge extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

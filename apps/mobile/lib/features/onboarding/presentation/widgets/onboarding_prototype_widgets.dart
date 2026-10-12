@@ -79,8 +79,8 @@ class PrototypePhotoUpload extends StatelessWidget {
             height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFFF1F1F2),
-              border: Border.all(color: const Color(0xFFCFCFD1), width: 1.5),
+              color: AppColors.inputFill,
+              border: Border.all(color: AppColors.inputBorderStrong, width: 1.5),
             ),
             alignment: Alignment.center,
             child: _buildAvatarContent(size),
@@ -343,7 +343,7 @@ class PrototypeAddAnotherButton extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 18),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFCFCFD1), width: 1.5, style: BorderStyle.solid),
+          border: Border.all(color: AppColors.inputBorderStrong, width: 1.5, style: BorderStyle.solid),
         ),
         child: Text(
           '+ $label',
@@ -400,7 +400,7 @@ class PrototypeDateField extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppColors.border, width: 1.5),
-              color: const Color(0xFFFCFCFD),
+              color: AppColors.surfaceElevated,
             ),
             child: Row(
               children: [
@@ -457,7 +457,7 @@ class PrototypeTimeField extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppColors.border, width: 1.5),
-              color: const Color(0xFFFCFCFD),
+              color: AppColors.surfaceElevated,
             ),
             child: Row(
               children: [

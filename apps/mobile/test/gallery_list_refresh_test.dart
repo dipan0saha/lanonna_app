@@ -10,6 +10,7 @@ import 'package:lanonna/features/gallery/presentation/gallery_screen.dart';
 import 'package:lanonna/features/home/data/home_repository.dart';
 import 'package:lanonna/features/home/data/home_refresh_signal.dart';
 import 'package:lanonna/features/home/data/selected_baby_store.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -62,6 +63,8 @@ Future<void> _pumpGallery(WidgetTester tester, {
       ],
       child: MaterialApp(
         theme: AppTheme.light,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: const GalleryScreen(),
       ),
     ),

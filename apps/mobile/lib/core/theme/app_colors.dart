@@ -17,4 +17,13 @@ abstract final class AppColors {
   static const Color error = Color(0xFFC62828);
   static const Color sageTint = primaryLight;
   static const Color peachTint = Color(0xFFFCE8DC);
+
+  /// Prototype form tiles (onboarding / event date fields).
+  static const Color inputFill = Color(0xFFF1F1F2);
+  static const Color inputBorderStrong = Color(0xFFCFCFD1);
+  static const Color surfaceElevated = Color(0xFFFCFCFD);
+  static const Color scaffoldStripe = Color(0xFFF2F2F3);
+  static const Color fieldShadow = Color(0x14000000);
+  static const Color googleSignInBlue = Color(0xFF4285F4);
+  static const Color hintOnSage = Color(0xFF3A5A2E);
 }

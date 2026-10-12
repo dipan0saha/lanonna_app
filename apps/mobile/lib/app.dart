@@ -100,16 +100,17 @@ class _LaNonnaAppState extends State<LaNonnaApp> {
         }
       case EmailVerifyLinkOutcome.noSignedInUser:
         _router.go(OnboardingRoutes.login);
+        final l10n = AppLocalizations.of(context)!;
         AppSnackBar.showAlertWithMessenger(
           messenger,
-          result.message ??
-              'Email verified. Sign in with the same address to continue.',
+          result.message ?? l10n.appEmailVerifiedSignIn,
         );
       case EmailVerifyLinkOutcome.invalidOrExpired:
       case EmailVerifyLinkOutcome.wrongMode:
+        final l10n = AppLocalizations.of(context)!;
         AppSnackBar.showAlertWithMessenger(
           messenger,
-          result.message ?? 'Could not verify your email from this link.',
+          result.message ?? l10n.appEmailVerifyLinkFailed,
         );
     }
   }
@@ -143,7 +144,7 @@ class _LaNonnaAppState extends State<LaNonnaApp> {
   Widget build(BuildContext context) {
     _ensurePush(context);
     return MaterialApp.router(
-      title: 'La Nonna',
+      onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
       theme: AppTheme.light,
       themeMode: ThemeMode.light,
       localizationsDelegates: const [

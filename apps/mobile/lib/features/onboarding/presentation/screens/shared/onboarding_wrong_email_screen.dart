@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -42,9 +43,10 @@ class _OnboardingWrongEmailScreenState extends State<OnboardingWrongEmailScreen>
       return const SizedBox.shrink();
     }
 
+    final l10n = AppLocalizations.of(context)!;
     final invitee = mismatch.inviteeEmail.isNotEmpty
         ? mismatch.inviteeEmail
-        : 'the invited email';
+        : l10n.wrongEmailInviteeFallback;
     final signedIn = mismatch.signedInEmail;
     final coordinator = context.read<OnboardingCoordinator>();
     final token = coordinator.pendingInviteToken;
@@ -56,15 +58,14 @@ class _OnboardingWrongEmailScreenState extends State<OnboardingWrongEmailScreen>
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: 24),
-          const OnboardingHeadline('Wrong account'),
+          OnboardingHeadline(l10n.wrongEmailHeadline),
           const SizedBox(height: 8),
           OnboardingSupportText(
-            'This invitation was sent to $invitee, but you\'re signed in as $signedIn. '
-            'Sign in with the invited email to continue.',
+            l10n.wrongEmailBody(invitee, signedIn),
           ),
           const SizedBox(height: 28),
           OnboardingPrimaryButton(
-            label: 'Switch account',
+            label: l10n.wrongEmailSwitchAccount,
             onPressed: () async {
               final flow = context.read<InviteFlowState>();
               flow.setLoginPrefillEmail(mismatch.inviteeEmail);
@@ -89,7 +90,7 @@ class _OnboardingWrongEmailScreenState extends State<OnboardingWrongEmailScreen>
                 await context.read<OnboardingCoordinator>().clearPendingInvite();
                 if (context.mounted) context.go(OnboardingRoutes.ownerCarousel);
               },
-              child: const Text('Leave this invitation'),
+              child: Text(l10n.wrongEmailLeaveInvitation),
             ),
           ),
         ],

@@ -123,7 +123,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
                 padding: AppMetrics.subpageScrollPadding,
                 children: [
                   Text(
-                    '${count} follower${count == 1 ? '' : 's'}',
+                    AppLocalizations.of(context)!.followerCount(count),
                     style: context.textStyles.bodySmall,
                   ),
                   const SizedBox(height: 12),

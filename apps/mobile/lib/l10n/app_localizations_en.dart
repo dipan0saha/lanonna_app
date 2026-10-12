@@ -330,4 +330,88 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get memberLeftSuccess => 'You left this baby profile.';
+
+  @override
+  String get appTitle => 'La Nonna';
+
+  @override
+  String get appEmailVerifiedSignIn =>
+      'Email verified. Sign in with the same address to continue.';
+
+  @override
+  String get appEmailVerifyLinkFailed =>
+      'Could not verify your email from this link.';
+
+  @override
+  String get batchInviteCoOwnerHintOnboarding =>
+      'Selecting Wife or Husband makes that person a co-owner with the same edit access as you.';
+
+  @override
+  String get batchInviteCoOwnerHintManage =>
+      '💡 Selecting \"Mother\" or \"Father\" makes that person a co-owner of this baby profile, with the same edit access as you.';
+
+  @override
+  String get batchInviteBabyMissing => 'Baby profile missing.';
+
+  @override
+  String get batchInviteNoInvitesToSend => 'No invites to send.';
+
+  @override
+  String get batchInviteAddEmailToSend =>
+      'Add at least one email address to send invites.';
+
+  @override
+  String get batchInviteInvalidEmails =>
+      'Enter a valid email for each invite row.';
+
+  @override
+  String get batchInviteNoNewInvites =>
+      'No new invites to send for the emails entered.';
+
+  @override
+  String batchInviteEmailQueueFailed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count invites were saved but emails could not be sent. Check Manage followers.',
+      one:
+          'One invite was saved but the email could not be sent. Check Manage followers.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get wrongEmailHeadline => 'Wrong account';
+
+  @override
+  String wrongEmailBody(String invitee, String signedIn) {
+    return 'This invitation was sent to $invitee, but you\'re signed in as $signedIn. Sign in with the invited email to continue.';
+  }
+
+  @override
+  String get wrongEmailInviteeFallback => 'the invited email';
+
+  @override
+  String get wrongEmailSwitchAccount => 'Switch account';
+
+  @override
+  String get wrongEmailLeaveInvitation => 'Leave this invitation';
+
+  @override
+  String predictionGenderVoteShare(int pct, int count) {
+    return '$pct% ($count)';
+  }
+
+  @override
+  String followerCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count followers',
+      one: '1 follower',
+      zero: '0 followers',
+    );
+    return '$_temp0';
+  }
 }

@@ -6,6 +6,7 @@ import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/features/fun/data/fun_repository.dart';
 import 'package:lanonna/features/fun/data/models/fun_models.dart';
 import 'package:lanonna/features/fun/presentation/names_tab.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 class _FakeFunRepository extends FunRepository {
@@ -54,6 +55,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: Provider<FunRepository>.value(
             value: _FakeFunRepository(payload),

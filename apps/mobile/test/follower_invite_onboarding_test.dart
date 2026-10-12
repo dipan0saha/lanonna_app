@@ -12,6 +12,7 @@ import 'package:lanonna/features/onboarding/presentation/screens/follower/follow
 import 'package:lanonna/features/onboarding/presentation/screens/follower/onboarding_follower_invite_screen.dart';
 import 'package:lanonna/features/invitations/presentation/invite_flow_state.dart';
 import 'package:lanonna/features/onboarding/presentation/screens/shared/onboarding_wrong_email_screen.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -103,7 +104,12 @@ void main() {
           ChangeNotifierProvider.value(value: coordinator),
           ChangeNotifierProvider.value(value: inviteFlowState),
         ],
-        child: MaterialApp.router(theme: AppTheme.light, routerConfig: router),
+        child: MaterialApp.router(
+          theme: AppTheme.light,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          routerConfig: router,
+        ),
       ),
     );
     await tester.pumpAndSettle();

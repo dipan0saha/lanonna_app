@@ -22,7 +22,7 @@ void main() {
 
   test('listBabies falls back to cache when network fails', () async {
     final api = _FlakyBabiesApi();
-    final repo = HomeRepository(api);
+    final repo = HomeRepository(api, currentUserId: () => 'user-1');
     final online = await repo.listBabies();
     expect(online, hasLength(2));
     api.failRequests = true;

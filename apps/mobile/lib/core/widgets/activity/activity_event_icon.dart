@@ -14,7 +14,7 @@ class ActivityEventIcon extends StatelessWidget {
       width: 30,
       height: 30,
       decoration: const BoxDecoration(
-        color: Color(0xFFF1F1F2),
+        color: AppColors.inputFill,
         shape: BoxShape.circle,
       ),
       alignment: Alignment.center,

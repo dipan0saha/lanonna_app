@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/api/api_error_message.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
+
+import '../../../core/api/run_mutation.dart';
 import '../../../core/auth/auth_repository.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
@@ -214,7 +216,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
     return invites;
   }
 
-  String? _validateBeforeSend() {
+  String? _validateBeforeSend(AppLocalizations l10n) {
     var sawEmail = false;
     var sawInvalid = false;
     for (final row in _rows) {
@@ -230,12 +232,12 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
       return null;
     }
     if (!sawEmail) {
-      return 'Add at least one email address to send invites.';
+      return l10n.batchInviteAddEmailToSend;
     }
     if (sawInvalid) {
-      return 'Enter a valid email for each invite row.';
+      return l10n.batchInviteInvalidEmails;
     }
-    return 'No new invites to send for the emails entered.';
+    return l10n.batchInviteNoNewInvites;
   }
 
   Future<void> _finish({required bool sendInvites}) async {
@@ -250,46 +252,50 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
       );
       return;
     }
+    final l10n = AppLocalizations.of(context)!;
     setState(() {
       _busy = true;
       _error = null;
     });
     try {
-      await _persistDraft();
       if (sendInvites) {
-        final validationError = _validateBeforeSend();
+        final validationError = _validateBeforeSend(l10n);
         final invites = _collectInvitesToSend();
         if (invites.isEmpty) {
-          setState(() => _error = validationError ?? 'No invites to send.');
+          setState(
+            () => _error = validationError ?? l10n.batchInviteNoInvitesToSend,
+          );
           return;
         }
-        if (!mounted) return;
-        final response = await context
-            .read<OnboardingRepository>()
-            .sendBatchInvites(babyId, invites);
-        if (mounted && response.emailQueueFailedCount > 0) {
-          final n = response.emailQueueFailedCount;
-          AppSnackBar.showAlert(
-            context,
-            n == 1
-                ? 'One invite was saved but the email could not be sent. Check Manage followers.'
-                : '$n invites were saved but emails could not be sent. Check Manage followers.',
-          );
-        }
       }
+      if (!mounted) return;
+      final ok = await runMutation(context, () async {
+        await _persistDraft();
+        if (sendInvites) {
+          final invites = _collectInvitesToSend();
+          final response = await context
+              .read<OnboardingRepository>()
+              .sendBatchInvites(babyId, invites);
+          if (!mounted) return;
+          if (response.emailQueueFailedCount > 0) {
+            AppSnackBar.showAlert(
+              context,
+              l10n.batchInviteEmailQueueFailed(response.emailQueueFailedCount),
+            );
+          }
+        }
+      });
+      if (!ok || !mounted) return;
       if (_isOnboarding) {
-        if (!mounted) return;
         await context.read<AuthRepository>().refreshSessionClaims();
         if (!mounted) return;
         await context.read<OnboardingCoordinator>().completeOnboarding();
         if (!mounted) return;
         await context.read<AppSession>().refreshFromApi();
         if (mounted) context.go('/home');
-      } else if (mounted) {
+      } else {
         context.pop();
       }
-    } catch (e) {
-      setState(() => _error = apiErrorMessage(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -305,9 +311,9 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
       ),
       child: Text(
         _isOnboarding
-            ? 'Selecting Wife or Husband makes that person a co-owner with the same edit access as you.'
-            : '💡 Selecting "Mother" or "Father" makes that person a co-owner of this baby profile, with the same edit access as you.',
-        style: const TextStyle(fontSize: 12, height: 1.5, color: Color(0xFF3a5a2e)),
+            ? AppLocalizations.of(context)!.batchInviteCoOwnerHintOnboarding
+            : AppLocalizations.of(context)!.batchInviteCoOwnerHintManage,
+        style: const TextStyle(fontSize: 12, height: 1.5, color: AppColors.hintOnSage),
       ),
     );
   }

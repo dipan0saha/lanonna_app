@@ -105,7 +105,7 @@ class _TopRow extends StatelessWidget {
                   width: 34,
                   height: 34,
                   decoration: const BoxDecoration(
-                    color: Color(0xFFF2F2F3),
+                    color: AppColors.scaffoldStripe,
                     shape: BoxShape.circle,
                   ),
                   alignment: Alignment.center,

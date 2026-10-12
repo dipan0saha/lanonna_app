@@ -85,6 +85,7 @@ Use a **throwaway** Firebase account (not Maestro smoke user).
 ## 11. Regression smoke
 
 - [ ] `flutter test`, API `pytest`, and worker `pytest` green (see [development.md](development.md#automated-tests)).
+- [ ] Optional: `flutter build apk --release --dart-define-from-file=flavors/dev.json` (R8 shrink) installs and launches on a device.
 - [ ] Optional: `flutter test integration_test/home_summary_load_test.dart` on emulator.
 - [ ] Owner onboarding + gallery + calendar still usable.
 

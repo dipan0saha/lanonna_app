@@ -8,6 +8,7 @@ import 'package:lanonna/features/onboarding/data/onboarding_repository.dart';
 import 'package:lanonna/features/onboarding/data/onboarding_storage.dart';
 import 'package:lanonna/features/onboarding/domain/onboarding_routes.dart';
 import 'package:lanonna/features/onboarding/presentation/onboarding_coordinator.dart';
+import 'package:lanonna/features/invitations/presentation/invite_flow_state.dart';
 import 'package:lanonna/features/onboarding/presentation/screens/onboarding_login_screen.dart';
 import 'package:lanonna/features/onboarding/presentation/widgets/onboarding_fields.dart';
 import 'package:provider/provider.dart';
@@ -35,8 +36,11 @@ Future<void> _pumpLogin(WidgetTester tester) async {
   );
 
   await tester.pumpWidget(
-    ChangeNotifierProvider<OnboardingCoordinator>.value(
-      value: coordinator,
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider<OnboardingCoordinator>.value(value: coordinator),
+        ChangeNotifierProvider<InviteFlowState>.value(value: InviteFlowState()),
+      ],
       child: MaterialApp.router(
         theme: AppTheme.light,
         localizationsDelegates: AppLocalizations.localizationsDelegates,

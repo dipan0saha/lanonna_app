@@ -182,5 +182,57 @@
   "memberSoleOwnerLeaveBody": "You are the only owner. Add a co-owner, delete this baby profile, or delete your account to leave.",
   "membershipEndedMessage": "You no longer have access to this profile.",
   "memberRemovedSuccess": "Member removed.",
-  "memberLeftSuccess": "You left this baby profile."
+  "memberLeftSuccess": "You left this baby profile.",
+  "appTitle": "La Nonna",
+  "appEmailVerifiedSignIn": "Email verified. Sign in with the same address to continue.",
+  "appEmailVerifyLinkFailed": "Could not verify your email from this link.",
+  "batchInviteCoOwnerHintOnboarding": "Selecting Wife or Husband makes that person a co-owner with the same edit access as you.",
+  "batchInviteCoOwnerHintManage": "💡 Selecting \"Mother\" or \"Father\" makes that person a co-owner of this baby profile, with the same edit access as you.",
+  "batchInviteBabyMissing": "Baby profile missing.",
+  "batchInviteNoInvitesToSend": "No invites to send.",
+  "batchInviteAddEmailToSend": "Add at least one email address to send invites.",
+  "batchInviteInvalidEmails": "Enter a valid email for each invite row.",
+  "batchInviteNoNewInvites": "No new invites to send for the emails entered.",
+  "batchInviteEmailQueueFailed": "{count, plural, =1{One invite was saved but the email could not be sent. Check Manage followers.} other{{count} invites were saved but emails could not be sent. Check Manage followers.}}",
+  "@batchInviteEmailQueueFailed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "wrongEmailHeadline": "Wrong account",
+  "wrongEmailBody": "This invitation was sent to {invitee}, but you're signed in as {signedIn}. Sign in with the invited email to continue.",
+  "@wrongEmailBody": {
+    "placeholders": {
+      "invitee": {
+        "type": "String"
+      },
+      "signedIn": {
+        "type": "String"
+      }
+    }
+  },
+  "wrongEmailInviteeFallback": "the invited email",
+  "wrongEmailSwitchAccount": "Switch account",
+  "wrongEmailLeaveInvitation": "Leave this invitation",
+  "predictionGenderVoteShare": "{pct}% ({count})",
+  "@predictionGenderVoteShare": {
+    "placeholders": {
+      "pct": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "followerCount": "{count, plural, =0{0 followers} =1{1 follower} other{{count} followers}}",
+  "@followerCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

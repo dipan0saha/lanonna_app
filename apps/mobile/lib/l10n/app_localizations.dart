@@ -567,6 +567,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You left this baby profile.'**
   String get memberLeftSuccess;
+
+  /// No description provided for @appTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'La Nonna'**
+  String get appTitle;
+
+  /// No description provided for @appEmailVerifiedSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Email verified. Sign in with the same address to continue.'**
+  String get appEmailVerifiedSignIn;
+
+  /// No description provided for @appEmailVerifyLinkFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not verify your email from this link.'**
+  String get appEmailVerifyLinkFailed;
+
+  /// No description provided for @batchInviteCoOwnerHintOnboarding.
+  ///
+  /// In en, this message translates to:
+  /// **'Selecting Wife or Husband makes that person a co-owner with the same edit access as you.'**
+  String get batchInviteCoOwnerHintOnboarding;
+
+  /// No description provided for @batchInviteCoOwnerHintManage.
+  ///
+  /// In en, this message translates to:
+  /// **'💡 Selecting \"Mother\" or \"Father\" makes that person a co-owner of this baby profile, with the same edit access as you.'**
+  String get batchInviteCoOwnerHintManage;
+
+  /// No description provided for @batchInviteBabyMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Baby profile missing.'**
+  String get batchInviteBabyMissing;
+
+  /// No description provided for @batchInviteNoInvitesToSend.
+  ///
+  /// In en, this message translates to:
+  /// **'No invites to send.'**
+  String get batchInviteNoInvitesToSend;
+
+  /// No description provided for @batchInviteAddEmailToSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Add at least one email address to send invites.'**
+  String get batchInviteAddEmailToSend;
+
+  /// No description provided for @batchInviteInvalidEmails.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email for each invite row.'**
+  String get batchInviteInvalidEmails;
+
+  /// No description provided for @batchInviteNoNewInvites.
+  ///
+  /// In en, this message translates to:
+  /// **'No new invites to send for the emails entered.'**
+  String get batchInviteNoNewInvites;
+
+  /// No description provided for @batchInviteEmailQueueFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{One invite was saved but the email could not be sent. Check Manage followers.} other{{count} invites were saved but emails could not be sent. Check Manage followers.}}'**
+  String batchInviteEmailQueueFailed(int count);
+
+  /// No description provided for @wrongEmailHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong account'**
+  String get wrongEmailHeadline;
+
+  /// No description provided for @wrongEmailBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This invitation was sent to {invitee}, but you\'re signed in as {signedIn}. Sign in with the invited email to continue.'**
+  String wrongEmailBody(String invitee, String signedIn);
+
+  /// No description provided for @wrongEmailInviteeFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'the invited email'**
+  String get wrongEmailInviteeFallback;
+
+  /// No description provided for @wrongEmailSwitchAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch account'**
+  String get wrongEmailSwitchAccount;
+
+  /// No description provided for @wrongEmailLeaveInvitation.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave this invitation'**
+  String get wrongEmailLeaveInvitation;
+
+  /// No description provided for @predictionGenderVoteShare.
+  ///
+  /// In en, this message translates to:
+  /// **'{pct}% ({count})'**
+  String predictionGenderVoteShare(int pct, int count);
+
+  /// No description provided for @followerCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{0 followers} =1{1 follower} other{{count} followers}}'**
+  String followerCount(int count);
 }
 
 class _AppLocalizationsDelegate

@@ -36,6 +36,14 @@ void main() {
     });
   });
 
+  group('followerCount', () {
+    test('pluralizes 0, 1, 2+', () {
+      expect(l10n.followerCount(0), '0 followers');
+      expect(l10n.followerCount(1), '1 follower');
+      expect(l10n.followerCount(3), '3 followers');
+    });
+  });
+
   group('registryItemsStillNeeded', () {
     test('pluralizes 0, 1, 2+', () {
       expect(l10n.registryItemsStillNeeded(0), '0 items still needed');

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:lanonna/core/widgets/gallery_social_glyphs.dart';
 import 'package:lanonna/features/gallery/data/models/photo_models.dart';
 import 'package:lanonna/features/gallery/presentation/widgets/gallery_photo_grid.dart';
@@ -21,6 +22,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: GalleryPhotoGrid(
             photos: photos,
@@ -51,6 +54,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: GalleryPhotoGrid(
             photos: photos,

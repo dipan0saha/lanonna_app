@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
@@ -288,6 +289,7 @@ class _NameSuggestionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final styles = context.textStyles;
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
@@ -324,9 +326,12 @@ class _NameSuggestionCard extends StatelessWidget {
                     color: suggestion.viewerHasLiked ? AppColors.primaryDark : null,
                   ),
                 ),
-                Text(
-                  '${suggestion.likeCount}',
-                  style: styles.labelMedium,
+                Semantics(
+                  label: l10n.nameLoveCount(suggestion.likeCount),
+                  child: Text(
+                    '${suggestion.likeCount}',
+                    style: styles.labelMedium,
+                  ),
                 ),
                 if (suggestion.canDelete)
                   IconButton(

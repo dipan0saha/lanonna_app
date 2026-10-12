@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/features/invitations/presentation/batch_invite_screen.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:lanonna/features/onboarding/data/onboarding_repository.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,6 +20,8 @@ void main() {
         ],
         child: MaterialApp(
           theme: AppTheme.light,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: const BatchInviteScreen(mode: BatchInviteMode.fromHome),
         ),
       ),

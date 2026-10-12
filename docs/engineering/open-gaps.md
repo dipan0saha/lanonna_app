@@ -191,8 +191,8 @@ Run all three suites before every ship; the suites are the only automated gate (
 | ✅ L-21 | Worker hygiene: export `SELECT *` / silent activity cap; unknown Pub/Sub payloads logged in full | `worker/baby_data_export.py` — explicit column lists, `export_activity_truncated` when activity exceeds `ACTIVITY_EXPORT_MAX_ROWS` (500); `worker/main.py` — `_safe_payload_summary` + unknown-type log (type/keys only; **M-41**) |
 | L-22 | Infra hygiene: GCS buckets lack `public_access_prevention`/versioning/lifecycle (**open**); `import-dev.sh` omitted `admin-api-key` | `storage.tf` — **fixed:** `admin-api-key` in `import-dev.sh` secret loop |
 | ✅ L-23 | Docs drift: mobile module table, `/health`, migration verify path | `development.md`, `operations.md` |
-| L-24 | Android release has no R8/minify rules (**open**). FCM unregister / router refresh | `android/.../build.gradle.kts` — **fixed:** unregister/delete token logs; `router_refresh` dispose |
-| L-25 | Convention violations: ~13 hardcoded hex colors in `features/` (e.g. `onboarding_buttons.dart:108`, `batch_invite_screen.dart:296`, `event_form_widgets.dart:38-39`); hardcoded strings in `batch_invite_screen.dart`, `onboarding_wrong_email_screen.dart`, `app.dart`; batch invite submit bypasses `runMutation`; hand-rolled count strings in `predictions_tab.dart:399`, `names_tab.dart:328`, `gallery_photo_grid.dart:109` | mobile |
+| ✅ L-24 | Android release R8/minify; FCM unregister / router refresh hygiene | `android/app/build.gradle.kts`, `proguard-rules.pro`; `push_notification_service.dart`, `router_refresh.dart` |
+| ✅ L-25 | Mobile convention: hex colors, ARB strings, `runMutation`, count/plural hygiene | `AppColors` tokens; `app_en.arb`; batch invite, wrong-email, gallery semantics, fun/account counts |
 | L-26 | `flutter analyze` infos — `use_null_aware_elements`, `unnecessary_underscores`, deprecated form `value` (**partial:** login/signup `mounted` guards; `home_repository` null-aware map) | mobile `lib/`, `test/` |
 | ✅ L-27 | Legacy `photo_ready_notification_log` unused after fan-out `dedupe_key` | migration `029` — `DROP TABLE photo_ready_notification_log` |
 | L-28 | **Consolidation backlog (deferred, medium risk — live request paths):** gallery vs calendar comment domain logic and photo/event comment SQL; router `try/except map_domain_errors` boilerplate and the repeated `upsert_app_user` first line; dynamic `UPDATE … SET` builders; mobile comment composer, tab empty states, AI-suggestions screen state machine, labeled-field shell, wider `runMutation` use; shared `get_connection` for API + worker, `infra/db` shared `connect()` and invite-hash helper; Terraform push-subscription `for_each` and dev/prod API-list dedupe; scheduler script merge; PUT/PATCH announcement alias | `services/api`, `apps/mobile`, `infra/` |
@@ -212,4 +212,4 @@ Run all three suites before every ship; the suites are the only automated gate (
 1. **Pre-beta security:** H-01, H-04, H-05, H-06, M-27, M-57
 2. **Mobile correctness:** M-54–M-61
 3. **Infra + prod parity:** M-19–M-22, M-47–M-53
-4. **Ops / polish:** M-09, M-31, L-08–L-09, L-14–L-16, L-22, L-24–L-26, L-25; then the L-28 consolidation backlog
+4. **Ops / polish:** M-09, M-31, L-08–L-09, L-14–L-16, L-22, L-26; then the L-28 consolidation backlog

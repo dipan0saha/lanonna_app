@@ -396,7 +396,9 @@ class _PredictionsTabState extends State<PredictionsTab> {
         child: Column(
           children: [
             Text(label, style: context.textStyles.titleSmall),
-            Text('$pct% ($count)'),
+            Text(
+              AppLocalizations.of(context)!.predictionGenderVoteShare(pct, count),
+            ),
           ],
         ),
       ),

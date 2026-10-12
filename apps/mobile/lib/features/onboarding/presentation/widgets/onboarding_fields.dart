@@ -8,6 +8,15 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import 'onboarding_typography.dart';
 
+/// Parent-driven [FormField] updates must not call [FormFieldState.didChange]
+/// synchronously from [State.didUpdateWidget] while an ancestor [Form] is building.
+void deferFormFieldDidChange(State state, VoidCallback apply) {
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (!state.mounted) return;
+    apply();
+  });
+}
+
 class OnboardingTextField extends StatelessWidget {
   const OnboardingTextField({
     super.key,
@@ -108,7 +117,11 @@ class _OnboardingTermsFormFieldState extends State<OnboardingTermsFormField> {
     if (oldWidget.value != widget.value &&
         field != null &&
         !field.hasInteractedByUser) {
-      field.didChange(widget.value);
+      final next = widget.value;
+      deferFormFieldDidChange(this, () {
+        if (!field.mounted || field.hasInteractedByUser) return;
+        field.didChange(next);
+      });
     }
   }
 
@@ -185,7 +198,11 @@ class _OnboardingRelationshipFormFieldState extends State<OnboardingRelationship
     if (oldWidget.value != widget.value &&
         field != null &&
         !field.hasInteractedByUser) {
-      field.didChange(widget.value);
+      final next = widget.value;
+      deferFormFieldDidChange(this, () {
+        if (!field.mounted || field.hasInteractedByUser) return;
+        field.didChange(next);
+      });
     }
   }
 
@@ -480,7 +497,7 @@ class OnboardingSegmentedControlStyle {
     selectedLabelColor: AppColors.primaryDark,
     thumbShadow: [
       BoxShadow(
-        color: Color(0x14000000),
+        color: AppColors.fieldShadow,
         blurRadius: 4,
         offset: Offset(0, 1),
       ),
@@ -529,7 +546,7 @@ class OnboardingSegmentedControl extends StatelessWidget {
       width: style.width,
       padding: EdgeInsets.all(style.outerPadding),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F1F2),
+        color: AppColors.inputFill,
         borderRadius: BorderRadius.circular(style.outerRadius),
       ),
       child: LayoutBuilder(

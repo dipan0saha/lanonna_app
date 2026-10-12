@@ -35,8 +35,8 @@ class PrototypeEventCoverUpload extends StatelessWidget {
             height: 70,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
-              color: const Color(0xFFF1F1F2),
-              border: Border.all(color: const Color(0xFFCFCFD1), width: 1.5),
+              color: AppColors.inputFill,
+              border: Border.all(color: AppColors.inputBorderStrong, width: 1.5),
             ),
             clipBehavior: Clip.antiAlias,
             child: hasPreview
