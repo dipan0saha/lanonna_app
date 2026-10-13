@@ -14,6 +14,7 @@ _PROFILE_COLUMNS = """
     email_digest_enabled,
     notify_gallery_enabled, notify_calendar_enabled,
     notify_registry_enabled, notify_comments_enabled,
+    biometric_unlock_enabled,
     created_at, updated_at
 """
 
@@ -121,6 +122,10 @@ def patch_profile_fields(
             )
         elif changes["accept_terms"] is False:
             raise ValueError("Terms acceptance cannot be revoked.")
+
+    if "biometric_unlock_enabled" in changes:
+        set_parts.append("biometric_unlock_enabled = %s")
+        params.append(bool(changes["biometric_unlock_enabled"]))
 
     if len(set_parts) == 1:
         raise ValueError("No profile fields to update.")

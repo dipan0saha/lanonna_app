@@ -25,6 +25,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsEditProfile => 'Edit profile';
 
   @override
+  String get settingsBiometricUnlock => 'Use biometric unlock';
+
+  @override
+  String get settingsBiometricUnlockSubtitle =>
+      'Require Face ID or fingerprint to open the app after you sign in';
+
+  @override
+  String get settingsBiometricUnavailable =>
+      'Biometrics are not available on this device.';
+
+  @override
+  String get biometricUnlockReason => 'Unlock La Nonna';
+
+  @override
+  String get biometricUnlockTitle => 'Locked';
+
+  @override
+  String get biometricUnlockRetry => 'Try again';
+
+  @override
+  String get biometricUnlockSignOut => 'Sign out';
+
+  @override
   String get notificationChannelGallery => 'Gallery';
 
   @override

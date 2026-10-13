@@ -45,6 +45,8 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSFaceIDUsageDescription</key>
+	<string>La Nonna uses Face ID so you can unlock the app after you sign in.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>La Nonna uses the camera so you can add profile and baby photos.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

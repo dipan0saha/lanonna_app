@@ -16,6 +16,7 @@ class ProfileResponse(BaseModel):
     postal_code: str | None = None
     terms_accepted_at: datetime | None = None
     owner_onboarding_completed: bool
+    biometric_unlock_enabled: bool = False
     created_at: str
     updated_at: str
 
@@ -28,6 +29,7 @@ class ProfileUpdateRequest(BaseModel):
     country_code: str | None = Field(default=None, min_length=2, max_length=2)
     postal_code: str | None = Field(default=None, max_length=32)
     accept_terms: bool | None = None
+    biometric_unlock_enabled: bool | None = None
 
     @field_validator("display_name", mode="before")
     @classmethod

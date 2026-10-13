@@ -65,6 +65,7 @@ class AccountPayload {
     this.birthDate,
     this.countryCode,
     this.postalCode,
+    this.biometricUnlockEnabled = false,
   });
 
   final String? displayName;
@@ -74,6 +75,7 @@ class AccountPayload {
   final String? birthDate;
   final String? countryCode;
   final String? postalCode;
+  final bool biometricUnlockEnabled;
   final List<BabySummary> babies;
   final UserEngagementStats engagement;
   final StorageUsage? storageUsage;
@@ -88,6 +90,7 @@ class AccountPayload {
     String? birthDate,
     String? countryCode,
     String? postalCode,
+    bool? biometricUnlockEnabled,
   }) {
     return AccountPayload(
       displayName: displayName ?? this.displayName,
@@ -100,6 +103,8 @@ class AccountPayload {
       birthDate: birthDate,
       countryCode: countryCode,
       postalCode: postalCode,
+      biometricUnlockEnabled:
+          biometricUnlockEnabled ?? this.biometricUnlockEnabled,
     );
   }
 
@@ -115,6 +120,8 @@ class AccountPayload {
       birthDate: profile['birth_date'] as String?,
       countryCode: profile['country_code'] as String?,
       postalCode: profile['postal_code'] as String?,
+      biometricUnlockEnabled:
+          profile['biometric_unlock_enabled'] as bool? ?? false,
       babies: babies
           .whereType<Map<String, dynamic>>()
           .map(BabySummary.fromJson)
@@ -278,6 +285,16 @@ class AccountRepository {
     _rememberProfileResponse(json, fallbackDisplayName: displayName);
   }
 
+  Future<void> setBiometricUnlockEnabled(bool enabled) async {
+    final json = await _api.patchJson('/v1/profile', body: {
+      'biometric_unlock_enabled': enabled,
+    });
+    _rememberProfileResponse(
+      json,
+      fallbackDisplayName: profileUpdates.account?.displayName ?? '',
+    );
+  }
+
   void _rememberProfileResponse(
     Map<String, dynamic> json, {
     required String fallbackDisplayName,
@@ -296,6 +313,9 @@ class AccountRepository {
         birthDate: json['birth_date'] as String?,
         countryCode: json['country_code'] as String?,
         postalCode: json['postal_code'] as String?,
+        biometricUnlockEnabled:
+            json['biometric_unlock_enabled'] as bool? ??
+            current.biometricUnlockEnabled,
       ),
     );
   }

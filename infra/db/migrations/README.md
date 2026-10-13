@@ -40,6 +40,7 @@ Apply in **lexicographic order** (filename prefix):
 | `032_drop_tombstoned_participation.sql` | Delete RSVPs, votes, name loves, and squishes for already-tombstoned accounts (FR-SET-005) |
 | `033_drop_ended_membership_participation.sql` | Delete those same presence rows when the person is no longer a current member (FR-INV-009 / FR-INV-010) |
 | `034_invitation_email_delivery_status.sql` | `email_delivery_status`, `email_last_error`, `email_send_attempts` on invitations (#62) |
+| `035_app_users_biometric_unlock.sql` | `app_users.biometric_unlock_enabled` (PRD §5.3 / M-31) |
 
 ## Apply (dev)
 

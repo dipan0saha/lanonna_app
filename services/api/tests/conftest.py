@@ -25,6 +25,7 @@ def _stub_row(firebase_uid: str, email: str | None) -> dict:
         "notify_calendar_enabled": True,
         "notify_registry_enabled": True,
         "notify_comments_enabled": True,
+        "biometric_unlock_enabled": False,
         "created_at": now,
         "updated_at": now,
         "deleted_at": None,

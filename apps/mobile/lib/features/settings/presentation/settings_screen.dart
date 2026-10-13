@@ -7,6 +7,7 @@ import '../../../core/platform/external_link_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
+import 'biometric_unlock_settings_tile.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -32,6 +33,7 @@ class SettingsScreen extends StatelessWidget {
       title: l10n.settingsTitle,
       body: ListView(
         children: [
+          const BiometricUnlockSettingsTile(),
           AppSemantics.button(
             'settings_notifications',
             ListTile(

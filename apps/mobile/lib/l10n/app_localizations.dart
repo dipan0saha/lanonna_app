@@ -124,6 +124,48 @@ abstract class AppLocalizations {
   /// **'Edit profile'**
   String get settingsEditProfile;
 
+  /// No description provided for @settingsBiometricUnlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Use biometric unlock'**
+  String get settingsBiometricUnlock;
+
+  /// No description provided for @settingsBiometricUnlockSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Require Face ID or fingerprint to open the app after you sign in'**
+  String get settingsBiometricUnlockSubtitle;
+
+  /// No description provided for @settingsBiometricUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Biometrics are not available on this device.'**
+  String get settingsBiometricUnavailable;
+
+  /// No description provided for @biometricUnlockReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock La Nonna'**
+  String get biometricUnlockReason;
+
+  /// No description provided for @biometricUnlockTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Locked'**
+  String get biometricUnlockTitle;
+
+  /// No description provided for @biometricUnlockRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get biometricUnlockRetry;
+
+  /// No description provided for @biometricUnlockSignOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get biometricUnlockSignOut;
+
   /// No description provided for @notificationChannelGallery.
   ///
   /// In en, this message translates to:

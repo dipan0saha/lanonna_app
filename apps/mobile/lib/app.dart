@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'core/auth/auth_repository.dart';
+import 'core/auth/biometric_app_lock.dart';
 import 'core/auth/email_verify_link_result.dart';
 import 'core/deep_links/app_link_bootstrap.dart';
 import 'core/deep_links/auth_action_app_link.dart';
@@ -160,7 +161,11 @@ class _LaNonnaAppState extends State<LaNonnaApp> {
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: _router,
       builder: (context, child) => AppVersionGate(
-        child: AppOfflineWrapper(child: child ?? const SizedBox.shrink()),
+        child: AppOfflineWrapper(
+          child: BiometricAppLock(
+            child: child ?? const SizedBox.shrink(),
+          ),
+        ),
       ),
     );
   }

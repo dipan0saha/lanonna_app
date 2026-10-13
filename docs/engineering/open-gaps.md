@@ -26,7 +26,7 @@ Run all three suites before every ship; the suites are the only automated gate (
 | Severity | Open | Themes |
 |----------|------|--------|
 | High | 3 | Release signing, worker OIDC, App Check enforce |
-| Medium | 17 | Export memory limits (beta), infra/IAM/prod parity (M-19 dev slice done), mobile error/async/date handling |
+| Medium | 16 | Export memory limits (beta), infra/IAM/prod parity (M-19 dev slice done), mobile error/async/date handling |
 | Low | 6 | Accessibility/i18n, infra GCS, Docker, lint remainder, deferred consolidation backlog |
 
 ---
@@ -156,7 +156,7 @@ Run all three suites before every ship; the suites are the only automated gate (
 | ID | Issue | Where | Fix |
 |----|-------|-------|-----|
 | M-27 | App Check token silently omitted when `getToken` fails | `core/app_check/app_check_bootstrap.dart`, `core/api/api_client.dart` | Retry/backoff or visible warning |
-| M-31 | Biometric unlock (PRD §5.3) not implemented — no `local_auth` usage | n/a | Implement or mark deferred in PRD |
+| ✅ M-31 | Biometric unlock (PRD §5.3) | `local_auth`, `BiometricAppLock`, migration `035` | Profile flag + settings toggle + resume lock overlay — **Status:** ✅ Fixed |
 | ✅ M-54 | Invite-mismatch PII in GoRouter query strings; invitee email in persisted preview JSON; Android Auto Backup of prefs | `InviteFlowState`, `invite_flow_navigation.dart`, `onboarding_wrong_email_screen.dart`, `AndroidManifest.xml` | In-memory mismatch/prefill/resume; preview JSON omits `invitee_email`; `allowBackup=false` + `backup_rules.xml` |
 | M-55 | Signed-in invite accept screens show `e.toString()` of an `Exception` instead of mapped copy | `onboarding_follower_invite_screen.dart:82-88`, `onboarding_coowner_invite_screen.dart:82-88` | Use `inviteAcceptUserMessage` / `apiErrorMessage` / `runMutation` |
 | M-56 | `AppSession.refreshFromApi` swallows all errors (`catch (_)`), so a failed status fetch can misroute (onboarding vs home) with no feedback | `onboarding/presentation/app_session.dart:46-57` | Surface an error/retry state or redirect conservatively |

@@ -38,6 +38,7 @@ def _profile_row(**overrides):
         "notify_calendar_enabled": True,
         "notify_registry_enabled": True,
         "notify_comments_enabled": True,
+        "biometric_unlock_enabled": False,
         "created_at": datetime.now(timezone.utc),
         "updated_at": datetime.now(timezone.utc),
     }
@@ -113,6 +114,20 @@ def test_patch_profile_rejects_blank_display_name():
     with _auth_as():
         response = client.patch("/v1/profile", json={"display_name": "   "})
     assert response.status_code == 422
+
+
+@patch("lanonna_api.routers.profile.patch_profile_fields")
+def test_patch_profile_biometric_unlock_enabled(mock_patch):
+    mock_patch.return_value = _profile_row(biometric_unlock_enabled=True)
+    with _auth_as():
+        response = client.patch(
+            "/v1/profile",
+            json={"biometric_unlock_enabled": True},
+        )
+    assert response.status_code == 200
+    changes = mock_patch.call_args[0][1]
+    assert changes == {"biometric_unlock_enabled": True}
+    assert response.json()["biometric_unlock_enabled"] is True
 
 
 @patch("lanonna_api.routers.profile.patch_profile_fields")

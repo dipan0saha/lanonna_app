@@ -28,6 +28,7 @@ def test_patch_profile_fields_only_updates_provided_columns():
                 "notify_calendar_enabled": True,
                 "notify_registry_enabled": True,
                 "notify_comments_enabled": True,
+                "biometric_unlock_enabled": False,
                 "created_at": datetime.now(timezone.utc),
                 "updated_at": datetime.now(timezone.utc),
             }
@@ -42,3 +43,42 @@ def test_patch_profile_fields_only_updates_provided_columns():
     assert "birth_date = %s" in sql
     assert "display_name =" not in sql
     assert params[0] == date(1991, 1, 1)
+
+
+def test_patch_profile_fields_biometric_unlock_enabled():
+    executed: list[tuple] = []
+
+    class FakeCursor:
+        def fetchone(self):
+            return {
+                "firebase_uid": "uid",
+                "email": "a@b.com",
+                "display_name": "Sarah Parker",
+                "avatar_url": None,
+                "phone": None,
+                "birth_date": None,
+                "country_code": None,
+                "postal_code": None,
+                "terms_accepted_at": None,
+                "owner_onboarding_completed_at": None,
+                "notification_digest": None,
+                "push_notifications_enabled": True,
+                "email_digest_enabled": True,
+                "notify_gallery_enabled": True,
+                "notify_calendar_enabled": True,
+                "notify_registry_enabled": True,
+                "notify_comments_enabled": True,
+                "biometric_unlock_enabled": True,
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc),
+            }
+
+    with patch(
+        "lanonna_api.repositories.users.get_connection",
+        return_value=RecordingConnection(FakeCursor, executed),
+    ):
+        patch_profile_fields("uid", {"biometric_unlock_enabled": True})
+
+    sql, params = executed[0]
+    assert "biometric_unlock_enabled = %s" in sql
+    assert params[0] is True

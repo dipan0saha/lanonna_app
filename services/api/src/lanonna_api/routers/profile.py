@@ -34,6 +34,7 @@ def _to_profile_response(row: dict[str, Any]) -> ProfileResponse:
         postal_code=row.get("postal_code"),
         terms_accepted_at=terms,
         owner_onboarding_completed=row.get("owner_onboarding_completed_at") is not None,
+        biometric_unlock_enabled=bool(row.get("biometric_unlock_enabled", False)),
         created_at=row["created_at"].isoformat(),
         updated_at=row["updated_at"].isoformat(),
     )
