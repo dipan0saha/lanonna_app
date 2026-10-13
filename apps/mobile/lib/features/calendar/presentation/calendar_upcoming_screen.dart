@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../home/data/home_repository.dart';
@@ -7,9 +6,8 @@ import '../../home/data/selected_baby_store.dart';
 import '../../home/presentation/baby_context_reload.dart';
 import '../data/calendar_repository.dart';
 import '../data/models/calendar_models.dart';
-import '../../../core/time/app_date_time.dart';
-import '../domain/calendar_routes.dart';
-import 'widgets/event_date_chip.dart';
+import '../domain/calendar_event_lists.dart';
+import 'widgets/calendar_today_upcoming_list.dart';
 
 class CalendarUpcomingScreen extends StatefulWidget {
   const CalendarUpcomingScreen({super.key});
@@ -20,7 +18,8 @@ class CalendarUpcomingScreen extends StatefulWidget {
 
 class _CalendarUpcomingScreenState extends State<CalendarUpcomingScreen>
     with BabyContextReload {
-  List<CalendarEvent> _events = [];
+  List<CalendarEvent> _today = [];
+  List<CalendarEvent> _upcoming = [];
   var _loading = true;
   String? _error;
 
@@ -60,18 +59,27 @@ class _CalendarUpcomingScreenState extends State<CalendarUpcomingScreen>
       final baby = await homeRepo.resolveSelectedBaby(store);
       if (baby == null) {
         setState(() {
-          _events = [];
+          _today = [];
+          _upcoming = [];
           _loading = false;
         });
         return;
       }
       if (!mounted) return;
-      final events = await context.read<CalendarRepository>().listEvents(
-            baby.id,
-            upcoming: true,
-          );
+      final calRepo = context.read<CalendarRepository>();
+      final now = DateTime.now();
+      final currentKey = calendarMonthKey(now);
+      final monthForToday =
+          await calRepo.listEvents(baby.id, month: currentKey);
+      final upcomingApi = await calRepo.listEvents(baby.id, upcoming: true);
+      final partition = partitionCalendarListEvents(
+        monthEventsForToday: monthForToday,
+        upcomingFromApi: upcomingApi,
+        now: now,
+      );
       setState(() {
-        _events = events;
+        _today = partition.today;
+        _upcoming = partition.upcoming;
         _loading = false;
       });
     } catch (e) {
@@ -108,34 +116,11 @@ class _CalendarUpcomingScreenState extends State<CalendarUpcomingScreen>
                       ),
                     ],
                   )
-                : _events.isEmpty
-                    ? ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        children: const [
-                          SizedBox(height: 120),
-                          Center(child: Text('No upcoming events')),
-                        ],
-                      )
-                    : ListView.builder(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        itemCount: _events.length,
-                        itemBuilder: (context, i) {
-                          final event = _events[i];
-                          return ListTile(
-                            leading: EventDateChip(startsAt: event.startsAt),
-                            title: Text(event.title),
-                            subtitle: Text(
-                              formatEventListDateTime(
-                                event.startsAt,
-                                Localizations.localeOf(context).toString(),
-                              ),
-                            ),
-                            onTap: () => context.push(
-                              CalendarRoutes.eventDetail(event.id),
-                            ),
-                          );
-                        },
-                      ),
+                : CalendarTodayUpcomingList(
+                    today: _today,
+                    upcoming: _upcoming,
+                    emptyMessage: 'No upcoming events',
+                  ),
       ),
     );
   }

@@ -35,13 +35,6 @@ class HomePrdSections extends StatelessWidget {
             teasers: teasers,
             onSignedUrlError: onRefresh,
           ),
-        if (teasers != null) ...[
-          HomeRegistryHighlightsList(items: teasers.registryHighlights),
-          HomeRecentPurchasesSection(
-            purchases: teasers.recentPurchases,
-            isOwner: isOwner,
-          ),
-        ],
         if (summary.recentActivity.isNotEmpty)
           HomeActivityFeed(
             items: summary.recentActivity,

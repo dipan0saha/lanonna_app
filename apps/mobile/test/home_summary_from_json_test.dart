@@ -13,16 +13,16 @@ void main() {
         'top_name': {'suggested_name': 'Milo', 'like_count': 5},
       },
       'teasers': {
-        'recent_photos': [],
-        'favorite_photos': [],
-        'registry_open_count': 2,
-        'registry_highlights': [
-          {'id': 'r1', 'name': 'Stroller', 'priority': 1.0},
+        'recent_photos': [
+          {'id': 'p1', 'thumb_url': 'https://thumb'},
         ],
-        'recent_registry_purchases': [],
-        'upcoming_events': [],
-        'rsvp_reminders': [],
-        'notification_preview': [],
+        'upcoming_events': [
+          {
+            'id': 'e1',
+            'title': 'Shower',
+            'starts_at': '2026-10-02T18:00:00Z',
+          },
+        ],
       },
       'recent_activity': [
         {
@@ -39,8 +39,8 @@ void main() {
     expect(summary.voteCount, 7);
     expect(summary.genderTotals?.male, 4);
     expect(summary.topName?.likeCount, 5);
-    expect(summary.teasers?.registryOpenCount, 2);
-    expect(summary.teasers?.registryHighlights.single.name, 'Stroller');
+    expect(summary.teasers?.recentPhotos.single.id, 'p1');
+    expect(summary.teasers?.upcomingEvents.single.title, 'Shower');
     expect(summary.recentActivity, hasLength(1));
     expect(summary.recentActivity.first.eventType, 'registry_item_added');
   });

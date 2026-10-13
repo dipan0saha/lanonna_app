@@ -56,13 +56,7 @@ class GettingStartedSummary(BaseModel):
 
 class HomeTeasersResponse(BaseModel):
     recent_photos: list[dict[str, Any]] = []
-    favorite_photos: list[dict[str, Any]] = []
-    registry_open_count: int = 0
-    registry_highlights: list[dict[str, Any]] = []
-    recent_registry_purchases: list[dict[str, Any]] = []
     upcoming_events: list[dict[str, Any]] = []
-    rsvp_reminders: list[dict[str, Any]] = []
-    notification_preview: list[dict[str, Any]] = []
 
 
 class HomeSummaryResponse(BaseModel):

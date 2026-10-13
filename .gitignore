@@ -11,6 +11,10 @@ service-account*.json
 firebase-debug.log
 firebase-debug.*.log
 
+# Firebase Hosting (local deploy cache; machine-specific App Links)
+hosting/.firebase/
+hosting/public/.well-known/assetlinks.json
+
 # OS and editors
 .DS_Store
 .idea/

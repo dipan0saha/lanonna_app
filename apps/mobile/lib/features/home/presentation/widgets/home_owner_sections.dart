@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_icon_button.dart';
 import '../../../account/data/account_repository.dart';
-import '../../../registry/domain/registry_routes.dart';
 import '../../data/models/home_summary.dart';
 import 'home_scroll_section.dart';
 
@@ -80,67 +79,6 @@ class HomeInviteStatusSection extends StatelessWidget {
               ),
             ),
         ],
-      ),
-    );
-  }
-}
-
-class HomeRegistryHighlightsList extends StatelessWidget {
-  const HomeRegistryHighlightsList({super.key, required this.items});
-
-  final List<HomeRegistryHighlight> items;
-
-  @override
-  Widget build(BuildContext context) {
-    if (items.isEmpty) return const SizedBox.shrink();
-    return HomeScrollSection.bordered(
-      title: 'Registry Highlights',
-      padding: EdgeInsets.zero,
-      child: Column(
-        children: items
-            .map(
-              (item) => ListTile(
-                title: Text(item.name),
-                trailing: const Icon(
-                  Icons.chevron_right,
-                  color: AppColors.muted,
-                ),
-                onTap: () => context.push(RegistryRoutes.itemEdit(item.id)),
-              ),
-            )
-            .toList(),
-      ),
-    );
-  }
-}
-
-class HomeRecentPurchasesSection extends StatelessWidget {
-  const HomeRecentPurchasesSection({
-    super.key,
-    required this.purchases,
-    required this.isOwner,
-  });
-
-  final List<HomeRecentPurchase> purchases;
-  final bool isOwner;
-
-  @override
-  Widget build(BuildContext context) {
-    if (purchases.isEmpty) return const SizedBox.shrink();
-    return HomeScrollSection.bordered(
-      title: 'Recent Registry Purchases',
-      padding: EdgeInsets.zero,
-      child: Column(
-        children: purchases.map((p) {
-          final subtitle = isOwner && p.purchaserDisplayName != null
-              ? '${p.purchaserDisplayName} is buying'
-              : 'Recently claimed';
-          return ListTile(
-            title: Text(p.itemName),
-            subtitle: Text(subtitle),
-            onTap: () => context.push(RegistryRoutes.itemEdit(p.itemId)),
-          );
-        }).toList(),
       ),
     );
   }

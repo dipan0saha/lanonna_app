@@ -19,8 +19,7 @@ from lanonna_api.repositories.babies import (
     get_baby_for_owner,
     update_baby_for_owner,
 )
-from lanonna_api.repositories.events import get_caller_rsvp, list_events
-from lanonna_api.repositories.notifications import list_notifications_for_user
+from lanonna_api.repositories.events import list_events
 from lanonna_api.repositories.photos import get_photo_for_baby, list_photos_for_baby
 from lanonna_api.repositories.fun import (
     birthdate_vote_histogram,
@@ -31,7 +30,6 @@ from lanonna_api.repositories.fun import (
 from lanonna_api.repositories.home_counts import (
     count_events,
     count_follower_memberships,
-    count_open_registry_items,
     count_photos_for_baby,
     count_registry_items,
     count_sent_invitations,
@@ -39,10 +37,6 @@ from lanonna_api.repositories.home_counts import (
 )
 from lanonna_api.repositories.invitations import list_invitations_for_baby
 from lanonna_api.repositories.announcements import get_announcement
-from lanonna_api.repositories.registry import (
-    list_open_registry_highlights,
-    list_recent_registry_purchases,
-)
 from lanonna_api.repositories.system_announcements import list_active_for_user
 from lanonna_api.domain.date_validation import (
     utc_today as _utc_today,
@@ -142,10 +136,7 @@ def list_activity_events(
     }
 
 
-def _build_home_teasers(
-    firebase_uid: str,
-    baby_profile_id: uuid.UUID,
-) -> dict[str, Any]:
+def _build_home_teasers(baby_profile_id: uuid.UUID) -> dict[str, Any]:
     photos = list_photos_for_baby(baby_profile_id, ready_only=True, limit=4)
     recent_photos = [
         {
@@ -155,82 +146,13 @@ def _build_home_teasers(
         for p in photos
         if p.get("thumb_path")
     ]
-    fav_rows = list_photos_for_baby(
-        baby_profile_id, ready_only=True, limit=4, sort="favorites"
-    )
-    favorite_photos = [
-        {
-            "id": str(p["id"]),
-            "thumb_url": signed_thumb_url(p.get("thumb_path")),
-            "squish_count": p.get("squish_count", 0),
-        }
-        for p in fav_rows
-        if p.get("thumb_path")
-    ]
-    rsvp_reminders: list[dict[str, Any]] = []
-    for ev in list_events(baby_profile_id, upcoming_only=True):
-        if get_caller_rsvp(ev["id"], firebase_uid) is not None:
-            continue
-        rsvp_reminders.append(
-            {
-                "id": str(ev["id"]),
-                "title": ev["title"],
-                "starts_at": ev["starts_at"].isoformat()
-                if hasattr(ev["starts_at"], "isoformat")
-                else str(ev["starts_at"]),
-            }
-        )
-        if len(rsvp_reminders) >= 3:
-            break
-    notifs = list_notifications_for_user(firebase_uid, limit=3, unread_only=True)
     upcoming_events = [
         _serialize_upcoming_event(ev)
         for ev in list_events(baby_profile_id, upcoming_only=True)[:3]
     ]
-    registry_highlights = [
-        {
-            "id": str(r["id"]),
-            "name": r["name"],
-            "priority": int(r.get("priority") or 0),
-        }
-        for r in list_open_registry_highlights(baby_profile_id, limit=3)
-    ]
-    recent_purchases = []
-    for row in list_recent_registry_purchases(baby_profile_id):
-        purchased_at = row.get("purchased_at")
-        recent_purchases.append(
-            {
-                "item_id": str(row["item_id"]),
-                "item_name": row["item_name"],
-                "purchaser_display_name": row.get("purchaser_display_name"),
-                "purchased_at": purchased_at.isoformat()
-                if hasattr(purchased_at, "isoformat")
-                else str(purchased_at),
-            }
-        )
     return {
         "recent_photos": recent_photos,
-        "favorite_photos": favorite_photos,
-        "registry_open_count": count_open_registry_items(baby_profile_id),
-        "registry_highlights": registry_highlights,
-        "recent_registry_purchases": recent_purchases,
         "upcoming_events": upcoming_events,
-        "rsvp_reminders": rsvp_reminders,
-        "notification_preview": [
-            {
-                "id": str(n["id"]),
-                "title": n["title"],
-                "body": n["body"],
-                "deep_link": n.get("deep_link"),
-                "baby_profile_id": str(n["baby_profile_id"])
-                if n.get("baby_profile_id")
-                else None,
-                "created_at": n["created_at"].isoformat()
-                if hasattr(n["created_at"], "isoformat")
-                else str(n["created_at"]),
-            }
-            for n in notifs
-        ],
     }
 
 
@@ -442,6 +364,6 @@ def build_home_summary(
         "system_announcements": system_announcements,
         "new_followers": new_followers,
         "invite_status": invite_status,
-        "teasers": _build_home_teasers(firebase_uid, baby_profile_id),
+        "teasers": _build_home_teasers(baby_profile_id),
         "recent_activity": [serialize_activity_item(item) for item in recent],
     }

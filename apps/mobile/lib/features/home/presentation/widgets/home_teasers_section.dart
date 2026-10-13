@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../../../../core/media/cached_signed_image.dart';
 import '../../../../core/widgets/app_semantics.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
-import '../../../../core/router/deep_link_navigation.dart';
-import '../../../calendar/domain/calendar_routes.dart';
 import '../../../gallery/domain/gallery_routes.dart';
 import '../../data/models/home_summary.dart';
 import 'home_scroll_section.dart';
@@ -26,66 +23,10 @@ class HomeTeasersSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     final children = <Widget>[];
-
-    if (teasers.notificationPreview.isNotEmpty) {
-      children.add(
-        HomeScrollSection.bordered(
-          title: 'Notifications',
-          padding: EdgeInsets.zero,
-          child: Column(
-            children: teasers.notificationPreview
-                .map(
-                  (n) => ListTile(
-                    title: Text(n.title),
-                    subtitle: Text(n.body),
-                    trailing: n.deepLink != null && n.deepLink!.isNotEmpty
-                        ? const Icon(
-                            Icons.chevron_right,
-                            color: AppColors.muted,
-                          )
-                        : null,
-                    onTap: n.deepLink != null && n.deepLink!.isNotEmpty
-                        ? () => navigateAppDeepLink(
-                            context,
-                            n.deepLink,
-                            babyProfileId: n.babyProfileId,
-                          )
-                        : null,
-                  ),
-                )
-                .toList(),
-          ),
-        ),
-      );
-    }
 
     if (teasers.upcomingEvents.isNotEmpty) {
       children.add(HomeUpcomingEventsSection(events: teasers.upcomingEvents));
-    }
-
-    if (teasers.rsvpReminders.isNotEmpty) {
-      children.add(
-        HomeScrollSection.bordered(
-          title: 'RSVP Reminders',
-          padding: EdgeInsets.zero,
-          child: Column(
-            children: teasers.rsvpReminders
-                .map(
-                  (e) => ListTile(
-                    title: Text(e.title),
-                    trailing: const Icon(
-                      Icons.chevron_right,
-                      color: AppColors.muted,
-                    ),
-                    onTap: () => context.push(CalendarRoutes.eventDetail(e.id)),
-                  ),
-                )
-                .toList(),
-          ),
-        ),
-      );
     }
 
     if (teasers.recentPhotos.isNotEmpty) {
@@ -98,42 +39,7 @@ class HomeTeasersSection extends StatelessWidget {
           ),
           body: _photoRow(
             teasers.recentPhotos,
-            AppColors.sageTint,
             onSignedUrlError: onSignedUrlError,
-          ),
-        ),
-      );
-    }
-
-    if (teasers.favoritePhotos.isNotEmpty) {
-      children.add(
-        HomeScrollSection(
-          title: 'Gallery Favorites',
-          trailing: HomeSectionLink(
-            label: 'View all',
-            onPressed: () => context.go(GalleryRoutes.favorites),
-          ),
-          body: _photoRow(
-            teasers.favoritePhotos,
-            AppColors.peachTint,
-            favorites: true,
-            onSignedUrlError: onSignedUrlError,
-          ),
-        ),
-      );
-    }
-
-    if (teasers.registryOpenCount > 0 && teasers.registryHighlights.isEmpty) {
-      children.add(
-        HomeScrollSection.bordered(
-          title: 'Registry Highlights',
-          padding: EdgeInsets.zero,
-          child: ListTile(
-            title: Text(
-              l10n.registryItemsStillNeeded(teasers.registryOpenCount),
-            ),
-            trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
-            onTap: () => context.go('/registry'),
           ),
         ),
       );
@@ -147,9 +53,7 @@ class HomeTeasersSection extends StatelessWidget {
   }
 
   Widget _photoRow(
-    List<HomeTeaserPhoto> photos,
-    Color fallback, {
-    bool favorites = false,
+    List<HomeTeaserPhoto> photos, {
     VoidCallback? onSignedUrlError,
   }) {
     return SizedBox(
@@ -162,15 +66,9 @@ class HomeTeasersSection extends StatelessWidget {
         itemBuilder: (context, i) {
           final p = photos[i];
           return AppSemantics.button(
-            favorites
-                ? 'home_favorite_photo_${p.id}'
-                : 'home_recent_photo_${p.id}',
+            'home_recent_photo_${p.id}',
             GestureDetector(
-              onTap: () => context.push(
-                favorites
-                    ? GalleryRoutes.photoDetail(p.id)
-                    : '/gallery/photo/${p.id}',
-              ),
+              onTap: () => context.push('/gallery/photo/${p.id}'),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: p.thumbUrl != null
@@ -185,12 +83,8 @@ class HomeTeasersSection extends StatelessWidget {
                     : Container(
                         width: 88,
                         height: 88,
-                        color: fallback,
-                        child: Icon(
-                          favorites
-                              ? Icons.favorite_outline
-                              : Icons.photo_outlined,
-                        ),
+                        color: AppColors.sageTint,
+                        child: const Icon(Icons.photo_outlined),
                       ),
               ),
             ),

@@ -18,10 +18,11 @@ import '../../shell/presentation/shell_tab_layout.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../data/calendar_repository.dart';
 import '../data/models/calendar_models.dart';
+import '../domain/calendar_event_lists.dart';
 import '../domain/calendar_routes.dart';
 import 'calendar_display.dart';
 import 'event_form_screen.dart';
-import 'widgets/event_date_chip.dart';
+import 'widgets/calendar_event_list_tile.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -35,6 +36,7 @@ class _CalendarScreenState extends State<CalendarScreen>
   BabySummary? _baby;
   DateTime _visibleMonth = DateTime(DateTime.now().year, DateTime.now().month);
   List<CalendarEvent> _monthEvents = [];
+  List<CalendarEvent> _today = [];
   List<CalendarEvent> _upcoming = [];
   var _loading = true;
   String? _loadError;
@@ -66,9 +68,6 @@ class _CalendarScreenState extends State<CalendarScreen>
 
   void _onEventsChanged() => _load();
 
-  String _monthKey(DateTime d) =>
-      '${d.year}-${d.month.toString().padLeft(2, '0')}';
-
   Future<void> _load() async {
     setState(() {
       _loading = true;
@@ -84,21 +83,31 @@ class _CalendarScreenState extends State<CalendarScreen>
         setState(() {
           _baby = null;
           _monthEvents = [];
+          _today = [];
           _upcoming = [];
           _loading = false;
         });
         return;
       }
-      final month = await calRepo.listEvents(
-        baby.id,
-        month: _monthKey(_visibleMonth),
+      final now = DateTime.now();
+      final visibleKey = calendarMonthKey(_visibleMonth);
+      final currentKey = calendarMonthKey(now);
+      final month = await calRepo.listEvents(baby.id, month: visibleKey);
+      final upcomingApi = await calRepo.listEvents(baby.id, upcoming: true);
+      final monthForToday = visibleKey == currentKey
+          ? month
+          : await calRepo.listEvents(baby.id, month: currentKey);
+      final partition = partitionCalendarListEvents(
+        monthEventsForToday: monthForToday,
+        upcomingFromApi: upcomingApi,
+        now: now,
       );
-      final upcoming = await calRepo.listEvents(baby.id, upcoming: true);
       if (!mounted) return;
       setState(() {
         _baby = baby;
         _monthEvents = month;
-        _upcoming = upcoming;
+        _today = partition.today;
+        _upcoming = partition.upcoming;
         _loading = false;
       });
     } catch (e) {
@@ -307,16 +316,35 @@ class _CalendarScreenState extends State<CalendarScreen>
                     ),
                   ),
                 ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                  child: Text(
-                    'Upcoming',
-                    style: styles.labelLarge?.copyWith(color: AppColors.muted),
+              if (_today.isNotEmpty) ...[
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    child: Text(
+                      'Today',
+                      style: styles.labelLarge?.copyWith(color: AppColors.muted),
+                    ),
                   ),
                 ),
-              ),
-              if (_upcoming.isEmpty)
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) =>
+                        CalendarEventListTile(event: _today[index]),
+                    childCount: _today.length,
+                  ),
+                ),
+              ],
+              if (_today.isNotEmpty || _upcoming.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    child: Text(
+                      'Upcoming',
+                      style: styles.labelLarge?.copyWith(color: AppColors.muted),
+                    ),
+                  ),
+                ),
+              if (_today.isEmpty && _upcoming.isEmpty)
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
@@ -337,23 +365,25 @@ class _CalendarScreenState extends State<CalendarScreen>
                     ),
                   ),
                 )
+              else if (_upcoming.isEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    child: Text(
+                      'No further upcoming events',
+                      style: styles.bodyMedium?.copyWith(
+                        color: AppColors.muted,
+                      ),
+                    ),
+                  ),
+                )
               else
                 SliverList(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final event = _upcoming[index];
-                    return ListTile(
-                      leading: EventDateChip(startsAt: event.startsAt),
-                      title: Text(event.title),
-                      subtitle: Text(
-                        formatEventListDateTime(
-                          event.startsAt,
-                          Localizations.localeOf(context).toString(),
-                        ),
-                      ),
-                      onTap: () =>
-                          context.push(CalendarRoutes.eventDetail(event.id)),
-                    );
-                  }, childCount: _upcoming.length),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) =>
+                        CalendarEventListTile(event: _upcoming[index]),
+                    childCount: _upcoming.length,
+                  ),
                 ),
               const SliverToBoxAdapter(child: SizedBox(height: 96)),
             ],

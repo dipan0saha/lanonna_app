@@ -45,13 +45,7 @@ void main() {
           body: HomeTeasersSection(
             teasers: HomeTeasers(
               recentPhotos: [HomeTeaserPhoto(id: 'photo-1')],
-              favoritePhotos: [],
-              registryOpenCount: 0,
-              registryHighlights: [],
-              recentPurchases: [],
               upcomingEvents: [],
-              rsvpReminders: [],
-              notificationPreview: [],
             ),
           ),
         ),

@@ -150,158 +150,27 @@ class HomeTeaserPhoto {
   }
 }
 
-class HomeRsvpReminder {
-  const HomeRsvpReminder({
-    required this.id,
-    required this.title,
-    this.startsAt,
-  });
-
-  final String id;
-  final String title;
-  final DateTime? startsAt;
-
-  factory HomeRsvpReminder.fromJson(Map<String, dynamic> json) {
-    return HomeRsvpReminder(
-      id: json['id']?.toString() ?? '',
-      title: json['title'] as String? ?? '',
-      startsAt: tryParseApiInstant(json['starts_at'] as String?),
-    );
-  }
-}
-
-class HomeNotificationPreview {
-  const HomeNotificationPreview({
-    required this.id,
-    required this.title,
-    required this.body,
-    this.deepLink,
-    this.babyProfileId,
-  });
-
-  final String id;
-  final String title;
-  final String body;
-  final String? deepLink;
-  final String? babyProfileId;
-
-  factory HomeNotificationPreview.fromJson(Map<String, dynamic> json) {
-    return HomeNotificationPreview(
-      id: json['id']?.toString() ?? '',
-      title: json['title'] as String? ?? '',
-      body: json['body'] as String? ?? '',
-      deepLink: json['deep_link'] as String?,
-      babyProfileId: json['baby_profile_id']?.toString(),
-    );
-  }
-}
-
-class HomeRegistryHighlight {
-  const HomeRegistryHighlight({
-    required this.id,
-    required this.name,
-    required this.priority,
-  });
-
-  final String id;
-  final String name;
-  final int priority;
-
-  factory HomeRegistryHighlight.fromJson(Map<String, dynamic> json) {
-    return HomeRegistryHighlight(
-      id: json['id']?.toString() ?? '',
-      name: json['name'] as String? ?? '',
-      priority: readInt(json['priority']),
-    );
-  }
-}
-
-class HomeRecentPurchase {
-  const HomeRecentPurchase({
-    required this.itemId,
-    required this.itemName,
-    this.purchaserDisplayName,
-    required this.purchasedAt,
-  });
-
-  final String itemId;
-  final String itemName;
-  final String? purchaserDisplayName;
-  final String purchasedAt;
-
-  factory HomeRecentPurchase.fromJson(Map<String, dynamic> json) {
-    return HomeRecentPurchase(
-      itemId: json['item_id']?.toString() ?? '',
-      itemName: json['item_name'] as String? ?? '',
-      purchaserDisplayName: json['purchaser_display_name'] as String?,
-      purchasedAt: json['purchased_at'] as String? ?? '',
-    );
-  }
-}
-
 class HomeTeasers {
   const HomeTeasers({
     required this.recentPhotos,
-    required this.favoritePhotos,
-    required this.registryOpenCount,
-    required this.registryHighlights,
-    required this.recentPurchases,
     required this.upcomingEvents,
-    required this.rsvpReminders,
-    required this.notificationPreview,
   });
 
   final List<HomeTeaserPhoto> recentPhotos;
-  final List<HomeTeaserPhoto> favoritePhotos;
-  final int registryOpenCount;
-  final List<HomeRegistryHighlight> registryHighlights;
-  final List<HomeRecentPurchase> recentPurchases;
   final List<NextUpEvent> upcomingEvents;
-  final List<HomeRsvpReminder> rsvpReminders;
-  final List<HomeNotificationPreview> notificationPreview;
 
   factory HomeTeasers.fromJson(Map<String, dynamic>? json) {
     if (json == null) {
-      return const HomeTeasers(
-        recentPhotos: [],
-        favoritePhotos: [],
-        registryOpenCount: 0,
-        registryHighlights: [],
-        recentPurchases: [],
-        upcomingEvents: [],
-        rsvpReminders: [],
-        notificationPreview: [],
-      );
+      return const HomeTeasers(recentPhotos: [], upcomingEvents: []);
     }
     return HomeTeasers(
       recentPhotos: (json['recent_photos'] as List<dynamic>? ?? [])
           .whereType<Map<String, dynamic>>()
           .map(HomeTeaserPhoto.fromJson)
           .toList(),
-      favoritePhotos: (json['favorite_photos'] as List<dynamic>? ?? [])
-          .whereType<Map<String, dynamic>>()
-          .map(HomeTeaserPhoto.fromJson)
-          .toList(),
-      registryOpenCount: readInt(json['registry_open_count']),
-      registryHighlights: (json['registry_highlights'] as List<dynamic>? ?? [])
-          .whereType<Map<String, dynamic>>()
-          .map(HomeRegistryHighlight.fromJson)
-          .toList(),
-      recentPurchases: (json['recent_registry_purchases'] as List<dynamic>? ?? [])
-          .whereType<Map<String, dynamic>>()
-          .map(HomeRecentPurchase.fromJson)
-          .toList(),
       upcomingEvents: (json['upcoming_events'] as List<dynamic>? ?? [])
           .whereType<Map<String, dynamic>>()
           .map((e) => NextUpEvent.fromJson(e))
-          .toList(),
-      rsvpReminders: (json['rsvp_reminders'] as List<dynamic>? ?? [])
-          .whereType<Map<String, dynamic>>()
-          .map(HomeRsvpReminder.fromJson)
-          .toList(),
-      notificationPreview: (json['notification_preview'] as List<dynamic>? ?? [])
-          .whereType<Map<String, dynamic>>()
-          .map(HomeNotificationPreview.fromJson)
           .toList(),
     );
   }

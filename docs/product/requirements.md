@@ -181,16 +181,13 @@ Recommended vertical order (adjust in design wireframes without dropping capabil
 2. **Due date countdown** — pre-birth only; hidden after birth recorded.
 3. **Onboarding checklist** — owner setup tasks until complete or dismissed per product rules.
 4. **System announcements** — dismissible banners (global or targeted).
-5. **Notifications preview** — recent unread in-app alerts with deep links.
-6. **Upcoming events** — teaser list; “View all” → `/calendar/upcoming`.
-7. **RSVP tasks** — events needing user RSVP; links to event detail.
-8. **Recent photos** — grid teaser; “View all” → `/gallery/recent`.
-9. **Gallery favorites** — top squished photos teaser; → `/gallery/favorites`.
-10. **Registry highlights** — featured/open items; → Registry tab.
-11. **Recent registry purchases** — last 15 days; owner/follower views per role.
-12. **Activity recap** — **full stream** of recent `activity_events` (chronological audit-style feed), not a weekly rollup.
-13. **New followers** — joined in last 30 days; owner only.
-14. **Invite status** — pending email invites; revoke; owner only.
+5. **Upcoming events** — teaser list; “View all” → `/calendar/upcoming`.
+6. **Recent photos** — grid teaser; “View all” → `/gallery/recent`.
+7. **Activity recap** — **full stream** of recent `activity_events` (chronological audit-style feed), not a weekly rollup.
+8. **New followers** — joined in last 30 days; owner only.
+9. **Invite status** — pending email invites; revoke; owner only.
+
+RSVP, gallery favorites, registry highlights/purchases, and notification preview are **not** on Home; use Calendar, Gallery, Registry, and the notification inbox (bell) instead (#67).
 
 ### 6.3 Home sections (follower context)
 
@@ -310,12 +307,12 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 
 | ID | Requirement | Acceptance criteria | Implementation note |
 |----|-------------|---------------------|---------------------|
-| FR-CAL-001 | Event list/calendar views | Month/list UI on Calendar tab | Flutter |
+| FR-CAL-001 | Event list/calendar views | Month grid on Calendar tab; **Today** section (local calendar day, all starts that day) when non-empty; **Upcoming** for later days via `upcoming=true` | `partitionCalendarListEvents`; current-month fetch |
 | FR-CAL-002 | Create event | Owner creates event (E2E-009); after save, event appears on Calendar **Upcoming** when `starts_at` is in the future and on month grid by **local** date; nested create routes refresh list on return (`#398`) | `/calendar/event/create` |
 | FR-CAL-003 | Event detail/edit | Detail by id; edit route for owner | `/calendar/event/:id`, `.../edit` |
 | FR-CAL-004 | RSVP | Follower/owner RSVP yes/no/maybe; attendee list shows each member's `display_name` (#7); RSVP sheet shows localized status labels, not API codes (#18) | `event_rsvps`; `rsvp_display_name_from_row`; mobile `rsvp_status_labels.dart` |
 | FR-CAL-005 | Event comments | Same moderation rules as FR-GAL-007 on event detail; comment field does not steal focus after returning from event edit (#17) | `event_comments`; `POST` / `PATCH` / `DELETE` on `…/events/{id}/comments` |
-| FR-CAL-006 | Upcoming list | View all upcoming from home teaser (E2E-018) | `/calendar/upcoming` |
+| FR-CAL-006 | Upcoming list | View all from home teaser (E2E-018); same Today + Upcoming grouping as Calendar tab | `/calendar/upcoming` |
 | FR-CAL-007 | AI event suggestions | Static catalog by expecting/age tabs; shared “AI Suggestions” UX with registry; hide rows already added (`catalog_suggestion_id` on event); after add, brief info snackbar confirms save (`#398`) | `/calendar/ai-suggestions`; `event_suggestions.json` |
 | FR-CAL-008 | Optional video call URL (#13) | Empty allowed; non-empty must be http(s) (bare domains normalized to `https://`); junk schemes rejected on save with user-visible message; API returns **400** on invalid URL | `url_validation.py`; `EventFormScreen`; `form_validators.dart` |
 
@@ -350,7 +347,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 
 | ID | Requirement | Acceptance criteria | Implementation note |
 |----|-------------|---------------------|---------------------|
-| FR-NOTIF-001 | In-app inbox | Bell (or equivalent) opens full notification list; mark read; home shows preview of recent unread (§6.2 item 5) | `notifications` table; `GET/PATCH` inbox routes |
+| FR-NOTIF-001 | In-app inbox | Bell (or equivalent) opens full notification list; mark read; deep links include `baby_profile_id` when present | `notifications` table; `GET/PATCH` inbox routes |
 | FR-NOTIF-002 | Push delivery | New photo, RSVP, etc. respect user prefs | Worker FCM when `push_notifications_enabled` and digest **`realtime`**; **`daily`** = inbox only; **`weekly`** = summary push (Scheduler) |
 | FR-NOTIF-003 | Deep link payload | Push/inbox/home preview opens the correct screen (including nested tab routes) | FCM `data.deep_link` + optional `baby_profile_id`; client `navigateAppDeepLink` uses **`go`** for shell tab paths (`/home`, `/gallery`, …) and **`push`** for root routes (`/notifications/inbox`, `/profile`, …); switches selected baby when `baby_profile_id` differs |
 | FR-NOTIF-004 | Preferences | Per-channel toggles in settings (E2E-014 partial) | `GET/PATCH /v1/me/notification-preferences`; `notify_*_enabled` on `app_users` (`gallery`, `calendar`, `registry`, `comments`); worker gates inbox + FCM |
@@ -466,7 +463,7 @@ Firebase Auth holds identity; link `user_id` to Firebase UID in SQL.
 - Display encode + worker thumbnails.
 - English UI copy via localization files.
 
-Engineering status aligns with [development.md](../engineering/development.md) and [operations.md](../engineering/operations.md): §6.2 home hub (teasers, birth welcome, system announcements, registry highlights/purchases, activity paginated route, owner invite/followers) is **implemented on dev**; owner storage meter on My Account (`GET /v1/me/account`); remaining v1 polish: App Check and device QA for push.
+Engineering status aligns with [development.md](../engineering/development.md) and [operations.md](../engineering/operations.md): §6.2 home hub (slim teasers: upcoming events + recent photos, birth welcome, system announcements, activity paginated route, owner invite/followers) is **implemented on dev**; owner storage meter on My Account (`GET /v1/me/account`); remaining v1 polish: App Check and device QA for push.
 
 ### 10.2 Later
 
@@ -483,7 +480,7 @@ Engineering status aligns with [development.md](../engineering/development.md) a
 | Topic | Decision |
 |-------|----------|
 | Bottom nav | Home → Gallery → Calendar → Registry → Fun; Profile/Settings via shell menu |
-| Notifications | Home preview + bell opens full inbox (FR-NOTIF-001) |
+| Notifications | Bell opens full inbox (FR-NOTIF-001) |
 | Force update | Hard block below minimum version (FR-SET-004, NFR-FORCE-001) |
 | Language | English only; no Spanish (FR-SET-002) |
 | System announcements | **Cloud SQL** (`system_announcements` + dismissals) for per-user dismiss and API control |
@@ -515,7 +512,7 @@ Engineering status aligns with [development.md](../engineering/development.md) a
 | RSVP tasks | Home §7 | Events needing RSVP |
 | Recent photos | Home §8; Gallery | Teaser + recent route |
 | Gallery favorites | Home §9; Gallery | Top squished teaser |
-| Registry highlights | Home §10; Registry | Featured items |
+| Registry highlights | Registry tab | Featured/open items |
 | Recent purchases | Home §11; Registry | Last 15 days |
 | Activity recap | Home §12 | Full-stream `activity_events` |
 | New followers | Home §13 | Last 30 days; owner |

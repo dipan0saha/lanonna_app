@@ -34,8 +34,7 @@ void main() {
           w is Text &&
           (w.data?.contains('Getting Started') == true ||
               w.data?.contains('Activity Recap') == true ||
-              w.data?.contains('Registry Highlights') == true ||
-              w.data?.contains('items still needed') == true ||
+              w.data?.contains('Recent Photos') == true ||
               w.data?.contains('FAMILY INSIGHT') == true ||
               w.data?.contains('DAYS TO DUE DATE') == true),
     );

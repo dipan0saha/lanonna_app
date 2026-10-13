@@ -56,10 +56,6 @@ void main() {
       genderTotals: const GenderTotals(male: 3, female: 2),
       teasers: HomeTeasers(
         recentPhotos: const [],
-        favoritePhotos: const [],
-        registryOpenCount: 0,
-        registryHighlights: const [],
-        recentPurchases: const [],
         upcomingEvents: [
           NextUpEvent(
             id: 'e1',
@@ -67,8 +63,6 @@ void main() {
             startsAt: DateTime.parse('2026-10-02T18:00:00Z').toLocal(),
           ),
         ],
-        rsvpReminders: const [],
-        notificationPreview: const [],
       ),
     );
 

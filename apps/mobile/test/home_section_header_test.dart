@@ -20,7 +20,7 @@ void main() {
           body: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const HomeSectionHeader(title: 'RSVP Reminders'),
+              const HomeSectionHeader(title: 'Recent Photos'),
               HomeSectionHeader(
                 title: 'Upcoming Events',
                 trailing: HomeSectionLink(
@@ -34,8 +34,8 @@ void main() {
       ),
     );
 
-    final rsvpLeft = _titleLeft(tester, 'RSVP REMINDERS');
+    final recentLeft = _titleLeft(tester, 'RECENT PHOTOS');
     final upcomingLeft = _titleLeft(tester, 'UPCOMING EVENTS');
-    expect(upcomingLeft, closeTo(rsvpLeft, 0.5));
+    expect(upcomingLeft, closeTo(recentLeft, 0.5));
   });
 }

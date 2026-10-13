@@ -17,7 +17,7 @@ void main() {
     expect(result, isA<HomeSummaryLoaded>());
     final loaded = result as HomeSummaryLoaded;
     expect(loaded.summary.lifecycleStatus, 'expecting');
-    expect(loaded.summary.teasers?.registryOpenCount, 1);
+    expect(loaded.summary.teasers?.upcomingEvents, isEmpty);
     expect(loaded.summary.recentActivity, isEmpty);
   });
 
@@ -229,14 +229,8 @@ class _SuccessApi extends ApiClient {
         'gender_totals': {'male': 0, 'female': 0},
       },
       'teasers': {
-        'registry_open_count': 1,
-        'registry_highlights': [],
         'recent_photos': [],
-        'favorite_photos': [],
-        'recent_registry_purchases': [],
         'upcoming_events': [],
-        'rsvp_reminders': [],
-        'notification_preview': [],
       },
       'recent_activity': [],
     };

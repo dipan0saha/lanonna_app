@@ -1,7 +1,7 @@
 from unittest.mock import patch
 import uuid
 
-from lanonna_api.domain.home import build_home_summary
+from lanonna_api.domain.home import _build_home_teasers, build_home_summary
 
 
 def test_build_home_summary_includes_getting_started_and_next_event():
@@ -33,16 +33,7 @@ def test_build_home_summary_includes_getting_started_and_next_event():
         patch("lanonna_api.domain.home.count_events", return_value=0),
         patch(
             "lanonna_api.domain.home._build_home_teasers",
-            return_value={
-                "recent_photos": [],
-                "favorite_photos": [],
-                "registry_open_count": 0,
-                "registry_highlights": [],
-                "recent_registry_purchases": [],
-                "upcoming_events": [],
-                "rsvp_reminders": [],
-                "notification_preview": [],
-            },
+            return_value={"recent_photos": [], "upcoming_events": []},
         ),
         patch("lanonna_api.domain.home.list_active_for_user", return_value=[]),
         patch("lanonna_api.domain.home.list_new_followers", return_value=[]),
@@ -84,16 +75,7 @@ def test_build_home_summary_follower_omits_getting_started():
         ),
         patch(
             "lanonna_api.domain.home._build_home_teasers",
-            return_value={
-                "recent_photos": [],
-                "favorite_photos": [],
-                "registry_open_count": 0,
-                "registry_highlights": [],
-                "recent_registry_purchases": [],
-                "upcoming_events": [],
-                "rsvp_reminders": [],
-                "notification_preview": [],
-            },
+            return_value={"recent_photos": [], "upcoming_events": []},
         ),
         patch("lanonna_api.domain.home.list_active_for_user", return_value=[]),
         patch("lanonna_api.domain.home._build_birth_welcome", return_value=None),
@@ -103,3 +85,37 @@ def test_build_home_summary_follower_omits_getting_started():
     assert data["getting_started"] is None
     assert data["next_up_event"]["title"] == "Reveal"
     assert data["family_insight"]["vote_count"] == 3
+
+
+def test_build_home_teasers_only_recent_photos_and_upcoming_events():
+    baby_id = uuid.uuid4()
+    photo_id = uuid.uuid4()
+    event_id = uuid.uuid4()
+    with (
+        patch(
+            "lanonna_api.domain.home.list_photos_for_baby",
+            return_value=[{"id": photo_id, "thumb_path": "thumbs/x.jpg"}],
+        ) as list_photos,
+        patch(
+            "lanonna_api.domain.home.list_events",
+            return_value=[
+                {
+                    "id": event_id,
+                    "title": "Shower",
+                    "starts_at": "2026-10-02T18:00:00Z",
+                    "location": "Home",
+                }
+            ],
+        ) as list_events,
+        patch(
+            "lanonna_api.domain.home.signed_thumb_url",
+            return_value="https://signed/thumb",
+        ),
+    ):
+        data = _build_home_teasers(baby_id)
+
+    assert set(data.keys()) == {"recent_photos", "upcoming_events"}
+    assert data["recent_photos"][0]["id"] == str(photo_id)
+    assert data["upcoming_events"][0]["title"] == "Shower"
+    list_photos.assert_called_once()
+    list_events.assert_called_once()

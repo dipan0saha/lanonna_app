@@ -18,20 +18,6 @@ def count_photos_for_baby(baby_profile_id: uuid.UUID) -> int:
     return int(row["count"]) if row else 0
 
 
-def count_open_registry_items(baby_profile_id: uuid.UUID) -> int:
-    with get_connection() as conn:
-        row = conn.execute(
-            """
-            SELECT COUNT(*)::int AS count
-            FROM registry_items r
-            LEFT JOIN registry_purchases p ON p.registry_item_id = r.id
-            WHERE r.baby_profile_id = %s AND p.id IS NULL
-            """,
-            (baby_profile_id,),
-        ).fetchone()
-    return int(row["count"]) if row else 0
-
-
 def count_registry_items(baby_profile_id: uuid.UUID) -> int:
     with get_connection() as conn:
         row = conn.execute(
