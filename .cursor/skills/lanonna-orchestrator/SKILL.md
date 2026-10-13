@@ -2,130 +2,76 @@
 name: lanonna-orchestrator
 description: >-
   Coordinates La Nonna (lanonna_app) work by delegating all implementation,
-  verification, and shipping to Task subagents; the parent only plans, prompts,
-  merges results, and escalates. Use when the user invokes this skill, asks for
-  orchestrator/multitask delegation, or wants Grok-style coordinator behavior
-  for develop, test, or dev deploy on this repo.
+  verification, and shipping to Task subagents; the parent only coordinates,
+  synthesizes the plan, prompts workers, merges results, and escalates. Always
+  starts with a design-only plan+explore worker (no patch plans). Use when the
+  user invokes this skill, asks for orchestrator/multitask delegation, or wants
+  Grok-style behavior for develop, test, or dev deploy. Auto commit/push and dev
+  migrate/deploy after verify unless the user opts out in the same thread.
 disable-model-invocation: true
 ---
 
 # La Nonna orchestrator
 
-You are the **coordinator**. You do **not** implement, test, or ship yourself.
+**Coordinator only** — no implement, test, or ship yourself.
 
-## Coordinator rules
+## Rules
 
-1. **Delegate everything** — exploration, code changes, tests, docs, commit, push, migrations, and deploy run via the **Task** tool (subagents). Do not use Read/Grep/Edit/Shell for product or infra work except what is strictly required to write the next subagent prompt (prefer zero tool use; put “read these paths/docs first” in the subagent prompt instead).
-2. **Sequential is fine** — run one subagent at a time when that is clearer. Parallel Tasks are optional, not a goal.
-3. **Multitask Mode** — when the user is in Multitask Mode, set `run_in_background: true` on every Task.
-4. **Subagent context** — subagents do not see the user message or your prior tool calls. Every Task `prompt` must be **self-contained** (goal, scope, constraints, deliverable format).
-5. **Project standards** — every worker prompt must require adherence to `.cursor/rules/project-agent.mdc` and the relevant `docs/engineering/` docs (see [reference.md](reference.md)).
-6. **User consent for git** — do not spawn a ship subagent that commits or pushes unless the user has explicitly asked for that in this conversation. Deploy only when substantive runtime/schema changes warrant it and the user has not opted out of the dev pipeline.
+1. **Delegate all work** via **Task**. No Read/Grep/Edit/Shell for product/infra except drafting prompts. **Exception:** you may read `docs/engineering/*`, `reference.md`, and `.cursor/rules/project-agent.mdc` to sanity-check the plan worker output — not to explore the codebase (that is the first worker’s job).
+2. **Plan first (required)** — before any implement/verify/ship Task, spawn exactly one **plan + explore** worker (see below). Post its synthesized **Plan** in chat, then proceed to implement unless the user said `revise plan`, `wait on plan`, or `skip plan`. Skip only for pure CI triage (`ci-investigator` only, no code change) or explicit `skip plan`.
+3. **No patch plans** — the first worker is **design-only** (no file edits). Reject and re-run plan worker if the output is only a diff list, “quick fix,” or skips layers (see [reference.md](reference.md) § Plan + explore return format).
+4. **Sequential OK**; parallel Tasks optional (never before plan is posted).
+5. **Multitask Mode** → `run_in_background: true` on every Task.
+6. **Model** — every new Task (not `resume`): `model`: **`composer-2.5`** (never `composer-2.5-fast`; never omit).
+7. **Self-contained prompts** — include goal, scope, constraints, deliverable; attach the approved **Plan** (or phase) to every implement/verify worker.
+8. **Standards** — workers follow `.cursor/rules/project-agent.mdc` + relevant `docs/engineering/` ([reference.md](reference.md)).
+9. **Auto ship** — after verify, always spawn ship worker (no “want me to commit/deploy?”). Opt-out: `don't commit`, `no push`, `no deploy`, `local only`, `draft only`. Docs-only: commit/push OK; skip migrate/deploy.
 
-## Operating loop
+## Loop
 
-```text
-Understand goal → (optional) plan subagent → implement → verify → (optional) review → ship (if authorized)
-```
+`plan+explore (required) → post Plan → implement (per plan phases) → verify → (optional review) → ship`
 
-After each subagent returns:
+After each return: merge; conflicts → **integrator** subagent; escalate on security, prod, secrets, billing, ambiguous product, blocked infra.
 
-- Merge facts into your mental plan; do not re-do their work.
-- If outputs conflict or scope overlapped, spawn an **integrator** subagent with both summaries and explicit merge instructions.
-- Escalate to the user on security, prod, secrets, billing, ambiguous product decisions, or blocked infra.
+**User comms:** post **Plan** before implement; per-wave summary; link subagents `[Name](id)`; after ship report commit/push/pipeline steps — no permission prompts for ship if verify passed.
 
-## Subagent routing
+## Routing
 
-| Need | `subagent_type` | Notes |
-|------|-----------------|--------|
-| Map codebase / “where is X” | `explore` | Set thoroughness in prompt (`quick` / `medium` / `very thorough`) |
-| Implement, fix, test, docs, ship commands | `generalPurpose` | Default worker |
-| Failing PR CI | `ci-investigator` | User points at PR/check |
-| Bugbot-style review | Launch Task with description **Bugbot** per review-bugbot skill, or user asks for bugbot | Only when requested |
-| Security review of changes | Launch Task with description **Security Review** when user requests | Only when requested |
-| Isolated branch / cloud VM | `environment: cloud` | Only if user asked for cloud; merging is a separate integrator task |
+| Order | Need | Type | Notes |
+|-------|------|------|--------|
+| **1st** | Plan + explore | `explore` (`very thorough`) or `generalPurpose` | **Read-only** — no edits; return format in reference.md § Plan + explore |
+| 2+ | Implement, verify, docs | `generalPurpose` | Must cite plan phases + touchpoints |
+| 2+ | Ship | `generalPurpose` | reference.md § Dev ship checklist |
+| — | PR CI only | `ci-investigator` | May skip plan if no implementation |
+| — | Bugbot / security | `generalPurpose` + title **Bugbot** / **Security Review** | User requested |
+| — | Cloud branch | `environment: cloud` | User requested; merge via integrator |
 
-Specialist skills (`autopilot`, `review-bugbot`, etc.) apply **inside** the subagent when the user asked for that workflow; the coordinator still only spawns Tasks.
+## Plan + explore worker (prompt essentials)
 
-## Worker prompt template
+Include user goal, `.cursor/rules/project-agent.mdc`, `platform-architecture.md` + `development.md` + [reference.md](reference.md). Require:
 
-Copy and fill for every implementation/verify/ship Task:
+- Sound Path B design (layers, permissions, API contract, migration/worker/mobile as needed).
+- Phased work breakdown for later workers — **not** a one-shot patch.
+- Alternatives considered (brief) and why this approach.
+- Verify + ship implications.
 
-```markdown
-## Goal
-[Outcome and acceptance criteria]
+Full return sections: [reference.md](reference.md) § Plan + explore return format.
 
-## Scope
-- In scope paths: [...]
-- Out of scope: [...]
+## Implement / verify / ship prompts
 
-## La Nonna constraints (mandatory)
-- Follow `.cursor/rules/project-agent.mdc` (diff review, no dead code, engineering docs when behavior changes).
-- Architecture: Postgres only via API; thin routers, domain rules, parameterized SQL in repositories; client display encode + signed GCS URLs; async work in worker via Pub/Sub (idempotent handlers).
-- Repo layout and conventions: read `docs/engineering/development.md` sections relevant to this task before editing.
-- Design principles: `docs/engineering/platform-architecture.md` as needed.
-- Match existing code style in touched files; no one-off hacks unless user chose a short-term path.
+Use [reference.md](reference.md) worker template; add **Approved plan** (paste or phase N of M). Implement workers must not deviate from plan without a new plan+explore pass.
 
-## Task-specific instructions
-[Concrete steps]
+## Verify
 
-## Verification
-[Commands to run — e.g. scoped pytest, flutter analyze/test, `./scripts/verify-dev-prerequisites.sh` when appropriate]
+Unless implementer proved checks: scoped `pytest`/compile, `flutter analyze`/tests, or `./scripts/verify-dev-prerequisites.sh` if cross-cutting.
 
-## Return format
-- Files changed (paths)
-- Behavior change (1–3 sentences)
-- Commands run and pass/fail
-- Assumptions and open questions
-- Ready for next step: yes/no
-```
+## Ship worker
 
-For **explore** Tasks, change return format to: touchpoint file list, risks, recommended implementation order.
-
-## Verify subagent
-
-After implementation, spawn a verify worker unless the implementer already ran the same checks and you trust the log summary.
-
-- Python API/worker: scoped `pytest` / compile per `development.md`
-- Mobile: `flutter analyze` / targeted tests under `apps/mobile`
-- Broad gate before calling feature done: `./scripts/verify-dev-prerequisites.sh` when the change is cross-cutting
-
-## Ship subagent (commit / push / dev deploy)
-
-Only when:
-
-- User explicitly authorized **commit** (and **push** if they want remote updated), and
-- Change is not docs-only (skip migrations/deploy for docs-only per project-agent rules).
-
-Ship prompt must include this **ordered** checklist (worker executes; coordinator does not):
-
-1. **Commit** — logical commit(s); no secrets or `tfplan` artifacts; follow repo commit message style.
-2. **Migrations (dev)** — if schema changed: Cloud SQL Auth Proxy + `infra/db/apply_migrations.py` with `DB_PASSWORD` from Secret Manager `db-lanonna-app-password` (`lanonna-dev`); set `DB_PORT` to match proxy (often `5433`); run `./scripts/verify-dev-migrations.sh` when migrations changed.
-3. **Deploy (dev)** — if runtime affected: `bash scripts/sync-email-templates.sh apply` before worker when templates changed → `./services/worker/scripts/deploy.sh` → `./scripts/apply-dev-run-iam.sh` → `./services/api/scripts/deploy.sh` (migrations before deploy when schema changed).
-
-Full commands and GCP context: [reference.md](reference.md) and `docs/engineering/operations.md`.
-
-## Talking to the user
-
-- Lead with plan or status, not tool noise.
-- After each wave, short summary: what subagents did, what is next, what you need from the user.
-- Link subagents in chat as `[Name](id)` when the product shows an id.
+Mandatory after verify (unless opted out). [reference.md](reference.md) § Dev ship checklist — commit/push, migrations if SQL, deploy applicable services. Retry or report on failure; never end with uncommitted work + a question.
 
 ## Examples
 
-**User:** “Add PATCH for gallery comment edits.”
+- **Feature:** plan+explore → post Plan → implement (API+mobile per phases) → verify → ship.
+- **PR 42 CI only:** ci-investigator; if fix needed → plan+explore (small scope) → implement → verify → ship.
 
-1. `explore` — find router, domain, mobile client patterns; return file list.
-2. `generalPurpose` — implement API + mobile using filled template; reference explore output.
-3. `generalPurpose` — verify scoped tests.
-4. Wait for user: “commit and deploy to dev” → ship subagent with checklist.
-
-**User:** “Why is CI failing on PR 42?”
-
-1. `ci-investigator` with PR/check context.
-2. If fix needed: `generalPurpose` with minimal fix scope; then verify subagent.
-
-## Additional resources
-
-- Cheat sheet: [reference.md](reference.md)
-- Engineering index: `docs/engineering/README.md`
+More: `docs/engineering/README.md`, [reference.md](reference.md).

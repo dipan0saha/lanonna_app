@@ -51,7 +51,7 @@ From `.cursor/rules/project-agent.mdc` + `operations.md`:
 
 | Step | When | Action |
 |------|------|--------|
-| Commit/push | User asked | No secrets, no `tfplan` |
+| Commit/push | Orchestrator ship worker (auto) | Logical commit(s); repo commit message style; no secrets, no `tfplan` |
 | Migrations | New/changed SQL in `infra/db/migrations/` | Proxy + `DB_PASSWORD` from SM `db-lanonna-app-password`; `infra/db/apply_migrations.py`; `DB_PORT` matches proxy (often **5433** for verify scripts; align with proxy); `./scripts/verify-dev-migrations.sh` |
 | Email templates | Template changes | `bash scripts/sync-email-templates.sh apply` **before** worker |
 | Worker | Worker/runtime change | `./services/worker/scripts/deploy.sh` |
@@ -74,8 +74,61 @@ From `.cursor/rules/project-agent.mdc` + `operations.md`:
 | Manual QA | `pre-beta-qa.md` |
 | Known gaps | `open-gaps.md` |
 
+## Subagent model
+
+Every Task: `model`: **`composer-2.5`** (never `composer-2.5-fast`; do not omit `model` on new Tasks).
+
+## Plan + explore return format (first worker only)
+
+**Read-only** — do not edit files. Read `docs/engineering/platform-architecture.md`, `development.md`, and this reference; explore the repo for touchpoints.
+
+**Not acceptable:** patch-only output, “minimal change” without layer rationale, SQL in routers, business rules only in mobile, skipping migration when schema changes, one undifferentiated edit list.
+
+Return these sections:
+
+1. **Problem & acceptance criteria**
+2. **Architecture fit** — mobile / API (`routers` → `domain` → `repositories`) / worker / GCS-Pub/Sub / migration / email templates; map to Path B principles
+3. **Data & permissions** — baby scope, membership, server-side checks
+4. **API contract** — routes, payloads, errors (if applicable)
+5. **Async & media** — signed URLs, worker idempotency (if applicable)
+6. **Phased implementation plan** — ordered phases for separate implement workers (each phase: goal, paths, dependencies)
+7. **Alternatives** — at least one other approach and why rejected
+8. **Risks & open questions**
+9. **Verify & ship** — tests; migration/deploy steps expected
+10. **Touchpoint files** — paths from exploration
+
+## Implement / verify worker template
+
+```markdown
+## Goal
+[From approved plan — phase N if split]
+
+## Approved plan
+[Relevant plan excerpt or full plan]
+
+## Scope
+In: [...]  Out: [...]
+
+## La Nonna constraints
+- `.cursor/rules/project-agent.mdc`
+- Architecture bullets from this reference; `development.md` / `platform-architecture.md` as needed
+- Match local style; no unplanned hacks
+
+## Instructions
+[Plan phase steps only]
+
+## Verification
+[Per plan]
+
+## Return format
+Files changed | behavior | commands + pass/fail | assumptions | ready: yes/no
+```
+
 ## Coordinator do-not
 
-- Do not commit, push, migrate, or deploy from the parent agent.
+- Do not spawn implement/verify/ship before plan+explore completes and Plan is posted (except CI-only / `skip plan`).
+- Do not accept patch-style plan output — re-run plan worker.
+
+- Do not commit, push, migrate, or deploy from the **parent** agent (only via ship **subagent**).
 - Do not implement “quick fixes” after a subagent — spawn integrator or fixer subagent.
-- Do not skip user authorization for git remote changes.
+- Do not end with “want me to commit/deploy?” — auto-spawn ship after verify unless user opted out in-thread (see SKILL.md rule 7).
