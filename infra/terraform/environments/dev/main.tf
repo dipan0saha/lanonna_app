@@ -25,10 +25,10 @@ locals {
 module "platform" {
   source = "../../modules/platform"
 
-  project_id   = var.project_id
-  region       = var.region
-  environment  = var.environment
-  apis         = local.standard_apis
+  project_id  = var.project_id
+  region      = var.region
+  environment = var.environment
+  apis        = local.standard_apis
 
   bucket_display    = "lanonna-dev-display"
   bucket_thumbnails = "lanonna-dev-thumbnails"
@@ -37,10 +37,10 @@ module "platform" {
   sql_disk_gb      = 10
   sql_availability = "ZONAL"
 
-  create_automation_sa      = true
-  manage_sql_app_password   = false
-  enable_firebase           = true
+  create_automation_sa    = true
+  manage_sql_app_password = false
+  enable_firebase         = true
 
   enable_worker_push_subscription = true
-  worker_push_endpoint            = "https://worker-1008830071001.us-central1.run.app/pubsub/push"
+  # worker_push_endpoint: leave empty to use the live Cloud Run `worker` URL (see worker_push.tf).
 }

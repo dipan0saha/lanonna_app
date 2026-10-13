@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/core/input/app_text_input_kind.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/core/validation/form_validators.dart';
 import 'package:lanonna/core/widgets/app_country_dropdown_field.dart';
@@ -7,6 +8,28 @@ import 'package:lanonna/core/widgets/app_labeled_text_form_field.dart';
 import 'package:lanonna/core/data/iso_countries.dart';
 
 void main() {
+  testWidgets('shipping city field title-cases while typing', (tester) async {
+    final city = TextEditingController();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: Scaffold(
+          body: AppLabeledTextFormField(
+            label: 'City',
+            kind: AppTextInputKind.personName,
+            controller: city,
+          ),
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextFormField), 'durham');
+    await tester.pump();
+
+    expect(city.text, 'Durham');
+  });
+
   testWidgets('shipping form clears field errors after failed save when user fixes input',
       (tester) async {
     final line1 = TextEditingController();

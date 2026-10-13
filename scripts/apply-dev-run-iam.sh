@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Cloud Run IAM for Pub/Sub push (OIDC). Terraform may lack run.services.setIamPolicy on some principals.
+# Dev worker Run IAM: strips public invoker and reconciles bindings Terraform also manages (run_iam.tf).
+# Run after worker deploy if push fails or allUsers was re-added.
 set -euo pipefail
 
 PROJECT="${GCP_PROJECT_ID:-lanonna-dev}"

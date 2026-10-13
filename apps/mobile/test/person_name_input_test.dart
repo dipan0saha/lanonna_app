@@ -17,6 +17,7 @@ void main() {
     test('multi-word', () {
       expect(formatPersonName('  mary   jane '), 'Mary Jane');
       expect(formatPersonName('anne marie'), 'Anne Marie');
+      expect(formatPersonName('441 s dillard st'), '441 S Dillard St');
     });
 
     test('preserves internal capitals', () {

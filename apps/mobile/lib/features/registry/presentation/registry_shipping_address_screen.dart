@@ -19,6 +19,7 @@ import '../../home/data/selected_baby_store.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../data/models/registry_models.dart';
 import '../data/registry_repository.dart';
+import '../domain/registry_shipping_input.dart';
 
 class RegistryShippingAddressScreen extends StatefulWidget {
   const RegistryShippingAddressScreen({super.key});
@@ -105,11 +106,20 @@ class _RegistryShippingAddressScreenState
   }
 
   void _applyAddress(RegistryShippingAddress address) {
-    _line1.text = address.line1 ?? '';
-    _line2.text = address.line2 ?? '';
-    _city.text = address.city ?? '';
-    _region.text = address.region ?? '';
-    _postal.text = address.postalCode ?? '';
+    _line1.text = AppTextInputPolicy.normalizeForSubmit(
+      AppTextInputKind.personName,
+      address.line1 ?? '',
+    );
+    _line2.text = AppTextInputPolicy.normalizeForSubmit(
+      AppTextInputKind.personName,
+      address.line2 ?? '',
+    );
+    _city.text = AppTextInputPolicy.normalizeForSubmit(
+      AppTextInputKind.personName,
+      address.city ?? '',
+    );
+    _region.text = formatRegistryShippingRegion(address.region ?? '');
+    _postal.text = (address.postalCode ?? '').trim();
     _countryCode = address.countryCode;
   }
 
@@ -120,11 +130,20 @@ class _RegistryShippingAddressScreenState
     if (_formKey.currentState?.validate() != true) return;
     setState(() => _saving = true);
     final patch = RegistryShippingAddress(
-      line1: _line1.text,
-      line2: _line2.text,
-      city: _city.text,
-      region: _region.text,
-      postalCode: _postal.text,
+      line1: AppTextInputPolicy.normalizeForSubmit(
+        AppTextInputKind.personName,
+        _line1.text,
+      ),
+      line2: AppTextInputPolicy.normalizeForSubmit(
+        AppTextInputKind.personName,
+        _line2.text,
+      ),
+      city: AppTextInputPolicy.normalizeForSubmit(
+        AppTextInputKind.personName,
+        _city.text,
+      ),
+      region: formatRegistryShippingRegion(_region.text),
+      postalCode: _postal.text.trim(),
       countryCode: _countryCode,
     ).toPatchJson();
     final ok = await runMutation(
@@ -206,7 +225,7 @@ class _RegistryShippingAddressScreenState
               semanticsId: 'registry_shipping_line1',
               label: 'Street address',
               hint: '123 Main St',
-              kind: AppTextInputKind.none,
+              kind: AppTextInputKind.personName,
               controller: _line1,
               textInputAction: TextInputAction.next,
               enabled: !_saving,
@@ -216,7 +235,7 @@ class _RegistryShippingAddressScreenState
             AppLabeledTextFormField(
               label: 'Apt, suite, etc. (optional)',
               hint: 'Apt 4B',
-              kind: AppTextInputKind.none,
+              kind: AppTextInputKind.personName,
               controller: _line2,
               textInputAction: TextInputAction.next,
               enabled: !_saving,
@@ -225,7 +244,7 @@ class _RegistryShippingAddressScreenState
             AppLabeledTextFormField(
               label: 'City',
               hint: 'Springfield',
-              kind: AppTextInputKind.none,
+              kind: AppTextInputKind.personName,
               controller: _city,
               textInputAction: TextInputAction.next,
               enabled: !_saving,
@@ -235,7 +254,7 @@ class _RegistryShippingAddressScreenState
             AppLabeledTextFormField(
               label: 'State / Province (optional)',
               hint: 'IL',
-              kind: AppTextInputKind.none,
+              kind: AppTextInputKind.personName,
               controller: _region,
               textInputAction: TextInputAction.next,
               enabled: !_saving,

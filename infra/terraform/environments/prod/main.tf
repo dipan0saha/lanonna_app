@@ -1,5 +1,6 @@
 locals {
   standard_apis = [
+    "cloudbuild.googleapis.com",
     "run.googleapis.com",
     "sqladmin.googleapis.com",
     "storage.googleapis.com",
@@ -24,10 +25,10 @@ locals {
 module "platform" {
   source = "../../modules/platform"
 
-  project_id   = var.project_id
-  region       = var.region
-  environment  = var.environment
-  apis         = local.standard_apis
+  project_id  = var.project_id
+  region      = var.region
+  environment = var.environment
+  apis        = local.standard_apis
 
   bucket_display    = var.bucket_display
   bucket_thumbnails = var.bucket_thumbnails

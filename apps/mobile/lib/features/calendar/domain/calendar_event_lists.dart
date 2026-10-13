@@ -34,3 +34,17 @@ CalendarListPartition partitionCalendarListEvents({
 
 String calendarMonthKey(DateTime date) =>
     '${date.year}-${date.month.toString().padLeft(2, '0')}';
+
+bool isSameLocalCalendarDay(DateTime a, DateTime b) {
+  return a.year == b.year && a.month == b.month && a.day == b.day;
+}
+
+List<CalendarEvent> eventsOnLocalCalendarDay(
+  List<CalendarEvent> monthEvents,
+  DateTime day,
+) {
+  return monthEvents
+      .where((e) => eventOnLocalCalendarDay(e.startsAt, day))
+      .toList()
+    ..sort((a, b) => a.startsAt.compareTo(b.startsAt));
+}

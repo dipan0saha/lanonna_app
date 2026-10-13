@@ -59,7 +59,13 @@ variable "worker_push_commands_subscription_name" {
 variable "worker_push_endpoint" {
   type        = string
   default     = ""
-  description = "Full URL e.g. https://worker-….run.app/pubsub/push"
+  description = "Full URL e.g. https://worker-….run.app/pubsub/push. When empty and push subs are enabled, read from the live Cloud Run service (worker_cloud_run_service_name)."
+}
+
+variable "worker_cloud_run_service_name" {
+  type        = string
+  default     = "worker"
+  description = "Cloud Run service name for push endpoint resolution and run.invoker bindings."
 }
 
 variable "display_bucket_cors_origins" {

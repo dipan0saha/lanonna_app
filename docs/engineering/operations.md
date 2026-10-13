@@ -54,7 +54,7 @@ Path B platform: **`infra/terraform/`** — one **`platform`** module, **`dev`**
 
 **Terraform manages:** APIs, GCS (+ upload notification), Pub/Sub (**push** subs + DLQ topic, retention subscription, and service-agent IAM), Cloud SQL, Artifact Registry, Secret Manager **containers**, IAM, Firebase project attachment. The legacy `infra/gcp/bootstrap.sh` has been removed.
 
-**Dev extras:** push subscription **`photo-upload-finalized-push-dev`** (OIDC), display bucket **CORS**, API **TokenCreator** IAM. **Run invoker** on `worker`: `./scripts/apply-dev-run-iam.sh` (gcloud; TF may **403** on `setIamPolicy` — use owner account).
+**Dev extras:** push subscriptions **`photo-upload-finalized-push-dev`** / **`lanonna-async-commands-push-dev`** (OIDC); push URL is read from live Cloud Run **`worker`** on `terraform apply` (override with `worker_push_endpoint` if needed). **Run invoker** for Pub/Sub is in Terraform (`run_iam.tf`); run `./scripts/apply-dev-run-iam.sh` after worker deploy to remove **`allUsers`** and reconcile IAM if apply lacked `setIamPolicy`.
 
 ### Prerequisites
 
@@ -219,7 +219,7 @@ Secrets (values in Secret Manager only): `db-lanonna-app-password`, `database-ur
 
 After migration `030` is applied, null emails on active users can be restored from Firebase Auth with `DB_PORT=5433 python infra/db/backfill_null_user_emails.py` (dry-run), then the same command with `--apply`. `--report-orphans` prints read-only counts and does not delete rows. The script needs Application Default Credentials that can call Firebase Auth `get_user`.
 
-**Retest onboarding:** `clear_dev_test_data.py --email you@example.com --reset-onboarding` — [development.md](development.md).
+**Retest onboarding:** `clear_dev_test_data.py --email you@example.com --reset-onboarding` — [development.md](development.md). Powerful dev-only scripts (no project guard) are an **intentional** tradeoff — [intentional-dev-decisions.md](intentional-dev-decisions.md#m-53).
 
 ---
 

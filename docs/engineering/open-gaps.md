@@ -2,9 +2,9 @@
 
 Open engineering gaps for La Nonna. Seeded from the Oct 2026 full-stack review and extended by a second full code review on **2026-10-11** (API, data layer, worker, mobile, infra/docs) plus live test runs.
 
-**Legend:** **✅** on an ID = fixed in repo (entry kept for audit); **Verified** — gap confirmed by code/tests; **Reported** — suspected, not fully traced.
+**Legend:** **✅** = resolved in repo **or** accepted intentional dev decision ([intentional-dev-decisions.md](intentional-dev-decisions.md)); entry kept for audit. **Verified** — gap confirmed by code/tests; **Reported** — suspected, not fully traced.
 
-Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [operations.md](operations.md).
+Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [operations.md](operations.md), [intentional-dev-decisions.md](intentional-dev-decisions.md).
 
 ---
 
@@ -25,8 +25,8 @@ Run all three suites before every ship; the suites are the only automated gate (
 
 | Severity | Open | Themes |
 |----------|------|--------|
-| High | 4 | Release signing, worker OIDC, App Check enforce, admin surface |
-| Medium | 20 | Export memory limits (beta), infra/IAM/prod parity, mobile error/async/date handling |
+| High | 3 | Release signing, worker OIDC, App Check enforce |
+| Medium | 17 | Export memory limits (beta), infra/IAM/prod parity (M-19 dev slice done), mobile error/async/date handling |
 | Low | 6 | Accessibility/i18n, infra GCS, Docker, lint remainder, deferred consolidation backlog |
 
 ---
@@ -54,10 +54,11 @@ Run all three suites before every ship; the suites are the only automated gate (
 - **Issue:** NFR-SEC-002 requires enforcement before public beta. With enforce off, missing/invalid App Check tokens are only logged. Combined with `--allow-unauthenticated`, JWT is the only gate.
 - **Fix:** Enable for beta/prod (`APP_CHECK_ENFORCE=true`), keep dev override documented, ensure debug tokens are registered for QA devices. *(Intentional off on dev until beta.)*
 
-### H-06 Admin CRUD on public Cloud Run with a single static key — Reported
+### ✅ H-06 Admin CRUD on public Cloud Run with a single static key — Reported
 - **Where:** `services/api/scripts/deploy.sh` (`--allow-unauthenticated`), `admin_auth.py`, `routers/admin_system_announcements.py`
 - **Issue:** `/v1/admin/system-announcements` protected only by `X-Admin-Key`; no rate limit, no IP/IAM restriction; comparison is `!=` (not constant-time).
 - **Fix:** `secrets.compare_digest`; rate-limit admin paths; consider IAP/IAM or a private admin surface; rotate key via Secret Manager.
+- **Status:** ✅ Intentional for `lanonna-dev` — see [intentional-dev-decisions.md](intentional-dev-decisions.md#h-06).
 
 ### ✅ H-09 Export Pub/Sub dedupe drops the retries that recovery depends on — Verified
 - **Where:** `services/worker/src/lanonna_worker/main.py`, `baby_data_export.py`
@@ -138,9 +139,9 @@ Run all three suites before every ship; the suites are the only automated gate (
 |----|-------|-------|-----|
 | ✅ M-17 | Migration set drift: `023` not tracked; export/invite schema needed follow-on migrations | `infra/db/migrations/025`–`027` | Track `023`; add export `started_at` and invite send-claim columns |
 | ✅ M-18 | Pub/Sub push had no dead-letter path; pull worker path obsolete | `infra/terraform/modules/platform/pubsub.tf` | Dead-letter policy on push subs; push-only worker; DLQ pull sub (**H-13**) |
-| M-19 | Prod env lacks push-subscription / Cloud Build wiring present in dev; dev hardcodes worker URL; Run invoker IAM is script-managed, not Terraform | `environments/prod/main.tf`, `dev/main.tf`, `run_iam.tf` | Parameterize endpoint; manage invoker in TF |
-| M-20 | Secret accessor granted to API and worker for all secrets (incl. `admin-api-key`) | `modules/platform/iam.tf` | Per-secret bindings |
-| M-21 | Dev automation SA has `editor`, `serviceAccountAdmin`, `projectIamAdmin` | `iam.tf` | Keep dev-only; narrow roles |
+| M-19 | Prod env lacks push-subscription / Cloud Build wiring present in dev; dev hardcodes worker URL; Run invoker IAM is script-managed, not Terraform | `environments/prod/main.tf`, `dev/main.tf`, `run_iam.tf` | **Dev:** endpoint from Cloud Run + invoker in TF (`worker_push.tf`, `run_iam.tf`). **Prod:** enable push subs + subscription names after worker deploy (`terraform.tfvars.example`); `cloudbuild.googleapis.com` added to prod APIs. |
+| ✅ M-20 | Secret accessor granted to API and worker for all secrets (incl. `admin-api-key`) | `modules/platform/iam.tf` | Per-secret bindings — **intentional on dev** ([intentional-dev-decisions.md](intentional-dev-decisions.md#m-20)) |
+| ✅ M-21 | Dev automation SA has `editor`, `serviceAccountAdmin`, `projectIamAdmin` | `iam.tf` | Keep dev-only; narrow roles — **intentional on dev** ([intentional-dev-decisions.md](intentional-dev-decisions.md#m-21)) |
 | M-22 | Cloud SQL public IPv4 enabled, no private IP / VPC connector | `modules/platform/sql.tf` | Private IP or documented restriction |
 | M-47 | Prod Terraform sets the SQL app password (`manage_sql_app_password = true`) but never writes it to Secret Manager; Cloud Run reads `db-lanonna-app-password:latest`, so a fresh prod apply can leave API/worker unable to connect | `environments/prod/main.tf:39`, `modules/platform/sql.tf:41-57`, `secrets.tf` | Add a `google_secret_manager_secret_version` from the generated password, or document a single bootstrap step |
 | ✅ M-48 | No repo-root `.gcloudignore`/`.dockerignore`; deploys uploaded the whole monorepo; service-level `.dockerignore` was ignored with repo-root context | repo-root `.gcloudignore`, `.dockerignore`; `services/*/scripts/deploy.sh` | Whitelist `packages/` + `services/`; removed `services/api/.dockerignore` and `services/worker/.dockerignore` |
@@ -148,7 +149,7 @@ Run all three suites before every ship; the suites are the only automated gate (
 | M-50 | Worker FCM permission (`roles/firebasecloudmessaging.admin`) is documented but not in Terraform; a fresh environment silently fails to push | `docs/engineering/operations.md`, `modules/platform/iam.tf` | Codify the role binding |
 | M-51 | `run-beta-gate.sh` needs `services/api/.venv` and deploys API only (no worker/IAM) | `scripts/run-beta-gate.sh:11-21` | Reuse the `verify-dev-prerequisites.sh` venv pattern; match the documented deploy order |
 | M-52 | Deploy scripts hardcode `ENVIRONMENT=dev` even if `GCP_PROJECT_ID` points elsewhere | `services/api/scripts/deploy.sh:44`, `services/worker/scripts/deploy.sh:38` | Derive from project id or require an explicit override |
-| M-53 | Dev maintenance scripts are unsafe: `clear_dev_test_data.py --email` hard-deletes **every** baby the user has any membership row for (including followed and tombstoned) and fails on `votes` FK; no environment guard on `--email`/`hard_delete_user`; `hard_delete_user.py` inits Firebase with the default ADC project | `infra/db/clear_dev_test_data.py:36-44,89-97,122-160`, `infra/db/hard_delete_user.py:523,531-544` | Limit to active, sole-owned babies; delete `votes`; require an explicit dev env/project guard |
+| ✅ M-53 | Dev maintenance scripts are unsafe: `clear_dev_test_data.py --email` hard-deletes **every** baby the user has any membership row for (including followed and tombstoned) and fails on `votes` FK; no environment guard on `--email`/`hard_delete_user`; `hard_delete_user.py` inits Firebase with the default ADC project | `infra/db/clear_dev_test_data.py:36-44,89-97,122-160`, `infra/db/hard_delete_user.py:523,531-544` | Limit to active, sole-owned babies; delete `votes`; require an explicit dev env/project guard — **intentional; operator discipline** ([intentional-dev-decisions.md](intentional-dev-decisions.md#m-53)) |
 
 ### Mobile
 
@@ -209,7 +210,7 @@ Run all three suites before every ship; the suites are the only automated gate (
 
 ## Suggested fix order
 
-1. **Pre-beta security:** H-01, H-04, H-05, H-06, M-27, M-57
+1. **Pre-beta security:** H-01, H-04, H-05, M-27, M-57
 2. **Mobile correctness:** M-54–M-61
-3. **Infra + prod parity:** M-19–M-22, M-47–M-53
+3. **Infra + prod parity:** M-19–M-22, M-47–M-52
 4. **Ops / polish:** M-09, M-31, L-08–L-09, L-14–L-16, L-22, L-26; then the L-28 consolidation backlog

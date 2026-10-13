@@ -7,6 +7,7 @@
 | [platform-architecture.md](platform-architecture.md) | Stack principles, flows, cost model, security checklist |
 | [pre-beta-qa.md](pre-beta-qa.md) | Manual device QA before widening beta |
 | [open-gaps.md](open-gaps.md) | Open pre-beta engineering gaps (Oct 2026 review) |
+| [intentional-dev-decisions.md](intentional-dev-decisions.md) | Accepted dev-only security/IAM/ops tradeoffs (not open work) |
 
 Product scope: [../product/requirements.md](../product/requirements.md).
 

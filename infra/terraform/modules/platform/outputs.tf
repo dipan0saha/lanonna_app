@@ -35,6 +35,11 @@ output "pubsub_subscription_worker_push_commands" {
   value = var.enable_worker_push_subscription ? google_pubsub_subscription.worker_push_commands[0].name : null
 }
 
+output "worker_push_endpoint" {
+  description = "Resolved Pub/Sub push URL for the worker (empty when push subs disabled)."
+  value       = local.worker_push_endpoint_effective
+}
+
 output "sql_connection_name" {
   value = google_sql_database_instance.main.connection_name
 }

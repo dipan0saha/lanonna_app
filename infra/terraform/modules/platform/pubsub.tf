@@ -47,8 +47,8 @@ resource "google_pubsub_topic_iam_member" "api_commands_publisher" {
 }
 
 locals {
-  pubsub_service_agent           = "serviceAccount:service-${data.google_project.current.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
-  pubsub_max_delivery_attempts   = 12
+  pubsub_service_agent         = "serviceAccount:service-${data.google_project.current.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+  pubsub_max_delivery_attempts = 12
 }
 
 # Dead-lettering needs the Pub/Sub service agent to publish to the DLQ topic and to
@@ -89,7 +89,7 @@ resource "google_pubsub_subscription" "worker_push" {
   ack_deadline_seconds = 300
 
   push_config {
-    push_endpoint = var.worker_push_endpoint
+    push_endpoint = local.worker_push_endpoint_effective
 
     oidc_token {
       service_account_email = google_service_account.worker.email
@@ -121,7 +121,7 @@ resource "google_pubsub_subscription" "worker_push_commands" {
   ack_deadline_seconds = 300
 
   push_config {
-    push_endpoint = var.worker_push_endpoint
+    push_endpoint = local.worker_push_endpoint_effective
 
     oidc_token {
       service_account_email = google_service_account.worker.email

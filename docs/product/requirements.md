@@ -307,7 +307,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 
 | ID | Requirement | Acceptance criteria | Implementation note |
 |----|-------------|---------------------|---------------------|
-| FR-CAL-001 | Event list/calendar views | Month grid on Calendar tab; **Today** section (local calendar day, all starts that day) when non-empty; **Upcoming** for later days via `upcoming=true` | `partitionCalendarListEvents`; current-month fetch |
+| FR-CAL-001 | Event list/calendar views | Month grid on Calendar tab; tapping a day **selects** that date and shows a day-scoped event list (or empty + owner **Add event**); event detail only when a list row is tapped (never auto-navigate from day tap); **Show all** or changing month clears selection and restores **Today** (when non-empty) + **Upcoming** (later days via `upcoming=true`) | `eventsOnLocalCalendarDay`; `partitionCalendarListEvents`; current-month fetch |
 | FR-CAL-002 | Create event | Owner creates event (E2E-009); after save, event appears on Calendar **Upcoming** when `starts_at` is in the future and on month grid by **local** date; nested create routes refresh list on return (`#398`) | `/calendar/event/create` |
 | FR-CAL-003 | Event detail/edit | Detail by id; edit route for owner | `/calendar/event/:id`, `.../edit` |
 | FR-CAL-004 | RSVP | Follower/owner RSVP yes/no/maybe; attendee list shows each member's `display_name` (#7); RSVP sheet shows localized status labels, not API codes (#18) | `event_rsvps`; `rsvp_display_name_from_row`; mobile `rsvp_status_labels.dart` |

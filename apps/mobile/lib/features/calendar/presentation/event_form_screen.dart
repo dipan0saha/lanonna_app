@@ -358,14 +358,15 @@ class _EventFormScreenState extends State<EventFormScreen> {
           ),
           if (pastStart)
             Padding(
-              padding: const EdgeInsets.only(bottom: AppMetrics.formFieldSpacing),
+              padding: const EdgeInsets.only(top: AppMetrics.fieldLabelGap),
               child: Text(
-                'This time is in the past. The event will show on the month view but not in Upcoming.',
+                'This start time is in the past. The event still appears on the month grid and under Today on Calendar, but not in Upcoming.',
                 style: context.textStyles.bodySmall?.copyWith(
                   color: AppColors.muted,
                 ),
               ),
             ),
+          const SizedBox(height: AppMetrics.formFieldSpacing),
           AppLabeledTextField(
             label: 'Location (optional)',
             hint: "e.g. Grandma Sue's backyard",
