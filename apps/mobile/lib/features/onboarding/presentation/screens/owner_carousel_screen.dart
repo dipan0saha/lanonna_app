@@ -104,13 +104,11 @@ class _OwnerCarouselScreenState extends State<OwnerCarouselScreen> {
         ),
         body: Column(
           children: [
-            const SizedBox(height: 8),
-            const Spacer(),
-            OnboardingCarousel(
+            Expanded(
+              child: OnboardingCarousel(
               itemCount: ownerCarouselSlideCount,
               currentIndex: _index,
               controller: _pageController,
-              artPageHeight: 260,
               onPageChanged: (i) => setState(() => _index = i),
               artBuilder: (context, index) => _slideArt[index](),
               captionBuilder: (context, index) {
@@ -121,7 +119,8 @@ class _OwnerCarouselScreenState extends State<OwnerCarouselScreen> {
                 );
               },
             ),
-            const Spacer(flex: 2),
+            ),
+            const SizedBox(height: 12),
           ],
         ),
       ),

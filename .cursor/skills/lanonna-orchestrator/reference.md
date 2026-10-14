@@ -82,7 +82,13 @@ Every Task: `model`: **`composer-2.5`** (never `composer-2.5-fast`; do not omit 
 
 **Read-only** — do not edit files. Read `docs/engineering/platform-architecture.md`, `development.md`, and this reference; explore the repo for touchpoints.
 
-**Not acceptable:** patch-only output, “minimal change” without layer rationale, SQL in routers, business rules only in mobile, skipping migration when schema changes, one undifferentiated edit list.
+**Regression analysis (required during exploration):**
+
+- **Blast radius** — for each touchpoint, trace callers and dependents (other features, shared domain/repos, mobile routes/repos, API routes used by multiple screens, worker handlers, migrations).
+- **Compatibility** — prefer additive API/DB changes; flag breaking contract or behavior changes and how to avoid them (defaults, nullable columns, keep old paths working).
+- **Feature map** — cross-check affected areas with `development.md` (mobile modules, API layers) and `pre-beta-qa.md` flows when user-facing.
+
+**Not acceptable:** patch-only output, “minimal change” without layer rationale, SQL in routers, business rules only in mobile, skipping migration when schema changes, one undifferentiated edit list, or no regression section when shared paths change.
 
 Return these sections:
 
@@ -96,6 +102,7 @@ Return these sections:
 8. **Risks & open questions**
 9. **Verify & ship** — tests; migration/deploy steps expected
 10. **Touchpoint files** — paths from exploration
+11. **Regression & existing functionality** — affected features/flows (concrete); what could break; how the plan avoids breakage; regression tests/commands and manual smoke (cite `pre-beta-qa.md` when user-facing)
 
 ## Implement / verify worker template
 
@@ -132,7 +139,7 @@ Files changed | behavior | commands + pass/fail | assumptions | ready: yes/no
 
 **Read** changed files, `.cursor/rules/project-agent.mdc`, and relevant `docs/engineering/`.
 
-**Check:** matches plan; Path B layers and permissions; migration/SQL quality; tests adequate for the change; no obvious bugs, dead code, or missing engineering docs per project-agent.
+**Check:** matches plan; plan **regression & existing functionality** items addressed in the diff; Path B layers and permissions; migration/SQL quality; tests adequate for the change; no obvious bugs, dead code, or missing engineering docs per project-agent.
 
 **Return:**
 

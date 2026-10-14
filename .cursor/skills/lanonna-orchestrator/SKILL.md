@@ -20,7 +20,7 @@ disable-model-invocation: true
 
 1. **Delegate all work** via **Task**. No Read/Grep/Edit/Shell for product/infra except drafting prompts. **Exception:** you may read `docs/engineering/*`, `reference.md`, and `.cursor/rules/project-agent.mdc` to sanity-check the plan worker output — not to explore the codebase (that is the first worker’s job).
 2. **Plan first (required)** — before any implement/verify/ship Task, spawn exactly one **plan + explore** worker (see below). Post its synthesized **Plan** in chat, then proceed to implement unless the user said `revise plan`, `wait on plan`, or `skip plan`. Skip only for pure CI triage (`ci-investigator` only, no code change) or explicit `skip plan`.
-3. **No patch plans** — the first worker is **design-only** (no file edits). Reject and re-run plan worker if the output is only a diff list, “quick fix,” or skips layers (see [reference.md](reference.md) § Plan + explore return format).
+3. **No patch plans** — the first worker is **design-only** (no file edits). Reject and re-run plan worker if the output is only a diff list, “quick fix,” skips layers, or omits regression analysis (see [reference.md](reference.md) § Plan + explore return format).
 4. **Sequential OK**; parallel Tasks optional (never before plan is posted).
 5. **Multitask Mode** → `run_in_background: true` on every Task.
 6. **Model** — every new Task (not `resume`): `model`: **`composer-2.5`** (never `composer-2.5-fast`; never omit).
@@ -59,6 +59,7 @@ Include user goal, `.cursor/rules/project-agent.mdc`, `platform-architecture.md`
 - Phased work breakdown for later workers — **not** a one-shot patch.
 - Alternatives considered (brief) and why this approach.
 - Verify + ship implications.
+- **Regression-safe plan** — complete reference.md §11 (regression & existing functionality); re-run plan worker if missing when touchpoints are non-trivial or shared code paths change.
 
 Full return sections: [reference.md](reference.md) § Plan + explore return format.
 

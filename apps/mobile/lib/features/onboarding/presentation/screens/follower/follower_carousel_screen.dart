@@ -105,12 +105,11 @@ class _FollowerCarouselScreenState extends State<FollowerCarouselScreen> {
       ),
       body: Column(
         children: [
-          const Spacer(),
-          OnboardingCarousel(
+          Expanded(
+            child: OnboardingCarousel(
             itemCount: slides.length,
             currentIndex: _index,
             controller: _pageController,
-            artPageHeight: 260,
             onPageChanged: (i) => setState(() => _index = i),
             artBuilder: (context, index) => slides[index].$3(),
             captionBuilder: (context, index) {
@@ -121,7 +120,8 @@ class _FollowerCarouselScreenState extends State<FollowerCarouselScreen> {
               );
             },
           ),
-          const Spacer(flex: 2),
+          ),
+          const SizedBox(height: 12),
         ],
       ),
     );

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/widgets/app_semantics.dart';
+import '../../../../core/widgets/google_logo_mark.dart';
 
 class OnboardingPrimaryButton extends StatelessWidget {
   const OnboardingPrimaryButton({
@@ -97,17 +99,43 @@ class OnboardingGoogleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return OnboardingOutlineButton(
-      label: 'Continue with Google',
-      onPressed: onPressed,
-      isLoading: isLoading,
-      leading: const Text(
-        'G',
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-          color: AppColors.googleSignInBlue,
+    final labelStyle = Theme.of(context).textTheme.labelLarge?.copyWith(
+          color: AppColors.textPrimary,
+          fontWeight: FontWeight.w600,
+        );
+
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton(
+        onPressed: isLoading ? null : onPressed,
+        style: OutlinedButton.styleFrom(
+          backgroundColor: AppColors.surface,
+          foregroundColor: AppColors.textPrimary,
+          minimumSize: const Size(88, AppMetrics.buttonMinHeight),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppMetrics.buttonHorizontalPadding,
+            vertical: AppMetrics.buttonVerticalPadding,
+          ),
+          side: const BorderSide(color: AppColors.border),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppMetrics.buttonRadius),
+          ),
+          textStyle: labelStyle,
         ),
+        child: isLoading
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const GoogleLogoMark(size: 20),
+                  const SizedBox(width: 10),
+                  Text('Continue with Google', style: labelStyle),
+                ],
+              ),
       ),
     );
   }
