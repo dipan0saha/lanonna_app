@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../../core/api/api_error_message.dart';
-import '../../../../../core/api/api_exception.dart';
 import '../../../../../core/auth/auth_repository.dart';
 import '../../../../invitations/data/models/invitation_preview.dart';
 import '../../../../invitations/presentation/invite_accept_messages.dart';
@@ -87,9 +85,7 @@ class _OnboardingCoOwnerInviteScreenState
       } catch (e) {
         if (mounted) {
           setState(() {
-            _problemMessage = e is Exception && e is! ApiException
-                ? e.toString().replaceFirst('Exception: ', '')
-                : apiErrorMessage(e);
+            _problemMessage = inviteLandingAcceptErrorMessage(e);
           });
         }
       }

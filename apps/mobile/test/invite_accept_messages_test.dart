@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/api/api_exception.dart';
 import 'package:lanonna/features/invitations/data/models/invitation_preview.dart';
@@ -28,6 +30,23 @@ void main() {
     );
     expect(revoked.canContinueInviteFlow, isFalse);
     expect(invitePreviewProblemCode(revoked), 'revoked');
+  });
+
+  test('inviteLandingAcceptErrorMessage maps ApiException and offline', () {
+    expect(
+      inviteLandingAcceptErrorMessage(
+        ApiException('Bad request', statusCode: 400),
+      ),
+      'Bad request',
+    );
+    expect(
+      inviteLandingAcceptErrorMessage(const SocketException('offline')),
+      contains('offline'),
+    );
+    expect(
+      inviteLandingAcceptErrorMessage(Exception('Custom failure')),
+      'Custom failure',
+    );
   });
 
   test('invitePreviewFetchUserMessage distinguishes offline, 404, and retryable', () {

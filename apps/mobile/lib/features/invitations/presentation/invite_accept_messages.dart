@@ -1,3 +1,4 @@
+import '../../../core/api/api_error_message.dart';
 import '../../../core/api/api_exception.dart';
 import '../data/models/invitation_preview.dart';
 
@@ -36,4 +37,11 @@ bool invitePreviewFetchCanRetry(Object error, {required bool offline}) {
   if (offline) return true;
   if (error is ApiException && error.statusCode == 404) return false;
   return true;
+}
+
+/// User copy when signed-in accept on invite landing fails (M-55).
+String inviteLandingAcceptErrorMessage(Object e) {
+  return e is Exception && e is! ApiException
+      ? e.toString().replaceFirst('Exception: ', '')
+      : apiErrorMessage(e);
 }

@@ -5,6 +5,7 @@ import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:lanonna/features/home/data/models/home_summary.dart';
 import 'package:lanonna/features/home/presentation/follower_home_composer.dart';
 import 'package:lanonna/core/domain/baby_summary.dart';
+import 'package:lanonna/core/time/app_date_time.dart';
 
 void main() {
   testWidgets('follower expecting shows notification footnote not announce', (tester) async {
@@ -34,6 +35,8 @@ void main() {
       ),
     );
 
+    final dueLabel = formatApiCalendarDate('2026-10-08', 'en_US');
+    expect(find.textContaining('Days to due date · $dueLabel'), findsOneWidget);
     expect(find.textContaining("You'll be notified"), findsOneWidget);
     expect(find.text('Announce Arrival'), findsNothing);
     expect(find.text('Invite'), findsNothing);

@@ -85,9 +85,7 @@ class _OnboardingFollowerInviteScreenState
       } catch (e) {
         if (mounted) {
           setState(() {
-            _problemMessage = e is Exception
-                ? e.toString().replaceFirst('Exception: ', '')
-                : 'Could not accept this invitation. Try again.';
+            _problemMessage = inviteLandingAcceptErrorMessage(e);
           });
         }
       }

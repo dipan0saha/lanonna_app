@@ -63,7 +63,7 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
     DateTime? parsed;
     final born = baby?.lifecycleStatus == 'born';
     final raw = born ? baby?.actualBirthDate : baby?.expectedBirthDate;
-    if (raw != null) parsed = DateTime.tryParse(raw);
+    if (raw != null) parsed = tryParseApiCalendarDate(raw);
     setState(() {
       _baby = baby;
       _name.text = baby?.name ?? '';

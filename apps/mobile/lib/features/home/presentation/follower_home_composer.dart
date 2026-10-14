@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/domain/baby_summary.dart';
+import '../../../core/time/app_date_time.dart';
 import '../data/models/home_summary.dart';
 import '../domain/app_routes.dart';
 import 'widgets/home_birth_welcome_card.dart';
@@ -34,16 +35,14 @@ class FollowerHomeComposer extends StatelessWidget {
 
   bool get _isExpecting => baby.lifecycleStatus == 'expecting';
 
-  String? _formattedDueDate() {
+  String? _formattedDueDate(BuildContext context) {
     final raw = baby.expectedBirthDate;
     if (raw == null || raw.isEmpty) return null;
-    final parsed = DateTime.tryParse(raw);
-    if (parsed == null) return raw;
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    return '${months[parsed.month - 1]} ${parsed.day}, ${parsed.year}';
+    final formatted = formatApiCalendarDate(
+      raw,
+      localeNameForFormatting(context),
+    );
+    return formatted.isEmpty ? null : formatted;
   }
 
   @override
@@ -59,7 +58,7 @@ class FollowerHomeComposer extends StatelessWidget {
             babyName: babyName,
             daysToDueDate: daysToDueDate ?? s?.daysToDue,
             showAnnounceCta: false,
-            dueDateLabel: _formattedDueDate(),
+            dueDateLabel: _formattedDueDate(context),
             followerFootnote:
                 "You'll be notified the moment $babyName arrives.",
           ),

@@ -95,7 +95,8 @@ class _OnboardingCompleteProfileScreenState
         firstName: _firstNameController.text,
         lastName: _lastNameController.text,
         phone: _phoneController.text,
-        birthDateIso: _birthDate?.toIso8601String().split('T').first,
+        birthDateIso:
+            _birthDate != null ? toApiCalendarDate(_birthDate!) : null,
         countryCode: _countryCode,
         postalCode: _postalController.text,
         relationshipLabel: _relationshipLabel,
@@ -131,7 +132,7 @@ class _OnboardingCompleteProfileScreenState
       if (_birthDate == null &&
           account.birthDate != null &&
           account.birthDate!.isNotEmpty) {
-        _birthDate = DateTime.tryParse(account.birthDate!);
+        _birthDate = tryParseApiCalendarDate(account.birthDate);
       }
       if (_networkPhotoUrl == null && account.avatarUrl != null) {
         _networkPhotoUrl = account.avatarUrl;
@@ -185,7 +186,7 @@ class _OnboardingCompleteProfileScreenState
           _relationshipLabel = draft.relationshipLabel;
           _acceptedTerms = draft.termsAccepted;
           if (draft.birthDateIso != null && draft.birthDateIso!.isNotEmpty) {
-            _birthDate = DateTime.tryParse(draft.birthDateIso!);
+            _birthDate = tryParseApiCalendarDate(draft.birthDateIso);
           }
           if (draft.photoPath != null) {
             _photoFile = XFile(draft.photoPath!);
