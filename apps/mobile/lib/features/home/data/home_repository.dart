@@ -2,6 +2,7 @@ import '../../../core/api/api_client.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/domain/baby_summary.dart';
+import 'home_refresh_signal.dart';
 import 'home_summary_result.dart';
 import 'models/home_summary.dart';
 import 'selected_baby_store.dart';
@@ -15,12 +16,29 @@ class HomeRepository {
   List<BabySummary>? _cachedBabies;
   String? _cachedForUserId;
   var _listEpoch = 0;
+  final Map<String, HomeSummary> _summaryByBaby = {};
+  HomeRefreshSignal? _homeRefreshSignal;
 
   void clearCachedBabies() {
     _cachedBabies = null;
     _cachedForUserId = null;
     _listEpoch += 1;
+    _summaryByBaby.clear();
   }
+
+  /// Clears per-baby home-summary cache when baby context changes.
+  void attachHomeRefreshSignal(HomeRefreshSignal signal) {
+    if (_homeRefreshSignal == signal) return;
+    _homeRefreshSignal?.babyContext.removeListener(_clearSummaryCache);
+    _homeRefreshSignal = signal;
+    signal.babyContext.addListener(_clearSummaryCache);
+  }
+
+  void _clearSummaryCache() {
+    _summaryByBaby.clear();
+  }
+
+  HomeSummary? cachedHomeSummary(String babyId) => _summaryByBaby[babyId];
 
   /// Drop the cached baby list and select [babyId] (invite accept).
   ///
@@ -140,10 +158,20 @@ class HomeRepository {
   Future<HomeSummaryResult> fetchHomeSummary(String babyId) async {
     try {
       final json = await _api.getJson('/v1/babies/$babyId/home-summary');
-      return HomeSummaryLoaded(HomeSummary.fromJson(json));
+      final summary = HomeSummary.fromJson(json);
+      _summaryByBaby[babyId] = summary;
+      return HomeSummaryLoaded(summary);
     } on ApiException catch (e) {
+      final cached = _summaryByBaby[babyId];
+      if (cached != null && _shouldServeStaleBabyCache(e)) {
+        return HomeSummaryLoaded(cached);
+      }
       return HomeSummaryFailed(e);
     } catch (e) {
+      final cached = _summaryByBaby[babyId];
+      if (cached != null && _shouldServeStaleBabyCache(e)) {
+        return HomeSummaryLoaded(cached);
+      }
       return HomeSummaryFailed(ApiException(apiErrorMessage(e)));
     }
   }

@@ -33,7 +33,7 @@ class CalendarScreen extends StatefulWidget {
 }
 
 class _CalendarScreenState extends State<CalendarScreen>
-    with BabyContextReload {
+    with BabyContextReload, TabLoadGenerationCache {
   BabySummary? _baby;
   DateTime _visibleMonth = DateTime(DateTime.now().year, DateTime.now().month);
   List<CalendarEvent> _monthEvents = [];
@@ -41,6 +41,7 @@ class _CalendarScreenState extends State<CalendarScreen>
   List<CalendarEvent> _upcoming = [];
   DateTime? _selectedDay;
   var _loading = true;
+  var _monthRefreshing = false;
   String? _loadError;
   CalendarRepository? _calendarRepo;
 
@@ -66,19 +67,27 @@ class _CalendarScreenState extends State<CalendarScreen>
   }
 
   @override
-  void onBabyContextReload() => _load();
+  void onBabyContextReload() => _load(forceRefresh: true);
 
   void _onEventsChanged() => _load();
 
-  Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _loadError = null;
-    });
+  Future<void> _load({DateTime? displayMonth, bool forceRefresh = false}) async {
+    final targetMonth = displayMonth ?? _visibleMonth;
+    final isMonthNavigation = displayMonth != null &&
+        (displayMonth.year != _visibleMonth.year ||
+            displayMonth.month != _visibleMonth.month);
+    final store = context.read<SelectedBabyStore>();
+    if (isMonthNavigation) {
+      setState(() => _monthRefreshing = true);
+    } else if (shouldShowTabLoadSpinner(store, hasDisplayedPayload: _baby != null)) {
+      setState(() {
+        _loading = true;
+        _loadError = null;
+      });
+    }
     try {
       final homeRepo = context.read<HomeRepository>();
       final calRepo = context.read<CalendarRepository>();
-      final store = context.read<SelectedBabyStore>();
       final baby = await homeRepo.resolveSelectedBaby(store);
       if (!mounted) return;
       if (baby == null) {
@@ -88,17 +97,30 @@ class _CalendarScreenState extends State<CalendarScreen>
           _today = [];
           _upcoming = [];
           _loading = false;
+          _monthRefreshing = false;
         });
         return;
       }
       final now = DateTime.now();
-      final visibleKey = calendarMonthKey(_visibleMonth);
+      final visibleKey = calendarMonthKey(targetMonth);
       final currentKey = calendarMonthKey(now);
-      final month = await calRepo.listEvents(baby.id, month: visibleKey);
-      final upcomingApi = await calRepo.listEvents(baby.id, upcoming: true);
+      final month = await calRepo.listEvents(
+        baby.id,
+        month: visibleKey,
+        forceRefresh: forceRefresh,
+      );
+      final upcomingApi = await calRepo.listEvents(
+        baby.id,
+        upcoming: true,
+        forceRefresh: forceRefresh,
+      );
       final monthForToday = visibleKey == currentKey
           ? month
-          : await calRepo.listEvents(baby.id, month: currentKey);
+          : await calRepo.listEvents(
+              baby.id,
+              month: currentKey,
+              forceRefresh: forceRefresh,
+            );
       final partition = partitionCalendarListEvents(
         monthEventsForToday: monthForToday,
         upcomingFromApi: upcomingApi,
@@ -107,11 +129,14 @@ class _CalendarScreenState extends State<CalendarScreen>
       if (!mounted) return;
       setState(() {
         _baby = baby;
+        _visibleMonth = targetMonth;
         _monthEvents = month;
         _today = partition.today;
         _upcoming = partition.upcoming;
         _loading = false;
+        _monthRefreshing = false;
       });
+      rememberTabLoadGeneration(store, baby);
     } catch (e) {
       if (!mounted) return;
       final hadBaby = _baby != null;
@@ -130,6 +155,7 @@ class _CalendarScreenState extends State<CalendarScreen>
         setState(() {
           _loadError = null;
           _loading = false;
+          _monthRefreshing = false;
         });
       }
     }
@@ -161,11 +187,9 @@ class _CalendarScreenState extends State<CalendarScreen>
   }
 
   void _shiftMonth(int delta) {
-    setState(() {
-      _selectedDay = null;
-      _visibleMonth = DateTime(_visibleMonth.year, _visibleMonth.month + delta);
-    });
-    _load();
+    setState(() => _selectedDay = null);
+    final target = DateTime(_visibleMonth.year, _visibleMonth.month + delta);
+    _load(displayMonth: target);
   }
 
   List<CalendarEvent> _eventsForSelectedDay() {
@@ -197,7 +221,7 @@ class _CalendarScreenState extends State<CalendarScreen>
     return Scaffold(
       backgroundColor: AppColors.background,
       body: ShellTabLayout(
-        onRefresh: _load,
+        onRefresh: () => _load(forceRefresh: true),
         body: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
@@ -244,14 +268,33 @@ class _CalendarScreenState extends State<CalendarScreen>
                               AppIconButton(
                                 semanticsId: 'calendar_previous_month',
                                 label: 'Previous month',
-                                onPressed: () => _shiftMonth(-1),
+                                onPressed: _monthRefreshing
+                                    ? null
+                                    : () => _shiftMonth(-1),
                                 icon: const Icon(Icons.chevron_left),
                               ),
-                              Text(monthLabel, style: styles.titleMedium),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(monthLabel, style: styles.titleMedium),
+                                  if (_monthRefreshing) ...[
+                                    const SizedBox(width: 8),
+                                    const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
                               AppIconButton(
                                 semanticsId: 'calendar_next_month',
                                 label: 'Next month',
-                                onPressed: () => _shiftMonth(1),
+                                onPressed: _monthRefreshing
+                                    ? null
+                                    : () => _shiftMonth(1),
                                 icon: const Icon(Icons.chevron_right),
                               ),
                             ],

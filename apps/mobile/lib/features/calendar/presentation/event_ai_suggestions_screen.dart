@@ -71,7 +71,7 @@ class _EventAiSuggestionsScreenState extends State<EventAiSuggestionsScreen> {
         });
         return;
       }
-      final events = await calRepo.listEvents(baby.id);
+      final events = await calRepo.listEventsForSuggestionDedupe(baby.id);
       setState(() {
         _items = availableEventSuggestions(catalog, events);
         _loading = false;

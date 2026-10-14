@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/api/api_exception.dart';
+import 'package:lanonna/features/home/data/home_refresh_signal.dart';
 import 'package:lanonna/features/home/data/home_repository.dart';
 import 'package:lanonna/features/home/data/home_summary_result.dart';
 import 'package:lanonna/features/home/data/selected_baby_store.dart';
@@ -97,6 +98,28 @@ void main() {
     final failed = result as HomeSummaryFailed;
     expect(failed.error, isA<ApiException>());
     expect((failed.error as ApiException).statusCode, 500);
+  });
+
+  test('fetchHomeSummary caches and serves stale on network failure', () async {
+    final api = _FlakySummaryApi();
+    final repo = HomeRepository(api);
+    final online = await repo.fetchHomeSummary('baby-1');
+    expect(online, isA<HomeSummaryLoaded>());
+    expect(repo.cachedHomeSummary('baby-1')?.lifecycleStatus, 'expecting');
+
+    api.failRequests = true;
+    final offline = await repo.fetchHomeSummary('baby-1');
+    expect(offline, isA<HomeSummaryLoaded>());
+  });
+
+  test('babyContext refresh signal clears summary cache', () async {
+    final signal = HomeRefreshSignal();
+    final repo = HomeRepository(_SuccessApi());
+    repo.attachHomeRefreshSignal(signal);
+    await repo.fetchHomeSummary('baby-1');
+    expect(repo.cachedHomeSummary('baby-1'), isNotNull);
+    signal.notifyBabyContextChanged();
+    expect(repo.cachedHomeSummary('baby-1'), isNull);
   });
 }
 
@@ -243,5 +266,31 @@ class _FailingApi extends ApiClient {
   @override
   Future<Map<String, dynamic>> getJson(String path) async {
     throw ApiException('Server error', statusCode: 500);
+  }
+}
+
+class _FlakySummaryApi extends ApiClient {
+  _FlakySummaryApi() : super(idTokenProvider: () async => 'token');
+
+  var failRequests = false;
+
+  @override
+  Future<Map<String, dynamic>> getJson(String path) async {
+    if (failRequests) {
+      throw const SocketException('offline');
+    }
+    return {
+      'lifecycle_status': 'expecting',
+      'family_insight': {
+        'name_suggestion_count': 0,
+        'vote_count': 0,
+        'gender_totals': {'male': 0, 'female': 0},
+      },
+      'teasers': {
+        'recent_photos': [],
+        'upcoming_events': [],
+      },
+      'recent_activity': [],
+    };
   }
 }

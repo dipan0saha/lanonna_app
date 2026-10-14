@@ -13,12 +13,14 @@ class HomePrdSections extends StatelessWidget {
     required this.babyId,
     required this.isOwner,
     required this.onRefresh,
+    this.onTeaserSignedUrlError,
   });
 
   final HomeSummary summary;
   final String babyId;
   final bool isOwner;
   final VoidCallback onRefresh;
+  final VoidCallback? onTeaserSignedUrlError;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +35,7 @@ class HomePrdSections extends StatelessWidget {
         if (teasers != null)
           HomeTeasersSection(
             teasers: teasers,
-            onSignedUrlError: onRefresh,
+            onSignedUrlError: onTeaserSignedUrlError ?? onRefresh,
           ),
         if (summary.recentActivity.isNotEmpty)
           HomeActivityFeed(

@@ -160,7 +160,11 @@ class _EventFormScreenState extends State<EventFormScreen> {
   Future<void> _pickCoverPhoto() async {
     final baby = _baby;
     if (baby == null) return;
-    final photos = await context.read<GalleryRepository>().listPhotos(baby.id);
+    final page = await context.read<GalleryRepository>().listPhotosPage(
+      baby.id,
+      limit: 40,
+    );
+    final photos = page.items;
     if (!mounted) return;
     final picked = await showModalBottomSheet<({String? id, String? thumbUrl})?>(
       context: context,

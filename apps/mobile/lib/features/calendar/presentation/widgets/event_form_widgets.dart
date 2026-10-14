@@ -42,7 +42,7 @@ class PrototypeEventCoverUpload extends StatelessWidget {
             child: hasPreview
                 ? CachedSignedImage(
                     imageUrl: url,
-                    cacheKey: cacheKey ?? 'event-cover-$url',
+                    cacheKey: cacheKey,
                     width: double.infinity,
                     height: 70,
                     fit: BoxFit.cover,

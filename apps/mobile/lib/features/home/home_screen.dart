@@ -33,7 +33,8 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with BabyContextReload {
+class _HomeScreenState extends State<HomeScreen>
+    with BabyContextReload, HomeTabReload, TabLoadGenerationCache {
   BabySummary? _baby;
   HomeSummary? _summary;
   String? _loadError;
@@ -51,21 +52,43 @@ class _HomeScreenState extends State<HomeScreen> with BabyContextReload {
   void didChangeDependencies() {
     super.didChangeDependencies();
     registerBabyContextListeners();
+    registerHomeTabRefreshListener();
   }
 
   @override
   void dispose() {
     disposeBabyContextListeners();
+    disposeHomeTabRefreshListener();
     super.dispose();
   }
 
   @override
   void onBabyContextReload() => _load();
 
+  @override
+  void onHomeTabRefresh() => _load();
+
+  Future<void> _refreshSummaryOnly() async {
+    final baby = _baby;
+    if (baby == null) return;
+    final repository = context.read<HomeRepository>();
+    final result = await repository.fetchHomeSummary(baby.id);
+    if (!mounted) return;
+    switch (result) {
+      case HomeSummaryLoaded loaded:
+        setState(() {
+          _summary = loaded.summary;
+          _summaryError = null;
+        });
+      case HomeSummaryFailed failed:
+        setState(() => _summaryError = apiErrorMessage(failed.error));
+    }
+  }
+
   Future<void> _load() async {
     final repository = context.read<HomeRepository>();
     final store = context.read<SelectedBabyStore>();
-    if (_baby == null) {
+    if (shouldShowTabLoadSpinner(store, hasDisplayedPayload: _baby != null)) {
       setState(() {
         _loading = true;
         _loadError = null;
@@ -73,6 +96,22 @@ class _HomeScreenState extends State<HomeScreen> with BabyContextReload {
     }
     try {
       final baby = await repository.resolveSelectedBaby(store);
+      if (baby != null) {
+        final cached = repository.cachedHomeSummary(baby.id);
+        if (cached != null && mounted) {
+          setState(() {
+            _baby = baby;
+            _summary = cached;
+            _loadError = null;
+            if (!shouldShowTabLoadSpinner(
+              store,
+              hasDisplayedPayload: true,
+            )) {
+              _loading = false;
+            }
+          });
+        }
+      }
       HomeSummary? summary;
       String? summaryError;
       if (baby != null) {
@@ -92,6 +131,7 @@ class _HomeScreenState extends State<HomeScreen> with BabyContextReload {
         _loadError = null;
         _loading = false;
       });
+      rememberTabLoadGeneration(store, baby);
     } catch (e) {
       if (!mounted) return;
       reportTabLoadFailure(
@@ -252,6 +292,7 @@ class _HomeScreenState extends State<HomeScreen> with BabyContextReload {
                     summary: _summary,
                     daysToDueDate: _daysToDueDate(_baby!),
                     onRefresh: _load,
+                    onTeaserSignedUrlError: _refreshSummaryOnly,
                     onAnnounceTap: _baby!.lifecycleStatus == 'expecting'
                         ? () => _onAnnounceArrival()
                         : null,
@@ -265,6 +306,7 @@ class _HomeScreenState extends State<HomeScreen> with BabyContextReload {
                     summary: _summary,
                     daysToDueDate: _daysToDueDate(_baby!),
                     onRefresh: _load,
+                    onTeaserSignedUrlError: _refreshSummaryOnly,
                     onVoteInFun: () => context.go(AppRoutes.gamification),
                     onViewGallery: () => context.go('/gallery'),
                   ),

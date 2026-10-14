@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../core/api/api_client.dart';
+import '../../../core/api/api_exception.dart';
 import '../../../core/time/app_date_time.dart';
+import '../domain/calendar_event_lists.dart';
 import 'models/calendar_models.dart';
 
 class CalendarRepository extends ChangeNotifier {
@@ -9,23 +11,81 @@ class CalendarRepository extends ChangeNotifier {
 
   final ApiClient _api;
 
-  void _markEventsChanged() => notifyListeners();
+  final Map<String, Map<String, List<CalendarEvent>>> _listsByBaby = {};
+
+  void _markEventsChanged() {
+    _listsByBaby.clear();
+    notifyListeners();
+  }
+
+  static String _cacheKey({String? month, bool upcoming = false}) {
+    if (upcoming) return 'upcoming';
+    return 'month:$month';
+  }
+
+  static bool _shouldServeStaleListCache(Object error) {
+    if (error is ApiException) {
+      final code = error.statusCode;
+      if (code != null && code >= 400 && code < 500) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  List<CalendarEvent>? peekCachedEvents(
+    String babyId, {
+    String? month,
+    bool upcoming = false,
+  }) {
+    return _listsByBaby[babyId]?[_cacheKey(month: month, upcoming: upcoming)];
+  }
 
   Future<List<CalendarEvent>> listEvents(
     String babyId, {
     String? month,
     bool upcoming = false,
+    bool forceRefresh = false,
   }) async {
-    final query = <String>[];
-    if (month != null) query.add('month=$month');
-    if (upcoming) query.add('upcoming=true');
-    final suffix = query.isEmpty ? '' : '?${query.join('&')}';
-    final list =
-        await _api.getJsonList('/v1/babies/$babyId/events$suffix');
-    return list
-        .whereType<Map<String, dynamic>>()
-        .map(CalendarEvent.fromJson)
-        .toList();
+    final key = _cacheKey(month: month, upcoming: upcoming);
+    if (!forceRefresh) {
+      final cached = _listsByBaby[babyId]?[key];
+      if (cached != null) return cached;
+    }
+    try {
+      final query = <String>[];
+      if (month != null) query.add('month=$month');
+      if (upcoming) query.add('upcoming=true');
+      final suffix = query.isEmpty ? '' : '?${query.join('&')}';
+      final list =
+          await _api.getJsonList('/v1/babies/$babyId/events$suffix');
+      final events = list
+          .whereType<Map<String, dynamic>>()
+          .map(CalendarEvent.fromJson)
+          .toList();
+      final babyCache = _listsByBaby.putIfAbsent(babyId, () => {});
+      babyCache[key] = events;
+      return events;
+    } catch (e) {
+      final cached = _listsByBaby[babyId]?[key];
+      if (cached != null && _shouldServeStaleListCache(e)) {
+        return cached;
+      }
+      rethrow;
+    }
+  }
+
+  /// Catalog dedupe: current calendar month plus upcoming (not full history).
+  Future<List<CalendarEvent>> listEventsForSuggestionDedupe(String babyId) async {
+    final now = DateTime.now();
+    final currentKey = calendarMonthKey(now);
+    final month = await listEvents(babyId, month: currentKey);
+    final upcoming = await listEvents(babyId, upcoming: true);
+    final byId = <String, CalendarEvent>{};
+    for (final event in [...month, ...upcoming]) {
+      byId[event.id] = event;
+    }
+    return byId.values.toList();
   }
 
   Future<EventDetail> fetchEvent(String babyId, String eventId) async {

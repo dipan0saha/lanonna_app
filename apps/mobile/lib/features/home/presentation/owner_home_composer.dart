@@ -20,6 +20,7 @@ class OwnerHomeComposer extends StatelessWidget {
     required this.summary,
     required this.daysToDueDate,
     required this.onRefresh,
+    this.onTeaserSignedUrlError,
     this.onAnnounceTap,
     this.onAddPhoto,
     this.onAddEvent,
@@ -30,6 +31,7 @@ class OwnerHomeComposer extends StatelessWidget {
   final HomeSummary? summary;
   final int? daysToDueDate;
   final VoidCallback onRefresh;
+  final VoidCallback? onTeaserSignedUrlError;
   final VoidCallback? onAnnounceTap;
   final VoidCallback? onAddPhoto;
   final VoidCallback? onAddEvent;
@@ -86,6 +88,7 @@ class OwnerHomeComposer extends StatelessWidget {
               babyId: baby.id,
               isOwner: true,
               onRefresh: onRefresh,
+              onTeaserSignedUrlError: onTeaserSignedUrlError,
             ),
         ],
       );
@@ -106,6 +109,7 @@ class OwnerHomeComposer extends StatelessWidget {
             babyId: baby.id,
             isOwner: true,
             onRefresh: onRefresh,
+            onTeaserSignedUrlError: onTeaserSignedUrlError,
           ),
       ],
     );

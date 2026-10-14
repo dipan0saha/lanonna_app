@@ -30,7 +30,7 @@ void main() {
     final repo = _TrackingHomeRepository();
     final signal = HomeRefreshSignal();
     var notified = false;
-    signal.addListener(() => notified = true);
+    signal.babyContext.addListener(() => notified = true);
 
     await handleMembershipEnded(
       homeRepository: repo,

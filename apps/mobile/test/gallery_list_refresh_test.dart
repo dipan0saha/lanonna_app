@@ -52,7 +52,7 @@ Future<void> _pumpGallery(
       providers: [
         ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
         ChangeNotifierProvider<GalleryRepository>.value(value: galleryRepo),
-        ChangeNotifierProvider<HomeRefreshSignal>.value(value: homeRefresh),
+        Provider<HomeRefreshSignal>.value(value: homeRefresh),
         ChangeNotifierProvider<ConnectivityService>(
           create: (_) => ConnectivityService.forTesting(),
         ),
@@ -119,7 +119,7 @@ void main() {
     expect(galleryRepo.listCalls, greaterThan(callsAfterLoad));
   });
 
-  testWidgets('HomeRefreshSignal reloads gallery list', (tester) async {
+  testWidgets('home tab refresh does not reload gallery list', (tester) async {
     final galleryRepo = FakeGalleryRepository();
     final homeRefresh = HomeRefreshSignal();
     await _pumpGallery(
@@ -143,6 +143,36 @@ void main() {
       ),
     ];
     homeRefresh.notifyHomeShouldRefresh();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text('No photos yet'), findsOneWidget);
+    expect(galleryRepo.listCalls, callsAfterLoad);
+  });
+
+  testWidgets('baby context refresh reloads gallery list', (tester) async {
+    final galleryRepo = FakeGalleryRepository();
+    final homeRefresh = HomeRefreshSignal();
+    await _pumpGallery(
+      tester,
+      galleryRepo: galleryRepo,
+      homeRefresh: homeRefresh,
+    );
+
+    expect(find.text('No photos yet'), findsOneWidget);
+    final callsAfterLoad = galleryRepo.listCalls;
+
+    galleryRepo.photos = [
+      PhotoSummary(
+        id: 'photo-2',
+        status: 'ready',
+        createdAt: DateTime.utc(2026, 2, 1),
+        thumbUrl: 'https://example.com/thumb2.webp',
+        squishCount: 1,
+        commentCount: 0,
+        uploaderDisplayName: 'Owner',
+      ),
+    ];
+    homeRefresh.notifyBabyContextChanged();
     for (var i = 0; i < 40; i++) {
       await tester.pump(const Duration(milliseconds: 16));
       if (find.text('All Photos').evaluate().isNotEmpty) break;

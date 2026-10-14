@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import '../theme/app_colors.dart';
+
 /// Disk-cached network image for short-lived signed GCS read URLs.
 class CachedSignedImage extends StatefulWidget {
   const CachedSignedImage({
@@ -39,22 +41,25 @@ class _CachedSignedImageState extends State<CachedSignedImage> {
     if (url == null || url.isEmpty) {
       return SizedBox(width: widget.width, height: widget.height);
     }
+    assert(() {
+      if (widget.cacheKey == null &&
+          url.contains('X-Goog-Signature') &&
+          widget.onSignedUrlError != null) {
+        debugPrint(
+          'CachedSignedImage: signed URL without cacheKey (prefer stable id keys)',
+        );
+      }
+      return true;
+    }());
     return CachedNetworkImage(
       imageUrl: url,
       cacheKey: widget.cacheKey ?? url,
       width: widget.width,
       height: widget.height,
       fit: widget.fit,
-      placeholder: (_, __) => SizedBox(
-        width: widget.width,
-        height: widget.height,
-        child: const Center(
-          child: SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
+      placeholder: (_, __) => ColoredBox(
+        color: AppColors.sageTint,
+        child: SizedBox(width: widget.width, height: widget.height),
       ),
       errorWidget: (_, __, ___) {
         _handleError();

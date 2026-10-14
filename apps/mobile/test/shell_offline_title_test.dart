@@ -36,7 +36,7 @@ void main() {
             ),
           ),
           ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
-          ChangeNotifierProvider<HomeRefreshSignal>(
+          Provider<HomeRefreshSignal>(
             create: (_) => HomeRefreshSignal(),
           ),
           ChangeNotifierProvider<ConnectivityService>.value(

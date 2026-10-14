@@ -41,7 +41,7 @@ void main() {
           ChangeNotifierProvider<SelectedBabyStore>.value(
             value: SelectedBabyStore(prefs),
           ),
-          ChangeNotifierProvider<HomeRefreshSignal>(
+          Provider<HomeRefreshSignal>(
             create: (_) => HomeRefreshSignal(),
           ),
           ChangeNotifierProvider<ConnectivityService>.value(
@@ -83,7 +83,7 @@ void main() {
           ChangeNotifierProvider<SelectedBabyStore>.value(
             value: SelectedBabyStore(prefs),
           ),
-          ChangeNotifierProvider<HomeRefreshSignal>(
+          Provider<HomeRefreshSignal>(
             create: (_) => HomeRefreshSignal(),
           ),
           ChangeNotifierProvider<ConnectivityService>.value(

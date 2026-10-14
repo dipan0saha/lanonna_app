@@ -24,7 +24,6 @@ class _ShellTopBarLoader extends StatefulWidget {
 class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
   String _centerTitle = 'La Nonna';
   var _unreadCount = 0;
-  SelectedBabyStore? _babyStore;
   HomeRefreshSignal? _babyRefresh;
   ConnectivityService? _connectivity;
   var _wasOffline = false;
@@ -38,17 +37,11 @@ class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final store = context.read<SelectedBabyStore>();
-    if (_babyStore != store) {
-      _babyStore?.removeListener(_onBabyContextChanged);
-      _babyStore = store;
-      _babyStore!.addListener(_onBabyContextChanged);
-    }
     final refresh = context.read<HomeRefreshSignal>();
     if (_babyRefresh != refresh) {
-      _babyRefresh?.removeListener(_onBabyContextChanged);
+      _babyRefresh?.babyContext.removeListener(_onBabyContextChanged);
       _babyRefresh = refresh;
-      _babyRefresh!.addListener(_onBabyContextChanged);
+      _babyRefresh!.babyContext.addListener(_onBabyContextChanged);
     }
     final connectivity = context.read<ConnectivityService>();
     if (_connectivity != connectivity) {
@@ -61,8 +54,7 @@ class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
 
   @override
   void dispose() {
-    _babyStore?.removeListener(_onBabyContextChanged);
-    _babyRefresh?.removeListener(_onBabyContextChanged);
+    _babyRefresh?.babyContext.removeListener(_onBabyContextChanged);
     _connectivity?.removeListener(_onConnectivityChanged);
     super.dispose();
   }
@@ -105,7 +97,7 @@ class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
 
   String get _title {
     if (_centerTitle != 'La Nonna') return _centerTitle;
-    final cached = _babyStore?.selectedBabyName;
+    final cached = context.read<SelectedBabyStore>().selectedBabyName;
     if (cached != null && cached.isNotEmpty) return cached;
     return _centerTitle;
   }

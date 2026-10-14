@@ -32,4 +32,39 @@ class FakeGalleryRepository extends GalleryRepository {
     listCalls++;
     return photos;
   }
+
+  @override
+  Future<PhotoDetail> fetchPhoto(String babyId, String photoId) async {
+    PhotoSummary? summary;
+    for (final p in photos) {
+      if (p.id == photoId) {
+        summary = p;
+        break;
+      }
+    }
+    if (summary == null) {
+      return PhotoDetail(
+        id: photoId,
+        status: 'ready',
+        createdAt: DateTime.utc(2026, 1, 1),
+        uploaderDisplayName: 'Owner',
+        squishCount: 0,
+        viewerHasSquished: false,
+        comments: const [],
+        taggedBabies: const [],
+      );
+    }
+    return PhotoDetail(
+      id: summary.id,
+      status: summary.status,
+      caption: summary.caption,
+      createdAt: summary.createdAt,
+      thumbUrl: summary.thumbUrl,
+      uploaderDisplayName: summary.uploaderDisplayName,
+      squishCount: summary.squishCount,
+      viewerHasSquished: false,
+      comments: const [],
+      taggedBabies: const [],
+    );
+  }
 }

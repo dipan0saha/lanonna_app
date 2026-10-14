@@ -17,7 +17,7 @@ class CalendarUpcomingScreen extends StatefulWidget {
 }
 
 class _CalendarUpcomingScreenState extends State<CalendarUpcomingScreen>
-    with BabyContextReload {
+    with BabyContextReload, TabLoadGenerationCache {
   List<CalendarEvent> _today = [];
   List<CalendarEvent> _upcoming = [];
   var _loading = true;
@@ -49,13 +49,18 @@ class _CalendarUpcomingScreenState extends State<CalendarUpcomingScreen>
   void _onEventsChanged() => _load();
 
   Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    final store = context.read<SelectedBabyStore>();
+    if (shouldShowTabLoadSpinner(
+      store,
+      hasDisplayedPayload: cachedLoadedBabyId != null,
+    )) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
     try {
       final homeRepo = context.read<HomeRepository>();
-      final store = context.read<SelectedBabyStore>();
       final baby = await homeRepo.resolveSelectedBaby(store);
       if (baby == null) {
         setState(() {
@@ -63,6 +68,8 @@ class _CalendarUpcomingScreenState extends State<CalendarUpcomingScreen>
           _upcoming = [];
           _loading = false;
         });
+        cachedLoadedBabyId = null;
+        cachedSelectionGeneration = -1;
         return;
       }
       if (!mounted) return;
@@ -82,6 +89,7 @@ class _CalendarUpcomingScreenState extends State<CalendarUpcomingScreen>
         _upcoming = partition.upcoming;
         _loading = false;
       });
+      rememberTabLoadGeneration(store, baby);
     } catch (e) {
       setState(() {
         _loading = false;

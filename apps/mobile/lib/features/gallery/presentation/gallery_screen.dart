@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -21,6 +23,7 @@ import '../../home/data/selected_baby_store.dart';
 import '../../shell/presentation/shell_tab_layout.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../data/gallery_repository.dart';
+import '../domain/gallery_loaded_pages.dart';
 import '../domain/gallery_refresh.dart';
 import '../data/models/photo_models.dart';
 import '../domain/gallery_routes.dart';
@@ -39,7 +42,8 @@ class GalleryScreen extends StatefulWidget {
   State<GalleryScreen> createState() => _GalleryScreenState();
 }
 
-class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
+class _GalleryScreenState extends State<GalleryScreen>
+    with BabyContextReload, TabLoadGenerationCache {
   BabySummary? _baby;
   List<PhotoSummary> _photos = [];
   List<HomeActivityItem> _activity = [];
@@ -49,6 +53,7 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
   var _hasMorePhotos = true;
   var _photoOffset = 0;
   var _uploading = false;
+  var _incrementalRefreshInFlight = false;
   GalleryRepository? _galleryRepo;
   final _scrollController = ScrollController();
 
@@ -89,7 +94,10 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
     }
   }
 
-  void _onGalleryChanged() => _load();
+  void _onGalleryChanged() {
+    if (_baby == null) return;
+    unawaited(_refreshLoadedPhotos());
+  }
 
   @override
   void didChangeDependencies() {
@@ -110,14 +118,16 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
   void onBabyContextReload() => _load();
 
   Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    final store = context.read<SelectedBabyStore>();
+    if (shouldShowTabLoadSpinner(store, hasDisplayedPayload: _baby != null)) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
     try {
       final homeRepo = context.read<HomeRepository>();
       final galleryRepo = context.read<GalleryRepository>();
-      final store = context.read<SelectedBabyStore>();
       final baby = await homeRepo.resolveSelectedBaby(store);
       if (baby == null) {
         setState(() {
@@ -146,6 +156,7 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
         _activity = activity;
         _loading = false;
       });
+      rememberTabLoadGeneration(store, baby);
     } catch (e) {
       if (!mounted) return;
       final hadBaby = _baby != null;
@@ -164,6 +175,41 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
         setState(() => _loading = false);
       }
     }
+  }
+
+  Future<void> _refreshLoadedPhotos() async {
+    if (_incrementalRefreshInFlight || _loading) return;
+    final baby = _baby;
+    if (baby == null) return;
+    _incrementalRefreshInFlight = true;
+    try {
+      final galleryRepo = context.read<GalleryRepository>();
+      final loadedCount = _photos.isEmpty ? GalleryRepository.pageSize : _photoOffset;
+      final fresh = await fetchLoadedPhotoRange(
+        galleryRepo,
+        baby.id,
+        loadedCount: loadedCount,
+        sort: _apiSort,
+      );
+      if (!mounted) return;
+      setState(() {
+        _photos = fresh;
+        _photoOffset = fresh.length;
+        if (fresh.length < loadedCount) {
+          _hasMorePhotos = false;
+        }
+      });
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.showAlert(context, apiErrorMessage(e));
+      }
+    } finally {
+      _incrementalRefreshInFlight = false;
+    }
+  }
+
+  void _onGridSignedUrlError() {
+    unawaited(_refreshLoadedPhotos());
   }
 
   Future<void> _loadMorePhotos() async {
@@ -229,15 +275,8 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
     for (var i = 0; i < 12; i++) {
       await Future<void>.delayed(const Duration(seconds: 2));
       if (!mounted) return;
-      final photos = await galleryRepo.listPhotos(babyId);
-      PhotoSummary? match;
-      for (final p in photos) {
-        if (p.id == photoId) {
-          match = p;
-          break;
-        }
-      }
-      if (match != null && match.status == 'ready' && match.thumbUrl != null) {
+      final detail = await galleryRepo.fetchPhoto(babyId, photoId);
+      if (detail.status == 'ready' && detail.thumbUrl != null) {
         return;
       }
     }
@@ -344,7 +383,7 @@ class _GalleryScreenState extends State<GalleryScreen> with BabyContextReload {
                   photos: _photos,
                   onPhotoTap: (p) =>
                       context.push(GalleryRoutes.photoDetail(p.id)),
-                  onSignedUrlError: _load,
+                  onSignedUrlError: _onGridSignedUrlError,
                 ),
               ),
               if (_loadingMore)

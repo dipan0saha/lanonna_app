@@ -1,14 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/domain/baby_summary.dart';
 import '../../../core/network/connectivity_service.dart';
 import '../data/home_refresh_signal.dart';
 import '../data/selected_baby_store.dart';
 
-/// Reload baby-scoped shell tabs when selection changes, [HomeRefreshSignal] fires,
+/// Whether to show the full-tab loading spinner before a background revalidate.
+bool tabLoadShouldShowSpinner({
+  required bool hasDisplayedPayload,
+  required String? loadedBabyId,
+  required String? selectedBabyId,
+  required int loadedSelectionGeneration,
+  required int selectionGeneration,
+}) {
+  if (!hasDisplayedPayload) return true;
+  if (loadedBabyId == null) return true;
+  if (selectedBabyId != null && loadedBabyId != selectedBabyId) return true;
+  if (loadedSelectionGeneration != selectionGeneration) return true;
+  return false;
+}
+
+/// Reload baby-scoped shell tabs when [HomeRefreshSignal.babyContext] fires
 /// or connectivity returns after being offline.
 mixin BabyContextReload<T extends StatefulWidget> on State<T> {
-  SelectedBabyStore? _babyContextStore;
   HomeRefreshSignal? _babyContextRefresh;
   ConnectivityService? _babyContextConnectivity;
   var _babyContextWasOffline = false;
@@ -16,17 +31,11 @@ mixin BabyContextReload<T extends StatefulWidget> on State<T> {
   void onBabyContextReload();
 
   void registerBabyContextListeners() {
-    final store = context.read<SelectedBabyStore>();
-    if (_babyContextStore != store) {
-      _babyContextStore?.removeListener(_handleBabyContextReload);
-      _babyContextStore = store;
-      _babyContextStore!.addListener(_handleBabyContextReload);
-    }
     final refresh = context.read<HomeRefreshSignal>();
     if (_babyContextRefresh != refresh) {
-      _babyContextRefresh?.removeListener(_handleBabyContextReload);
+      _babyContextRefresh?.babyContext.removeListener(_handleBabyContextReload);
       _babyContextRefresh = refresh;
-      _babyContextRefresh!.addListener(_handleBabyContextReload);
+      _babyContextRefresh!.babyContext.addListener(_handleBabyContextReload);
     }
     final connectivity = context.read<ConnectivityService>();
     if (_babyContextConnectivity != connectivity) {
@@ -38,10 +47,8 @@ mixin BabyContextReload<T extends StatefulWidget> on State<T> {
   }
 
   void disposeBabyContextListeners() {
-    _babyContextStore?.removeListener(_handleBabyContextReload);
-    _babyContextRefresh?.removeListener(_handleBabyContextReload);
+    _babyContextRefresh?.babyContext.removeListener(_handleBabyContextReload);
     _babyContextConnectivity?.removeListener(_handleConnectivityChanged);
-    _babyContextStore = null;
     _babyContextRefresh = null;
     _babyContextConnectivity = null;
   }
@@ -59,5 +66,51 @@ mixin BabyContextReload<T extends StatefulWidget> on State<T> {
     } else if (!online) {
       _babyContextWasOffline = true;
     }
+  }
+}
+
+/// Home tab also reloads on [HomeRefreshSignal.homeTab] (nav re-tap, cross-tab teasers).
+mixin HomeTabReload<T extends StatefulWidget> on State<T> {
+  HomeRefreshSignal? _homeTabRefresh;
+
+  void onHomeTabRefresh();
+
+  void registerHomeTabRefreshListener() {
+    final refresh = context.read<HomeRefreshSignal>();
+    if (_homeTabRefresh != refresh) {
+      _homeTabRefresh?.homeTab.removeListener(_handleHomeTabRefresh);
+      _homeTabRefresh = refresh;
+      _homeTabRefresh!.homeTab.addListener(_handleHomeTabRefresh);
+    }
+  }
+
+  void disposeHomeTabRefreshListener() {
+    _homeTabRefresh?.homeTab.removeListener(_handleHomeTabRefresh);
+    _homeTabRefresh = null;
+  }
+
+  void _handleHomeTabRefresh() {
+    if (mounted) onHomeTabRefresh();
+  }
+}
+
+/// Tracks baby + selection generation for stale-while-revalidate tab loads.
+mixin TabLoadGenerationCache<T extends StatefulWidget> on State<T> {
+  String? cachedLoadedBabyId;
+  int cachedSelectionGeneration = -1;
+
+  void rememberTabLoadGeneration(SelectedBabyStore store, BabySummary? baby) {
+    cachedLoadedBabyId = baby?.id;
+    cachedSelectionGeneration = store.selectionGeneration;
+  }
+
+  bool shouldShowTabLoadSpinner(SelectedBabyStore store, {required bool hasDisplayedPayload}) {
+    return tabLoadShouldShowSpinner(
+      hasDisplayedPayload: hasDisplayedPayload,
+      loadedBabyId: cachedLoadedBabyId,
+      selectedBabyId: store.selectedBabyId,
+      loadedSelectionGeneration: cachedSelectionGeneration,
+      selectionGeneration: store.selectionGeneration,
+    );
   }
 }

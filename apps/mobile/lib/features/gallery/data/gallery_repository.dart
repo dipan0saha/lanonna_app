@@ -13,12 +13,12 @@ class GalleryRepository extends ChangeNotifier {
   /// Uploads and other flows outside this repository call this after mutating gallery data.
   void markGalleryChanged() => _markGalleryChanged();
 
-  static const int _pageSize = 50;
+  static const int pageSize = 50;
 
   Future<PhotoListPage> listPhotosPage(
     String babyId, {
     String sort = 'default',
-    int limit = _pageSize,
+    int limit = pageSize,
     int offset = 0,
   }) async {
     final params = <String, String>{

@@ -39,7 +39,7 @@ void main() {
         providers: [
           ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
           ChangeNotifierProvider<CalendarRepository>.value(value: calRepo),
-          ChangeNotifierProvider<HomeRefreshSignal>(
+          Provider<HomeRefreshSignal>(
             create: (_) => HomeRefreshSignal(),
           ),
           ChangeNotifierProvider<ConnectivityService>(

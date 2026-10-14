@@ -43,7 +43,7 @@ lanonna_app/
 | `home/` (activity) | `/home/activity` | Full home activity feed |
 | `account/` (inbox) | `/notifications/inbox` | Notification inbox |
 
-Repositories are registered in `bootstrap.dart`; routes in `core/router/app_router.dart`. Legacy redirects: `/login` → onboarding login, `/role-selection` → owner carousel. Shared API models (e.g. `BabySummary`) live under `apps/mobile/lib/core/domain/`. **Selected baby:** `HomeRepository.resolveSelectedBaby(SelectedBabyStore)` — use for baby-scoped loads (not raw `selectedBabyId` alone). After a successful `/v1/babies` fetch, the repo keeps an in-memory list for offline resolution; tab screens use `BabyContextReload` (selection, home refresh, reconnect) and `AsyncTabBody` for load errors. **Route-scoped baby:** `HomeRepository.babyById(id)` for deep links and screens keyed by `babyId` in the URL. Static catalogs: `assets/calendar/event_suggestions.json`, `assets/registry/registry_suggestions.json`.
+Repositories are registered in `bootstrap.dart`; routes in `core/router/app_router.dart`. Legacy redirects: `/login` → onboarding login, `/role-selection` → owner carousel. Shared API models (e.g. `BabySummary`) live under `apps/mobile/lib/core/domain/`. **Selected baby:** `HomeRepository.resolveSelectedBaby(SelectedBabyStore)` — use for baby-scoped loads (not raw `selectedBabyId` alone). After a successful `/v1/babies` fetch, the repo keeps an in-memory list for offline resolution; tab screens use `BabyContextReload` (`HomeRefreshSignal.babyContext`, reconnect) and stale-while-revalidate loads via `TabLoadGenerationCache`; **Home** also listens to `HomeRefreshSignal.homeTab` (nav re-tap, cross-tab teasers). `notifyBabyContextChanged` is the single reload signal for baby switch (not `SelectedBabyStore` listeners). `AsyncTabBody` for load errors. **Route-scoped baby:** `HomeRepository.babyById(id)` for deep links and screens keyed by `babyId` in the URL. Static catalogs: `assets/calendar/event_suggestions.json`, `assets/registry/registry_suggestions.json`.
 
 ### API layout (`services/api/src/lanonna_api/`)
 
@@ -359,6 +359,7 @@ Baseline on **profile/release** build (`flavors/dev.json`): cold start → home 
 
 | Area | Implementation |
 |------|----------------|
+| Tab refresh | Split `HomeRefreshSignal` (`homeTab` vs `babyContext`); SWR shell tab loads (`TabLoadGenerationCache`); gallery `GalleryRepository` notify refreshes loaded pages only (keeps scroll); photo detail opens on `fetchPhoto` then pages swipe ids |
 | Upload | `display_encode.dart`; ~2 MB cap in `storage.py` |
 | Feed/detail | Worker thumbs; signed read URLs (900s TTL); `CachedSignedImage` + optional `onSignedUrlError` |
 | Pagination | Gallery list; home activity limits; capped `home-summary` teasers |
@@ -367,7 +368,7 @@ Baseline on **profile/release** build (`flavors/dev.json`): cold start → home 
 
 ### Backlog (pick one per cycle)
 
-1. **P0:** Stable `cacheKey` on all `CachedSignedImage`; reduce redundant tab reloads; calendar AI dedupe without full event history; trim `home-summary` if profiling shows bloat.
+1. **P0:** Stable `cacheKey` on remaining `CachedSignedImage` call sites; trim `home-summary` if profiling shows bloat. Done: tab SWR (`TabLoadGenerationCache`), calendar month cache + AI dedupe via month/upcoming, home-summary per-baby cache, event cover `event-cover-{photoId}`.
 2. **P1:** ListView.builder for long lists; batch signed URL work in `build_home_summary` if needed.
 3. **P2:** Offline banner + coalesced fetches (`ConnectivityService`, `BabyContextReload`).
 4. **P3:** CDN at scale; optional archive tier for originals.

@@ -9,6 +9,7 @@ import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
+import '../../home/data/home_refresh_signal.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../onboarding/data/create_baby_draft.dart';
@@ -246,6 +247,9 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
       if (!mounted) return;
       final store = context.read<SelectedBabyStore>();
       await store.setSelectedBabyId(baby.id);
+      if (mounted) {
+        context.read<HomeRefreshSignal>().notifyBabyContextChanged();
+      }
 
       if (_isOnboarding) {
         if (!mounted) return;

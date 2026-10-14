@@ -19,6 +19,7 @@ class FollowerHomeComposer extends StatelessWidget {
     required this.summary,
     required this.daysToDueDate,
     required this.onRefresh,
+    this.onTeaserSignedUrlError,
     required this.onVoteInFun,
     required this.onViewGallery,
   });
@@ -27,6 +28,7 @@ class FollowerHomeComposer extends StatelessWidget {
   final HomeSummary? summary;
   final int? daysToDueDate;
   final VoidCallback onRefresh;
+  final VoidCallback? onTeaserSignedUrlError;
   final VoidCallback onVoteInFun;
   final VoidCallback onViewGallery;
 
@@ -87,6 +89,7 @@ class FollowerHomeComposer extends StatelessWidget {
               babyId: baby.id,
               isOwner: false,
               onRefresh: onRefresh,
+              onTeaserSignedUrlError: onTeaserSignedUrlError,
             ),
         ],
       );
@@ -114,6 +117,7 @@ class FollowerHomeComposer extends StatelessWidget {
             babyId: baby.id,
             isOwner: false,
             onRefresh: onRefresh,
+            onTeaserSignedUrlError: onTeaserSignedUrlError,
           ),
       ],
     );

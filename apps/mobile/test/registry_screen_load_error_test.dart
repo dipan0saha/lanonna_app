@@ -49,7 +49,7 @@ void main() {
         providers: [
           Provider<HomeRepository>.value(value: _FailingHomeRepository()),
           ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
-          ChangeNotifierProvider<HomeRefreshSignal>(create: (_) => HomeRefreshSignal()),
+          Provider<HomeRefreshSignal>(create: (_) => HomeRefreshSignal()),
           ChangeNotifierProvider<ConnectivityService>.value(value: connectivity),
           Provider<RegistryRepository>.value(value: registryRepo),
           Provider<AuthRepository>.value(value: _FakeAuthRepository()),

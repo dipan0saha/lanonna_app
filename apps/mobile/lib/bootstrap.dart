@@ -98,6 +98,7 @@ Future<Widget> bootstrapLaNonnaApp() async {
     inviteFlowState: inviteFlowState,
   );
   final homeRefreshSignal = HomeRefreshSignal();
+  homeRepository.attachHomeRefreshSignal(homeRefreshSignal);
   apiClient.registerMembershipEndedHandler(
     (exception) => handleMembershipEnded(
       homeRepository: homeRepository,
@@ -148,7 +149,7 @@ Future<Widget> bootstrapLaNonnaApp() async {
       Provider<InvitationsRepository>.value(value: invitationsRepository),
       Provider<SearchRepository>.value(value: searchRepository),
       ChangeNotifierProvider<SelectedBabyStore>.value(value: selectedBabyStore),
-      ChangeNotifierProvider<HomeRefreshSignal>.value(value: homeRefreshSignal),
+      Provider<HomeRefreshSignal>.value(value: homeRefreshSignal),
       ChangeNotifierProvider<ConnectivityService>.value(
         value: connectivityService,
       ),

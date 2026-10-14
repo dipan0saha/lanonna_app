@@ -1,13 +1,25 @@
 import 'package:flutter/foundation.dart';
 
-/// Notifies listeners (e.g. [HomeScreen], shell tabs) to reload baby-scoped data.
-class HomeRefreshSignal extends ChangeNotifier {
+/// Home tab only (nav re-tap, cross-tab home teasers).
+class HomeTabRefreshListenable extends ChangeNotifier {
+  void notifyRefresh() => notifyListeners();
+}
+
+/// Baby switch, membership refresh, deep links — all shell tabs.
+class BabyContextRefreshListenable extends ChangeNotifier {
+  void notifyRefresh() => notifyListeners();
+}
+
+/// Coordinates tab reloads: home-only refresh vs baby-context change.
+class HomeRefreshSignal {
+  final homeTab = HomeTabRefreshListenable();
+  final babyContext = BabyContextRefreshListenable();
+
   void notifyHomeShouldRefresh() {
-    notifyListeners();
+    homeTab.notifyRefresh();
   }
 
-  /// Baby switcher or explicit context change — same listeners as home refresh.
   void notifyBabyContextChanged() {
-    notifyListeners();
+    babyContext.notifyRefresh();
   }
 }

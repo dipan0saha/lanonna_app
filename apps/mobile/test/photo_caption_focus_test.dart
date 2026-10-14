@@ -58,11 +58,13 @@ class _Gallery extends GalleryRepository {
   );
 
   @override
-  Future<List<PhotoSummary>> listPhotos(
+  Future<PhotoListPage> listPhotosPage(
     String babyId, {
     String sort = 'default',
+    int limit = 50,
+    int offset = 0,
   }) async {
-    return [
+    final items = [
       PhotoSummary(
         id: 'photo-1',
         status: 'ready',
@@ -73,6 +75,7 @@ class _Gallery extends GalleryRepository {
         uploaderDisplayName: 'Alex',
       ),
     ];
+    return PhotoListPage(items: items, hasMore: false);
   }
 
   @override

@@ -31,7 +31,7 @@ class RegistryScreen extends StatefulWidget {
 }
 
 class _RegistryScreenState extends State<RegistryScreen>
-    with BabyContextReload {
+    with BabyContextReload, TabLoadGenerationCache {
   BabySummary? _baby;
   List<RegistryItem> _items = [];
   RegistryShippingAddress? _shipping;
@@ -60,14 +60,16 @@ class _RegistryScreenState extends State<RegistryScreen>
   void onBabyContextReload() => _load();
 
   Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _loadError = null;
-    });
+    final store = context.read<SelectedBabyStore>();
+    if (shouldShowTabLoadSpinner(store, hasDisplayedPayload: _baby != null)) {
+      setState(() {
+        _loading = true;
+        _loadError = null;
+      });
+    }
     try {
       final homeRepo = context.read<HomeRepository>();
       final regRepo = context.read<RegistryRepository>();
-      final store = context.read<SelectedBabyStore>();
       final baby = await homeRepo.resolveSelectedBaby(store);
       if (baby == null) {
         setState(() {
@@ -85,6 +87,7 @@ class _RegistryScreenState extends State<RegistryScreen>
         _shipping = shipping;
         _loading = false;
       });
+      rememberTabLoadGeneration(store, baby);
     } catch (e) {
       if (!mounted) return;
       final hadBaby = _baby != null;

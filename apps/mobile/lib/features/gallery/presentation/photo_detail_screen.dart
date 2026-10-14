@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
@@ -42,6 +44,9 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
   BabySummary? _baby;
   PhotoDetail? _detail;
   List<String> _photoIds = [];
+  var _photoIdPageOffset = 0;
+  var _photoIdListHasMore = true;
+  var _photoIdListLoading = false;
   var _initialLoadInFlight = true;
   final _scrollController = ScrollController();
   var _editingCaption = false;
@@ -84,6 +89,9 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       _comments.unfocus();
       setState(() {
         _detail = null;
+        _photoIds = [];
+        _photoIdPageOffset = 0;
+        _photoIdListHasMore = true;
         _initialLoadInFlight = true;
       });
       _loadInitial();
@@ -111,7 +119,6 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       }
       if (!mounted) return;
       final galleryRepo = context.read<GalleryRepository>();
-      final photos = await galleryRepo.listPhotos(baby.id);
       final detail = await galleryRepo.fetchPhoto(baby.id, widget.photoId);
       _captionController.text = detail.caption ?? '';
       final memberBabies = baby.role == 'owner'
@@ -121,11 +128,11 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       setState(() {
         _baby = baby;
         _detail = detail;
-        _photoIds = photos.map((p) => p.id).toList();
         _memberBabies = memberBabies;
         _taggedBabyIds = detail.taggedBabies.map((t) => t.id).toSet();
         _initialLoadInFlight = false;
       });
+      unawaited(_ensurePhotoIdsForSwipe());
     } catch (e) {
       if (!mounted) return;
       setState(() => _initialLoadInFlight = false);
@@ -135,6 +142,48 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
         return;
       }
       AppSnackBar.showAlert(context, apiErrorMessage(e));
+    }
+  }
+
+  Future<void> _appendPhotoIdPage() async {
+    final baby = _baby;
+    if (baby == null || !_photoIdListHasMore || _photoIdListLoading) return;
+    _photoIdListLoading = true;
+    try {
+      final page = await context.read<GalleryRepository>().listPhotosPage(
+        baby.id,
+        offset: _photoIdPageOffset,
+      );
+      if (!mounted) return;
+      setState(() {
+        _photoIds = [..._photoIds, ...page.items.map((p) => p.id)];
+        _photoIdPageOffset += page.items.length;
+        _photoIdListHasMore = page.hasMore;
+      });
+    } finally {
+      _photoIdListLoading = false;
+    }
+  }
+
+  Future<void> _ensurePhotoIdsForSwipe() async {
+    while (mounted &&
+        _photoIdListHasMore &&
+        !_photoIds.contains(widget.photoId)) {
+      await _appendPhotoIdPage();
+    }
+    var idx = _photoIds.indexOf(widget.photoId);
+    while (mounted && _photoIdListHasMore && idx >= 0 && idx >= _photoIds.length - 1) {
+      await _appendPhotoIdPage();
+      idx = _photoIds.indexOf(widget.photoId);
+    }
+  }
+
+  Future<void> _ensurePhotoIdForAdjacent(int delta) async {
+    final idx = _photoIds.indexOf(widget.photoId);
+    if (idx < 0) return;
+    final target = idx + delta;
+    while (mounted && target >= _photoIds.length && _photoIdListHasMore) {
+      await _appendPhotoIdPage();
     }
   }
 
@@ -343,12 +392,22 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     }
   }
 
-  void _goAdjacent(int delta) {
+  Future<void> _goAdjacent(int delta) async {
+    await _ensurePhotoIdForAdjacent(delta);
+    if (!mounted) return;
     final idx = _photoIds.indexOf(widget.photoId);
     if (idx < 0) return;
     final next = idx + delta;
     if (next < 0 || next >= _photoIds.length) return;
     context.replace(GalleryRoutes.photoDetail(_photoIds[next]));
+  }
+
+  bool get _showPhotoNav {
+    final idx = _photoIds.indexOf(widget.photoId);
+    if (idx < 0) return false;
+    if (idx > 0) return true;
+    if (idx < _photoIds.length - 1) return true;
+    return _photoIdListHasMore;
   }
 
   @override
@@ -374,17 +433,17 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     return PrototypeSubpageScaffold(
       title: 'Photo',
       actions: [
-        if (_photoIds.length > 1) ...[
+        if (_showPhotoNav) ...[
           AppIconButton(
             semanticsId: 'photo_previous',
             label: 'Previous photo',
-            onPressed: () => _goAdjacent(-1),
+            onPressed: () => unawaited(_goAdjacent(-1)),
             icon: const Icon(Icons.chevron_left, size: 20),
           ),
           AppIconButton(
             semanticsId: 'photo_next',
             label: 'Next photo',
-            onPressed: () => _goAdjacent(1),
+            onPressed: () => unawaited(_goAdjacent(1)),
             icon: const Icon(Icons.chevron_right, size: 20),
           ),
         ],

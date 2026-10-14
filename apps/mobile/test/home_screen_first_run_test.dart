@@ -28,7 +28,7 @@ void main() {
         providers: [
           Provider<HomeRepository>.value(value: repo),
           ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
-          ChangeNotifierProvider<HomeRefreshSignal>(
+          Provider<HomeRefreshSignal>(
             create: (_) => HomeRefreshSignal(),
           ),
           ChangeNotifierProvider<ConnectivityService>(
@@ -66,7 +66,7 @@ void main() {
         providers: [
           Provider<HomeRepository>.value(value: repo),
           ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
-          ChangeNotifierProvider<HomeRefreshSignal>(
+          Provider<HomeRefreshSignal>(
             create: (_) => HomeRefreshSignal(),
           ),
           ChangeNotifierProvider<ConnectivityService>(

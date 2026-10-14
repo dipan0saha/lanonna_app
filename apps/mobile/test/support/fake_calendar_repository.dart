@@ -21,7 +21,14 @@ class FakeCalendarRepository extends CalendarRepository {
     String babyId, {
     String? month,
     bool upcoming = false,
+    bool forceRefresh = false,
   }) async {
+    listCalls++;
+    return upcomingEvents;
+  }
+
+  @override
+  Future<List<CalendarEvent>> listEventsForSuggestionDedupe(String babyId) async {
     listCalls++;
     return upcomingEvents;
   }

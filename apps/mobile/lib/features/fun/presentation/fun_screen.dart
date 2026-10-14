@@ -24,7 +24,8 @@ class FunScreen extends StatefulWidget {
   State<FunScreen> createState() => _FunScreenState();
 }
 
-class _FunScreenState extends State<FunScreen> with BabyContextReload {
+class _FunScreenState extends State<FunScreen>
+    with BabyContextReload, TabLoadGenerationCache {
   var _segment = 0;
   BabySummary? _baby;
   var _loading = true;
@@ -52,13 +53,15 @@ class _FunScreenState extends State<FunScreen> with BabyContextReload {
   void onBabyContextReload() => _loadBaby();
 
   Future<void> _loadBaby() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    final store = context.read<SelectedBabyStore>();
+    if (shouldShowTabLoadSpinner(store, hasDisplayedPayload: _baby != null)) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
     try {
       final homeRepo = context.read<HomeRepository>();
-      final store = context.read<SelectedBabyStore>();
       final baby = await homeRepo.resolveSelectedBaby(store);
       if (!mounted) return;
       setState(() {
@@ -66,6 +69,7 @@ class _FunScreenState extends State<FunScreen> with BabyContextReload {
         _loading = false;
         _error = null;
       });
+      rememberTabLoadGeneration(store, baby);
     } catch (e) {
       if (!mounted) return;
       final hadBaby = _baby != null;
