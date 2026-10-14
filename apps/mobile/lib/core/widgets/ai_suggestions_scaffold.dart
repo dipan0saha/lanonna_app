@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'ai_suggestion_list_card.dart';
+import 'app_chip.dart';
 
 export 'ai_suggestion_list_card.dart'
     show AiSuggestionListItem, AiSuggestionTab;
@@ -39,10 +40,10 @@ class AiSuggestionsScaffold extends StatelessWidget {
                 for (final tab in tabs)
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(
-                      label: Text(tab.label),
+                    child: AppToggleChip(
+                      label: tab.label,
                       selected: selectedTab == tab.key,
-                      onSelected: (_) => onTabChanged(tab.key),
+                      onTap: () => onTabChanged(tab.key),
                     ),
                   ),
               ],

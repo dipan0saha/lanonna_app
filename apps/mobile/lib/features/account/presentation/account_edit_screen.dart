@@ -48,6 +48,12 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
       ? AutovalidateMode.onUserInteraction
       : AutovalidateMode.disabled;
 
+  bool get _hasAvatarPhoto {
+    if (_photoFile != null) return true;
+    final url = _networkAvatarUrl?.trim();
+    return url != null && url.isNotEmpty;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -186,18 +192,20 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
           child: ListView(
             children: [
               Center(
-                child: PrototypePhotoUpload(
-                  imageFile: _photoFile,
-                  imageUrl: _photoFile == null ? _networkAvatarUrl : null,
-                  onTap: _saving ? null : _pickPhoto,
-                  onSignedUrlError: _load,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Center(
-                child: Text(
-                  'Tap to change photo',
-                  style: TextStyle(fontSize: 12),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    PrototypePhotoUpload(
+                      imageFile: _photoFile,
+                      imageUrl: _photoFile == null ? _networkAvatarUrl : null,
+                      onTap: _saving ? null : _pickPhoto,
+                      onSignedUrlError: _load,
+                    ),
+                    OnboardingPhotoCaption(
+                      hasPhoto: _hasAvatarPhoto,
+                      onTap: _saving ? null : _pickPhoto,
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 16),

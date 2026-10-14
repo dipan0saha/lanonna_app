@@ -9,6 +9,7 @@ import '../../../core/time/app_date_time.dart';
 import '../../../core/presentation/detail_screen_load.dart';
 import '../../../core/presentation/display_initials.dart';
 import '../../../core/media/cached_signed_image.dart';
+import '../../../core/widgets/app_chip.dart';
 import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/detail_comment_composer.dart';
@@ -374,17 +375,17 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 Wrap(
                   spacing: 8,
                   children: [
-                    _RsvpChip(
+                    AppToggleChip(
                       label: 'Going',
                       selected: detail.viewerRsvp == 'going',
                       onTap: () => _setRsvp('going'),
                     ),
-                    _RsvpChip(
+                    AppToggleChip(
                       label: 'Maybe',
                       selected: detail.viewerRsvp == 'maybe',
                       onTap: () => _setRsvp('maybe'),
                     ),
-                    _RsvpChip(
+                    AppToggleChip(
                       label: "Can't go",
                       selected: detail.viewerRsvp == 'cant_go',
                       onTap: () => _setRsvp('cant_go'),
@@ -487,23 +488,3 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   }
 }
 
-class _RsvpChip extends StatelessWidget {
-  const _RsvpChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return FilterChip(
-      label: Text(label),
-      selected: selected,
-      onSelected: (_) => onTap(),
-    );
-  }
-}

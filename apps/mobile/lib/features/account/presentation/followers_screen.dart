@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/api/run_mutation.dart';
 import '../../../core/theme/app_metrics.dart';
+import '../../../core/widgets/app_chip.dart';
 import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/app_bordered_surface.dart';
 import '../../../core/widgets/app_section_title.dart';
@@ -153,7 +154,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Chip(label: Text(m.role)),
+                            AppBadgeChip(label: m.role),
                             if (m.canRemove)
                               AppIconButton(
                                 semanticsId: 'member_remove_${m.firebaseUid}',

@@ -50,6 +50,12 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
   XFile? _photo;
   String? _existingPhotoUrl;
 
+  bool get _hasAnnouncementPhoto {
+    if (_photo != null) return true;
+    final url = _existingPhotoUrl?.trim();
+    return url != null && url.isNotEmpty;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -232,12 +238,20 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
             ),
             const SizedBox(height: 20),
             Center(
-              child: PrototypePhotoUpload(
-                imageFile: _photo,
-                imageUrl: _existingPhotoUrl,
-                onTap: _pickPhoto,
-                label: 'Baby photo',
-                size: 100,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  PrototypePhotoUpload(
+                    imageFile: _photo,
+                    imageUrl: _existingPhotoUrl,
+                    onTap: _pickPhoto,
+                    size: 100,
+                  ),
+                  OnboardingPhotoCaption(
+                    hasPhoto: _hasAnnouncementPhoto,
+                    onTap: _pickPhoto,
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 16),

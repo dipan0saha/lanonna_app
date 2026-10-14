@@ -322,13 +322,18 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
         const OnboardingFieldLabel('Profile photo (optional)'),
         const SizedBox(height: 8),
         Center(
-          child: PrototypePhotoUpload(
-            imageFile: _selectedImage,
-            onTap: _busy ? null : _pickPhoto,
-            label: _selectedImage != null
-                ? 'Change profile photo'
-                : 'Add profile photo',
-            showLabel: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              PrototypePhotoUpload(
+                imageFile: _selectedImage,
+                onTap: _busy ? null : _pickPhoto,
+              ),
+              OnboardingPhotoCaption(
+                hasPhoto: _selectedImage != null,
+                onTap: _busy ? null : _pickPhoto,
+              ),
+            ],
           ),
         ),
         if (_selectedImage != null) ...[
@@ -396,6 +401,7 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
         const OnboardingFieldLabel('Gender'),
         const SizedBox(height: 8),
         OnboardingPillSelect(
+          layout: OnboardingPillLayout.wrap,
           options: genderOptions,
           selectedIndex: selectedGenderIndex >= 0 ? selectedGenderIndex : null,
           selectedStyleForIndex: (index) {

@@ -34,6 +34,19 @@ abstract final class AppMetrics {
   static const double buttonMinHeight = 52;
   static const double buttonHorizontalPadding = 24;
   static const double buttonVerticalPadding = 15;
+
+  /// Onboarding optional choice pills (prototype `.pill-opt` / `.pill-select`).
+  static const double choicePillGap = 10;
+  static const double choicePillHorizontalPadding = 18;
+  static const double choicePillVerticalPadding = 10;
+  static const double choicePillMinHeight = 44;
+
+  /// Toggle / badge / removable chips (prototype preset pills).
+  static const double appChipHorizontalPadding = 13;
+  static const double appChipVerticalPadding = 8;
+  static const double appChipBorderWidth = 1.5;
+  static const double appChipDenseVerticalPadding = 4;
+
   static const double surfaceRadius = 16;
   static const double surfacePadding = 18;
   static const double headlineSize = 24;

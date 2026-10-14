@@ -102,6 +102,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
     expect(find.text('Also share this photo in the gallery'), findsNothing);
     expect(find.text('Profile photo (optional)'), findsOneWidget);
+    expect(find.text('Add a photo'), findsOneWidget);
   });
 
   testWidgets('gallery opt-in shown when draft has photo', (tester) async {

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/theme/la_nonna_theme.dart';
+import '../../../core/widgets/app_chip.dart';
 import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
@@ -158,9 +159,9 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
                       label: Text(l10n.photoSquishCount(d.squishCount)),
                     ),
                     const SizedBox(width: 12),
-                    Chip(
-                      label: Text(l10n.photoCommentCount(d.commentCount)),
-                      visualDensity: VisualDensity.compact,
+                    AppBadgeChip(
+                      label: l10n.photoCommentCount(d.commentCount),
+                      dense: true,
                     ),
                   ],
                 ),

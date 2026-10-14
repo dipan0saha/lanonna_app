@@ -30,6 +30,7 @@ step "Flutter analyze + test"
 (
   cd apps/mobile
   flutter pub get
+  bash scripts/check-no-material-chips.sh
   flutter analyze
   flutter test
 )

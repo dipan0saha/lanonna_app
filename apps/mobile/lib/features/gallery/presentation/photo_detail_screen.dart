@@ -12,6 +12,7 @@ import '../../../core/comments/comment_composer_controller.dart';
 import '../../../core/presentation/detail_screen_load.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/input/dismiss_text_input.dart';
+import '../../../core/widgets/app_chip.dart';
 import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/media/cached_signed_image.dart';
 import '../../../core/widgets/app_snackbar.dart';
@@ -583,15 +584,15 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                             children: [
                               for (final b in _memberBabies)
                                 if (b.id != currentBabyId)
-                                  FilterChip(
-                                    label: Text(b.name),
+                                  AppToggleChip(
+                                    label: b.name,
                                     selected: _taggedBabyIds.contains(b.id),
-                                    onSelected: (selected) {
+                                    onTap: () {
                                       setState(() {
-                                        if (selected) {
-                                          _taggedBabyIds.add(b.id);
-                                        } else {
+                                        if (_taggedBabyIds.contains(b.id)) {
                                           _taggedBabyIds.remove(b.id);
+                                        } else {
+                                          _taggedBabyIds.add(b.id);
                                         }
                                       });
                                       _savePhotoTags();

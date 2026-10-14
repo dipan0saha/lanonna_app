@@ -45,6 +45,12 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
   bool get _isBorn => _baby?.lifecycleStatus == 'born';
   bool get _isOwner => _baby?.role == 'owner';
 
+  bool get _hasAvatarPhoto {
+    if (_photoFile != null) return true;
+    final url = _networkAvatarUrl?.trim();
+    return url != null && url.isNotEmpty;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -132,16 +138,21 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
         children: [
           if (_isOwner) ...[
             Center(
-              child: PrototypePhotoUpload(
-                imageFile: _photoFile,
-                imageUrl: _photoFile == null ? _networkAvatarUrl : null,
-                onTap: _saving ? null : _pickPhoto,
-                onSignedUrlError: _load,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  PrototypePhotoUpload(
+                    imageFile: _photoFile,
+                    imageUrl: _photoFile == null ? _networkAvatarUrl : null,
+                    onTap: _saving ? null : _pickPhoto,
+                    onSignedUrlError: _load,
+                  ),
+                  OnboardingPhotoCaption(
+                    hasPhoto: _hasAvatarPhoto,
+                    onTap: _saving ? null : _pickPhoto,
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 8),
-            const Center(
-              child: Text('Tap to change photo', style: TextStyle(fontSize: 12)),
             ),
             const SizedBox(height: 16),
           ],

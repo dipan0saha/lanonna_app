@@ -43,6 +43,45 @@ class OnboardingIconBlob extends StatelessWidget {
   }
 }
 
+/// Muted caption under [PrototypePhotoUpload]; tappable to open the picker.
+class OnboardingPhotoCaption extends StatelessWidget {
+  const OnboardingPhotoCaption({
+    super.key,
+    required this.hasPhoto,
+    this.onTap,
+    this.addLabel = 'Add a photo',
+    this.changeLabel = 'Change photo',
+  });
+
+  final bool hasPhoto;
+  final VoidCallback? onTap;
+  final String addLabel;
+  final String changeLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = hasPhoto ? changeLabel : addLabel;
+    final style = context.textStyles.bodyMedium?.copyWith(
+      fontSize: 12,
+      color: AppColors.muted,
+    );
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Center(
+        child: Semantics(
+          button: onTap != null,
+          label: label,
+          child: GestureDetector(
+            onTap: onTap,
+            behavior: HitTestBehavior.opaque,
+            child: Text(label, style: style, textAlign: TextAlign.center),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class PrototypePhotoUpload extends StatelessWidget {
   const PrototypePhotoUpload({
     super.key,
@@ -50,45 +89,30 @@ class PrototypePhotoUpload extends StatelessWidget {
     this.imageUrl,
     this.onTap,
     this.onSignedUrlError,
-    this.label = 'Add a photo',
     this.size = 88,
-    this.showLabel = true,
   });
 
   final XFile? imageFile;
   final String? imageUrl;
   final VoidCallback? onTap;
   final VoidCallback? onSignedUrlError;
-  final String label;
   final double size;
-  final bool showLabel;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        GestureDetector(
-          onTap: onTap,
-          child: Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.inputFill,
-              border: Border.all(color: AppColors.inputBorderStrong, width: 1.5),
-            ),
-            alignment: Alignment.center,
-            child: _buildAvatarContent(size),
-          ),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: AppColors.inputFill,
+          border: Border.all(color: AppColors.inputBorderStrong, width: 1.5),
         ),
-        if (showLabel) ...[
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: context.textStyles.bodyMedium?.copyWith(fontSize: 12),
-          ),
-        ],
-      ],
+        alignment: Alignment.center,
+        child: _buildAvatarContent(size),
+      ),
     );
   }
 
@@ -188,45 +212,6 @@ class PrototypeMomentCard extends StatelessWidget {
           const SizedBox(height: 12),
           child,
         ],
-      ),
-    );
-  }
-}
-
-class PrototypePresetChip extends StatelessWidget {
-  const PrototypePresetChip({
-    super.key,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.sageTint : AppColors.surface,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(
-            color: selected ? AppColors.primaryDark : AppColors.border,
-            width: 1.5,
-          ),
-        ),
-        child: Text(
-          '+ $label',
-          style: context.textStyles.bodySmall?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: selected ? AppColors.primaryDark : AppColors.textPrimary,
-          ),
-        ),
       ),
     );
   }

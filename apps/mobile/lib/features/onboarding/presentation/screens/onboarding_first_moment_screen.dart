@@ -13,6 +13,7 @@ import '../../../gallery/presentation/upload/run_gallery_photo_upload.dart';
 import '../../../gallery/domain/gallery_refresh.dart';
 import '../../../../core/constants/first_moment_presets.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_chip.dart';
 import '../../data/create_baby_draft.dart';
 import '../../data/onboarding_repository.dart';
 import '../../domain/baby_gender.dart';
@@ -216,10 +217,11 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
       runSpacing: 8,
       children: items
           .map(
-            (p) => PrototypePresetChip(
+            (p) => AppToggleChip(
               label: p.label,
               selected: selected.contains(p.id),
               onTap: () => onToggle(p.id),
+              showPlusPrefix: true,
             ),
           )
           .toList(),
@@ -235,14 +237,19 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
         runSpacing: 8,
         children: _nameDrafts
             .map(
-              (d) => Chip(
-                label: Text(d['name'] ?? ''),
-                onDeleted: () {
-                  setState(() {
-                    _nameDrafts.remove(d);
-                    _syncDraft();
-                  });
-                },
+              (d) => AppRemovableChip(
+                label: d['name'] ?? '',
+                accent: d['gender'] == 'female'
+                    ? AppChipAccent.peach
+                    : AppChipAccent.sage,
+                onRemove: _busy
+                    ? null
+                    : () {
+                        setState(() {
+                          _nameDrafts.remove(d);
+                          _syncDraft();
+                        });
+                      },
               ),
             )
             .toList(),
@@ -335,10 +342,18 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
               title: 'Upload your first photo',
               subtitle: 'From your camera or library',
               child: Center(
-                child: PrototypePhotoUpload(
-                  imageFile: _photoFile,
-                  onTap: _busy ? null : _pickPhoto,
-                  label: _photoFile != null ? 'Change photo' : 'Add a photo',
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    PrototypePhotoUpload(
+                      imageFile: _photoFile,
+                      onTap: _busy ? null : _pickPhoto,
+                    ),
+                    OnboardingPhotoCaption(
+                      hasPhoto: _photoFile != null,
+                      onTap: _busy ? null : _pickPhoto,
+                    ),
+                  ],
                 ),
               ),
             ),

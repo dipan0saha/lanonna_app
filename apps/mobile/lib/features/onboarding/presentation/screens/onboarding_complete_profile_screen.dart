@@ -62,7 +62,6 @@ class _OnboardingCompleteProfileScreenState
   XFile? _photoFile;
   String? _networkPhotoUrl;
   String _subtext = 'Add your name and photo so family knows who\'s who.';
-  String _photoLabel = 'Add a photo';
   var _hydrated = false;
   List<IsoCountry> _countries = const [];
   String? _countryCode;
@@ -72,6 +71,12 @@ class _OnboardingCompleteProfileScreenState
   bool get _isOwnerPath {
     final coordinator = context.read<OnboardingCoordinator>();
     return coordinator.onboardingPath == OnboardingPath.owner;
+  }
+
+  bool get _hasProfilePhoto {
+    if (_photoFile != null) return true;
+    final url = _networkPhotoUrl?.trim();
+    return url != null && url.isNotEmpty;
   }
 
   @override
@@ -130,7 +135,6 @@ class _OnboardingCompleteProfileScreenState
       }
       if (_networkPhotoUrl == null && account.avatarUrl != null) {
         _networkPhotoUrl = account.avatarUrl;
-        _photoLabel = 'Change photo';
       }
       if (mounted) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -185,14 +189,10 @@ class _OnboardingCompleteProfileScreenState
           }
           if (draft.photoPath != null) {
             _photoFile = XFile(draft.photoPath!);
-            _photoLabel = 'Change photo';
           }
           if (draft.networkPhotoUrl != null &&
               draft.networkPhotoUrl!.isNotEmpty) {
             _networkPhotoUrl = draft.networkPhotoUrl;
-            if (_photoFile == null) {
-              _photoLabel = 'Change photo';
-            }
           }
         });
         if (draft.firstName.isNotEmpty || draft.lastName.isNotEmpty) return;
@@ -215,7 +215,6 @@ class _OnboardingCompleteProfileScreenState
             final googlePhoto = user.photoURL;
             if (googlePhoto != null && googlePhoto.isNotEmpty) {
               _networkPhotoUrl = googlePhoto;
-              _photoLabel = 'Change photo';
             }
             _subtext =
                 "We pulled in your details. Add a photo so family knows who's who.";
@@ -233,10 +232,7 @@ class _OnboardingCompleteProfileScreenState
       imageQuality: 85,
     );
     if (file == null) return;
-    setState(() {
-      _photoFile = file;
-      _photoLabel = 'Change photo';
-    });
+    setState(() => _photoFile = file);
     await _persistDraft();
   }
 
@@ -360,22 +356,19 @@ class _OnboardingCompleteProfileScreenState
             OnboardingSupportText(_subtext),
             const SizedBox(height: 20),
             Center(
-              child: PrototypePhotoUpload(
-                imageFile: _photoFile,
-                imageUrl: _photoFile == null ? _networkPhotoUrl : null,
-                onTap: _busy ? null : _pickPhoto,
-                label: _photoLabel,
-                showLabel: false,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Center(
-              child: Text(
-                _photoLabel,
-                style: text.labelLarge?.copyWith(
-                  color: AppColors.primaryDark,
-                  fontWeight: FontWeight.w700,
-                ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  PrototypePhotoUpload(
+                    imageFile: _photoFile,
+                    imageUrl: _photoFile == null ? _networkPhotoUrl : null,
+                    onTap: _busy ? null : _pickPhoto,
+                  ),
+                  OnboardingPhotoCaption(
+                    hasPhoto: _hasProfilePhoto,
+                    onTap: _busy ? null : _pickPhoto,
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 22),

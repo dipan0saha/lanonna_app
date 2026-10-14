@@ -6,6 +6,7 @@ import '../../../../core/widgets/app_semantics.dart';
 import '../../../../core/widgets/app_text_form_field.dart';
 import '../../../../core/theme/app_brand_theme.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import 'onboarding_typography.dart';
 
@@ -228,6 +229,7 @@ class _OnboardingRelationshipFormFieldState
             const OnboardingFieldLabel('Your relationship to baby'),
             const SizedBox(height: 8),
             OnboardingPillSelect(
+              layout: OnboardingPillLayout.equalWidthRow,
               options: const ['Mother', 'Father'],
               selectedIndex: relationshipIndex,
               selectedStyleForIndex: (_) => const OnboardingPillSelectedStyle(
@@ -692,56 +694,132 @@ class OnboardingPillSelectedStyle {
   final Color foreground;
 }
 
+/// How [OnboardingPillSelect] lays out options (see development.md onboarding UI).
+enum OnboardingPillLayout {
+  /// Intrinsic-width pills in a [Wrap] (e.g. create-baby gender).
+  wrap,
+
+  /// Equal-width columns in a full-width [Row] (e.g. Mother / Father).
+  equalWidthRow,
+}
+
 class OnboardingPillSelect extends StatelessWidget {
   const OnboardingPillSelect({
     super.key,
     required this.options,
     required this.selectedIndex,
     required this.onSelected,
+    this.layout = OnboardingPillLayout.wrap,
     this.selectedStyleForIndex,
   });
 
   final List<String> options;
   final int? selectedIndex;
   final ValueChanged<int> onSelected;
+  final OnboardingPillLayout layout;
   final OnboardingPillSelectedStyle? Function(int index)? selectedStyleForIndex;
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: List.generate(options.length, (index) {
-        final selected = selectedIndex == index;
-        final override = selected ? selectedStyleForIndex?.call(index) : null;
-        return GestureDetector(
-          onTap: () => onSelected(index),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-            decoration: BoxDecoration(
-              color: selected
-                  ? (override?.background ?? AppColors.sageTint)
-                  : Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: selected
-                    ? (override?.border ?? AppColors.primaryDark)
-                    : Theme.of(context).colorScheme.outline,
-              ),
-            ),
-            child: Text(
-              options[index],
-              style: context.textStyles.bodyMedium!.copyWith(
-                fontWeight: FontWeight.w600,
-                color: selected
-                    ? (override?.foreground ?? AppColors.primaryDark)
-                    : Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-          ),
+    assert(
+      layout != OnboardingPillLayout.equalWidthRow || options.length >= 2,
+      'equalWidthRow requires at least two options',
+    );
+
+    final pills = List.generate(options.length, (index) {
+      final selected = selectedIndex == index;
+      final override = selected ? selectedStyleForIndex?.call(index) : null;
+      final pill = _OnboardingChoicePill(
+        label: options[index],
+        selected: selected,
+        selectedStyle: override,
+        expandWidth: layout == OnboardingPillLayout.equalWidthRow,
+        onTap: () => onSelected(index),
+      );
+
+      if (layout == OnboardingPillLayout.equalWidthRow) {
+        return Expanded(child: pill);
+      }
+      return pill;
+    });
+
+    switch (layout) {
+      case OnboardingPillLayout.wrap:
+        return Wrap(
+          spacing: AppMetrics.choicePillGap,
+          runSpacing: AppMetrics.choicePillGap,
+          children: pills,
         );
-      }),
+      case OnboardingPillLayout.equalWidthRow:
+        return Row(
+          children: [
+            for (var i = 0; i < pills.length; i++) ...[
+              if (i > 0) const SizedBox(width: AppMetrics.choicePillGap),
+              pills[i],
+            ],
+          ],
+        );
+    }
+  }
+}
+
+class _OnboardingChoicePill extends StatelessWidget {
+  const _OnboardingChoicePill({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.selectedStyle,
+    this.expandWidth = false,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final OnboardingPillSelectedStyle? selectedStyle;
+  final bool expandWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final labelStyle = context.textStyles.labelMedium!.copyWith(
+      fontWeight: FontWeight.w600,
+      color: selected
+          ? (selectedStyle?.foreground ?? AppColors.primaryDark)
+          : colorScheme.onSurface,
+    );
+
+    final content = Text(
+      label,
+      textAlign: expandWidth ? TextAlign.center : null,
+      style: labelStyle,
+    );
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        constraints: const BoxConstraints(
+          minHeight: AppMetrics.choicePillMinHeight,
+        ),
+        width: expandWidth ? double.infinity : null,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppMetrics.choicePillHorizontalPadding,
+          vertical: AppMetrics.choicePillVerticalPadding,
+        ),
+        alignment: expandWidth ? Alignment.center : null,
+        decoration: BoxDecoration(
+          color: selected
+              ? (selectedStyle?.background ?? AppColors.sageTint)
+              : colorScheme.surface,
+          borderRadius: BorderRadius.circular(AppMetrics.buttonRadius),
+          border: Border.all(
+            color: selected
+                ? (selectedStyle?.border ?? AppColors.primaryDark)
+                : colorScheme.outline,
+          ),
+        ),
+        child: content,
+      ),
     );
   }
 }
