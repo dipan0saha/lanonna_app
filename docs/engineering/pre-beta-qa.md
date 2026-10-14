@@ -71,6 +71,7 @@ Use a **real** inbox (not `@test.com` smoke addresses).
 - [ ] Sign up with email/password → verify screen copy mentions **Verify my email**.
 - [ ] Email subject is **Verify your email for La Nonna** (not `project-1008830071001`), sender display name **La Nonna**, body is the branded template with **Verify my email**. Password reset uses **Reset your password for La Nonna**.
 - [ ] Tap link → verified (in app or browser + **Continue**); user reaches complete profile.
+- [ ] **Desktop:** after Firebase **Continue**, browser shows **Email verified** at `https://lanonna-dev.firebaseapp.com/email-verified` (not Hosting 404); then on phone tap **Continue** on Check your email.
 
 ## 9. Account delete (FR-SET-005)
 

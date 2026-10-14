@@ -7,7 +7,7 @@ abstract final class AuthLinkConfig {
   static String get authActionHost => '$projectId.firebaseapp.com';
 
   static Uri get emailVerificationContinueUrl =>
-      Uri.parse('https://$authActionHost/');
+      Uri.parse('https://$authActionHost/email-verified');
 
   static const androidPackageName = 'com.lanonna.lanonna';
   static const iOSBundleId = 'com.lanonna.lanonna';

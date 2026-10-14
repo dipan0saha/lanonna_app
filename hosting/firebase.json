@@ -17,6 +17,18 @@
       {
         "source": "/invite/**",
         "destination": "/invite/index.html"
+      },
+      {
+        "source": "/email-verified",
+        "destination": "/email-verified/index.html"
+      },
+      {
+        "source": "/email-verified/**",
+        "destination": "/email-verified/index.html"
+      },
+      {
+        "source": "/",
+        "destination": "/email-verified/index.html"
       }
     ],
     "headers": [
