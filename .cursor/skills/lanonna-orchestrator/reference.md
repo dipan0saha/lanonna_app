@@ -124,11 +124,30 @@ In: [...]  Out: [...]
 Files changed | behavior | commands + pass/fail | assumptions | ready: yes/no
 ```
 
+## Pre-ship review (before ship worker)
+
+**Read-only** — do not edit files. `model`: **`composer-2.5`**.
+
+**Inputs in prompt:** approved Plan; `git status` + full `git diff`; implement/verify worker summaries.
+
+**Read** changed files, `.cursor/rules/project-agent.mdc`, and relevant `docs/engineering/`.
+
+**Check:** matches plan; Path B layers and permissions; migration/SQL quality; tests adequate for the change; no obvious bugs, dead code, or missing engineering docs per project-agent.
+
+**Return:**
+
+- **Verdict:** `ship yes` | `ship no`
+- Issues: **Critical** / **Must-fix** / **Suggestion** (file + brief detail)
+- Plan adherence: yes/no + gaps
+
+**Gate:** ship worker only if `ship yes` (Suggestions alone are OK). Critical or Must-fix → coordinator runs fix → verify → review again (max 2 review rounds).
+
 ## Coordinator do-not
 
 - Do not spawn implement/verify/ship before plan+explore completes and Plan is posted (except CI-only / `skip plan`).
 - Do not accept patch-style plan output — re-run plan worker.
+- Do not spawn ship before pre-ship review passes (except docs-only / `skip review`).
 
 - Do not commit, push, migrate, or deploy from the **parent** agent (only via ship **subagent**).
 - Do not implement “quick fixes” after a subagent — spawn integrator or fixer subagent.
-- Do not end with “want me to commit/deploy?” — auto-spawn ship after verify unless user opted out in-thread (see SKILL.md rule 7).
+- Do not end with “want me to commit/deploy?” — auto-spawn ship after verify + review unless user opted out (see SKILL.md rules 9–10).

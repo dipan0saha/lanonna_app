@@ -7,7 +7,8 @@ description: >-
   starts with a design-only plan+explore worker (no patch plans). Use when the
   user invokes this skill, asks for orchestrator/multitask delegation, or wants
   Grok-style behavior for develop, test, or dev deploy. Auto commit/push and dev
-  migrate/deploy after verify unless the user opts out in the same thread.
+  migrate/deploy after verify and mandatory pre-ship review unless the user
+  opts out in the same thread.
 disable-model-invocation: true
 ---
 
@@ -25,15 +26,18 @@ disable-model-invocation: true
 6. **Model** — every new Task (not `resume`): `model`: **`composer-2.5`** (never `composer-2.5-fast`; never omit).
 7. **Self-contained prompts** — include goal, scope, constraints, deliverable; attach the approved **Plan** (or phase) to every implement/verify worker.
 8. **Standards** — workers follow `.cursor/rules/project-agent.mdc` + relevant `docs/engineering/` ([reference.md](reference.md)).
-9. **Auto ship** — after verify, always spawn ship worker (no “want me to commit/deploy?”). Opt-out: `don't commit`, `no push`, `no deploy`, `local only`, `draft only`. Docs-only: commit/push OK; skip migrate/deploy.
+9. **Pre-ship review** — after verify passes, spawn **read-only** pre-ship review before ship (see below). Ship only when review returns **ship: yes** (no Critical/Must-fix). Skip review: docs-only diff, no code changed, or user said `skip review`.
+10. **Auto ship** — after verify + pre-ship review pass, spawn ship worker (no “want me to commit/deploy?”). Opt-out: `don't commit`, `no push`, `no deploy`, `local only`, `draft only`. Docs-only: commit/push OK; skip migrate/deploy.
 
 ## Loop
 
-`plan+explore (required) → post Plan → implement (per plan phases) → verify → (optional review) → ship`
+`plan+explore → post Plan → implement → verify → pre-ship review (required) → ship`
 
 After each return: merge; conflicts → **integrator** subagent; escalate on security, prod, secrets, billing, ambiguous product, blocked infra.
 
-**User comms:** post **Plan** before implement; per-wave summary; link subagents `[Name](id)`; after ship report commit/push/pipeline steps — no permission prompts for ship if verify passed.
+**User comms:** post **Plan** before implement; per-wave summary; link subagents `[Name](id)`; after ship report commit/push/pipeline steps — no permission prompts for ship if verify and review passed.
+
+**Review fix loop:** Critical/Must-fix → fixer implement worker → verify → pre-ship review again (max **2** review rounds, then escalate).
 
 ## Routing
 
@@ -41,7 +45,8 @@ After each return: merge; conflicts → **integrator** subagent; escalate on sec
 |-------|------|------|--------|
 | **1st** | Plan + explore | `explore` (`very thorough`) or `generalPurpose` | **Read-only** — no edits; return format in reference.md § Plan + explore |
 | 2+ | Implement, verify, docs | `generalPurpose` | Must cite plan phases + touchpoints |
-| 2+ | Ship | `generalPurpose` | reference.md § Dev ship checklist |
+| Before ship | Pre-ship review | `generalPurpose` | **Read-only** — reference.md § Pre-ship review |
+| After review pass | Ship | `generalPurpose` | reference.md § Dev ship checklist |
 | — | PR CI only | `ci-investigator` | May skip plan if no implementation |
 | — | Bugbot / security | `generalPurpose` + title **Bugbot** / **Security Review** | User requested |
 | — | Cloud branch | `environment: cloud` | User requested; merge via integrator |
@@ -65,13 +70,17 @@ Use [reference.md](reference.md) worker template; add **Approved plan** (paste o
 
 Unless implementer proved checks: scoped `pytest`/compile, `flutter analyze`/tests, or `./scripts/verify-dev-prerequisites.sh` if cross-cutting.
 
+## Pre-ship review
+
+Mandatory after verify (unless skipped per rule 9). Prompt: [reference.md](reference.md) § Pre-ship review. Do not spawn ship until **Verdict: ship yes**.
+
 ## Ship worker
 
-Mandatory after verify (unless opted out). [reference.md](reference.md) § Dev ship checklist — commit/push, migrations if SQL, deploy applicable services. Retry or report on failure; never end with uncommitted work + a question.
+Mandatory after verify + pre-ship review pass (unless opted out). [reference.md](reference.md) § Dev ship checklist — commit/push, migrations if SQL, deploy applicable services. Retry or report on failure; never end with uncommitted work + a question.
 
 ## Examples
 
-- **Feature:** plan+explore → post Plan → implement (API+mobile per phases) → verify → ship.
-- **PR 42 CI only:** ci-investigator; if fix needed → plan+explore (small scope) → implement → verify → ship.
+- **Feature:** plan+explore → post Plan → implement → verify → pre-ship review → ship.
+- **PR 42 CI only:** ci-investigator; if fix needed → plan+explore → implement → verify → pre-ship review → ship.
 
 More: `docs/engineering/README.md`, [reference.md](reference.md).
