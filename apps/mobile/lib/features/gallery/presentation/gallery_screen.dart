@@ -280,6 +280,12 @@ class _GalleryScreenState extends State<GalleryScreen>
         return;
       }
     }
+    if (mounted) {
+      AppSnackBar.showAlert(
+        context,
+        'Photo processing is taking longer than usual. Pull to refresh the gallery.',
+      );
+    }
   }
 
   Widget _buildFilteredEmpty() {

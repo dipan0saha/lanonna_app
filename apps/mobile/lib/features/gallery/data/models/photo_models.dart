@@ -1,3 +1,5 @@
+import '../../../../core/time/app_date_time.dart';
+
 class PhotoSummary {
   PhotoSummary({
     required this.id,
@@ -24,7 +26,7 @@ class PhotoSummary {
       id: json['id'] as String,
       status: json['status'] as String? ?? 'pending',
       caption: json['caption'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: parseApiInstant(json['created_at'] as String),
       thumbUrl: json['thumb_url'] as String?,
       squishCount: json['squish_count'] as int? ?? 0,
       commentCount: json['comment_count'] as int? ?? 0,
@@ -74,7 +76,7 @@ class PhotoComment {
       body: json['body'] as String,
       authorDisplayName:
           json['author_display_name'] as String? ?? 'Family member',
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: parseApiInstant(json['created_at'] as String),
       isMine: isMine,
       canEdit: json['can_edit'] as bool? ?? isMine,
       canDelete: json['can_delete'] as bool? ?? isMine,
@@ -138,7 +140,7 @@ class PhotoDetail {
       id: json['id'] as String,
       status: json['status'] as String? ?? 'ready',
       caption: json['caption'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: parseApiInstant(json['created_at'] as String),
       displayUrl: json['display_url'] as String?,
       thumbUrl: json['thumb_url'] as String?,
       uploaderDisplayName:

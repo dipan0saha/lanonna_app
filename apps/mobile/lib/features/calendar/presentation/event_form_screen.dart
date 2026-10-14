@@ -29,6 +29,7 @@ import '../../../core/domain/baby_summary.dart';
 import '../../onboarding/presentation/widgets/onboarding_prototype_widgets.dart';
 import '../data/calendar_repository.dart';
 import 'calendar_display.dart';
+import '../domain/calendar_navigation.dart';
 import 'widgets/event_form_widgets.dart';
 
 class EventFormPrefill {
@@ -112,7 +113,45 @@ class _EventFormScreenState extends State<EventFormScreen> {
     final homeRepo = context.read<HomeRepository>();
     final store = context.read<SelectedBabyStore>();
     final baby = await homeRepo.resolveSelectedBaby(store);
-    if (mounted) setState(() => _baby = baby);
+    if (!mounted) return;
+    if (baby != null && baby.role != 'owner') {
+      AppSnackBar.showAlert(
+        context,
+        'Only owners can create or edit calendar events.',
+      );
+      returnToCalendar(context);
+      return;
+    }
+    setState(() => _baby = baby);
+  }
+
+  void _onCoverUrlError() {
+    _refreshCoverPreview();
+  }
+
+  Future<void> _refreshCoverPreview() async {
+    final baby = _baby;
+    if (baby == null) return;
+    if (widget.isEdit && widget.eventId != null) {
+      await _loadEvent();
+      return;
+    }
+    final photoId = _coverPhotoId;
+    if (photoId == null) return;
+    try {
+      final detail = await context.read<GalleryRepository>().fetchPhoto(
+        baby.id,
+        photoId,
+      );
+      if (!mounted) return;
+      setState(() {
+        _coverPhotoPreviewUrl = detail.thumbUrl ?? detail.displayUrl;
+      });
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.showAlert(context, apiErrorMessage(e));
+      }
+    }
   }
 
   Future<void> _loadEvent() async {
@@ -388,6 +427,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
             onTap: _baby == null ? null : _pickCoverPhoto,
             previewImageUrl: _coverPhotoPreviewUrl,
             cacheKey: _coverPhotoId != null ? 'event-cover-$_coverPhotoId' : null,
+            onSignedUrlError: _onCoverUrlError,
           ),
           const SizedBox(height: 8),
           AppSemantics.button(

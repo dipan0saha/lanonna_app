@@ -12,11 +12,13 @@ class PrototypeEventCoverUpload extends StatelessWidget {
     required this.onTap,
     this.previewImageUrl,
     this.cacheKey,
+    this.onSignedUrlError,
   });
 
   final VoidCallback? onTap;
   final String? previewImageUrl;
   final String? cacheKey;
+  final VoidCallback? onSignedUrlError;
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +48,7 @@ class PrototypeEventCoverUpload extends StatelessWidget {
                     width: double.infinity,
                     height: 70,
                     fit: BoxFit.cover,
+                    onSignedUrlError: onSignedUrlError,
                   )
                 : const Center(
                     child: Icon(

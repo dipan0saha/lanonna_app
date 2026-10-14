@@ -23,6 +23,7 @@ import '../announcement/data/announcement_repository.dart';
 import '../onboarding/presentation/widgets/onboarding_buttons.dart';
 import '../shell/presentation/shell_tab_layout.dart';
 import '../../../core/api/api_error_message.dart';
+import '../../../core/time/app_date_time.dart';
 import '../../core/network/connectivity_service.dart';
 import '../../core/widgets/app_semantics.dart';
 
@@ -156,7 +157,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (fromSummary != null) return fromSummary;
     final raw = baby.expectedBirthDate;
     if (raw == null) return null;
-    final due = DateTime.tryParse(raw);
+    final due = tryParseApiCalendarDate(raw);
     if (due == null) return null;
     final today = DateTime.now();
     final dueDay = DateTime(due.year, due.month, due.day);

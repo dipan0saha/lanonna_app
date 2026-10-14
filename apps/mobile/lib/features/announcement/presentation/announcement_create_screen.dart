@@ -62,19 +62,29 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
     _prefill();
   }
 
+  @override
+  void dispose() {
+    _first.dispose();
+    _last.dispose();
+    _weight.dispose();
+    _length.dispose();
+    super.dispose();
+  }
+
   Future<void> _prefill() async {
-    final detail = await context.read<AnnouncementRepository>().fetch(
-      widget.babyId,
-    );
-    if (detail != null) {
-      _first.text = detail.firstName ?? '';
-      _last.text = detail.lastName ?? '';
-      _weight.text = detail.weightText ?? '';
-      _length.text = detail.lengthText ?? '';
-      _gender = detail.gender;
-      if (detail.birthDate != null) {
-        _birthDate = DateTime.tryParse(detail.birthDate!);
-      }
+    try {
+      final detail = await context.read<AnnouncementRepository>().fetch(
+        widget.babyId,
+      );
+      if (detail != null) {
+        _first.text = detail.firstName ?? '';
+        _last.text = detail.lastName ?? '';
+        _weight.text = detail.weightText ?? '';
+        _length.text = detail.lengthText ?? '';
+        _gender = detail.gender;
+        if (detail.birthDate != null) {
+          _birthDate = tryParseApiCalendarDate(detail.birthDate);
+        }
       if (detail.birthTime != null && detail.birthTime!.contains(':')) {
         final parts = detail.birthTime!.split(':');
         if (parts.length >= 2) {
@@ -84,9 +94,15 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
           );
         }
       }
-      _existingPhotoUrl = detail.photoDisplayUrl;
+        _existingPhotoUrl = detail.photoDisplayUrl;
+      }
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.showAlert(context, apiErrorMessage(e));
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
-    if (mounted) setState(() => _loading = false);
   }
 
   Future<void> _pickPhoto() async {

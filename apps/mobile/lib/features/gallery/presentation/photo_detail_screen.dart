@@ -20,6 +20,7 @@ import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/widgets/detail_comment_composer.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/time/app_date_time.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../home/data/home_repository.dart';
@@ -428,7 +429,10 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
         body: const Center(child: Text('Photo not found')),
       );
     }
-    final meta = _formatDate(detail.createdAt);
+    final meta = formatApiCalendarDateFromParts(
+      detail.createdAt,
+      localeNameForFormatting(context),
+    );
     final baby = _baby;
     final currentBabyId = baby?.id;
     return PrototypeSubpageScaffold(
@@ -699,21 +703,4 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     );
   }
 
-  static String _formatDate(DateTime dt) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return '${months[dt.month - 1]} ${dt.day}, ${dt.year}';
-  }
 }

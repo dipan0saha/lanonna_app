@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_client.dart';
+import '../../../core/time/app_date_time.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/theme/app_colors.dart';
@@ -122,7 +123,7 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
           _genderPill = _genderBoy;
         }
         if (draft.dateIso != null) {
-          final parsed = DateTime.tryParse(draft.dateIso!);
+          final parsed = tryParseApiCalendarDate(draft.dateIso);
           _selectedDate = _babyStatus == BabyLifecycle.expecting
               ? onboardingSanitizeExpectingDueDate(parsed)
               : parsed;

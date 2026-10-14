@@ -92,7 +92,7 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
     _postal.text = account.postalCode ?? '';
     _countryCode = account.countryCode;
     if (account.birthDate != null && account.birthDate!.isNotEmpty) {
-      _birthDate = DateTime.tryParse(account.birthDate!);
+      _birthDate = tryParseApiCalendarDate(account.birthDate);
     }
     _networkAvatarUrl = account.avatarUrl;
     setState(() {});

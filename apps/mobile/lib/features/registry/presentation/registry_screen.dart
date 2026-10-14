@@ -320,9 +320,15 @@ class _RegistryScreenState extends State<RegistryScreen>
                                       RegistryRoutes.itemEdit(item.id),
                                     ),
                                     onDelete: () async {
-                                      await context
-                                          .read<RegistryRepository>()
-                                          .deleteItem(_baby!.id, item.id);
+                                      final baby = _baby;
+                                      if (baby == null) return;
+                                      final ok = await runMutation(
+                                        context,
+                                        () => context
+                                            .read<RegistryRepository>()
+                                            .deleteItem(baby.id, item.id),
+                                      );
+                                      if (!ok || !mounted) return;
                                       await _load();
                                     },
                                   ),

@@ -3,8 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/api/api_error_message.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/time/app_date_time.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/app_chip.dart';
 import '../../../core/widgets/app_icon_button.dart';
@@ -45,25 +47,38 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
 
   Future<void> _load() async {
     setState(() => _loading = true);
-    final homeRepo = context.read<HomeRepository>();
-    final routeBaby = await homeRepo.babyById(widget.babyId);
-    if (!mounted) return;
-    final detail = await context.read<AnnouncementRepository>().fetch(
-      widget.babyId,
-    );
-    setState(() {
-      _detail = detail;
-      _isOwner = routeBaby?.role == 'owner';
-      _loading = false;
-    });
-    if (detail == null && mounted) {
-      context.replace('/baby/${widget.babyId}/announcement/create');
+    try {
+      final homeRepo = context.read<HomeRepository>();
+      final routeBaby = await homeRepo.babyById(widget.babyId);
+      if (!mounted) return;
+      final detail = await context.read<AnnouncementRepository>().fetch(
+        widget.babyId,
+      );
+      if (!mounted) return;
+      setState(() {
+        _detail = detail;
+        _isOwner = routeBaby?.role == 'owner';
+        _loading = false;
+      });
+      if (detail == null && mounted) {
+        context.replace('/baby/${widget.babyId}/announcement/create');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      AppSnackBar.showAlert(context, apiErrorMessage(e));
     }
   }
 
   Future<void> _squish() async {
-    await context.read<AnnouncementRepository>().squish(widget.babyId);
-    await _load();
+    try {
+      await context.read<AnnouncementRepository>().squish(widget.babyId);
+      await _load();
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.showAlert(context, apiErrorMessage(e));
+      }
+    }
   }
 
   Future<void> _sendComment() async {
@@ -72,12 +87,18 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
       _comment.text,
     );
     if (text.isEmpty) return;
-    await context.read<AnnouncementRepository>().addComment(
-      widget.babyId,
-      text,
-    );
-    _comment.clear();
-    await _load();
+    try {
+      await context.read<AnnouncementRepository>().addComment(
+        widget.babyId,
+        text,
+      );
+      _comment.clear();
+      await _load();
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.showAlert(context, apiErrorMessage(e));
+      }
+    }
   }
 
   @override
