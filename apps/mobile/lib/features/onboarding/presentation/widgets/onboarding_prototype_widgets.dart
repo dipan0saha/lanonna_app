@@ -15,7 +15,7 @@ import '../../domain/baby_gender.dart';
 import 'onboarding_fields.dart';
 import 'onboarding_typography.dart';
 
-/// Organic shape art from the HTML prototype (`.icon-blob`).
+/// Soft circular icon backdrop for onboarding carousel and verify screens.
 class OnboardingIconBlob extends StatelessWidget {
   const OnboardingIconBlob({
     super.key,
@@ -35,12 +35,7 @@ class OnboardingIconBlob extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(44),
-          topRight: Radius.circular(56),
-          bottomRight: Radius.circular(60),
-          bottomLeft: Radius.circular(40),
-        ),
+        shape: BoxShape.circle,
       ),
       alignment: Alignment.center,
       child: child,

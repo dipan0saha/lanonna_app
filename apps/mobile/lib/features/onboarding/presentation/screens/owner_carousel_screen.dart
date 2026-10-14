@@ -9,7 +9,7 @@ import '../widgets/onboarding_buttons.dart';
 import '../widgets/onboarding_carousel.dart';
 import '../widgets/onboarding_carousel_art.dart';
 import '../widgets/onboarding_scaffold.dart';
-import '../widgets/onboarding_typography.dart';
+import '../widgets/onboarding_carousel_caption.dart';
 import '../widgets/owner_carousel_slides.dart';
 
 class OwnerCarouselScreen extends StatefulWidget {
@@ -82,6 +82,7 @@ class _OwnerCarouselScreenState extends State<OwnerCarouselScreen> {
         );
       },
       child: OnboardingScaffold(
+        scrollBody: false,
         showSkip: !_isLastSlide,
         onSkip: _goToSignup,
         bottom: Column(
@@ -104,25 +105,23 @@ class _OwnerCarouselScreenState extends State<OwnerCarouselScreen> {
         body: Column(
           children: [
             const SizedBox(height: 8),
+            const Spacer(),
             OnboardingCarousel(
               itemCount: ownerCarouselSlideCount,
               currentIndex: _index,
               controller: _pageController,
-              pageHeight: 420,
+              artPageHeight: 260,
               onPageChanged: (i) => setState(() => _index = i),
-              itemBuilder: (context, index) {
+              artBuilder: (context, index) => _slideArt[index](),
+              captionBuilder: (context, index) {
                 final slide = ownerCarouselSlide(index);
-                return Column(
-                  children: [
-                    _slideArt[index](),
-                    const SizedBox(height: 28),
-                    OnboardingHeadline(slide.$1, textAlign: TextAlign.center),
-                    const SizedBox(height: 12),
-                    OnboardingSupportText(slide.$2, textAlign: TextAlign.center),
-                  ],
+                return OnboardingCarouselCaption(
+                  title: slide.$1,
+                  body: slide.$2,
                 );
               },
             ),
+            const Spacer(flex: 2),
           ],
         ),
       ),

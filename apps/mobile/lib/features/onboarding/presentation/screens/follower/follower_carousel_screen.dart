@@ -8,7 +8,7 @@ import '../../widgets/onboarding_buttons.dart';
 import '../../widgets/onboarding_carousel.dart';
 import '../../widgets/onboarding_carousel_art.dart';
 import '../../widgets/onboarding_scaffold.dart';
-import '../../widgets/onboarding_typography.dart';
+import '../../widgets/onboarding_carousel_caption.dart';
 
 class FollowerCarouselScreen extends StatefulWidget {
   const FollowerCarouselScreen({super.key});
@@ -87,9 +87,9 @@ class _FollowerCarouselScreenState extends State<FollowerCarouselScreen> {
     _pageController ??= PageController(initialPage: _index);
 
     return OnboardingScaffold(
+      scrollBody: false,
       showSkip: !isLast,
       onSkip: _finish,
-      pinBottomCta: false,
       bottom: OnboardingPrimaryButton(
         label: isLast ? 'Get Started' : 'Next',
         onPressed: () {
@@ -103,24 +103,26 @@ class _FollowerCarouselScreenState extends State<FollowerCarouselScreen> {
           _finish();
         },
       ),
-      body: OnboardingCarousel(
-        itemCount: slides.length,
-        currentIndex: _index,
-        controller: _pageController,
-        pageHeight: 420,
-        onPageChanged: (i) => setState(() => _index = i),
-        itemBuilder: (context, index) {
-          final slide = slides[index];
-          return Column(
-            children: [
-              slide.$3(),
-              const SizedBox(height: 28),
-              OnboardingHeadline(slide.$1, textAlign: TextAlign.center),
-              const SizedBox(height: 12),
-              OnboardingSupportText(slide.$2, textAlign: TextAlign.center),
-            ],
-          );
-        },
+      body: Column(
+        children: [
+          const Spacer(),
+          OnboardingCarousel(
+            itemCount: slides.length,
+            currentIndex: _index,
+            controller: _pageController,
+            artPageHeight: 260,
+            onPageChanged: (i) => setState(() => _index = i),
+            artBuilder: (context, index) => slides[index].$3(),
+            captionBuilder: (context, index) {
+              final slide = slides[index];
+              return OnboardingCarouselCaption(
+                title: slide.$1,
+                body: slide.$2,
+              );
+            },
+          ),
+          const Spacer(flex: 2),
+        ],
       ),
     );
   }

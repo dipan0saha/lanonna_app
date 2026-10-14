@@ -16,6 +16,7 @@ class OnboardingScaffold extends StatelessWidget {
     this.bottom,
     this.pinBottomCta = true,
     this.resizeToAvoidBottomInset = true,
+    this.scrollBody = true,
   });
 
   final Widget body;
@@ -27,6 +28,8 @@ class OnboardingScaffold extends StatelessWidget {
   final Widget? bottom;
   final bool pinBottomCta;
   final bool resizeToAvoidBottomInset;
+  /// When false, [body] fills the area below the top row (for carousels with [Spacer]).
+  final bool scrollBody;
 
   @override
   Widget build(BuildContext context) {
@@ -47,14 +50,21 @@ class OnboardingScaffold extends StatelessWidget {
               ),
             ),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppMetrics.horizontalPadding,
-                ),
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                child: body,
-              ),
+              child: scrollBody
+                  ? SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppMetrics.horizontalPadding,
+                      ),
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      child: body,
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppMetrics.horizontalPadding,
+                      ),
+                      child: body,
+                    ),
             ),
             if (pinBottomCta && bottom != null)
               Padding(
