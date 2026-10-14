@@ -11,6 +11,7 @@ import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/onboarding_form_drafts.dart';
 import '../../../invitations/presentation/invite_flow_state.dart';
+import '../../domain/onboarding_routes.dart';
 import '../../domain/onboarding_step.dart';
 import '../onboarding_coordinator.dart';
 import '../utils/onboarding_auth_navigation.dart';
@@ -251,7 +252,7 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
           OnboardingBottomLink(
             prefix: "Don't have an account? ",
             actionLabel: 'Sign up',
-            onTap: _busy ? () {} : () => context.go(signupRouteForContext(context)),
+            onTap: _busy ? () {} : () => context.go(OnboardingRoutes.signup),
           ),
           const SizedBox(height: 26),
         ],

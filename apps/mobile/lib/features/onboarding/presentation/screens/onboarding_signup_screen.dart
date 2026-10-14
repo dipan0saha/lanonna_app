@@ -10,6 +10,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../core/validation/form_validators.dart';
 import '../../data/onboarding_form_drafts.dart';
 import '../../../invitations/presentation/invite_flow_state.dart';
+import '../../domain/onboarding_routes.dart';
 import '../../domain/onboarding_step.dart';
 import '../onboarding_coordinator.dart';
 import '../utils/onboarding_auth_navigation.dart';
@@ -174,7 +175,7 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
             OnboardingBottomLink(
               prefix: 'Already have an account? ',
               actionLabel: 'Log in',
-              onTap: _busy ? () {} : () => context.go(loginRouteForContext(context)),
+              onTap: _busy ? () {} : () => context.go(OnboardingRoutes.login),
             ),
             if (_error != null)
               Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),

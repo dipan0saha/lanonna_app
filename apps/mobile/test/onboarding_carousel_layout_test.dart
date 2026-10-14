@@ -6,17 +6,13 @@ import 'package:lanonna/features/onboarding/presentation/widgets/onboarding_caro
 import 'package:lanonna/features/onboarding/presentation/widgets/onboarding_prototype_widgets.dart';
 
 void main() {
-  Future<void> pumpCarousel(
-    WidgetTester tester, {
-    double? artPageHeight,
-    double totalHeight = 640,
-  }) async {
+  testWidgets('expanded art region centers icon above caption band', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
         home: Scaffold(
           body: SizedBox(
-            height: totalHeight,
+            height: 640,
             width: 400,
             child: Column(
               children: [
@@ -24,7 +20,6 @@ void main() {
                   child: OnboardingCarousel(
                     itemCount: 1,
                     currentIndex: 0,
-                    artPageHeight: artPageHeight,
                     artBuilder: (context, index) => const OnboardingIconBlob(
                       size: 120,
                       backgroundColor: Color(0xFFE8F0E8),
@@ -43,25 +38,14 @@ void main() {
         ),
       ),
     );
-  }
-
-  testWidgets('carousel caption sits below centered art region', (tester) async {
-    await pumpCarousel(tester, artPageHeight: 260);
-
-    final artCenter = tester.getCenter(find.byType(OnboardingIconBlob));
-    final titleTop = tester.getTopLeft(find.text('Title'));
-    expect(
-      titleTop.dy,
-      greaterThan(artCenter.dy),
-      reason: 'copy should render below the art blob',
-    );
-  });
-
-  testWidgets('expanded art region centers icon above caption band', (tester) async {
-    await pumpCarousel(tester);
 
     final artCenter = tester.getCenter(find.byType(OnboardingIconBlob));
     final titleTop = tester.getTopLeft(find.text('Title')).dy;
+    expect(
+      titleTop,
+      greaterThan(artCenter.dy),
+      reason: 'copy should render below the art blob',
+    );
     final bandMid = titleTop / 2;
     expect(
       artCenter.dy,

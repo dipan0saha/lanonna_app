@@ -16,7 +16,6 @@ class OnboardingCarousel extends StatefulWidget {
     this.onPageChanged,
     this.controller,
     this.captionGap = 20,
-    this.artPageHeight,
   });
 
   final int itemCount;
@@ -26,8 +25,6 @@ class OnboardingCarousel extends StatefulWidget {
   final ValueChanged<int>? onPageChanged;
   final PageController? controller;
   final double captionGap;
-  /// When set, art uses a fixed height (tests). When null, art [Expanded] fills space above caption.
-  final double? artPageHeight;
 
   @override
   State<OnboardingCarousel> createState() => _OnboardingCarouselState();
@@ -60,15 +57,10 @@ class _OnboardingCarouselState extends State<OnboardingCarousel> {
 
   @override
   Widget build(BuildContext context) {
-    final artHeight = widget.artPageHeight;
-    final artRegion = artHeight != null
-        ? SizedBox(height: artHeight, child: _artPageView())
-        : Expanded(child: _artPageView());
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        artRegion,
+        Expanded(child: _artPageView()),
         SizedBox(height: widget.captionGap),
         widget.captionBuilder(context, widget.currentIndex),
         const SizedBox(height: 24),

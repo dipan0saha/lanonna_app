@@ -46,47 +46,6 @@ class OnboardingPrimaryButton extends StatelessWidget {
   }
 }
 
-class OnboardingOutlineButton extends StatelessWidget {
-  const OnboardingOutlineButton({
-    super.key,
-    required this.label,
-    required this.onPressed,
-    this.leading,
-    this.isLoading = false,
-    this.buttonKey,
-  });
-
-  final String label;
-  final VoidCallback? onPressed;
-  final Widget? leading;
-  final bool isLoading;
-  final Key? buttonKey;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton(
-        key: buttonKey,
-        onPressed: isLoading ? null : onPressed,
-        child: isLoading
-            ? const SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (leading != null) ...[leading!, const SizedBox(width: 10)],
-                  Text(label),
-                ],
-              ),
-      ),
-    );
-  }
-}
-
 class OnboardingGoogleButton extends StatelessWidget {
   const OnboardingGoogleButton({
     super.key,

@@ -24,6 +24,5 @@ abstract final class AppColors {
   static const Color surfaceElevated = Color(0xFFFCFCFD);
   static const Color scaffoldStripe = Color(0xFFF2F2F3);
   static const Color fieldShadow = Color(0x14000000);
-  static const Color googleSignInBlue = Color(0xFF4285F4);
   static const Color hintOnSage = Color(0xFF3A5A2E);
 }

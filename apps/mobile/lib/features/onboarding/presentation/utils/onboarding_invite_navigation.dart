@@ -45,7 +45,3 @@ Future<void> goBackFromInviteAuth(
     persist: persist,
   );
 }
-
-String loginRouteForContext(BuildContext context) => OnboardingRoutes.login;
-
-String signupRouteForContext(BuildContext context) => OnboardingRoutes.signup;

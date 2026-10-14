@@ -23,9 +23,6 @@ class CompleteProfileDraft {
   final String? photoPath;
   final String? networkPhotoUrl;
 
-  /// Legacy single-field name (migrated on read).
-  String get fullName => '$firstName $lastName'.trim();
-
   Map<String, dynamic> toJson() => {
         'firstName': firstName,
         'lastName': lastName,

@@ -28,7 +28,7 @@ class OnboardingScaffold extends StatelessWidget {
   final Widget? bottom;
   final bool pinBottomCta;
   final bool resizeToAvoidBottomInset;
-  /// When false, [body] fills the area below the top row (for carousels with [Spacer]).
+  /// When false, [body] fills the area below the top row (e.g. carousels in [Expanded]).
   final bool scrollBody;
 
   @override
