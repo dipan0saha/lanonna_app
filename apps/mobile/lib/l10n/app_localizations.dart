@@ -322,12 +322,6 @@ abstract class AppLocalizations {
   /// **'We sent a message to {email} with a Verify my email button. Tap it to activate your account. If you do not see it, check spam or junk.'**
   String emailVerifyBody(String email);
 
-  /// No description provided for @emailVerifyOAuthNote.
-  ///
-  /// In en, this message translates to:
-  /// **'Google sign-up skips this step.'**
-  String get emailVerifyOAuthNote;
-
   /// No description provided for @emailVerifyContinuePending.
   ///
   /// In en, this message translates to:

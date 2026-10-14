@@ -138,9 +138,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get emailVerifyOAuthNote => 'Google sign-up skips this step.';
-
-  @override
   String get emailVerifyContinuePending =>
       'Not verified yet - open the newest email and tap Verify my email, then try Continue.';
 

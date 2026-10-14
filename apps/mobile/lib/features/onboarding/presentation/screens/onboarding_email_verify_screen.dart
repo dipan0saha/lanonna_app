@@ -105,11 +105,6 @@ class _OnboardingEmailVerifyScreenState extends State<OnboardingEmailVerifyScree
             l10n.emailVerifyBody(email),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
-          OnboardingSupportText(
-            l10n.emailVerifyOAuthNote,
-            textAlign: TextAlign.center,
-          ),
           if (isLikelyUndeliverable) ...[
             const SizedBox(height: 16),
             Card(

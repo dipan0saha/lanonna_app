@@ -45,7 +45,6 @@
       }
     }
   },
-  "emailVerifyOAuthNote": "Google sign-up skips this step.",
   "emailVerifyContinuePending": "Not verified yet - open the newest email and tap Verify my email, then try Continue.",
   "emailVerifySent": "Verification email sent.",
   "emailVerifyResend": "Resend email",
