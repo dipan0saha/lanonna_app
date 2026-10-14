@@ -84,8 +84,11 @@ class ApiClient {
     return _decodeObject(response);
   }
 
-  Future<Map<String, dynamic>> getJsonPublic(String path) async {
-    final response = await _publicRequest('GET', path);
+  Future<Map<String, dynamic>> getJsonPublic(
+    String path, {
+    Duration? timeout,
+  }) async {
+    final response = await _publicRequest('GET', path, timeout: timeout);
     return _decodeObject(response);
   }
 
@@ -137,10 +140,12 @@ class ApiClient {
     String method,
     String path, {
     Map<String, dynamic>? body,
+    Duration? timeout,
   }) async {
     _throwIfOffline();
     final uri = Uri.parse('${AppConfig.apiBaseUrl}$path');
     final headers = {'Content-Type': 'application/json'};
+    final requestTimeout = timeout ?? _timeout;
     try {
       final response = await switch (method) {
         'GET' => _http.get(uri, headers: headers),
@@ -150,7 +155,7 @@ class ApiClient {
           body: jsonEncode(body ?? {}),
         ),
         _ => throw ApiException('Unsupported method $method'),
-      }.timeout(_timeout);
+      }.timeout(requestTimeout);
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return response;
       }

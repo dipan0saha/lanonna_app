@@ -361,6 +361,7 @@ Baseline on **profile/release** build (`flavors/dev.json`): cold start → home 
 
 | Area | Implementation |
 |------|----------------|
+| Cold start | [`AppVersionGate`](../../apps/mobile/lib/core/version/app_version_gate.dart) checks `/v1/app/version` in the background (5s timeout); onboarding carousel shows without waiting. Signed-in [`AppSession.refreshFromApi`](../../apps/mobile/lib/features/onboarding/presentation/app_session.dart) runs after first frame ([`LaNonnaApp`](../../apps/mobile/lib/app.dart)); router uses cached onboarding status until fresh. Debug App Check token logging is non-blocking. |
 | Tab refresh | Split `HomeRefreshSignal` (`homeTab` vs `babyContext`); SWR shell tab loads (`TabLoadGenerationCache`); gallery `GalleryRepository` notify refreshes loaded pages only (keeps scroll); photo detail opens on `fetchPhoto` then pages swipe ids |
 | Upload | `display_encode.dart`; ~2 MB cap in `storage.py` |
 | Feed/detail | Worker thumbs; signed read URLs (900s TTL); `CachedSignedImage` + optional `onSignedUrlError` |

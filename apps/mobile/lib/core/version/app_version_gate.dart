@@ -24,13 +24,18 @@ class AppVersionRequirement {
   }
 }
 
+/// Shorter than [apiRequestTimeout] so cold start is not blocked on a slow API.
+const Duration appVersionCheckTimeout = Duration(seconds: 5);
+
 Future<AppVersionRequirement?> fetchAppVersionRequirement(
-  ApiClient client,
-) async {
+  ApiClient client, {
+  Duration timeout = appVersionCheckTimeout,
+}) async {
   final platform = platformKeyForVersionCheck();
   try {
     final json = await client.getJsonPublic(
       '/v1/app/version?platform=$platform',
+      timeout: timeout,
     );
     return AppVersionRequirement.fromJson(json);
   } catch (_) {
@@ -96,7 +101,8 @@ class AppVersionBlockScreen extends StatelessWidget {
   }
 }
 
-/// Runs version check once; shows [child] or a hard block screen.
+/// Runs version check once in the background; shows [child] immediately.
+/// Replaces UI with a hard block only when the installed build is below minimum.
 class AppVersionGate extends StatefulWidget {
   const AppVersionGate({super.key, required this.child});
 
@@ -109,7 +115,6 @@ class AppVersionGate extends StatefulWidget {
 class _AppVersionGateState extends State<AppVersionGate> {
   AppVersionRequirement? _block;
   String? _installedVersion;
-  var _checking = true;
 
   var _started = false;
 
@@ -133,18 +138,12 @@ class _AppVersionGateState extends State<AppVersionGate> {
       setState(() {
         _block = requirement;
         _installedVersion = installed;
-        _checking = false;
       });
-      return;
     }
-    setState(() => _checking = false);
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_checking) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
     final block = _block;
     if (block != null && _installedVersion != null) {
       return AppVersionBlockScreen(

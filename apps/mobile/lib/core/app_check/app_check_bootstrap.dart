@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter/foundation.dart';
 
@@ -14,17 +16,20 @@ Future<void> activateFirebaseAppCheck() async {
         debugProvider ? AppleProvider.debug : AppleProvider.appAttest,
   );
   if (debugProvider) {
-    try {
-      final token = await FirebaseAppCheck.instance.getToken();
-      if (token != null) {
-        // `print` so Maestro release builds still emit the token in logcat.
-        debugPrint(
-          'Firebase App Check debug token (register in Firebase Console → App Check): $token',
-        );
-      }
-    } catch (e) {
-      debugPrint('App Check token not ready yet: $e');
+    unawaited(_logAppCheckDebugToken());
+  }
+}
+
+Future<void> _logAppCheckDebugToken() async {
+  try {
+    final token = await FirebaseAppCheck.instance.getToken();
+    if (token != null) {
+      debugPrint(
+        'Firebase App Check debug token (register in Firebase Console → App Check): $token',
+      );
     }
+  } catch (e) {
+    debugPrint('App Check token not ready yet: $e');
   }
 }
 

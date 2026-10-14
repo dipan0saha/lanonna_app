@@ -113,10 +113,6 @@ Future<Widget> bootstrapLaNonnaApp() async {
     session: session,
   );
 
-  if (authRepository.currentUser != null) {
-    await session.refreshFromApi();
-  }
-
   final coldStartUri = await readColdStartAppLinkUri();
   final initialInviteLocation = coldStartUri != null
       ? inviteAppLinkToRouterLocation(coldStartUri)

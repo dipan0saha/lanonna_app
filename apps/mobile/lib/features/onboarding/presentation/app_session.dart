@@ -191,6 +191,10 @@ class AppSession extends ChangeNotifier {
     required bool emailVerified,
     required String location,
   }) {
+    if (isSignedIn) {
+      _restoreCachedStatus();
+    }
+
     final path = location.split('?').first;
 
     if (path == OnboardingRoutes.roleSelection) {
