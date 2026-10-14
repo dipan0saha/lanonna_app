@@ -62,13 +62,13 @@ Requires migration **`019`** on dev (`photo_baby_tags` — [migrations/README.md
 
 - [ ] Photo detail: edit and delete **own** comment; cannot edit others’ comments.
 - [ ] Event detail: same for event comments.
-- [ ] Photo detail (owner, multi-baby account): “In this photo” chips tag/untag other babies you belong to; followers see read-only tag names when set.
+- [ ] Photo detail (owner, multi-baby account): “In this photo” **AppToggleChip** pills tag/untag other babies you belong to; followers see read-only tag names when set.
 
 ## 8. Email verification (FR-AUTH-002)
 
 Use a **real** inbox (not `@test.com` smoke addresses).
 
-- [ ] Sign up with email/password → verify screen copy mentions **Verify my email**.
+- [ ] Sign up with email/password → verify screen copy mentions **Verify my email** (no Google “skips verification” note on this screen).
 - [ ] Email subject is **Verify your email for La Nonna** (not `project-1008830071001`), sender display name **La Nonna**, body is the branded template with **Verify my email**. Password reset uses **Reset your password for La Nonna**.
 - [ ] Tap link → verified (in app or browser + **Continue**); user reaches complete profile.
 - [ ] **Desktop:** after Firebase **Continue**, browser shows **Email verified** at `https://lanonna-dev.firebaseapp.com/email-verified` (not Hosting 404); then on phone tap **Continue** on Check your email.
@@ -86,9 +86,23 @@ Use a **throwaway** Firebase account (not Maestro smoke user).
 - [ ] My Account → **Export baby data** (owner): job reaches **ready** and **Download export** works. Open the JSON: comments, RSVPs, members (display names, no member emails), predictions, announcement, photo tags, and registry purchases are present; photo `download_url` values are `https://` and note a 7-day expiry. Check `lanonna-async-commands-dlq-pull` is empty afterward ([operations.md](operations.md#dead-letter-queue)).
 - [ ] Invite a second co-owner and accept → success; invite a **third** co-owner → "max owners" message, no extra membership.
 
-## 11. Regression smoke
+## 11. Biometric unlock (M-31)
 
-- [ ] `flutter test`, API `pytest`, and worker `pytest` green (see [development.md](development.md#automated-tests)).
+- [ ] Settings → enable biometric unlock (device must have biometrics enrolled); successful local auth required to turn on.
+- [ ] Kill app with an active Firebase session and completed onboarding → app lock overlay on resume; unlock with biometrics.
+- [ ] Toggle off in Settings → no lock on next resume.
+
+## 12. Onboarding UI (carousel, pills, chips)
+
+- [ ] Owner/follower welcome carousels: art + caption band + dots; **Next** advances (prototype layout).
+- [ ] Complete profile: optional **Mother** / **Father** equal-width pills; create-baby gender uses wrap pills.
+- [ ] Profile photo: circle + grey **Add a photo** / **Change photo** caption (onboarding, create baby, first moment, edits).
+- [ ] First moment: preset **+** pills (sage when selected); name suggestion tags removable (peach girl / sage boy).
+- [ ] Event RSVP, AI suggestion tabs, followers role badge, announcement comment count use core chips (not Material black chips).
+
+## 13. Regression smoke
+
+- [ ] `flutter test`, API `pytest`, and worker `pytest` green (see [development.md](development.md#automated-tests)); `verify-dev-prerequisites.sh` includes `check-no-material-chips.sh`.
 - [ ] Optional: `flutter build apk --release --dart-define-from-file=flavors/dev.json` (R8 shrink) installs and launches on a device.
 - [ ] Optional: `flutter test integration_test/home_summary_load_test.dart` on emulator.
 - [ ] Owner onboarding + gallery + calendar still usable.

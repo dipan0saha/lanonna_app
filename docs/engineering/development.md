@@ -12,6 +12,7 @@ lanonna_app/
 ├── scripts/                 # verify-dev-prerequisites.sh, infra smoke, Run IAM, ship APK
 ├── packages/
 │   └── email-templates/     # Mailjet HTML/text templates (versioned)
+├── hosting/                 # Firebase Hosting (invite landing, email-verified continue URL, App Links)
 ├── infra/
 │   ├── db/                  # `apply_migrations.py`, `clear_dev_test_data.py`, migrations/
 │   ├── terraform/           # GCP platform (dev/prod)
@@ -96,6 +97,7 @@ Transient feedback uses [`AppSnackBar`](../../apps/mobile/lib/core/widgets/app_s
 | Layer | Command | Notes |
 |-------|---------|--------|
 | Mobile unit/widget | `cd apps/mobile && flutter test` | Part of `verify-dev-prerequisites.sh` |
+| Mobile chip policy | `cd apps/mobile && bash scripts/check-no-material-chips.sh` | Fails on Material `Chip` / `FilterChip` in `lib/`; runs in `verify-dev-prerequisites.sh` |
 | Mobile integration | `flutter test integration_test/home_summary_load_test.dart` (device/emulator) | Run locally before release |
 | Maestro (Android) | `./maestro/scripts/run-maestro-smoke.sh` after proxy + deploy | See [maestro/README.md](../../apps/mobile/maestro/README.md) |
 | API | `PYTHONPATH=services/api/src services/api/.venv/bin/pytest -q services/api/tests` | Run when touching API; included in `verify-dev-prerequisites.sh` compile path — run pytest explicitly for API changes |
@@ -124,7 +126,7 @@ Product UI tokens live under `apps/mobile/lib/core/theme/` (see also PRD §5.1):
 | File | Role |
 |------|------|
 | `app_colors.dart` | Raw brand hex (palette only) |
-| `app_metrics.dart` | Spacing, radii, button sizes |
+| `app_metrics.dart` | Spacing, radii, button sizes, `choicePill*`, `appChip*` |
 | `app_text_theme.dart` | Inter + Baloo 2 text styles; tab screen titles use `headlineSmall` (Baloo 2, 24px) |
 | `app_brand_theme.dart` | `ThemeExtension` — sage/peach tints, insight fills |
 | `app_theme.dart` | `AppTheme.light` → `ThemeData` + component themes |
@@ -147,7 +149,7 @@ Product UI tokens live under `apps/mobile/lib/core/theme/` (see also PRD §5.1):
 
 **API errors from UI mutations (#8):** Repository calls throw [`ApiException`](../../apps/mobile/lib/core/api/api_exception.dart); map with [`apiErrorMessage`](../../apps/mobile/lib/core/api/api_error_message.dart). Use [`runMutation`](../../apps/mobile/lib/core/api/run_mutation.dart) in presentation for create/update/delete actions so users always see server `detail` (e.g. Fun name limit). **Client-side** required fields: `Form` + [`form_validators.dart`](../../apps/mobile/lib/core/validation/form_validators.dart) + `AppLabeledTextFormField` (registry item, shipping address); lightweight `Form` on Fun name suggest card. Do not silently `return` on empty required input or show raw `'Save failed: $e'`. **Post-submit revalidation (FR-SET-002 / #21):** on failed `validate()`, set `_validateOnInteraction = true` and pass `AutovalidateMode.onUserInteraction` to the `Form` and each field (`OnboardingTextField`, `OnboardingTermsFormField`, `OnboardingRelationshipFormField`, registry `AppLabeledTextFormField`). Keep screen-level `_error` for API/auth failures only.
 
-**Onboarding sign-in UI:** Google OAuth uses the multicolor mark in [`assets/branding/google_sign_in_g.svg`](../../apps/mobile/assets/branding/google_sign_in_g.svg) via [`GoogleLogoMark`](../../apps/mobile/lib/core/widgets/google_logo_mark.dart) on [`OnboardingGoogleButton`](../../apps/mobile/lib/features/onboarding/presentation/widgets/onboarding_buttons.dart) (login + signup). Facebook login is **not implemented** (prototype only); deferred plan: [facebook-login-implementation-plan.md](facebook-login-implementation-plan.md). Owner/follower carousels use [`OnboardingCarousel`](../../apps/mobile/lib/features/onboarding/presentation/widgets/onboarding_carousel.dart) with art in an [`Expanded`](https://api.flutter.dev/flutter/widgets/Expanded-class.html) region above the caption band.
+**Onboarding sign-in UI:** Google OAuth uses the multicolor mark in [`assets/branding/google_sign_in_g.svg`](../../apps/mobile/assets/branding/google_sign_in_g.svg) via [`GoogleLogoMark`](../../apps/mobile/lib/core/widgets/google_logo_mark.dart) on [`OnboardingGoogleButton`](../../apps/mobile/lib/features/onboarding/presentation/widgets/onboarding_buttons.dart) (login + signup). Facebook login is **not implemented** (prototype only); deferred plan: [facebook-login-implementation-plan.md](facebook-login-implementation-plan.md). Owner/follower welcome carousels use [`OnboardingCarousel`](../../apps/mobile/lib/features/onboarding/presentation/widgets/onboarding_carousel.dart) (prototype layout: [`Expanded`](https://api.flutter.dev/flutter/widgets/Expanded-class.html) art region, [`OnboardingCarouselCaption`](../../apps/mobile/lib/features/onboarding/presentation/widgets/onboarding_carousel_caption.dart) band, footer dots + primary **Next**). Email/password verify screen copy is ARB-only (no “Google skips verification” note — Google auth never lands on that screen).
 
 **Onboarding choice controls:** [`OnboardingSegmentedControl`](../../apps/mobile/lib/features/onboarding/presentation/widgets/onboarding_fields.dart) — full-width binary **track** with a sliding thumb; one side is always active (e.g. Expecting / Already born). [`OnboardingPillSelect`](../../apps/mobile/lib/features/onboarding/presentation/widgets/onboarding_fields.dart) — optional pills (`selectedIndex` may be null). Use `OnboardingPillLayout.wrap` for multi-option fields that may wrap (create-baby gender). Use `OnboardingPillLayout.equalWidthRow` for optional binary fields that should span the form width (owner complete profile Mother / Father). Metrics: `AppMetrics.choicePill*`.
 

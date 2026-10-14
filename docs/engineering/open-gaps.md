@@ -8,13 +8,13 @@ Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [op
 
 ---
 
-## Health snapshot (2026-10-11)
+## Health snapshot (2026-10-14)
 
 | Check | Result |
 |-------|--------|
-| API `pytest` (`services/api`, `-m "not integration"`) | 230 passed (13 integration tests deselected; they need Postgres) |
-| Worker `pytest` | 56 passed |
-| `flutter test` | 292 passed |
+| API `pytest` (`services/api`, `-m "not integration"`) | 236 passed (13 integration tests deselected; they need Postgres) |
+| Worker `pytest` | 89 passed (`tests/test_pubsub_terraform.py` asserts live `pubsub.tf` retry policy) |
+| `flutter test` | 329 passed |
 | `flutter analyze` | 0 errors, 0 warnings, 47 infos (L-26) |
 
 Run all three suites before every ship; the suites are the only automated gate (no CI).
@@ -124,6 +124,7 @@ Run all three suites before every ship; the suites are the only automated gate (
 |----|-------|-------|-----|
 | ✅ M-11 | Export jobs: stale `running`, missing failure path, retry not wired to Pub/Sub | `worker/baby_data_export.py`, migrations `026` | `started_at`, reclaim stale runs, mark failed; pairs with **H-09** |
 | ✅ M-12 | Duplicate Pub/Sub invite deliveries could double-send email | `worker/invite_email.py`, migration `027` | Claim invite send in DB before Mailjet |
+| ✅ M-63 | Transient Mailjet/network errors left invites without resend path; delivery state opaque | `worker/invite_email.py`, migration `034`, `invitations` domain/API (#62) | `email_delivery_status` / `email_send_attempts`; HTTP **500** retries via Pub/Sub; **resend** + undelivered duplicate resend; DLQ alert in `monitoring.tf` |
 | ✅ M-15 | Thumbnail download loads whole object in memory, no size/dimension cap | `worker/thumbnails.py` | `MAX_DISPLAY_BYTES` / pixel cap; skip oversize or decompression bombs |
 | ✅ M-16 | Worker config defaults to dev project/buckets if env unset | `worker/config.py` | `validate_worker_settings()` at startup; non-dev rejects dev defaults |
 | ✅ M-41 | Raw `invite_token` on Pub/Sub + full payload logging | `api/pubsub.py`, `worker/main.py`, migration `028` | Publish `invitation_id` only; `email_invite_token` in DB until send; safe payload summary in logs |
@@ -139,7 +140,7 @@ Run all three suites before every ship; the suites are the only automated gate (
 |----|-------|-------|-----|
 | ✅ M-17 | Migration set drift: `023` not tracked; export/invite schema needed follow-on migrations | `infra/db/migrations/025`–`027` | Track `023`; add export `started_at` and invite send-claim columns |
 | ✅ M-18 | Pub/Sub push had no dead-letter path; pull worker path obsolete | `infra/terraform/modules/platform/pubsub.tf` | Dead-letter policy on push subs; push-only worker; DLQ pull sub (**H-13**) |
-| M-19 | Prod env lacks push-subscription / Cloud Build wiring present in dev; dev hardcodes worker URL; Run invoker IAM is script-managed, not Terraform | `environments/prod/main.tf`, `dev/main.tf`, `run_iam.tf` | **Dev:** endpoint from Cloud Run + invoker in TF (`worker_push.tf`, `run_iam.tf`). **Prod:** enable push subs + subscription names after worker deploy (`terraform.tfvars.example`); `cloudbuild.googleapis.com` added to prod APIs. |
+| M-19 | Prod env lacks push-subscription / Cloud Build wiring present in dev; Run invoker IAM still reconciled via script after worker deploy | `environments/prod/main.tf`, `dev/main.tf`, `run_iam.tf`, `worker_push.tf` | **Dev:** ✅ push URL from live Cloud Run on `terraform apply` + invoker in TF (`worker_push.tf`, `run_iam.tf`); still run `./scripts/apply-dev-run-iam.sh` after worker deploy. **Prod:** enable push subs + subscription names after worker deploy (`terraform.tfvars.example`); `cloudbuild.googleapis.com` added to prod APIs. |
 | ✅ M-20 | Secret accessor granted to API and worker for all secrets (incl. `admin-api-key`) | `modules/platform/iam.tf` | Per-secret bindings — **intentional on dev** ([intentional-dev-decisions.md](intentional-dev-decisions.md#m-20)) |
 | ✅ M-21 | Dev automation SA has `editor`, `serviceAccountAdmin`, `projectIamAdmin` | `iam.tf` | Keep dev-only; narrow roles — **intentional on dev** ([intentional-dev-decisions.md](intentional-dev-decisions.md#m-21)) |
 | M-22 | Cloud SQL public IPv4 enabled, no private IP / VPC connector | `modules/platform/sql.tf` | Private IP or documented restriction |
@@ -203,7 +204,7 @@ Run all three suites before every ship; the suites are the only automated gate (
 ## Test coverage gaps (still thin)
 
 - **API:** No router/HTTP tests for `fun`, `registry`, `invitations`, `notifications`, `search`, `admin_system_announcements`, baby photo routes, and `/v1/uploads/display/signed-url`; only domain-level mocks for `onboarding`. Event create/update time-range validation has an HTTP test. Repositories have almost no direct SQL tests (`search_name_suggestions` has a column-conformance test, and `tests/integration/` runs search, provisioning, and the onboarding gate on Postgres); also untested: `account`, `pubsub`, `storage`, `media_urls`, `membership`.
-- **Mobile:** Untested core modules: `api_client`, `auth_repository`, `user_deleted_session_handler`, `push_notification_service`, `app_router`, `app_link_bootstrap`, `onboarding_storage`, `onboarding_coordinator`, `shell/`. No tests for `search/`, `settings/`, `legal/`, `home_activity_screen`, `calendar_upcoming_screen`, wrong-email and invite-bootstrap screens. `integration_test/` has only `home_summary_load_test.dart` and `smoke_sign_in_test.dart`. `session_cleanup_test.dart` covers local wipe on sign-out; `delete_account_screen_test.dart` only checks copy.
+- **Mobile:** Untested core modules: `api_client`, `auth_repository`, `user_deleted_session_handler`, `push_notification_service`, `app_router`, `app_link_bootstrap`, `onboarding_storage`, `onboarding_coordinator`, `shell/`. No tests for `search/`, `settings/` (UI), `legal/`, `home_activity_screen`, `calendar_upcoming_screen`, wrong-email and invite-bootstrap screens. Widget coverage added for `app_chip`, onboarding carousel/icon blob, Google button, pill select, photo caption, biometric lock **policy**, and `app_version_gate` (Oct 2026). `integration_test/` has only `home_summary_load_test.dart` and `smoke_sign_in_test.dart`. `session_cleanup_test.dart` covers local wipe on sign-out; `delete_account_screen_test.dart` only checks copy.
 - **Worker:** Push routes now have poison-payload and export-dispatch tests (`test_main_pubsub_payload.py`, `test_main_export_dispatch.py`); invite HTML escaping, FCM chunking, and `pubsub_payload` have unit tests. Baby export SQL is covered by `services/api/tests/integration/test_baby_data_export_postgres.py` (real Postgres, including the baby-graph table manifest). Still thin: weekly digest, Mailjet claim-release edge cases. Lifecycle export tests stub the document builder.
 
 ---

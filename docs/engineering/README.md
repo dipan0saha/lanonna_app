@@ -8,6 +8,7 @@
 | [pre-beta-qa.md](pre-beta-qa.md) | Manual device QA before widening beta |
 | [open-gaps.md](open-gaps.md) | Open pre-beta engineering gaps (Oct 2026 review) |
 | [intentional-dev-decisions.md](intentional-dev-decisions.md) | Accepted dev-only security/IAM/ops tradeoffs (not open work) |
+| [facebook-login-implementation-plan.md](facebook-login-implementation-plan.md) | Deferred Facebook OAuth plan (not in v1) |
 
 Product scope: [../product/requirements.md](../product/requirements.md).
 
