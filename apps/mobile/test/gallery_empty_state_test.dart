@@ -7,7 +7,11 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: GalleryEmptyState(isOwner: true, onAddPhoto: () {}),
+          body: GalleryEmptyState(
+            isOwner: true,
+            babyName: 'Parker',
+            onAddPhoto: () {},
+          ),
         ),
       ),
     );

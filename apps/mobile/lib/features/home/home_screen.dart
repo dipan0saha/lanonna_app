@@ -316,6 +316,9 @@ class _HomeScreenState extends State<HomeScreen>
                     onTeaserSignedUrlError: _refreshSummaryOnly,
                     onVoteInFun: () => context.go(AppRoutes.gamification),
                     onViewGallery: () => context.go('/gallery'),
+                    hideVoteInFun:
+                        _baby!.lifecycleStatus == 'born' ||
+                        _summary?.lifecycleStatus == 'born',
                   ),
               ],
             ],

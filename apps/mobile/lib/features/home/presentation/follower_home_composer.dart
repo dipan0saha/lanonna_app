@@ -23,6 +23,7 @@ class FollowerHomeComposer extends StatelessWidget {
     this.onTeaserSignedUrlError,
     required this.onVoteInFun,
     required this.onViewGallery,
+    this.hideVoteInFun = false,
   });
 
   final BabySummary baby;
@@ -32,6 +33,7 @@ class FollowerHomeComposer extends StatelessWidget {
   final VoidCallback? onTeaserSignedUrlError;
   final VoidCallback onVoteInFun;
   final VoidCallback onViewGallery;
+  final bool hideVoteInFun;
 
   bool get _isExpecting => baby.lifecycleStatus == 'expecting';
 
@@ -65,7 +67,7 @@ class FollowerHomeComposer extends StatelessWidget {
           HomeScrollSection(
             title: 'Quick Actions',
             body: HomeFollowerQuickActions(
-              onVoteInFun: onVoteInFun,
+              onVoteInFun: hideVoteInFun ? null : onVoteInFun,
               onViewGallery: onViewGallery,
             ),
           ),
@@ -101,12 +103,12 @@ class FollowerHomeComposer extends StatelessWidget {
           HomeBirthWelcomeCard(
             welcome: s!.birthWelcome!,
             babyId: baby.id,
-            onSignedUrlError: onRefresh,
+            showShareToInstagram: false,
           ),
         HomeScrollSection(
           title: 'Quick Actions',
           body: HomeFollowerQuickActions(
-            onVoteInFun: onVoteInFun,
+            onVoteInFun: hideVoteInFun ? null : onVoteInFun,
             onViewGallery: onViewGallery,
           ),
         ),

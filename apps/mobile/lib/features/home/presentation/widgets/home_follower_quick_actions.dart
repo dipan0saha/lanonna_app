@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
+import '../../../../core/widgets/tinted_icon_square.dart';
 
 class HomeFollowerQuickActions extends StatelessWidget {
   const HomeFollowerQuickActions({
@@ -25,14 +26,15 @@ class HomeFollowerQuickActions extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Expanded(
-            child: _QuickActionTile(
-              icon: Icons.emoji_events_outlined,
-              label: 'Vote in Fun',
-              onTap: onVoteInFun,
+          if (onVoteInFun != null)
+            Expanded(
+              child: _QuickActionTile(
+                icon: Icons.emoji_events_outlined,
+                label: 'Vote in Fun',
+                onTap: onVoteInFun,
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
+          if (onVoteInFun != null) const SizedBox(width: 12),
           Expanded(
             child: _QuickActionTile(
               icon: Icons.photo_library_outlined,
@@ -73,12 +75,14 @@ class _QuickActionTile extends StatelessWidget {
           ),
           child: Column(
             children: [
-              Icon(icon, size: 22, color: AppColors.primaryDark),
+              TintedIconSquare(icon: icon),
               const SizedBox(height: 8),
               Text(
                 label,
                 textAlign: TextAlign.center,
-                style: context.fieldLabelStyle,
+                style: context.textStyles.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),

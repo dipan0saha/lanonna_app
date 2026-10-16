@@ -293,6 +293,20 @@ class _PredictionsTabState extends State<PredictionsTab> {
             child: const Text('View who voted'),
           ),
           const SizedBox(height: AppMetrics.sectionBlockSpacing),
+          const AppSectionTitle(title: 'Popular Dates'),
+          if (p == null || p.birthdateHistogram.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                closed ? 'No guesses yet' : 'No guesses yet - be the first!',
+              ),
+            )
+          else
+            _PopularDatesList(
+              histogram: p.birthdateHistogram,
+              locale: locale,
+            ),
+          const SizedBox(height: AppMetrics.sectionBlockSpacing),
           const AppSectionTitle(title: 'Birthdate guesses'),
           Card(
             child: Padding(
@@ -346,21 +360,6 @@ class _PredictionsTabState extends State<PredictionsTab> {
               ),
             ),
           ),
-          const SizedBox(height: AppMetrics.sectionBlockSpacing),
-          const AppSectionTitle(title: 'Popular Dates'),
-          if (p == null || p.birthdateHistogram.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Text(
-                closed ? 'No guesses yet' : 'No guesses yet - be the first!',
-              ),
-            )
-          else
-            for (final row in p.birthdateHistogram)
-              ListTile(
-                title: Text(formatApiCalendarDate(row.date, locale)),
-                trailing: Text(l10n.predictionVoteCount(row.count)),
-              ),
           const SizedBox(height: 8),
           if (savedBirthdate != null)
             Padding(
@@ -385,7 +384,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
           if (!closed) ...[
             FilledButton(
               key: const Key('lockPredictionBtn'),
-              onPressed: submitEnabled ? _submitBirthdateGuess : null,
+              onPressed: submitEnabled ? _submitBirthdateGuess : _pickDate,
               child: Text(
                 savedBirthdate == null
                     ? l10n.funBirthdateSaveGuess
@@ -394,6 +393,10 @@ class _PredictionsTabState extends State<PredictionsTab> {
             ),
             const SizedBox(height: 8),
             OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primaryDark,
+                side: const BorderSide(color: AppColors.primaryDark),
+              ),
               onPressed: _pickDate,
               child: Text(l10n.funBirthdatePickDate),
             ),
@@ -457,6 +460,65 @@ class _PredictionsTabState extends State<PredictionsTab> {
       return AppSemantics.button(semanticsId, child, label: label);
     }
     return child;
+  }
+}
+
+class _PopularDatesList extends StatelessWidget {
+  const _PopularDatesList({
+    required this.histogram,
+    required this.locale,
+  });
+
+  final List<BirthdateVoteCount> histogram;
+  final String locale;
+
+  @override
+  Widget build(BuildContext context) {
+    final maxCount = histogram.fold<int>(
+      0,
+      (max, row) => row.count > max ? row.count : max,
+    );
+    return Column(
+      children: [
+        for (final row in histogram)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        formatApiCalendarDate(row.date, locale),
+                        style: context.textStyles.bodySmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '${row.count}',
+                      style: context.textStyles.labelSmall?.copyWith(
+                        color: AppColors.secondaryDark,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: maxCount > 0 ? row.count / maxCount : 0,
+                    minHeight: 8,
+                    backgroundColor: AppColors.border,
+                    color: AppColors.secondaryDark,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
   }
 }
 

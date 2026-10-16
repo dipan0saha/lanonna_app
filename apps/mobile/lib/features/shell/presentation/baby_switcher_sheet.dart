@@ -114,6 +114,18 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
     }
   }
 
+  String _switcherSubtitle(List<BabySummary> babies) {
+    final owners = babies.where((b) => b.role == 'owner').length;
+    final followers = babies.where((b) => b.role == 'follower').length;
+    if (owners > 0 && followers > 0) {
+      return "You're the Owner of one and a Follower of another.";
+    }
+    if (owners > 1) {
+      return 'Choose which baby profile to view.';
+    }
+    return 'Choose which baby profile to view.';
+  }
+
   Future<void> _select(BabySummary baby) async {
     await context.read<SelectedBabyStore>().setSelectedBabyId(baby.id);
     if (mounted) {
@@ -139,7 +151,23 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Switch baby', style: styles.titleMedium),
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+          Text('Switch profile', style: styles.titleSmall),
+          const SizedBox(height: 4),
+          Text(
+            _switcherSubtitle(_babies),
+            style: styles.bodySmall?.copyWith(color: AppColors.muted),
+          ),
           const SizedBox(height: 12),
           if (_loading)
             const Padding(

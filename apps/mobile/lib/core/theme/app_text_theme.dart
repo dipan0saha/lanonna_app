@@ -86,6 +86,16 @@ abstract final class AppTextTheme {
     );
   }
 
+  /// Script display for announcement keepsake first names (prototype --font-script).
+  static TextStyle keepsakeScriptName(TextTheme base) {
+    return GoogleFonts.dancingScript(
+      fontSize: 36,
+      fontWeight: FontWeight.w700,
+      color: AppColors.textPrimary,
+      height: 1.1,
+    );
+  }
+
   /// Typed user input inside bordered fields (not labels or hints).
   static TextStyle fieldInput(TextTheme _) {
     return GoogleFonts.inter(

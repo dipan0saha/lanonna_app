@@ -21,15 +21,29 @@ class ActivitySummaryText extends StatelessWidget {
       color: AppColors.textPrimary,
     );
     final actor = actorDisplayName?.trim();
-    if (actor != null &&
-        actor.isNotEmpty &&
-        summary.startsWith(actor)) {
-      final rest = summary.substring(actor.length);
+    if (actor != null && actor.isNotEmpty) {
+      if (summary.startsWith(actor)) {
+        final rest = summary.substring(actor.length);
+        return Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: actor,
+                style: base?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              TextSpan(text: rest, style: base),
+            ],
+          ),
+        );
+      }
       return Text.rich(
         TextSpan(
           children: [
-            TextSpan(text: actor, style: base?.copyWith(fontWeight: FontWeight.w700)),
-            TextSpan(text: rest, style: base),
+            TextSpan(
+              text: '$actor ',
+              style: base?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            TextSpan(text: summary, style: base),
           ],
         ),
       );

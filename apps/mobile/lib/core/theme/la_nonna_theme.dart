@@ -20,4 +20,8 @@ extension LaNonnaTheme on BuildContext {
 
   AppBrandTheme get brand =>
       Theme.of(this).extension<AppBrandTheme>() ?? AppBrandTheme.light;
+
+  /// Script font for keepsake announcement names.
+  TextStyle get keepsakeScriptNameStyle =>
+      AppTextTheme.keepsakeScriptName(textStyles);
 }

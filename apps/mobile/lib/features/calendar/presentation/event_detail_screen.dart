@@ -7,15 +7,17 @@ import '../../../core/comments/comment_actions.dart';
 import '../../../core/comments/comment_composer_controller.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/presentation/detail_screen_load.dart';
-import '../../../core/presentation/display_initials.dart';
 import '../../../core/media/cached_signed_image.dart';
-import '../../../core/widgets/app_chip.dart';
+import '../../../core/widgets/app_rsvp_tile_row.dart';
+import '../../../core/widgets/app_section_caps_label.dart';
+import '../../../core/widgets/avatar_stack.dart';
 import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/detail_comment_composer.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
+import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
@@ -26,6 +28,20 @@ import '../data/models/calendar_models.dart';
 import '../domain/calendar_navigation.dart';
 import '../domain/calendar_routes.dart';
 import '../domain/rsvp_status_labels.dart';
+
+String _rsvpInlineSummary(AppLocalizations l10n, RsvpSummary summary) {
+  final parts = <String>[];
+  if (summary.going > 0) {
+    parts.add('${summary.going} going');
+  }
+  if (summary.maybe > 0) {
+    parts.add('${summary.maybe} maybe');
+  }
+  if (parts.isEmpty) {
+    return 'No RSVPs yet';
+  }
+  return parts.join(' · ');
+}
 
 class EventDetailScreen extends StatefulWidget {
   const EventDetailScreen({super.key, required this.eventId});
@@ -316,7 +332,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 12),
-                Text('When', style: Theme.of(context).textTheme.labelLarge),
+                const AppSectionCapsLabel('When'),
+                const SizedBox(height: 6),
                 Text(
                   formatEventDetailWhen(
                     detail.startsAt,
@@ -325,10 +342,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 ),
                 if (detail.location != null) ...[
                   const SizedBox(height: 12),
-                  Text(
-                    'Location',
-                    style: Theme.of(context).textTheme.labelLarge,
-                  ),
+                  const AppSectionCapsLabel('Location'),
+                  const SizedBox(height: 6),
                   Text('📍 ${detail.location}'),
                 ],
                 if (detail.videoCallUrl != null) ...[
@@ -368,82 +383,59 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   Text(detail.description!),
                 ],
                 const SizedBox(height: 16),
-                Text(
-                  'Your RSVP',
-                  style: Theme.of(context).textTheme.labelLarge,
-                ),
+                const AppSectionCapsLabel('Your RSVP'),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children: [
-                    AppToggleChip(
-                      label: 'Going',
-                      selected: detail.viewerRsvp == 'going',
-                      onTap: () => _setRsvp('going'),
-                    ),
-                    AppToggleChip(
-                      label: 'Maybe',
-                      selected: detail.viewerRsvp == 'maybe',
-                      onTap: () => _setRsvp('maybe'),
-                    ),
-                    AppToggleChip(
-                      label: "Can't go",
-                      selected: detail.viewerRsvp == 'cant_go',
-                      onTap: () => _setRsvp('cant_go'),
-                    ),
-                  ],
+                AppRsvpTileRow(
+                  selectedStatus: detail.viewerRsvp,
+                  onSelect: _setRsvp,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 InkWell(
                   onTap: () => _showRsvpSheet(detail),
                   child: Row(
                     children: [
-                      if (detail.rsvpAttendees.isNotEmpty)
-                        SizedBox(
-                          height: 28,
-                          width:
-                              (detail.rsvpAttendees.length.clamp(0, 4) * 18.0) +
-                              10,
-                          child: Stack(
-                            children: [
-                              for (
-                                var i = 0;
-                                i < detail.rsvpAttendees.length && i < 4;
-                                i++
-                              )
-                                Positioned(
-                                  left: i * 18.0,
-                                  child: CircleAvatar(
-                                    radius: 14,
-                                    backgroundColor: AppColors.sageTint,
-                                    child: Text(
-                                      displayInitials(
-                                        detail.rsvpAttendees[i].displayName,
-                                      ),
-                                      style: const TextStyle(fontSize: 10),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
+                      AvatarStack(
+                        displayNames: detail.rsvpAttendees
+                            .map((a) => a.displayName)
+                            .toList(),
+                      ),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          rsvpSummaryViewAllTeaser(l10n, detail.rsvpSummary),
-                          style: const TextStyle(
-                            color: AppColors.primaryDark,
+                          _rsvpInlineSummary(l10n, detail.rsvpSummary),
+                          style: context.textStyles.bodySmall?.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
+                        ),
+                      ),
+                      Text(
+                        'View RSVPs ›',
+                        style: context.textStyles.labelSmall?.copyWith(
+                          color: AppColors.primaryDark,
+                          letterSpacing: 0,
                         ),
                       ),
                     ],
                   ),
                 ),
                 const Divider(height: 24),
-                const Text(
+                AppSectionCapsLabel(
                   'Comments',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  trailing: detail.comments.isNotEmpty
+                      ? Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.sageTint,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text('${detail.comments.length}'),
+                        )
+                      : null,
                 ),
+                const SizedBox(height: 8),
                 for (final c in detail.comments)
                   ListTile(
                     title: Text(c.authorDisplayName),

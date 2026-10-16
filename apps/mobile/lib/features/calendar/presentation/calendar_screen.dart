@@ -7,6 +7,7 @@ import '../../../core/presentation/tab_load_kind.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/app_semantics.dart';
+import '../../../core/widgets/app_empty_state.dart';
 import '../../../core/widgets/async_tab_body.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
@@ -400,29 +401,15 @@ class _CalendarScreenState extends State<CalendarScreen>
                     ),
                   ),
                 if (_today.isEmpty && _upcoming.isEmpty)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppMetrics.horizontalPadding,
-                        24,
-                        AppMetrics.horizontalPadding,
-                        24,
-                      ),
-                      child: Column(
-                        children: [
-                          Text('No events yet', style: styles.titleMedium),
-                          const SizedBox(height: 8),
-                          Text(
-                            _isOwner
-                                ? 'Add ultrasounds, showers, or the gender reveal so family knows when to celebrate.'
-                                : 'Nothing on the calendar yet - check back soon.',
-                            textAlign: TextAlign.center,
-                            style: styles.bodyMedium?.copyWith(
-                              color: AppColors.muted,
-                            ),
-                          ),
-                        ],
-                      ),
+                  SliverFillRemaining(
+                    child: AppEmptyState(
+                      icon: Icons.event_outlined,
+                      title: 'No events yet',
+                      message: _isOwner
+                          ? 'Add ultrasounds, showers, or the gender reveal so family knows when to celebrate.'
+                          : 'Nothing on the calendar yet — check back soon.',
+                      actionLabel: _isOwner ? '+ Add Event' : null,
+                      onAction: _isOwner ? _openCreateEvent : null,
                     ),
                   )
                 else if (_upcoming.isEmpty)
@@ -463,6 +450,7 @@ class _CalendarScreenState extends State<CalendarScreen>
                 onPressed: () => _openCreateEvent(),
                 child: const Icon(Icons.add),
               ),
+              label: 'Create event',
             )
           : null,
     );

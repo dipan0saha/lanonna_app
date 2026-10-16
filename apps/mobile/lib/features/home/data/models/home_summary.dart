@@ -183,6 +183,9 @@ class BirthWelcomeSummary {
     this.welcomeVisibleUntil,
     this.photoDisplayUrl,
     this.announcementId,
+    this.birthDate,
+    this.weightText,
+    this.everyoneNotified,
   });
 
   final String babyName;
@@ -190,6 +193,9 @@ class BirthWelcomeSummary {
   final String? welcomeVisibleUntil;
   final String? photoDisplayUrl;
   final String? announcementId;
+  final String? birthDate;
+  final String? weightText;
+  final bool? everyoneNotified;
 
   factory BirthWelcomeSummary.fromJson(Map<String, dynamic>? json) {
     if (json == null) return const BirthWelcomeSummary(babyName: '', daysSinceBirth: 0);
@@ -200,6 +206,9 @@ class BirthWelcomeSummary {
       welcomeVisibleUntil: json['welcome_visible_until'] as String?,
       photoDisplayUrl: ann?['photo_display_url'] as String?,
       announcementId: ann?['announcement_id']?.toString(),
+      birthDate: json['birth_date'] as String?,
+      weightText: json['weight_text'] as String?,
+      everyoneNotified: json['everyone_notified'] as bool?,
     );
   }
 }

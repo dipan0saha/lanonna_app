@@ -27,7 +27,9 @@ void main() {
     await tester.tap(find.text('Open'));
     await tester.pumpAndSettle();
 
+    expect(find.text('Add a Photo'), findsOneWidget);
     expect(find.text(displayPhotoSourceHint()), findsOneWidget);
     expect(find.text('Take photo'), findsOneWidget);
+    expect(find.text('Cancel'), findsOneWidget);
   });
 }

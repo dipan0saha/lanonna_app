@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/la_nonna_theme.dart';
 
-/// Compact sage pill for gender vote totals (home insight + Fun predictions).
+/// Compact orange pill for gender vote totals (home insight + Fun predictions).
 class VoteCountPill extends StatelessWidget {
   const VoteCountPill({super.key, required this.total});
 
@@ -19,8 +19,9 @@ class VoteCountPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.sageTint,
+        color: AppColors.peachTint,
         borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColors.secondaryDark, width: 1),
       ),
       child: Text(
         labelFor(total),
@@ -28,7 +29,7 @@ class VoteCountPill extends StatelessWidget {
           fontSize: 11,
           fontWeight: FontWeight.w800,
           letterSpacing: 0.03,
-          color: AppColors.primaryDark,
+          color: AppColors.secondaryDark,
           height: 1,
         ),
       ),

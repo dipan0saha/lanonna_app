@@ -9,7 +9,6 @@ import '../../../core/time/app_date_time.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
-import '../../../core/widgets/app_chip.dart';
 import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
@@ -112,11 +111,6 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
     if (d == null) {
       return const Scaffold(body: Center(child: Text('No announcement yet')));
     }
-    final birthTimeLabel = formatApiClockTime(
-      d.birthTime,
-      Localizations.localeOf(context).toString(),
-    );
-
     return PrototypeSubpageScaffold(
       title: 'Announcement',
       actions: [
@@ -151,46 +145,15 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
                 16,
               ),
               children: [
-                AnnouncementKeepsakeCard(detail: d, onSignedUrlError: _load),
-                if (d.birthTime != null ||
-                    d.weightText != null ||
-                    d.lengthText != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Column(
-                      children: [
-                        if (birthTimeLabel.isNotEmpty)
-                          _StatRow(
-                            icon: Icons.schedule_outlined,
-                            label: birthTimeLabel,
-                          ),
-                        if (d.weightText != null)
-                          _StatRow(
-                            icon: Icons.monitor_weight_outlined,
-                            label: d.weightText!,
-                          ),
-                        if (d.lengthText != null)
-                          _StatRow(
-                            icon: Icons.straighten,
-                            label: d.lengthText!,
-                          ),
-                      ],
-                    ),
+                Center(
+                  child: AnnouncementKeepsakeCard(
+                    detail: d,
+                    onSignedUrlError: _load,
+                    showEngagementRow: true,
+                    squishCount: d.squishCount,
+                    commentCount: d.commentCount,
+                    onSquishTap: _squish,
                   ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: _squish,
-                      icon: const Icon(Icons.favorite_border, size: 18),
-                      label: Text(l10n.photoSquishCount(d.squishCount)),
-                    ),
-                    const SizedBox(width: 12),
-                    AppBadgeChip(
-                      label: l10n.photoCommentCount(d.commentCount),
-                      dense: true,
-                    ),
-                  ],
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -249,28 +212,6 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatRow extends StatelessWidget {
-  const _StatRow({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 16, color: context.brand.shellIconMuted),
-          const SizedBox(width: 8),
-          Text(label, style: context.textStyles.bodyMedium),
         ],
       ),
     );

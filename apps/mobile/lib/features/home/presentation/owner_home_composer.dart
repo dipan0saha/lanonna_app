@@ -10,6 +10,7 @@ import 'widgets/home_insight_card.dart';
 import 'widgets/home_prd_sections.dart';
 import 'widgets/home_scroll_section.dart';
 import 'widgets/owner_expecting_hero_card.dart';
+import 'widgets/home_next_up_section.dart';
 import 'widgets/owner_getting_started_card.dart';
 import 'widgets/owner_quick_actions_row.dart';
 
@@ -62,6 +63,8 @@ class OwnerHomeComposer extends StatelessWidget {
             ),
             const SizedBox(height: 18),
           ],
+          if (s?.nextUpEvent != null && s!.nextUpEvent!.id.isNotEmpty)
+            HomeNextUpSection(event: s.nextUpEvent!),
           if (s != null && s.showRichInsight)
             HomeFamilyInsightGenderCard(
               summary: s,
@@ -77,7 +80,9 @@ class OwnerHomeComposer extends StatelessWidget {
                 onAction: () => context.push(AppRoutes.inviteFamily),
               ),
             ),
-          if (s != null && s.gettingStarted != null)
+          if (s != null &&
+              s.gettingStarted != null &&
+              s.gettingStarted!.completedCount < s.gettingStarted!.total)
             OwnerGettingStartedCard(
               summary: s.gettingStarted!,
               babyId: baby.id,

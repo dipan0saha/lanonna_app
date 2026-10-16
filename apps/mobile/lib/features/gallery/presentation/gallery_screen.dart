@@ -72,9 +72,9 @@ class _GalleryScreenState extends State<GalleryScreen>
   };
 
   String get _sectionLabel => switch (widget.mode) {
-    GalleryViewMode.all => 'All Photos',
-    GalleryViewMode.recent => 'Last 30 days',
-    GalleryViewMode.favorites => 'Most squished',
+    GalleryViewMode.all => 'ALL PHOTOS',
+    GalleryViewMode.recent => 'RECENT ACTIVITY',
+    GalleryViewMode.favorites => 'FAVORITES',
   };
 
   @override
@@ -367,6 +367,7 @@ class _GalleryScreenState extends State<GalleryScreen>
                 child: _isAllMode
                     ? GalleryEmptyState(
                         isOwner: _isOwner,
+                        babyName: _baby?.name ?? '',
                         onAddPhoto: _isOwner ? _onAddPhoto : null,
                       )
                     : _buildFilteredEmpty(),

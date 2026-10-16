@@ -19,6 +19,7 @@ import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../home/data/home_repository.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../../../core/time/app_date_time.dart';
+import '../../onboarding/presentation/widgets/onboarding_fields.dart';
 import '../../onboarding/presentation/widgets/onboarding_prototype_widgets.dart';
 import '../../onboarding/presentation/widgets/onboarding_typography.dart';
 
@@ -44,6 +45,19 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
 
   bool get _isBorn => _baby?.lifecycleStatus == 'born';
   bool get _isOwner => _baby?.role == 'owner';
+
+  int? get _genderPillIndex {
+    switch (_gender) {
+      case 'male':
+        return 0;
+      case 'female':
+        return 1;
+      case 'unknown':
+        return 2;
+      default:
+        return _isBorn ? null : 2;
+    }
+  }
 
   bool get _hasAvatarPhoto {
     if (_photoFile != null) return true;
@@ -163,30 +177,26 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
           ),
           const OnboardingFieldLabel('Gender'),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => setState(() => _gender = 'male'),
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor:
-                        _gender == 'male' ? AppColors.sageTint : null,
-                  ),
-                  child: const Text('Boy'),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => setState(() => _gender = 'female'),
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor:
-                        _gender == 'female' ? AppColors.peachTint : null,
-                  ),
-                  child: const Text('Girl'),
-                ),
-              ),
-            ],
+          OnboardingPillSelect(
+            options: const ['Boy', 'Girl', 'Not sure yet'],
+            selectedIndex: _genderPillIndex,
+            onSelected: (index) {
+              setState(() {
+                _gender = switch (index) {
+                  0 => 'male',
+                  1 => 'female',
+                  _ => 'unknown',
+                };
+              });
+            },
+            selectedStyleForIndex: (index) {
+              if (index != 1) return null;
+              return const OnboardingPillSelectedStyle(
+                background: AppColors.peachTint,
+                border: AppColors.secondaryDark,
+                foreground: AppColors.secondaryDark,
+              );
+            },
           ),
           ListTile(
             title: Text(_isBorn ? 'Date of birth' : 'Expected due date'),
@@ -216,7 +226,7 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
             onPressed: _saving ? null : _save,
             child: Text(_saving ? 'Saving…' : 'Save Changes'),
           ),
-          TextButton(
+          OutlinedButton(
             onPressed: () => context.pop(),
             child: const Text('Cancel'),
           ),

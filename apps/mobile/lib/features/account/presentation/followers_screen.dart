@@ -5,15 +5,18 @@ import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
 import '../../../core/api/run_mutation.dart';
+import '../../../core/domain/baby_summary.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
-import '../../../core/widgets/app_chip.dart';
-import '../../../core/widgets/app_icon_button.dart';
+import '../../../core/time/app_date_time.dart';
 import '../../../core/widgets/app_bordered_surface.dart';
 import '../../../core/widgets/app_section_title.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/widgets/app_snackbar.dart';
+import '../../../core/widgets/dashed_outline_button.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
+import '../../home/data/home_repository.dart';
 import '../../home/domain/app_routes.dart';
 import '../data/account_repository.dart';
 
@@ -29,6 +32,7 @@ class FollowersScreen extends StatefulWidget {
 class _FollowersScreenState extends State<FollowersScreen> {
   List<MemberRow> _members = [];
   List<InvitationRow> _invites = [];
+  BabySummary? _baby;
   var _loading = true;
   String? _loadError;
 
@@ -45,12 +49,15 @@ class _FollowersScreenState extends State<FollowersScreen> {
     });
     try {
       final repo = context.read<AccountRepository>();
+      final homeRepo = context.read<HomeRepository>();
       final members = await repo.listMembers(widget.babyId);
       final invites = await repo.listInvitations(widget.babyId);
+      final baby = await homeRepo.babyById(widget.babyId);
       if (!mounted) return;
       setState(() {
         _members = members;
         _invites = invites.where((i) => i.status == 'pending').toList();
+        _baby = baby;
         _loading = false;
       });
     } catch (e) {
@@ -62,17 +69,34 @@ class _FollowersScreenState extends State<FollowersScreen> {
     }
   }
 
+  String _inviteTitle(InvitationRow inv) {
+    final label = inv.relationshipLabel?.trim();
+    if (label != null && label.isNotEmpty) return label;
+    return 'Pending invite';
+  }
+
   String _inviteSubtitle(InvitationRow inv) {
     if (inv.emailDeliveryStatus == 'failed') {
       return inv.emailLastError ?? 'Email failed to send';
     }
     if (inv.emailDeliveryStatus == 'sent') {
-      return 'Email sent';
+      return 'Invite email sent';
     }
     if (inv.emailDeliveryStatus == 'pending') {
       return 'Pending — email sending';
     }
-    return inv.status;
+    return inv.email;
+  }
+
+  String? _acceptedLabel(MemberRow member) {
+    final raw = member.joinedAt;
+    if (raw == null || raw.isEmpty) return null;
+    final formatted = formatApiCalendarDate(
+      raw,
+      localeNameForFormatting(context),
+    );
+    if (formatted.isEmpty) return 'Accepted';
+    return 'Accepted · $formatted';
   }
 
   Future<void> _confirmRemove(MemberRow member) async {
@@ -110,7 +134,11 @@ class _FollowersScreenState extends State<FollowersScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final count = _members.where((m) => m.role == 'follower').length;
+    final followers =
+        _members.where((m) => m.role == 'follower').toList(growable: false);
+    final count = followers.length;
+    final babyName = _baby?.name ?? 'Baby';
+
     return AppSemantics.container(
       'followers_screen',
       PrototypeSubpageScaffold(
@@ -138,31 +166,50 @@ class _FollowersScreenState extends State<FollowersScreen> {
                 padding: AppMetrics.subpageScrollPadding,
                 children: [
                   Text(
-                    AppLocalizations.of(context)!.followerCount(count),
-                    style: context.textStyles.bodySmall,
+                    '$babyName · ${l10n.followerCount(count)}',
+                    style: context.textStyles.titleSmall,
                   ),
-                  const SizedBox(height: 12),
-                  if (_members.isEmpty && _invites.isEmpty)
-                    const Text('No followers yet - invite family to join.'),
-                  for (final m in _members)
-                    AppBorderedSurface(
-                      child: ListTile(
-                        title: Text(m.displayName),
-                        subtitle: Text(
-                          m.relationshipLabel ?? m.email ?? m.role,
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            AppBadgeChip(label: m.role),
-                            if (m.canRemove)
-                              AppIconButton(
-                                semanticsId: 'member_remove_${m.firebaseUid}',
-                                label: l10n.memberRemoveAction,
-                                icon: const Icon(Icons.person_remove_outlined),
-                                onPressed: () => _confirmRemove(m),
+                  const SizedBox(height: 16),
+                  if (followers.isEmpty && _invites.isEmpty)
+                    const Text('No followers yet — invite family to join.'),
+                  for (final m in followers)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: AppBorderedSurface(
+                        child: Padding(
+                          padding: const EdgeInsets.all(14),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('👤', style: TextStyle(fontSize: 22)),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      m.displayName,
+                                      style: context.textStyles.titleSmall,
+                                    ),
+                                    if (_acceptedLabel(m) != null)
+                                      Text(
+                                        _acceptedLabel(m)!,
+                                        style: context.textStyles.bodySmall
+                                            ?.copyWith(color: AppColors.muted),
+                                      ),
+                                  ],
+                                ),
                               ),
-                          ],
+                              if (m.canRemove)
+                                TextButton(
+                                  onPressed: () => _confirmRemove(m),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: AppColors.error,
+                                  ),
+                                  child: const Text('Revoke'),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -170,67 +217,104 @@ class _FollowersScreenState extends State<FollowersScreen> {
                     const SizedBox(height: AppMetrics.sectionBlockSpacing),
                     const AppSectionTitle(title: 'Pending invites'),
                     for (final inv in _invites)
-                      ListTile(
-                        title: Text(inv.email),
-                        subtitle: Text(_inviteSubtitle(inv)),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (inv.canResendEmail)
-                              AppIconButton(
-                                semanticsId: 'resend_invite_${inv.id}',
-                                label: 'Resend invitation',
-                                icon: const Icon(Icons.refresh),
-                                onPressed: () async {
-                                  final sent = await runMutation(
-                                    context,
-                                    () => context
-                                        .read<AccountRepository>()
-                                        .resendInvitation(
-                                          widget.babyId,
-                                          inv.id,
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: AppBorderedSurface(
+                          child: Padding(
+                            padding: const EdgeInsets.all(14),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('✉️', style: TextStyle(fontSize: 20)),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        _inviteTitle(inv),
+                                        style: context.textStyles.titleSmall,
+                                      ),
+                                      Text(
+                                        _inviteSubtitle(inv),
+                                        style: context.textStyles.bodySmall
+                                            ?.copyWith(color: AppColors.muted),
+                                      ),
+                                      if (inv.email.isNotEmpty)
+                                        Text(
+                                          inv.email,
+                                          style: context.textStyles.bodySmall,
                                         ),
-                                  );
-                                  if (!sent || !mounted) return;
-                                  AppSnackBar.showInfo(
-                                    context,
-                                    'Invite email queued',
-                                  );
-                                  await _load();
-                                },
-                              ),
-                            AppIconButton(
-                              semanticsId: 'revoke_invite_${inv.id}',
-                              label: 'Revoke invitation',
-                              icon: const Icon(Icons.close),
-                              onPressed: () async {
-                                try {
-                                  await context
-                                      .read<AccountRepository>()
-                                      .revokeInvitation(widget.babyId, inv.id);
-                                  await _load();
-                                } catch (e) {
-                                  if (!context.mounted) return;
-                                  AppSnackBar.showAlert(
-                                    context,
-                                    apiErrorMessage(e),
-                                  );
-                                }
-                              },
+                                    ],
+                                  ),
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    if (inv.canResendEmail)
+                                      TextButton(
+                                        onPressed: () async {
+                                          final sent = await runMutation(
+                                            context,
+                                            () => context
+                                                .read<AccountRepository>()
+                                                .resendInvitation(
+                                                  widget.babyId,
+                                                  inv.id,
+                                                ),
+                                          );
+                                          if (!sent || !mounted) return;
+                                          AppSnackBar.showInfo(
+                                            context,
+                                            'Invite email queued',
+                                          );
+                                          await _load();
+                                        },
+                                        style: TextButton.styleFrom(
+                                          foregroundColor:
+                                              AppColors.primaryDark,
+                                        ),
+                                        child: const Text('Resend'),
+                                      ),
+                                    TextButton(
+                                      onPressed: () async {
+                                        try {
+                                          await context
+                                              .read<AccountRepository>()
+                                              .revokeInvitation(
+                                                widget.babyId,
+                                                inv.id,
+                                              );
+                                          await _load();
+                                        } catch (e) {
+                                          if (!context.mounted) return;
+                                          AppSnackBar.showAlert(
+                                            context,
+                                            apiErrorMessage(e),
+                                          );
+                                        }
+                                      },
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: AppColors.error,
+                                      ),
+                                      child: const Text('Revoke'),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
                   ],
                   const SizedBox(height: 16),
-                  Center(
-                    child: AppSemantics.button(
-                      'followers_invite_more',
-                      TextButton(
-                        onPressed: () => context.push(AppRoutes.inviteFamily),
-                        child: const Text('+ Invite more people'),
-                      ),
+                  AppSemantics.button(
+                    'followers_invite_more',
+                    DashedOutlineButton(
+                      label: '+ Invite more people',
+                      onPressed: () => context.push(AppRoutes.inviteFamily),
                     ),
+                    label: 'Invite more people',
                   ),
                 ],
               ),

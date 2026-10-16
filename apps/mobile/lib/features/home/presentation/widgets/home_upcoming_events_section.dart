@@ -60,7 +60,28 @@ class HomeUpcomingEventsSection extends StatelessWidget {
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Text(event.title, style: text.titleSmall),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(event.title, style: text.titleSmall),
+                              if (dt != null || (event.location?.isNotEmpty ?? false))
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    [
+                                      if (dt != null)
+                                        formatEventDetailWhen(dt, locale),
+                                      if (event.location != null &&
+                                          event.location!.trim().isNotEmpty)
+                                        event.location!.trim(),
+                                    ].join(' · '),
+                                    style: text.bodySmall?.copyWith(
+                                      color: AppColors.muted,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
