@@ -20,6 +20,7 @@ import '../../../core/domain/baby_summary.dart';
 import '../data/models/registry_models.dart';
 import '../data/registry_repository.dart';
 import '../domain/registry_shipping_input.dart';
+import '../../../core/theme/app_button_styles.dart';
 
 class RegistryShippingAddressScreen extends StatefulWidget {
   const RegistryShippingAddressScreen({super.key});
@@ -196,9 +197,7 @@ class _RegistryShippingAddressScreenState
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return PrototypeSubpageScaffold(
@@ -270,7 +269,9 @@ class _RegistryShippingAddressScreenState
               child: Text('Country', style: context.fieldLabelStyle),
             ),
             Padding(
-              padding: const EdgeInsets.only(bottom: AppMetrics.formFieldSpacing),
+              padding: const EdgeInsets.only(
+                bottom: AppMetrics.formFieldSpacing,
+              ),
               child: AppCountryDropdownField(
                 countries: _countries,
                 value: _countryCode,
@@ -292,9 +293,7 @@ class _RegistryShippingAddressScreenState
               const SizedBox(height: AppMetrics.formFieldSpacing - 4),
               OutlinedButton(
                 onPressed: _saving ? null : _clear,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Theme.of(context).colorScheme.error,
-                ),
+                style: AppButtonStyles.outlinedDestructive,
                 child: const Text('Remove address'),
               ),
             ],

@@ -177,6 +177,7 @@ class _GalleryScreenState extends State<GalleryScreen>
         _loading = false;
       });
       rememberTabLoadGeneration(store, baby);
+      onGalleryFullLoadSettled();
     } catch (e) {
       if (!mounted) return;
       final hadBaby = _baby != null;

@@ -64,14 +64,18 @@ class RegistryNeededRow extends StatelessWidget {
           ),
           if (onClaim != null) ...[
             SizedBox(width: AppSpacing.sm),
-            Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.hairline),
-              child: AppGiftPillButton(
-                semanticsId: isOwner
-                    ? 'registry_mark_purchased'
-                    : 'registry_claim_item',
-                label: isOwner ? 'Mark as purchased' : "I'll buy this",
-                onPressed: onClaim,
+            // Flexible lets the pill wrap its label on narrow (360dp) rows
+            // instead of overflowing next to the owner edit/delete icons.
+            Flexible(
+              child: Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.hairline),
+                child: AppGiftPillButton(
+                  semanticsId: isOwner
+                      ? 'registry_mark_purchased'
+                      : 'registry_claim_item',
+                  label: isOwner ? 'Mark as purchased' : "I'll buy this",
+                  onPressed: onClaim,
+                ),
               ),
             ),
           ],

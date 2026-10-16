@@ -146,19 +146,19 @@ class PhotoDetail {
       thumbUrl: json['thumb_url'] as String?,
       uploaderDisplayName:
           json['uploader_display_name'] as String? ?? 'Family member',
-      squishCount: json['squish_count'] as int? ?? 0,
+      squishCount: readInt(json['squish_count']),
       viewerHasSquished: json['viewer_has_squished'] as bool? ?? false,
       comments: commentsRaw is List
           ? commentsRaw
-              .whereType<Map<String, dynamic>>()
-              .map(PhotoComment.fromJson)
-              .toList()
+                .whereType<Map<String, dynamic>>()
+                .map(PhotoComment.fromJson)
+                .toList()
           : [],
       taggedBabies: taggedRaw is List
           ? taggedRaw
-              .whereType<Map<String, dynamic>>()
-              .map(PhotoTaggedBaby.fromJson)
-              .toList()
+                .whereType<Map<String, dynamic>>()
+                .map(PhotoTaggedBaby.fromJson)
+                .toList()
           : [],
     );
   }

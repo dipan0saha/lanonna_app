@@ -51,12 +51,4 @@ void main() {
       expect(l10n.followerCount(3), '3 followers');
     });
   });
-
-  group('registryItemsStillNeeded', () {
-    test('pluralizes 0, 1, 2+', () {
-      expect(l10n.registryItemsStillNeeded(0), '0 items still needed');
-      expect(l10n.registryItemsStillNeeded(1), '1 item still needed');
-      expect(l10n.registryItemsStillNeeded(4), '4 items still needed');
-    });
-  });
 }

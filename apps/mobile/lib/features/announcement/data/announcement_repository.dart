@@ -1,4 +1,5 @@
 import '../../../core/api/api_client.dart';
+import '../../../core/json/json_readers.dart';
 
 class AnnouncementDetail {
   AnnouncementDetail({
@@ -41,8 +42,8 @@ class AnnouncementDetail {
       weightText: json['weight_text'] as String?,
       lengthText: json['length_text'] as String?,
       photoDisplayUrl: json['photo_display_url'] as String?,
-      squishCount: json['squish_count'] as int? ?? 0,
-      commentCount: json['comment_count'] as int? ?? 0,
+      squishCount: readInt(json['squish_count']),
+      commentCount: readInt(json['comment_count']),
       comments: comments.whereType<Map<String, dynamic>>().toList(),
     );
   }
@@ -73,16 +74,19 @@ class AnnouncementRepository {
     String? lengthText,
     String? photoId,
   }) async {
-    final json = await _api.patchJson('/v1/babies/$babyId/announcement', body: {
-      'first_name': firstName,
-      'last_name': lastName,
-      'gender': gender,
-      'birth_date': birthDate,
-      'birth_time': birthTime,
-      'weight_text': weightText,
-      'length_text': lengthText,
-      if (photoId != null) 'photo_id': photoId,
-    });
+    final json = await _api.patchJson(
+      '/v1/babies/$babyId/announcement',
+      body: {
+        'first_name': firstName,
+        'last_name': lastName,
+        'gender': gender,
+        'birth_date': birthDate,
+        'birth_time': birthTime,
+        'weight_text': weightText,
+        'length_text': lengthText,
+        if (photoId != null) 'photo_id': photoId,
+      },
+    );
     return AnnouncementDetail.fromJson(json);
   }
 
@@ -91,8 +95,9 @@ class AnnouncementRepository {
   }
 
   Future<void> addComment(String babyId, String body) async {
-    await _api.postJson('/v1/babies/$babyId/announcement/comments', body: {
-      'body': body,
-    });
+    await _api.postJson(
+      '/v1/babies/$babyId/announcement/comments',
+      body: {'body': body},
+    );
   }
 }

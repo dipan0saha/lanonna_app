@@ -17,6 +17,7 @@ import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../data/registry_repository.dart';
+import '../../../core/theme/app_button_styles.dart';
 
 class RegistryItemFormPrefill {
   RegistryItemFormPrefill({
@@ -149,7 +150,10 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
     if (baby == null || !widget.isEdit) return;
     final ok = await runMutation(
       context,
-      () => context.read<RegistryRepository>().deleteItem(baby.id, widget.itemId!),
+      () => context.read<RegistryRepository>().deleteItem(
+        baby.id,
+        widget.itemId!,
+      ),
     );
     if (!ok || !mounted) return;
     context.read<HomeRefreshSignal>().notifyHomeShouldRefresh();
@@ -248,9 +252,7 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
               const SizedBox(height: AppMetrics.formFieldSpacing - 4),
               OutlinedButton(
                 onPressed: _delete,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Theme.of(context).colorScheme.error,
-                ),
+                style: AppButtonStyles.outlinedDestructive,
                 child: const Text('Delete Item'),
               ),
             ],

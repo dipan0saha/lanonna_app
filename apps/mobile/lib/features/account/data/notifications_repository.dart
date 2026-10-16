@@ -1,5 +1,6 @@
 import '../../../core/api/api_client.dart';
 import '../../../core/time/app_date_time.dart';
+import '../../../core/json/json_readers.dart';
 
 class NotificationPreferences {
   NotificationPreferences({
@@ -126,7 +127,10 @@ class NotificationsRepository {
     if (notifyCommentsEnabled != null) {
       body['notify_comments_enabled'] = notifyCommentsEnabled;
     }
-    final json = await _api.patchJson('/v1/me/notification-preferences', body: body);
+    final json = await _api.patchJson(
+      '/v1/me/notification-preferences',
+      body: body,
+    );
     return NotificationPreferences.fromJson(json);
   }
 
@@ -144,27 +148,28 @@ class NotificationsRepository {
 
   Future<int> markAllRead() async {
     final json = await _api.postJson('/v1/me/notifications/read-all', body: {});
-    return json['updated'] as int? ?? 0;
+    return readInt(json['updated']);
   }
 
   Future<int> unreadCount() async {
     final json = await _api.getJson('/v1/me/notifications/unread-count');
-    return json['count'] as int? ?? 0;
+    return readInt(json['count']);
   }
 
   Future<void> registerDeviceToken({
     required String fcmToken,
     required String platform,
   }) async {
-    await _api.putJson('/v1/me/device-tokens', body: {
-      'fcm_token': fcmToken,
-      'platform': platform,
-    });
+    await _api.putJson(
+      '/v1/me/device-tokens',
+      body: {'fcm_token': fcmToken, 'platform': platform},
+    );
   }
 
   Future<void> unregisterDeviceToken(String fcmToken) async {
-    await _api.deleteJson('/v1/me/device-tokens', body: {
-      'fcm_token': fcmToken,
-    });
+    await _api.deleteJson(
+      '/v1/me/device-tokens',
+      body: {'fcm_token': fcmToken},
+    );
   }
 }

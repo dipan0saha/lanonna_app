@@ -217,18 +217,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String registryItemsStillNeeded(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count items still needed',
-      one: '1 item still needed',
-      zero: '0 items still needed',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String funBirthdateYourGuess(String date) {
     return 'Your guess: $date';
   }
@@ -273,6 +261,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get predictionsClosedNote => 'Predictions closed — baby has arrived';
+
+  @override
+  String get namesClosedNote => 'Name ideas are closed — baby has arrived.';
 
   @override
   String get rsvpStatusGoing => 'Going';
@@ -411,9 +402,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get batchInviteCoOwnerHintManage =>
       '💡 Selecting \"Mother\" or \"Father\" makes that person a co-owner of this baby profile, with the same edit access as you.';
-
-  @override
-  String get batchInviteBabyMissing => 'Baby profile missing.';
 
   @override
   String get batchInviteNoInvitesToSend => 'No invites to send.';

@@ -61,6 +61,15 @@ mixin GalleryListReload<T extends StatefulWidget> on State<T> {
 
   Future<void> refreshGalleryListNow() => _refreshLoadedPhotos();
 
+  /// Call when the full-tab load finishes (success or failure). A change that
+  /// arrived while the full load was in flight may not be in its response, so
+  /// the queued incremental refresh runs now instead of being dropped.
+  void onGalleryFullLoadSettled() {
+    if (!_galleryRefreshQueued || !mounted) return;
+    _galleryRefreshQueued = false;
+    unawaited(_refreshLoadedPhotos());
+  }
+
   Future<void> _refreshLoadedPhotos() async {
     if (_incrementalRefreshInFlight || galleryReloadBlockedByFullLoad) {
       _galleryRefreshQueued = true;

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/widgets/app_semantics.dart';
 import '../../../../core/widgets/google_logo_mark.dart';
 
@@ -59,28 +58,14 @@ class OnboardingGoogleButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final labelStyle = Theme.of(context).textTheme.labelLarge?.copyWith(
-          color: AppColors.textPrimary,
-          fontWeight: FontWeight.w600,
-        );
+      color: AppColors.textPrimary,
+      fontWeight: FontWeight.w600,
+    );
 
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton(
         onPressed: isLoading ? null : onPressed,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: AppColors.surface,
-          foregroundColor: AppColors.textPrimary,
-          minimumSize: const Size(88, AppMetrics.buttonMinHeight),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppMetrics.buttonHorizontalPadding,
-            vertical: AppMetrics.buttonVerticalPadding,
-          ),
-          side: const BorderSide(color: AppColors.border),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppMetrics.buttonRadius),
-          ),
-          textStyle: labelStyle,
-        ),
         child: isLoading
             ? const SizedBox(
                 width: 22,

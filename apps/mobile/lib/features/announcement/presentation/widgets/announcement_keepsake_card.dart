@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../../../../core/media/cached_signed_image.dart';
 import '../../../../core/time/app_date_time.dart';
@@ -135,14 +136,18 @@ class AnnouncementKeepsakeCard extends StatelessWidget {
               children: [
                 if (squishCount != null)
                   AppSquishEngagementPill(
-                    label: '$squishCount squishes',
+                    label: AppLocalizations.of(
+                      context,
+                    )!.photoSquishCount(squishCount!),
                     active: false,
                     onPressed: onSquishTap ?? () {},
                     semanticsId: 'announcement_squish',
                   ),
                 if (commentCount != null)
                   AppEngagementPill(
-                    label: '$commentCount comments',
+                    label: AppLocalizations.of(
+                      context,
+                    )!.photoCommentCount(commentCount!),
                     icon: Icons.chat_bubble_outline,
                   ),
               ],
@@ -209,4 +214,3 @@ class _StatItem {
   final IconData icon;
   final String label;
 }
-

@@ -1,3 +1,5 @@
+import '../../../../core/json/json_readers.dart';
+
 class RegistryShippingAddress {
   const RegistryShippingAddress({
     this.line1,
@@ -38,22 +40,22 @@ class RegistryShippingAddress {
   }
 
   Map<String, dynamic> toPatchJson() => {
-        'line1': _emptyToNull(line1),
-        'line2': _emptyToNull(line2),
-        'city': _emptyToNull(city),
-        'region': _emptyToNull(region),
-        'postal_code': _emptyToNull(postalCode),
-        'country_code': _emptyToNull(countryCode),
-      };
+    'line1': _emptyToNull(line1),
+    'line2': _emptyToNull(line2),
+    'city': _emptyToNull(city),
+    'region': _emptyToNull(region),
+    'postal_code': _emptyToNull(postalCode),
+    'country_code': _emptyToNull(countryCode),
+  };
 
   static Map<String, dynamic> clearPatchJson() => {
-        'line1': null,
-        'line2': null,
-        'city': null,
-        'region': null,
-        'postal_code': null,
-        'country_code': null,
-      };
+    'line1': null,
+    'line2': null,
+    'city': null,
+    'region': null,
+    'postal_code': null,
+    'country_code': null,
+  };
 
   static String? _emptyToNull(String? value) {
     if (value == null) return null;
@@ -114,7 +116,7 @@ class RegistryItem {
       name: json['name'] as String,
       description: json['description'] as String?,
       productUrl: json['product_url'] as String?,
-      priority: json['priority'] as int? ?? 3,
+      priority: readInt(json['priority'], defaultValue: 3),
       catalogSuggestionId: json['catalog_suggestion_id'] as String?,
       isPurchased: json['is_purchased'] as bool? ?? false,
       purchase: purchaseJson != null

@@ -15,7 +15,6 @@ import '../../../core/api/display_photo_upload.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
-import '../../../core/widgets/app_secondary_outlined_button.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../home/data/home_repository.dart';
 import '../../../core/domain/baby_summary.dart';
@@ -91,7 +90,10 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
 
   Future<void> _pickPhoto() async {
     if (!_isOwner) return;
-    final file = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    final file = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
     if (file == null) return;
     setState(() => _photoFile = file);
   }
@@ -117,10 +119,11 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
       final dateIso = _date != null ? toApiCalendarDate(_date!) : null;
       String? avatarUrl = _networkAvatarUrl;
       if (_photoFile != null && !kIsWeb) {
-        avatarUrl = await DisplayPhotoUpload(context.read<ApiClient>()).uploadBabyAvatar(
-          babyProfileId: widget.babyId,
-          imageFile: File(_photoFile!.path),
-        );
+        avatarUrl = await DisplayPhotoUpload(context.read<ApiClient>())
+            .uploadBabyAvatar(
+              babyProfileId: widget.babyId,
+              imageFile: File(_photoFile!.path),
+            );
       }
       if (!mounted) return;
       await context.read<HomeRepository>().updateBaby(
@@ -227,9 +230,10 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
             onPressed: _saving ? null : _save,
             child: Text(_saving ? 'Saving…' : 'Save Changes'),
           ),
-          AppSecondaryOutlinedButton(
-            label: 'Cancel',
+          SizedBox(height: AppSpacing.sm),
+          OutlinedButton(
             onPressed: () => context.pop(),
+            child: const Text('Cancel'),
           ),
         ],
       ),

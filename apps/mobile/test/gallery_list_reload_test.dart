@@ -94,7 +94,7 @@ void main() {
     }
 
     expect(find.text('ALL PHOTOS'), findsOneWidget);
-    expect(find.bySemanticsLabel('Coalesced refresh'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('^Coalesced refresh')), findsOneWidget);
     expect(find.text('2'), findsOneWidget);
     expect(find.text('1'), findsOneWidget);
   });

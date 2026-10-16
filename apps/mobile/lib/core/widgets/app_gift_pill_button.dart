@@ -44,7 +44,7 @@ class AppGiftPillButton extends StatelessWidget {
                 ExcludeSemantics(child: Text('🎁', style: style)),
                 SizedBox(width: AppSpacing.xxs),
               ],
-              AppButtonLabel(label, style: style),
+              Flexible(child: AppButtonLabel(label, style: style)),
             ],
           ),
         ),

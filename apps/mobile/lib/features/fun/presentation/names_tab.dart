@@ -178,6 +178,14 @@ class _NamesTabState extends State<NamesTab> {
           16,
         ),
         children: [
+          if (_readOnly)
+            Padding(
+              padding: EdgeInsets.only(bottom: AppSpacing.md),
+              child: Text(
+                AppLocalizations.of(context)!.namesClosedNote,
+                style: context.textStyles.bodyMedium,
+              ),
+            ),
           if (!_readOnly) _inputCard(),
           if (!_readOnly) const SizedBox(height: 16),
           Row(
@@ -347,11 +355,7 @@ class _NameSuggestionCard extends StatelessWidget {
                     ),
                   )
                 else if (suggestion.viewerHasLiked)
-                  Icon(
-                    Icons.favorite,
-                    size: 20,
-                    color: AppColors.primaryDark,
-                  ),
+                  Icon(Icons.favorite, size: 20, color: AppColors.primaryDark),
                 Semantics(
                   label: l10n.nameLoveCount(suggestion.likeCount),
                   child: Text(

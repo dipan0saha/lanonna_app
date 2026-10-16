@@ -60,7 +60,10 @@ abstract final class AppTheme {
         style: OutlinedButton.styleFrom(
           backgroundColor: AppColors.surface,
           foregroundColor: AppColors.textPrimary,
-          minimumSize: const Size(88, AppMetrics.buttonMinHeight),
+          minimumSize: const Size(
+            AppMetrics.buttonMinWidth,
+            AppMetrics.buttonMinHeight,
+          ),
           padding: const EdgeInsets.symmetric(
             horizontal: AppMetrics.buttonHorizontalPadding,
             vertical: AppMetrics.buttonVerticalPadding,
@@ -80,7 +83,10 @@ abstract final class AppTheme {
           elevation: 0,
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.primaryButtonForeground,
-          minimumSize: const Size(88, AppMetrics.buttonMinHeight),
+          minimumSize: const Size(
+            AppMetrics.buttonMinWidth,
+            AppMetrics.buttonMinHeight,
+          ),
           padding: const EdgeInsets.symmetric(
             horizontal: AppMetrics.buttonHorizontalPadding,
             vertical: AppMetrics.buttonVerticalPadding,
@@ -112,7 +118,10 @@ abstract final class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppMetrics.fieldRadius),
-          borderSide: const BorderSide(color: AppColors.primaryDark, width: 1.5),
+          borderSide: const BorderSide(
+            color: AppColors.primaryDark,
+            width: 1.5,
+          ),
         ),
       ),
       switchTheme: SwitchThemeData(
