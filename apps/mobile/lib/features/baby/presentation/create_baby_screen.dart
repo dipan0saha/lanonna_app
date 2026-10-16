@@ -9,6 +9,7 @@ import '../../../core/time/app_date_time.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_metrics.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../home/data/home_refresh_signal.dart';
@@ -543,7 +544,7 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
     return PrototypeSubpageScaffold(
       title: 'Add Baby',
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: AppMetrics.subpageFormScrollPadding,
         children: [_buildFormColumn()],
       ),
     );

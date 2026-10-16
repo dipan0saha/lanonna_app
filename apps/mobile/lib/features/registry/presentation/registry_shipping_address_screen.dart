@@ -207,12 +207,7 @@ class _RegistryShippingAddressScreenState
         key: _formKey,
         autovalidateMode: _autovalidateMode,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            AppMetrics.horizontalPadding,
-            0,
-            AppMetrics.horizontalPadding,
-            96,
-          ),
+          padding: AppMetrics.subpageFormScrollPadding,
           children: [
             Text(
               'Where should family send registry gifts?',

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../data/models/calendar_models.dart';
 import 'calendar_event_list_tile.dart';
@@ -36,7 +37,12 @@ class CalendarTodayUpcomingList extends StatelessWidget {
     if (today.isNotEmpty) {
       children.add(
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          padding: const EdgeInsets.fromLTRB(
+            AppMetrics.horizontalPadding,
+            16,
+            AppMetrics.horizontalPadding,
+            8,
+          ),
           child: Text(
             'Today',
             style: styles.labelLarge?.copyWith(color: AppColors.muted),
@@ -51,7 +57,12 @@ class CalendarTodayUpcomingList extends StatelessWidget {
     if (today.isNotEmpty || upcoming.isNotEmpty) {
       children.add(
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          padding: const EdgeInsets.fromLTRB(
+            AppMetrics.horizontalPadding,
+            8,
+            AppMetrics.horizontalPadding,
+            8,
+          ),
           child: Text(
             'Upcoming',
             style: styles.labelLarge?.copyWith(color: AppColors.muted),
@@ -63,7 +74,12 @@ class CalendarTodayUpcomingList extends StatelessWidget {
     if (upcoming.isEmpty) {
       children.add(
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          padding: const EdgeInsets.fromLTRB(
+            AppMetrics.horizontalPadding,
+            0,
+            AppMetrics.horizontalPadding,
+            24,
+          ),
           child: Text(
             'No further upcoming events',
             style: styles.bodyMedium?.copyWith(color: AppColors.muted),

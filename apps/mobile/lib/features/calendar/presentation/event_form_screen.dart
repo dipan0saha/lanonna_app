@@ -364,12 +364,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
     return PrototypeSubpageScaffold(
       title: widget.isEdit ? 'Edit Event' : 'New Event',
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(
-          AppMetrics.horizontalPadding,
-          0,
-          AppMetrics.horizontalPadding,
-          96,
-        ),
+        padding: AppMetrics.subpageFormScrollPadding,
         children: [
           AppLabeledTextField(
             semanticsId: 'calendar_event_title',

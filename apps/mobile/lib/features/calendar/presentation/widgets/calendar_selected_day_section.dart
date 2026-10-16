@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../../../core/time/app_date_time.dart';
 import '../../data/models/calendar_models.dart';
@@ -33,7 +34,12 @@ class CalendarSelectedDaySection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+          padding: const EdgeInsets.fromLTRB(
+            AppMetrics.horizontalPadding,
+            8,
+            8,
+            8,
+          ),
           child: Row(
             children: [
               Expanded(
@@ -51,7 +57,12 @@ class CalendarSelectedDaySection extends StatelessWidget {
         ),
         if (events.isEmpty)
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            padding: const EdgeInsets.fromLTRB(
+              AppMetrics.horizontalPadding,
+              8,
+              AppMetrics.horizontalPadding,
+              16,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

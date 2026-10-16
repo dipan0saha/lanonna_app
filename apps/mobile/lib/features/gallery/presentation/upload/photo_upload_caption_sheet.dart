@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/input/app_text_input_kind.dart';
 import '../../../../core/widgets/app_semantics.dart';
 import '../../../../core/widgets/app_text_field.dart';
@@ -51,7 +52,12 @@ class _PhotoUploadCaptionSheetState extends State<_PhotoUploadCaptionSheet> {
     final bottom = MediaQuery.paddingOf(context).bottom;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + bottom),
+      padding: EdgeInsets.fromLTRB(
+        AppMetrics.horizontalPadding,
+        16,
+        AppMetrics.horizontalPadding,
+        16 + bottom,
+      ),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,

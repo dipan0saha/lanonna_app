@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/router/deep_link_navigation.dart';
 import '../../../core/widgets/app_semantics.dart';
+import '../../../core/theme/app_metrics.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../data/notifications_repository.dart';
 
@@ -58,7 +59,7 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
             : _loadError != null
             ? Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(24),
+                  padding: AppMetrics.subpageScrollPadding,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -77,6 +78,7 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
             : RefreshIndicator(
                 onRefresh: _load,
                 child: ListView.builder(
+                  padding: AppMetrics.subpageScrollPadding,
                   itemCount: _items.length,
                   itemBuilder: (context, i) {
                     final n = _items[i];

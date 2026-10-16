@@ -256,7 +256,9 @@ class _CalendarScreenState extends State<CalendarScreen>
             else ...[
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppMetrics.horizontalPadding,
+                  ),
                   child: Card(
                     child: Padding(
                       padding: const EdgeInsets.all(12),
@@ -314,7 +316,12 @@ class _CalendarScreenState extends State<CalendarScreen>
               if (_isOwner)
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.fromLTRB(
+                      AppMetrics.horizontalPadding,
+                      16,
+                      AppMetrics.horizontalPadding,
+                      16,
+                    ),
                     child: InkWell(
                       onTap: () => context.push(CalendarRoutes.aiSuggestions),
                       borderRadius: BorderRadius.circular(12),
@@ -355,7 +362,12 @@ class _CalendarScreenState extends State<CalendarScreen>
                 if (_today.isNotEmpty) ...[
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                      padding: const EdgeInsets.fromLTRB(
+                        AppMetrics.horizontalPadding,
+                        8,
+                        AppMetrics.horizontalPadding,
+                        8,
+                      ),
                       child: Text(
                         'Today',
                         style:
@@ -374,7 +386,12 @@ class _CalendarScreenState extends State<CalendarScreen>
                 if (_today.isNotEmpty || _upcoming.isNotEmpty)
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                      padding: const EdgeInsets.fromLTRB(
+                        AppMetrics.horizontalPadding,
+                        8,
+                        AppMetrics.horizontalPadding,
+                        8,
+                      ),
                       child: Text(
                         'Upcoming',
                         style:
@@ -385,7 +402,12 @@ class _CalendarScreenState extends State<CalendarScreen>
                 if (_today.isEmpty && _upcoming.isEmpty)
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.fromLTRB(
+                        AppMetrics.horizontalPadding,
+                        24,
+                        AppMetrics.horizontalPadding,
+                        24,
+                      ),
                       child: Column(
                         children: [
                           Text('No events yet', style: styles.titleMedium),
@@ -406,7 +428,12 @@ class _CalendarScreenState extends State<CalendarScreen>
                 else if (_upcoming.isEmpty)
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                      padding: const EdgeInsets.fromLTRB(
+                        AppMetrics.horizontalPadding,
+                        0,
+                        AppMetrics.horizontalPadding,
+                        8,
+                      ),
                       child: Text(
                         'No further upcoming events',
                         style: styles.bodyMedium?.copyWith(

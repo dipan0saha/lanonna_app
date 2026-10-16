@@ -12,6 +12,18 @@ abstract final class AppMetrics {
         24,
       );
 
+  /// Horizontal-only outer inset (tab sections, slivers, rows).
+  static EdgeInsets get pageHorizontalInsets =>
+      const EdgeInsets.symmetric(horizontal: horizontalPadding);
+
+  /// Stack subpage forms with primary button at bottom (shipping, registry item).
+  static EdgeInsets get subpageFormScrollPadding => const EdgeInsets.fromLTRB(
+        horizontalPadding,
+        0,
+        horizontalPadding,
+        96,
+      );
+
   /// Home hero / welcome cards (prototype shell).
   static const double homeHeroRadius = 20;
   static const double fieldRadius = 12;

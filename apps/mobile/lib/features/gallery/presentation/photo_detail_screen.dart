@@ -20,6 +20,7 @@ import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/widgets/detail_comment_composer.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_metrics.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../../core/theme/la_nonna_theme.dart';
@@ -494,7 +495,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: AppMetrics.subpageScrollPadding,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

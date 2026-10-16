@@ -10,6 +10,7 @@ import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/validation/form_validators.dart';
 import '../../../core/widgets/app_text_form_field.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../data/fun_repository.dart';
@@ -177,7 +178,12 @@ class _NamesTabState extends State<NamesTab> {
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(
+          AppMetrics.horizontalPadding,
+          16,
+          AppMetrics.horizontalPadding,
+          16,
+        ),
         children: [
           _inputCard(),
           const SizedBox(height: 16),

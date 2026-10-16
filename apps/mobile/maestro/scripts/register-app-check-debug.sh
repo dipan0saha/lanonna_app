@@ -12,9 +12,19 @@ read_token() {
     | sed 's/.*: //' || true
 }
 
+read_token_from_exchange_failure() {
+  adb logcat -d 2>/dev/null \
+    | rg -o 'Failed to exchange debug token \([a-f0-9-]+\)' \
+    | tail -1 \
+    | sed 's/.*(//;s/)//' || true
+}
+
 TOKEN=""
 for _ in $(seq 1 45); do
   TOKEN="$(read_token)"
+  if [[ -z "${TOKEN}" ]]; then
+    TOKEN="$(read_token_from_exchange_failure)"
+  fi
   if [[ -n "${TOKEN}" ]]; then
     break
   fi

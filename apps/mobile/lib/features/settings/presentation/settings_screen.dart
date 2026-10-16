@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../config/app_config.dart';
 import '../../../core/platform/external_link_launcher.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_metrics.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import 'biometric_unlock_settings_tile.dart';
@@ -32,6 +33,7 @@ class SettingsScreen extends StatelessWidget {
     return PrototypeSubpageScaffold(
       title: l10n.settingsTitle,
       body: ListView(
+        padding: AppMetrics.subpageScrollPadding,
         children: [
           const BiometricUnlockSettingsTile(),
           AppSemantics.button(

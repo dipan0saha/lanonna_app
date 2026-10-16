@@ -15,6 +15,7 @@ import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/detail_comment_composer.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_metrics.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
@@ -166,7 +167,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         final l10n = AppLocalizations.of(ctx)!;
         return SafeArea(
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: AppMetrics.subpageScrollPadding,
             children: [
               Text('RSVPs', style: Theme.of(ctx).textTheme.titleMedium),
               const SizedBox(height: 8),
@@ -308,7 +309,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             child: ListView(
               key: PageStorageKey<String>('event-detail-${widget.eventId}'),
               controller: _scrollController,
-              padding: const EdgeInsets.all(16),
+              padding: AppMetrics.subpageScrollPadding,
               children: [
                 Text(
                   detail.title,

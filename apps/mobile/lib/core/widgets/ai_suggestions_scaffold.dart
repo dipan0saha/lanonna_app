@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_metrics.dart';
 import 'ai_suggestion_list_card.dart';
 import 'app_chip.dart';
 
@@ -34,7 +35,12 @@ class AiSuggestionsScaffold extends StatelessWidget {
         children: [
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(
+              AppMetrics.horizontalPadding,
+              16,
+              AppMetrics.horizontalPadding,
+              16,
+            ),
             child: Row(
               children: [
                 for (final tab in tabs)
@@ -61,9 +67,7 @@ class AiSuggestionsScaffold extends StatelessWidget {
                               const SizedBox(height: 48),
                               Center(
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                  ),
+                                  padding: AppMetrics.pageHorizontalInsets,
                                   child: Text(
                                     emptyMessage,
                                     textAlign: TextAlign.center,
