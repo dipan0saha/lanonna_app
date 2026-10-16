@@ -8,8 +8,10 @@ import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/app_section_title.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
+import '../../../core/domain/baby_display_label.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
+import '../../home/presentation/baby_context_reload.dart';
 import '../data/notifications_repository.dart';
 
 class NotificationPreferencesScreen extends StatefulWidget {
@@ -20,7 +22,8 @@ class NotificationPreferencesScreen extends StatefulWidget {
       _NotificationPreferencesScreenState();
 }
 
-class _NotificationPreferencesScreenState extends State<NotificationPreferencesScreen> {
+class _NotificationPreferencesScreenState extends State<NotificationPreferencesScreen>
+    with BabyContextReload {
   NotificationPreferences? _prefs;
   var _loading = true;
   var _saving = false;
@@ -31,6 +34,21 @@ class _NotificationPreferencesScreenState extends State<NotificationPreferencesS
     super.initState();
     _load();
   }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    registerBabyContextListeners();
+  }
+
+  @override
+  void dispose() {
+    disposeBabyContextListeners();
+    super.dispose();
+  }
+
+  @override
+  void onBabyContextReload() => _load();
 
   Future<void> _load() async {
     final prefs = await context.read<NotificationsRepository>().fetchPreferences();
@@ -69,8 +87,7 @@ class _NotificationPreferencesScreenState extends State<NotificationPreferencesS
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final prefs = _prefs;
-    final trimmedName = (_babyName ?? '').trim();
-    final babyLabel = trimmedName.isEmpty ? 'your baby' : 'Baby $trimmedName';
+    final babyLabel = babyNotificationLabel(_babyName ?? '');
     return PrototypeSubpageScaffold(
       title: 'Notification preferences',
       body: _loading || prefs == null

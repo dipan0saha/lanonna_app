@@ -37,14 +37,15 @@ class AppGiftPillButton extends StatelessWidget {
             horizontal: AppMetrics.compactPillHorizontalPadding,
             vertical: AppMetrics.compactPillVerticalPadding,
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
+          child: Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               if (showGiftEmoji) ...[
                 ExcludeSemantics(child: Text('🎁', style: style)),
                 SizedBox(width: AppSpacing.xxs),
               ],
-              Flexible(child: AppButtonLabel(label, style: style)),
+              AppButtonLabel(label, style: style),
             ],
           ),
         ),

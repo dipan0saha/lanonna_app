@@ -31,6 +31,9 @@ void main() {
     expect(find.byIcon(Icons.chat_bubble_outline), findsOneWidget);
     expect(find.textContaining('Grandma Sue'), findsOneWidget);
     expect(find.textContaining('commented on'), findsOneWidget);
+    final rich = tester.widget<RichText>(find.byType(RichText));
+    final actorSpan = (rich.text as TextSpan).children!.first as TextSpan;
+    expect(actorSpan.style?.fontWeight, FontWeight.w700);
     expect(
       find.bySemanticsLabel(RegExp('Grandma Sue commented on')),
       findsOneWidget,

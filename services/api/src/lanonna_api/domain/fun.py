@@ -5,7 +5,11 @@ from datetime import date
 from typing import Any
 
 from lanonna_api.domain.gallery import require_membership
-from lanonna_api.domain.prediction_errors import PredictionsClosedError
+from lanonna_api.domain.fun_closed import ensure_fun_writes_open
+from lanonna_api.domain.prediction_errors import (
+    ensure_predictions_open,
+    fun_writes_closed,
+)
 from lanonna_api.domain.name_suggestions import (
     normalize_gender_for_fun,
     normalize_suggested_name,
@@ -79,12 +83,13 @@ def suggest_name(
     suggested_name: str,
     gender: str,
 ) -> dict[str, Any]:
-    require_membership(firebase_uid, baby_profile_id)
+    membership = require_membership(firebase_uid, baby_profile_id)
+    ensure_fun_writes_open(membership)
     gender = normalize_gender_for_fun(gender)
     suggested_name = normalize_suggested_name(suggested_name)
     if not suggested_name:
         raise ValueError("Name is required.")
-    membership = get_baby_membership(firebase_uid, baby_profile_id)
+    membership = get_baby_membership(firebase_uid, baby_profile_id) or membership
     if find_name_suggestion_case_insensitive(baby_profile_id, suggested_name, gender):
         raise ValueError("That name is already on the list for this gender.")
     if membership and membership["role"] != "owner":
@@ -128,8 +133,8 @@ def remove_suggestion(
     baby_profile_id: uuid.UUID,
     suggestion_id: uuid.UUID,
 ) -> None:
-    require_membership(firebase_uid, baby_profile_id)
-    membership = get_baby_membership(firebase_uid, baby_profile_id)
+    membership = require_membership(firebase_uid, baby_profile_id)
+    ensure_fun_writes_open(membership)
     row = get_name_suggestion(baby_profile_id, suggestion_id)
     if row is None:
         raise LookupError("Suggestion not found.")
@@ -146,7 +151,8 @@ def toggle_like(
     baby_profile_id: uuid.UUID,
     suggestion_id: uuid.UUID,
 ) -> dict[str, Any]:
-    require_membership(firebase_uid, baby_profile_id)
+    membership = require_membership(firebase_uid, baby_profile_id)
+    ensure_fun_writes_open(membership)
     row = get_name_suggestion(baby_profile_id, suggestion_id)
     if row is None:
         raise LookupError("Suggestion not found.")
@@ -158,16 +164,6 @@ def toggle_like(
         remove_likes_for_user_gender(baby_profile_id, firebase_uid, gender, conn)
         add_like(suggestion_id, firebase_uid, conn)
     return {"liked": True}
-
-
-def _predictions_closed(membership: dict[str, Any]) -> bool:
-    """Born is ``baby_profiles.lifecycle_status`` (announce-arrival and create-as-born)."""
-    return (membership.get("lifecycle_status") or "expecting") == "born"
-
-
-def _ensure_predictions_open(membership: dict[str, Any]) -> None:
-    if _predictions_closed(membership):
-        raise PredictionsClosedError()
 
 
 def get_predictions(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, Any]:
@@ -204,7 +200,7 @@ def get_predictions(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, 
             }
             for row in hist
         ],
-        "predictions_closed": _predictions_closed(membership),
+        "predictions_closed": fun_writes_closed(membership),
     }
 
 
@@ -214,7 +210,7 @@ def set_gender_vote(
     gender_value: str,
 ) -> dict[str, Any]:
     membership = require_membership(firebase_uid, baby_profile_id)
-    _ensure_predictions_open(membership)
+    ensure_predictions_open(membership)
     if gender_value not in ("male", "female"):
         raise ValueError("Invalid gender vote.")
     upsert_gender_vote(baby_profile_id, firebase_uid, gender_value, False)
@@ -234,6 +230,6 @@ def set_birthdate_vote(
     predicted_birth_date: date,
 ) -> dict[str, Any]:
     membership = require_membership(firebase_uid, baby_profile_id)
-    _ensure_predictions_open(membership)
+    ensure_predictions_open(membership)
     upsert_birthdate_vote(baby_profile_id, firebase_uid, predicted_birth_date, False)
     return {"date": predicted_birth_date.isoformat()}

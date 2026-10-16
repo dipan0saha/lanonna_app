@@ -30,8 +30,15 @@ mixin GalleryListReload<T extends StatefulWidget> on State<T> {
   /// How many items are currently loaded (pagination offset).
   int get galleryReloadLoadedCount;
 
+  /// Whether more pages exist beyond the loaded window.
+  bool get galleryReloadHasMore;
+
   /// Apply a refreshed list from the API.
-  void applyGalleryReloadResult(List<PhotoSummary> photos, int requestedCount);
+  void applyGalleryReloadResult(
+    List<PhotoSummary> photos,
+    int requestedCount, {
+    bool? hasMore,
+  });
 
   /// Whether a full-tab load is in progress (refresh waits until false).
   bool get galleryReloadBlockedByFullLoad;
@@ -82,14 +89,20 @@ mixin GalleryListReload<T extends StatefulWidget> on State<T> {
       final loadedCount = galleryReloadPhotos.isEmpty
           ? GalleryRepository.pageSize
           : galleryReloadLoadedCount;
-      final fresh = await fetchLoadedPhotoRange(
+      final refresh = await refreshLoadedPhotoList(
         _galleryRepo!,
         babyId,
+        currentItems: galleryReloadPhotos,
         loadedCount: loadedCount,
+        previousHasMore: galleryReloadHasMore,
         sort: galleryReloadSort,
       );
       if (!mounted) return;
-      applyGalleryReloadResult(fresh, loadedCount);
+      applyGalleryReloadResult(
+        refresh.items,
+        refresh.loadedCount,
+        hasMore: refresh.hasMore,
+      );
     } catch (e) {
       if (mounted) {
         AppSnackBar.showAlert(context, apiErrorMessage(e));
