@@ -45,16 +45,32 @@ class _PredictionsTabState extends State<PredictionsTab> {
     _load();
   }
 
+  @override
+  void didUpdateWidget(covariant PredictionsTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Baby switch reuses this State: reset per-baby state and reload.
+    if (oldWidget.baby.id != widget.baby.id) {
+      _payload = null;
+      _pendingGuess = null;
+      _visibleMonth = visibleMonthForBirthdateGuess(
+        dueDate: babyExpectedDueDate(widget.baby),
+      );
+      _load();
+    }
+  }
+
   Future<void> _load() async {
     setState(() {
       _loading = true;
       _error = null;
     });
+    final babyId = widget.baby.id;
     try {
       final payload = await context.read<FunRepository>().fetchPredictions(
-        widget.baby.id,
+        babyId,
       );
-      if (!mounted) return;
+      // Ignore a response for a baby that is no longer shown.
+      if (!mounted || babyId != widget.baby.id) return;
       final due = babyExpectedDueDate(widget.baby);
       setState(() {
         _payload = payload;
@@ -66,7 +82,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
         _pendingGuess = null;
       });
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || babyId != widget.baby.id) return;
       setState(() {
         _loading = false;
         _error = apiErrorMessage(e);

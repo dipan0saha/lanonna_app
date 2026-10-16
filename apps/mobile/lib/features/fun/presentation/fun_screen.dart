@@ -113,15 +113,8 @@ class _FunScreenState extends State<FunScreen>
         // rejects prediction writes with predictions_closed.
         final baby = _baby!;
         return _segment == 0
-            ? NamesTab(
-                key: ValueKey('fun-names-${baby.id}'),
-                baby: baby,
-                readOnly: baby.lifecycleStatus == 'born',
-              )
-            : PredictionsTab(
-                key: ValueKey('fun-predictions-${baby.id}'),
-                baby: baby,
-              );
+            ? NamesTab(baby: baby, readOnly: baby.lifecycleStatus == 'born')
+            : PredictionsTab(baby: baby);
     }
   }
 

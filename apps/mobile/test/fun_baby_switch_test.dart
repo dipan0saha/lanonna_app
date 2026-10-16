@@ -19,7 +19,7 @@ import 'support/fake_notifications_repository.dart';
 
 class _SwitchHomeRepository extends HomeRepository {
   _SwitchHomeRepository(this._babies)
-      : super(ApiClient(idTokenProvider: () async => null));
+    : super(ApiClient(idTokenProvider: () async => null));
 
   final List<BabySummary> _babies;
 
@@ -41,7 +41,7 @@ class _FakeFunRepository extends FunRepository {
   @override
   Future<PredictionsPayload> fetchPredictions(String babyId) async {
     return predictionsByBaby[babyId] ??
-        const PredictionsPayload(
+        PredictionsPayload(
           maleVotes: 0,
           femaleVotes: 0,
           birthdateHistogram: [],
@@ -51,7 +51,7 @@ class _FakeFunRepository extends FunRepository {
 
   @override
   Future<NamesPayload> fetchNames(String babyId) async {
-    return const NamesPayload(suggestions: []);
+    return NamesPayload(suggestions: []);
   }
 }
 
@@ -78,13 +78,13 @@ void main() {
     ];
     final homeRepo = _SwitchHomeRepository(babies);
     final funRepo = _FakeFunRepository();
-    funRepo.predictionsByBaby['baby-a'] = const PredictionsPayload(
+    funRepo.predictionsByBaby['baby-a'] = PredictionsPayload(
       maleVotes: 3,
       femaleVotes: 1,
       birthdateHistogram: [],
       genderVoters: [],
     );
-    funRepo.predictionsByBaby['baby-b'] = const PredictionsPayload(
+    funRepo.predictionsByBaby['baby-b'] = PredictionsPayload(
       maleVotes: 0,
       femaleVotes: 0,
       birthdateHistogram: [],
@@ -123,13 +123,14 @@ void main() {
 
     await tester.tap(find.text('Predictions'));
     await tester.pumpAndSettle();
-    expect(find.text('4'), findsOneWidget);
+    expect(find.text('75% (3)'), findsOneWidget);
 
     await store.setSelectedBabyId('baby-b');
     homeRefresh.notifyBabyContextChanged();
     await tester.pumpAndSettle();
 
     expect(find.text('Predictions closed — baby has arrived'), findsOneWidget);
-    expect(find.text('4'), findsNothing);
+    expect(find.text('75% (3)'), findsNothing);
+    expect(find.text('0% (0)'), findsNWidgets(2));
   });
 }
