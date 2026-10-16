@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_metrics.dart';
 import '../theme/la_nonna_theme.dart';
+import 'app_button_label.dart';
 import 'app_semantics.dart';
 
 /// Solid green gift CTA (registry "I'll buy this" / "Mark as purchased").
@@ -43,14 +44,7 @@ class AppGiftPillButton extends StatelessWidget {
                 ExcludeSemantics(child: Text('🎁', style: style)),
                 SizedBox(width: AppSpacing.xxs),
               ],
-              Flexible(
-                child: Text(
-                  label,
-                  style: style,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
+              AppButtonLabel(label, style: style),
             ],
           ),
         ),

@@ -30,6 +30,6 @@ void main() {
     expect(find.text('Add a Photo'), findsOneWidget);
     expect(find.text(displayPhotoSourceHint()), findsOneWidget);
     expect(find.text('Take photo'), findsOneWidget);
-    expect(find.text('Cancel'), findsOneWidget);
+    expect(find.text('Close'), findsOneWidget);
   });
 }

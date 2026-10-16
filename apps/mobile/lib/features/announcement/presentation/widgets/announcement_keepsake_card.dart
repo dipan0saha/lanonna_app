@@ -5,6 +5,7 @@ import '../../../../core/time/app_date_time.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
+import '../../../../core/widgets/app_engagement_pill.dart';
 import '../../data/announcement_repository.dart';
 
 /// White keepsake card with script first name and four icon stats.
@@ -133,15 +134,16 @@ class AnnouncementKeepsakeCard extends StatelessWidget {
               runSpacing: AppSpacing.sm,
               children: [
                 if (squishCount != null)
-                  _EngagementPill(
-                    icon: Icons.back_hand_outlined,
+                  AppSquishEngagementPill(
                     label: '$squishCount squishes',
-                    onTap: onSquishTap,
+                    active: false,
+                    onPressed: onSquishTap ?? () {},
+                    semanticsId: 'announcement_squish',
                   ),
                 if (commentCount != null)
-                  _EngagementPill(
-                    icon: Icons.chat_bubble_outline,
+                  AppEngagementPill(
                     label: '$commentCount comments',
+                    icon: Icons.chat_bubble_outline,
                   ),
               ],
             ),
@@ -208,44 +210,3 @@ class _StatItem {
   final String label;
 }
 
-class _EngagementPill extends StatelessWidget {
-  const _EngagementPill({required this.icon, required this.label, this.onTap});
-
-  final IconData icon;
-  final String label;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(AppMetrics.buttonRadius),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppMetrics.buttonRadius),
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppMetrics.compactPillHorizontalPadding,
-            vertical: AppMetrics.compactPillVerticalPadding,
-          ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppMetrics.buttonRadius),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: AppMetrics.keepsakeEngagementIconSize,
-                color: AppColors.primaryDark,
-              ),
-              SizedBox(width: AppSpacing.xs),
-              Text(label, style: context.textStyles.labelSmall),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}

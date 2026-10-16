@@ -26,8 +26,8 @@ void main() {
       ),
     );
 
-    expect(find.text('View Announcement'), findsOneWidget);
-    expect(find.text('Share to Instagram'), findsOneWidget);
+    expect(find.textContaining('View Announcement'), findsOneWidget);
+    expect(find.textContaining('Share to Instagram'), findsOneWidget);
     expect(find.textContaining('Born'), findsOneWidget);
     expect(find.bySemanticsIdentifier('home_share_announcement'), findsOneWidget);
   });

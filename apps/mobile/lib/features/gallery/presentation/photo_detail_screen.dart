@@ -13,6 +13,7 @@ import '../../../core/presentation/detail_screen_load.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/input/dismiss_text_input.dart';
 import '../../../core/widgets/app_chip.dart';
+import '../../../core/widgets/app_engagement_pill.dart';
 import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/media/cached_signed_image.dart';
 import '../../../core/widgets/app_snackbar.dart';
@@ -175,7 +176,10 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       await _appendPhotoIdPage();
     }
     var idx = _photoIds.indexOf(widget.photoId);
-    while (mounted && _photoIdListHasMore && idx >= 0 && idx >= _photoIds.length - 1) {
+    while (mounted &&
+        _photoIdListHasMore &&
+        idx >= 0 &&
+        idx >= _photoIds.length - 1) {
       await _appendPhotoIdPage();
       idx = _photoIds.indexOf(widget.photoId);
     }
@@ -405,12 +409,12 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     context.replace(GalleryRoutes.photoDetail(_photoIds[next]));
   }
 
-  bool get _showPhotoNav {
+  bool get _hasPreviousPhoto => _photoIds.indexOf(widget.photoId) > 0;
+
+  bool get _hasNextPhoto {
     final idx = _photoIds.indexOf(widget.photoId);
     if (idx < 0) return false;
-    if (idx > 0) return true;
-    if (idx < _photoIds.length - 1) return true;
-    return _photoIdListHasMore;
+    return idx < _photoIds.length - 1 || _photoIdListHasMore;
   }
 
   @override
@@ -439,20 +443,6 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     return PrototypeSubpageScaffold(
       title: 'Photo',
       actions: [
-        if (_showPhotoNav) ...[
-          AppIconButton(
-            semanticsId: 'photo_previous',
-            label: 'Previous photo',
-            onPressed: () => unawaited(_goAdjacent(-1)),
-            icon: const Icon(Icons.chevron_left, size: 20),
-          ),
-          AppIconButton(
-            semanticsId: 'photo_next',
-            label: 'Next photo',
-            onPressed: () => unawaited(_goAdjacent(1)),
-            icon: const Icon(Icons.chevron_right, size: 20),
-          ),
-        ],
         if (_isOwner)
           AppIconButton(
             semanticsId: 'photo_delete',
@@ -490,6 +480,34 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                           ColoredBox(
                             color: Colors.grey.shade300,
                             child: const Center(child: Text('Processing…')),
+                          ),
+                        if (_hasPreviousPhoto)
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            top: AppSpacing.md,
+                            child: Center(
+                              child: _PhotoHeroNavButton(
+                                semanticsId: 'photo_previous',
+                                label: 'Previous photo',
+                                icon: Icons.keyboard_arrow_up,
+                                onPressed: () => unawaited(_goAdjacent(-1)),
+                              ),
+                            ),
+                          ),
+                        if (_hasNextPhoto)
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            bottom: AppSpacing.md,
+                            child: Center(
+                              child: _PhotoHeroNavButton(
+                                semanticsId: 'photo_next',
+                                label: 'Next photo',
+                                icon: Icons.keyboard_arrow_down,
+                                onPressed: () => unawaited(_goAdjacent(1)),
+                              ),
+                            ),
                           ),
                       ],
                     ),
@@ -547,25 +565,21 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        Row(
+                        Wrap(
+                          spacing: AppSpacing.sm,
+                          runSpacing: AppSpacing.sm,
                           children: [
-                            AppSemantics.button(
-                              'gallery_photo_squish',
-                              OutlinedButton.icon(
-                                onPressed: _toggleSquish,
-                                icon: Icon(
-                                  detail.viewerHasSquished
-                                      ? Icons.favorite
-                                      : Icons.favorite_border,
-                                ),
-                                label: Text(
-                                  l10n.photoSquishCount(detail.squishCount),
-                                ),
-                              ),
+                            AppSquishEngagementPill(
+                              semanticsId: 'gallery_photo_squish',
+                              label: l10n.photoSquishCount(detail.squishCount),
+                              active: detail.viewerHasSquished,
+                              onPressed: _toggleSquish,
                             ),
-                            const SizedBox(width: 8),
-                            Text(
-                              l10n.photoCommentCount(detail.comments.length),
+                            AppEngagementPill(
+                              label: l10n.photoCommentCount(
+                                detail.comments.length,
+                              ),
+                              icon: Icons.chat_bubble_outline,
                             ),
                           ],
                         ),
@@ -703,5 +717,43 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       ),
     );
   }
+}
 
+class _PhotoHeroNavButton extends StatelessWidget {
+  const _PhotoHeroNavButton({
+    required this.semanticsId,
+    required this.label,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final String semanticsId;
+  final String label;
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppSemantics.button(
+      semanticsId,
+      Material(
+        color: AppColors.surface,
+        shape: const CircleBorder(),
+        elevation: AppMetrics.photoNavButtonElevation,
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onPressed,
+          child: Padding(
+            padding: EdgeInsets.all(AppSpacing.xs),
+            child: Icon(
+              icon,
+              color: AppColors.textPrimary,
+              size: AppMetrics.trailingIconSize,
+            ),
+          ),
+        ),
+      ),
+      label: label,
+    );
+  }
 }

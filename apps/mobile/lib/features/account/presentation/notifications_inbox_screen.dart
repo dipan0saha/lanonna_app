@@ -11,6 +11,7 @@ import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../data/notifications_repository.dart';
 import '../data/notifications_unread_signal.dart';
+import 'widgets/inbox_notification_row.dart';
 
 class NotificationsInboxScreen extends StatefulWidget {
   const NotificationsInboxScreen({super.key});
@@ -137,12 +138,7 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
                         : n.title.trim();
                     return AppSemantics.button(
                       'notification_${n.id}',
-                      ListTile(
-                        title: Text(n.title),
-                        subtitle: Text(n.body),
-                        trailing: n.readAt == null
-                            ? const Icon(Icons.circle, size: 10)
-                            : null,
+                      InkWell(
                         onTap: () async {
                           if (n.readAt == null) {
                             await context
@@ -160,6 +156,7 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
                           }
                           await _load();
                         },
+                        child: InboxNotificationRow(notification: n),
                       ),
                       label: label,
                     );

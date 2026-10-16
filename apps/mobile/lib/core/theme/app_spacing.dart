@@ -1,5 +1,7 @@
 /// Standard spacing scale (prototype 4/6/8/12/16/20px rhythm).
 abstract final class AppSpacing {
+  /// Optical nudge (e.g. aligning a subtitle under a title baseline).
+  static const double hairline = 2;
   static const double xxs = 4;
   static const double xs = 6;
   static const double sm = 8;

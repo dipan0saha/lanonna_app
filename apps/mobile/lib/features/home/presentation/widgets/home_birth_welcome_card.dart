@@ -6,6 +6,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../../../core/time/app_date_time.dart';
+import '../../../../core/widgets/app_button_label.dart';
+import '../../../../core/widgets/app_responsive_button_pair.dart';
 import '../../../../core/widgets/app_semantics.dart';
 import '../../../announcement/presentation/announcement_share.dart';
 import '../../data/models/home_summary.dart';
@@ -59,45 +61,46 @@ class HomeBirthWelcomeCard extends StatelessWidget {
             ),
           ],
           SizedBox(height: AppSpacing.lg),
-          Row(
-            children: [
-              Expanded(
-                child: AppSemantics.button(
-                  'home_view_announcement',
-                  FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.surface,
-                      foregroundColor: AppColors.textPrimary,
-                      elevation: 0,
-                    ),
-                    onPressed: () => context.push('/baby/$babyId/announcement'),
-                    child: const Text('View Announcement'),
+          AppResponsiveButtonPair(
+            start: AppSemantics.button(
+              'home_view_announcement',
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.surface,
+                  foregroundColor: AppColors.textPrimary,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppMetrics.buttonHorizontalPadding,
+                    vertical: AppMetrics.buttonVerticalPadding,
                   ),
-                  label: 'View announcement',
                 ),
+                onPressed: () => context.push('/baby/$babyId/announcement'),
+                child: const AppButtonLabel('🎀 View Announcement'),
               ),
-              if (showShareToInstagram) ...[
-                SizedBox(width: AppSpacing.smMd),
-                Expanded(
-                  child: AppSemantics.button(
+              label: 'View announcement',
+            ),
+            end: showShareToInstagram
+                ? AppSemantics.button(
                     'home_share_announcement',
                     OutlinedButton(
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.primaryDark,
                         side: const BorderSide(color: AppColors.primaryDark),
                         backgroundColor: AppColors.surface,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppMetrics.buttonHorizontalPadding,
+                          vertical: AppMetrics.buttonVerticalPadding,
+                        ),
                       ),
                       onPressed: () => AnnouncementShare.shareBabyAnnouncement(
                         context,
                         babyId,
                       ),
-                      child: const Text('Share to Instagram'),
+                      child: const AppButtonLabel('📸 Share to Instagram'),
                     ),
                     label: 'Share announcement to Instagram',
-                  ),
-                ),
-              ],
-            ],
+                  )
+                : null,
           ),
         ],
       ),

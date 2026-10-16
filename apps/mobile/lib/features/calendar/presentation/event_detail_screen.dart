@@ -10,6 +10,7 @@ import '../../../core/time/app_date_time.dart';
 import '../../../core/presentation/detail_screen_load.dart';
 import '../../../core/media/cached_signed_image.dart';
 import '../../../core/widgets/app_rsvp_tile_row.dart';
+import '../../../core/widgets/app_modal_sheet.dart';
 import '../../../core/widgets/app_section_caps_label.dart';
 import '../../../core/widgets/avatar_stack.dart';
 import '../../../core/widgets/app_icon_button.dart';
@@ -178,26 +179,27 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   }
 
   void _showRsvpSheet(EventDetail detail) {
-    showModalBottomSheet<void>(
+    showAppModalSheet<void>(
       context: context,
-      builder: (ctx) {
+      title: 'RSVPs',
+      subtitle: detail.rsvpAttendees.isEmpty
+          ? 'No RSVPs yet'
+          : '${detail.rsvpAttendees.length} responses',
+      bodyBuilder: (ctx) {
         final l10n = AppLocalizations.of(ctx)!;
-        return SafeArea(
-          child: ListView(
-            padding: AppMetrics.subpageScrollPadding,
-            children: [
-              Text('RSVPs', style: Theme.of(ctx).textTheme.titleMedium),
-              const SizedBox(height: 8),
-              if (detail.rsvpAttendees.isEmpty)
-                const Text('No RSVPs yet')
-              else
-                for (final a in detail.rsvpAttendees)
-                  ListTile(
-                    title: Text(a.displayName),
-                    trailing: Text(rsvpStatusLabel(l10n, a.status)),
-                  ),
-            ],
-          ),
+        return ListView(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          children: [
+            if (detail.rsvpAttendees.isEmpty)
+              const Text('No RSVPs yet')
+            else
+              for (final a in detail.rsvpAttendees)
+                ListTile(
+                  title: Text(a.displayName),
+                  trailing: Text(rsvpStatusLabel(l10n, a.status)),
+                ),
+          ],
         );
       },
     );

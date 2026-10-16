@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../core/theme/app_metrics.dart';
-import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/app_modal_sheet.dart';
 import '../../data/calendar_repository.dart';
 import '../../data/models/calendar_models.dart';
 import 'calendar_event_list_tile.dart';
@@ -11,12 +10,11 @@ Future<void> showCalendarPastEventsSheet(
   BuildContext context, {
   required String babyId,
 }) async {
-  await showModalBottomSheet<void>(
+  await showAppModalSheet<void>(
     context: context,
-    isScrollControlled: true,
-    builder: (ctx) {
-      return _CalendarPastEventsBody(babyId: babyId);
-    },
+    title: 'Past events',
+    subtitle: 'Events that have already happened',
+    bodyBuilder: (ctx) => _CalendarPastEventsBody(babyId: babyId),
   );
 }
 
@@ -53,36 +51,18 @@ class _CalendarPastEventsBodyState extends State<_CalendarPastEventsBody> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          AppMetrics.horizontalPadding,
-          AppSpacing.md,
-          AppMetrics.horizontalPadding,
-          AppSpacing.lg,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text('Past events', style: Theme.of(context).textTheme.titleSmall),
-            SizedBox(height: AppSpacing.md),
-            if (_loading)
-              const Center(child: CircularProgressIndicator())
-            else if (_events.isEmpty)
-              const Text('No past events yet.')
-            else
-              Flexible(
-                child: ListView(
-                  shrinkWrap: true,
-                  children: [
-                    for (final e in _events) CalendarEventListTile(event: e),
-                  ],
-                ),
-              ),
-          ],
-        ),
-      ),
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_events.isEmpty) {
+      return const Text('No past events yet.');
+    }
+    return ListView(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      children: [
+        for (final e in _events) CalendarEventListTile(event: e),
+      ],
     );
   }
 }
