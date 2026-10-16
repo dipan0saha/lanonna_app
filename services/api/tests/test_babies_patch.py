@@ -51,3 +51,43 @@ def test_patch_baby_born_invokes_announce_arrival():
     assert call_args.args[0] == "owner-1"
     assert call_args.args[1] == baby_id
     assert call_args.args[2] == birth
+
+
+def test_patch_baby_seeds_profile_name_suggestions_when_expecting():
+    baby_id = uuid.uuid4()
+    row = {
+        "id": baby_id,
+        "name": "Baby",
+        "gender": "unknown",
+        "expected_birth_date": date(2026, 12, 1),
+        "actual_birth_date": None,
+        "lifecycle_status": "expecting",
+        "role": "owner",
+        "relationship_label": None,
+        "avatar_url": None,
+    }
+    with (
+        _auth_as(),
+        patch(
+            "lanonna_api.routers.babies.update_baby_for_owner",
+            return_value=row,
+        ) as update,
+        patch(
+            "lanonna_api.routers.babies.seed_expecting_profile_name_suggestions",
+            return_value=1,
+        ) as seed,
+    ):
+        response = client.patch(
+            f"/v1/babies/{baby_id}",
+            json={
+                "name": "Baby",
+                "profile_name_suggestions": [
+                    {"name": "Liam", "gender": "male"},
+                ],
+            },
+        )
+
+    assert response.status_code == 200
+    update.assert_called_once()
+    seed.assert_called_once()
+    assert seed.call_args.kwargs["baby"] == row

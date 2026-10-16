@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_client.dart';
+import '../../../core/domain/baby_summary.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/input/app_text_input_kind.dart';
@@ -28,8 +29,11 @@ import '../../onboarding/presentation/widgets/onboarding_fields.dart';
 import '../../onboarding/presentation/widgets/onboarding_prototype_widgets.dart';
 import '../../onboarding/presentation/widgets/onboarding_scaffold.dart';
 import '../../onboarding/presentation/widgets/onboarding_typography.dart';
+import '../domain/create_baby_form_hydration.dart';
 import '../domain/create_baby_mode.dart';
 import '../domain/create_baby_submit.dart';
+import '../domain/owner_onboarding_baby_phase.dart';
+import '../../onboarding/domain/owner_onboarding_baby_resolver.dart';
 
 const _genderBoy = 'Boy';
 const _genderGirl = 'Girl';
@@ -97,12 +101,77 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
     );
   }
 
+  bool get _isReviseOnboarding =>
+      _isOnboarding &&
+      ownerOnboardingBabyPhaseFor(context.read<OnboardingCoordinator>()) ==
+          OwnerOnboardingBabyPhase.revise;
+
+  void _applyDraft(CreateBabyDraft draft) {
+    _babyStatus = draft.lifecycle == 'born'
+        ? BabyLifecycle.born
+        : BabyLifecycle.expecting;
+    _genderPill = draft.genderPill;
+    if (_babyStatus == BabyLifecycle.born && _genderPill == _genderUnsure) {
+      _genderPill = _genderBoy;
+    }
+    if (draft.dateIso != null) {
+      final parsed = tryParseApiCalendarDate(draft.dateIso);
+      _selectedDate = _babyStatus == BabyLifecycle.expecting
+          ? onboardingSanitizeExpectingDueDate(parsed)
+          : parsed;
+    }
+    _boyNameController.text = draft.boyName;
+    _girlNameController.text = draft.girlName;
+    if (draft.photoPath != null) {
+      _selectedImage = XFile(draft.photoPath!);
+    }
+    _sharePhotoToGallery = draft.sharePhotoToGallery;
+  }
+
+  Future<void> _hydrateFromServerBabyIfNeeded() async {
+    final coordinator = context.read<OnboardingCoordinator>();
+    if (ownerOnboardingBabyPhaseFor(coordinator) != OwnerOnboardingBabyPhase.revise) {
+      return;
+    }
+    final homeRepo = context.read<HomeRepository>();
+    final session = context.read<AppSession>();
+    var babyId = coordinator.createdBabyId;
+    if (babyId == null || babyId.isEmpty) {
+      babyId = await OwnerOnboardingBabyResolver.resolve(
+        coordinator: coordinator,
+        readStatus: () => session.status,
+        refreshStatus: session.refreshFromApi,
+      );
+    }
+    if (babyId == null || babyId.isEmpty || !mounted) return;
+
+    final babies = await homeRepo.listBabies();
+    final baby = babies.where((b) => b.id == babyId).firstOrNull;
+    if (baby == null || !mounted) return;
+
+    final draft = coordinator.createBabyDraft;
+    final hasDraftNames = draft != null &&
+        (draft.boyName.trim().isNotEmpty || draft.girlName.trim().isNotEmpty);
+    if (!hasDraftNames) {
+      final fromSummary = CreateBabyFormFromSummary.fromBaby(baby);
+      _babyStatus = fromSummary.lifecycle;
+      _genderPill = fromSummary.genderPill;
+      _selectedDate = fromSummary.selectedDate;
+      if (_boyNameController.text.trim().isEmpty) {
+        _boyNameController.text = fromSummary.boyName;
+      }
+      if (_girlNameController.text.trim().isEmpty) {
+        _girlNameController.text = fromSummary.girlName;
+      }
+    }
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_isOnboarding || _synced) return;
     _synced = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       // Widget tests mount this screen without a router. Once a router is
       // present, skip the step write if an invite link already left this route.
@@ -115,27 +184,10 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
       context.read<OnboardingCoordinator>().setStep(OnboardingStep.createBaby);
       final draft = context.read<OnboardingCoordinator>().createBabyDraft;
       if (draft != null) {
-        _babyStatus = draft.lifecycle == 'born'
-            ? BabyLifecycle.born
-            : BabyLifecycle.expecting;
-        _genderPill = draft.genderPill;
-        if (_babyStatus == BabyLifecycle.born && _genderPill == _genderUnsure) {
-          _genderPill = _genderBoy;
-        }
-        if (draft.dateIso != null) {
-          final parsed = tryParseApiCalendarDate(draft.dateIso);
-          _selectedDate = _babyStatus == BabyLifecycle.expecting
-              ? onboardingSanitizeExpectingDueDate(parsed)
-              : parsed;
-        }
-        _boyNameController.text = draft.boyName;
-        _girlNameController.text = draft.girlName;
-        if (draft.photoPath != null) {
-          _selectedImage = XFile(draft.photoPath!);
-        }
-        _sharePhotoToGallery = draft.sharePhotoToGallery;
-        setState(() {});
+        _applyDraft(draft);
       }
+      await _hydrateFromServerBabyIfNeeded();
+      if (mounted) setState(() {});
     });
   }
 
@@ -224,26 +276,43 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
       final homeRepo = context.read<HomeRepository>();
       final api = context.read<ApiClient>();
       final coordinator = context.read<OnboardingCoordinator>();
-      final baby = await submitCreateBaby(
-        context: context,
-        mode: widget.mode,
-        input: CreateBabyFormInput(
-          status: _babyStatus,
-          gender: _selectedGender,
-          selectedDate: _selectedDate,
-          boyName: _boyNameController.text,
-          girlName: _girlNameController.text,
-          selectedImage: _selectedImage,
-          sharePhotoToGallery: _sharePhotoToGallery,
-        ),
-        repository: repository,
-        homeRepo: homeRepo,
-        api: api,
-        coordinator: coordinator,
-        onNonFatalError: (message) {
-          if (mounted) AppSnackBar.showAlert(context, message);
-        },
+      final input = CreateBabyFormInput(
+        status: _babyStatus,
+        gender: _selectedGender,
+        selectedDate: _selectedDate,
+        boyName: _boyNameController.text,
+        girlName: _girlNameController.text,
+        selectedImage: _selectedImage,
+        sharePhotoToGallery: _sharePhotoToGallery,
       );
+
+      final BabySummary baby;
+      if (_isOnboarding) {
+        baby = await submitOwnerOnboardingBaby(
+          context: context,
+          input: input,
+          repository: repository,
+          homeRepo: homeRepo,
+          api: api,
+          coordinator: coordinator,
+          onNonFatalError: (message) {
+            if (mounted) AppSnackBar.showAlert(context, message);
+          },
+        );
+      } else {
+        baby = await submitCreateBaby(
+          context: context,
+          mode: widget.mode,
+          input: input,
+          repository: repository,
+          homeRepo: homeRepo,
+          api: api,
+          coordinator: coordinator,
+          onNonFatalError: (message) {
+            if (mounted) AppSnackBar.showAlert(context, message);
+          },
+        );
+      }
 
       if (!mounted) return;
       final store = context.read<SelectedBabyStore>();
@@ -377,7 +446,11 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
       children: [
         if (_isOnboarding) ...[
           const SizedBox(height: 10),
-          const OnboardingHeadline("Create your baby's profile"),
+          OnboardingHeadline(
+            _isReviseOnboarding
+                ? "Update your baby's profile"
+                : "Create your baby's profile",
+          ),
           const SizedBox(height: 8),
           const OnboardingSupportText(
             'You can always add or change these details later.',

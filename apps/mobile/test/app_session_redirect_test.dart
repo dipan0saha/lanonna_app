@@ -496,16 +496,47 @@ void main() {
   });
 
   test(
-    'owner with baby redirects create-baby to first moment by default',
+    'owner with baby allows create-baby when step is createBaby',
     () async {
       final f = await _fixtures();
       f.session.debugSetStatus(_ownerMidOnboarding());
+      await f.coordinator.setStep(OnboardingStep.createBaby);
       final redirect = f.session.redirectFor(
         isSignedIn: true,
         emailVerified: true,
         location: OnboardingRoutes.ownerCreateBaby,
       );
+      expect(redirect, isNull);
+    },
+  );
+
+  test(
+    'owner with baby resumes first moment when step is firstMoment',
+    () async {
+      final f = await _fixtures();
+      f.session.debugSetStatus(_ownerMidOnboarding());
+      await f.coordinator.setStep(OnboardingStep.firstMoment);
+      final redirect = f.session.redirectFor(
+        isSignedIn: true,
+        emailVerified: true,
+        location: OnboardingRoutes.ownerCarousel,
+      );
       expect(redirect, OnboardingRoutes.ownerFirstMoment);
+    },
+  );
+
+  test(
+    'owner with baby resume path returns create-baby for createBaby step',
+    () async {
+      final f = await _fixtures();
+      f.session.debugSetStatus(_ownerMidOnboarding());
+      await f.coordinator.setStep(OnboardingStep.createBaby);
+      final redirect = f.session.redirectFor(
+        isSignedIn: true,
+        emailVerified: true,
+        location: OnboardingRoutes.ownerCarousel,
+      );
+      expect(redirect, OnboardingRoutes.ownerCreateBaby);
     },
   );
 }

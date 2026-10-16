@@ -100,6 +100,13 @@ def patch_baby(
                 detail=str(exc),
             ) from exc
 
+    suggestions = body.profile_name_suggestions
+    if suggestions and body.lifecycle_status == "born":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="profile_name_suggestions are only allowed for expecting babies.",
+        )
+
     announcing = body.lifecycle_status == "born" and body.actual_birth_date is not None
     try:
         if announcing:
@@ -117,6 +124,21 @@ def patch_baby(
 
     if row is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Baby not found")
+
+    if suggestions:
+        lifecycle = row.get("lifecycle_status") or "expecting"
+        if lifecycle != "expecting":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="profile_name_suggestions are only allowed for expecting babies.",
+            )
+        seed_expecting_profile_name_suggestions(
+            user["uid"],
+            baby_profile_id,
+            [{"name": r.name, "gender": r.gender} for r in suggestions],
+            baby=row,
+        )
+
     return baby_summary_from_row(row)
 
 
