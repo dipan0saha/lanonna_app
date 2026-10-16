@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install API dependencies
+        run: |
+          python -m venv /tmp/api-venv
+          /tmp/api-venv/bin/pip install -q -r services/api/requirements.txt -r services/api/requirements-dev.txt
+          /tmp/api-venv/bin/pip install -q -e packages/lanonna_activity_copy -e services/api
+      - name: API unit + integration tests
+        run: |
+          PYTHONPATH=services/api/src /tmp/api-venv/bin/pytest -q services/api/tests
+
+  worker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Worker tests
+        run: |
+          python -m venv /tmp/api-venv
+          /tmp/api-venv/bin/pip install -q -r services/api/requirements.txt -r services/api/requirements-dev.txt
+          /tmp/api-venv/bin/pip install -q -e packages/lanonna_activity_copy -e services/api
+          /tmp/api-venv/bin/pip install -q -r services/worker/requirements.txt
+          cd services/worker
+          PYTHONPATH=src /tmp/api-venv/bin/python -m pytest -q tests
+
+  mobile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Flutter analyze, tests, l10n guard
+        run: |
+          cd apps/mobile
+          flutter pub get
+          bash scripts/check-no-material-chips.sh
+          bash scripts/check-no-hardcoded-user-strings.sh
+          flutter analyze
+          flutter test

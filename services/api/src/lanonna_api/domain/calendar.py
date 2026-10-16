@@ -21,6 +21,7 @@ from lanonna_api.domain.notifications import (
     safe_enqueue_notify_user,
     safe_enqueue_fan_out,
 )
+from lanonna_api.pagination import offset_page_from_extra_row
 from lanonna_api.repositories.activity_events import insert_activity_event
 from lanonna_api.domain.media_urls import signed_display_url
 from lanonna_api.domain.users_display import (
@@ -112,14 +113,11 @@ def list_calendar_events(
             limit=page_size + 1,
             offset=offset,
         )
-        has_more = len(rows) > page_size
-        page_rows = rows[:page_size]
-        return {
-            "items": [_event_row_to_json(r) for r in page_rows],
-            "has_more": has_more,
-            "offset": offset,
-            "limit": page_size,
-        }
+        page = offset_page_from_extra_row(
+            rows, offset=offset, limit=page_size
+        )
+        page["items"] = [_event_row_to_json(r) for r in page["items"]]
+        return page
     rows = list_events(
         baby_profile_id,
         month_start=month_start,

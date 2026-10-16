@@ -4,6 +4,7 @@ import uuid
 from typing import Any
 
 from lanonna_api.domain import assert_owner_membership, create_pending_photo
+from lanonna_api.pagination import offset_page_from_extra_row
 from lanonna_api.domain.media_urls import signed_display_url, signed_thumb_url
 from lanonna_api.domain.membership_access import require_active_membership
 from lanonna_api.repositories.babies import list_babies_for_user
@@ -99,7 +100,7 @@ def list_gallery(
     limit: int = 50,
     offset: int = 0,
     sort: str = "default",
-) -> list[dict[str, Any]]:
+) -> dict[str, Any]:
     membership = require_membership(firebase_uid, baby_profile_id)
     ready_only = membership["role"] != "owner"
     sort_param: PhotoListSort = (
@@ -108,25 +109,25 @@ def list_gallery(
     rows = list_photos_for_baby(
         baby_profile_id,
         ready_only=ready_only,
-        limit=limit,
+        limit=limit + 1,
         offset=offset,
         sort=sort_param,
     )
-    out = []
-    for row in rows:
-        out.append(
-            {
-                "id": str(row["id"]),
-                "status": row["status"],
-                "caption": row.get("caption"),
-                "created_at": row["created_at"].isoformat(),
-                "thumb_url": signed_thumb_url(row.get("thumb_path")),
-                "squish_count": row["squish_count"],
-                "comment_count": row["comment_count"],
-                "uploader_display_name": uploader_display_name_from_row(row),
-            }
-        )
-    return out
+    page = offset_page_from_extra_row(rows, offset=offset, limit=limit)
+    page["items"] = [
+        {
+            "id": str(row["id"]),
+            "status": row["status"],
+            "caption": row.get("caption"),
+            "created_at": row["created_at"].isoformat(),
+            "thumb_url": signed_thumb_url(row.get("thumb_path")),
+            "squish_count": row["squish_count"],
+            "comment_count": row["comment_count"],
+            "uploader_display_name": uploader_display_name_from_row(row),
+        }
+        for row in page["items"]
+    ]
+    return page
 
 
 def get_photo_detail(

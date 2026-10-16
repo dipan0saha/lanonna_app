@@ -4,9 +4,6 @@ import uuid
 from datetime import date
 from typing import Any, Literal
 
-from lanonna_api.domain.avatar_urls import signed_avatar_url
-from lanonna_api.domain.fun_closed import fun_closed_flags
-
 from pydantic import BaseModel, Field, field_validator
 
 from lanonna_api.schemas.first_moment import NameSuggestionRow
@@ -59,21 +56,3 @@ class BabySummary(BaseModel):
     can_leave: bool = True
     names_closed: bool = False
     predictions_closed: bool = False
-
-
-def baby_summary_from_row(row: dict[str, Any]) -> BabySummary:
-    closed = fun_closed_flags(row)
-    return BabySummary(
-        id=row["id"],
-        name=row["name"],
-        gender=row.get("gender"),
-        expected_birth_date=row.get("expected_birth_date"),
-        actual_birth_date=row.get("actual_birth_date"),
-        lifecycle_status=row.get("lifecycle_status") or "expecting",
-        role=row["role"],
-        relationship_label=row.get("relationship_label"),
-        avatar_url=signed_avatar_url(row.get("avatar_url")),
-        can_leave=bool(row.get("can_leave", True)),
-        names_closed=closed["names_closed"],
-        predictions_closed=closed["predictions_closed"],
-    )

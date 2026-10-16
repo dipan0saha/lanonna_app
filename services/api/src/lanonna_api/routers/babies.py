@@ -17,11 +17,11 @@ from lanonna_api.repositories.babies import (
 from lanonna_api.domain.member_lifecycle import can_leave_baby
 from lanonna_api.domain.onboarding import seed_expecting_profile_name_suggestions, seed_first_moment
 from lanonna_api.repositories.memberships import count_active_owners
+from lanonna_api.domain.baby_summaries import baby_summary_from_row
 from lanonna_api.schemas.babies import (
     BabyCreateRequest,
     BabySummary,
     BabyUpdateRequest,
-    baby_summary_from_row,
 )
 from lanonna_api.schemas.home import HomeSummaryResponse
 from lanonna_api.schemas.first_moment import (

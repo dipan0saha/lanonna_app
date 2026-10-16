@@ -10,6 +10,7 @@ def list_notifications_for_user(
     firebase_uid: str,
     *,
     limit: int = 50,
+    offset: int = 0,
     unread_only: bool = False,
 ) -> list[dict[str, Any]]:
     clause = "AND read_at IS NULL" if unread_only else ""
@@ -23,9 +24,9 @@ def list_notifications_for_user(
             WHERE firebase_uid = %s
             {clause}
             ORDER BY created_at DESC
-            LIMIT %s
+            LIMIT %s OFFSET %s
             """,
-            (firebase_uid, limit),
+            (firebase_uid, limit, offset),
         ).fetchall()
     return [dict(row) for row in rows]
 

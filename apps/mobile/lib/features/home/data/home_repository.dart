@@ -1,4 +1,5 @@
 import '../../../core/api/api_client.dart';
+import '../../../core/api/offset_page.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/domain/baby_summary.dart';
@@ -184,14 +185,8 @@ class HomeRepository {
     final json = await _api.getJson(
       '/v1/babies/$babyId/activity-events?limit=$limit&offset=$offset&scope=$scope',
     );
-    final items = (json['items'] as List<dynamic>? ?? [])
-        .whereType<Map<String, dynamic>>()
-        .map(HomeActivityItem.fromJson)
-        .toList();
-    return ActivityPage(
-      items: items,
-      hasMore: json['has_more'] as bool? ?? false,
-    );
+    final page = parseOffsetPage(json, HomeActivityItem.fromJson, defaultLimit: limit);
+    return ActivityPage(items: page.items, hasMore: page.hasMore);
   }
 }
 

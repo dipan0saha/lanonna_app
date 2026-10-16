@@ -44,7 +44,7 @@ def test_list_gallery_follower_ready_only():
     ) as list_mock:
         list_gallery("uid", baby_id)
         list_mock.assert_called_once_with(
-            baby_id, ready_only=True, limit=50, offset=0, sort="default"
+            baby_id, ready_only=True, limit=51, offset=0, sort="default"
         )
 
 
@@ -59,7 +59,7 @@ def test_list_gallery_passes_favorites_sort():
     ) as list_mock:
         list_gallery("uid", baby_id, sort="favorites")
         list_mock.assert_called_once_with(
-            baby_id, ready_only=False, limit=50, offset=0, sort="favorites"
+            baby_id, ready_only=False, limit=51, offset=0, sort="favorites"
         )
 
 

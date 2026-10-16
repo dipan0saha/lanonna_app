@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../core/api/api_client.dart';
+import '../../../core/api/offset_page.dart';
 import 'models/photo_models.dart';
 
 class GalleryRepository extends ChangeNotifier {
@@ -28,15 +29,12 @@ class GalleryRepository extends ChangeNotifier {
     if (sort != 'default') {
       params['sort'] = sort;
     }
-    final list = await _api.getJsonList(
+    final json = await _api.getJson(
       '/v1/babies/$babyId/photos',
       queryParameters: params,
     );
-    final items = list
-        .whereType<Map<String, dynamic>>()
-        .map(PhotoSummary.fromJson)
-        .toList();
-    return PhotoListPage(items: items, hasMore: items.length >= limit);
+    final page = parseOffsetPage(json, PhotoSummary.fromJson, defaultLimit: limit);
+    return PhotoListPage(items: page.items, hasMore: page.hasMore);
   }
 
   /// Fetches every page (for pickers and upload polling).

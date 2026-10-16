@@ -43,6 +43,7 @@ from lanonna_api.domain.date_validation import (
     validate_actual_birth_date,
 )
 from lanonna_api.domain.fun_closed import fun_closed_flags
+from lanonna_api.pagination import offset_page
 from lanonna_api.domain.notification_metadata import NotificationType
 from lanonna_api.domain.notifications import (
     FanOutSpec,
@@ -137,12 +138,12 @@ def list_activity_events(
         offset=offset,
         event_types=event_types,
     )
-    return {
-        "items": [serialize_activity_item(item) for item in rows],
-        "limit": limit,
-        "offset": offset,
-        "has_more": len(rows) == limit,
-    }
+    return offset_page(
+        [serialize_activity_item(item) for item in rows],
+        offset=offset,
+        limit=limit,
+        has_more=len(rows) == limit,
+    )
 
 
 def _build_home_teasers(baby_profile_id: uuid.UUID) -> dict[str, Any]:
