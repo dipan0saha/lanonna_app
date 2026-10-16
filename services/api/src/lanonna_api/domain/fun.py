@@ -68,12 +68,14 @@ def list_names(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, Any]:
                 "viewer_has_liked": sid in liked_ids,
             }
         )
+    closed = fun_writes_closed(membership) if membership else False
     return {
         "suggestions": suggestions,
         "viewer_liked_by_gender": {
             "male": str(liked["male"]) if liked.get("male") else None,
             "female": str(liked["female"]) if liked.get("female") else None,
         },
+        "names_closed": closed,
     }
 
 

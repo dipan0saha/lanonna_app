@@ -7,7 +7,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, Response, status
 from pydantic import BaseModel, Field
 
-from lanonna_api.auth import current_app_user
+from lanonna_api.auth import AppUser, current_app_user
 from lanonna_api.http_errors import map_domain_errors
 from lanonna_api.domain import fun as fun_domain
 from lanonna_api.input_limits import MAX_FUN_SUGGESTED_NAME_LEN
@@ -34,10 +34,10 @@ class BirthdateVoteBody(BaseModel):
 @router.get("/names")
 def list_names(
     baby_profile_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
-        return fun_domain.list_names(user["uid"], baby_profile_id)
+        return fun_domain.list_names(user.uid, baby_profile_id)
     except Exception as exc:
         raise map_domain_errors(exc) from exc
 
@@ -46,11 +46,11 @@ def list_names(
 def create_name(
     baby_profile_id: uuid.UUID,
     body: NameCreate,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
         return fun_domain.suggest_name(
-            user["uid"],
+            user.uid,
             baby_profile_id,
             body.suggested_name,
             body.gender,
@@ -63,10 +63,10 @@ def create_name(
 def delete_name(
     baby_profile_id: uuid.UUID,
     suggestion_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> Response:
     try:
-        fun_domain.remove_suggestion(user["uid"], baby_profile_id, suggestion_id)
+        fun_domain.remove_suggestion(user.uid, baby_profile_id, suggestion_id)
     except Exception as exc:
         raise map_domain_errors(exc) from exc
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -76,10 +76,10 @@ def delete_name(
 def like_name(
     baby_profile_id: uuid.UUID,
     suggestion_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
-        return fun_domain.toggle_like(user["uid"], baby_profile_id, suggestion_id)
+        return fun_domain.toggle_like(user.uid, baby_profile_id, suggestion_id)
     except Exception as exc:
         raise map_domain_errors(exc) from exc
 
@@ -87,10 +87,10 @@ def like_name(
 @router.get("/predictions")
 def get_predictions(
     baby_profile_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
-        return fun_domain.get_predictions(user["uid"], baby_profile_id)
+        return fun_domain.get_predictions(user.uid, baby_profile_id)
     except Exception as exc:
         raise map_domain_errors(exc) from exc
 
@@ -99,11 +99,11 @@ def get_predictions(
 def put_gender_vote(
     baby_profile_id: uuid.UUID,
     body: GenderVoteBody,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
         return fun_domain.set_gender_vote(
-            user["uid"],
+            user.uid,
             baby_profile_id,
             body.gender,
         )
@@ -115,11 +115,11 @@ def put_gender_vote(
 def put_birthdate_vote(
     baby_profile_id: uuid.UUID,
     body: BirthdateVoteBody,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
         return fun_domain.set_birthdate_vote(
-            user["uid"],
+            user.uid,
             baby_profile_id,
             body.predicted_birth_date,
         )

@@ -7,7 +7,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, Query, Response, status
 from pydantic import BaseModel, Field
 
-from lanonna_api.auth import current_app_user
+from lanonna_api.auth import AppUser, current_app_user
 from lanonna_api.http_errors import map_domain_errors
 from lanonna_api.domain import calendar as calendar_domain
 from lanonna_api.input_limits import (
@@ -54,15 +54,19 @@ def list_events_route(
     month: str | None = Query(default=None, pattern=r"^\d{4}-\d{2}$"),
     upcoming: bool = Query(default=False),
     past: bool = Query(default=False),
-    user: dict[str, Any] = Depends(current_app_user),
-) -> list[dict[str, Any]]:
+    offset: int = Query(default=0, ge=0),
+    limit: int | None = Query(default=None, ge=1, le=100),
+    user: AppUser = Depends(current_app_user),
+) -> list[dict[str, Any]] | dict[str, Any]:
     try:
         return calendar_domain.list_calendar_events(
-            user["uid"],
+            user.uid,
             baby_profile_id,
             month=month,
             upcoming=upcoming,
             past=past,
+            offset=offset,
+            limit=limit,
         )
     except Exception as exc:
         raise map_domain_errors(exc) from exc
@@ -72,11 +76,11 @@ def list_events_route(
 def create_event_route(
     baby_profile_id: uuid.UUID,
     body: EventCreate,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
         return calendar_domain.create_calendar_event(
-            user["uid"],
+            user.uid,
             baby_profile_id,
             title=body.title,
             starts_at=body.starts_at,
@@ -95,10 +99,10 @@ def create_event_route(
 def event_detail(
     baby_profile_id: uuid.UUID,
     event_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
-        return calendar_domain.get_event_detail(user["uid"], baby_profile_id, event_id)
+        return calendar_domain.get_event_detail(user.uid, baby_profile_id, event_id)
     except Exception as exc:
         raise map_domain_errors(exc) from exc
 
@@ -108,12 +112,12 @@ def patch_event(
     baby_profile_id: uuid.UUID,
     event_id: uuid.UUID,
     body: EventUpdate,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, Any]:
     fields = body.model_dump(exclude_unset=True)
     try:
         return calendar_domain.update_calendar_event(
-            user["uid"], baby_profile_id, event_id, fields
+            user.uid, baby_profile_id, event_id, fields
         )
     except Exception as exc:
         raise map_domain_errors(exc) from exc
@@ -123,10 +127,10 @@ def patch_event(
 def delete_event_route(
     baby_profile_id: uuid.UUID,
     event_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> Response:
     try:
-        calendar_domain.remove_calendar_event(user["uid"], baby_profile_id, event_id)
+        calendar_domain.remove_calendar_event(user.uid, baby_profile_id, event_id)
     except Exception as exc:
         raise map_domain_errors(exc) from exc
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -137,11 +141,11 @@ def rsvp_route(
     baby_profile_id: uuid.UUID,
     event_id: uuid.UUID,
     body: RsvpBody,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
         return calendar_domain.set_rsvp(
-            user["uid"], baby_profile_id, event_id, body.status
+            user.uid, baby_profile_id, event_id, body.status
         )
     except Exception as exc:
         raise map_domain_errors(exc) from exc
@@ -157,11 +161,11 @@ def patch_event_comment(
     event_id: uuid.UUID,
     comment_id: uuid.UUID,
     body: CommentPatch,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
         return calendar_domain.edit_event_comment(
-            user["uid"], baby_profile_id, event_id, comment_id, body.body
+            user.uid, baby_profile_id, event_id, comment_id, body.body
         )
     except Exception as exc:
         raise map_domain_errors(exc) from exc
@@ -172,11 +176,11 @@ def create_event_comment(
     baby_profile_id: uuid.UUID,
     event_id: uuid.UUID,
     body: CommentBody,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
         return calendar_domain.add_event_comment(
-            user["uid"], baby_profile_id, event_id, body.body
+            user.uid, baby_profile_id, event_id, body.body
         )
     except Exception as exc:
         raise map_domain_errors(exc) from exc
@@ -190,11 +194,11 @@ def delete_event_comment_route(
     baby_profile_id: uuid.UUID,
     event_id: uuid.UUID,
     comment_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> Response:
     try:
         calendar_domain.delete_event_comment(
-            user["uid"], baby_profile_id, event_id, comment_id
+            user.uid, baby_profile_id, event_id, comment_id
         )
     except Exception as exc:
         raise map_domain_errors(exc) from exc

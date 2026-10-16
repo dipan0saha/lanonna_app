@@ -5,7 +5,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from lanonna_api.auth import current_app_user
+from lanonna_api.auth import AppUser, current_app_user
 from lanonna_api.repositories.device_tokens import delete_device_token, upsert_device_token
 from lanonna_api.repositories.notifications import (
     count_unread_notifications,
@@ -21,16 +21,16 @@ router = APIRouter(prefix="/v1/me", tags=["notifications"])
 
 @router.get("/notifications/unread-count")
 def unread_notification_count(
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, int]:
-    return {"count": count_unread_notifications(user["uid"])}
+    return {"count": count_unread_notifications(user.uid)}
 
 
 @router.get("/notifications")
 def list_my_notifications(
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> list[dict[str, Any]]:
-    rows = list_notifications_for_user(user["uid"], limit=50)
+    rows = list_notifications_for_user(user.uid, limit=50)
     return [
         {
             "id": str(r["id"]),
@@ -40,6 +40,9 @@ def list_my_notifications(
             "title": r["title"],
             "body": r["body"],
             "deep_link": r.get("deep_link"),
+            "notification_type": r.get("notification_type") or "generic",
+            "actor_firebase_uid": r.get("actor_firebase_uid"),
+            "actor_display_name": r.get("actor_display_name"),
             "read_at": r["read_at"].isoformat() if r.get("read_at") else None,
             "created_at": r["created_at"].isoformat(),
         }
@@ -50,45 +53,45 @@ def list_my_notifications(
 @router.put("/device-tokens")
 def register_device_token(
     body: DeviceTokenUpsertRequest,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, str]:
-    upsert_device_token(user["uid"], body.fcm_token.strip(), body.platform)
+    upsert_device_token(user.uid, body.fcm_token.strip(), body.platform)
     return {"status": "ok"}
 
 
 @router.delete("/device-tokens")
 def unregister_device_token(
     body: DeviceTokenDeleteRequest,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, str]:
-    delete_device_token(user["uid"], body.fcm_token.strip())
+    delete_device_token(user.uid, body.fcm_token.strip())
     return {"status": "ok"}
 
 
 @router.post("/system-announcements/{announcement_id}/dismiss")
 def dismiss_system_announcement(
     announcement_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, str]:
-    if not dismiss_announcement(announcement_id, user["uid"]):
+    if not dismiss_announcement(announcement_id, user.uid):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
     return {"status": "ok"}
 
 
 @router.post("/notifications/read-all")
 def mark_all_read(
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, int]:
-    updated = mark_all_notifications_read(user["uid"])
+    updated = mark_all_notifications_read(user.uid)
     return {"updated": updated}
 
 
 @router.patch("/notifications/{notification_id}/read")
 def mark_read(
     notification_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, str]:
-    ok = mark_notification_read(notification_id, user["uid"])
+    ok = mark_notification_read(notification_id, user.uid)
     if not ok:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
     return {"status": "ok"}

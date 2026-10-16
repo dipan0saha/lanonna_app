@@ -76,6 +76,9 @@ def publish_notify_fan_out(
     exclude_firebase_uid: str | None,
     firebase_uids: list[str],
     notification_channel: str | None = None,
+    notification_type: str = "generic",
+    actor_firebase_uid: str | None = None,
+    actor_display_name: str | None = None,
 ) -> None:
     payload = {
         "type": "notify_fan_out",
@@ -86,6 +89,9 @@ def publish_notify_fan_out(
         "recipient_mode": recipient_mode,
         "exclude_firebase_uid": exclude_firebase_uid,
         "firebase_uids": firebase_uids,
+        "notification_type": notification_type,
+        "actor_firebase_uid": actor_firebase_uid,
+        "actor_display_name": actor_display_name,
     }
     if notification_channel:
         payload["notification_channel"] = notification_channel
@@ -100,6 +106,9 @@ def publish_notify_user(
     deep_link: str,
     baby_profile_id: uuid.UUID | None,
     notification_channel: str | None = None,
+    notification_type: str = "generic",
+    actor_firebase_uid: str | None = None,
+    actor_display_name: str | None = None,
 ) -> None:
     payload = {
         "type": "notify_user",
@@ -108,6 +117,9 @@ def publish_notify_user(
         "body": body,
         "deep_link": deep_link,
         "baby_profile_id": str(baby_profile_id) if baby_profile_id else None,
+        "notification_type": notification_type,
+        "actor_firebase_uid": actor_firebase_uid,
+        "actor_display_name": actor_display_name,
     }
     if notification_channel:
         payload["notification_channel"] = notification_channel

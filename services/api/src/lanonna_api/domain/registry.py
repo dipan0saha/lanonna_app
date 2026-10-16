@@ -7,6 +7,7 @@ from lanonna_api.domain import assert_owner_membership
 from lanonna_api.domain.catalog_suggestion_ids import normalize_catalog_suggestion_id
 from lanonna_api.domain.url_validation import normalize_optional_http_url
 from lanonna_api.domain.gallery import require_membership
+from lanonna_api.domain.notification_metadata import NotificationType, actor_fields
 from lanonna_api.domain.users_display import actor_display_name
 from lanonna_api.domain.users_display import purchaser_display_name_from_row
 from lanonna_api.domain.notifications import (
@@ -184,6 +185,8 @@ def claim_purchase(
             recipient_mode="baby_members",
             exclude_firebase_uid=firebase_uid,
             notification_channel=NotificationChannel.REGISTRY,
+            notification_type=NotificationType.REGISTRY,
+            **actor_fields(firebase_uid),
         )
     else:
         activity_text = f'Someone is buying "{item_name}"'
@@ -196,6 +199,8 @@ def claim_purchase(
             recipient_mode="baby_owners",
             exclude_firebase_uid=firebase_uid,
             notification_channel=NotificationChannel.REGISTRY,
+            notification_type=NotificationType.REGISTRY,
+            **actor_fields(firebase_uid),
         )
     insert_activity_event(
         baby_profile_id,

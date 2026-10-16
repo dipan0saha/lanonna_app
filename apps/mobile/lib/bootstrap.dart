@@ -16,7 +16,6 @@ import 'core/network/connectivity_service.dart';
 import 'core/router/router_refresh.dart';
 import 'features/account/data/account_repository.dart';
 import 'features/account/data/notifications_repository.dart';
-import 'features/account/data/notifications_unread_signal.dart';
 import 'features/announcement/data/announcement_repository.dart';
 import 'features/calendar/data/calendar_repository.dart';
 import 'features/fun/data/fun_repository.dart';
@@ -75,7 +74,6 @@ Future<Widget> bootstrapLaNonnaApp() async {
   final funRepository = FunRepository(apiClient);
   final accountRepository = AccountRepository(apiClient);
   final notificationsRepository = NotificationsRepository(apiClient);
-  final notificationsUnreadSignal = NotificationsUnreadSignal();
   final announcementRepository = AnnouncementRepository(apiClient);
   final invitationsRepository = InvitationsRepository(apiClient);
   final searchRepository = SearchRepository(apiClient);
@@ -142,9 +140,8 @@ Future<Widget> bootstrapLaNonnaApp() async {
       Provider<RegistryRepository>.value(value: registryRepository),
       Provider<FunRepository>.value(value: funRepository),
       Provider<AccountRepository>.value(value: accountRepository),
-      Provider<NotificationsRepository>.value(value: notificationsRepository),
-      ChangeNotifierProvider<NotificationsUnreadSignal>.value(
-        value: notificationsUnreadSignal,
+      ChangeNotifierProvider<NotificationsRepository>.value(
+        value: notificationsRepository,
       ),
       Provider<AnnouncementRepository>.value(value: announcementRepository),
       Provider<InvitationsRepository>.value(value: invitationsRepository),

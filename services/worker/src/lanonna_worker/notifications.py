@@ -102,16 +102,30 @@ def _insert_notification(
     body: str,
     deep_link: str | None,
     baby_profile_id: uuid.UUID | None,
+    notification_type: str = "generic",
+    actor_firebase_uid: str | None = None,
+    actor_display_name: str | None = None,
 ) -> uuid.UUID:
     notification_id = uuid.uuid4()
     conn.execute(
         """
         INSERT INTO notifications (
-            id, firebase_uid, baby_profile_id, title, body, deep_link
+            id, firebase_uid, baby_profile_id, title, body, deep_link,
+            notification_type, actor_firebase_uid, actor_display_name
         )
-        VALUES (%s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """,
-        (notification_id, firebase_uid, baby_profile_id, title, body, deep_link),
+        (
+            notification_id,
+            firebase_uid,
+            baby_profile_id,
+            title,
+            body,
+            deep_link,
+            notification_type,
+            actor_firebase_uid,
+            actor_display_name,
+        ),
     )
     return notification_id
 
@@ -266,6 +280,9 @@ def process_notify_fan_out(
     exclude = payload.get("exclude_firebase_uid")
     explicit_uids = [str(u) for u in payload.get("firebase_uids") or []]
     channel = payload.get("notification_channel")
+    notification_type = str(payload.get("notification_type") or "generic")
+    actor_firebase_uid = payload.get("actor_firebase_uid")
+    actor_display_name = payload.get("actor_display_name")
     delivery_key = resolve_delivery_key(payload, pubsub_message_id=pubsub_message_id)
 
     with get_connection() as conn:
@@ -289,6 +306,9 @@ def process_notify_fan_out(
                 body=body,
                 deep_link=deep_link,
                 baby_profile_id=baby_id,
+                notification_type=notification_type,
+                actor_firebase_uid=actor_firebase_uid,
+                actor_display_name=actor_display_name,
             )
             _send_fcm(
                 conn,
@@ -313,6 +333,9 @@ def process_notify_user(
     baby_raw = payload.get("baby_profile_id")
     baby_id = uuid.UUID(str(baby_raw)) if baby_raw else None
     channel = payload.get("notification_channel")
+    notification_type = str(payload.get("notification_type") or "generic")
+    actor_firebase_uid = payload.get("actor_firebase_uid")
+    actor_display_name = payload.get("actor_display_name")
     delivery_key = resolve_delivery_key(payload, pubsub_message_id=pubsub_message_id)
 
     with get_connection() as conn:
@@ -328,6 +351,9 @@ def process_notify_user(
             body=body,
             deep_link=deep_link,
             baby_profile_id=baby_id,
+            notification_type=notification_type,
+            actor_firebase_uid=actor_firebase_uid,
+            actor_display_name=actor_display_name,
         )
         _send_fcm(
             conn,

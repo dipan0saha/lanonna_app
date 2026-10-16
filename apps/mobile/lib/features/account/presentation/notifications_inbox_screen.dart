@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
@@ -10,7 +11,6 @@ import '../../../core/theme/app_metrics.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../data/notifications_repository.dart';
-import '../data/notifications_unread_signal.dart';
 import 'widgets/inbox_notification_row.dart';
 
 class NotificationsInboxScreen extends StatefulWidget {
@@ -28,10 +28,6 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
   String? _loadError;
 
   bool get _hasUnread => _items.any((n) => n.readAt == null);
-
-  void _notifyUnreadChanged() {
-    context.read<NotificationsUnreadSignal>().notifyUnreadChanged();
-  }
 
   @override
   void initState() {
@@ -66,7 +62,6 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
     try {
       await context.read<NotificationsRepository>().markAllRead();
       if (!mounted) return;
-      _notifyUnreadChanged();
       await _load();
     } catch (e) {
       if (!mounted) return;
@@ -78,10 +73,11 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return AppSemantics.container(
       'notifications_inbox',
       PrototypeSubpageScaffold(
-        title: 'Notifications',
+        title: l10n.notificationsInboxTitle,
         actions: _loading || _loadError != null || !_hasUnread
             ? null
             : [
@@ -90,7 +86,7 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
                   TextButton(
                     onPressed: _markingAllRead ? null : _markAllRead,
                     child: Text(
-                      'Mark all read',
+                      l10n.notificationsMarkAllRead,
                       style: TextStyle(
                         color: _markingAllRead
                             ? AppColors.muted
@@ -98,7 +94,7 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
                       ),
                     ),
                   ),
-                  label: 'Mark all read',
+                  label: l10n.notificationsMarkAllRead,
                 ),
               ],
         body: _loading
@@ -114,7 +110,7 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
                       const SizedBox(height: 12),
                       FilledButton(
                         onPressed: _load,
-                        child: const Text('Retry'),
+                        child: Text(l10n.actionRetry),
                       ),
                     ],
                   ),
@@ -123,8 +119,8 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
             : _items.isEmpty
             ? AppEmptyState(
                 icon: Icons.notifications_none_outlined,
-                title: 'No notifications yet',
-                message: 'When family comments, RSVPs, or joins, you\'ll see it here.',
+                title: l10n.notificationsInboxEmptyTitle,
+                message: l10n.notificationsInboxEmptyMessage,
               )
             : RefreshIndicator(
                 onRefresh: _load,
@@ -134,7 +130,7 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
                   itemBuilder: (context, i) {
                     final n = _items[i];
                     final label = n.title.trim().isEmpty
-                        ? 'Notification'
+                        ? l10n.inboxNotificationFallbackTitle
                         : n.title.trim();
                     return AppSemantics.button(
                       'notification_${n.id}',
@@ -144,7 +140,6 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
                             await context
                                 .read<NotificationsRepository>()
                                 .markRead(n.id);
-                            _notifyUnreadChanged();
                           }
                           if (n.deepLink != null && n.deepLink!.isNotEmpty) {
                             if (!context.mounted) return;

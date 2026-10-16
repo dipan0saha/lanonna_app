@@ -16,7 +16,9 @@ def list_notifications_for_user(
     with get_connection() as conn:
         rows = conn.execute(
             f"""
-            SELECT id, baby_profile_id, title, body, deep_link, read_at, created_at
+            SELECT
+                id, baby_profile_id, title, body, deep_link, read_at, created_at,
+                notification_type, actor_firebase_uid, actor_display_name
             FROM notifications
             WHERE firebase_uid = %s
             {clause}

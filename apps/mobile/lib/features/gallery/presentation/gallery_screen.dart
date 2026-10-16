@@ -384,7 +384,9 @@ class _GalleryScreenState extends State<GalleryScreen>
                 child: GalleryPhotoGrid(
                   photos: _photos,
                   onPhotoTap: (p) =>
-                      context.push(GalleryRoutes.photoDetail(p.id)),
+                      context.push(
+                        GalleryRoutes.photoDetail(p.id, sort: _apiSort),
+                      ),
                   onSignedUrlError: _onGridSignedUrlError,
                 ),
               ),

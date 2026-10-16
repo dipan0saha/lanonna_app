@@ -10,7 +10,7 @@ from lanonna_api.middleware.request_context import RequestContextMiddleware
 from pydantic import BaseModel, Field, model_validator
 
 from lanonna_api.app_check import require_app_check
-from lanonna_api.auth import current_app_user
+from lanonna_api.auth import AppUser, current_app_user
 from lanonna_api.config import settings
 from lanonna_api.routers import (
     admin_system_announcements,
@@ -131,13 +131,13 @@ class DisplayUploadSignResponse(BaseModel):
 )
 def sign_display_upload(
     body: DisplayUploadSignRequest,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> DisplayUploadSignResponse:
     try:
         if body.scope == "baby":
             baby_id = body.baby_profile_id
             assert baby_id is not None
-            if get_baby_for_owner(user["uid"], baby_id) is None:
+            if get_baby_for_owner(user.uid, baby_id) is None:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Baby not found",
@@ -149,7 +149,7 @@ def sign_display_upload(
             )
         else:
             signed = mint_user_avatar_upload_url(
-                user["uid"],
+                user.uid,
                 content_type=body.content_type,
                 byte_length=body.byte_length,
             )
@@ -157,7 +157,7 @@ def sign_display_upload(
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     except Exception as exc:
-        logger.exception("sign_display_upload_failed uid=%s", user.get("uid"))
+        logger.exception("sign_display_upload_failed uid=%s", user.uid)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Signed URL generation failed",

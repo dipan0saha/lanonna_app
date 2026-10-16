@@ -10,6 +10,8 @@ class BabySummary {
     this.avatarUrl,
     this.relationshipLabel,
     this.canLeave = true,
+    this.namesClosed = false,
+    this.predictionsClosed = false,
   });
 
   final String id;
@@ -22,6 +24,10 @@ class BabySummary {
   final String? avatarUrl;
   final String? relationshipLabel;
   final bool canLeave;
+  final bool namesClosed;
+  final bool predictionsClosed;
+
+  bool get isBorn => lifecycleStatus == 'born';
 
   factory BabySummary.fromJson(Map<String, dynamic> json) {
     return BabySummary(
@@ -35,6 +41,8 @@ class BabySummary {
       avatarUrl: json['avatar_url'] as String?,
       relationshipLabel: json['relationship_label'] as String?,
       canLeave: json['can_leave'] as bool? ?? true,
+      namesClosed: json['names_closed'] as bool? ?? false,
+      predictionsClosed: json['predictions_closed'] as bool? ?? false,
     );
   }
 }

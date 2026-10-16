@@ -250,5 +250,20 @@
         "type": "int"
       }
     }
-  }
+  },
+  "actionRetry": "Retry",
+  "babyNameFallback": "your baby",
+  "notificationsInboxTitle": "Notifications",
+  "notificationsMarkAllRead": "Mark all read",
+  "notificationsInboxEmptyTitle": "No notifications yet",
+  "notificationsInboxEmptyMessage": "When family comments, RSVPs, or joins, you'll see it here.",
+  "inboxNotificationFallbackTitle": "Notification",
+  "accountDigestFrequency": "Digest frequency",
+  "homeBornActivityEmpty": "Nothing yet. Once family starts commenting and squishing photos, you'll see it here.",
+  "calendarPastEventsTitle": "Past events",
+  "calendarPastEventsSubtitle": "Events that have already happened",
+  "calendarPastEventsEmpty": "No past events yet.",
+  "calendarLoadMore": "Load more",
+  "registrySortPriorityHighFirst": "Priority: High first",
+  "registrySortPriorityLowFirst": "Priority: Low first"
 }

@@ -813,6 +813,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =0{0 followers} =1{1 follower} other{{count} followers}}'**
   String followerCount(int count);
+
+  String get actionRetry;
+
+  String get babyNameFallback;
+
+  String get notificationsInboxTitle;
+
+  String get notificationsMarkAllRead;
+
+  String get notificationsInboxEmptyTitle;
+
+  String get notificationsInboxEmptyMessage;
+
+  String get inboxNotificationFallbackTitle;
+
+  String get accountDigestFrequency;
+
+  String get homeBornActivityEmpty;
+
+  String get calendarPastEventsTitle;
+
+  String get calendarPastEventsSubtitle;
+
+  String get calendarPastEventsEmpty;
+
+  String get calendarLoadMore;
+
+  String get registrySortPriorityHighFirst;
+
+  String get registrySortPriorityLowFirst;
 }
 
 class _AppLocalizationsDelegate

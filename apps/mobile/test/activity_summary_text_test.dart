@@ -4,7 +4,7 @@ import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/core/widgets/activity/activity_summary_text.dart';
 
 void main() {
-  testWidgets('ActivitySummaryText bolds actor prefix case-insensitively', (
+  testWidgets('ActivitySummaryText bolds structured actor before summary', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -25,25 +25,20 @@ void main() {
     expect(first.style?.fontWeight, FontWeight.w700);
   });
 
-  testWidgets('ActivitySummaryText bolds actor embedded at summary start', (
+  testWidgets('ActivitySummaryText renders summary alone without actor', (
     tester,
   ) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
         home: const Scaffold(
-          body: ActivitySummaryText(
-            summary: 'grandma sue commented on "Bump"',
-            actorDisplayName: 'Grandma Sue',
-          ),
+          body: ActivitySummaryText(summary: 'Family voted on gender'),
         ),
       ),
     );
 
-    final rich = tester.widget<RichText>(find.byType(RichText));
-    final first = _firstTextSpan(rich.text);
-    expect(first.style?.fontWeight, FontWeight.w700);
-    expect(first.text, 'grandma sue');
+    expect(find.text('Family voted on gender'), findsOneWidget);
+    expect(find.byType(RichText), findsNothing);
   });
 }
 

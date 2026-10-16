@@ -1,4 +1,5 @@
 import '../../../core/api/api_client.dart';
+import '../../../core/api/api_exception.dart';
 import '../../../core/json/json_readers.dart';
 
 class AnnouncementDetail {
@@ -58,8 +59,9 @@ class AnnouncementRepository {
     try {
       final json = await _api.getJson('/v1/babies/$babyId/announcement');
       return AnnouncementDetail.fromJson(json);
-    } catch (_) {
-      return null;
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) return null;
+      rethrow;
     }
   }
 

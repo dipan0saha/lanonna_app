@@ -91,8 +91,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
   }
 
   bool get _predictionsClosed =>
-      widget.baby.lifecycleStatus == 'born' ||
-      (_payload?.predictionsClosed ?? false);
+      widget.baby.predictionsClosed || (_payload?.predictionsClosed ?? false);
 
   Future<void> _voteGender(String gender) async {
     if (_predictionsClosed) return;

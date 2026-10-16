@@ -113,7 +113,7 @@ class _FunScreenState extends State<FunScreen>
         // rejects prediction writes with predictions_closed.
         final baby = _baby!;
         return _segment == 0
-            ? NamesTab(baby: baby, readOnly: baby.lifecycleStatus == 'born')
+            ? NamesTab(baby: baby, readOnly: baby.namesClosed)
             : PredictionsTab(baby: baby);
     }
   }

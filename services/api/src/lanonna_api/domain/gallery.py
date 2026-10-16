@@ -42,8 +42,10 @@ from lanonna_api.domain.users_display import (
     author_display_name_from_row,
     uploader_display_name_from_row,
 )
+from lanonna_api.domain.notification_metadata import NotificationType, actor_fields
 from lanonna_api.domain.notifications import NotificationChannel, safe_enqueue_notify_user
 from lanonna_api.repositories.activity_events import insert_activity_event
+from lanonna_api.auth import AppUser
 from lanonna_api.config import settings
 from lanonna_api.storage import mint_display_upload_for_object
 
@@ -61,7 +63,7 @@ def require_membership(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[st
 
 
 def init_photo_upload(
-    user: dict[str, Any],
+    user: AppUser,
     baby_profile_id: uuid.UUID,
     content_type: str,
     byte_length: int,
@@ -72,10 +74,10 @@ def init_photo_upload(
         raise ValueError("Display asset exceeds maximum size.")
     if content_type not in settings.display_allowed_content_types:
         raise ValueError(f"Unsupported content type: {content_type}")
-    assert_owner_membership(user["uid"], baby_profile_id)
+    assert_owner_membership(user.uid, baby_profile_id)
     photo = create_pending_photo(
         baby_profile_id,
-        user["uid"],
+        user.uid,
         content_type,
         byte_length,
         caption,
@@ -212,6 +214,8 @@ def squish_photo(
             deep_link=f"/gallery/photo/{photo_id}",
             baby_profile_id=baby_profile_id,
             notification_channel=NotificationChannel.GALLERY,
+            notification_type=NotificationType.SQUISH,
+            **actor_fields(firebase_uid),
         )
     return {"squished": active}
 
@@ -247,6 +251,8 @@ def add_comment(
             deep_link=f"/gallery/photo/{photo_id}",
             baby_profile_id=baby_profile_id,
             notification_channel=NotificationChannel.COMMENTS,
+            notification_type=NotificationType.COMMENT,
+            **actor_fields(firebase_uid),
         )
     return {
         "id": str(c["id"]),

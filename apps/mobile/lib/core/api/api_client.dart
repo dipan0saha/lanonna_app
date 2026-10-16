@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../config/app_config.dart';
@@ -285,7 +286,9 @@ class ApiClient {
           if (formatted.isNotEmpty) message = formatted;
         }
       }
-    } catch (_) {}
+    } catch (e, st) {
+      debugPrint('api_client_error_body_parse_failed: $e\n$st');
+    }
     return ApiException(
       message,
       statusCode: response.statusCode,

@@ -13,6 +13,8 @@ from lanonna_api.repositories.catalog_suggestions import (
 # Safety cap when listing full event history (no month / upcoming filter).
 LIST_EVENTS_MAX_ROWS = 500
 
+PAST_EVENTS_PAGE_SIZE = 30
+
 
 def list_events(
     baby_profile_id: uuid.UUID,
@@ -23,6 +25,7 @@ def list_events(
     past_only: bool = False,
     now: datetime | None = None,
     limit: int | None = None,
+    offset: int = 0,
 ) -> list[dict[str, Any]]:
     clauses = ["e.baby_profile_id = %s"]
     params: list[Any] = [baby_profile_id]
@@ -47,6 +50,10 @@ def list_events(
     row_limit = limit
     if unscoped:
         row_limit = row_limit or LIST_EVENTS_MAX_ROWS
+    offset_sql = ""
+    if offset > 0:
+        offset_sql = " OFFSET %s"
+        params.append(offset)
     if row_limit is not None:
         limit_sql = " LIMIT %s"
         params.append(row_limit)
@@ -61,7 +68,7 @@ def list_events(
                 e.created_by_firebase_uid, e.created_at
             FROM events e
             WHERE {where}
-            ORDER BY e.starts_at {order}{limit_sql}
+            ORDER BY e.starts_at {order}{limit_sql}{offset_sql}
             """,
             tuple(params),
         ).fetchall()

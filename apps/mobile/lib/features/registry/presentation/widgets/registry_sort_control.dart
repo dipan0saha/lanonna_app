@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
@@ -26,7 +27,7 @@ class RegistrySortControl extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              sort.menuLabel,
+              sort.menuLabel(AppLocalizations.of(context)!),
               style: context.textStyles.labelMedium?.copyWith(
                 color: AppColors.primaryDark,
               ),

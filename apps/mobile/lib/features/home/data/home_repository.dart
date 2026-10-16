@@ -26,16 +26,9 @@ class HomeRepository {
     _summaryByBaby.clear();
   }
 
-  /// Clears per-baby home-summary cache when baby context changes.
+  /// Subscribes to baby-context changes (selection only; per-baby cache kept).
   void attachHomeRefreshSignal(HomeRefreshSignal signal) {
-    if (_homeRefreshSignal == signal) return;
-    _homeRefreshSignal?.babyContext.removeListener(_clearSummaryCache);
     _homeRefreshSignal = signal;
-    signal.babyContext.addListener(_clearSummaryCache);
-  }
-
-  void _clearSummaryCache() {
-    _summaryByBaby.clear();
   }
 
   HomeSummary? cachedHomeSummary(String babyId) => _summaryByBaby[babyId];

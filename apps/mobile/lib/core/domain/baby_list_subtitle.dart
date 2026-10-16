@@ -2,7 +2,7 @@ import '../time/app_date_time.dart';
 import 'baby_summary.dart';
 
 String babyLifecycleSubtitle(BabySummary baby, [String? localeName]) {
-  if (baby.lifecycleStatus == 'born') {
+  if (baby.isBorn) {
     final bornLabel = formatApiCalendarDate(baby.actualBirthDate, localeName);
     if (bornLabel.isNotEmpty) return 'Born $bornLabel';
     return 'Born';

@@ -12,6 +12,7 @@ import '../../../core/widgets/app_modal_sheet.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/widgets/baby_profile_avatar.dart';
 import '../../../core/widgets/membership_role_pill.dart';
+import '../../../core/api/api_error_message.dart';
 import '../../../core/api/run_mutation.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../account/data/account_repository.dart';
@@ -40,6 +41,7 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
   List<BabySummary> _babies = [];
   String? _highlightedId;
   var _loading = true;
+  String? _loadError;
 
   @override
   void initState() {
@@ -48,18 +50,27 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
   }
 
   Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _loadError = null;
+    });
     try {
       final homeRepo = context.read<HomeRepository>();
       final store = context.read<SelectedBabyStore>();
       final babies = await homeRepo.listBabies();
       final resolved = await homeRepo.resolveSelectedBaby(store);
+      if (!mounted) return;
       setState(() {
         _babies = babies;
         _highlightedId = resolved?.id;
         _loading = false;
       });
-    } catch (_) {
-      setState(() => _loading = false);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadError = apiErrorMessage(e);
+      });
     }
   }
 
@@ -152,6 +163,17 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
               const Padding(
                 padding: EdgeInsets.all(AppSpacing.xxl),
                 child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_loadError != null)
+              Column(
+                children: [
+                  Text(_loadError!, textAlign: TextAlign.center),
+                  SizedBox(height: AppSpacing.md),
+                  FilledButton(
+                    onPressed: _load,
+                    child: Text(AppLocalizations.of(context)!.actionRetry),
+                  ),
+                ],
               )
             else if (_babies.isEmpty)
               const Text('No baby profiles yet.')

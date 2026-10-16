@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../../data/models/home_summary.dart';
 import 'home_activity_feed.dart';
 import 'home_owner_sections.dart';
 import 'home_system_announcements_section.dart';
 import 'home_teasers_section.dart';
-
-const _kBornHomeActivityEmptyMessage =
-    'Nothing yet. Once family starts commenting and squishing photos, '
-    "you'll see it here.";
 
 /// PRD §6.2 sections #4–#14 (after hero/checklist blocks in composers).
 class HomePrdSections extends StatelessWidget {
@@ -29,7 +26,10 @@ class HomePrdSections extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final teasers = summary.teasers;
+    final showActivity =
+        summary.lifecycleStatus == 'born' || summary.recentActivity.isNotEmpty;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -37,14 +37,14 @@ class HomePrdSections extends StatelessWidget {
           items: summary.systemAnnouncements,
           onDismissed: onRefresh,
         ),
-        if (summary.lifecycleStatus == 'born' ||
-            summary.recentActivity.isNotEmpty)
+        if (showActivity)
           HomeActivityFeed(
             items: summary.recentActivity,
             babyId: babyId,
-            showEmptyPlaceholder: summary.lifecycleStatus == 'born' &&
+            showEmptyPlaceholder:
+                summary.lifecycleStatus == 'born' &&
                 summary.recentActivity.isEmpty,
-            emptyMessage: _kBornHomeActivityEmptyMessage,
+            emptyMessage: l10n.homeBornActivityEmpty,
           ),
         if (teasers != null)
           HomeTeasersSection(

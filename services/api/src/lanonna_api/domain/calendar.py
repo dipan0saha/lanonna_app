@@ -13,6 +13,7 @@ from lanonna_api.domain.content_permissions import (
     member_content_can_edit,
 )
 from lanonna_api.domain.gallery import require_membership
+from lanonna_api.domain.notification_metadata import NotificationType, actor_fields
 from lanonna_api.domain.users_display import actor_display_name
 from lanonna_api.domain.notifications import (
     FanOutSpec,
@@ -27,6 +28,7 @@ from lanonna_api.domain.users_display import (
     rsvp_display_name_from_row,
 )
 from lanonna_api.repositories.events import (
+    PAST_EVENTS_PAGE_SIZE,
     catalog_suggestion_claimed,
     create_event,
     delete_event,
@@ -87,21 +89,45 @@ def list_calendar_events(
     month: str | None = None,
     upcoming: bool = False,
     past: bool = False,
-) -> list[dict[str, Any]]:
+    offset: int = 0,
+    limit: int | None = None,
+) -> list[dict[str, Any]] | dict[str, Any]:
     require_membership(firebase_uid, baby_profile_id)
     if upcoming and past:
         raise ValueError("Cannot request both upcoming and past events.")
     month_start = month_end = None
     if month:
         month_start, month_end = _parse_month(month)
+    if past:
+        page_size = limit or PAST_EVENTS_PAGE_SIZE
+        if offset < 0:
+            raise ValueError("offset must be non-negative.")
+        rows = list_events(
+            baby_profile_id,
+            month_start=month_start,
+            month_end=month_end,
+            upcoming_only=False,
+            past_only=True,
+            now=datetime.now(timezone.utc),
+            limit=page_size + 1,
+            offset=offset,
+        )
+        has_more = len(rows) > page_size
+        page_rows = rows[:page_size]
+        return {
+            "items": [_event_row_to_json(r) for r in page_rows],
+            "has_more": has_more,
+            "offset": offset,
+            "limit": page_size,
+        }
     rows = list_events(
         baby_profile_id,
         month_start=month_start,
         month_end=month_end,
         upcoming_only=upcoming,
-        past_only=past,
+        past_only=False,
         now=datetime.now(timezone.utc),
-        limit=30 if past else None,
+        limit=None,
     )
     return [_event_row_to_json(r) for r in rows]
 
@@ -194,6 +220,8 @@ def create_calendar_event(
             deep_link=f"/calendar/event/{row['id']}",
             exclude_firebase_uid=firebase_uid,
             notification_channel=NotificationChannel.CALENDAR,
+            notification_type=NotificationType.EVENT,
+            **actor_fields(firebase_uid),
         )
     )
     return _event_row_to_json(row)
@@ -258,6 +286,8 @@ def set_rsvp(
             deep_link=f"/calendar/event/{event_id}",
             baby_profile_id=baby_profile_id,
             notification_channel=NotificationChannel.CALENDAR,
+            notification_type=NotificationType.EVENT,
+            **actor_fields(firebase_uid),
         )
     return {"status": status}
 
@@ -285,6 +315,8 @@ def add_event_comment(
             deep_link=f"/calendar/event/{event_id}",
             baby_profile_id=baby_profile_id,
             notification_channel=NotificationChannel.COMMENTS,
+            notification_type=NotificationType.COMMENT,
+            **actor_fields(firebase_uid),
         )
     return {
         "id": str(c["id"]),

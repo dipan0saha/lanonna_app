@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import '../../../core/network/connectivity_service.dart';
 import '../../account/data/account_repository.dart';
 import '../../account/data/notifications_repository.dart';
-import '../../account/data/notifications_unread_signal.dart';
 import '../../home/data/home_refresh_signal.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
@@ -14,14 +13,6 @@ import 'baby_switcher_sheet.dart';
 
 Widget shellHomeTopBar(BuildContext context) {
   return const _ShellTopBarLoader();
-}
-
-T? _maybeRead<T>(BuildContext context) {
-  try {
-    return context.read<T>();
-  } on ProviderNotFoundException {
-    return null;
-  }
 }
 
 class _ShellTopBarLoader extends StatefulWidget {
@@ -38,7 +29,8 @@ class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
   String? _accountAvatarUrl;
   HomeRefreshSignal? _babyRefresh;
   ConnectivityService? _connectivity;
-  NotificationsUnreadSignal? _unreadSignal;
+  NotificationsRepository? _notificationsRepo;
+  AccountProfileUpdates? _accountUpdates;
   var _wasOffline = false;
 
   @override
@@ -63,11 +55,18 @@ class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
       _wasOffline = !connectivity.isOnline;
       _connectivity!.addListener(_onConnectivityChanged);
     }
-    final unreadSignal = _maybeRead<NotificationsUnreadSignal>(context);
-    if (_unreadSignal != unreadSignal) {
-      _unreadSignal?.removeListener(_onUnreadChanged);
-      _unreadSignal = unreadSignal;
-      unreadSignal?.addListener(_onUnreadChanged);
+    final notificationsRepo = context.read<NotificationsRepository>();
+    if (_notificationsRepo != notificationsRepo) {
+      _notificationsRepo?.removeListener(_onInboxChanged);
+      _notificationsRepo = notificationsRepo;
+      _notificationsRepo!.addListener(_onInboxChanged);
+    }
+    final accountRepo = context.read<AccountRepository>();
+    if (_accountUpdates != accountRepo.profileUpdates) {
+      _accountUpdates?.removeListener(_onAccountUpdated);
+      _accountUpdates = accountRepo.profileUpdates;
+      _accountUpdates!.addListener(_onAccountUpdated);
+      _applyCachedAccount();
     }
   }
 
@@ -75,12 +74,25 @@ class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
   void dispose() {
     _babyRefresh?.babyContext.removeListener(_onBabyContextChanged);
     _connectivity?.removeListener(_onConnectivityChanged);
-    _unreadSignal?.removeListener(_onUnreadChanged);
+    _notificationsRepo?.removeListener(_onInboxChanged);
+    _accountUpdates?.removeListener(_onAccountUpdated);
     super.dispose();
   }
 
-  void _onUnreadChanged() {
-    if (mounted) _refresh();
+  void _onInboxChanged() {
+    if (mounted) _refreshUnreadOnly();
+  }
+
+  void _onAccountUpdated() {
+    if (!mounted) return;
+    _applyCachedAccount();
+    setState(() {});
+  }
+
+  void _applyCachedAccount() {
+    final account = context.read<AccountRepository>().cachedAccount;
+    _accountName = account?.displayName;
+    _accountAvatarUrl = account?.avatarUrl;
   }
 
   void _onConnectivityChanged() {
@@ -98,27 +110,29 @@ class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
     if (mounted) _refresh();
   }
 
+  Future<void> _refreshUnreadOnly() async {
+    try {
+      final notificationsRepo = context.read<NotificationsRepository>();
+      final unread = await notificationsRepo.unreadCount();
+      if (mounted) setState(() => _unreadCount = unread);
+    } catch (e) {
+      debugPrint('shell_top_bar_unread_refresh_failed: $e');
+    }
+  }
+
   Future<void> _refresh() async {
     try {
       final store = context.read<SelectedBabyStore>();
       final homeRepo = context.read<HomeRepository>();
       final notificationsRepo = context.read<NotificationsRepository>();
-      final accountRepo = context.read<AccountRepository>();
       final resolved = await homeRepo.resolveSelectedBaby(store);
       if (!mounted) return;
       final unread = await notificationsRepo.unreadCount();
-      AccountPayload? account;
-      try {
-        account = await accountRepo.fetchAccount();
-      } catch (_) {
-        account = accountRepo.cachedAccount;
-      }
       if (mounted) {
         setState(() {
           if (resolved != null) _centerTitle = resolved.name;
           _unreadCount = unread;
-          _accountName = account?.displayName;
-          _accountAvatarUrl = account?.avatarUrl;
+          _applyCachedAccount();
         });
       }
     } catch (e) {
@@ -146,7 +160,7 @@ class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
       onSearchTap: () => context.push('/search'),
       onNotificationsTap: () async {
         await context.push('/notifications/inbox');
-        await _refresh();
+        await _refreshUnreadOnly();
       },
       onAccountTap: () => context.push('/profile'),
       accountDisplayName: _accountName,

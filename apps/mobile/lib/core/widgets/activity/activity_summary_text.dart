@@ -13,17 +13,6 @@ class ActivitySummaryText extends StatelessWidget {
   final String summary;
   final String? actorDisplayName;
 
-  int? _leadingActorLength(String text, String actor) {
-    if (actor.isEmpty || text.isEmpty) return null;
-    if (text.startsWith(actor)) return actor.length;
-    final textLower = text.toLowerCase();
-    final actorLower = actor.toLowerCase();
-    if (textLower.startsWith(actorLower)) {
-      return actor.length;
-    }
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
     final base = context.textStyles.bodySmall?.copyWith(
@@ -32,22 +21,6 @@ class ActivitySummaryText extends StatelessWidget {
     );
     final actor = actorDisplayName?.trim();
     if (actor != null && actor.isNotEmpty) {
-      final prefixLength = _leadingActorLength(summary, actor);
-      if (prefixLength != null) {
-        final actorText = summary.substring(0, prefixLength);
-        final rest = summary.substring(prefixLength);
-        return Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(
-                text: actorText,
-                style: base?.copyWith(fontWeight: FontWeight.w700),
-              ),
-              TextSpan(text: rest, style: base),
-            ],
-          ),
-        );
-      }
       return Text.rich(
         TextSpan(
           children: [

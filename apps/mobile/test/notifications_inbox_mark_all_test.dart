@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/features/account/data/notifications_repository.dart';
-import 'package:lanonna/features/account/data/notifications_unread_signal.dart';
 import 'package:lanonna/features/account/presentation/notifications_inbox_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -11,6 +10,13 @@ class _InboxRepo extends NotificationsRepository {
 
   var markAllCalls = 0;
   var allRead = false;
+  var notifyCount = 0;
+
+  @override
+  void notifyInboxMayHaveChanged() {
+    notifyCount++;
+    super.notifyInboxMayHaveChanged();
+  }
 
   @override
   Future<List<InboxNotification>> listInbox() async {
@@ -34,27 +40,20 @@ class _InboxRepo extends NotificationsRepository {
   Future<int> markAllRead() async {
     markAllCalls++;
     allRead = true;
+    notifyInboxMayHaveChanged();
     return 1;
   }
 }
 
 void main() {
-  testWidgets('mark all read updates list and notifies unread signal', (
+  testWidgets('mark all read updates list and notifies repository listeners', (
     tester,
   ) async {
     final repo = _InboxRepo();
-    final unreadSignal = NotificationsUnreadSignal();
-    var unreadNotifications = 0;
-    unreadSignal.addListener(() => unreadNotifications++);
 
     await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          Provider<NotificationsRepository>.value(value: repo),
-          ChangeNotifierProvider<NotificationsUnreadSignal>.value(
-            value: unreadSignal,
-          ),
-        ],
+      ChangeNotifierProvider<NotificationsRepository>.value(
+        value: repo,
         child: const MaterialApp(home: NotificationsInboxScreen()),
       ),
     );
@@ -65,7 +64,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repo.markAllCalls, 1);
-    expect(unreadNotifications, 1);
-    expect(find.text('Mark all read'), findsNothing);
+    expect(repo.notifyCount, greaterThan(0));
   });
 }

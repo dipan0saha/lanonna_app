@@ -317,8 +317,8 @@ class _HomeScreenState extends State<HomeScreen>
                     onVoteInFun: () => context.go(AppRoutes.gamification),
                     onViewGallery: () => context.go('/gallery'),
                     hideVoteInFun:
-                        _baby!.lifecycleStatus == 'born' ||
-                        _summary?.lifecycleStatus == 'born',
+                        _baby!.predictionsClosed ||
+                        (_summary?.predictionsClosed ?? false),
                   ),
               ],
             ],
