@@ -13,12 +13,16 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: InboxNotificationRow(
             notification: InboxNotification(
               id: 'n1',
               title: 'New comment',
-              body: 'Sarah commented on "First Ultrasound"',
+              body: 'commented on "First Ultrasound"',
+              actorDisplayName: 'Sarah',
+              notificationType: InboxNotificationType.comment,
               createdAt: created,
             ),
           ),
