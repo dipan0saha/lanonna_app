@@ -5,6 +5,7 @@ import '../../../../core/media/cached_signed_image.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/widgets/gallery_social_glyphs.dart';
+import '../../../../core/widgets/gallery_tile_badge.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../../../core/widgets/app_semantics.dart';
 import '../../data/models/photo_models.dart';
@@ -27,13 +28,11 @@ class GalleryPhotoGrid extends StatelessWidget {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppMetrics.horizontalPadding,
-      ),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      padding: EdgeInsets.symmetric(horizontal: AppMetrics.horizontalPadding),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
-        crossAxisSpacing: 6,
-        mainAxisSpacing: 6,
+        crossAxisSpacing: AppMetrics.galleryGridSpacing,
+        mainAxisSpacing: AppMetrics.galleryGridSpacing,
       ),
       itemCount: photos.length,
       itemBuilder: (context, index) {
@@ -41,7 +40,7 @@ class GalleryPhotoGrid extends StatelessWidget {
         final tile = GestureDetector(
           onTap: () => onPhotoTap(photo),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppMetrics.galleryTileRadius),
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -50,17 +49,20 @@ class GalleryPhotoGrid extends StatelessWidget {
                   Container(
                     color: Colors.black38,
                     alignment: Alignment.center,
-                    child: const Text(
+                    child: Text(
                       'Processing…',
-                      style: TextStyle(color: Colors.white, fontSize: 10),
+                      style: context.textStyles.labelSmall?.copyWith(
+                        color: AppColors.surface,
+                        letterSpacing: 0,
+                      ),
                     ),
                   ),
                 if (photo.status != 'pending') ...[
                   if (photo.commentCount > 0)
                     Positioned(
-                      left: 5,
-                      bottom: 5,
-                      child: _GalleryTileBadge(
+                      left: AppMetrics.appChipDenseVerticalPadding + 1,
+                      bottom: AppMetrics.appChipDenseVerticalPadding + 1,
+                      child: GalleryTileBadge(
                         glyph: const GalleryCommentGlyph(),
                         count: photo.commentCount,
                         semanticsLabel: l10n.photoCommentCount(
@@ -70,9 +72,9 @@ class GalleryPhotoGrid extends StatelessWidget {
                     ),
                   if (photo.squishCount > 0)
                     Positioned(
-                      right: 5,
-                      bottom: 5,
-                      child: _GalleryTileBadge(
+                      right: AppMetrics.appChipDenseVerticalPadding + 1,
+                      bottom: AppMetrics.appChipDenseVerticalPadding + 1,
+                      child: GalleryTileBadge(
                         glyph: const GallerySquishGlyph(),
                         count: photo.squishCount,
                         semanticsLabel: l10n.photoSquishCount(
@@ -95,48 +97,6 @@ class GalleryPhotoGrid extends StatelessWidget {
           label: label,
         );
       },
-    );
-  }
-}
-
-class _GalleryTileBadge extends StatelessWidget {
-  const _GalleryTileBadge({
-    required this.glyph,
-    required this.count,
-    required this.semanticsLabel,
-  });
-
-  final Widget glyph;
-  final int count;
-  final String semanticsLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      label: semanticsLabel,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.45),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            glyph,
-            const SizedBox(width: 3),
-            Text(
-              '$count',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                height: 1,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -175,11 +135,11 @@ class _GalleryThumb extends StatelessWidget {
               photo.status == 'pending'
                   ? Icons.hourglass_empty
                   : Icons.image_not_supported_outlined,
-              size: 22,
+              size: AppMetrics.shellAddIconSize,
               color: AppColors.muted,
             ),
             if (photo.status != 'pending') ...[
-              const SizedBox(height: 4),
+              SizedBox(height: AppSpacing.xxs),
               Text('Unavailable', style: muted, textAlign: TextAlign.center),
             ],
           ],

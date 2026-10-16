@@ -1,7 +1,9 @@
 from unittest.mock import patch
 import uuid
 
-from lanonna_api.domain.home import _build_home_teasers, build_home_summary
+from datetime import date, timedelta
+
+from lanonna_api.domain.home import _build_birth_welcome, _build_home_teasers, build_home_summary
 
 
 def test_build_home_summary_includes_getting_started_and_next_event():
@@ -119,3 +121,34 @@ def test_build_home_teasers_only_recent_photos_and_upcoming_events():
     assert data["upcoming_events"][0]["title"] == "Shower"
     list_photos.assert_called_once()
     list_events.assert_called_once()
+
+
+def test_build_birth_welcome_for_follower_when_born():
+    baby_id = uuid.uuid4()
+    birth = date.today() - timedelta(days=2)
+    baby = {
+        "name": "Parker",
+        "lifecycle_status": "born",
+        "actual_birth_date": birth.isoformat(),
+    }
+    with (
+        patch("lanonna_api.domain.home.get_announcement") as get_ann,
+        patch("lanonna_api.domain.home._utc_today", return_value=date.today()),
+        patch(
+            "lanonna_api.domain.home._display_url_for_photo",
+            return_value="https://example.com/photo.jpg",
+        ),
+    ):
+        get_ann.return_value = {
+            "id": uuid.uuid4(),
+            "first_name": "Parker",
+            "weight_text": "7 lb 4 oz",
+            "photo_id": uuid.uuid4(),
+        }
+        data = _build_birth_welcome(baby, baby_id, is_owner=False)
+
+    assert data is not None
+    assert data["baby_name"] == "Parker"
+    assert data["weight_text"] == "7 lb 4 oz"
+    assert data["everyone_notified"] is False
+    assert data["announcement"]["photo_display_url"].startswith("https://")

@@ -82,7 +82,7 @@ def _build_birth_welcome(
     baby_profile_id: uuid.UUID,
     is_owner: bool,
 ) -> dict[str, Any] | None:
-    if not is_owner or (baby.get("lifecycle_status") or "") != "born":
+    if (baby.get("lifecycle_status") or "") != "born":
         return None
     birth = _parse_date(baby.get("actual_birth_date"))
     if birth is None:
@@ -94,18 +94,25 @@ def _build_birth_welcome(
     baby_name = baby.get("name") or "Baby"
     ann = get_announcement(baby_profile_id)
     announcement_preview = None
+    weight_text = None
     if ann:
         photo_id = ann.get("photo_id")
+        weight_text = ann.get("weight_text")
         announcement_preview = {
             "announcement_id": str(ann["id"]),
             "first_name": ann.get("first_name"),
             "last_name": ann.get("last_name"),
             "photo_display_url": _display_url_for_photo(baby_profile_id, photo_id),
         }
+    birth_iso = birth.isoformat()
+    everyone_notified = is_owner and ann is not None
     return {
         "baby_name": baby_name,
         "days_since_birth": days_since,
         "welcome_visible_until": welcome_until.isoformat(),
+        "birth_date": birth_iso,
+        "weight_text": weight_text,
+        "everyone_notified": everyone_notified,
         "announcement": announcement_preview,
     }
 

@@ -224,16 +224,16 @@ class _PredictionsTabState extends State<PredictionsTab> {
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(
+        padding: EdgeInsets.fromLTRB(
           AppMetrics.horizontalPadding,
-          16,
+          AppSpacing.lg,
           AppMetrics.horizontalPadding,
-          16,
+          AppSpacing.lg,
         ),
         children: [
           if (closed)
             Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: EdgeInsets.only(bottom: AppSpacing.md),
               child: Text(
                 l10n.predictionsClosedNote,
                 style: context.textStyles.bodyMedium,
@@ -271,10 +271,12 @@ class _PredictionsTabState extends State<PredictionsTab> {
           if (genderVotes.maleProgress != null) ...[
             const SizedBox(height: 8),
             ClipRRect(
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(
+                AppMetrics.predictionBarRadius,
+              ),
               child: LinearProgressIndicator(
                 value: genderVotes.maleProgress,
-                minHeight: 8,
+                minHeight: AppMetrics.predictionBarHeight,
                 backgroundColor: AppColors.peachTint,
                 color: AppColors.primaryDark,
               ),
@@ -293,10 +295,21 @@ class _PredictionsTabState extends State<PredictionsTab> {
             child: const Text('View who voted'),
           ),
           const SizedBox(height: AppMetrics.sectionBlockSpacing),
+          const AppSectionTitle(title: 'Popular Dates'),
+          if (p == null || p.birthdateHistogram.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+              child: Text(
+                closed ? 'No guesses yet' : 'No guesses yet - be the first!',
+              ),
+            )
+          else
+            _PopularDatesList(histogram: p.birthdateHistogram, locale: locale),
+          const SizedBox(height: AppMetrics.sectionBlockSpacing),
           const AppSectionTitle(title: 'Birthdate guesses'),
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: AppMetrics.monthGridCardPadding,
               child: Column(
                 children: [
                   Row(
@@ -310,7 +323,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
                       ),
                       Text(
                         '${_monthName(_visibleMonth.month)} ${_visibleMonth.year}',
-                        style: context.textStyles.titleMedium,
+                        style: context.calendarMonthTitleStyle,
                       ),
                       AppIconButton(
                         semanticsId: 'predictions_next_month',
@@ -346,21 +359,6 @@ class _PredictionsTabState extends State<PredictionsTab> {
               ),
             ),
           ),
-          const SizedBox(height: AppMetrics.sectionBlockSpacing),
-          const AppSectionTitle(title: 'Popular Dates'),
-          if (p == null || p.birthdateHistogram.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Text(
-                closed ? 'No guesses yet' : 'No guesses yet - be the first!',
-              ),
-            )
-          else
-            for (final row in p.birthdateHistogram)
-              ListTile(
-                title: Text(formatApiCalendarDate(row.date, locale)),
-                trailing: Text(l10n.predictionVoteCount(row.count)),
-              ),
           const SizedBox(height: 8),
           if (savedBirthdate != null)
             Padding(
@@ -385,7 +383,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
           if (!closed) ...[
             FilledButton(
               key: const Key('lockPredictionBtn'),
-              onPressed: submitEnabled ? _submitBirthdateGuess : null,
+              onPressed: submitEnabled ? _submitBirthdateGuess : _pickDate,
               child: Text(
                 savedBirthdate == null
                     ? l10n.funBirthdateSaveGuess
@@ -394,6 +392,10 @@ class _PredictionsTabState extends State<PredictionsTab> {
             ),
             const SizedBox(height: 8),
             OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primaryDark,
+                side: const BorderSide(color: AppColors.primaryDark),
+              ),
               onPressed: _pickDate,
               child: Text(l10n.funBirthdatePickDate),
             ),
@@ -432,9 +434,9 @@ class _PredictionsTabState extends State<PredictionsTab> {
     final child = InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: AppMetrics.borderedListRowPadding,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppMetrics.fieldRadius),
           border: Border.all(
             color: selected ? AppColors.primaryDark : AppColors.border,
             width: selected ? 2 : 1,
@@ -457,6 +459,64 @@ class _PredictionsTabState extends State<PredictionsTab> {
       return AppSemantics.button(semanticsId, child, label: label);
     }
     return child;
+  }
+}
+
+class _PopularDatesList extends StatelessWidget {
+  const _PopularDatesList({required this.histogram, required this.locale});
+
+  final List<BirthdateVoteCount> histogram;
+  final String locale;
+
+  @override
+  Widget build(BuildContext context) {
+    final maxCount = histogram.fold<int>(
+      0,
+      (max, row) => row.count > max ? row.count : max,
+    );
+    return Column(
+      children: [
+        for (final row in histogram)
+          Padding(
+            padding: EdgeInsets.only(bottom: AppSpacing.smMd),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        formatApiCalendarDate(row.date, locale),
+                        style: context.textStyles.bodySmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '${row.count}',
+                      style: context.textStyles.labelSmall?.copyWith(
+                        color: AppColors.secondaryDark,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: AppSpacing.xxs),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(
+                    AppMetrics.predictionBarRadius,
+                  ),
+                  child: LinearProgressIndicator(
+                    value: maxCount > 0 ? row.count / maxCount : 0,
+                    minHeight: AppMetrics.predictionBarHeight,
+                    backgroundColor: AppColors.border,
+                    color: AppColors.secondaryDark,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
   }
 }
 

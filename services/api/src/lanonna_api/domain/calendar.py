@@ -86,8 +86,11 @@ def list_calendar_events(
     baby_profile_id: uuid.UUID,
     month: str | None = None,
     upcoming: bool = False,
+    past: bool = False,
 ) -> list[dict[str, Any]]:
     require_membership(firebase_uid, baby_profile_id)
+    if upcoming and past:
+        raise ValueError("Cannot request both upcoming and past events.")
     month_start = month_end = None
     if month:
         month_start, month_end = _parse_month(month)
@@ -96,7 +99,9 @@ def list_calendar_events(
         month_start=month_start,
         month_end=month_end,
         upcoming_only=upcoming,
+        past_only=past,
         now=datetime.now(timezone.utc),
+        limit=30 if past else None,
     )
     return [_event_row_to_json(r) for r in rows]
 

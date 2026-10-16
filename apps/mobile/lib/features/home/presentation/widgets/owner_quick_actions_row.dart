@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
+import '../../../../core/widgets/tinted_icon_square.dart';
 
 class OwnerQuickActionsRow extends StatelessWidget {
   const OwnerQuickActionsRow({
@@ -52,11 +54,7 @@ class OwnerQuickActionsRow extends StatelessWidget {
 }
 
 class _Action extends StatelessWidget {
-  const _Action({
-    required this.label,
-    required this.icon,
-    required this.onTap,
-  });
+  const _Action({required this.label, required this.icon, required this.onTap});
 
   final String label;
   final IconData icon;
@@ -76,9 +74,15 @@ class _Action extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Icon(icon, size: 22, color: AppColors.textPrimary),
-            const SizedBox(height: 6),
-            Text(label, style: context.textStyles.labelSmall),
+            TintedIconSquare(icon: icon),
+            SizedBox(height: AppSpacing.sm),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: context.textStyles.bodySmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
         ),
       ),

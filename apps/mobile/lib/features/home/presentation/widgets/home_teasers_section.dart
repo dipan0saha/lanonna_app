@@ -16,16 +16,18 @@ class HomeTeasersSection extends StatelessWidget {
     super.key,
     required this.teasers,
     this.onSignedUrlError,
+    this.includeUpcomingEvents = true,
   });
 
   final HomeTeasers teasers;
   final VoidCallback? onSignedUrlError;
+  final bool includeUpcomingEvents;
 
   @override
   Widget build(BuildContext context) {
     final children = <Widget>[];
 
-    if (teasers.upcomingEvents.isNotEmpty) {
+    if (includeUpcomingEvents && teasers.upcomingEvents.isNotEmpty) {
       children.add(HomeUpcomingEventsSection(events: teasers.upcomingEvents));
     }
 

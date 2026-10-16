@@ -61,6 +61,7 @@ class HomeFamilyInsightGenderCard extends StatelessWidget {
                   'Boy',
                   genderVotes.displayPercentForMale(),
                   totals.male,
+                  leading: totals.male > totals.female,
                 ),
               ),
               const SizedBox(width: 10),
@@ -69,6 +70,7 @@ class HomeFamilyInsightGenderCard extends StatelessWidget {
                   'Girl',
                   genderVotes.displayPercentForFemale(),
                   totals.female,
+                  leading: totals.female > totals.male,
                 ),
               ),
             ],
@@ -130,13 +132,16 @@ class HomeFamilyInsightGenderCard extends StatelessWidget {
     );
   }
 
-  Widget _voteBox(String label, int pct, int count) {
+  Widget _voteBox(String label, int pct, int count, {bool leading = false}) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.sageTint,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(
+          color: leading ? AppColors.primaryDark : AppColors.border,
+          width: leading ? 2 : 1.5,
+        ),
       ),
       child: Column(
         children: [

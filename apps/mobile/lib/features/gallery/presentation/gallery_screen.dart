@@ -8,6 +8,7 @@ import '../../../core/api/api_client.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/presentation/tab_load_failure.dart';
 import '../../../core/presentation/tab_load_kind.dart';
+import '../../../core/widgets/app_section_caps_label.dart';
 import '../../../core/widgets/async_tab_body.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_semantics.dart';
@@ -72,9 +73,9 @@ class _GalleryScreenState extends State<GalleryScreen>
   };
 
   String get _sectionLabel => switch (widget.mode) {
-    GalleryViewMode.all => 'All Photos',
-    GalleryViewMode.recent => 'Last 30 days',
-    GalleryViewMode.favorites => 'Most squished',
+    GalleryViewMode.all => 'All photos',
+    GalleryViewMode.recent => 'Recent activity',
+    GalleryViewMode.favorites => 'Favorites',
   };
 
   @override
@@ -184,7 +185,9 @@ class _GalleryScreenState extends State<GalleryScreen>
     _incrementalRefreshInFlight = true;
     try {
       final galleryRepo = context.read<GalleryRepository>();
-      final loadedCount = _photos.isEmpty ? GalleryRepository.pageSize : _photoOffset;
+      final loadedCount = _photos.isEmpty
+          ? GalleryRepository.pageSize
+          : _photoOffset;
       final fresh = await fetchLoadedPhotoRange(
         galleryRepo,
         baby.id,
@@ -367,6 +370,7 @@ class _GalleryScreenState extends State<GalleryScreen>
                 child: _isAllMode
                     ? GalleryEmptyState(
                         isOwner: _isOwner,
+                        babyName: _baby?.name ?? '',
                         onAddPhoto: _isOwner ? _onAddPhoto : null,
                       )
                     : _buildFilteredEmpty(),
@@ -380,13 +384,7 @@ class _GalleryScreenState extends State<GalleryScreen>
                     AppMetrics.horizontalPadding,
                     8,
                   ),
-                  child: Text(
-                    _sectionLabel,
-                    style: context.textStyles.labelLarge?.copyWith(
-                      color: AppColors.muted,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
+                  child: AppSectionCapsLabel(_sectionLabel),
                 ),
               ),
               SliverToBoxAdapter(

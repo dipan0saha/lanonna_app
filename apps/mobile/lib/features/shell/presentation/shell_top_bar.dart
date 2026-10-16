@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/network/connectivity_service.dart';
+import '../../account/data/account_repository.dart';
 import '../../account/data/notifications_repository.dart';
 import '../../account/data/notifications_unread_signal.dart';
 import '../../home/data/home_refresh_signal.dart';
@@ -33,6 +34,8 @@ class _ShellTopBarLoader extends StatefulWidget {
 class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
   String _centerTitle = 'La Nonna';
   var _unreadCount = 0;
+  String? _accountName;
+  String? _accountAvatarUrl;
   HomeRefreshSignal? _babyRefresh;
   ConnectivityService? _connectivity;
   NotificationsUnreadSignal? _unreadSignal;
@@ -98,17 +101,24 @@ class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
   Future<void> _refresh() async {
     try {
       final store = context.read<SelectedBabyStore>();
-      final resolved = await context.read<HomeRepository>().resolveSelectedBaby(
-        store,
-      );
+      final homeRepo = context.read<HomeRepository>();
+      final notificationsRepo = context.read<NotificationsRepository>();
+      final accountRepo = context.read<AccountRepository>();
+      final resolved = await homeRepo.resolveSelectedBaby(store);
       if (!mounted) return;
-      final unread = await context
-          .read<NotificationsRepository>()
-          .unreadCount();
+      final unread = await notificationsRepo.unreadCount();
+      AccountPayload? account;
+      try {
+        account = await accountRepo.fetchAccount();
+      } catch (_) {
+        account = accountRepo.cachedAccount;
+      }
       if (mounted) {
         setState(() {
           if (resolved != null) _centerTitle = resolved.name;
           _unreadCount = unread;
+          _accountName = account?.displayName;
+          _accountAvatarUrl = account?.avatarUrl;
         });
       }
     } catch (e) {
@@ -128,7 +138,8 @@ class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
     return HomeTopBar(
       centerTitle: _title,
       showUnreadDot: _unreadCount > 0,
-      onProfileTap: () async {
+      onAddBabyTap: () => context.push('/baby/create'),
+      onBabySwitcherTap: () async {
         await showBabySwitcherSheet(context);
         await _refresh();
       },
@@ -137,6 +148,9 @@ class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
         await context.push('/notifications/inbox');
         await _refresh();
       },
+      onAccountTap: () => context.push('/profile'),
+      accountDisplayName: _accountName,
+      accountAvatarUrl: _accountAvatarUrl,
     );
   }
 }

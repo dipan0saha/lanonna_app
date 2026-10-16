@@ -312,7 +312,7 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
             ),
             AppLabeledTextField(
               label: 'Weight',
-              kind: AppTextInputKind.prose,
+              kind: AppTextInputKind.none,
               controller: _weight,
               maxLength: 40,
             ),

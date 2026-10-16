@@ -8,7 +8,7 @@ import 'package:lanonna/features/calendar/data/models/calendar_models.dart';
 /// (a test that never fetches an event can omit it). Both count their calls.
 class FakeCalendarRepository extends CalendarRepository {
   FakeCalendarRepository({this.detailByFetch})
-      : super(ApiClient(idTokenProvider: () async => null));
+    : super(ApiClient(idTokenProvider: () async => null));
 
   final EventDetail Function()? detailByFetch;
 
@@ -21,6 +21,7 @@ class FakeCalendarRepository extends CalendarRepository {
     String babyId, {
     String? month,
     bool upcoming = false,
+    bool past = false,
     bool forceRefresh = false,
   }) async {
     listCalls++;
@@ -28,7 +29,9 @@ class FakeCalendarRepository extends CalendarRepository {
   }
 
   @override
-  Future<List<CalendarEvent>> listEventsForSuggestionDedupe(String babyId) async {
+  Future<List<CalendarEvent>> listEventsForSuggestionDedupe(
+    String babyId,
+  ) async {
     listCalls++;
     return upcomingEvents;
   }

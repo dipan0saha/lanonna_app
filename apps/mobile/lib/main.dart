@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 
 import 'bootstrap.dart';
 import 'core/app_check/app_check_bootstrap.dart';
+import 'core/theme/bundled_font_licenses.dart';
 import 'firebase_options.dart';
 
 @pragma('vm:entry-point')
@@ -16,6 +17,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  registerBundledFontLicenses();
   if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
     await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   }

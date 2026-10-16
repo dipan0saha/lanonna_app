@@ -37,11 +37,6 @@ class HomePrdSections extends StatelessWidget {
           items: summary.systemAnnouncements,
           onDismissed: onRefresh,
         ),
-        if (teasers != null)
-          HomeTeasersSection(
-            teasers: teasers,
-            onSignedUrlError: onTeaserSignedUrlError ?? onRefresh,
-          ),
         if (summary.lifecycleStatus == 'born' ||
             summary.recentActivity.isNotEmpty)
           HomeActivityFeed(
@@ -50,6 +45,13 @@ class HomePrdSections extends StatelessWidget {
             showEmptyPlaceholder: summary.lifecycleStatus == 'born' &&
                 summary.recentActivity.isEmpty,
             emptyMessage: _kBornHomeActivityEmptyMessage,
+          ),
+        if (teasers != null)
+          HomeTeasersSection(
+            teasers: teasers,
+            onSignedUrlError: onTeaserSignedUrlError ?? onRefresh,
+            includeUpcomingEvents:
+                summary.nextUpEvent == null || summary.nextUpEvent!.id.isEmpty,
           ),
         if (isOwner) ...[
           HomeNewFollowersSection(

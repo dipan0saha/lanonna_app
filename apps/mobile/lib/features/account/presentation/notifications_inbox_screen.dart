@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/router/deep_link_navigation.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/app_empty_state.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/widgets/app_snackbar.dart';
@@ -119,7 +120,11 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
                 ),
               )
             : _items.isEmpty
-            ? const Center(child: Text('No notifications yet'))
+            ? AppEmptyState(
+                icon: Icons.notifications_none_outlined,
+                title: 'No notifications yet',
+                message: 'When family comments, RSVPs, or joins, you\'ll see it here.',
+              )
             : RefreshIndicator(
                 onRefresh: _load,
                 child: ListView.builder(

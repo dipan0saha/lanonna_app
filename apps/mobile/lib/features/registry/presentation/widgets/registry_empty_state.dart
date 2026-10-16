@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_metrics.dart';
-import '../../../../core/theme/la_nonna_theme.dart';
+import '../../../../core/widgets/app_empty_state.dart';
 
 class RegistryEmptyState extends StatelessWidget {
   const RegistryEmptyState({
@@ -16,32 +14,15 @@ class RegistryEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppMetrics.horizontalPadding,
-        16,
-        AppMetrics.horizontalPadding,
-        16,
-      ),
-      child: Column(
-        children: [
-          const Icon(Icons.card_giftcard_outlined, size: 36, color: AppColors.primaryDark),
-          const SizedBox(height: 12),
-          Text('No registry items yet', style: context.textStyles.titleMedium),
-          const SizedBox(height: 8),
-          Text(
-            isOwner
-                ? 'Add the things your baby will need so family knows what to bring.'
-                : "Nothing's been added to the registry yet - check back soon.",
-            textAlign: TextAlign.center,
-            style: context.textStyles.bodyMedium?.copyWith(color: AppColors.muted),
-          ),
-          if (isOwner && onAddItem != null) ...[
-            const SizedBox(height: 18),
-            FilledButton(onPressed: onAddItem, child: const Text('+ Add Item')),
-          ],
-        ],
-      ),
+    return AppEmptyState(
+      expand: false,
+      icon: Icons.card_giftcard_outlined,
+      title: 'No registry items yet',
+      message: isOwner
+          ? 'Add the things your baby will need so family knows what to bring.'
+          : "Nothing's been added to the registry yet — check back soon.",
+      actionLabel: isOwner ? '+ Add Item' : null,
+      onAction: onAddItem,
     );
   }
 }

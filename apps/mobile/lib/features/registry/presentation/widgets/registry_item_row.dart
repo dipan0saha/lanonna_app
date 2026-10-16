@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_metrics.dart';
+
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
+import '../../../../core/widgets/app_gift_pill_button.dart';
 import '../../../../core/widgets/app_icon_button.dart';
 import '../../../../core/widgets/app_semantics.dart';
+import '../../../../core/widgets/registry_priority_chip.dart';
 import '../../data/models/registry_models.dart';
 
 class RegistryNeededRow extends StatelessWidget {
@@ -26,65 +31,66 @@ class RegistryNeededRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasActions = onClaim != null || isOwner;
-
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Column(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(item.name, style: context.textStyles.titleSmall),
-          if (item.description != null && item.description!.isNotEmpty)
-            Text(
-              item.description!,
-              style: context.textStyles.bodySmall?.copyWith(
-                color: AppColors.muted,
-              ),
-            ),
-          Text(
-            'Priority ${item.priority}',
-            style: context.textStyles.labelSmall?.copyWith(
-              color: AppColors.primaryDark,
-            ),
-          ),
-          if (hasActions) ...[
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (onClaim != null)
-                  isOwner
-                      ? AppSemantics.button(
-                          'registry_mark_purchased',
-                          TextButton(
-                            onPressed: onClaim,
-                            child: const Text('Mark as purchased'),
-                          ),
-                          label: 'Mark as purchased',
-                        )
-                      : TextButton(
-                          onPressed: onClaim,
-                          child: const Text("I'll buy this"),
-                        ),
-                if (isOwner) ...[
-                  AppIconButton(
-                    semanticsId: 'registry_item_edit_${item.id}',
-                    label: 'Edit item',
-                    onPressed: onEdit,
-                    icon: const Icon(Icons.edit_outlined, size: 18),
-                  ),
-                  AppIconButton(
-                    semanticsId: 'registry_item_delete_${item.id}',
-                    label: 'Delete item',
-                    onPressed: onDelete,
-                    icon: const Icon(
-                      Icons.delete_outline,
-                      size: 18,
-                      color: AppColors.error,
+                Text(item.name, style: context.textStyles.titleSmall),
+                if (item.description != null && item.description!.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      item.description!,
+                      style: context.textStyles.bodySmall?.copyWith(
+                        color: AppColors.muted,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                ],
+                SizedBox(height: AppSpacing.xs),
+                RegistryPriorityChip(priority: item.priority),
               ],
+            ),
+          ),
+          SizedBox(width: AppSpacing.sm),
+          if (onClaim != null)
+            Flexible(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: AppGiftPillButton(
+                  semanticsId: isOwner
+                      ? 'registry_mark_purchased'
+                      : 'registry_claim_item',
+                  label: isOwner ? 'Mark as purchased' : "I'll buy this",
+                  onPressed: onClaim,
+                ),
+              ),
+            ),
+          if (isOwner) ...[
+            AppIconButton(
+              semanticsId: 'registry_item_edit_${item.id}',
+              label: 'Edit item',
+              onPressed: onEdit,
+              icon: const Icon(
+                Icons.edit_outlined,
+                size: AppMetrics.inlineIconSize,
+              ),
+            ),
+            AppIconButton(
+              semanticsId: 'registry_item_delete_${item.id}',
+              label: 'Delete item',
+              icon: const Icon(
+                Icons.delete_outline,
+                size: AppMetrics.inlineIconSize,
+                color: AppColors.error,
+              ),
+              onPressed: onDelete,
             ),
           ],
         ],
@@ -109,7 +115,7 @@ class RegistryPurchasedRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final purchase = item.purchase;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: Row(
         children: [
           Expanded(
@@ -132,7 +138,11 @@ class RegistryPurchasedRow extends StatelessWidget {
             ),
           ),
           if (canUndo && onUndo != null)
-            TextButton(onPressed: onUndo, child: const Text('Undo')),
+            AppSemantics.button(
+              'registry_undo_purchase',
+              TextButton(onPressed: onUndo, child: const Text('Undo')),
+              label: 'Undo purchase',
+            ),
         ],
       ),
     );

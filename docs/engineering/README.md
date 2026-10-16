@@ -3,6 +3,7 @@
 | Document | Use when |
 |----------|----------|
 | [development.md](development.md) | Daily work — repo layout, API routes, mobile conventions, DB tools, performance |
+| [mobile-prototype-parity.md](mobile-prototype-parity.md) | Shared mobile theme/widgets aligned with the HTML prototype |
 | [operations.md](operations.md) | GCP/Terraform, deploy, migrations, dev readiness, ship APK / beta scripts |
 | [platform-architecture.md](platform-architecture.md) | Stack principles, flows, cost model, security checklist |
 | [pre-beta-qa.md](pre-beta-qa.md) | Manual device QA before widening beta |

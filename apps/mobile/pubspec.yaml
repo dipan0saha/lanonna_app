@@ -89,6 +89,9 @@ flutter:
     - assets/data/iso3166_countries.json
     - assets/legal/terms.html
     - assets/legal/privacy.html
+    # Bundled Google Fonts (OFL); google_fonts loads these instead of fetching.
+    - assets/google_fonts/DancingScript-Bold.ttf
+    - assets/google_fonts/DancingScript-OFL.txt
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

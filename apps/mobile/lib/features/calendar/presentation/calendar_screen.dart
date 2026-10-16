@@ -7,7 +7,10 @@ import '../../../core/presentation/tab_load_kind.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/app_semantics.dart';
+import '../../../core/widgets/app_empty_state.dart';
+import '../../../core/widgets/app_section_caps_label.dart';
 import '../../../core/widgets/async_tab_body.dart';
+import '../../../core/widgets/calendar_ai_suggestion_banner.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
@@ -22,7 +25,8 @@ import '../domain/calendar_event_lists.dart';
 import '../domain/calendar_routes.dart';
 import 'calendar_display.dart';
 import 'event_form_screen.dart';
-import 'widgets/calendar_event_list_tile.dart';
+import 'widgets/calendar_grouped_events_card.dart';
+import 'widgets/calendar_past_events_sheet.dart';
 import 'widgets/calendar_selected_day_section.dart';
 
 class CalendarScreen extends StatefulWidget {
@@ -200,6 +204,8 @@ class _CalendarScreenState extends State<CalendarScreen>
 
   bool get _isOwner => _baby?.role == 'owner';
 
+  List<CalendarEvent> get _groupedUpcoming => [..._today, ..._upcoming];
+
   Set<int> _eventDays() {
     return _monthEvents
         .where((e) => eventOnLocalMonthDay(e.startsAt, _visibleMonth))
@@ -261,7 +267,7 @@ class _CalendarScreenState extends State<CalendarScreen>
                   ),
                   child: Card(
                     child: Padding(
-                      padding: const EdgeInsets.all(12),
+                      padding: AppMetrics.monthGridCardPadding,
                       child: Column(
                         children: [
                           Row(
@@ -278,9 +284,12 @@ class _CalendarScreenState extends State<CalendarScreen>
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text(monthLabel, style: styles.titleMedium),
+                                  Text(
+                                    monthLabel,
+                                    style: context.calendarMonthTitleStyle,
+                                  ),
                                   if (_monthRefreshing) ...[
-                                    const SizedBox(width: 8),
+                                    SizedBox(width: AppSpacing.sm),
                                     const SizedBox(
                                       width: 16,
                                       height: 16,
@@ -315,37 +324,10 @@ class _CalendarScreenState extends State<CalendarScreen>
               ),
               if (_isOwner)
                 SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppMetrics.horizontalPadding,
-                      16,
-                      AppMetrics.horizontalPadding,
-                      16,
-                    ),
-                    child: InkWell(
-                      onTap: () => context.push(CalendarRoutes.aiSuggestions),
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: AppColors.peachTint,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.auto_awesome_outlined),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                'Not sure where to start? See AI-suggested events by stage and age.',
-                                style: styles.bodyMedium,
-                              ),
-                            ),
-                            const Icon(Icons.chevron_right),
-                          ],
-                        ),
-                      ),
-                    ),
+                  child: CalendarAiSuggestionBanner(
+                    message:
+                        'Not sure where to start? See AI-suggested events by stage and age.',
+                    onTap: () => context.push(CalendarRoutes.aiSuggestions),
                   ),
                 ),
               if (_selectedDay != null)
@@ -359,96 +341,46 @@ class _CalendarScreenState extends State<CalendarScreen>
                   ),
                 )
               else ...[
-                if (_today.isNotEmpty) ...[
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppMetrics.horizontalPadding,
-                        8,
-                        AppMetrics.horizontalPadding,
-                        8,
-                      ),
-                      child: Text(
-                        'Today',
-                        style:
-                            styles.labelLarge?.copyWith(color: AppColors.muted),
-                      ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      AppMetrics.horizontalPadding,
+                      AppSpacing.sm,
+                      AppMetrics.horizontalPadding,
+                      AppSpacing.sm,
                     ),
-                  ),
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) =>
-                          CalendarEventListTile(event: _today[index]),
-                      childCount: _today.length,
-                    ),
-                  ),
-                ],
-                if (_today.isNotEmpty || _upcoming.isNotEmpty)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppMetrics.horizontalPadding,
-                        8,
-                        AppMetrics.horizontalPadding,
-                        8,
-                      ),
-                      child: Text(
-                        'Upcoming',
-                        style:
-                            styles.labelLarge?.copyWith(color: AppColors.muted),
-                      ),
-                    ),
-                  ),
-                if (_today.isEmpty && _upcoming.isEmpty)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppMetrics.horizontalPadding,
-                        24,
-                        AppMetrics.horizontalPadding,
-                        24,
-                      ),
-                      child: Column(
-                        children: [
-                          Text('No events yet', style: styles.titleMedium),
-                          const SizedBox(height: 8),
-                          Text(
-                            _isOwner
-                                ? 'Add ultrasounds, showers, or the gender reveal so family knows when to celebrate.'
-                                : 'Nothing on the calendar yet - check back soon.',
-                            textAlign: TextAlign.center,
-                            style: styles.bodyMedium?.copyWith(
-                              color: AppColors.muted,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                else if (_upcoming.isEmpty)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppMetrics.horizontalPadding,
-                        0,
-                        AppMetrics.horizontalPadding,
-                        8,
-                      ),
-                      child: Text(
-                        'No further upcoming events',
-                        style: styles.bodyMedium?.copyWith(
-                          color: AppColors.muted,
+                    child: Row(
+                      children: [
+                        const AppSectionCapsLabel('Upcoming'),
+                        const Spacer(),
+                        TextButton(
+                          onPressed: _baby == null
+                              ? null
+                              : () => showCalendarPastEventsSheet(
+                                  context,
+                                  babyId: _baby!.id,
+                                ),
+                          child: const Text('Past'),
                         ),
-                      ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (_groupedUpcoming.isEmpty)
+                  SliverFillRemaining(
+                    child: AppEmptyState(
+                      icon: Icons.event_outlined,
+                      title: 'No events yet',
+                      message: _isOwner
+                          ? 'Add ultrasounds, showers, or the gender reveal so family knows when to celebrate.'
+                          : 'Nothing on the calendar yet — check back soon.',
+                      actionLabel: _isOwner ? '+ Add Event' : null,
+                      onAction: _isOwner ? _openCreateEvent : null,
                     ),
                   )
                 else
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) =>
-                          CalendarEventListTile(event: _upcoming[index]),
-                      childCount: _upcoming.length,
-                    ),
+                  SliverToBoxAdapter(
+                    child: CalendarGroupedEventsCard(events: _groupedUpcoming),
                   ),
               ],
               const SliverToBoxAdapter(child: SizedBox(height: 96)),
@@ -463,6 +395,7 @@ class _CalendarScreenState extends State<CalendarScreen>
                 onPressed: () => _openCreateEvent(),
                 child: const Icon(Icons.add),
               ),
+              label: 'Create event',
             )
           : null,
     );
@@ -508,7 +441,7 @@ class _MonthGrid extends StatelessWidget {
     final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
     final startWeekday = first.weekday % 7;
     final cells = <Widget>[
-      for (final label in ['S', 'M', 'T', 'W', 'T', 'F', 'S'])
+      for (final label in AppMetrics.calendarWeekdayTwoLetter)
         Center(child: Text(label, style: styles.labelSmall)),
     ];
     for (var i = 0; i < startWeekday; i++) {
@@ -526,11 +459,13 @@ class _MonthGrid extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: () => onDayTap(day),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius:
+                BorderRadius.circular(AppMetrics.calendarDayCellRadius),
             child: Container(
               decoration: BoxDecoration(
                 color: isToday ? AppColors.primary : null,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius:
+                    BorderRadius.circular(AppMetrics.calendarDayCellRadius),
                 border: isSelected
                     ? Border.all(color: AppColors.primaryDark, width: 2)
                     : null,
@@ -549,9 +484,9 @@ class _MonthGrid extends StatelessWidget {
                   ),
                   if (hasEvent)
                     Container(
-                      width: 6,
-                      height: 6,
-                      margin: const EdgeInsets.only(top: 2),
+                      width: AppMetrics.calendarEventDotSize,
+                      height: AppMetrics.calendarEventDotSize,
+                      margin: EdgeInsets.only(top: AppSpacing.xxs / 2),
                       decoration: BoxDecoration(
                         color: isToday
                             ? AppColors.primaryButtonForeground

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../../core/widgets/app_sheet_handle.dart';
+
 import 'package:go_router/go_router.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
@@ -114,6 +117,18 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
     }
   }
 
+  String _switcherSubtitle(List<BabySummary> babies) {
+    final owners = babies.where((b) => b.role == 'owner').length;
+    final followers = babies.where((b) => b.role == 'follower').length;
+    if (owners > 0 && followers > 0) {
+      return "You're the Owner of one and a Follower of another.";
+    }
+    if (owners > 1) {
+      return 'Choose which baby profile to view.';
+    }
+    return 'Choose which baby profile to view.';
+  }
+
   Future<void> _select(BabySummary baby) async {
     await context.read<SelectedBabyStore>().setSelectedBabyId(baby.id);
     if (mounted) {
@@ -139,7 +154,13 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Switch baby', style: styles.titleMedium),
+          const AppSheetHandle(),
+          Text('Switch profile', style: styles.titleSmall),
+          SizedBox(height: AppSpacing.xxs),
+          Text(
+            _switcherSubtitle(_babies),
+            style: styles.bodySmall?.copyWith(color: AppColors.muted),
+          ),
           const SizedBox(height: 12),
           if (_loading)
             const Padding(
@@ -157,63 +178,68 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
                     AppSemantics.button(
                       'baby_switcher_${baby.id.replaceAll('-', '_')}',
                       ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: AppColors.sageTint,
-                        child: Text(
-                          baby.name.isNotEmpty ? baby.name[0].toUpperCase() : '?',
-                          style: styles.titleSmall,
-                        ),
-                      ),
-                      title: Text(baby.name),
-                      subtitle: Text(
-                        babyListSubtitle(
-                          baby,
-                          localeNameForFormatting(context),
-                        ),
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (baby.id == selectedId)
-                            const Icon(Icons.check, color: AppColors.primaryDark),
-                          PopupMenuButton<String>(
-                            icon: const Icon(Icons.more_vert, size: 20),
-                            onSelected: (value) async {
-                              if (value == 'leave') {
-                                await _leaveBaby(baby);
-                                return;
-                              }
-                              Navigator.of(context).pop();
-                              if (value == 'edit') {
-                                context.push('/baby/${baby.id}/edit');
-                              } else if (value == 'followers') {
-                                context.push('/baby/${baby.id}/followers');
-                              }
-                            },
-                            itemBuilder: (ctx) {
-                              final l10n = AppLocalizations.of(ctx)!;
-                              return [
-                                if (baby.role == 'owner') ...[
-                                  const PopupMenuItem(
-                                    value: 'edit',
-                                    child: Text('Edit baby'),
-                                  ),
-                                  const PopupMenuItem(
-                                    value: 'followers',
-                                    child: Text('Manage followers'),
-                                  ),
-                                ],
-                                PopupMenuItem(
-                                  value: 'leave',
-                                  child: Text(l10n.memberLeaveProfile),
-                                ),
-                              ];
-                            },
+                        leading: CircleAvatar(
+                          backgroundColor: AppColors.sageTint,
+                          child: Text(
+                            baby.name.isNotEmpty
+                                ? baby.name[0].toUpperCase()
+                                : '?',
+                            style: styles.titleSmall,
                           ),
-                        ],
+                        ),
+                        title: Text(baby.name),
+                        subtitle: Text(
+                          babyListSubtitle(
+                            baby,
+                            localeNameForFormatting(context),
+                          ),
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (baby.id == selectedId)
+                              const Icon(
+                                Icons.check,
+                                color: AppColors.primaryDark,
+                              ),
+                            PopupMenuButton<String>(
+                              icon: const Icon(Icons.more_vert, size: 20),
+                              onSelected: (value) async {
+                                if (value == 'leave') {
+                                  await _leaveBaby(baby);
+                                  return;
+                                }
+                                Navigator.of(context).pop();
+                                if (value == 'edit') {
+                                  context.push('/baby/${baby.id}/edit');
+                                } else if (value == 'followers') {
+                                  context.push('/baby/${baby.id}/followers');
+                                }
+                              },
+                              itemBuilder: (ctx) {
+                                final l10n = AppLocalizations.of(ctx)!;
+                                return [
+                                  if (baby.role == 'owner') ...[
+                                    const PopupMenuItem(
+                                      value: 'edit',
+                                      child: Text('Edit baby'),
+                                    ),
+                                    const PopupMenuItem(
+                                      value: 'followers',
+                                      child: Text('Manage followers'),
+                                    ),
+                                  ],
+                                  PopupMenuItem(
+                                    value: 'leave',
+                                    child: Text(l10n.memberLeaveProfile),
+                                  ),
+                                ];
+                              },
+                            ),
+                          ],
+                        ),
+                        onTap: () => _select(baby),
                       ),
-                      onTap: () => _select(baby),
-                    ),
                     ),
                 ],
               ),

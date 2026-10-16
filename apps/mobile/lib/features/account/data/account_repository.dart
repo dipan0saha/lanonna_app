@@ -144,6 +144,7 @@ class MemberRow {
     required this.canRemove,
     this.email,
     this.relationshipLabel,
+    this.joinedAt,
   });
 
   final String firebaseUid;
@@ -152,6 +153,7 @@ class MemberRow {
   final bool canRemove;
   final String? email;
   final String? relationshipLabel;
+  final String? joinedAt;
 
   factory MemberRow.fromJson(Map<String, dynamic> json) {
     return MemberRow(
@@ -161,6 +163,7 @@ class MemberRow {
       canRemove: json['can_remove'] as bool? ?? false,
       email: json['email'] as String?,
       relationshipLabel: json['relationship_label'] as String?,
+      joinedAt: json['joined_at'] as String?,
     );
   }
 }

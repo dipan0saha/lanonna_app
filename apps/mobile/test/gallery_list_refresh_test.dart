@@ -73,7 +73,7 @@ Future<void> _pumpGallery(
   for (var i = 0; i < 40; i++) {
     await tester.pump(const Duration(milliseconds: 16));
     if (find.text('No photos yet').evaluate().isNotEmpty ||
-        find.text('All Photos').evaluate().isNotEmpty) {
+        find.text('ALL PHOTOS').evaluate().isNotEmpty) {
       break;
     }
   }
@@ -110,10 +110,10 @@ void main() {
     galleryRepo.notifyListeners();
     for (var i = 0; i < 40; i++) {
       await tester.pump(const Duration(milliseconds: 16));
-      if (find.text('All Photos').evaluate().isNotEmpty) break;
+      if (find.text('ALL PHOTOS').evaluate().isNotEmpty) break;
     }
 
-    expect(find.text('All Photos'), findsOneWidget);
+    expect(find.text('ALL PHOTOS'), findsOneWidget);
     expect(find.byTooltip('Add photo'), findsOneWidget);
     expect(find.bySemanticsLabel('Refresh test caption'), findsOneWidget);
     expect(galleryRepo.listCalls, greaterThan(callsAfterLoad));
@@ -175,10 +175,10 @@ void main() {
     homeRefresh.notifyBabyContextChanged();
     for (var i = 0; i < 40; i++) {
       await tester.pump(const Duration(milliseconds: 16));
-      if (find.text('All Photos').evaluate().isNotEmpty) break;
+      if (find.text('ALL PHOTOS').evaluate().isNotEmpty) break;
     }
 
-    expect(find.text('All Photos'), findsOneWidget);
+    expect(find.text('ALL PHOTOS'), findsOneWidget);
     expect(galleryRepo.listCalls, greaterThan(callsAfterLoad));
   });
 }
