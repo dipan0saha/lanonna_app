@@ -106,7 +106,6 @@ class OwnerHomeComposer extends StatelessWidget {
           HomeBirthWelcomeCard(
             welcome: s!.birthWelcome!,
             babyId: baby.id,
-            onSignedUrlError: onRefresh,
           ),
         if (s != null)
           HomePrdSections(
