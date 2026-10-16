@@ -47,6 +47,19 @@ class _NamesTabState extends State<NamesTab> {
   }
 
   @override
+  void didUpdateWidget(covariant NamesTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Baby switch reuses this State (same tab position): drop the previous
+    // baby's suggestions and draft, then load for the new baby.
+    if (oldWidget.baby.id != widget.baby.id) {
+      _payload = null;
+      _input.clear();
+      _validateSuggestOnInteraction = false;
+      _load();
+    }
+  }
+
+  @override
   void dispose() {
     _input.dispose();
     super.dispose();
@@ -57,16 +70,17 @@ class _NamesTabState extends State<NamesTab> {
       _loading = true;
       _error = null;
     });
+    final babyId = widget.baby.id;
     try {
-      final payload = await context.read<FunRepository>().fetchNames(
-        widget.baby.id,
-      );
+      final payload = await context.read<FunRepository>().fetchNames(babyId);
+      // Ignore a response for a baby that is no longer shown.
+      if (!mounted || babyId != widget.baby.id) return;
       setState(() {
         _payload = payload;
         _loading = false;
       });
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || babyId != widget.baby.id) return;
       setState(() {
         _loading = false;
         _error = apiErrorMessage(e);

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/domain/baby_display_label.dart';
 import '../../../../core/widgets/app_empty_state.dart';
 
 class GalleryEmptyState extends StatelessWidget {
@@ -16,7 +17,7 @@ class GalleryEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = babyName.trim().isEmpty ? 'your baby' : babyName.trim();
+    final name = babyDisplayName(babyName);
     return AppEmptyState(
       expand: false,
       icon: Icons.photo_outlined,

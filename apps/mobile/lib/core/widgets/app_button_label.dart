@@ -14,6 +14,7 @@ class AppButtonLabel extends StatelessWidget {
       style: style,
       textAlign: TextAlign.center,
       softWrap: true,
+      textWidthBasis: TextWidthBasis.longestLine,
     );
   }
 }

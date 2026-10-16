@@ -70,14 +70,23 @@ class _GalleryScreenState extends State<GalleryScreen>
   int get galleryReloadLoadedCount => _photoOffset;
 
   @override
+  bool get galleryReloadHasMore => _hasMorePhotos;
+
+  @override
   bool get galleryReloadBlockedByFullLoad => _loading;
 
   @override
-  void applyGalleryReloadResult(List<PhotoSummary> photos, int requestedCount) {
+  void applyGalleryReloadResult(
+    List<PhotoSummary> photos,
+    int requestedCount, {
+    bool? hasMore,
+  }) {
     setState(() {
       _photos = photos;
       _photoOffset = photos.length;
-      if (photos.length < requestedCount) {
+      if (hasMore != null) {
+        _hasMorePhotos = hasMore;
+      } else if (photos.length < requestedCount) {
         _hasMorePhotos = false;
       }
     });

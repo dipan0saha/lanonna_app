@@ -5,7 +5,7 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 from lanonna_api.auth import current_user
-from lanonna_api.domain.prediction_errors import PredictionsClosedError
+from lanonna_api.domain.fun_closed import PredictionsClosedError
 from lanonna_api.main import app
 
 client = TestClient(app)

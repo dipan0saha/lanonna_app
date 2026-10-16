@@ -8,8 +8,10 @@ import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/app_section_title.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
+import '../../../core/domain/baby_display_label.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
+import '../../home/presentation/baby_context_reload.dart';
 import '../data/notifications_repository.dart';
 
 class NotificationPreferencesScreen extends StatefulWidget {
@@ -20,7 +22,9 @@ class NotificationPreferencesScreen extends StatefulWidget {
       _NotificationPreferencesScreenState();
 }
 
-class _NotificationPreferencesScreenState extends State<NotificationPreferencesScreen> {
+class _NotificationPreferencesScreenState
+    extends State<NotificationPreferencesScreen>
+    with BabyContextReload {
   NotificationPreferences? _prefs;
   var _loading = true;
   var _saving = false;
@@ -32,8 +36,25 @@ class _NotificationPreferencesScreenState extends State<NotificationPreferencesS
     _load();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    registerBabyContextListeners();
+  }
+
+  @override
+  void dispose() {
+    disposeBabyContextListeners();
+    super.dispose();
+  }
+
+  @override
+  void onBabyContextReload() => _load();
+
   Future<void> _load() async {
-    final prefs = await context.read<NotificationsRepository>().fetchPreferences();
+    final prefs = await context
+        .read<NotificationsRepository>()
+        .fetchPreferences();
     final homeRepo = context.read<HomeRepository>();
     final store = context.read<SelectedBabyStore>();
     final baby = await homeRepo.resolveSelectedBaby(store);
@@ -49,15 +70,17 @@ class _NotificationPreferencesScreenState extends State<NotificationPreferencesS
     if (prefs == null) return;
     setState(() => _saving = true);
     try {
-      final updated = await context.read<NotificationsRepository>().updatePreferences(
-        digest: prefs.digest,
-        pushEnabled: prefs.pushEnabled,
-        emailDigestEnabled: prefs.emailDigestEnabled,
-        notifyGalleryEnabled: prefs.notifyGalleryEnabled,
-        notifyCalendarEnabled: prefs.notifyCalendarEnabled,
-        notifyRegistryEnabled: prefs.notifyRegistryEnabled,
-        notifyCommentsEnabled: prefs.notifyCommentsEnabled,
-      );
+      final updated = await context
+          .read<NotificationsRepository>()
+          .updatePreferences(
+            digest: prefs.digest,
+            pushEnabled: prefs.pushEnabled,
+            emailDigestEnabled: prefs.emailDigestEnabled,
+            notifyGalleryEnabled: prefs.notifyGalleryEnabled,
+            notifyCalendarEnabled: prefs.notifyCalendarEnabled,
+            notifyRegistryEnabled: prefs.notifyRegistryEnabled,
+            notifyCommentsEnabled: prefs.notifyCommentsEnabled,
+          );
       setState(() => _prefs = updated);
       if (mounted) context.pop();
     } finally {
@@ -69,8 +92,7 @@ class _NotificationPreferencesScreenState extends State<NotificationPreferencesS
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final prefs = _prefs;
-    final trimmedName = (_babyName ?? '').trim();
-    final babyLabel = trimmedName.isEmpty ? 'your baby' : 'Baby $trimmedName';
+    final babyLabel = babyDisplayName(_babyName);
     return PrototypeSubpageScaffold(
       title: 'Notification preferences',
       body: _loading || prefs == null
@@ -103,14 +125,16 @@ class _NotificationPreferencesScreenState extends State<NotificationPreferencesS
                   title: const Text('Push notifications'),
                   subtitle: const Text('Get alerts on your phone'),
                   value: prefs.pushEnabled,
-                  onChanged: (v) => setState(() => _prefs = prefs.copyWith(pushEnabled: v)),
+                  onChanged: (v) =>
+                      setState(() => _prefs = prefs.copyWith(pushEnabled: v)),
                 ),
                 SwitchListTile(
                   title: const Text('Weekly email digest'),
                   subtitle: const Text('Photos, events and registry updates'),
                   value: prefs.emailDigestEnabled,
-                  onChanged: (v) =>
-                      setState(() => _prefs = prefs.copyWith(emailDigestEnabled: v)),
+                  onChanged: (v) => setState(
+                    () => _prefs = prefs.copyWith(emailDigestEnabled: v),
+                  ),
                 ),
                 const SizedBox(height: AppMetrics.sectionBlockSpacing),
                 AppSectionTitle(
@@ -121,35 +145,41 @@ class _NotificationPreferencesScreenState extends State<NotificationPreferencesS
                   title: Text(l10n.notificationChannelGallery),
                   subtitle: Text(l10n.notificationChannelGallerySubtitle),
                   value: prefs.notifyGalleryEnabled,
-                  onChanged: (v) =>
-                      setState(() => _prefs = prefs.copyWith(notifyGalleryEnabled: v)),
+                  onChanged: (v) => setState(
+                    () => _prefs = prefs.copyWith(notifyGalleryEnabled: v),
+                  ),
                 ),
                 SwitchListTile(
                   title: Text(l10n.notificationChannelCalendar),
                   subtitle: Text(l10n.notificationChannelCalendarSubtitle),
                   value: prefs.notifyCalendarEnabled,
-                  onChanged: (v) =>
-                      setState(() => _prefs = prefs.copyWith(notifyCalendarEnabled: v)),
+                  onChanged: (v) => setState(
+                    () => _prefs = prefs.copyWith(notifyCalendarEnabled: v),
+                  ),
                 ),
                 SwitchListTile(
                   title: Text(l10n.notificationChannelRegistry),
                   subtitle: Text(l10n.notificationChannelRegistrySubtitle),
                   value: prefs.notifyRegistryEnabled,
-                  onChanged: (v) =>
-                      setState(() => _prefs = prefs.copyWith(notifyRegistryEnabled: v)),
+                  onChanged: (v) => setState(
+                    () => _prefs = prefs.copyWith(notifyRegistryEnabled: v),
+                  ),
                 ),
                 SwitchListTile(
                   title: Text(l10n.notificationChannelComments),
                   subtitle: Text(l10n.notificationChannelCommentsSubtitle),
                   value: prefs.notifyCommentsEnabled,
-                  onChanged: (v) =>
-                      setState(() => _prefs = prefs.copyWith(notifyCommentsEnabled: v)),
+                  onChanged: (v) => setState(
+                    () => _prefs = prefs.copyWith(notifyCommentsEnabled: v),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 FilledButton(
                   onPressed: _saving ? null : _save,
                   child: Text(
-                    _saving ? l10n.notificationPrefsSaving : l10n.notificationPrefsSave,
+                    _saving
+                        ? l10n.notificationPrefsSaving
+                        : l10n.notificationPrefsSave,
                   ),
                 ),
               ],
@@ -157,7 +187,11 @@ class _NotificationPreferencesScreenState extends State<NotificationPreferencesS
     );
   }
 
-  Widget _digestTile(String value, String label, NotificationPreferences prefs) {
+  Widget _digestTile(
+    String value,
+    String label,
+    NotificationPreferences prefs,
+  ) {
     final selected = prefs.digest == value;
     return ListTile(
       leading: Icon(

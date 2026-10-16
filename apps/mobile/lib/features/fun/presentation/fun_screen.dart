@@ -111,9 +111,10 @@ class _FunScreenState extends State<FunScreen>
       case TabLoadKind.content:
         // After birth both tabs stay visible but read-only; the API also
         // rejects prediction writes with predictions_closed.
+        final baby = _baby!;
         return _segment == 0
-            ? NamesTab(baby: _baby!, readOnly: _baby!.lifecycleStatus == 'born')
-            : PredictionsTab(baby: _baby!);
+            ? NamesTab(baby: baby, readOnly: baby.lifecycleStatus == 'born')
+            : PredictionsTab(baby: baby);
     }
   }
 

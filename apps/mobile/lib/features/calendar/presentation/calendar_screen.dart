@@ -367,23 +367,26 @@ class _CalendarScreenState extends State<CalendarScreen>
                   ),
                 ),
                 if (_groupedUpcoming.isEmpty)
-                  SliverToBoxAdapter(
+                  SliverFillRemaining(
+                    hasScrollBody: false,
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(
+                      padding: EdgeInsets.fromLTRB(
                         AppMetrics.horizontalPadding,
                         AppSpacing.sm,
                         AppMetrics.horizontalPadding,
                         AppMetrics.fabScrollClearance,
                       ),
-                      child: AppEmptyState(
-                        expand: false,
-                        icon: Icons.event_outlined,
-                        title: 'No events yet',
-                        message: _isOwner
-                            ? 'Add ultrasounds, showers, or the gender reveal so family knows when to celebrate.'
-                            : 'Nothing on the calendar yet — check back soon.',
-                        actionLabel: _isOwner ? '+ Add Event' : null,
-                        onAction: _isOwner ? _openCreateEvent : null,
+                      child: Center(
+                        child: AppEmptyState(
+                          expand: false,
+                          icon: Icons.event_outlined,
+                          title: 'No events yet',
+                          message: _isOwner
+                              ? 'Add ultrasounds, showers, or the gender reveal so family knows when to celebrate.'
+                              : 'Nothing on the calendar yet — check back soon.',
+                          actionLabel: _isOwner ? '+ Add Event' : null,
+                          onAction: _isOwner ? _openCreateEvent : null,
+                        ),
                       ),
                     ),
                   )
