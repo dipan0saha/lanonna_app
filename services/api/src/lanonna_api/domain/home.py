@@ -214,6 +214,7 @@ def announce_arrival(
                 exclude_firebase_uid=firebase_uid,
                 notification_channel=NotificationChannel.CALENDAR,
                 notification_type=NotificationType.GENERIC,
+                actor_firebase_uid=firebase_uid,
             )
         )
     return result

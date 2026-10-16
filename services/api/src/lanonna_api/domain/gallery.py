@@ -42,7 +42,7 @@ from lanonna_api.domain.users_display import (
     author_display_name_from_row,
     uploader_display_name_from_row,
 )
-from lanonna_api.domain.notification_metadata import NotificationType, actor_fields
+from lanonna_api.domain.notification_metadata import NotificationType
 from lanonna_api.domain.notifications import NotificationChannel, safe_enqueue_notify_user
 from lanonna_api.repositories.activity_events import insert_activity_event
 from lanonna_api.auth import AppUser
@@ -215,7 +215,7 @@ def squish_photo(
             baby_profile_id=baby_profile_id,
             notification_channel=NotificationChannel.GALLERY,
             notification_type=NotificationType.SQUISH,
-            **actor_fields(firebase_uid),
+            actor_firebase_uid=firebase_uid,
         )
     return {"squished": active}
 
@@ -252,7 +252,7 @@ def add_comment(
             baby_profile_id=baby_profile_id,
             notification_channel=NotificationChannel.COMMENTS,
             notification_type=NotificationType.COMMENT,
-            **actor_fields(firebase_uid),
+            actor_firebase_uid=firebase_uid,
         )
     return {
         "id": str(c["id"]),

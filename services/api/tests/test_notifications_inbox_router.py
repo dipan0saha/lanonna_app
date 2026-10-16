@@ -1,9 +1,10 @@
+from types import MappingProxyType
 from contextlib import contextmanager
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
-from lanonna_api.auth import current_app_user
+from lanonna_api.auth import AppUser, current_app_user
 from lanonna_api.main import app
 
 client = TestClient(app)
@@ -11,10 +12,12 @@ client = TestClient(app)
 
 @contextmanager
 def _auth_as(uid: str = "user-1"):
-    app.dependency_overrides[current_app_user] = lambda: {
-        "uid": uid,
-        "email": "u@test.com",
-    }
+    app.dependency_overrides[current_app_user] = lambda: AppUser(
+        uid=uid,
+        email="u@test.com",
+        display_name=None,
+        claims=MappingProxyType({"uid": uid}),
+    )
     try:
         yield
     finally:

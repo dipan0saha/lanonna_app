@@ -13,7 +13,7 @@ from lanonna_api.domain.content_permissions import (
     member_content_can_edit,
 )
 from lanonna_api.domain.gallery import require_membership
-from lanonna_api.domain.notification_metadata import NotificationType, actor_fields
+from lanonna_api.domain.notification_metadata import NotificationType
 from lanonna_api.domain.users_display import actor_display_name
 from lanonna_api.domain.notifications import (
     FanOutSpec,
@@ -221,7 +221,7 @@ def create_calendar_event(
             exclude_firebase_uid=firebase_uid,
             notification_channel=NotificationChannel.CALENDAR,
             notification_type=NotificationType.EVENT,
-            **actor_fields(firebase_uid),
+            actor_firebase_uid=firebase_uid,
         )
     )
     return _event_row_to_json(row)
@@ -287,7 +287,7 @@ def set_rsvp(
             baby_profile_id=baby_profile_id,
             notification_channel=NotificationChannel.CALENDAR,
             notification_type=NotificationType.EVENT,
-            **actor_fields(firebase_uid),
+            actor_firebase_uid=firebase_uid,
         )
     return {"status": status}
 
@@ -316,7 +316,7 @@ def add_event_comment(
             baby_profile_id=baby_profile_id,
             notification_channel=NotificationChannel.COMMENTS,
             notification_type=NotificationType.COMMENT,
-            **actor_fields(firebase_uid),
+            actor_firebase_uid=firebase_uid,
         )
     return {
         "id": str(c["id"]),

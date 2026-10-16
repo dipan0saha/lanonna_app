@@ -11,6 +11,11 @@ from firebase_admin import messaging
 
 from lanonna_worker.db import get_connection
 from lanonna_worker.idempotency import resolve_delivery_key, try_claim_delivery
+from lanonna_worker.notification_metadata import (
+    GENERIC,
+    actor_uid_from_payload,
+    notification_type_from_payload,
+)
 
 logger = logging.getLogger("lanonna.worker.notifications")
 
@@ -102,9 +107,8 @@ def _insert_notification(
     body: str,
     deep_link: str | None,
     baby_profile_id: uuid.UUID | None,
-    notification_type: str = "generic",
+    notification_type: str = GENERIC,
     actor_firebase_uid: str | None = None,
-    actor_display_name: str | None = None,
 ) -> uuid.UUID:
     notification_id = uuid.uuid4()
     conn.execute(
@@ -113,7 +117,10 @@ def _insert_notification(
             id, firebase_uid, baby_profile_id, title, body, deep_link,
             notification_type, actor_firebase_uid, actor_display_name
         )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        SELECT %s, %s, %s, %s, %s, %s, %s, a.firebase_uid,
+            NULLIF(TRIM(a.display_name), '')
+        FROM (SELECT 1) AS one
+        LEFT JOIN app_users a ON a.firebase_uid = %s
         """,
         (
             notification_id,
@@ -124,7 +131,6 @@ def _insert_notification(
             deep_link,
             notification_type,
             actor_firebase_uid,
-            actor_display_name,
         ),
     )
     return notification_id
@@ -280,9 +286,8 @@ def process_notify_fan_out(
     exclude = payload.get("exclude_firebase_uid")
     explicit_uids = [str(u) for u in payload.get("firebase_uids") or []]
     channel = payload.get("notification_channel")
-    notification_type = str(payload.get("notification_type") or "generic")
-    actor_firebase_uid = payload.get("actor_firebase_uid")
-    actor_display_name = payload.get("actor_display_name")
+    notification_type = notification_type_from_payload(payload)
+    actor_firebase_uid = actor_uid_from_payload(payload)
     delivery_key = resolve_delivery_key(payload, pubsub_message_id=pubsub_message_id)
 
     with get_connection() as conn:
@@ -308,7 +313,6 @@ def process_notify_fan_out(
                 baby_profile_id=baby_id,
                 notification_type=notification_type,
                 actor_firebase_uid=actor_firebase_uid,
-                actor_display_name=actor_display_name,
             )
             _send_fcm(
                 conn,
@@ -333,9 +337,8 @@ def process_notify_user(
     baby_raw = payload.get("baby_profile_id")
     baby_id = uuid.UUID(str(baby_raw)) if baby_raw else None
     channel = payload.get("notification_channel")
-    notification_type = str(payload.get("notification_type") or "generic")
-    actor_firebase_uid = payload.get("actor_firebase_uid")
-    actor_display_name = payload.get("actor_display_name")
+    notification_type = notification_type_from_payload(payload)
+    actor_firebase_uid = actor_uid_from_payload(payload)
     delivery_key = resolve_delivery_key(payload, pubsub_message_id=pubsub_message_id)
 
     with get_connection() as conn:
@@ -353,7 +356,6 @@ def process_notify_user(
             baby_profile_id=baby_id,
             notification_type=notification_type,
             actor_firebase_uid=actor_firebase_uid,
-            actor_display_name=actor_display_name,
         )
         _send_fcm(
             conn,

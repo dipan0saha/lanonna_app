@@ -1,9 +1,11 @@
 import uuid
+from types import MappingProxyType
 from unittest.mock import patch
 
 import pytest
 from pydantic import ValidationError
 
+from lanonna_api.auth import AppUser
 from lanonna_api.domain.gallery import init_photo_upload
 from lanonna_api.routers.photos import PhotoInitRequest
 
@@ -29,7 +31,12 @@ def test_photo_init_request_rejects_long_caption():
 
 
 def test_init_photo_upload_passes_caption_to_create_pending_photo():
-    user = {"uid": "uid1", "email": "a@b.com"}
+    user = AppUser(
+        uid="uid1",
+        email="a@b.com",
+        display_name=None,
+        claims=MappingProxyType({"uid": "uid1"}),
+    )
     with patch(
         "lanonna_api.domain.gallery.assert_owner_membership",
     ), patch(
