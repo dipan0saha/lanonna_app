@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/domain/baby_summary.dart';
+import '../../../core/json/json_readers.dart';
 
 class UserEngagementStats {
   const UserEngagementStats({
@@ -27,10 +28,10 @@ class UserEngagementStats {
       );
     }
     return UserEngagementStats(
-      photosSquished: json['photos_squished'] as int? ?? 0,
-      eventsAttended: json['events_attended'] as int? ?? 0,
-      itemsBought: json['items_bought'] as int? ?? 0,
-      comments: json['comments'] as int? ?? 0,
+      photosSquished: readInt(json['photos_squished']),
+      eventsAttended: readInt(json['events_attended']),
+      itemsBought: readInt(json['items_bought']),
+      comments: readInt(json['comments']),
     );
   }
 }
@@ -44,8 +45,8 @@ class StorageUsage {
   factory StorageUsage.fromJson(Map<String, dynamic>? json) {
     if (json == null) return const StorageUsage(usedBytes: 0, quotaBytes: 0);
     return StorageUsage(
-      usedBytes: json['used_bytes'] as int? ?? 0,
-      quotaBytes: json['quota_bytes'] as int? ?? 0,
+      usedBytes: readInt(json['used_bytes']),
+      quotaBytes: readInt(json['quota_bytes']),
     );
   }
 
@@ -289,9 +290,10 @@ class AccountRepository {
   }
 
   Future<void> setBiometricUnlockEnabled(bool enabled) async {
-    final json = await _api.patchJson('/v1/profile', body: {
-      'biometric_unlock_enabled': enabled,
-    });
+    final json = await _api.patchJson(
+      '/v1/profile',
+      body: {'biometric_unlock_enabled': enabled},
+    );
     _rememberProfileResponse(
       json,
       fallbackDisplayName: profileUpdates.account?.displayName ?? '',

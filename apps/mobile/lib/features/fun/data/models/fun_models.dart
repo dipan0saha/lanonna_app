@@ -1,3 +1,5 @@
+import '../../../../core/json/json_readers.dart';
+
 class NameSuggestion {
   NameSuggestion({
     required this.id,
@@ -25,7 +27,7 @@ class NameSuggestion {
       id: json['id'] as String,
       suggestedName: json['suggested_name'] as String,
       gender: json['gender'] as String? ?? 'unknown',
-      likeCount: json['like_count'] as int? ?? 0,
+      likeCount: readInt(json['like_count']),
       viewerHasLiked: json['viewer_has_liked'] as bool? ?? false,
       isMine: isMine,
       canDelete: json['can_delete'] as bool? ?? isMine,
@@ -86,8 +88,8 @@ class PredictionsPayload {
     final hist = json['birthdate_histogram'] as List<dynamic>? ?? [];
     final voters = json['gender_voters'] as List<dynamic>? ?? [];
     return PredictionsPayload(
-      maleVotes: totals['male'] as int? ?? 0,
-      femaleVotes: totals['female'] as int? ?? 0,
+      maleVotes: readInt(totals['male']),
+      femaleVotes: readInt(totals['female']),
       viewerGenderVote: json['viewer_gender_vote'] as String?,
       viewerBirthdateVote: json['viewer_birthdate_vote'] as String?,
       birthdateHistogram: hist
@@ -112,7 +114,7 @@ class BirthdateVoteCount {
   factory BirthdateVoteCount.fromJson(Map<String, dynamic> json) {
     return BirthdateVoteCount(
       date: json['date'] as String,
-      count: json['count'] as int? ?? 0,
+      count: readInt(json['count']),
     );
   }
 }

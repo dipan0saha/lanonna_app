@@ -18,9 +18,10 @@ import '../data/fun_repository.dart';
 import '../data/models/fun_models.dart';
 
 class NamesTab extends StatefulWidget {
-  const NamesTab({super.key, required this.baby});
+  const NamesTab({super.key, required this.baby, this.readOnly = false});
 
   final BabySummary baby;
+  final bool readOnly;
 
   @override
   State<NamesTab> createState() => _NamesTabState();
@@ -36,6 +37,8 @@ class _NamesTabState extends State<NamesTab> {
   var _validateSuggestOnInteraction = false;
 
   bool get _isOwner => widget.baby.role == 'owner';
+
+  bool get _readOnly => widget.readOnly;
 
   @override
   void initState() {
@@ -154,9 +157,11 @@ class _NamesTabState extends State<NamesTab> {
               expand: false,
               icon: Icons.star_outline,
               title: 'No name suggestions yet',
-              message: 'Suggest a name below — everyone gets a say.',
+              message: _readOnly
+                  ? 'No name ideas were saved before baby arrived.'
+                  : 'Suggest a name below — everyone gets a say.',
             ),
-            _inputCard(),
+            if (!_readOnly) _inputCard(),
           ],
         ),
       );
@@ -173,8 +178,16 @@ class _NamesTabState extends State<NamesTab> {
           16,
         ),
         children: [
-          _inputCard(),
-          const SizedBox(height: 16),
+          if (_readOnly)
+            Padding(
+              padding: EdgeInsets.only(bottom: AppSpacing.md),
+              child: Text(
+                AppLocalizations.of(context)!.namesClosedNote,
+                style: context.textStyles.bodyMedium,
+              ),
+            ),
+          if (!_readOnly) _inputCard(),
+          if (!_readOnly) const SizedBox(height: 16),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -267,8 +280,9 @@ class _NamesTabState extends State<NamesTab> {
             padding: const EdgeInsets.only(top: 8),
             child: _NameSuggestionCard(
               suggestion: s,
-              onLike: () => _like(s),
-              onDelete: () => _delete(s),
+              readOnly: _readOnly,
+              onLike: _readOnly ? null : () => _like(s),
+              onDelete: _readOnly ? null : () => _delete(s),
             ),
           ),
       ],
@@ -280,13 +294,15 @@ class _NamesTabState extends State<NamesTab> {
 class _NameSuggestionCard extends StatelessWidget {
   const _NameSuggestionCard({
     required this.suggestion,
+    this.readOnly = false,
     required this.onLike,
     required this.onDelete,
   });
 
   final NameSuggestion suggestion;
-  final VoidCallback onLike;
-  final VoidCallback onDelete;
+  final bool readOnly;
+  final VoidCallback? onLike;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -315,28 +331,31 @@ class _NameSuggestionCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                AppIconButton(
-                  semanticsId: 'name_like_${suggestion.id}',
-                  label: suggestion.viewerHasLiked
-                      ? 'Unlike ${suggestion.suggestedName}'
-                      : 'Love ${suggestion.suggestedName}',
-                  onPressed: onLike,
-                  visualDensity: VisualDensity.compact,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 36,
-                    minHeight: 36,
-                  ),
-                  icon: Icon(
-                    suggestion.viewerHasLiked
-                        ? Icons.favorite
-                        : Icons.favorite_border,
-                    size: 20,
-                    color: suggestion.viewerHasLiked
-                        ? AppColors.primaryDark
-                        : null,
-                  ),
-                ),
+                if (!readOnly)
+                  AppIconButton(
+                    semanticsId: 'name_like_${suggestion.id}',
+                    label: suggestion.viewerHasLiked
+                        ? 'Unlike ${suggestion.suggestedName}'
+                        : 'Love ${suggestion.suggestedName}',
+                    onPressed: onLike,
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 36,
+                      minHeight: 36,
+                    ),
+                    icon: Icon(
+                      suggestion.viewerHasLiked
+                          ? Icons.favorite
+                          : Icons.favorite_border,
+                      size: 20,
+                      color: suggestion.viewerHasLiked
+                          ? AppColors.primaryDark
+                          : null,
+                    ),
+                  )
+                else if (suggestion.viewerHasLiked)
+                  Icon(Icons.favorite, size: 20, color: AppColors.primaryDark),
                 Semantics(
                   label: l10n.nameLoveCount(suggestion.likeCount),
                   child: Text(
@@ -344,7 +363,7 @@ class _NameSuggestionCard extends StatelessWidget {
                     style: styles.labelMedium,
                   ),
                 ),
-                if (suggestion.canDelete)
+                if (!readOnly && suggestion.canDelete)
                   AppIconButton(
                     semanticsId: 'name_remove_${suggestion.id}',
                     label: 'Remove ${suggestion.suggestedName}',

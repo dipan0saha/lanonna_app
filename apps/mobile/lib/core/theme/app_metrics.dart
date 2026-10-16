@@ -37,6 +37,7 @@ abstract final class AppMetrics {
   static const double fieldContentPaddingHorizontal = 16;
   static const double fieldContentPaddingVertical = 13;
   static const double buttonRadius = 999;
+  static const double buttonMinWidth = 88;
   static const double buttonMinHeight = 52;
   static const double buttonHorizontalPadding = 24;
   static const double buttonVerticalPadding = 15;

@@ -111,8 +111,6 @@ class FollowerHomeComposer extends StatelessWidget {
             onVoteInFun: hideVoteInFun ? null : onVoteInFun,
             onViewGallery: onViewGallery,
             useBornOutlineActions: true,
-            onViewAnnouncement: () =>
-                context.push('/baby/${baby.id}/announcement'),
           ),
         ),
         if (s != null)

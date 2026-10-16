@@ -11,6 +11,7 @@ import '../../../../core/widgets/app_responsive_button_pair.dart';
 import '../../../../core/widgets/app_semantics.dart';
 import '../../../announcement/presentation/announcement_share.dart';
 import '../../data/models/home_summary.dart';
+import '../../../../core/theme/app_button_styles.dart';
 
 class HomeBirthWelcomeCard extends StatelessWidget {
   const HomeBirthWelcomeCard({
@@ -83,15 +84,7 @@ class HomeBirthWelcomeCard extends StatelessWidget {
                 ? AppSemantics.button(
                     'home_share_announcement',
                     OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.primaryDark,
-                        side: const BorderSide(color: AppColors.primaryDark),
-                        backgroundColor: AppColors.surface,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppMetrics.buttonHorizontalPadding,
-                          vertical: AppMetrics.buttonVerticalPadding,
-                        ),
-                      ),
+                      style: AppButtonStyles.outlinedAccent,
                       onPressed: () => AnnouncementShare.shareBabyAnnouncement(
                         context,
                         babyId,

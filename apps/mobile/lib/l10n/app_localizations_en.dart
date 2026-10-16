@@ -184,6 +184,27 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String rsvpResponseCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count responses',
+      one: '1 response',
+      zero: '0 responses',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notificationPreferencesIntro(String babyName) {
+    return 'Choose how often you\'d like updates from $babyName.';
+  }
+
+  @override
+  String get aiSuggestionsSubtitle =>
+      'Pick a stage, then add suggestions to your calendar or registry.';
+
+  @override
   String nameLoveCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -191,18 +212,6 @@ class AppLocalizationsEn extends AppLocalizations {
       other: '$count loves',
       one: '1 love',
       zero: '0 loves',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String registryItemsStillNeeded(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count items still needed',
-      one: '1 item still needed',
-      zero: '0 items still needed',
     );
     return '$_temp0';
   }
@@ -252,6 +261,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get predictionsClosedNote => 'Predictions closed — baby has arrived';
+
+  @override
+  String get namesClosedNote => 'Name ideas are closed — baby has arrived.';
 
   @override
   String get rsvpStatusGoing => 'Going';
@@ -390,9 +402,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get batchInviteCoOwnerHintManage =>
       '💡 Selecting \"Mother\" or \"Father\" makes that person a co-owner of this baby profile, with the same edit access as you.';
-
-  @override
-  String get batchInviteBabyMissing => 'Baby profile missing.';
 
   @override
   String get batchInviteNoInvitesToSend => 'No invites to send.';

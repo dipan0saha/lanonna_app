@@ -5,6 +5,7 @@ import '../../../../core/widgets/account_tinted_avatar.dart';
 import '../../../../core/widgets/app_bordered_surface.dart';
 import '../../../../core/widgets/app_semantics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
+import '../../../../core/theme/app_button_styles.dart';
 
 class AccountProfileCard extends StatelessWidget {
   const AccountProfileCard({
@@ -45,14 +46,7 @@ class AccountProfileCard extends StatelessWidget {
               Expanded(
                 child: AppSemantics.button(
                   'account_edit_profile',
-                  OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.textPrimary,
-                      side: const BorderSide(color: AppColors.border),
-                    ),
-                    onPressed: onEdit,
-                    child: const Text('Edit'),
-                  ),
+                  OutlinedButton(onPressed: onEdit, child: const Text('Edit')),
                   label: 'Edit profile',
                 ),
               ),
@@ -62,10 +56,7 @@ class AccountProfileCard extends StatelessWidget {
                   'account_sign_out',
                   OutlinedButton(
                     onPressed: onLogOut,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.error,
-                      side: const BorderSide(color: AppColors.error),
-                    ),
+                    style: AppButtonStyles.outlinedDestructive,
                     child: const Text('Log Out'),
                   ),
                   label: 'Log Out',

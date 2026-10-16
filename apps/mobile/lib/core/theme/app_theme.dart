@@ -56,12 +56,37 @@ abstract final class AppTheme {
           side: const BorderSide(color: AppColors.border),
         ),
       ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          backgroundColor: AppColors.surface,
+          foregroundColor: AppColors.textPrimary,
+          minimumSize: const Size(
+            AppMetrics.buttonMinWidth,
+            AppMetrics.buttonMinHeight,
+          ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppMetrics.buttonHorizontalPadding,
+            vertical: AppMetrics.buttonVerticalPadding,
+          ),
+          side: const BorderSide(color: AppColors.border),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppMetrics.buttonRadius),
+          ),
+          textStyle: textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+      ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           elevation: 0,
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.primaryButtonForeground,
-          minimumSize: const Size(88, AppMetrics.buttonMinHeight),
+          minimumSize: const Size(
+            AppMetrics.buttonMinWidth,
+            AppMetrics.buttonMinHeight,
+          ),
           padding: const EdgeInsets.symmetric(
             horizontal: AppMetrics.buttonHorizontalPadding,
             vertical: AppMetrics.buttonVerticalPadding,
@@ -93,7 +118,10 @@ abstract final class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppMetrics.fieldRadius),
-          borderSide: const BorderSide(color: AppColors.primaryDark, width: 1.5),
+          borderSide: const BorderSide(
+            color: AppColors.primaryDark,
+            width: 1.5,
+          ),
         ),
       ),
       switchTheme: SwitchThemeData(

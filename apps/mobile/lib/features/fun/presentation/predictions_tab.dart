@@ -19,6 +19,7 @@ import '../data/fun_repository.dart';
 import '../data/models/fun_models.dart';
 import '../domain/birthdate_prediction.dart';
 import '../domain/gender_vote_display.dart';
+import '../../../core/theme/app_button_styles.dart';
 
 class PredictionsTab extends StatefulWidget {
   const PredictionsTab({super.key, required this.baby});
@@ -153,10 +154,13 @@ class _PredictionsTabState extends State<PredictionsTab> {
 
   void _showVoters() {
     final voters = _payload?.genderVoters ?? [];
+    final l10n = AppLocalizations.of(context)!;
     showAppModalSheet(
       context: context,
       title: 'Who voted',
-      subtitle: voters.isEmpty ? 'No votes yet' : '${voters.length} votes',
+      subtitle: voters.isEmpty
+          ? 'No votes yet'
+          : l10n.predictionVoteCount(voters.length),
       bodyBuilder: (context) => ListView(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -390,10 +394,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
             ),
             const SizedBox(height: 8),
             OutlinedButton(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primaryDark,
-                side: const BorderSide(color: AppColors.primaryDark),
-              ),
+              style: AppButtonStyles.outlinedAccent,
               onPressed: _pickDate,
               child: Text(l10n.funBirthdatePickDate),
             ),

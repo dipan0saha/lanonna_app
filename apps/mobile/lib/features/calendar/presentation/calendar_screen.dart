@@ -367,13 +367,16 @@ class _CalendarScreenState extends State<CalendarScreen>
                   ),
                 ),
                 if (_groupedUpcoming.isEmpty)
-                  SliverFillRemaining(
-                    hasScrollBody: false,
+                  SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.only(
-                        bottom: AppMetrics.fabScrollClearance,
+                      padding: const EdgeInsets.fromLTRB(
+                        AppMetrics.horizontalPadding,
+                        AppSpacing.sm,
+                        AppMetrics.horizontalPadding,
+                        AppMetrics.fabScrollClearance,
                       ),
                       child: AppEmptyState(
+                        expand: false,
                         icon: Icons.event_outlined,
                         title: 'No events yet',
                         message: _isOwner

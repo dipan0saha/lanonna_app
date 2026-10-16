@@ -179,12 +179,13 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   }
 
   void _showRsvpSheet(EventDetail detail) {
+    final l10n = AppLocalizations.of(context)!;
     showAppModalSheet<void>(
       context: context,
       title: 'RSVPs',
       subtitle: detail.rsvpAttendees.isEmpty
           ? 'No RSVPs yet'
-          : '${detail.rsvpAttendees.length} responses',
+          : l10n.rsvpResponseCount(detail.rsvpAttendees.length),
       bodyBuilder: (ctx) {
         final l10n = AppLocalizations.of(ctx)!;
         return ListView(

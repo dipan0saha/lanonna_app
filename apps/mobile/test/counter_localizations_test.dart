@@ -28,6 +28,14 @@ void main() {
     });
   });
 
+  group('rsvpResponseCount', () {
+    test('singular and plural', () {
+      expect(l10n.rsvpResponseCount(0), '0 responses');
+      expect(l10n.rsvpResponseCount(1), '1 response');
+      expect(l10n.rsvpResponseCount(3), '3 responses');
+    });
+  });
+
   group('nameLoveCount', () {
     test('pluralizes 0, 1, 2+', () {
       expect(l10n.nameLoveCount(0), '0 loves');
@@ -41,14 +49,6 @@ void main() {
       expect(l10n.followerCount(0), '0 followers');
       expect(l10n.followerCount(1), '1 follower');
       expect(l10n.followerCount(3), '3 followers');
-    });
-  });
-
-  group('registryItemsStillNeeded', () {
-    test('pluralizes 0, 1, 2+', () {
-      expect(l10n.registryItemsStillNeeded(0), '0 items still needed');
-      expect(l10n.registryItemsStillNeeded(1), '1 item still needed');
-      expect(l10n.registryItemsStillNeeded(4), '4 items still needed');
     });
   });
 }

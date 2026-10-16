@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/api/api_exception.dart';
 import 'package:lanonna/features/home/data/home_repository.dart';
@@ -15,7 +16,9 @@ import 'package:lanonna/core/domain/baby_summary.dart';
 import 'support/fake_home_repository.dart';
 
 void main() {
-  testWidgets('registry AI suggestions shows snackbar when list fails', (tester) async {
+  testWidgets('registry AI suggestions shows snackbar when list fails', (
+    tester,
+  ) async {
     SharedPreferences.setMockInitialValues({'selected_baby_id': 'baby-1'});
 
     final homeRepo = FakeHomeRepository(
@@ -36,7 +39,11 @@ void main() {
           Provider<RegistryRepository>.value(value: regRepo),
           ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
         ],
-        child: const MaterialApp(home: RegistryAiSuggestionsScreen()),
+        child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: RegistryAiSuggestionsScreen(),
+        ),
       ),
     );
 
@@ -50,7 +57,8 @@ void main() {
 }
 
 class _FailingRegistryRepository extends RegistryRepository {
-  _FailingRegistryRepository() : super(ApiClient(idTokenProvider: () async => 't'));
+  _FailingRegistryRepository()
+    : super(ApiClient(idTokenProvider: () async => 't'));
 
   @override
   Future<List<RegistryItem>> listItems(String babyId) async {

@@ -69,9 +69,8 @@ class _NotificationPreferencesScreenState extends State<NotificationPreferencesS
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final prefs = _prefs;
-    final babyLabel = (_babyName ?? '').trim().isEmpty
-        ? 'your baby'
-        : 'Baby ${_babyName!.trim()}';
+    final trimmedName = (_babyName ?? '').trim();
+    final babyLabel = trimmedName.isEmpty ? 'your baby' : 'Baby $trimmedName';
     return PrototypeSubpageScaffold(
       title: 'Notification preferences',
       body: _loading || prefs == null
@@ -80,7 +79,7 @@ class _NotificationPreferencesScreenState extends State<NotificationPreferencesS
               padding: AppMetrics.subpageScrollPadding,
               children: [
                 Text(
-                  "Choose how often you'd like updates from $babyLabel.",
+                  l10n.notificationPreferencesIntro(babyLabel),
                   style: context.textStyles.bodyMedium?.copyWith(
                     color: AppColors.muted,
                   ),
@@ -94,7 +93,7 @@ class _NotificationPreferencesScreenState extends State<NotificationPreferencesS
                 ),
                 SizedBox(height: AppSpacing.lg),
                 AppSectionTitle(
-                  title: 'How often would you like updates?',
+                  title: 'How often would you like updates for $babyLabel?',
                   style: context.textStyles.titleSmall,
                 ),
                 _digestTile('realtime', 'Real-time', prefs),

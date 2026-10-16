@@ -358,17 +358,29 @@ abstract class AppLocalizations {
   /// **'{count, plural, =0{0 votes} =1{1 vote} other{{count} votes}}'**
   String predictionVoteCount(int count);
 
+  /// No description provided for @rsvpResponseCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{0 responses} =1{1 response} other{{count} responses}}'**
+  String rsvpResponseCount(int count);
+
+  /// No description provided for @notificationPreferencesIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how often you\'d like updates from {babyName}.'**
+  String notificationPreferencesIntro(String babyName);
+
+  /// Subtitle under AI Suggestions app bar (calendar + registry).
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a stage, then add suggestions to your calendar or registry.'**
+  String get aiSuggestionsSubtitle;
+
   /// No description provided for @nameLoveCount.
   ///
   /// In en, this message translates to:
   /// **'{count, plural, =0{0 loves} =1{1 love} other{{count} loves}}'**
   String nameLoveCount(int count);
-
-  /// No description provided for @registryItemsStillNeeded.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =0{0 items still needed} =1{1 item still needed} other{{count} items still needed}}'**
-  String registryItemsStillNeeded(int count);
 
   /// No description provided for @funBirthdateYourGuess.
   ///
@@ -441,6 +453,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Predictions closed — baby has arrived'**
   String get predictionsClosedNote;
+
+  /// Shown above the read-only name list after the baby is born.
+  ///
+  /// In en, this message translates to:
+  /// **'Name ideas are closed — baby has arrived.'**
+  String get namesClosedNote;
 
   /// No description provided for @rsvpStatusGoing.
   ///
@@ -675,12 +693,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'💡 Selecting \"Mother\" or \"Father\" makes that person a co-owner of this baby profile, with the same edit access as you.'**
   String get batchInviteCoOwnerHintManage;
-
-  /// No description provided for @batchInviteBabyMissing.
-  ///
-  /// In en, this message translates to:
-  /// **'Baby profile missing.'**
-  String get batchInviteBabyMissing;
 
   /// No description provided for @batchInviteNoInvitesToSend.
   ///

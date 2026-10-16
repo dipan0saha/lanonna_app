@@ -1,4 +1,5 @@
 import '../../../../core/time/app_date_time.dart';
+import '../../../../core/json/json_readers.dart';
 
 class CalendarEvent {
   CalendarEvent({
@@ -41,11 +42,7 @@ class CalendarEvent {
 }
 
 class RsvpSummary {
-  RsvpSummary({
-    required this.going,
-    required this.maybe,
-    required this.cantGo,
-  });
+  RsvpSummary({required this.going, required this.maybe, required this.cantGo});
 
   final int going;
   final int maybe;
@@ -53,9 +50,9 @@ class RsvpSummary {
 
   factory RsvpSummary.fromJson(Map<String, dynamic> json) {
     return RsvpSummary(
-      going: json['going'] as int? ?? 0,
-      maybe: json['maybe'] as int? ?? 0,
-      cantGo: json['cant_go'] as int? ?? 0,
+      going: readInt(json['going']),
+      maybe: readInt(json['maybe']),
+      cantGo: readInt(json['cant_go']),
     );
   }
 }
@@ -158,9 +155,9 @@ class EventDetail extends CalendarEvent {
           .toList(),
       comments: commentsRaw is List
           ? commentsRaw
-              .whereType<Map<String, dynamic>>()
-              .map(EventComment.fromJson)
-              .toList()
+                .whereType<Map<String, dynamic>>()
+                .map(EventComment.fromJson)
+                .toList()
           : [],
     );
   }

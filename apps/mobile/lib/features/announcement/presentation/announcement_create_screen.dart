@@ -17,6 +17,7 @@ import '../../../core/time/app_date_time.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
+import '../../../core/widgets/app_chip.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../onboarding/presentation/widgets/onboarding_prototype_widgets.dart';
 import '../../onboarding/presentation/widgets/onboarding_typography.dart';
@@ -174,11 +175,11 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
       _last.text,
     );
     final weightText = AppTextInputPolicy.normalizeForSubmit(
-      AppTextInputKind.prose,
+      AppTextInputKind.measurement,
       _weight.text,
     );
     final lengthText = AppTextInputPolicy.normalizeForSubmit(
-      AppTextInputKind.prose,
+      AppTextInputKind.measurement,
       _length.text,
     );
     setState(() => _saving = true);
@@ -214,25 +215,6 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
     }
   }
 
-  Widget _genderSegment(String label, String value) {
-    final selected = _gender == value;
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: OutlinedButton(
-          onPressed: () => setState(() => _gender = value),
-          style: OutlinedButton.styleFrom(
-            backgroundColor: selected ? AppColors.sageTint : null,
-            side: BorderSide(
-              color: selected ? AppColors.primaryDark : AppColors.border,
-              width: selected ? 2 : 1,
-            ),
-          ),
-          child: Text(label),
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -292,8 +274,22 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
             const SizedBox(height: 8),
             Row(
               children: [
-                _genderSegment('Boy', 'male'),
-                _genderSegment('Girl', 'female'),
+                Expanded(
+                  child: AppToggleChip(
+                    label: 'Boy',
+                    selected: _gender == 'male',
+                    onTap: () => setState(() => _gender = 'male'),
+                  ),
+                ),
+                SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: AppToggleChip(
+                    label: 'Girl',
+                    selected: _gender == 'female',
+                    selectedAccent: AppChipAccent.peach,
+                    onTap: () => setState(() => _gender = 'female'),
+                  ),
+                ),
               ],
             ),
             ListTile(
@@ -312,13 +308,13 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
             ),
             AppLabeledTextField(
               label: 'Weight',
-              kind: AppTextInputKind.none,
+              kind: AppTextInputKind.measurement,
               controller: _weight,
               maxLength: 40,
             ),
             AppLabeledTextField(
               label: 'Length',
-              kind: AppTextInputKind.prose,
+              kind: AppTextInputKind.measurement,
               controller: _length,
               maxLength: 40,
               spacingAfter: 0,

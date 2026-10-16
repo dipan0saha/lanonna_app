@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_colors.dart';
 import '../theme/app_metrics.dart';
+import '../theme/la_nonna_theme.dart';
 import 'ai_suggestion_list_card.dart';
 import 'app_chip.dart';
 
@@ -17,6 +19,7 @@ class AiSuggestionsScaffold extends StatelessWidget {
     required this.onRefresh,
     required this.items,
     required this.emptyMessage,
+    this.subtitle,
   });
 
   final List<AiSuggestionTab> tabs;
@@ -26,13 +29,30 @@ class AiSuggestionsScaffold extends StatelessWidget {
   final Future<void> Function() onRefresh;
   final List<AiSuggestionListItem> items;
   final String emptyMessage;
+  final String? subtitle;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('AI Suggestions')),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (subtitle != null && subtitle!.trim().isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppMetrics.horizontalPadding,
+                0,
+                AppMetrics.horizontalPadding,
+                8,
+              ),
+              child: Text(
+                subtitle!,
+                style: context.textStyles.bodyMedium?.copyWith(
+                  color: AppColors.muted,
+                ),
+              ),
+            ),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.fromLTRB(

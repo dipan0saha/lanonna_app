@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/presentation/tab_load_failure.dart';
 import '../../../core/presentation/tab_load_kind.dart';
-import '../../../core/widgets/app_empty_state.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/widgets/async_tab_body.dart';
 import '../../../core/theme/app_colors.dart';
@@ -111,18 +109,10 @@ class _FunScreenState extends State<FunScreen>
       case TabLoadKind.empty:
         return const Center(child: Text('No baby profile yet.'));
       case TabLoadKind.content:
-        if (_baby!.lifecycleStatus == 'born') {
-          return AppEmptyState(
-            icon: Icons.emoji_events_outlined,
-            title: 'Family Fun is wrapped up',
-            message:
-                "Family Fun wraps up once baby's here. See what's new in the Gallery instead.",
-            actionLabel: 'Go to Gallery',
-            onAction: () => context.go('/gallery'),
-          );
-        }
+        // After birth both tabs stay visible but read-only; the API also
+        // rejects prediction writes with predictions_closed.
         return _segment == 0
-            ? NamesTab(baby: _baby!)
+            ? NamesTab(baby: _baby!, readOnly: _baby!.lifecycleStatus == 'born')
             : PredictionsTab(baby: _baby!);
     }
   }
@@ -150,20 +140,17 @@ class _FunScreenState extends State<FunScreen>
                   style: context.textStyles.headlineSmall,
                 ),
               ),
-              if (_baby?.lifecycleStatus != 'born')
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xl,
-                  ),
-                  child: OnboardingSegmentedControl(
-                    style: OnboardingSegmentedControlStyle.mini,
-                    leftLabel: 'Names',
-                    rightLabel: 'Predictions',
-                    isLeftSelected: _segment == 0,
-                    onLeftTap: () => setState(() => _segment = 0),
-                    onRightTap: () => setState(() => _segment = 1),
-                  ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                child: OnboardingSegmentedControl(
+                  style: OnboardingSegmentedControlStyle.mini,
+                  leftLabel: 'Names',
+                  rightLabel: 'Predictions',
+                  isLeftSelected: _segment == 0,
+                  onLeftTap: () => setState(() => _segment = 0),
+                  onRightTap: () => setState(() => _segment = 1),
                 ),
+              ),
               const SizedBox(height: 8),
               Expanded(child: _funBody()),
             ],

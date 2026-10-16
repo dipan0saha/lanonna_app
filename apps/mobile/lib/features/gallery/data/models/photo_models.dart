@@ -1,3 +1,4 @@
+import '../../../../core/json/json_readers.dart';
 import '../../../../core/time/app_date_time.dart';
 
 class PhotoSummary {
@@ -28,8 +29,8 @@ class PhotoSummary {
       caption: json['caption'] as String?,
       createdAt: parseApiInstant(json['created_at'] as String),
       thumbUrl: json['thumb_url'] as String?,
-      squishCount: json['squish_count'] as int? ?? 0,
-      commentCount: json['comment_count'] as int? ?? 0,
+      squishCount: readInt(json['squish_count']),
+      commentCount: readInt(json['comment_count']),
       uploaderDisplayName:
           json['uploader_display_name'] as String? ?? 'Family member',
     );
@@ -145,19 +146,19 @@ class PhotoDetail {
       thumbUrl: json['thumb_url'] as String?,
       uploaderDisplayName:
           json['uploader_display_name'] as String? ?? 'Family member',
-      squishCount: json['squish_count'] as int? ?? 0,
+      squishCount: readInt(json['squish_count']),
       viewerHasSquished: json['viewer_has_squished'] as bool? ?? false,
       comments: commentsRaw is List
           ? commentsRaw
-              .whereType<Map<String, dynamic>>()
-              .map(PhotoComment.fromJson)
-              .toList()
+                .whereType<Map<String, dynamic>>()
+                .map(PhotoComment.fromJson)
+                .toList()
           : [],
       taggedBabies: taggedRaw is List
           ? taggedRaw
-              .whereType<Map<String, dynamic>>()
-              .map(PhotoTaggedBaby.fromJson)
-              .toList()
+                .whereType<Map<String, dynamic>>()
+                .map(PhotoTaggedBaby.fromJson)
+                .toList()
           : [],
     );
   }

@@ -115,3 +115,32 @@ String toApiCalendarDate(DateTime date) {
       '${date.month.toString().padLeft(2, '0')}-'
       '${date.day.toString().padLeft(2, '0')}';
 }
+
+/// Inbox / activity relative time (e.g. "2 minutes ago", "Yesterday").
+String formatRelativeTime(DateTime instant, [String? localeName]) {
+  final local = eventWallTime(instant);
+  final now = DateTime.now();
+  final diff = now.difference(local);
+  if (diff.isNegative || diff.inSeconds < 45) {
+    return 'Just now';
+  }
+  if (diff.inMinutes < 60) {
+    final m = diff.inMinutes;
+    return m == 1 ? '1 minute ago' : '$m minutes ago';
+  }
+  if (diff.inHours < 24 && now.day == local.day) {
+    final h = diff.inHours;
+    return h == 1 ? '1 hour ago' : '$h hours ago';
+  }
+  final yesterday = DateTime(now.year, now.month, now.day - 1);
+  if (local.year == yesterday.year &&
+      local.month == yesterday.month &&
+      local.day == yesterday.day) {
+    return 'Yesterday';
+  }
+  if (diff.inDays < 7) {
+    final d = diff.inDays;
+    return d == 1 ? '1 day ago' : '$d days ago';
+  }
+  return DateFormat.yMMMd(localeName).format(local);
+}
