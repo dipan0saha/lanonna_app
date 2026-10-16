@@ -1,166 +1,89 @@
--- Backfill actor_firebase_uid (and display name) for legacy inbox rows where the
--- actor can be resolved from structured sources (deep_link UUIDs, notification_type,
--- and source tables). No title/body text matching. Idempotent: only NULL actors.
+-- Backfill the actor on legacy inbox rows (036 left them NULL) from structured
+-- source rows only. No title/body text parsing: the fixed API title selects the
+-- source table, the deep link supplies the source id.
+--
+-- Safety rules:
+--   * only rows with actor_firebase_uid IS NULL are touched (idempotent);
+--   * time-matched sources (comments, squishes, RSVPs, joins, purchases) must
+--     fall in [notification - 2 min, notification + 5 s];
+--   * a row is updated only when exactly ONE distinct candidate actor exists,
+--     so ambiguity leaves it NULL instead of guessing;
+--   * the recipient is never their own actor.
 
--- Gallery photo UUID from deep_link (/gallery/photo/{uuid}).
-CREATE OR REPLACE FUNCTION _notification_photo_id(deep_link TEXT)
-RETURNS UUID
-LANGUAGE sql
-IMMUTABLE
-AS $$
-    SELECT NULLIF(
-        substring(deep_link FROM '/gallery/photo/([0-9a-fA-F-]{36})'),
-        ''
-    )::uuid;
-$$;
-
-CREATE OR REPLACE FUNCTION _notification_event_id(deep_link TEXT)
-RETURNS UUID
-LANGUAGE sql
-IMMUTABLE
-AS $$
-    SELECT NULLIF(
-        substring(deep_link FROM '/calendar/event/([0-9a-fA-F-]{36})'),
-        ''
-    )::uuid;
-$$;
-
-CREATE OR REPLACE FUNCTION _notification_baby_id_from_followers_link(deep_link TEXT)
-RETURNS UUID
-LANGUAGE sql
-IMMUTABLE
-AS $$
-    SELECT NULLIF(
-        substring(deep_link FROM '/baby/([0-9a-fA-F-]{36})/followers'),
-        ''
-    )::uuid;
-$$;
-
--- photo_comments: latest comment on the photo at or before the notification time.
-UPDATE notifications n
-SET actor_firebase_uid = src.author_firebase_uid
-FROM LATERAL (
-    SELECT c.author_firebase_uid
-    FROM photo_comments c
-    WHERE c.deleted_at IS NULL
-      AND c.photo_id = _notification_photo_id(n.deep_link)
-      AND c.created_at <= n.created_at + interval '2 seconds'
-    ORDER BY c.created_at DESC
-    LIMIT 1
-) src
-WHERE n.actor_firebase_uid IS NULL
-  AND n.notification_type = 'comment'
-  AND _notification_photo_id(n.deep_link) IS NOT NULL
-  AND src.author_firebase_uid IS NOT NULL
-  AND src.author_firebase_uid IS DISTINCT FROM n.firebase_uid;
-
--- event_comments: same pattern for calendar event comments.
-UPDATE notifications n
-SET actor_firebase_uid = src.author_firebase_uid
-FROM LATERAL (
-    SELECT c.author_firebase_uid
-    FROM event_comments c
-    WHERE c.deleted_at IS NULL
-      AND c.event_id = _notification_event_id(n.deep_link)
-      AND c.created_at <= n.created_at + interval '2 seconds'
-    ORDER BY c.created_at DESC
-    LIMIT 1
-) src
-WHERE n.actor_firebase_uid IS NULL
-  AND n.notification_type = 'comment'
-  AND _notification_event_id(n.deep_link) IS NOT NULL
-  AND src.author_firebase_uid IS NOT NULL
-  AND src.author_firebase_uid IS DISTINCT FROM n.firebase_uid;
-
--- photo_squishes: squish row at or before notification time.
-UPDATE notifications n
-SET actor_firebase_uid = src.firebase_uid
-FROM LATERAL (
-    SELECT s.firebase_uid
-    FROM photo_squishes s
-    WHERE s.photo_id = _notification_photo_id(n.deep_link)
-      AND s.created_at <= n.created_at + interval '2 seconds'
-    ORDER BY s.created_at DESC
-    LIMIT 1
-) src
-WHERE n.actor_firebase_uid IS NULL
-  AND n.notification_type = 'squish'
-  AND _notification_photo_id(n.deep_link) IS NOT NULL
-  AND src.firebase_uid IS NOT NULL
-  AND src.firebase_uid IS DISTINCT FROM n.firebase_uid;
-
--- New photo ready / gallery deep links: uploader on the photo row.
-UPDATE notifications n
-SET actor_firebase_uid = p.uploader_firebase_uid
-FROM photos p
-WHERE n.actor_firebase_uid IS NULL
-  AND n.notification_type = 'photo'
-  AND p.id = _notification_photo_id(n.deep_link)
-  AND p.uploader_firebase_uid IS NOT NULL
-  AND p.uploader_firebase_uid IS DISTINCT FROM n.firebase_uid;
-
--- Calendar events: event_created activity row with matching event_id payload.
-UPDATE notifications n
-SET actor_firebase_uid = ae.actor_firebase_uid
-FROM activity_events ae
-WHERE n.actor_firebase_uid IS NULL
-  AND n.notification_type = 'event'
-  AND _notification_event_id(n.deep_link) IS NOT NULL
-  AND ae.baby_profile_id = n.baby_profile_id
-  AND ae.event_type = 'event_created'
-  AND ae.actor_firebase_uid IS NOT NULL
-  AND (ae.payload ->> 'event_id') = _notification_event_id(n.deep_link)::text
-  AND ae.created_at BETWEEN n.created_at - interval '30 seconds'
-      AND n.created_at + interval '5 seconds';
-
--- Calendar events: RSVP actor (no activity row is written for RSVPs).
-UPDATE notifications n
-SET actor_firebase_uid = src.firebase_uid
-FROM LATERAL (
-    SELECT r.firebase_uid
-    FROM event_rsvps r
-    WHERE r.event_id = _notification_event_id(n.deep_link)
-      AND r.updated_at <= n.created_at + interval '2 seconds'
-    ORDER BY r.updated_at DESC
-    LIMIT 1
-) src
-WHERE n.actor_firebase_uid IS NULL
-  AND n.notification_type = 'event'
-  AND _notification_event_id(n.deep_link) IS NOT NULL
-  AND src.firebase_uid IS NOT NULL
-  AND src.firebase_uid IS DISTINCT FROM n.firebase_uid;
-
--- Invite accepted: new member on the baby (followers deep link).
-UPDATE notifications n
-SET actor_firebase_uid = src.firebase_uid
-FROM LATERAL (
-    SELECT m.firebase_uid
-    FROM baby_memberships m
-    WHERE m.baby_profile_id = _notification_baby_id_from_followers_link(n.deep_link)
+WITH n AS (
+    SELECT
+        id,
+        firebase_uid AS recipient,
+        baby_profile_id,
+        title,
+        created_at,
+        substring(deep_link FROM '^/gallery/photo/([0-9a-fA-F-]{36})$')::uuid AS photo_id,
+        substring(deep_link FROM '^/calendar/event/([0-9a-fA-F-]{36})$')::uuid AS event_id,
+        substring(deep_link FROM '^/baby/([0-9a-fA-F-]{36})/followers$')::uuid AS joined_baby_id
+    FROM notifications
+    WHERE actor_firebase_uid IS NULL
+),
+candidates AS (
+    SELECT n.id, n.recipient, c.author_firebase_uid AS actor
+    FROM n JOIN photo_comments c ON c.photo_id = n.photo_id
+    WHERE n.title = 'New comment'
+      AND c.created_at BETWEEN n.created_at - interval '2 minutes'
+                           AND n.created_at + interval '5 seconds'
+    UNION ALL
+    SELECT n.id, n.recipient, c.author_firebase_uid
+    FROM n JOIN event_comments c ON c.event_id = n.event_id
+    WHERE n.title = 'New comment'
+      AND c.created_at BETWEEN n.created_at - interval '2 minutes'
+                           AND n.created_at + interval '5 seconds'
+    UNION ALL
+    SELECT n.id, n.recipient, s.firebase_uid
+    FROM n JOIN photo_squishes s ON s.photo_id = n.photo_id
+    WHERE n.title = 'New squish'
+      AND s.created_at BETWEEN n.created_at - interval '2 minutes'
+                           AND n.created_at + interval '5 seconds'
+    UNION ALL
+    SELECT n.id, n.recipient, p.uploader_firebase_uid
+    FROM n JOIN photos p ON p.id = n.photo_id
+    WHERE n.title = 'New photo'
+    UNION ALL
+    SELECT n.id, n.recipient, e.created_by_firebase_uid
+    FROM n JOIN events e ON e.id = n.event_id
+    WHERE n.title = 'New event'
+    UNION ALL
+    SELECT n.id, n.recipient, r.firebase_uid
+    FROM n JOIN event_rsvps r ON r.event_id = n.event_id
+    WHERE n.title = 'New RSVP'
+      AND r.updated_at BETWEEN n.created_at - interval '2 minutes'
+                           AND n.created_at + interval '5 seconds'
+    UNION ALL
+    SELECT n.id, n.recipient, m.firebase_uid
+    FROM n JOIN baby_memberships m ON m.baby_profile_id = n.joined_baby_id
+    WHERE n.title = 'Invite accepted'
       AND m.joined_via = 'invite'
-      AND m.removed_at IS NULL
-      AND m.firebase_uid IS DISTINCT FROM n.firebase_uid
       AND m.created_at BETWEEN n.created_at - interval '2 minutes'
-          AND n.created_at + interval '5 seconds'
-    ORDER BY m.created_at DESC
-    LIMIT 1
-) src
-WHERE n.actor_firebase_uid IS NULL
-  AND n.notification_type = 'generic'
-  AND _notification_baby_id_from_followers_link(n.deep_link) IS NOT NULL
-  AND src.firebase_uid IS NOT NULL;
-
--- Display name from app_users when we resolved an actor uid.
-UPDATE notifications n
-SET actor_display_name = NULLIF(TRIM(u.display_name), '')
-FROM app_users u
-WHERE n.actor_firebase_uid = u.firebase_uid
-  AND n.actor_firebase_uid IS NOT NULL
-  AND (n.actor_display_name IS NULL OR TRIM(n.actor_display_name) = '');
-
-DROP FUNCTION IF EXISTS _notification_photo_id(TEXT);
-DROP FUNCTION IF EXISTS _notification_event_id(TEXT);
-DROP FUNCTION IF EXISTS _notification_baby_id_from_followers_link(TEXT);
+                           AND n.created_at + interval '5 seconds'
+    UNION ALL
+    SELECT n.id, n.recipient, ae.actor_firebase_uid
+    FROM n JOIN activity_events ae ON ae.baby_profile_id = n.baby_profile_id
+    WHERE n.title = 'Registry update'
+      AND ae.event_type = 'registry_purchased'
+      AND ae.created_at BETWEEN n.created_at - interval '2 minutes'
+                            AND n.created_at + interval '5 seconds'
+),
+resolved AS (
+    SELECT id, min(actor) AS actor
+    FROM candidates
+    WHERE actor IS NOT NULL AND actor IS DISTINCT FROM recipient
+    GROUP BY id
+    HAVING count(DISTINCT actor) = 1
+)
+UPDATE notifications t
+SET actor_firebase_uid = u.firebase_uid,
+    actor_display_name = NULLIF(TRIM(u.display_name), '')
+FROM resolved r
+JOIN app_users u ON u.firebase_uid = r.actor
+WHERE t.id = r.id
+  AND t.actor_firebase_uid IS NULL;
 
 INSERT INTO schema_migrations (version) VALUES ('037_notification_actor_backfill')
 ON CONFLICT (version) DO NOTHING;

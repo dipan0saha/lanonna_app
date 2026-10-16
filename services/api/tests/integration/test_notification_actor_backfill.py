@@ -35,8 +35,10 @@ def _insert_notification(
     recipient: str,
     baby_id: uuid.UUID,
     notification_type: str,
+    title: str,
     deep_link: str,
     created_at: datetime,
+    actor: str | None = None,
 ) -> uuid.UUID:
     nid = uuid.uuid4()
     with get_connection() as conn:
@@ -46,21 +48,26 @@ def _insert_notification(
                 id, firebase_uid, baby_profile_id, title, body, deep_link,
                 notification_type, actor_firebase_uid, created_at
             )
-            VALUES (%s, %s, %s, 'T', 'B', %s, %s, NULL, %s)
+            VALUES (%s, %s, %s, %s, 'B', %s, %s, %s, %s)
             """,
-            (nid, recipient, baby_id, deep_link, notification_type, created_at),
+            (nid, recipient, baby_id, title, deep_link, notification_type, actor, created_at),
         )
     return nid
 
 
-def test_migration_backfills_squish_actor_from_photo_squish_row(postgres_database):
-    owner = "actor-backfill-owner"
-    squisher = "actor-backfill-squisher"
-    resolve_app_user(owner, "owner@example.com")
-    resolve_app_user(squisher, "squisher@example.com")
+def _actor(nid: uuid.UUID) -> str | None:
+    with get_connection() as conn:
+        row = conn.execute(
+            "SELECT actor_firebase_uid FROM notifications WHERE id = %s", (nid,)
+        ).fetchone()
+    return row["actor_firebase_uid"]
+
+
+def _seed_photo(owner: str, members: list[str]) -> tuple[uuid.UUID, uuid.UUID]:
+    for uid in [owner, *members]:
+        resolve_app_user(uid, f"{uid}@example.com")
     baby_id = uuid.uuid4()
     photo_id = uuid.uuid4()
-    squish_at = datetime(2026, 5, 1, 12, 0, tzinfo=timezone.utc)
     with get_connection() as conn:
         conn.execute(
             """
@@ -72,41 +79,91 @@ def test_migration_backfills_squish_actor_from_photo_squish_row(postgres_databas
         conn.execute(
             """
             INSERT INTO baby_memberships (baby_profile_id, firebase_uid, role, joined_via)
-            VALUES (%s, %s, 'owner', 'created'), (%s, %s, 'follower', 'invite')
+            VALUES (%s, %s, 'owner', 'created')
             """,
-            (baby_id, owner, baby_id, squisher),
+            (baby_id, owner),
         )
-        conn.execute(
-            """
-            INSERT INTO photos (
-                id, baby_profile_id, uploader_firebase_uid, status, created_at
+        for uid in members:
+            conn.execute(
+                """
+                INSERT INTO baby_memberships (baby_profile_id, firebase_uid, role, joined_via)
+                VALUES (%s, %s, 'follower', 'invite')
+                """,
+                (baby_id, uid),
             )
-            VALUES (%s, %s, %s, 'ready', %s)
-            """,
-            (photo_id, baby_id, owner, squish_at),
-        )
         conn.execute(
             """
-            INSERT INTO photo_squishes (photo_id, firebase_uid, created_at)
-            VALUES (%s, %s, %s)
+            INSERT INTO photos (id, baby_profile_id, uploader_firebase_uid, status)
+            VALUES (%s, %s, %s, 'ready')
             """,
-            (photo_id, squisher, squish_at),
+            (photo_id, baby_id, owner),
         )
-    _insert_notification(
-        recipient=owner,
+    return baby_id, photo_id
+
+
+def _squish(photo_id: uuid.UUID, uid: str, at: datetime) -> None:
+    with get_connection() as conn:
+        conn.execute(
+            "INSERT INTO photo_squishes (photo_id, firebase_uid, created_at) VALUES (%s, %s, %s)",
+            (photo_id, uid, at),
+        )
+
+
+_AT = datetime(2026, 5, 1, 12, 0, tzinfo=timezone.utc)
+
+
+def test_backfills_single_squisher(postgres_database):
+    baby_id, photo_id = _seed_photo("bf-owner-1", ["bf-squisher-1"])
+    _squish(photo_id, "bf-squisher-1", _AT)
+    nid = _insert_notification(
+        recipient="bf-owner-1",
         baby_id=baby_id,
         notification_type="squish",
+        title="New squish",
         deep_link=f"/gallery/photo/{photo_id}",
-        created_at=squish_at + timedelta(seconds=1),
+        created_at=_AT + timedelta(seconds=1),
     )
     _run_actor_backfill_migration()
-    with get_connection() as conn:
-        row = conn.execute(
-            """
-            SELECT actor_firebase_uid FROM notifications
-            WHERE firebase_uid = %s AND deep_link = %s
-            """,
-            (owner, f"/gallery/photo/{photo_id}"),
-        ).fetchone()
-    assert row is not None
-    assert row["actor_firebase_uid"] == squisher
+    assert _actor(nid) == "bf-squisher-1"
+
+
+def test_ambiguous_candidates_stay_null(postgres_database):
+    baby_id, photo_id = _seed_photo("bf-owner-2", ["bf-a", "bf-b"])
+    _squish(photo_id, "bf-a", _AT)
+    _squish(photo_id, "bf-b", _AT + timedelta(seconds=1))
+    nid = _insert_notification(
+        recipient="bf-owner-2",
+        baby_id=baby_id,
+        notification_type="squish",
+        title="New squish",
+        deep_link=f"/gallery/photo/{photo_id}",
+        created_at=_AT + timedelta(seconds=2),
+    )
+    _run_actor_backfill_migration()
+    assert _actor(nid) is None
+
+
+def test_source_outside_window_and_existing_actor_untouched(postgres_database):
+    baby_id, photo_id = _seed_photo("bf-owner-3", ["bf-old", "bf-kept"])
+    _squish(photo_id, "bf-old", _AT - timedelta(hours=1))
+    stale = _insert_notification(
+        recipient="bf-owner-3",
+        baby_id=baby_id,
+        notification_type="squish",
+        title="New squish",
+        deep_link=f"/gallery/photo/{photo_id}",
+        created_at=_AT,
+    )
+    kept = _insert_notification(
+        recipient="bf-owner-3",
+        baby_id=baby_id,
+        notification_type="squish",
+        title="New squish",
+        deep_link=f"/gallery/photo/{photo_id}",
+        created_at=_AT - timedelta(hours=1),
+        actor="bf-kept",
+    )
+    _run_actor_backfill_migration()
+    _run_actor_backfill_migration()
+    assert _actor(stale) is None
+    assert _actor(kept) == "bf-kept"

@@ -43,7 +43,7 @@ from lanonna_api.domain.date_validation import (
     validate_actual_birth_date,
 )
 from lanonna_api.domain.fun_closed import fun_closed_flags
-from lanonna_api.pagination import offset_page
+from lanonna_api.pagination import offset_page_from_extra_row
 from lanonna_api.domain.notification_metadata import NotificationType
 from lanonna_api.domain.notifications import (
     FanOutSpec,
@@ -134,16 +134,13 @@ def list_activity_events(
     event_types = tuple(GALLERY_ACTIVITY_EVENT_TYPES) if scope == "gallery" else None
     rows = list_recent_for_baby(
         baby_profile_id,
-        limit=limit,
+        limit=limit + 1,
         offset=offset,
         event_types=event_types,
     )
-    return offset_page(
-        [serialize_activity_item(item) for item in rows],
-        offset=offset,
-        limit=limit,
-        has_more=len(rows) == limit,
-    )
+    page = offset_page_from_extra_row(rows, offset=offset, limit=limit)
+    page["items"] = [serialize_activity_item(item) for item in page["items"]]
+    return page
 
 
 def _build_home_teasers(baby_profile_id: uuid.UUID) -> dict[str, Any]:
