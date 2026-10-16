@@ -88,6 +88,7 @@ void main() {
 
     expect(find.text('ACTIVITY RECAP'), findsOneWidget);
     expect(find.text('Invite'), findsNothing);
+    expect(find.text('🎉'), findsOneWidget);
     expect(find.textContaining('is here!'), findsOneWidget);
   });
 }
