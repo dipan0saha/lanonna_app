@@ -5,6 +5,7 @@ import '../../../core/api/api_error_message.dart';
 import '../../../core/widgets/activity/activity_feed_card.dart';
 import '../data/home_repository.dart';
 import '../data/models/home_summary.dart';
+import '../../../l10n/app_localizations.dart';
 
 class HomeActivityScreen extends StatefulWidget {
   const HomeActivityScreen({super.key, required this.babyId});
@@ -56,7 +57,7 @@ class _HomeActivityScreenState extends State<HomeActivityScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Activity')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.activityTitle)),
       body: _error != null && _items.isEmpty
           ? Center(
               child: Padding(
@@ -66,7 +67,7 @@ class _HomeActivityScreenState extends State<HomeActivityScreen> {
                   children: [
                     Text(_error!, textAlign: TextAlign.center),
                     const SizedBox(height: 12),
-                    FilledButton(onPressed: _fetchMore, child: const Text('Retry')),
+                    FilledButton(onPressed: _fetchMore, child: Text(AppLocalizations.of(context)!.actionRetry)),
                   ],
                 ),
               ),
@@ -85,7 +86,7 @@ class _HomeActivityScreenState extends State<HomeActivityScreen> {
                               height: 24,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('Load more'),
+                          : Text(AppLocalizations.of(context)!.actionLoadMore),
                     ),
                   ),
               ],

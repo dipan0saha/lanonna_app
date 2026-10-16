@@ -122,15 +122,15 @@ class _NotificationPreferencesScreenState
                 _digestTile('daily', 'Daily digest', prefs),
                 _digestTile('weekly', 'Weekly digest', prefs),
                 SwitchListTile(
-                  title: const Text('Push notifications'),
-                  subtitle: const Text('Get alerts on your phone'),
+                  title: Text(AppLocalizations.of(context)!.notificationPrefsPushTitle),
+                  subtitle: Text(AppLocalizations.of(context)!.notificationPrefsPushSubtitle),
                   value: prefs.pushEnabled,
                   onChanged: (v) =>
                       setState(() => _prefs = prefs.copyWith(pushEnabled: v)),
                 ),
                 SwitchListTile(
-                  title: const Text('Weekly email digest'),
-                  subtitle: const Text('Photos, events and registry updates'),
+                  title: Text(AppLocalizations.of(context)!.notificationPrefsDigestTitle),
+                  subtitle: Text(AppLocalizations.of(context)!.notificationPrefsDigestSubtitle),
                   value: prefs.emailDigestEnabled,
                   onChanged: (v) => setState(
                     () => _prefs = prefs.copyWith(emailDigestEnabled: v),

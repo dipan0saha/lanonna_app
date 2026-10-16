@@ -903,6 +903,522 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Priority: Low first'**
   String get registrySortPriorityLowFirst;
+
+  /// No description provided for @versionGateUpdateInStore.
+  ///
+  /// In en, this message translates to:
+  /// **'Update in store'**
+  String get versionGateUpdateInStore;
+
+  /// No description provided for @aiSuggestionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Suggestions'**
+  String get aiSuggestionsTitle;
+
+  /// No description provided for @actionTryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get actionTryAgain;
+
+  /// No description provided for @accountDateOfBirthOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Date of birth (optional)'**
+  String get accountDateOfBirthOptional;
+
+  /// No description provided for @accountAddNewBaby.
+  ///
+  /// In en, this message translates to:
+  /// **'+ Add New'**
+  String get accountAddNewBaby;
+
+  /// No description provided for @accountManageFollowers.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Followers'**
+  String get accountManageFollowers;
+
+  /// No description provided for @accountInviteFamily.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite Family'**
+  String get accountInviteFamily;
+
+  /// No description provided for @accountExportBabyData.
+  ///
+  /// In en, this message translates to:
+  /// **'Export baby data'**
+  String get accountExportBabyData;
+
+  /// No description provided for @exportDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Download export'**
+  String get exportDownload;
+
+  /// No description provided for @exportRefreshStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh status'**
+  String get exportRefreshStatus;
+
+  /// No description provided for @actionCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get actionCancel;
+
+  /// No description provided for @followersEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No followers yet — invite family to join.'**
+  String get followersEmpty;
+
+  /// No description provided for @actionRevoke.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke'**
+  String get actionRevoke;
+
+  /// No description provided for @actionResend.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend'**
+  String get actionResend;
+
+  /// No description provided for @notificationPrefsPushTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Push notifications'**
+  String get notificationPrefsPushTitle;
+
+  /// No description provided for @notificationPrefsPushSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Get alerts on your phone'**
+  String get notificationPrefsPushSubtitle;
+
+  /// No description provided for @notificationPrefsDigestTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly email digest'**
+  String get notificationPrefsDigestTitle;
+
+  /// No description provided for @notificationPrefsDigestSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos, events and registry updates'**
+  String get notificationPrefsDigestSubtitle;
+
+  /// No description provided for @actionEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get actionEdit;
+
+  /// No description provided for @accountLogOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Log Out'**
+  String get accountLogOut;
+
+  /// No description provided for @announcementDateOfBirth.
+  ///
+  /// In en, this message translates to:
+  /// **'Date of birth'**
+  String get announcementDateOfBirth;
+
+  /// No description provided for @announcementTimeOfBirth.
+  ///
+  /// In en, this message translates to:
+  /// **'Time of birth'**
+  String get announcementTimeOfBirth;
+
+  /// No description provided for @calendarTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar'**
+  String get calendarTitle;
+
+  /// No description provided for @noBabyProfileYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No baby profile yet.'**
+  String get noBabyProfileYet;
+
+  /// No description provided for @calendarPastButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Past'**
+  String get calendarPastButton;
+
+  /// No description provided for @calendarUpcomingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming events'**
+  String get calendarUpcomingTitle;
+
+  /// No description provided for @eventNoRsvps.
+  ///
+  /// In en, this message translates to:
+  /// **'No RSVPs yet'**
+  String get eventNoRsvps;
+
+  /// No description provided for @eventDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this event?'**
+  String get eventDeleteConfirmTitle;
+
+  /// No description provided for @eventDeleteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Family will no longer see it on the calendar.'**
+  String get eventDeleteConfirmBody;
+
+  /// No description provided for @actionDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get actionDelete;
+
+  /// No description provided for @eventNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Event not found'**
+  String get eventNotFound;
+
+  /// No description provided for @eventJoinVideoCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Join video call'**
+  String get eventJoinVideoCall;
+
+  /// No description provided for @eventPhotoLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo'**
+  String get eventPhotoLabel;
+
+  /// No description provided for @eventCoverUploadNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload new photo'**
+  String get eventCoverUploadNew;
+
+  /// No description provided for @eventCoverNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No cover photo'**
+  String get eventCoverNone;
+
+  /// No description provided for @actionShowAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all'**
+  String get actionShowAll;
+
+  /// No description provided for @calendarAddEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Add event'**
+  String get calendarAddEvent;
+
+  /// No description provided for @funRemoveNameTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove name suggestion?'**
+  String get funRemoveNameTitle;
+
+  /// No description provided for @funRemoveNameBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove \"{name}\" from the list?'**
+  String funRemoveNameBody(String name);
+
+  /// No description provided for @actionRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get actionRemove;
+
+  /// No description provided for @funGenderBoy.
+  ///
+  /// In en, this message translates to:
+  /// **'Boy'**
+  String get funGenderBoy;
+
+  /// No description provided for @funGenderGirl.
+  ///
+  /// In en, this message translates to:
+  /// **'Girl'**
+  String get funGenderGirl;
+
+  /// No description provided for @actionAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get actionAdd;
+
+  /// No description provided for @funViewWhoVoted.
+  ///
+  /// In en, this message translates to:
+  /// **'View who voted'**
+  String get funViewWhoVoted;
+
+  /// No description provided for @photoDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this photo?'**
+  String get photoDeleteConfirmTitle;
+
+  /// No description provided for @photoNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo not found'**
+  String get photoNotFound;
+
+  /// No description provided for @photoProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing…'**
+  String get photoProcessing;
+
+  /// No description provided for @actionSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get actionSave;
+
+  /// No description provided for @photoSourceCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photo'**
+  String get photoSourceCamera;
+
+  /// No description provided for @photoSourceLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from library'**
+  String get photoSourceLibrary;
+
+  /// No description provided for @actionSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get actionSkip;
+
+  /// No description provided for @actionPost.
+  ///
+  /// In en, this message translates to:
+  /// **'Post'**
+  String get actionPost;
+
+  /// No description provided for @photoUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable'**
+  String get photoUnavailable;
+
+  /// No description provided for @homeCreateAnnouncementTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create announcement?'**
+  String get homeCreateAnnouncementTitle;
+
+  /// No description provided for @actionLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get actionLater;
+
+  /// No description provided for @actionCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get actionCreate;
+
+  /// No description provided for @activityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get activityTitle;
+
+  /// No description provided for @actionLoadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Load more'**
+  String get actionLoadMore;
+
+  /// No description provided for @actionManageFollowers.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage followers'**
+  String get actionManageFollowers;
+
+  /// No description provided for @actionDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss'**
+  String get actionDismiss;
+
+  /// No description provided for @onboardingHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'I already have an account'**
+  String get onboardingHaveAccount;
+
+  /// No description provided for @onboardingContinueWithGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Google'**
+  String get onboardingContinueWithGoogle;
+
+  /// No description provided for @onboardingAgreePrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'I agree to the '**
+  String get onboardingAgreePrefix;
+
+  /// No description provided for @onboardingTermsOfService.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of Service'**
+  String get onboardingTermsOfService;
+
+  /// No description provided for @onboardingAgreeAnd.
+  ///
+  /// In en, this message translates to:
+  /// **' and '**
+  String get onboardingAgreeAnd;
+
+  /// No description provided for @onboardingPrivacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get onboardingPrivacyPolicy;
+
+  /// No description provided for @registryPriorityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority'**
+  String get registryPriorityLabel;
+
+  /// No description provided for @registryPriorityLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Nice to have'**
+  String get registryPriorityLow;
+
+  /// No description provided for @registryPriorityHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'Really need this'**
+  String get registryPriorityHigh;
+
+  /// No description provided for @registryDeleteItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Item'**
+  String get registryDeleteItem;
+
+  /// No description provided for @registryMarkPurchasedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as purchased?'**
+  String get registryMarkPurchasedTitle;
+
+  /// No description provided for @registryMarkPurchased.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as purchased'**
+  String get registryMarkPurchased;
+
+  /// No description provided for @registryAllCaughtUp.
+  ///
+  /// In en, this message translates to:
+  /// **'All caught up!'**
+  String get registryAllCaughtUp;
+
+  /// No description provided for @registryNothingPurchased.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing purchased yet.'**
+  String get registryNothingPurchased;
+
+  /// No description provided for @shippingRemoveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove shipping address?'**
+  String get shippingRemoveTitle;
+
+  /// No description provided for @shippingCountryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Country'**
+  String get shippingCountryLabel;
+
+  /// No description provided for @shippingSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save address'**
+  String get shippingSave;
+
+  /// No description provided for @shippingRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove address'**
+  String get shippingRemove;
+
+  /// No description provided for @actionUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get actionUndo;
+
+  /// No description provided for @searchSelectBaby.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a baby profile to search'**
+  String get searchSelectBaby;
+
+  /// No description provided for @searchNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No results for \"{query}\"'**
+  String searchNoResults(String query);
+
+  /// No description provided for @actionOk.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get actionOk;
+
+  /// No description provided for @babySwitcherEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No baby profiles yet.'**
+  String get babySwitcherEmpty;
+
+  /// No description provided for @babySwitcherEditBaby.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit baby'**
+  String get babySwitcherEditBaby;
+
+  /// No description provided for @babySwitcherMyAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'My Account'**
+  String get babySwitcherMyAccount;
+
+  /// No description provided for @babySwitcherAddBaby.
+  ///
+  /// In en, this message translates to:
+  /// **'Add New Baby'**
+  String get babySwitcherAddBaby;
 }
 
 class _AppLocalizationsDelegate

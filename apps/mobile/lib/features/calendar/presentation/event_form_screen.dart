@@ -33,6 +33,7 @@ import '../data/calendar_repository.dart';
 import 'calendar_display.dart';
 import '../domain/calendar_navigation.dart';
 import 'widgets/event_form_widgets.dart';
+import '../../../l10n/app_localizations.dart';
 
 class EventFormPrefill {
   EventFormPrefill({
@@ -215,7 +216,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Upload new photo'),
+              title: Text(AppLocalizations.of(context)!.eventCoverUploadNew),
               onTap: () async {
                 final file = await ImagePicker().pickImage(
                   source: ImageSource.gallery,
@@ -239,7 +240,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.clear),
-              title: const Text('No cover photo'),
+              title: Text(AppLocalizations.of(context)!.eventCoverNone),
               onTap: () => Navigator.pop(context, (id: '', thumbUrl: null)),
             ),
             if (photos.isNotEmpty)

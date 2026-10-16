@@ -140,7 +140,7 @@ class _GalleryThumb extends StatelessWidget {
             ),
             if (photo.status != 'pending') ...[
               SizedBox(height: AppSpacing.xxs),
-              Text('Unavailable', style: muted, textAlign: TextAlign.center),
+              Text(AppLocalizations.of(context)!.photoUnavailable, style: muted, textAlign: TextAlign.center),
             ],
           ],
         ),

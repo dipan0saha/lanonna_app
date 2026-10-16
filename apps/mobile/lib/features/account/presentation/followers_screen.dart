@@ -161,7 +161,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
                       const SizedBox(height: 12),
                       FilledButton(
                         onPressed: _load,
-                        child: const Text('Retry'),
+                        child: Text(AppLocalizations.of(context)!.actionRetry),
                       ),
                     ],
                   ),
@@ -176,7 +176,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
                   ),
                   SizedBox(height: AppSpacing.lg),
                   if (followers.isEmpty && _invites.isEmpty)
-                    const Text('No followers yet — invite family to join.'),
+                    Text(AppLocalizations.of(context)!.followersEmpty),
                   for (final m in followers)
                     Padding(
                       padding: const EdgeInsets.only(
@@ -217,7 +217,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
                                     style: TextButton.styleFrom(
                                       foregroundColor: AppColors.error,
                                     ),
-                                    child: const Text('Revoke'),
+                                    child: Text(AppLocalizations.of(context)!.actionRevoke),
                                   ),
                                   label: l10n.memberRemoveAction,
                                 ),
@@ -289,7 +289,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
                                             foregroundColor:
                                                 AppColors.primaryDark,
                                           ),
-                                          child: const Text('Resend'),
+                                          child: Text(AppLocalizations.of(context)!.actionResend),
                                         ),
                                         label: 'Resend invitation',
                                       ),
@@ -316,7 +316,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
                                         style: TextButton.styleFrom(
                                           foregroundColor: AppColors.error,
                                         ),
-                                        child: const Text('Revoke'),
+                                        child: Text(AppLocalizations.of(context)!.actionRevoke),
                                       ),
                                       label: 'Revoke invitation',
                                     ),

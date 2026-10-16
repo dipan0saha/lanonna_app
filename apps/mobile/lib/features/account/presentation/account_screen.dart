@@ -170,7 +170,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   children: [
                     Text(_loadError!, textAlign: TextAlign.center),
                     const SizedBox(height: 12),
-                    FilledButton(onPressed: _load, child: const Text('Retry')),
+                    FilledButton(onPressed: _load, child: Text(AppLocalizations.of(context)!.actionRetry)),
                   ],
                 ),
               ),
@@ -195,7 +195,7 @@ class _AccountScreenState extends State<AccountScreen> {
                     title: 'Baby Profiles',
                     action: TextButton(
                       onPressed: () => context.push('/baby/create'),
-                      child: const Text('+ Add New'),
+                      child: Text(AppLocalizations.of(context)!.accountAddNewBaby),
                     ),
                   ),
                   AccountBabyProfilesCard(
@@ -219,7 +219,7 @@ class _AccountScreenState extends State<AccountScreen> {
                     child: Column(
                       children: [
                         ListTile(
-                          title: const Text('Settings'),
+                          title: Text(AppLocalizations.of(context)!.settingsTitle),
                           subtitle: const Text(
                             'Notifications, profile, and help',
                           ),
@@ -253,7 +253,7 @@ class _AccountScreenState extends State<AccountScreen> {
                           AppSemantics.button(
                             'account_manage_followers',
                             ListTile(
-                              title: const Text('Manage Followers'),
+                              title: Text(AppLocalizations.of(context)!.accountManageFollowers),
                               trailing: const Icon(
                                 Icons.chevron_right,
                                 color: AppColors.muted,
@@ -263,7 +263,7 @@ class _AccountScreenState extends State<AccountScreen> {
                           ),
                         if (showOwnerPrefs)
                           ListTile(
-                            title: const Text('Invite Family'),
+                            title: Text(AppLocalizations.of(context)!.accountInviteFamily),
                             trailing: const Icon(
                               Icons.chevron_right,
                               color: AppColors.muted,
@@ -272,7 +272,7 @@ class _AccountScreenState extends State<AccountScreen> {
                           ),
                         if (showOwnerPrefs)
                           ListTile(
-                            title: const Text('Export baby data'),
+                            title: Text(AppLocalizations.of(context)!.accountExportBabyData),
                             trailing: const Icon(
                               Icons.chevron_right,
                               color: AppColors.muted,

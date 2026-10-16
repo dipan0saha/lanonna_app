@@ -22,6 +22,7 @@ import '../../home/data/home_repository.dart';
 import '../../home/domain/app_routes.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../data/search_repository.dart';
+import '../../../l10n/app_localizations.dart';
 
 class GlobalSearchScreen extends StatefulWidget {
   const GlobalSearchScreen({super.key});
@@ -135,7 +136,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
         ),
       ),
       body: _babyId == null
-          ? const Center(child: Text('Select a baby profile to search'))
+          ? Center(child: Text(AppLocalizations.of(context)!.searchSelectBaby))
           : AsyncTabBody(
               loading: _loading && results == null && _error == null,
               error: _error,
@@ -150,7 +151,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                       ),
                     )
                   : results.isEmpty
-                      ? Center(child: Text('No results for "${results.query}"'))
+                      ? Center(child: Text(AppLocalizations.of(context)!.searchNoResults(results.query)))
                       : ListView(
                           padding: AppMetrics.subpageScrollPadding,
                           children: [

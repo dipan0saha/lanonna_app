@@ -535,4 +535,268 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get registrySortPriorityLowFirst => 'Priority: Low first';
+
+  @override
+  String get versionGateUpdateInStore => 'Update in store';
+
+  @override
+  String get aiSuggestionsTitle => 'AI Suggestions';
+
+  @override
+  String get actionTryAgain => 'Try again';
+
+  @override
+  String get accountDateOfBirthOptional => 'Date of birth (optional)';
+
+  @override
+  String get accountAddNewBaby => '+ Add New';
+
+  @override
+  String get accountManageFollowers => 'Manage Followers';
+
+  @override
+  String get accountInviteFamily => 'Invite Family';
+
+  @override
+  String get accountExportBabyData => 'Export baby data';
+
+  @override
+  String get exportDownload => 'Download export';
+
+  @override
+  String get exportRefreshStatus => 'Refresh status';
+
+  @override
+  String get actionCancel => 'Cancel';
+
+  @override
+  String get followersEmpty => 'No followers yet — invite family to join.';
+
+  @override
+  String get actionRevoke => 'Revoke';
+
+  @override
+  String get actionResend => 'Resend';
+
+  @override
+  String get notificationPrefsPushTitle => 'Push notifications';
+
+  @override
+  String get notificationPrefsPushSubtitle => 'Get alerts on your phone';
+
+  @override
+  String get notificationPrefsDigestTitle => 'Weekly email digest';
+
+  @override
+  String get notificationPrefsDigestSubtitle =>
+      'Photos, events and registry updates';
+
+  @override
+  String get actionEdit => 'Edit';
+
+  @override
+  String get accountLogOut => 'Log Out';
+
+  @override
+  String get announcementDateOfBirth => 'Date of birth';
+
+  @override
+  String get announcementTimeOfBirth => 'Time of birth';
+
+  @override
+  String get calendarTitle => 'Calendar';
+
+  @override
+  String get noBabyProfileYet => 'No baby profile yet.';
+
+  @override
+  String get calendarPastButton => 'Past';
+
+  @override
+  String get calendarUpcomingTitle => 'Upcoming events';
+
+  @override
+  String get eventNoRsvps => 'No RSVPs yet';
+
+  @override
+  String get eventDeleteConfirmTitle => 'Delete this event?';
+
+  @override
+  String get eventDeleteConfirmBody =>
+      'Family will no longer see it on the calendar.';
+
+  @override
+  String get actionDelete => 'Delete';
+
+  @override
+  String get eventNotFound => 'Event not found';
+
+  @override
+  String get eventJoinVideoCall => 'Join video call';
+
+  @override
+  String get eventPhotoLabel => 'Photo';
+
+  @override
+  String get eventCoverUploadNew => 'Upload new photo';
+
+  @override
+  String get eventCoverNone => 'No cover photo';
+
+  @override
+  String get actionShowAll => 'Show all';
+
+  @override
+  String get calendarAddEvent => 'Add event';
+
+  @override
+  String get funRemoveNameTitle => 'Remove name suggestion?';
+
+  @override
+  String funRemoveNameBody(String name) {
+    return 'Remove \"$name\" from the list?';
+  }
+
+  @override
+  String get actionRemove => 'Remove';
+
+  @override
+  String get funGenderBoy => 'Boy';
+
+  @override
+  String get funGenderGirl => 'Girl';
+
+  @override
+  String get actionAdd => 'Add';
+
+  @override
+  String get funViewWhoVoted => 'View who voted';
+
+  @override
+  String get photoDeleteConfirmTitle => 'Delete this photo?';
+
+  @override
+  String get photoNotFound => 'Photo not found';
+
+  @override
+  String get photoProcessing => 'Processing…';
+
+  @override
+  String get actionSave => 'Save';
+
+  @override
+  String get photoSourceCamera => 'Take photo';
+
+  @override
+  String get photoSourceLibrary => 'Choose from library';
+
+  @override
+  String get actionSkip => 'Skip';
+
+  @override
+  String get actionPost => 'Post';
+
+  @override
+  String get photoUnavailable => 'Unavailable';
+
+  @override
+  String get homeCreateAnnouncementTitle => 'Create announcement?';
+
+  @override
+  String get actionLater => 'Later';
+
+  @override
+  String get actionCreate => 'Create';
+
+  @override
+  String get activityTitle => 'Activity';
+
+  @override
+  String get actionLoadMore => 'Load more';
+
+  @override
+  String get actionManageFollowers => 'Manage followers';
+
+  @override
+  String get actionDismiss => 'Dismiss';
+
+  @override
+  String get onboardingHaveAccount => 'I already have an account';
+
+  @override
+  String get onboardingContinueWithGoogle => 'Continue with Google';
+
+  @override
+  String get onboardingAgreePrefix => 'I agree to the ';
+
+  @override
+  String get onboardingTermsOfService => 'Terms of Service';
+
+  @override
+  String get onboardingAgreeAnd => ' and ';
+
+  @override
+  String get onboardingPrivacyPolicy => 'Privacy Policy';
+
+  @override
+  String get registryPriorityLabel => 'Priority';
+
+  @override
+  String get registryPriorityLow => 'Nice to have';
+
+  @override
+  String get registryPriorityHigh => 'Really need this';
+
+  @override
+  String get registryDeleteItem => 'Delete Item';
+
+  @override
+  String get registryMarkPurchasedTitle => 'Mark as purchased?';
+
+  @override
+  String get registryMarkPurchased => 'Mark as purchased';
+
+  @override
+  String get registryAllCaughtUp => 'All caught up!';
+
+  @override
+  String get registryNothingPurchased => 'Nothing purchased yet.';
+
+  @override
+  String get shippingRemoveTitle => 'Remove shipping address?';
+
+  @override
+  String get shippingCountryLabel => 'Country';
+
+  @override
+  String get shippingSave => 'Save address';
+
+  @override
+  String get shippingRemove => 'Remove address';
+
+  @override
+  String get actionUndo => 'Undo';
+
+  @override
+  String get searchSelectBaby => 'Select a baby profile to search';
+
+  @override
+  String searchNoResults(String query) {
+    return 'No results for \"$query\"';
+  }
+
+  @override
+  String get actionOk => 'OK';
+
+  @override
+  String get babySwitcherEmpty => 'No baby profiles yet.';
+
+  @override
+  String get babySwitcherEditBaby => 'Edit baby';
+
+  @override
+  String get babySwitcherMyAccount => 'My Account';
+
+  @override
+  String get babySwitcherAddBaby => 'Add New Baby';
 }

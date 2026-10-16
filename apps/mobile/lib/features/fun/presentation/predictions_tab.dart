@@ -128,7 +128,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(ctx)!.actionCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -309,7 +309,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
             ),
           TextButton(
             onPressed: _showVoters,
-            child: const Text('View who voted'),
+            child: Text(AppLocalizations.of(context)!.funViewWhoVoted),
           ),
           const SizedBox(height: AppMetrics.sectionBlockSpacing),
           const AppSectionTitle(title: 'Popular Dates'),

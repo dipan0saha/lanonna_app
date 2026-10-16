@@ -376,18 +376,18 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete this photo?'),
+        title: Text(AppLocalizations.of(context)!.photoDeleteConfirmTitle),
         content: const Text(
           'This removes it for everyone who can see it - this can\'t be undone.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.actionCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(context)!.actionDelete),
           ),
         ],
       ),
@@ -439,7 +439,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     if (detail == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: const Center(child: Text('Photo not found')),
+        body: Center(child: Text(AppLocalizations.of(context)!.photoNotFound)),
       );
     }
     final meta = formatApiCalendarDateFromParts(
@@ -487,7 +487,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                         else
                           ColoredBox(
                             color: Colors.grey.shade300,
-                            child: const Center(child: Text('Processing…')),
+                            child: Center(child: Text(AppLocalizations.of(context)!.photoProcessing)),
                           ),
                         if (_hasPreviousPhoto)
                           Positioned(
@@ -541,7 +541,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                               ),
                               TextButton(
                                 onPressed: _saveCaption,
-                                child: const Text('Save'),
+                                child: Text(AppLocalizations.of(context)!.actionSave),
                               ),
                             ],
                           )

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lanonna/core/api/api_client.dart';
@@ -45,6 +46,8 @@ Future<void> _pumpCarousel(WidgetTester tester) async {
     ChangeNotifierProvider<OnboardingCoordinator>.value(
       value: coordinator,
       child: MaterialApp.router(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: AppTheme.light,
         routerConfig: router,
       ),
@@ -60,8 +63,9 @@ void main() {
     expect(ownerCarouselSlide(3).$1, 'Never lose a moment');
   });
 
-  testWidgets('owner carousel shows Next then Get started on last slide',
-      (tester) async {
+  testWidgets('owner carousel shows Next then Get started on last slide', (
+    tester,
+  ) async {
     await _pumpCarousel(tester);
 
     expect(find.byKey(const Key('owner_carousel_next')), findsOneWidget);

@@ -30,8 +30,7 @@ class GalleryRepository extends ChangeNotifier {
       params['sort'] = sort;
     }
     final json = await _api.getJson(
-      '/v1/babies/$babyId/photos',
-      queryParameters: params,
+      Uri(path: '/v1/babies/$babyId/photos', queryParameters: params).toString(),
     );
     final page = parseOffsetPage(json, PhotoSummary.fromJson, defaultLimit: limit);
     return PhotoListPage(items: page.items, hasMore: page.hasMore);

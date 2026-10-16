@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/features/onboarding/presentation/widgets/onboarding_fields.dart';
 import 'package:lanonna/core/validation/form_validators.dart';
 
 void main() {
-  testWidgets('parent hydration can update terms field inside Form', (tester) async {
+  testWidgets('parent hydration can update terms field inside Form', (
+    tester,
+  ) async {
     var accepted = false;
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: Form(
             child: StatefulBuilder(
@@ -41,10 +46,14 @@ void main() {
     expect(accepted, isTrue);
   });
 
-  testWidgets('parent hydration can update relationship field inside Form', (tester) async {
+  testWidgets('parent hydration can update relationship field inside Form', (
+    tester,
+  ) async {
     String? relationship;
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: Form(
             child: StatefulBuilder(
@@ -55,7 +64,8 @@ void main() {
                       value: relationship,
                       autovalidateMode: AutovalidateMode.disabled,
                       validator: validateOnboardingRelationshipToBaby,
-                      onSelected: (label) => setState(() => relationship = label),
+                      onSelected: (label) =>
+                          setState(() => relationship = label),
                     ),
                     TextButton(
                       onPressed: () => setState(() => relationship = 'Mother'),

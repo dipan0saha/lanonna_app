@@ -23,7 +23,8 @@ class HomeFamilyInsightGenderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final totals = summary.genderTotals ?? const GenderTotals(male: 0, female: 0);
+    final totals =
+        summary.genderTotals ?? const GenderTotals(male: 0, female: 0);
     final genderVotes = genderVoteDisplay(
       maleVotes: totals.male,
       femaleVotes: totals.female,
@@ -58,7 +59,8 @@ class HomeFamilyInsightGenderCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _voteBox(
-                  'Boy',
+                  context,
+                  AppLocalizations.of(context)!.funGenderBoy,
                   genderVotes.displayPercentForMale(),
                   totals.male,
                   leading: totals.male > totals.female,
@@ -67,7 +69,8 @@ class HomeFamilyInsightGenderCard extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: _voteBox(
-                  'Girl',
+                  context,
+                  AppLocalizations.of(context)!.funGenderGirl,
                   genderVotes.displayPercentForFemale(),
                   totals.female,
                   leading: totals.female > totals.male,
@@ -132,7 +135,13 @@ class HomeFamilyInsightGenderCard extends StatelessWidget {
     );
   }
 
-  Widget _voteBox(String label, int pct, int count, {bool leading = false}) {
+  Widget _voteBox(
+    BuildContext context,
+    String label,
+    int pct,
+    int count, {
+    bool leading = false,
+  }) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -146,7 +155,9 @@ class HomeFamilyInsightGenderCard extends StatelessWidget {
       child: Column(
         children: [
           Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-          Text('$pct% ($count)'),
+          Text(
+            AppLocalizations.of(context)!.predictionGenderVoteShare(pct, count),
+          ),
         ],
       ),
     );

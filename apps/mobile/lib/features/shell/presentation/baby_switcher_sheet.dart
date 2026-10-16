@@ -85,7 +85,7 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('OK'),
+              child: Text(AppLocalizations.of(ctx)!.actionOk),
             ),
           ],
         ),
@@ -176,7 +176,7 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
                 ],
               )
             else if (_babies.isEmpty)
-              const Text('No baby profiles yet.')
+              Text(AppLocalizations.of(context)!.babySwitcherEmpty)
             else
               for (final baby in _babies)
                 AppSemantics.button(
@@ -215,13 +215,13 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
                             final l10n = AppLocalizations.of(ctx)!;
                             return [
                               if (baby.role == 'owner') ...[
-                                const PopupMenuItem(
+                                PopupMenuItem(
                                   value: 'edit',
-                                  child: Text('Edit baby'),
+                                  child: Text(AppLocalizations.of(context)!.babySwitcherEditBaby),
                                 ),
-                                const PopupMenuItem(
+                                PopupMenuItem(
                                   value: 'followers',
-                                  child: Text('Manage followers'),
+                                  child: Text(AppLocalizations.of(context)!.actionManageFollowers),
                                 ),
                               ],
                               PopupMenuItem(
@@ -239,7 +239,7 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
             const Divider(height: AppSpacing.xxl),
             ListTile(
               leading: const Icon(Icons.person_outline),
-              title: const Text('My Account'),
+              title: Text(AppLocalizations.of(context)!.babySwitcherMyAccount),
               onTap: () {
                 Navigator.of(context).pop();
                 context.push('/profile');
@@ -247,7 +247,7 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
             ),
             ListTile(
               leading: const Icon(Icons.add),
-              title: const Text('Add New Baby'),
+              title: Text(AppLocalizations.of(context)!.babySwitcherAddBaby),
               onTap: () {
                 Navigator.of(context).pop();
                 context.push('/baby/create');

@@ -9,6 +9,7 @@ import '../../../../core/widgets/app_modal_sheet.dart';
 import '../../../../core/widgets/app_responsive_button_pair.dart';
 import '../../../../core/widgets/app_semantics.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Optional caption before uploading a gallery photo. Returns trimmed caption or `null` if skipped.
 Future<String?> showPhotoUploadCaptionSheet(
@@ -87,11 +88,11 @@ class _PhotoUploadCaptionSheetState extends State<_PhotoUploadCaptionSheet> {
           AppResponsiveButtonPair(
             start: AppSemantics.button(
               'gallery_upload_skip',
-              OutlinedButton(onPressed: _skip, child: const Text('Skip')),
+              OutlinedButton(onPressed: _skip, child: Text(AppLocalizations.of(context)!.actionSkip)),
             ),
             end: AppSemantics.button(
               'gallery_upload_post',
-              FilledButton(onPressed: _post, child: const Text('Post')),
+              FilledButton(onPressed: _post, child: Text(AppLocalizations.of(context)!.actionPost)),
             ),
           ),
         ],

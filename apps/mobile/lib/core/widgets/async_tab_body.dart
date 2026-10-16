@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Standard loading / error / content switch for tab screens (offline and API errors).
 class AsyncTabBody extends StatelessWidget {
@@ -35,7 +36,7 @@ class AsyncTabBody extends StatelessWidget {
               FilledButton(
                 key: const Key('async_tab_retry'),
                 onPressed: onRetry,
-                child: const Text('Try again'),
+                child: Text(AppLocalizations.of(context)!.actionTryAgain),
               ),
             ],
           ),

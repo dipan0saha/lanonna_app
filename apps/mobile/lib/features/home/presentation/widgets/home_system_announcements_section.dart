@@ -5,6 +5,7 @@ import '../../../../core/router/deep_link_navigation.dart';
 import '../../../../core/theme/app_metrics.dart';
 import '../../data/home_repository.dart';
 import '../../data/models/home_summary.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class HomeSystemAnnouncementsSection extends StatelessWidget {
   const HomeSystemAnnouncementsSection({
@@ -47,7 +48,7 @@ class HomeSystemAnnouncementsSection extends StatelessWidget {
                       .dismissSystemAnnouncement(item.id);
                   onDismissed();
                 },
-                child: const Text('Dismiss'),
+                child: Text(AppLocalizations.of(context)!.actionDismiss),
               ),
             ],
           ),

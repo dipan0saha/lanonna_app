@@ -27,6 +27,7 @@ import '../data/registry_repository.dart';
 import '../domain/registry_routes.dart';
 import 'widgets/registry_empty_state.dart';
 import 'widgets/registry_item_row.dart';
+import '../../../l10n/app_localizations.dart';
 
 class RegistryScreen extends StatefulWidget {
   const RegistryScreen({super.key});
@@ -186,18 +187,18 @@ class _RegistryScreenState extends State<RegistryScreen>
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Mark as purchased?'),
+          title: Text(AppLocalizations.of(ctx)!.registryMarkPurchasedTitle),
           content: const Text(
             'Family will see this item as taken so no one buys it again.',
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel'),
+              child: Text(AppLocalizations.of(ctx)!.actionCancel),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Mark as purchased'),
+              child: Text(AppLocalizations.of(ctx)!.registryMarkPurchased),
             ),
           ],
         ),
@@ -267,8 +268,8 @@ class _RegistryScreenState extends State<RegistryScreen>
                 ),
               )
             else if (kind == TabLoadKind.empty)
-              const SliverFillRemaining(
-                child: Center(child: Text('No baby profile yet.')),
+              SliverFillRemaining(
+                child: Center(child: Text(AppLocalizations.of(context)!.noBabyProfileYet)),
               )
             else ...[
               if (_isOwner)
@@ -315,9 +316,9 @@ class _RegistryScreenState extends State<RegistryScreen>
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: _needed.isEmpty
-                          ? const Padding(
+                          ? Padding(
                               padding: EdgeInsets.all(16),
-                              child: Text('All caught up!'),
+                              child: Text(AppLocalizations.of(context)!.registryAllCaughtUp),
                             )
                           : Column(
                               children: [
@@ -370,9 +371,9 @@ class _RegistryScreenState extends State<RegistryScreen>
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: _purchased.isEmpty
-                          ? const Padding(
+                          ? Padding(
                               padding: EdgeInsets.all(16),
-                              child: Text('Nothing purchased yet.'),
+                              child: Text(AppLocalizations.of(context)!.registryNothingPurchased),
                             )
                           : Column(
                               children: [

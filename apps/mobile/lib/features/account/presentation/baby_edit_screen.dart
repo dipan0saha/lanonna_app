@@ -22,6 +22,7 @@ import '../../../core/time/app_date_time.dart';
 import '../../onboarding/presentation/widgets/onboarding_fields.dart';
 import '../../onboarding/presentation/widgets/onboarding_prototype_widgets.dart';
 import '../../onboarding/presentation/widgets/onboarding_typography.dart';
+import '../../../l10n/app_localizations.dart';
 
 class BabyEditScreen extends StatefulWidget {
   const BabyEditScreen({super.key, required this.babyId});
@@ -233,7 +234,7 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
           SizedBox(height: AppSpacing.sm),
           OutlinedButton(
             onPressed: () => context.pop(),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.actionCancel),
           ),
         ],
       ),

@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/core/widgets/ai_suggestions_scaffold.dart';
 
 void main() {
-  testWidgets('AI suggestions scaffold shows card row and + Add', (tester) async {
+  testWidgets('AI suggestions scaffold shows card row and + Add', (
+    tester,
+  ) async {
     var addTapped = false;
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: AppTheme.light,
         home: AiSuggestionsScaffold(
           tabs: const [AiSuggestionTab(key: 'all', label: 'All')],
@@ -40,9 +45,6 @@ void main() {
     expect(addTapped, isTrue);
 
     final semantics = tester.getSemantics(find.text('+ Add'));
-    expect(
-      semantics.identifier,
-      'calendar_suggestion_add_test',
-    );
+    expect(semantics.identifier, 'calendar_suggestion_add_test');
   });
 }

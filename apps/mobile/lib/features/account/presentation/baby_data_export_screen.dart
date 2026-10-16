@@ -11,6 +11,7 @@ import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../data/account_repository.dart';
+import '../../../l10n/app_localizations.dart';
 
 class BabyDataExportScreen extends StatefulWidget {
   const BabyDataExportScreen({super.key});
@@ -128,12 +129,12 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
                   const SizedBox(height: 8),
                   OutlinedButton(
                     onPressed: job?.downloadUrl != null ? _openDownload : null,
-                    child: const Text('Download export'),
+                    child: Text(AppLocalizations.of(context)!.exportDownload),
                   ),
                   const SizedBox(height: 8),
                   TextButton(
                     onPressed: _refresh,
-                    child: const Text('Refresh status'),
+                    child: Text(AppLocalizations.of(context)!.exportRefreshStatus),
                   ),
                 ],
               ),

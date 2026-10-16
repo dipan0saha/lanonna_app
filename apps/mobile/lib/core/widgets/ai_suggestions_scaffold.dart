@@ -5,6 +5,7 @@ import '../theme/app_metrics.dart';
 import '../theme/la_nonna_theme.dart';
 import 'ai_suggestion_list_card.dart';
 import 'app_chip.dart';
+import '../../l10n/app_localizations.dart';
 
 export 'ai_suggestion_list_card.dart'
     show AiSuggestionListItem, AiSuggestionTab;
@@ -34,7 +35,7 @@ class AiSuggestionsScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('AI Suggestions')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.aiSuggestionsTitle)),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
