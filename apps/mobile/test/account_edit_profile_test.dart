@@ -6,6 +6,7 @@ import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/auth/auth_repository.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/features/account/data/account_repository.dart';
+import 'package:lanonna/features/account/data/notifications_repository.dart';
 import 'package:lanonna/features/account/presentation/account_edit_screen.dart';
 import 'package:lanonna/features/account/presentation/account_screen.dart';
 import 'package:provider/provider.dart';
@@ -61,6 +62,23 @@ class _Accounts extends AccountRepository {
   }
 }
 
+class _Notifications extends NotificationsRepository {
+  _Notifications() : super(ApiClient(idTokenProvider: () async => 't'));
+
+  @override
+  Future<NotificationPreferences> fetchPreferences() async {
+    return NotificationPreferences(
+      digest: 'weekly',
+      pushEnabled: true,
+      emailDigestEnabled: true,
+      notifyGalleryEnabled: true,
+      notifyCalendarEnabled: true,
+      notifyRegistryEnabled: true,
+      notifyCommentsEnabled: true,
+    );
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -86,6 +104,7 @@ void main() {
         providers: [
           Provider<AccountRepository>.value(value: accounts),
           Provider<AuthRepository>.value(value: _Auth()),
+          Provider<NotificationsRepository>.value(value: _Notifications()),
         ],
         child: MaterialApp.router(theme: AppTheme.light, routerConfig: router),
       ),
@@ -93,6 +112,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Fxtwo Coown'), findsOneWidget);
+    expect(find.text('Weekly email summary'), findsOneWidget);
     await tester.tap(find.text('Edit Profile'));
     await tester.pumpAndSettle();
 

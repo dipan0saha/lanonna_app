@@ -81,25 +81,37 @@ class _AccountScreenState extends State<AccountScreen> {
       _loading = true;
       _loadError = null;
     });
+    final notificationsRepo = context.read<NotificationsRepository>();
     try {
-      final accountRepo = context.read<AccountRepository>();
-      final notificationsRepo = context.read<NotificationsRepository>();
-      final results = await Future.wait([
-        accountRepo.fetchAccount(),
-        notificationsRepo.fetchPreferences(),
-      ]);
-      final payload = results[0] as AccountPayload;
-      final prefs = results[1] as NotificationPreferences;
+      final payload = await context.read<AccountRepository>().fetchAccount();
+      if (!mounted) return;
       setState(() {
         _payload = payload;
-        _digestSummary = notificationDigestSummaryLabel(prefs.digest);
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _loadError = apiErrorMessage(e);
         _loading = false;
       });
+      return;
+    }
+    await _loadDigestSummary(notificationsRepo);
+  }
+
+  /// Best-effort: the digest row is secondary, so a preferences failure hides
+  /// the row instead of failing the whole Account screen.
+  Future<void> _loadDigestSummary(NotificationsRepository repo) async {
+    try {
+      final prefs = await repo.fetchPreferences();
+      if (!mounted) return;
+      setState(() {
+        _digestSummary = notificationDigestSummaryLabel(prefs.digest);
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _digestSummary = null);
     }
   }
 
