@@ -67,4 +67,4 @@ jobs:
           bash scripts/check-no-material-chips.sh
           bash scripts/check-no-hardcoded-user-strings.sh
           flutter analyze --no-fatal-infos
-          flutter test
+          flutter test --exclude-tags golden

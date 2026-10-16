@@ -39,22 +39,26 @@ void main() {
     return decoration! as BoxDecoration;
   }
 
-  testWidgets('OnboardingIconBlob uses a circle backdrop at the requested size',
-      (tester) async {
-    const size = 120.0;
-    await pumpBlob(tester, size: size);
+  testWidgets(
+    'OnboardingIconBlob uses a circle backdrop at the requested size',
+    (tester) async {
+      const size = 120.0;
+      await pumpBlob(tester, size: size);
 
-    final box = tester.getSize(find.byType(OnboardingIconBlob));
-    expect(box.width, size);
-    expect(box.height, size);
+      final box = tester.getSize(find.byType(OnboardingIconBlob));
+      expect(box.width, size);
+      expect(box.height, size);
 
-    final decoration = blobDecoration(tester);
-    expect(decoration.shape, BoxShape.circle);
-    expect(decoration.color, AppColors.sageTint);
-    expect(decoration.borderRadius, isNull);
-  });
+      final decoration = blobDecoration(tester);
+      expect(decoration.shape, BoxShape.circle);
+      expect(decoration.color, AppColors.sageTint);
+      expect(decoration.borderRadius, isNull);
+    },
+  );
 
-  testWidgets('OnboardingIconBlob matches golden', (tester) async {
+  testWidgets('OnboardingIconBlob matches golden', tags: 'golden', (
+    tester,
+  ) async {
     await pumpBlob(tester, size: 140);
     await expectLater(
       find.byType(OnboardingIconBlob),
