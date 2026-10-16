@@ -13,6 +13,7 @@ Manual device checks before widening beta. Run against **lanonna-dev** with `flu
 
 ## 1. App Check
 
+- [ ] (Android dev) Optional: `APP_CHECK_DEBUG_TOKEN` in `apps/mobile/maestro/local.env` + `./maestro/scripts/register-app-check-debug.sh` + rebuild — same UUID after `pm clear` (not used in release builds).
 - [ ] Cold start app; logcat shows App Check debug token; token added under Firebase Console → App Check → Apps → Manage debug tokens.
 - [ ] Signed-in home loads (API calls include `X-Firebase-AppCheck`).
 - [ ] `GET /v1/invitations/preview?token=…` still works **without** App Check (public invite landing).

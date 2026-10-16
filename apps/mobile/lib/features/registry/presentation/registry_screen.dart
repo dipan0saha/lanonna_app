@@ -130,7 +130,12 @@ class _RegistryScreenState extends State<RegistryScreen>
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          padding: const EdgeInsets.fromLTRB(
+            AppMetrics.horizontalPadding,
+            8,
+            AppMetrics.horizontalPadding,
+            0,
+          ),
           child: Row(
             children: [
               Text(
@@ -150,7 +155,9 @@ class _RegistryScreenState extends State<RegistryScreen>
         ),
         if (hasAddress)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppMetrics.horizontalPadding,
+            ),
             child: Card(
               child: Padding(
                 padding: const EdgeInsets.all(14),
@@ -163,7 +170,12 @@ class _RegistryScreenState extends State<RegistryScreen>
           )
         else if (_isOwner)
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+            padding: const EdgeInsets.fromLTRB(
+              AppMetrics.horizontalPadding,
+              4,
+              AppMetrics.horizontalPadding,
+              0,
+            ),
             child: Text(
               'Add an address so family knows where to send gifts.',
               style: context.textStyles.bodySmall?.copyWith(
@@ -286,7 +298,12 @@ class _RegistryScreenState extends State<RegistryScreen>
               else ...[
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                    padding: const EdgeInsets.fromLTRB(
+                      AppMetrics.horizontalPadding,
+                      12,
+                      AppMetrics.horizontalPadding,
+                      0,
+                    ),
                     child: AppSectionTitle(
                       title: 'Needed',
                       action: Text(
@@ -300,7 +317,9 @@ class _RegistryScreenState extends State<RegistryScreen>
                 ),
                 SliverToBoxAdapter(
                   child: Card(
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: AppMetrics.horizontalPadding,
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: _needed.isEmpty
@@ -340,9 +359,9 @@ class _RegistryScreenState extends State<RegistryScreen>
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(
-                      16,
+                      AppMetrics.horizontalPadding,
                       AppMetrics.sectionBlockSpacing,
-                      16,
+                      AppMetrics.horizontalPadding,
                       0,
                     ),
                     child: const AppSectionTitle(title: 'Purchased'),
@@ -350,7 +369,12 @@ class _RegistryScreenState extends State<RegistryScreen>
                 ),
                 SliverToBoxAdapter(
                   child: Card(
-                    margin: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+                    margin: const EdgeInsets.fromLTRB(
+                      AppMetrics.horizontalPadding,
+                      0,
+                      AppMetrics.horizontalPadding,
+                      96,
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: _purchased.isEmpty
@@ -402,7 +426,12 @@ class _AiBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(
+        AppMetrics.horizontalPadding,
+        16,
+        AppMetrics.horizontalPadding,
+        16,
+      ),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),

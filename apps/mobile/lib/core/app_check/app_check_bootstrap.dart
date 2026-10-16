@@ -21,15 +21,24 @@ Future<void> activateFirebaseAppCheck() async {
 }
 
 Future<void> _logAppCheckDebugToken() async {
-  try {
-    final token = await FirebaseAppCheck.instance.getToken();
-    if (token != null) {
-      debugPrint(
-        'Firebase App Check debug token (register in Firebase Console → App Check): $token',
-      );
+  // Native SDK logs the registerable debug UUID (logcat: DebugAppCheckProvider).
+  for (var attempt = 0; attempt < 6; attempt++) {
+    try {
+      final token = await FirebaseAppCheck.instance.getToken();
+      if (token != null && token.isNotEmpty) {
+        debugPrint('Firebase App Check ready for API (debug build).');
+        return;
+      }
+    } catch (e) {
+      if (attempt >= 5) {
+        debugPrint(
+          'App Check not ready: $e. Register debug UUID (or set '
+          'APP_CHECK_DEBUG_TOKEN in maestro/local.env and rebuild): '
+          'bash apps/mobile/maestro/scripts/register-app-check-debug.sh',
+        );
+      }
     }
-  } catch (e) {
-    debugPrint('App Check token not ready yet: $e');
+    await Future<void>.delayed(const Duration(seconds: 2));
   }
 }
 

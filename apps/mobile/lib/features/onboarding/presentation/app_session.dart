@@ -181,6 +181,7 @@ class AppSession extends ChangeNotifier {
     OnboardingRoutes.login,
     OnboardingRoutes.emailVerify,
     OnboardingRoutes.completeProfile,
+    OnboardingRoutes.ownerCreateBaby,
     OnboardingRoutes.ownerFirstMoment,
     OnboardingRoutes.ownerInvite,
     ..._invitePublic,
@@ -311,6 +312,9 @@ class AppSession extends ChangeNotifier {
         return OnboardingRoutes.ownerCreateBaby;
       }
       if (!_coordinator.isInvitePath && status.needsOwnerOnboarding) {
+        if (path == OnboardingRoutes.ownerCarousel) {
+          return _onboardingResumePath(status);
+        }
         if (_ownerPostBabyAllowed.contains(path)) return null;
         if (path == OnboardingRoutes.ownerCreateBaby) {
           return _onboardingResumePath(status);
@@ -346,6 +350,17 @@ class AppSession extends ChangeNotifier {
         : OnboardingRoutes.followerInvite;
   }
 
+  String _resumePathForOwnerOnboardingStep() {
+    final step = _coordinator.activeStep;
+    if (step == OnboardingStep.createBaby) {
+      return OnboardingRoutes.ownerCreateBaby;
+    }
+    if (step == OnboardingStep.batchInvite) {
+      return OnboardingRoutes.ownerInvite;
+    }
+    return OnboardingRoutes.ownerFirstMoment;
+  }
+
   /// First-moment and batch-invite routes assume baby id is rehydrated via
   /// [refreshFromApi] (status field) and [OwnerOnboardingBabyResolver].
   String _onboardingResumePath(OnboardingStatus? status) {
@@ -353,20 +368,12 @@ class AppSession extends ChangeNotifier {
     if (!status.profileComplete) return OnboardingRoutes.completeProfile;
     if (!status.hasOwnerBaby) {
       if (_coordinator.createdBabyId != null) {
-        final step = _coordinator.activeStep;
-        if (step == OnboardingStep.batchInvite) {
-          return OnboardingRoutes.ownerInvite;
-        }
-        return OnboardingRoutes.ownerFirstMoment;
+        return _resumePathForOwnerOnboardingStep();
       }
       return OnboardingRoutes.ownerCreateBaby;
     }
     if (status.needsOwnerOnboarding) {
-      final step = _coordinator.activeStep;
-      if (step == OnboardingStep.batchInvite) {
-        return OnboardingRoutes.ownerInvite;
-      }
-      return OnboardingRoutes.ownerFirstMoment;
+      return _resumePathForOwnerOnboardingStep();
     }
     return OnboardingRoutes.ownerInvite;
   }

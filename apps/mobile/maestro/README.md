@@ -9,7 +9,7 @@ UI tests for the La Nonna Flutter app on an Android emulator or device. Selector
 - `apps/mobile/flavors/dev.json` (API URL, not committed if local-only)
 - Firebase **App Check** debug token registered for the emulator ([pre-beta-qa.md](../../../docs/engineering/pre-beta-qa.md)) — required for onboarding/API calls during cold-start flows
 - Cloud SQL Auth Proxy on `127.0.0.1:5433` (same as `infra/db/clear_dev_test_data.py`); `provision-smoke-user.sh` loads `DB_PASSWORD` from Secret Manager when `gcloud` is available
-- After `pm clear` / cold start, register the emulator App Check debug token (see logcat `Firebase App Check debug token: …`):
+- **Stable Android debug token (recommended):** set `APP_CHECK_DEBUG_TOKEN` in `maestro/local.env`, run `./maestro/scripts/register-app-check-debug.sh` once, then rebuild. Debug APKs seed that UUID on startup (survives `pm clear` / reinstall). Without a pin, register from logcat after cold start:
 
 ```bash
 firebase appcheck:debugtokens:create YOUR_TOKEN \
@@ -24,6 +24,7 @@ Copy `local.env.example` to `local.env` (gitignored):
 
 | Variable | Example |
 |----------|---------|
+| `APP_CHECK_DEBUG_TOKEN` | Optional UUID; pins Android debug App Check (rebuild after change) |
 | `SMOKE_TEST_EMAIL` | `lanonna.dev.smoke@test.com` |
 | `SMOKE_TEST_PASSWORD` | Team / Firebase dev password |
 
@@ -49,7 +50,7 @@ chmod +x maestro/scripts/*.sh
 ./maestro/scripts/run-auth-sign-in.sh
 ```
 
-`prepare-emulator-for-maestro.sh` runs automatically: after `pm clear`, first launch emits a new App Check debug token (registered via Firebase CLI), then the app is relaunched so API calls succeed. Fresh installs from `build-install.sh` need this too.
+`prepare-emulator-for-maestro.sh` runs automatically: after `pm clear`, first launch emits a new App Check debug token (registered via Firebase CLI), then the app is relaunched so API calls succeed. `build-install.sh` upgrades in place (`adb install -r`) so the debug token usually stays the same across rebuilds; only `pm clear`, uninstall, or a wiped emulator needs re-registration.
 
 Flow timeouts are intentionally short (mostly 10–45s) so failures surface quickly; a green run should finish in a few minutes, not ~3 minutes per stuck step.
 

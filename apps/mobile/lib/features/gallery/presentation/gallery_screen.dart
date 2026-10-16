@@ -374,7 +374,12 @@ class _GalleryScreenState extends State<GalleryScreen>
             else ...[
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppMetrics.horizontalPadding,
+                    0,
+                    AppMetrics.horizontalPadding,
+                    8,
+                  ),
                   child: Text(
                     _sectionLabel,
                     style: context.textStyles.labelLarge?.copyWith(
@@ -408,7 +413,12 @@ class _GalleryScreenState extends State<GalleryScreen>
               else if (!_hasMorePhotos)
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    padding: const EdgeInsets.fromLTRB(
+                      AppMetrics.horizontalPadding,
+                      8,
+                      AppMetrics.horizontalPadding,
+                      0,
+                    ),
                     child: Text(
                       'You\'ve reached the end of the gallery.',
                       textAlign: TextAlign.center,
@@ -421,7 +431,12 @@ class _GalleryScreenState extends State<GalleryScreen>
               if (_isAllMode) ...[
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    padding: const EdgeInsets.fromLTRB(
+                      AppMetrics.horizontalPadding,
+                      16,
+                      AppMetrics.horizontalPadding,
+                      8,
+                    ),
                     child: Text(
                       'Recent Activity',
                       style: context.textStyles.labelLarge?.copyWith(

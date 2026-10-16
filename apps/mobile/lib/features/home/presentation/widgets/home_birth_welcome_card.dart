@@ -42,6 +42,12 @@ class HomeBirthWelcomeCard extends StatelessWidget {
       ),
       child: Column(
         children: [
+          const Text(
+            '🎉',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 28),
+          ),
+          const SizedBox(height: 8),
           if (welcome.photoDisplayUrl != null)
             ClipRRect(
               borderRadius: BorderRadius.circular(12),

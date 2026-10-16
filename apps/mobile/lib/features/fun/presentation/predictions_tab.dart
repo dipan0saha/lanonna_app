@@ -155,7 +155,12 @@ class _PredictionsTabState extends State<PredictionsTab> {
     showModalBottomSheet(
       context: context,
       builder: (context) => ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(
+          AppMetrics.horizontalPadding,
+          16,
+          AppMetrics.horizontalPadding,
+          16,
+        ),
         children: [
           Text('Who voted', style: context.textStyles.titleMedium),
           for (final v in voters)
@@ -219,7 +224,12 @@ class _PredictionsTabState extends State<PredictionsTab> {
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(
+          AppMetrics.horizontalPadding,
+          16,
+          AppMetrics.horizontalPadding,
+          16,
+        ),
         children: [
           if (closed)
             Padding(

@@ -39,6 +39,10 @@ class BabyUpdateRequest(BaseModel):
     actual_birth_date: date | None = None
     lifecycle_status: Literal["expecting", "born"] | None = None
     avatar_url: str | None = Field(default=None, max_length=2048)
+    profile_name_suggestions: list[NameSuggestionRow] | None = Field(
+        default=None,
+        max_length=5,
+    )
 
 
 class BabySummary(BaseModel):

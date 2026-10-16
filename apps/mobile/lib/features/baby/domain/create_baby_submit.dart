@@ -2,42 +2,21 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/api/display_photo_upload.dart';
 import '../../../core/domain/baby_summary.dart';
-import '../../../core/time/app_date_time.dart';
 import '../../gallery/domain/gallery_refresh.dart';
 import '../../gallery/presentation/upload/run_gallery_photo_upload.dart';
 import '../../home/data/home_repository.dart';
 import '../../onboarding/data/onboarding_repository.dart';
-import '../../onboarding/domain/baby_gender.dart';
 import '../../onboarding/domain/baby_lifecycle.dart';
 import '../../onboarding/presentation/onboarding_coordinator.dart';
-import '../../onboarding/presentation/utils/onboarding_baby_helpers.dart';
+import 'baby_profile_write_payload.dart';
 import 'create_baby_mode.dart';
+import 'owner_onboarding_baby_phase.dart';
 
-class CreateBabyFormInput {
-  const CreateBabyFormInput({
-    required this.status,
-    required this.gender,
-    required this.selectedDate,
-    required this.boyName,
-    required this.girlName,
-    this.selectedImage,
-    this.sharePhotoToGallery = false,
-  });
-
-  final BabyLifecycle status;
-  final BabyGender gender;
-  final DateTime? selectedDate;
-  final String boyName;
-  final String girlName;
-  final XFile? selectedImage;
-  final bool sharePhotoToGallery;
-}
+export 'baby_profile_write_payload.dart' show CreateBabyFormInput;
 
 Future<String?> resolveRelationshipLabelForCreateBaby({
   required CreateBabyMode mode,
@@ -57,6 +36,53 @@ Future<String?> resolveRelationshipLabelForCreateBaby({
   return coordinator.completeProfileDraft?.relationshipLabel;
 }
 
+Future<void> _applyAvatarAndGallery({
+  required BuildContext context,
+  required String babyProfileId,
+  required CreateBabyFormInput input,
+  required ApiClient api,
+  required HomeRepository homeRepo,
+  required bool isCreate,
+  void Function(String message)? onNonFatalError,
+}) async {
+  if (input.selectedImage == null || kIsWeb) return;
+
+  final imageFile = File(input.selectedImage!.path);
+  var avatarSaved = false;
+  final createdLabel = isCreate ? 'Baby created' : 'Baby updated';
+  try {
+    final avatarUrl = await DisplayPhotoUpload(api).uploadBabyAvatar(
+      babyProfileId: babyProfileId,
+      imageFile: imageFile,
+    );
+    await homeRepo.updateBaby(babyProfileId, avatarUrl: avatarUrl);
+    avatarSaved = true;
+  } catch (e) {
+    onNonFatalError?.call(
+      '$createdLabel; profile photo failed: ${apiErrorMessage(e)}',
+    );
+  }
+  if (input.sharePhotoToGallery) {
+    try {
+      if (!context.mounted) return;
+      await runGalleryPhotoUpload(
+        context: context,
+        babyProfileId: babyProfileId,
+        imageFile: imageFile,
+        api: api,
+      );
+      if (context.mounted) {
+        notifyGalleryDataChanged(context);
+      }
+    } catch (e) {
+      final prefix = avatarSaved
+          ? 'Profile photo saved; gallery upload failed'
+          : '$createdLabel; gallery upload failed';
+      onNonFatalError?.call('$prefix: ${apiErrorMessage(e)}');
+    }
+  }
+}
+
 /// Creates baby profile, optional avatar, optional gallery share. Caller handles navigation.
 Future<BabySummary> submitCreateBaby({
   required BuildContext context,
@@ -68,26 +94,7 @@ Future<BabySummary> submitCreateBaby({
   required OnboardingCoordinator coordinator,
   void Function(String message)? onNonFatalError,
 }) async {
-  final name = resolveOnboardingBabyName(
-    status: input.status,
-    gender: input.gender,
-    boyName: input.boyName,
-    girlName: input.girlName,
-  );
-
-  final expected = input.status == BabyLifecycle.expecting && input.selectedDate != null
-      ? toApiCalendarDate(input.selectedDate!)
-      : null;
-  final actual = input.status == BabyLifecycle.born && input.selectedDate != null
-      ? toApiCalendarDate(input.selectedDate!)
-      : null;
-
-  final profileNameSuggestions = expectingProfileNameSuggestionsForFun(
-    status: input.status,
-    gender: input.gender,
-    boyName: input.boyName,
-    girlName: input.girlName,
-  );
+  final payload = buildBabyProfileWritePayload(input);
 
   final relationshipLabel = await resolveRelationshipLabelForCreateBaby(
     mode: mode,
@@ -96,50 +103,95 @@ Future<BabySummary> submitCreateBaby({
   );
 
   final baby = await repository.createBaby(
-    name: name,
-    gender: input.gender.apiValue,
-    lifecycleStatus: input.status.apiValue,
-    expectedBirthDate: expected,
-    actualBirthDate: actual,
+    name: payload.name,
+    gender: payload.gender,
+    lifecycleStatus: payload.lifecycleStatus,
+    expectedBirthDate: payload.expectedBirthDate,
+    actualBirthDate: payload.actualBirthDate,
     relationshipLabel: relationshipLabel,
-    profileNameSuggestions: profileNameSuggestions,
+    profileNameSuggestions: payload.profileNameSuggestions,
   );
 
-  if (input.selectedImage != null && !kIsWeb) {
-    final imageFile = File(input.selectedImage!.path);
-    var avatarSaved = false;
-    try {
-      final avatarUrl = await DisplayPhotoUpload(api).uploadBabyAvatar(
-        babyProfileId: baby.id,
-        imageFile: imageFile,
-      );
-      await homeRepo.updateBaby(baby.id, avatarUrl: avatarUrl);
-      avatarSaved = true;
-    } catch (e) {
-      onNonFatalError?.call(
-        'Baby created; profile photo failed: ${apiErrorMessage(e)}',
-      );
-    }
-    if (input.sharePhotoToGallery) {
-      try {
-        if (!context.mounted) return baby;
-        await runGalleryPhotoUpload(
-          context: context,
-          babyProfileId: baby.id,
-          imageFile: imageFile,
-          api: api,
-        );
-        if (context.mounted) {
-          notifyGalleryDataChanged(context);
-        }
-      } catch (e) {
-        final prefix = avatarSaved
-            ? 'Profile photo saved; gallery upload failed'
-            : 'Baby created; gallery upload failed';
-        onNonFatalError?.call('$prefix: ${apiErrorMessage(e)}');
-      }
-    }
-  }
+  await _applyAvatarAndGallery(
+    context: context,
+    babyProfileId: baby.id,
+    input: input,
+    api: api,
+    homeRepo: homeRepo,
+    isCreate: true,
+    onNonFatalError: onNonFatalError,
+  );
 
   return baby;
+}
+
+Future<BabySummary> submitReviseOwnerOnboardingBaby({
+  required BuildContext context,
+  required String babyId,
+  required CreateBabyFormInput input,
+  required HomeRepository homeRepo,
+  required ApiClient api,
+  void Function(String message)? onNonFatalError,
+}) async {
+  final payload = buildBabyProfileWritePayload(input);
+  final isBorn = input.status == BabyLifecycle.born;
+
+  final baby = await homeRepo.updateBaby(
+    babyId,
+    name: payload.name,
+    gender: payload.gender,
+    lifecycleStatus: payload.lifecycleStatus,
+    expectedBirthDate: isBorn ? null : payload.expectedBirthDate,
+    actualBirthDate: isBorn ? payload.actualBirthDate : null,
+    profileNameSuggestions: payload.profileNameSuggestions,
+  );
+
+  await _applyAvatarAndGallery(
+    context: context,
+    babyProfileId: baby.id,
+    input: input,
+    api: api,
+    homeRepo: homeRepo,
+    isCreate: false,
+    onNonFatalError: onNonFatalError,
+  );
+
+  return baby;
+}
+
+/// Owner onboarding create or revise (no duplicate POST when baby id exists).
+Future<BabySummary> submitOwnerOnboardingBaby({
+  required BuildContext context,
+  required CreateBabyFormInput input,
+  required OnboardingRepository repository,
+  required HomeRepository homeRepo,
+  required ApiClient api,
+  required OnboardingCoordinator coordinator,
+  void Function(String message)? onNonFatalError,
+}) async {
+  final phase = ownerOnboardingBabyPhaseFor(coordinator);
+  if (phase == OwnerOnboardingBabyPhase.revise) {
+    final babyId = coordinator.createdBabyId;
+    if (babyId == null || babyId.isEmpty) {
+      throw StateError('Revise phase requires createdBabyId');
+    }
+    return submitReviseOwnerOnboardingBaby(
+      context: context,
+      babyId: babyId,
+      input: input,
+      homeRepo: homeRepo,
+      api: api,
+      onNonFatalError: onNonFatalError,
+    );
+  }
+  return submitCreateBaby(
+    context: context,
+    mode: CreateBabyMode.onboarding,
+    input: input,
+    repository: repository,
+    homeRepo: homeRepo,
+    api: api,
+    coordinator: coordinator,
+    onNonFatalError: onNonFatalError,
+  );
 }

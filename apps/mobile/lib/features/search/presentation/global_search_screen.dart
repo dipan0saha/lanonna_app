@@ -152,7 +152,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                   : results.isEmpty
                       ? Center(child: Text('No results for "${results.query}"'))
                       : ListView(
-                          padding: const EdgeInsets.all(16),
+                          padding: AppMetrics.subpageScrollPadding,
                           children: [
                             if (results.photos.isNotEmpty) ...[
                               const AppSectionTitle(title: 'Photos'),

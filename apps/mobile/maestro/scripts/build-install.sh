@@ -38,5 +38,5 @@ if [[ ! -f "${APK}" ]]; then
 fi
 
 adb shell pm trim-caches 800M >/dev/null 2>&1 || true
-adb uninstall com.lanonna.lanonna >/dev/null 2>&1 || true
+# Upgrade in place so App Check debug secret (and other app data) survives rebuilds.
 adb install -r "${APK}"

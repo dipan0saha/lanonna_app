@@ -3,6 +3,7 @@ import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../../../../core/media/cached_signed_image.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/widgets/gallery_social_glyphs.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../../../core/widgets/app_semantics.dart';
@@ -26,7 +27,9 @@ class GalleryPhotoGrid extends StatelessWidget {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppMetrics.horizontalPadding,
+      ),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
         crossAxisSpacing: 6,

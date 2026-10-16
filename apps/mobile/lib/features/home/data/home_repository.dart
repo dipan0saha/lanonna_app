@@ -140,18 +140,22 @@ class HomeRepository {
     String? actualBirthDate,
     String? lifecycleStatus,
     String? avatarUrl,
+    List<Map<String, String>>? profileNameSuggestions,
   }) async {
-    final json = await _api.patchJson(
-      '/v1/babies/$babyId',
-      body: {
-        'name': name,
-        'gender': gender,
-        'expected_birth_date': expectedBirthDate,
-        'actual_birth_date': actualBirthDate,
-        'lifecycle_status': lifecycleStatus,
-        'avatar_url': avatarUrl,
-      },
-    );
+    final body = <String, dynamic>{
+      'name': name,
+      'gender': gender,
+      'expected_birth_date': expectedBirthDate,
+      'actual_birth_date': actualBirthDate,
+      'lifecycle_status': lifecycleStatus,
+      'avatar_url': avatarUrl,
+    };
+    if (profileNameSuggestions != null && profileNameSuggestions.isNotEmpty) {
+      body['profile_name_suggestions'] = profileNameSuggestions
+          .map((r) => {'name': r['name'], 'gender': r['gender'] ?? 'unknown'})
+          .toList();
+    }
+    final json = await _api.patchJson('/v1/babies/$babyId', body: body);
     return BabySummary.fromJson(json);
   }
 

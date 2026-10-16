@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 
 class RegistryEmptyState extends StatelessWidget {
@@ -16,7 +17,12 @@ class RegistryEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+      padding: const EdgeInsets.fromLTRB(
+        AppMetrics.horizontalPadding,
+        16,
+        AppMetrics.horizontalPadding,
+        16,
+      ),
       child: Column(
         children: [
           const Icon(Icons.card_giftcard_outlined, size: 36, color: AppColors.primaryDark),

@@ -15,6 +15,7 @@ import '../../../core/widgets/app_labeled_text_form_field.dart';
 import '../../../core/api/display_photo_upload.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../onboarding/presentation/widgets/onboarding_prototype_widgets.dart';
@@ -244,7 +245,7 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
         key: _formKey,
         autovalidateMode: _autovalidateMode,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          padding: AppMetrics.subpageFormScrollPadding,
           children: [
             Text(
               'Share the news with family. They will see a keepsake card with photo and details.',

@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import '../../features/account/data/account_repository.dart';
 import '../../features/onboarding/domain/onboarding_routes.dart';
 import '../../features/onboarding/presentation/app_session.dart';
-import '../router/app_router.dart';
 import '../theme/app_colors.dart';
 import 'auth_repository.dart';
 import 'biometric_app_lock_policy.dart';
@@ -71,12 +70,13 @@ class _BiometricAppLockState extends State<BiometricAppLock>
     super.dispose();
   }
 
-  String _currentPath() {
-    final ctx = appRootNavigatorKey.currentContext;
-    if (ctx != null) {
-      return GoRouterState.of(ctx).uri.path;
-    }
-    return '/';
+  /// Current route path, or null before [GoRouter] is available under this widget.
+  String? _currentPathOrNull() {
+    if (!mounted) return null;
+    final router = GoRouter.maybeOf(context);
+    if (router == null) return null;
+    final path = router.routerDelegate.currentConfiguration.uri.path;
+    return path.isEmpty ? '/' : path;
   }
 
   @override
@@ -96,7 +96,8 @@ class _BiometricAppLockState extends State<BiometricAppLock>
     final auth = context.read<AuthRepository>();
     final session = context.read<AppSession>();
     final account = context.read<AccountRepository>().cachedAccount;
-    final location = _currentPath();
+    final location = _currentPathOrNull();
+    if (location == null) return false;
     return biometricAppLockShouldEngage(
       isSignedIn: auth.currentUser != null,
       canAccessMainApp: session.canAccessMainApp,
@@ -125,6 +126,12 @@ class _BiometricAppLockState extends State<BiometricAppLock>
 
   Future<void> _evaluateLock({required bool coldStart}) async {
     if (!mounted) return;
+    if (_currentPathOrNull() == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _evaluateLock(coldStart: coldStart);
+      });
+      return;
+    }
     if (!_wouldEngageLock()) {
       if (_locked) setState(() => _locked = false);
       return;

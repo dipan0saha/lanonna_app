@@ -5,6 +5,7 @@ import '../../../features/gallery/domain/gallery_routes.dart';
 import '../../../features/home/data/models/home_summary.dart';
 import '../app_semantics.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_metrics.dart';
 import '../../theme/la_nonna_theme.dart';
 import 'activity_event_icon.dart';
 import 'activity_summary_text.dart';
@@ -15,7 +16,9 @@ class ActivityFeedCard extends StatelessWidget {
     super.key,
     required this.items,
     this.showEmptyState = false,
-    this.padding = const EdgeInsets.symmetric(horizontal: 16),
+    this.padding = const EdgeInsets.symmetric(
+      horizontal: AppMetrics.horizontalPadding,
+    ),
   });
 
   final List<HomeActivityItem> items;

@@ -169,12 +169,7 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
         key: _formKey,
         autovalidateMode: _autovalidateMode,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            AppMetrics.horizontalPadding,
-            0,
-            AppMetrics.horizontalPadding,
-            96,
-          ),
+          padding: AppMetrics.subpageFormScrollPadding,
           children: [
             AppLabeledTextFormField(
               semanticsId: 'registry_item_name',

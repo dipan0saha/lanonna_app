@@ -7,6 +7,7 @@ import '../../../core/api/api_error_message.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/widgets/app_snackbar.dart';
+import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/app_chip.dart';
 import '../../../core/widgets/app_icon_button.dart';
@@ -143,7 +144,12 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
         children: [
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              padding: const EdgeInsets.fromLTRB(
+                AppMetrics.horizontalPadding,
+                8,
+                AppMetrics.horizontalPadding,
+                16,
+              ),
               children: [
                 AnnouncementKeepsakeCard(detail: d, onSignedUrlError: _load),
                 if (d.birthTime != null ||

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
+import '../theme/app_metrics.dart';
 import '../theme/la_nonna_theme.dart';
 
 class OfflineBanner extends StatelessWidget {
@@ -13,7 +14,12 @@ class OfflineBanner extends StatelessWidget {
       child: SafeArea(
         bottom: false,
         child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.fromLTRB(
+          AppMetrics.horizontalPadding,
+          8,
+          AppMetrics.horizontalPadding,
+          8,
+        ),
         child: Text(
           "You're offline. Check your connection.",
           style: context.textStyles.bodySmall?.copyWith(
