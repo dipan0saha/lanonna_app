@@ -3,6 +3,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/media/display_encode.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/la_nonna_theme.dart';
+
 Future<File?> showPhotoSourceSheet(BuildContext context) async {
   return showModalBottomSheet<File?>(
     context: context,
@@ -11,6 +15,15 @@ Future<File?> showPhotoSourceSheet(BuildContext context) async {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              child: Text(
+                displayPhotoSourceHint(),
+                style: context.textStyles.bodySmall?.copyWith(
+                  color: AppColors.muted,
+                ),
+              ),
+            ),
             ListTile(
               leading: const Icon(Icons.photo_camera_outlined),
               title: const Text('Take photo'),

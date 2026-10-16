@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/network/connectivity_service.dart';
 import '../../account/data/notifications_repository.dart';
+import '../../account/data/notifications_unread_signal.dart';
 import '../../home/data/home_refresh_signal.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
@@ -12,6 +13,14 @@ import 'baby_switcher_sheet.dart';
 
 Widget shellHomeTopBar(BuildContext context) {
   return const _ShellTopBarLoader();
+}
+
+T? _maybeRead<T>(BuildContext context) {
+  try {
+    return context.read<T>();
+  } on ProviderNotFoundException {
+    return null;
+  }
 }
 
 class _ShellTopBarLoader extends StatefulWidget {
@@ -26,6 +35,7 @@ class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
   var _unreadCount = 0;
   HomeRefreshSignal? _babyRefresh;
   ConnectivityService? _connectivity;
+  NotificationsUnreadSignal? _unreadSignal;
   var _wasOffline = false;
 
   @override
@@ -50,13 +60,24 @@ class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
       _wasOffline = !connectivity.isOnline;
       _connectivity!.addListener(_onConnectivityChanged);
     }
+    final unreadSignal = _maybeRead<NotificationsUnreadSignal>(context);
+    if (_unreadSignal != unreadSignal) {
+      _unreadSignal?.removeListener(_onUnreadChanged);
+      _unreadSignal = unreadSignal;
+      unreadSignal?.addListener(_onUnreadChanged);
+    }
   }
 
   @override
   void dispose() {
     _babyRefresh?.babyContext.removeListener(_onBabyContextChanged);
     _connectivity?.removeListener(_onConnectivityChanged);
+    _unreadSignal?.removeListener(_onUnreadChanged);
     super.dispose();
+  }
+
+  void _onUnreadChanged() {
+    if (mounted) _refresh();
   }
 
   void _onConnectivityChanged() {

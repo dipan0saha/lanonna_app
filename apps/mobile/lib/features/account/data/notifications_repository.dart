@@ -137,6 +137,11 @@ class NotificationsRepository {
     await _api.patchJson('/v1/me/notifications/$id/read', body: {});
   }
 
+  Future<int> markAllRead() async {
+    final json = await _api.postJson('/v1/me/notifications/read-all', body: {});
+    return json['updated'] as int? ?? 0;
+  }
+
   Future<int> unreadCount() async {
     final json = await _api.getJson('/v1/me/notifications/unread-count');
     return json['count'] as int? ?? 0;

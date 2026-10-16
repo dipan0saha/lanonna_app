@@ -234,6 +234,7 @@ Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps:
 | GET | `/v1/me/notifications` | In-app notification inbox |
 | GET | `/v1/me/notifications/unread-count` | Unread inbox count (shell bell dot) |
 | PATCH | `/v1/me/notifications/{id}/read` | Mark notification read |
+| POST | `/v1/me/notifications/read-all` | Mark all inbox notifications read for the current user (`updated` count) |
 | PUT, DELETE | `/v1/me/device-tokens` | Register or remove FCM device token (`platform`: `ios` \| `android`) |
 | GET | `/v1/me/delete-account/eligibility` | Account deletion preflight (`allowed: true`, `blockers: []` in v1; `sole_owned_babies` is `{id, name}` for profiles delete will remove) |
 | POST | `/v1/me/delete-account` | Soft-delete SQL first (sole-owned babies, memberships, `app_users.deleted_at`), then Firebase `delete_user` (#H-03). If Firebase fails after SQL, retry POST (skips SQL when already tombstoned). |
