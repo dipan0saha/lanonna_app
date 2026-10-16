@@ -9,6 +9,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import 'onboarding_typography.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Parent-driven [FormField] updates must not call [FormFieldState.didChange]
 /// synchronously from [State.didUpdateWidget] while an ancestor [Form] is building.
@@ -305,15 +306,15 @@ class OnboardingTermsAgreementCheckbox extends StatelessWidget {
             child: Wrap(
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Text('I agree to the ', style: muted),
+                Text(AppLocalizations.of(context)!.onboardingAgreePrefix, style: muted),
                 GestureDetector(
                   onTap: onTermsTap,
-                  child: Text('Terms of Service', style: link),
+                  child: Text(AppLocalizations.of(context)!.onboardingTermsOfService, style: link),
                 ),
-                Text(' and ', style: muted),
+                Text(AppLocalizations.of(context)!.onboardingAgreeAnd, style: muted),
                 GestureDetector(
                   onTap: onPrivacyTap,
-                  child: Text('Privacy Policy', style: link),
+                  child: Text(AppLocalizations.of(context)!.onboardingPrivacyPolicy, style: link),
                 ),
               ],
             ),

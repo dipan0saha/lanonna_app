@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/media/display_encode.dart';
 import '../../../../core/widgets/app_modal_sheet.dart';
+import '../../../../l10n/app_localizations.dart';
 
 Future<File?> showPhotoSourceSheet(BuildContext context) async {
   return showAppModalSheet<File?>(
@@ -17,7 +18,7 @@ Future<File?> showPhotoSourceSheet(BuildContext context) async {
         children: [
           ListTile(
             leading: const Icon(Icons.photo_camera_outlined),
-            title: const Text('Take photo'),
+            title: Text(AppLocalizations.of(context)!.photoSourceCamera),
             onTap: () async {
               final picker = ImagePicker();
               final file = await picker.pickImage(
@@ -31,7 +32,7 @@ Future<File?> showPhotoSourceSheet(BuildContext context) async {
           ),
           ListTile(
             leading: const Icon(Icons.photo_library_outlined),
-            title: const Text('Choose from library'),
+            title: Text(AppLocalizations.of(context)!.photoSourceLibrary),
             onTap: () async {
               final picker = ImagePicker();
               final file = await picker.pickImage(

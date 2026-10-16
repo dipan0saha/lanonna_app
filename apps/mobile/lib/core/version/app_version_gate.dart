@@ -6,6 +6,7 @@ import '../platform/external_link_launcher.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_metrics.dart';
 import 'app_version_check.dart';
+import '../../l10n/app_localizations.dart';
 
 class AppVersionRequirement {
   const AppVersionRequirement({
@@ -91,7 +92,7 @@ class AppVersionBlockScreen extends StatelessWidget {
               const Spacer(),
               FilledButton(
                 onPressed: () => _openStore(context),
-                child: const Text('Update in store'),
+                child: Text(AppLocalizations.of(context)!.versionGateUpdateInStore),
               ),
             ],
           ),

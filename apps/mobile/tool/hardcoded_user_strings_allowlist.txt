@@ -1,0 +1,3 @@
+# Exceptions to scripts/check-no-hardcoded-user-strings.sh.
+# Format: path|exact literal|justification (why it is not user-facing copy).
+# Symbol/number-only literals are already ignored by the check.

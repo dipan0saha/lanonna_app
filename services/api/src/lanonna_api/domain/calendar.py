@@ -21,6 +21,7 @@ from lanonna_api.domain.notifications import (
     safe_enqueue_notify_user,
     safe_enqueue_fan_out,
 )
+from lanonna_api.pagination import offset_page_from_extra_row
 from lanonna_api.repositories.activity_events import insert_activity_event
 from lanonna_api.domain.media_urls import signed_display_url
 from lanonna_api.domain.users_display import (
@@ -28,6 +29,7 @@ from lanonna_api.domain.users_display import (
     rsvp_display_name_from_row,
 )
 from lanonna_api.repositories.events import (
+    LIST_EVENTS_MAX_ROWS,
     PAST_EVENTS_PAGE_SIZE,
     catalog_suggestion_claimed,
     create_event,
@@ -91,7 +93,7 @@ def list_calendar_events(
     past: bool = False,
     offset: int = 0,
     limit: int | None = None,
-) -> list[dict[str, Any]] | dict[str, Any]:
+) -> dict[str, Any]:
     require_membership(firebase_uid, baby_profile_id)
     if upcoming and past:
         raise ValueError("Cannot request both upcoming and past events.")
@@ -112,14 +114,11 @@ def list_calendar_events(
             limit=page_size + 1,
             offset=offset,
         )
-        has_more = len(rows) > page_size
-        page_rows = rows[:page_size]
-        return {
-            "items": [_event_row_to_json(r) for r in page_rows],
-            "has_more": has_more,
-            "offset": offset,
-            "limit": page_size,
-        }
+        page = offset_page_from_extra_row(
+            rows, offset=offset, limit=page_size
+        )
+        page["items"] = [_event_row_to_json(r) for r in page["items"]]
+        return page
     rows = list_events(
         baby_profile_id,
         month_start=month_start,
@@ -127,9 +126,13 @@ def list_calendar_events(
         upcoming_only=upcoming,
         past_only=False,
         now=datetime.now(timezone.utc),
-        limit=None,
+        limit=LIST_EVENTS_MAX_ROWS + 1,
     )
-    return [_event_row_to_json(r) for r in rows]
+    # Month and upcoming views are naturally bounded and load in one page;
+    # the same envelope reports has_more if the safety cap is ever hit.
+    page = offset_page_from_extra_row(rows, offset=0, limit=LIST_EVENTS_MAX_ROWS)
+    page["items"] = [_event_row_to_json(r) for r in page["items"]]
+    return page
 
 
 def get_event_detail(

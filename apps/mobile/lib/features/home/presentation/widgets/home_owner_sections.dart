@@ -7,6 +7,7 @@ import '../../../../core/widgets/app_icon_button.dart';
 import '../../../account/data/account_repository.dart';
 import '../../data/models/home_summary.dart';
 import 'home_scroll_section.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class HomeNewFollowersSection extends StatelessWidget {
   const HomeNewFollowersSection({
@@ -33,7 +34,7 @@ class HomeNewFollowersSection extends StatelessWidget {
             ),
           TextButton(
             onPressed: () => context.push('/baby/$babyId/followers'),
-            child: const Text('Manage followers'),
+            child: Text(AppLocalizations.of(context)!.actionManageFollowers),
           ),
         ],
       ),

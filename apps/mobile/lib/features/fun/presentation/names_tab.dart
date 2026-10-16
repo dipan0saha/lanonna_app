@@ -123,16 +123,16 @@ class _NamesTabState extends State<NamesTab> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Remove name suggestion?'),
-        content: Text('Remove "${s.suggestedName}" from the list?'),
+        title: Text(AppLocalizations.of(ctx)!.funRemoveNameTitle),
+        content: Text(AppLocalizations.of(ctx)!.funRemoveNameBody(s.suggestedName)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(ctx)!.actionCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Remove'),
+            child: Text(AppLocalizations.of(ctx)!.actionRemove),
           ),
         ],
       ),
@@ -234,14 +234,14 @@ class _NamesTabState extends State<NamesTab> {
                 validator: validateFunNameSuggestion,
                 autovalidateMode: autovalidate,
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               Row(
                 children: [
                   Expanded(
                     child: SegmentedButton<String>(
-                      segments: const [
-                        ButtonSegment(value: 'male', label: Text('Boy')),
-                        ButtonSegment(value: 'female', label: Text('Girl')),
+                      segments: [
+                        ButtonSegment(value: 'male', label: Text(AppLocalizations.of(context)!.funGenderBoy)),
+                        ButtonSegment(value: 'female', label: Text(AppLocalizations.of(context)!.funGenderGirl)),
                       ],
                       selected: {_gender},
                       onSelectionChanged: (s) =>
@@ -249,7 +249,7 @@ class _NamesTabState extends State<NamesTab> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  FilledButton(onPressed: _submit, child: const Text('Add')),
+                  FilledButton(onPressed: _submit, child: Text(AppLocalizations.of(context)!.actionAdd)),
                 ],
               ),
               if (!_isOwner)

@@ -27,6 +27,7 @@ import '../../../core/api/api_error_message.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../core/network/connectivity_service.dart';
 import '../../core/widgets/app_semantics.dart';
+import '../../l10n/app_localizations.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -190,18 +191,18 @@ class _HomeScreenState extends State<HomeScreen>
             final goCreate = await showDialog<bool>(
               context: context,
               builder: (ctx) => AlertDialog(
-                title: const Text('Create announcement?'),
+                title: Text(AppLocalizations.of(ctx)!.homeCreateAnnouncementTitle),
                 content: const Text(
                   'Share a keepsake card with photo and birth details for family.',
                 ),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(ctx, false),
-                    child: const Text('Later'),
+                    child: Text(AppLocalizations.of(ctx)!.actionLater),
                   ),
                   FilledButton(
                     onPressed: () => Navigator.pop(ctx, true),
-                    child: const Text('Create'),
+                    child: Text(AppLocalizations.of(ctx)!.actionCreate),
                   ),
                 ],
               ),
@@ -289,7 +290,7 @@ class _HomeScreenState extends State<HomeScreen>
                     child: MaterialBanner(
                       content: Text(_summaryError!),
                       actions: [
-                        TextButton(onPressed: _load, child: const Text('Retry')),
+                        TextButton(onPressed: _load, child: Text(AppLocalizations.of(context)!.actionRetry)),
                       ],
                     ),
                   ),

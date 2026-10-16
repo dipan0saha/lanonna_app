@@ -24,6 +24,7 @@ import '../../onboarding/presentation/widgets/onboarding_typography.dart';
 import '../../gallery/domain/gallery_refresh.dart';
 import '../data/announcement_repository.dart';
 import '../domain/announcement_navigation.dart';
+import '../../../l10n/app_localizations.dart';
 
 class AnnouncementCreateScreen extends StatefulWidget {
   const AnnouncementCreateScreen({super.key, required this.babyId});
@@ -294,14 +295,14 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
             ),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Date of birth'),
+              title: Text(AppLocalizations.of(context)!.announcementDateOfBirth),
               subtitle: Text(_birthDateDisplay(context) ?? 'Tap to choose'),
               trailing: const Icon(Icons.calendar_today_outlined, size: 20),
               onTap: _pickDate,
             ),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Time of birth'),
+              title: Text(AppLocalizations.of(context)!.announcementTimeOfBirth),
               subtitle: Text(_birthTimeLabel(context) ?? 'Optional'),
               trailing: const Icon(Icons.schedule_outlined, size: 20),
               onTap: _pickTime,

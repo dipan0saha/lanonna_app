@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/theme/app_colors.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
@@ -9,10 +10,10 @@ void main() {
   testWidgets('Google button shows brand mark and dark label', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: AppTheme.light,
-        home: Scaffold(
-          body: OnboardingGoogleButton(onPressed: () {}),
-        ),
+        home: Scaffold(body: OnboardingGoogleButton(onPressed: () {})),
       ),
     );
 

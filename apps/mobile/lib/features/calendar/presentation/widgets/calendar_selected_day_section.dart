@@ -6,6 +6,7 @@ import '../../../../core/theme/la_nonna_theme.dart';
 import '../../../../core/time/app_date_time.dart';
 import '../../data/models/calendar_models.dart';
 import 'calendar_event_list_tile.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Day-scoped list under the month grid when a calendar day is selected.
 class CalendarSelectedDaySection extends StatelessWidget {
@@ -50,7 +51,7 @@ class CalendarSelectedDaySection extends StatelessWidget {
               ),
               TextButton(
                 onPressed: onClearSelection,
-                child: const Text('Show all'),
+                child: Text(AppLocalizations.of(context)!.actionShowAll),
               ),
             ],
           ),
@@ -74,7 +75,7 @@ class CalendarSelectedDaySection extends StatelessWidget {
                   const SizedBox(height: 12),
                   FilledButton.tonal(
                     onPressed: onAddEvent,
-                    child: const Text('Add event'),
+                    child: Text(AppLocalizations.of(context)!.calendarAddEvent),
                   ),
                 ],
               ],

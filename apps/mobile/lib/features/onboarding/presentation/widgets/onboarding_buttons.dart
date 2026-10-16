@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_semantics.dart';
 import '../../../../core/widgets/google_logo_mark.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class OnboardingPrimaryButton extends StatelessWidget {
   const OnboardingPrimaryButton({
@@ -77,7 +78,7 @@ class OnboardingGoogleButton extends StatelessWidget {
                 children: [
                   const GoogleLogoMark(size: 20),
                   const SizedBox(width: 10),
-                  Text('Continue with Google', style: labelStyle),
+                  Text(AppLocalizations.of(context)!.onboardingContinueWithGoogle, style: labelStyle),
                 ],
               ),
       ),

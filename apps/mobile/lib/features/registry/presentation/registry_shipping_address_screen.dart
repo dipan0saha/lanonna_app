@@ -21,6 +21,7 @@ import '../data/models/registry_models.dart';
 import '../data/registry_repository.dart';
 import '../domain/registry_shipping_input.dart';
 import '../../../core/theme/app_button_styles.dart';
+import '../../../l10n/app_localizations.dart';
 
 class RegistryShippingAddressScreen extends StatefulWidget {
   const RegistryShippingAddressScreen({super.key});
@@ -164,18 +165,18 @@ class _RegistryShippingAddressScreenState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Remove shipping address?'),
+        title: Text(AppLocalizations.of(ctx)!.shippingRemoveTitle),
         content: const Text(
           'Followers will no longer see where to send gifts.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(ctx)!.actionCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Remove'),
+            child: Text(AppLocalizations.of(ctx)!.actionRemove),
           ),
         ],
       ),
@@ -266,7 +267,7 @@ class _RegistryShippingAddressScreenState
             ),
             Padding(
               padding: const EdgeInsets.only(bottom: AppMetrics.fieldLabelGap),
-              child: Text('Country', style: context.fieldLabelStyle),
+              child: Text(AppLocalizations.of(context)!.shippingCountryLabel, style: context.fieldLabelStyle),
             ),
             Padding(
               padding: const EdgeInsets.only(
@@ -285,7 +286,7 @@ class _RegistryShippingAddressScreenState
               'registry_shipping_save',
               FilledButton(
                 onPressed: _saving ? null : _save,
-                child: const Text('Save address'),
+                child: Text(AppLocalizations.of(context)!.shippingSave),
               ),
               label: 'Save address',
             ),
@@ -294,7 +295,7 @@ class _RegistryShippingAddressScreenState
               OutlinedButton(
                 onPressed: _saving ? null : _clear,
                 style: AppButtonStyles.outlinedDestructive,
-                child: const Text('Remove address'),
+                child: Text(AppLocalizations.of(context)!.shippingRemove),
               ),
             ],
           ],

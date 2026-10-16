@@ -82,7 +82,7 @@ def list_photos(
     offset: int = Query(default=0, ge=0),
     sort: Literal["default", "recent", "favorites"] = Query(default="default"),
     user: AppUser = Depends(current_app_user),
-) -> list[dict[str, Any]]:
+) -> dict[str, Any]:
     try:
         return gallery_domain.list_gallery(
             user.uid, baby_profile_id, limit, offset, sort=sort

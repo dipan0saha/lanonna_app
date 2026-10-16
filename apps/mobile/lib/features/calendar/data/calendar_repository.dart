@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exception.dart';
-import '../../../core/json/json_readers.dart';
+import '../../../core/api/offset_page.dart';
 import '../../../core/time/app_date_time.dart';
 import '../domain/calendar_event_lists.dart';
 import 'models/calendar_models.dart';
@@ -33,12 +33,7 @@ class CalendarRepository extends ChangeNotifier {
     notifyListeners();
   }
 
-  static String _cacheKey({
-    String? month,
-    bool upcoming = false,
-    bool past = false,
-  }) {
-    if (past) return 'past';
+  static String _cacheKey({String? month, bool upcoming = false}) {
     if (upcoming) return 'upcoming';
     return 'month:$month';
   }
@@ -57,11 +52,8 @@ class CalendarRepository extends ChangeNotifier {
     String babyId, {
     String? month,
     bool upcoming = false,
-    bool past = false,
   }) {
-    return _listsByBaby[babyId]?[
-      _cacheKey(month: month, upcoming: upcoming, past: past)
-    ];
+    return _listsByBaby[babyId]?[_cacheKey(month: month, upcoming: upcoming)];
   }
 
   Future<CalendarPastEventsPage> listPastEventsPage(
@@ -73,16 +65,16 @@ class CalendarRepository extends ChangeNotifier {
     final json = await _api.getJson(
       '/v1/babies/$babyId/events?past=true&offset=$offset&limit=$pageLimit',
     );
-    final rawItems = json['items'] as List<dynamic>? ?? [];
-    final items = rawItems
-        .whereType<Map<String, dynamic>>()
-        .map(CalendarEvent.fromJson)
-        .toList();
+    final page = parseOffsetPage(
+      json,
+      CalendarEvent.fromJson,
+      defaultLimit: pageLimit,
+    );
     return CalendarPastEventsPage(
-      items: items,
-      hasMore: json['has_more'] as bool? ?? false,
-      offset: readInt(json['offset']),
-      limit: readInt(json['limit'], defaultValue: pageLimit),
+      items: page.items,
+      hasMore: page.hasMore,
+      offset: page.offset,
+      limit: page.limit,
     );
   }
 
@@ -90,10 +82,9 @@ class CalendarRepository extends ChangeNotifier {
     String babyId, {
     String? month,
     bool upcoming = false,
-    bool past = false,
     bool forceRefresh = false,
   }) async {
-    final key = _cacheKey(month: month, upcoming: upcoming, past: past);
+    final key = _cacheKey(month: month, upcoming: upcoming);
     if (!forceRefresh) {
       final cached = _listsByBaby[babyId]?[key];
       if (cached != null) return cached;
@@ -102,14 +93,9 @@ class CalendarRepository extends ChangeNotifier {
       final query = <String>[];
       if (month != null) query.add('month=$month');
       if (upcoming) query.add('upcoming=true');
-      if (past) query.add('past=true');
       final suffix = query.isEmpty ? '' : '?${query.join('&')}';
-      final list =
-          await _api.getJsonList('/v1/babies/$babyId/events$suffix');
-      final events = list
-          .whereType<Map<String, dynamic>>()
-          .map(CalendarEvent.fromJson)
-          .toList();
+      final json = await _api.getJson('/v1/babies/$babyId/events$suffix');
+      final events = parseOffsetPage(json, CalendarEvent.fromJson).items;
       final babyCache = _listsByBaby.putIfAbsent(babyId, () => {});
       babyCache[key] = events;
       return events;

@@ -16,6 +16,7 @@ import '../../../core/domain/baby_summary.dart';
 import '../../onboarding/presentation/widgets/onboarding_fields.dart';
 import 'names_tab.dart';
 import 'predictions_tab.dart';
+import '../../../l10n/app_localizations.dart';
 
 class FunScreen extends StatefulWidget {
   const FunScreen({super.key});
@@ -107,7 +108,7 @@ class _FunScreenState extends State<FunScreen>
           child: const SizedBox.shrink(),
         );
       case TabLoadKind.empty:
-        return const Center(child: Text('No baby profile yet.'));
+        return Center(child: Text(AppLocalizations.of(context)!.noBabyProfileYet));
       case TabLoadKind.content:
         // After birth both tabs stay visible but read-only; the API also
         // rejects prediction writes with predictions_closed.

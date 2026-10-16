@@ -57,7 +57,7 @@ def list_events_route(
     offset: int = Query(default=0, ge=0),
     limit: int | None = Query(default=None, ge=1, le=100),
     user: AppUser = Depends(current_app_user),
-) -> list[dict[str, Any]] | dict[str, Any]:
+) -> dict[str, Any]:
     try:
         return calendar_domain.list_calendar_events(
             user.uid,

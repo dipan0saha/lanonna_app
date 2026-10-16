@@ -11,6 +11,7 @@ import '../widgets/onboarding_carousel_art.dart';
 import '../widgets/onboarding_scaffold.dart';
 import '../widgets/onboarding_carousel_caption.dart';
 import '../widgets/owner_carousel_slides.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class OwnerCarouselScreen extends StatefulWidget {
   const OwnerCarouselScreen({super.key});
@@ -98,7 +99,7 @@ class _OwnerCarouselScreenState extends State<OwnerCarouselScreen> {
             const SizedBox(height: 12),
             TextButton(
               onPressed: () => context.go(OnboardingRoutes.login),
-              child: const Text('I already have an account'),
+              child: Text(AppLocalizations.of(context)!.onboardingHaveAccount),
             ),
           ],
         ),

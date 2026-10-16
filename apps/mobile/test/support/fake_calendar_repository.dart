@@ -21,7 +21,6 @@ class FakeCalendarRepository extends CalendarRepository {
     String babyId, {
     String? month,
     bool upcoming = false,
-    bool past = false,
     bool forceRefresh = false,
   }) async {
     listCalls++;

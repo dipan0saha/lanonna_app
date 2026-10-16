@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from lanonna_api.auth import AppUser, current_app_user
 from lanonna_api.repositories.device_tokens import delete_device_token, upsert_device_token
@@ -14,6 +14,7 @@ from lanonna_api.repositories.notifications import (
     mark_notification_read,
 )
 from lanonna_api.repositories.system_announcements import dismiss_announcement
+from lanonna_api.pagination import offset_page_from_extra_row
 from lanonna_api.schemas.device_tokens import DeviceTokenDeleteRequest, DeviceTokenUpsertRequest
 
 router = APIRouter(prefix="/v1/me", tags=["notifications"])
@@ -29,9 +30,14 @@ def unread_notification_count(
 @router.get("/notifications")
 def list_my_notifications(
     user: AppUser = Depends(current_app_user),
-) -> list[dict[str, Any]]:
-    rows = list_notifications_for_user(user.uid, limit=50)
-    return [
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+) -> dict[str, Any]:
+    rows = list_notifications_for_user(
+        user.uid, limit=limit + 1, offset=offset
+    )
+    page = offset_page_from_extra_row(rows, offset=offset, limit=limit)
+    page["items"] = [
         {
             "id": str(r["id"]),
             "baby_profile_id": str(r["baby_profile_id"])
@@ -46,8 +52,9 @@ def list_my_notifications(
             "read_at": r["read_at"].isoformat() if r.get("read_at") else None,
             "created_at": r["created_at"].isoformat(),
         }
-        for r in rows
+        for r in page["items"]
     ]
+    return page
 
 
 @router.put("/device-tokens")

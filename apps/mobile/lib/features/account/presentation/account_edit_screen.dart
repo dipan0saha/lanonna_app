@@ -20,6 +20,7 @@ import '../../../core/theme/app_metrics.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../onboarding/presentation/widgets/onboarding_prototype_widgets.dart';
 import '../data/account_repository.dart';
+import '../../../l10n/app_localizations.dart';
 
 class AccountEditScreen extends StatefulWidget {
   const AccountEditScreen({super.key});
@@ -239,7 +240,7 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
               const SizedBox(height: 8),
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Date of birth (optional)'),
+                title: Text(AppLocalizations.of(context)!.accountDateOfBirthOptional),
                 subtitle: Text(_birthDateDisplay(context) ?? 'Select a date'),
                 trailing: const Icon(Icons.calendar_today_outlined),
                 onTap: _saving ? null : _pickBirthDate,

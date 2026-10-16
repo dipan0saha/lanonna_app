@@ -9,6 +9,7 @@ import '../../../../core/widgets/app_icon_button.dart';
 import '../../../../core/widgets/app_semantics.dart';
 import '../../../../core/widgets/registry_priority_chip.dart';
 import '../../data/models/registry_models.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class RegistryNeededRow extends StatelessWidget {
   const RegistryNeededRow({
@@ -161,7 +162,7 @@ class RegistryPurchasedRow extends StatelessWidget {
           if (canUndo && onUndo != null)
             AppSemantics.button(
               'registry_undo_purchase',
-              TextButton(onPressed: onUndo, child: const Text('Undo')),
+              TextButton(onPressed: onUndo, child: Text(AppLocalizations.of(context)!.actionUndo)),
               label: 'Undo purchase',
             ),
         ],

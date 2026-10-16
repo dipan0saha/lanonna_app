@@ -18,6 +18,7 @@ import '../../home/data/selected_baby_store.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../data/registry_repository.dart';
 import '../../../core/theme/app_button_styles.dart';
+import '../../../l10n/app_localizations.dart';
 
 class RegistryItemFormPrefill {
   RegistryItemFormPrefill({
@@ -209,7 +210,7 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Priority', style: context.fieldLabelStyle),
+                      Text(AppLocalizations.of(context)!.registryPriorityLabel, style: context.fieldLabelStyle),
                       Text(
                         '$_priority',
                         style: context.textStyles.bodyMedium?.copyWith(
@@ -233,8 +234,8 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Nice to have', style: mutedCaption),
-                      Text('Really need this', style: mutedCaption),
+                      Text(AppLocalizations.of(context)!.registryPriorityLow, style: mutedCaption),
+                      Text(AppLocalizations.of(context)!.registryPriorityHigh, style: mutedCaption),
                     ],
                   ),
                 ],
@@ -253,7 +254,7 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
               OutlinedButton(
                 onPressed: _delete,
                 style: AppButtonStyles.outlinedDestructive,
-                child: const Text('Delete Item'),
+                child: Text(AppLocalizations.of(context)!.registryDeleteItem),
               ),
             ],
           ],

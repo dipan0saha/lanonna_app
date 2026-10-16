@@ -193,7 +193,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           physics: const NeverScrollableScrollPhysics(),
           children: [
             if (detail.rsvpAttendees.isEmpty)
-              const Text('No RSVPs yet')
+              Text(AppLocalizations.of(context)!.eventNoRsvps)
             else
               for (final a in detail.rsvpAttendees)
                 ListTile(
@@ -262,16 +262,16 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete this event?'),
-        content: const Text('Family will no longer see it on the calendar.'),
+        title: Text(AppLocalizations.of(ctx)!.eventDeleteConfirmTitle),
+        content: Text(AppLocalizations.of(ctx)!.eventDeleteConfirmBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(ctx)!.actionCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(ctx)!.actionDelete),
           ),
         ],
       ),
@@ -299,7 +299,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) returnToCalendar(context);
       });
-      return const Scaffold(body: Center(child: Text('Event not found')));
+      return Scaffold(body: Center(child: Text(AppLocalizations.of(context)!.eventNotFound)));
     }
     return PrototypeSubpageScaffold(
       title: 'Event',
@@ -358,12 +358,12 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   ),
                   TextButton(
                     onPressed: () => _openVideo(detail.videoCallUrl!),
-                    child: const Text('Join video call'),
+                    child: Text(AppLocalizations.of(context)!.eventJoinVideoCall),
                   ),
                 ],
                 if (detail.coverPhotoDisplayUrl != null) ...[
                   const SizedBox(height: 12),
-                  Text('Photo', style: Theme.of(context).textTheme.labelLarge),
+                  Text(AppLocalizations.of(context)!.eventPhotoLabel, style: Theme.of(context).textTheme.labelLarge),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: CachedSignedImage(

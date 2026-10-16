@@ -46,17 +46,6 @@ void main() {
     expect(api.calls, 2);
   });
 
-  test('listEvents caches past list separately', () async {
-    final api = _EventsApi();
-    final repo = CalendarRepository(api);
-    await repo.listEvents('baby-1', past: true);
-    expect(api.lastPath, contains('past=true'));
-    expect(api.calls, 1);
-    await repo.listEvents('baby-1', past: true);
-    expect(api.calls, 1);
-    expect(repo.peekCachedEvents('baby-1', past: true), isNotNull);
-  });
-
   test('listEventsForSuggestionDedupe merges month and upcoming', () async {
     final api = _DedupeEventsApi();
     final repo = CalendarRepository(api);
@@ -75,22 +64,19 @@ class _EventsApi extends ApiClient {
   String? lastPath;
 
   @override
-  Future<List<dynamic>> getJsonList(
-    String path, {
-    Map<String, String>? queryParameters,
-  }) async {
+  Future<Map<String, dynamic>> getJson(String path) async {
     lastPath = path;
     calls++;
     if (failRequests) {
       throw const SocketException('offline');
     }
-    return [
+    return _page([
       {
         'id': 'ev-1',
         'title': 'March event',
         'starts_at': '2026-03-10T12:00:00Z',
       },
-    ];
+      ]);
   }
 
   @override
@@ -113,27 +99,31 @@ class _DedupeEventsApi extends ApiClient {
   var upcomingCalls = 0;
 
   @override
-  Future<List<dynamic>> getJsonList(
-    String path, {
-    Map<String, String>? queryParameters,
-  }) async {
+  Future<Map<String, dynamic>> getJson(String path) async {
     if (path.contains('upcoming=true')) {
       upcomingCalls++;
-      return [
+      return _page([
         {
           'id': 'u1',
           'title': 'Upcoming',
           'starts_at': '2026-12-01T12:00:00Z',
         },
-      ];
+        ]);
     }
     monthCalls++;
-    return [
+    return _page([
       {
         'id': 'm1',
         'title': 'Month',
         'starts_at': '2026-03-01T12:00:00Z',
       },
-    ];
+      ]);
   }
 }
+
+Map<String, dynamic> _page(List<Map<String, dynamic>> items) => {
+  'items': items,
+  'offset': 0,
+  'limit': items.length,
+  'has_more': false,
+};

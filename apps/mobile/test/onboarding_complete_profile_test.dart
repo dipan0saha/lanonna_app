@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
@@ -30,7 +31,8 @@ class _EmptyDisplayNameAccountRepository extends _FakeAccountRepository {
 }
 
 class _FakeAccountRepository extends AccountRepository {
-  _FakeAccountRepository() : super(ApiClient(idTokenProvider: () async => null));
+  _FakeAccountRepository()
+    : super(ApiClient(idTokenProvider: () async => null));
 
   @override
   Future<AccountPayload> fetchAccount() async {
@@ -52,16 +54,21 @@ class _FakeAccountRepository extends AccountRepository {
   }
 }
 
-Future<({
-  OnboardingCoordinator coordinator,
-  OnboardingStorage storage,
-  OnboardingRepository repository,
-})> _fixturesForPath(OnboardingPath path) async {
+Future<
+  ({
+    OnboardingCoordinator coordinator,
+    OnboardingStorage storage,
+    OnboardingRepository repository,
+  })
+>
+_fixturesForPath(OnboardingPath path) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
   final storage = OnboardingStorage(prefs);
   await storage.saveOnboardingPath(path);
-  final repository = OnboardingRepository(ApiClient(idTokenProvider: () async => null));
+  final repository = OnboardingRepository(
+    ApiClient(idTokenProvider: () async => null),
+  );
   final coordinator = OnboardingCoordinator(
     storage: storage,
     repository: repository,
@@ -101,12 +108,19 @@ Widget _wrap(
         ),
       ),
     ],
-    child: MaterialApp(theme: AppTheme.light, home: child),
+    child: MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      theme: AppTheme.light,
+      home: child,
+    ),
   );
 }
 
 void main() {
-  testWidgets('owner complete profile shows relationship section', (tester) async {
+  testWidgets('owner complete profile shows relationship section', (
+    tester,
+  ) async {
     final fx = await _fixturesForPath(OnboardingPath.owner);
     await tester.pumpWidget(
       _wrap(
@@ -123,7 +137,9 @@ void main() {
     expect(find.text('Continue'), findsOneWidget);
   });
 
-  testWidgets('terms validation clears after accept without second submit', (tester) async {
+  testWidgets('terms validation clears after accept without second submit', (
+    tester,
+  ) async {
     _useTallViewport(tester);
     final fx = await _fixturesForPath(OnboardingPath.owner);
     await tester.pumpWidget(
@@ -137,8 +153,14 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    await tester.enterText(find.byKey(const Key('onboarding_first_name')), 'Test');
-    await tester.enterText(find.byKey(const Key('onboarding_last_name')), 'User');
+    await tester.enterText(
+      find.byKey(const Key('onboarding_first_name')),
+      'Test',
+    );
+    await tester.enterText(
+      find.byKey(const Key('onboarding_last_name')),
+      'User',
+    );
     await tester.ensureVisible(find.text('Continue'));
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
@@ -149,34 +171,42 @@ void main() {
     expect(find.text('Please accept the terms to continue'), findsNothing);
   });
 
-  testWidgets('relationship validation clears after selection without second submit',
-      (tester) async {
-    _useTallViewport(tester);
-    final fx = await _fixturesForPath(OnboardingPath.owner);
-    await tester.pumpWidget(
-      _wrap(
-        const OnboardingCompleteProfileScreen(),
-        coordinator: fx.coordinator,
-        storage: fx.storage,
-        repository: fx.repository,
-        accountRepository: _EmptyDisplayNameAccountRepository(),
-      ),
-    );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
-    await tester.enterText(find.byKey(const Key('onboarding_first_name')), 'Test');
-    await tester.enterText(find.byKey(const Key('onboarding_last_name')), 'User');
-    await tester.ensureVisible(find.byType(Checkbox));
-    await tester.tap(find.byType(Checkbox));
-    await tester.pump();
-    await tester.ensureVisible(find.text('Continue'));
-    await tester.tap(find.text('Continue'));
-    await tester.pumpAndSettle();
-    expect(find.text('Select your relationship to baby'), findsOneWidget);
-    await tester.tap(find.text('Mother'));
-    await tester.pumpAndSettle();
-    expect(find.text('Select your relationship to baby'), findsNothing);
-  });
+  testWidgets(
+    'relationship validation clears after selection without second submit',
+    (tester) async {
+      _useTallViewport(tester);
+      final fx = await _fixturesForPath(OnboardingPath.owner);
+      await tester.pumpWidget(
+        _wrap(
+          const OnboardingCompleteProfileScreen(),
+          coordinator: fx.coordinator,
+          storage: fx.storage,
+          repository: fx.repository,
+          accountRepository: _EmptyDisplayNameAccountRepository(),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.enterText(
+        find.byKey(const Key('onboarding_first_name')),
+        'Test',
+      );
+      await tester.enterText(
+        find.byKey(const Key('onboarding_last_name')),
+        'User',
+      );
+      await tester.ensureVisible(find.byType(Checkbox));
+      await tester.tap(find.byType(Checkbox));
+      await tester.pump();
+      await tester.ensureVisible(find.text('Continue'));
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      expect(find.text('Select your relationship to baby'), findsOneWidget);
+      await tester.tap(find.text('Mother'));
+      await tester.pumpAndSettle();
+      expect(find.text('Select your relationship to baby'), findsNothing);
+    },
+  );
 
   testWidgets('owner continue requires terms acceptance', (tester) async {
     final fx = await _fixturesForPath(OnboardingPath.owner);
@@ -190,8 +220,14 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
-    await tester.enterText(find.byKey(const Key('onboarding_first_name')), 'Test');
-    await tester.enterText(find.byKey(const Key('onboarding_last_name')), 'User');
+    await tester.enterText(
+      find.byKey(const Key('onboarding_first_name')),
+      'Test',
+    );
+    await tester.enterText(
+      find.byKey(const Key('onboarding_last_name')),
+      'User',
+    );
     await tester.ensureVisible(find.text('Continue'));
     await tester.tap(find.text('Continue'));
     await tester.pump();
@@ -221,7 +257,9 @@ void main() {
     expect(firstField.controller?.text, 'R3');
   });
 
-  testWidgets('name validation clears after fix without second submit', (tester) async {
+  testWidgets('name validation clears after fix without second submit', (
+    tester,
+  ) async {
     final fx = await _fixturesForPath(OnboardingPath.follower);
     await tester.pumpWidget(
       _wrap(
@@ -241,12 +279,17 @@ void main() {
     await tester.tap(find.text('Continue'));
     await tester.pump();
     expect(find.text('First name is required'), findsOneWidget);
-    await tester.enterText(find.byKey(const Key('onboarding_first_name')), 'Ada');
+    await tester.enterText(
+      find.byKey(const Key('onboarding_first_name')),
+      'Ada',
+    );
     await tester.pump();
     expect(find.text('First name is required'), findsNothing);
   });
 
-  testWidgets('follower complete profile hides relationship section', (tester) async {
+  testWidgets('follower complete profile hides relationship section', (
+    tester,
+  ) async {
     final fx = await _fixturesForPath(OnboardingPath.follower);
     await tester.pumpWidget(
       _wrap(

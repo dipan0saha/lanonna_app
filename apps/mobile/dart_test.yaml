@@ -1,0 +1,4 @@
+tags:
+  # Pixel goldens are rendered on macOS; Linux CI anti-aliases slightly
+  # differently, so CI excludes this tag. Run them locally on macOS.
+  golden:

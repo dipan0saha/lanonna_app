@@ -1,0 +1,18 @@
+# Local Postgres for API integration tests (pytest marker `integration`).
+# Usage:
+#   docker compose -f docker-compose.test.yml up -d
+#   PYTHONPATH=services/api/src pytest -q services/api/tests
+#   docker compose -f docker-compose.test.yml down
+services:
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 5s
+      retries: 15

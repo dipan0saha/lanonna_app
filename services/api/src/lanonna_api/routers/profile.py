@@ -14,7 +14,7 @@ from lanonna_api.repositories.users import (
     update_notification_preferences,
 )
 from pydantic import BaseModel
-from lanonna_api.schemas.babies import baby_summary_from_row
+from lanonna_api.domain.baby_summaries import baby_summary_from_row
 from lanonna_api.schemas.profile import ProfileResponse, ProfileUpdateRequest
 
 router = APIRouter(prefix="/v1", tags=["profile"])

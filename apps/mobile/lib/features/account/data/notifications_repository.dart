@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../core/api/api_client.dart';
+import '../../../core/api/offset_page.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/json/json_readers.dart';
 import '../domain/inbox_notification_type.dart';
@@ -148,11 +149,9 @@ class NotificationsRepository extends ChangeNotifier {
   }
 
   Future<List<InboxNotification>> listInbox() async {
-    final list = await _api.getJsonList('/v1/me/notifications');
-    return list
-        .whereType<Map<String, dynamic>>()
-        .map(InboxNotification.fromJson)
-        .toList();
+    final json = await _api.getJson('/v1/me/notifications');
+    final page = parseOffsetPage(json, InboxNotification.fromJson);
+    return page.items;
   }
 
   Future<void> markRead(String id) async {

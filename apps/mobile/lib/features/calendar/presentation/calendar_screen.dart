@@ -28,6 +28,7 @@ import 'event_form_screen.dart';
 import 'widgets/calendar_grouped_events_card.dart';
 import 'widgets/calendar_past_events_sheet.dart';
 import 'widgets/calendar_selected_day_section.dart';
+import '../../../l10n/app_localizations.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -239,7 +240,7 @@ class _CalendarScreenState extends State<CalendarScreen>
                   AppMetrics.horizontalPadding,
                   10,
                 ),
-                child: Text('Calendar', style: styles.headlineSmall),
+                child: Text(AppLocalizations.of(context)!.calendarTitle, style: styles.headlineSmall),
               ),
             ),
             if (kind == TabLoadKind.loading)
@@ -256,8 +257,8 @@ class _CalendarScreenState extends State<CalendarScreen>
                 ),
               )
             else if (kind == TabLoadKind.empty)
-              const SliverFillRemaining(
-                child: Center(child: Text('No baby profile yet.')),
+              SliverFillRemaining(
+                child: Center(child: Text(AppLocalizations.of(context)!.noBabyProfileYet)),
               )
             else ...[
               SliverToBoxAdapter(
@@ -360,7 +361,7 @@ class _CalendarScreenState extends State<CalendarScreen>
                                   context,
                                   babyId: _baby!.id,
                                 ),
-                          child: const Text('Past'),
+                          child: Text(AppLocalizations.of(context)!.calendarPastButton),
                         ),
                       ],
                     ),

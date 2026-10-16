@@ -6,6 +6,7 @@ import '../../../../core/widgets/app_bordered_surface.dart';
 import '../../../../core/widgets/app_semantics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../../../core/theme/app_button_styles.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class AccountProfileCard extends StatelessWidget {
   const AccountProfileCard({
@@ -46,7 +47,7 @@ class AccountProfileCard extends StatelessWidget {
               Expanded(
                 child: AppSemantics.button(
                   'account_edit_profile',
-                  OutlinedButton(onPressed: onEdit, child: const Text('Edit')),
+                  OutlinedButton(onPressed: onEdit, child: Text(AppLocalizations.of(context)!.actionEdit)),
                   label: 'Edit profile',
                 ),
               ),
@@ -57,7 +58,7 @@ class AccountProfileCard extends StatelessWidget {
                   OutlinedButton(
                     onPressed: onLogOut,
                     style: AppButtonStyles.outlinedDestructive,
-                    child: const Text('Log Out'),
+                    child: Text(AppLocalizations.of(context)!.accountLogOut),
                   ),
                   label: 'Log Out',
                 ),

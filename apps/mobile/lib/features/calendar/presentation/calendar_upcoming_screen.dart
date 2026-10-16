@@ -8,6 +8,7 @@ import '../data/calendar_repository.dart';
 import '../data/models/calendar_models.dart';
 import '../domain/calendar_event_lists.dart';
 import 'widgets/calendar_today_upcoming_list.dart';
+import '../../../l10n/app_localizations.dart';
 
 class CalendarUpcomingScreen extends StatefulWidget {
   const CalendarUpcomingScreen({super.key});
@@ -101,7 +102,7 @@ class _CalendarUpcomingScreenState extends State<CalendarUpcomingScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Upcoming events')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.calendarUpcomingTitle)),
       body: RefreshIndicator(
         onRefresh: _load,
         child: _loading
