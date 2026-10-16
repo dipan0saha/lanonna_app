@@ -7,15 +7,14 @@ Manual device checks before widening beta. Run against **lanonna-dev** with `flu
 - **Deploy / schema:** [operations.md](operations.md) — dev API + worker deployed; all SQL migrations applied on dev (`apply_migrations.py`; confirm with `./scripts/verify-dev-migrations.sh`).
 - **App Check policy:** [`deploy.sh`](../../services/api/scripts/deploy.sh) defaults to **`APP_CHECK_ENFORCE=false`** on dev so sideloaded APKs work without registering every emulator token. The Flutter client still sends App Check when Firebase provides a token. Before wide beta, deploy with `APP_CHECK_ENFORCE=true ./services/api/scripts/deploy.sh` and register debug tokens (section 1 below). When enforce is off, the API accepts missing `X-Firebase-AppCheck` headers.
 - **Beta gate script:** `./scripts/run-beta-gate.sh` runs unit tests and optionally deploys API. Force-update requires migration **`020_app_versions`** (covered by the migration gate).
-- Firebase **App Check** enabled for Android/iOS; **debug token** registered for your emulator (log line on app start: `Firebase App Check debug token …`).
+- Firebase **App Check** enabled for Android/iOS. **Android (recommended):** `APP_CHECK_DEBUG_TOKEN` in `apps/mobile/maestro/local.env`, `./maestro/scripts/register-app-check-debug.sh`, rebuild debug — same UUID after `pm clear` / reinstall. Otherwise register from logcat (`Firebase App Check debug token: …`).
 - Disable `DEV_AUTO_SIGN_IN_*` when testing unsigned invite UX.
 - Second test account or follower membership for push fan-out tests.
 
 ## 1. App Check
 
-- [ ] (Android dev) Optional: `APP_CHECK_DEBUG_TOKEN` in `apps/mobile/maestro/local.env` + `./maestro/scripts/register-app-check-debug.sh` + rebuild — same UUID after `pm clear` (not used in release builds).
-- [ ] Cold start app; logcat shows App Check debug token; token added under Firebase Console → App Check → Apps → Manage debug tokens.
-- [ ] Signed-in home loads (API calls include `X-Firebase-AppCheck`).
+- [ ] (Android dev) Pinned token: `APP_CHECK_DEBUG_TOKEN` in `maestro/local.env` + `register-app-check-debug.sh` + rebuild; logcat UUID matches pin after cold start (release builds ignore the pin).
+- [ ] Signed-in home loads; debug logcat shows `Firebase App Check ready for API` when pinned/registered; API requests include `X-Firebase-AppCheck` when enforce is on.
 - [ ] `GET /v1/invitations/preview?token=…` still works **without** App Check (public invite landing).
 
 ## 2. Display encode (FR-GAL-002)
@@ -90,13 +89,15 @@ Use a **throwaway** Firebase account (not Maestro smoke user).
 ## 11. Biometric unlock (M-31)
 
 - [ ] Settings → enable biometric unlock (device must have biometrics enrolled); successful local auth required to turn on.
-- [ ] Kill app with an active Firebase session and completed onboarding → app lock overlay on resume; unlock with biometrics.
+- [ ] Kill app with an active Firebase session and completed onboarding → app lock overlay on resume (no GoRouter crash on first frame); unlock with biometrics.
 - [ ] Toggle off in Settings → no lock on next resume.
 
 ## 12. Onboarding UI (carousel, pills, chips)
 
 - [ ] Owner/follower welcome carousels: art + caption band + dots; **Next** advances (prototype layout).
 - [ ] Complete profile: optional **Mother** / **Father** equal-width pills; create-baby gender uses wrap pills.
+- [ ] Owner flow: after create-baby + first moment, **Back** from first moment reopens create-baby in **revise** mode; save updates baby via PATCH (no duplicate POST).
+- [ ] Subpage horizontal inset matches home tabs (~26px): e.g. Announce Arrival create vs registry shipping address.
 - [ ] Profile photo: circle + grey **Add a photo** / **Change photo** caption (onboarding, create baby, first moment, edits).
 - [ ] First moment: preset **+** pills (sage when selected); name suggestion tags removable (peach girl / sage boy).
 - [ ] Event RSVP, AI suggestion tabs, followers role badge, announcement comment count use core chips (not Material black chips).
@@ -119,7 +120,7 @@ Record date, device/emulator ID, and tester in your release notes when all boxes
 | API deploy | | Revision from `gcloud run services describe api --region=us-central1`; URL from `flavors/dev.json` |
 | `APP_CHECK_ENFORCE` | | Dev default **false** in `deploy.sh`; set **true** + debug tokens before wide beta |
 | Migrations | | `apply_migrations.py` + `verify-dev-migrations.sh` via Cloud SQL proxy |
-| App Check debug token | | Firebase Console or `firebase appcheck:debugtokens:create` |
+| App Check debug token | | `maestro/local.env` + `register-app-check-debug.sh`, or Firebase Console / CLI |
 | Invite cold start (adb) | | Needs valid pending invite token |
 | Push / encode / cache / tags | Manual | Second member account for fan-out |
 

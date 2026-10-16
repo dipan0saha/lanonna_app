@@ -2,7 +2,7 @@
 
 **Status:** Not scheduled for implementation. PRD still lists Facebook as omitted (FR-ONB-010/011); prototype includes “Continue with Facebook” on signup/login. Use this doc when picking up the feature.
 
-**Related:** [requirements.md](../product/requirements.md) (FR-AUTH-006), [La_Nonna_Onboarding_Prototype.html](../prototype/La_Nonna_Onboarding_Prototype.html), [development.md](development.md) (auth).
+**Related:** [requirements.md](../product/requirements.md) (FR-AUTH-006), [nonna_combined_prototype.html](../prototype/nonna_combined_prototype.html) (onboarding section), [development.md](development.md) (auth).
 
 ---
 

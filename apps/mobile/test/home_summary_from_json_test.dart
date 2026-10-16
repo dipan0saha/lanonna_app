@@ -43,5 +43,41 @@ void main() {
     expect(summary.teasers?.upcomingEvents.single.title, 'Shower');
     expect(summary.recentActivity, hasLength(1));
     expect(summary.recentActivity.first.eventType, 'registry_item_added');
+    expect(summary.showRichInsight, isTrue);
+  });
+
+  test('showRichInsight false when only owner name suggestions exist', () {
+    final summary = HomeSummary.fromJson({
+      'lifecycle_status': 'expecting',
+      'family_insight': {
+        'name_suggestion_count': 2,
+        'vote_count': 0,
+        'top_name': {'suggested_name': 'Olivia', 'like_count': 0},
+      },
+    });
+    expect(summary.showRichInsight, isFalse);
+  });
+
+  test('showRichInsight true when gender votes exist', () {
+    final summary = HomeSummary.fromJson({
+      'lifecycle_status': 'expecting',
+      'family_insight': {
+        'name_suggestion_count': 0,
+        'vote_count': 1,
+      },
+    });
+    expect(summary.showRichInsight, isTrue);
+  });
+
+  test('showRichInsight true when top name has loves', () {
+    final summary = HomeSummary.fromJson({
+      'lifecycle_status': 'expecting',
+      'family_insight': {
+        'name_suggestion_count': 1,
+        'vote_count': 0,
+        'top_name': {'suggested_name': 'Milo', 'like_count': 1},
+      },
+    });
+    expect(summary.showRichInsight, isTrue);
   });
 }

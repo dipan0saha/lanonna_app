@@ -15,19 +15,28 @@ class HomeActivityFeed extends StatelessWidget {
     required this.babyId,
     this.showViewAll = true,
     this.showSectionHeader = true,
+    this.showEmptyPlaceholder = false,
+    this.emptyMessage,
   });
 
   final List<HomeActivityItem> items;
   final String babyId;
   final bool showViewAll;
   final bool showSectionHeader;
+  final bool showEmptyPlaceholder;
+  final String? emptyMessage;
 
   @override
   Widget build(BuildContext context) {
-    if (items.isEmpty) return const SizedBox.shrink();
+    if (items.isEmpty && !showEmptyPlaceholder) {
+      return const SizedBox.shrink();
+    }
 
+    final isEmpty = items.isEmpty;
     final body = ActivityFeedCard(
       items: items,
+      showEmptyState: isEmpty,
+      emptyMessage: emptyMessage,
       padding: EdgeInsets.symmetric(horizontal: AppMetrics.horizontalPadding),
     );
 
@@ -42,8 +51,8 @@ class HomeActivityFeed extends StatelessWidget {
     }
 
     return HomeScrollSection(
-      title: 'Activity Recap',
-      trailing: showViewAll
+      title: 'Recent Activity',
+      trailing: showViewAll && !isEmpty
           ? HomeSectionLink(
               label: 'View all',
               onPressed: () => context.push(AppRoutes.homeActivity(babyId)),

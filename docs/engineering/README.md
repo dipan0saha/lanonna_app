@@ -6,7 +6,7 @@
 | [operations.md](operations.md) | GCP/Terraform, deploy, migrations, dev readiness, ship APK / beta scripts |
 | [platform-architecture.md](platform-architecture.md) | Stack principles, flows, cost model, security checklist |
 | [pre-beta-qa.md](pre-beta-qa.md) | Manual device QA before widening beta |
-| [open-gaps.md](open-gaps.md) | Open pre-beta engineering gaps (Oct 2026 review) |
+| [open-gaps.md](open-gaps.md) | Open pre-beta engineering gaps (health snapshot updated Oct 2026) |
 | [intentional-dev-decisions.md](intentional-dev-decisions.md) | Accepted dev-only security/IAM/ops tradeoffs (not open work) |
 | [facebook-login-implementation-plan.md](facebook-login-implementation-plan.md) | Deferred Facebook OAuth plan (not in v1) |
 

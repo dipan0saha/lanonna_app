@@ -33,7 +33,7 @@ void main() {
       (w) =>
           w is Text &&
           (w.data?.contains('Getting Started') == true ||
-              w.data?.contains('Activity Recap') == true ||
+              w.data?.contains('Recent Activity') == true ||
               w.data?.contains('Recent Photos') == true ||
               w.data?.contains('FAMILY INSIGHT') == true ||
               w.data?.contains('DAYS TO DUE DATE') == true),

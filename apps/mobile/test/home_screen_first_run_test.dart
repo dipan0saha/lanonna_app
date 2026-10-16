@@ -86,10 +86,49 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 
-    expect(find.text('ACTIVITY RECAP'), findsOneWidget);
+    expect(find.text('RECENT ACTIVITY'), findsOneWidget);
     expect(find.text('Invite'), findsNothing);
     expect(find.text('🎉'), findsOneWidget);
     expect(find.textContaining('is here!'), findsOneWidget);
+  });
+
+  testWidgets('owner born home shows empty recent activity placeholder', (tester) async {
+    SharedPreferences.setMockInitialValues({'selected_baby_id': 'baby-born-empty'});
+
+    final repo = _FakeHomeRepository();
+    final store = SelectedBabyStore(await SharedPreferences.getInstance());
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          Provider<HomeRepository>.value(value: repo),
+          ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
+          Provider<HomeRefreshSignal>(
+            create: (_) => HomeRefreshSignal(),
+          ),
+          ChangeNotifierProvider<ConnectivityService>(
+            create: (_) => ConnectivityService.forTesting(),
+          ),
+          Provider<NotificationsRepository>(
+            create: (_) => FakeNotificationsRepository(),
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light,
+          home: const HomeScreen(),
+        ),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text('RECENT ACTIVITY'), findsOneWidget);
+    expect(
+      find.textContaining('Nothing yet. Once family starts commenting'),
+      findsOneWidget,
+    );
+    expect(find.text('View all'), findsNothing);
   });
 }
 
@@ -110,6 +149,13 @@ class _FakeHomeRepository extends HomeRepository {
       BabySummary(
         id: 'baby-2',
         name: 'Parker',
+        lifecycleStatus: 'born',
+        actualBirthDate: DateTime.now().toIso8601String(),
+        role: 'owner',
+      ),
+      BabySummary(
+        id: 'baby-born-empty',
+        name: 'Liam',
         lifecycleStatus: 'born',
         actualBirthDate: DateTime.now().toIso8601String(),
         role: 'owner',
@@ -137,6 +183,20 @@ class _FakeHomeRepository extends HomeRepository {
           daysSinceBirth: 0,
         ),
       ));
+    }
+    if (babyId == 'baby-born-empty') {
+      return HomeSummaryLoaded(
+        const HomeSummary(
+          lifecycleStatus: 'born',
+          nameSuggestionCount: 0,
+          voteCount: 0,
+          recentActivity: [],
+          birthWelcome: BirthWelcomeSummary(
+            babyName: 'Liam',
+            daysSinceBirth: 1,
+          ),
+        ),
+      );
     }
     return HomeSummaryLoaded(
       HomeSummary(

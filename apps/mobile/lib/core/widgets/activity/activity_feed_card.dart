@@ -16,13 +16,18 @@ class ActivityFeedCard extends StatelessWidget {
     super.key,
     required this.items,
     this.showEmptyState = false,
+    this.emptyMessage,
     this.padding = const EdgeInsets.symmetric(
       horizontal: AppMetrics.horizontalPadding,
     ),
   });
 
+  static const defaultEmptyMessage =
+      'Nothing yet - activity will show up here.';
+
   final List<HomeActivityItem> items;
   final bool showEmptyState;
+  final String? emptyMessage;
   final EdgeInsetsGeometry padding;
 
   @override
@@ -46,7 +51,7 @@ class ActivityFeedCard extends StatelessWidget {
               ? Padding(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   child: Text(
-                    'Nothing yet - activity will show up here.',
+                    emptyMessage ?? defaultEmptyMessage,
                     textAlign: TextAlign.center,
                     style: context.textStyles.bodySmall?.copyWith(
                       fontSize: 12.5,

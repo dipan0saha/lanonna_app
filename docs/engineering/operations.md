@@ -36,7 +36,7 @@ export SMOKE_TEST_PASSWORD='…'
 | Quality gate | `verify-dev-prerequisites.sh` (Flutter analyze/test, API/worker compile); run `pytest` when you touch Python |
 | Firebase | Local plist/json + `firebase_options.dart` (see [Flutter (dev)](#flutter-dev) below) |
 | Mailjet | Secrets on worker for `send_invite_email` |
-| App Check | Code ready; dev deploy defaults `APP_CHECK_ENFORCE=false` — [pre-beta-qa.md](pre-beta-qa.md) |
+| App Check | Code ready; dev deploy defaults `APP_CHECK_ENFORCE=false` — [pre-beta-qa.md](pre-beta-qa.md). Android QA: pin `APP_CHECK_DEBUG_TOKEN` in `apps/mobile/maestro/local.env`, run `apps/mobile/maestro/scripts/register-app-check-debug.sh`, rebuild debug |
 | FCM | Migration `014`, worker `firebase-admin`, mobile `PushNotificationService`; iOS Push capability |
 
 **Pre-beta blockers:** [open-gaps.md](open-gaps.md).
@@ -280,7 +280,7 @@ Switch back for interactive work: `gcloud config set account lanonnaapp@gmail.co
 | Email/Password Auth | Enabled; smoke user via `SMOKE_TEST_PASSWORD` |
 | Billing budgets | $50 / $150 / $300 on dev |
 | Mailjet secrets | Set in Secret Manager — rotate if exposed |
-| App Check | Debug tokens for QA; enforce before wide beta |
+| App Check | Register Android debug token(s) for QA (`register-app-check-debug.sh` or Console); enforce on API before wide beta (`APP_CHECK_ENFORCE=true` deploy) |
 | Google / Apple sign-in | Enable in Firebase when product-ready |
 
 ---

@@ -308,7 +308,10 @@ class HomeSummary {
   final List<HomeInviteStatusRow> inviteStatus;
   final List<HomeActivityItem> recentActivity;
 
-  bool get showRichInsight => voteCount > 0 || nameSuggestionCount > 0;
+  /// Rich Family Insight when family has voted on gender or loved a name —
+  /// not for owner-only name drafts (suggestion count alone).
+  bool get showRichInsight =>
+      voteCount > 0 || (topName?.likeCount ?? 0) > 0;
 
   factory HomeSummary.fromJson(Map<String, dynamic> json) {
     final insight = json['family_insight'] as Map<String, dynamic>? ?? {};

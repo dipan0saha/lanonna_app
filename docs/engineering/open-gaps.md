@@ -8,13 +8,13 @@ Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [op
 
 ---
 
-## Health snapshot (2026-10-14)
+## Health snapshot (2026-10-16)
 
 | Check | Result |
 |-------|--------|
 | API `pytest` (`services/api`, `-m "not integration"`) | 236 passed (13 integration tests deselected; they need Postgres) |
 | Worker `pytest` | 89 passed (`tests/test_pubsub_terraform.py` asserts live `pubsub.tf` retry policy) |
-| `flutter test` | 329 passed (verified 2026-10-14) |
+| `flutter test` | 335 passed (verified 2026-10-16) |
 | `flutter analyze` | 0 errors, 0 warnings, 47 infos (L-26) |
 
 Run all three suites before every ship; the suites are the only automated gate (no CI).
@@ -52,7 +52,7 @@ Run all three suites before every ship; the suites are the only automated gate (
 ### H-05 App Check not enforced by default — Verified (config/deploy)
 - **Where:** `services/api/src/lanonna_api/config.py` (`app_check_enforce = False`); `services/api/scripts/deploy.sh` (`APP_CHECK_ENFORCE` defaults `false`, TEMP note)
 - **Issue:** NFR-SEC-002 requires enforcement before public beta. With enforce off, missing/invalid App Check tokens are only logged. Combined with `--allow-unauthenticated`, JWT is the only gate.
-- **Fix:** Enable for beta/prod (`APP_CHECK_ENFORCE=true`), keep dev override documented, ensure debug tokens are registered for QA devices. *(Intentional off on dev until beta.)*
+- **Fix:** Enable for beta/prod (`APP_CHECK_ENFORCE=true`), keep dev override documented, ensure debug tokens are registered for QA devices. **Dev Android:** optional pinned UUID in `maestro/local.env` (`APP_CHECK_DEBUG_TOKEN`) + [`register-app-check-debug.sh`](../../apps/mobile/maestro/scripts/register-app-check-debug.sh) + debug rebuild (`LanonnaApplication` seeds Firebase debug prefs). *(Intentional off on dev until beta.)*
 
 ### ✅ H-06 Admin CRUD on public Cloud Run with a single static key — Reported
 - **Where:** `services/api/scripts/deploy.sh` (`--allow-unauthenticated`), `admin_auth.py`, `routers/admin_system_announcements.py`
@@ -156,8 +156,8 @@ Run all three suites before every ship; the suites are the only automated gate (
 
 | ID | Issue | Where | Fix |
 |----|-------|-------|-----|
-| M-27 | App Check token silently omitted when `getToken` fails | `core/app_check/app_check_bootstrap.dart`, `core/api/api_client.dart` | Retry/backoff or visible warning |
-| ✅ M-31 | Biometric unlock (PRD §5.3) | `local_auth`, `BiometricAppLock`, migration `035` | Profile flag + settings toggle + resume lock overlay — **Status:** ✅ Fixed |
+| M-27 | App Check token silently omitted when `getToken` fails | `core/app_check/app_check_bootstrap.dart`, `core/api/api_client.dart` | **Partial (2026-10-16):** debug bootstrap retries `getToken` and logs register/pin hints; API client still omits `X-Firebase-AppCheck` on failure |
+| ✅ M-31 | Biometric unlock (PRD §5.3) | `local_auth`, `BiometricAppLock`, migration `035` | Profile flag + settings toggle + resume lock overlay; cold start uses `GoRouter.maybeOf` and defers lock eval until the router is ready (2026-10-16) — **Status:** ✅ Fixed |
 | ✅ M-54 | Invite-mismatch PII in GoRouter query strings; invitee email in persisted preview JSON; Android Auto Backup of prefs | `InviteFlowState`, `invite_flow_navigation.dart`, `onboarding_wrong_email_screen.dart`, `AndroidManifest.xml` | In-memory mismatch/prefill/resume; preview JSON omits `invitee_email`; `allowBackup=false` + `backup_rules.xml` |
 | ✅ M-55 | Signed-in invite accept screens show `e.toString()` of an `Exception` instead of mapped copy | `onboarding_follower_invite_screen.dart`, `onboarding_coowner_invite_screen.dart`, `invite_accept_messages.dart` | Shared `inviteLandingAcceptErrorMessage` (`apiErrorMessage` / generic `Exception` strip) — **Status:** ✅ Fixed (2026-10-14) |
 | M-56 | `AppSession.refreshFromApi` swallows all errors (`catch (_)`), so a failed status fetch can misroute (onboarding vs home) with no feedback | `onboarding/presentation/app_session.dart:46-57` | Surface an error/retry state or redirect conservatively |
@@ -204,7 +204,7 @@ Run all three suites before every ship; the suites are the only automated gate (
 ## Test coverage gaps (still thin)
 
 - **API:** No router/HTTP tests for `fun`, `registry`, `invitations`, `notifications`, `search`, `admin_system_announcements`, baby photo routes, and `/v1/uploads/display/signed-url`; only domain-level mocks for `onboarding`. Event create/update time-range validation has an HTTP test. Repositories have almost no direct SQL tests (`search_name_suggestions` has a column-conformance test, and `tests/integration/` runs search, provisioning, and the onboarding gate on Postgres); also untested: `account`, `pubsub`, `storage`, `media_urls`, `membership`.
-- **Mobile:** Untested core modules: `api_client`, `auth_repository`, `user_deleted_session_handler`, `push_notification_service`, `app_router`, `app_link_bootstrap`, `onboarding_storage`, `onboarding_coordinator`, `shell/`. No tests for `search/`, `settings/` (UI), `legal/`, `home_activity_screen`, `calendar_upcoming_screen`, wrong-email and invite-bootstrap screens. Widget coverage added for `app_chip`, onboarding carousel/icon blob, Google button, pill select, photo caption, biometric lock **policy**, and `app_version_gate` (Oct 2026). `integration_test/` has only `home_summary_load_test.dart` and `smoke_sign_in_test.dart`. `session_cleanup_test.dart` covers local wipe on sign-out; `delete_account_screen_test.dart` only checks copy.
+- **Mobile:** Untested core modules: `api_client`, `auth_repository`, `user_deleted_session_handler`, `push_notification_service`, `app_router`, `app_link_bootstrap`, `onboarding_storage`, `onboarding_coordinator`, `shell/`. No tests for `search/` (UI beyond error surfacing), `settings/` (UI), `legal/`, `home_activity_screen`, `calendar_upcoming_screen`, wrong-email and invite-bootstrap screens. Widget/unit coverage includes `app_chip`, onboarding carousel/icon blob, Google button, pill select, photo caption, biometric lock **policy**, `app_version_gate`, owner create-baby **revise** submit (`create_baby_submit_test.dart`), registry shipping models, and `#410` subpage scaffold insets (Oct 2026). `integration_test/` has only `home_summary_load_test.dart` and `smoke_sign_in_test.dart`. `session_cleanup_test.dart` covers local wipe on sign-out; `delete_account_screen_test.dart` only checks copy.
 - **Worker:** Push routes now have poison-payload and export-dispatch tests (`test_main_pubsub_payload.py`, `test_main_export_dispatch.py`); invite HTML escaping, FCM chunking, and `pubsub_payload` have unit tests. Baby export SQL is covered by `services/api/tests/integration/test_baby_data_export_postgres.py` (real Postgres, including the baby-graph table manifest). Still thin: weekly digest, Mailjet claim-release edge cases. Lifecycle export tests stub the document builder.
 
 ---
@@ -212,6 +212,6 @@ Run all three suites before every ship; the suites are the only automated gate (
 ## Suggested fix order
 
 1. **Pre-beta security:** H-01, H-04, H-05, M-27, M-57
-2. **Mobile correctness:** M-54–M-61
+2. **Mobile correctness:** M-56, M-59 (remaining `mounted` guards), M-57
 3. **Infra + prod parity:** M-19–M-22, M-47–M-52
 4. **Ops / polish:** M-09, M-31, L-08–L-09, L-14–L-16, L-22, L-26; then the L-28 consolidation backlog

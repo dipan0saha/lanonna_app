@@ -319,7 +319,7 @@ Isolates **storage + egress** if behavior drifts from §2.5 (SQL/Run/email held 
 **Identity and API**
 
 - [ ] Every mutating route requires valid Firebase ID token; reject expired or wrong-audience tokens
-- [ ] **App Check** enforced on API before public beta (Debug provider only in dev builds)
+- [ ] **App Check** enforced on API before public beta (Debug provider in debug / Maestro builds; Android dev can pin debug UUID via `maestro/local.env` — see [development.md](development.md))
 - [ ] Authorization in domain layer: baby membership + role on every photo, invite, and profile action
 - [x] Rate limits on invite batch and photo-init endpoints (per-IP sliding window middleware)
 - [ ] Scheduler and internal admin routes: **OIDC** only; no public `allUsers` invoke on Run
