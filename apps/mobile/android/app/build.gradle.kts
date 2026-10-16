@@ -1,3 +1,5 @@
+import java.io.File
+
 plugins {
     id("com.android.application")
     // START: FlutterFire Configuration
@@ -7,6 +9,38 @@ plugins {
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+fun readMaestroLocalEnvValue(mobileRoot: File, key: String): String {
+    val envFile = File(mobileRoot, "maestro/local.env")
+    if (!envFile.isFile) {
+        return ""
+    }
+    for (line in envFile.readLines()) {
+        val trimmed = line.trim()
+        if (trimmed.isEmpty() || trimmed.startsWith("#")) {
+            continue
+        }
+        val eq = trimmed.indexOf('=')
+        if (eq <= 0) {
+            continue
+        }
+        if (trimmed.substring(0, eq).trim() == key) {
+            return trimmed.substring(eq + 1).trim().removeSurrounding("\"").removeSurrounding("'")
+        }
+    }
+    return ""
+}
+
+fun readAppCheckDebugToken(mobileRoot: File): String {
+    System.getenv("APP_CHECK_DEBUG_TOKEN")?.trim()?.takeIf { it.isNotEmpty() }?.let { return it }
+    return readMaestroLocalEnvValue(mobileRoot, "APP_CHECK_DEBUG_TOKEN").trim()
+}
+
+fun escapeBuildConfigString(value: String): String =
+    value.replace("\\", "\\\\").replace("\"", "\\\"")
+
+val mobileRoot = rootProject.file("..")
+val appCheckDebugToken = readAppCheckDebugToken(mobileRoot)
 
 android {
     namespace = "com.lanonna.lanonna"
@@ -22,6 +56,10 @@ android {
         jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.lanonna.lanonna"
@@ -32,10 +70,19 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        manifestPlaceholders["applicationName"] = "com.lanonna.lanonna.LanonnaApplication"
     }
 
     buildTypes {
+        debug {
+            buildConfigField(
+                "String",
+                "APP_CHECK_DEBUG_TOKEN",
+                "\"${escapeBuildConfigString(appCheckDebugToken)}\"",
+            )
+        }
         release {
+            buildConfigField("String", "APP_CHECK_DEBUG_TOKEN", "\"\"")
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
@@ -51,4 +98,8 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    implementation("com.google.firebase:firebase-common")
 }

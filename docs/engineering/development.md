@@ -109,7 +109,7 @@ Run **all three suites** before shipping — there is no CI, so they are the onl
 
 ### Maestro E2E (Android)
 
-Black-box UI tests under `apps/mobile/maestro/`. Use semantics ids (`nav_home`, `auth_sign_in`, …) via `AppSemantics` in `lib/core/widgets/app_semantics.dart`. Copy `maestro/local.env.example` → `maestro/local.env` with the dev smoke password (`lanonna.dev.smoke@test.com`). Start Cloud SQL Auth Proxy (port **5433** recommended when **5432** is in use; set `DB_PORT` consistently). Scripts:
+Black-box UI tests under `apps/mobile/maestro/`. Use semantics ids (`nav_home`, `auth_sign_in`, …) via `AppSemantics` in `lib/core/widgets/app_semantics.dart`. Copy `maestro/local.env.example` → `maestro/local.env` with the dev smoke password (`lanonna.dev.smoke@test.com`). Optional `APP_CHECK_DEBUG_TOKEN` in `local.env` bakes a stable Android App Check debug UUID into debug APKs (`LanonnaApplication` seeds Firebase prefs before App Check activates; release builds ignore it). Start Cloud SQL Auth Proxy (port **5433** recommended when **5432** is in use; set `DB_PORT` consistently). Scripts:
 
 | Script | Scope |
 |--------|--------|

@@ -32,7 +32,8 @@ Future<void> _logAppCheckDebugToken() async {
     } catch (e) {
       if (attempt >= 5) {
         debugPrint(
-          'App Check not ready: $e. Register the emulator debug UUID: '
+          'App Check not ready: $e. Register debug UUID (or set '
+          'APP_CHECK_DEBUG_TOKEN in maestro/local.env and rebuild): '
           'bash apps/mobile/maestro/scripts/register-app-check-debug.sh',
         );
       }

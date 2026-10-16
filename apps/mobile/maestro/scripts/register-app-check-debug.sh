@@ -1,9 +1,25 @@
 #!/usr/bin/env bash
-# Read the latest App Check debug UUID from logcat and register it in Firebase.
+# Register an App Check debug UUID in Firebase (local.env pin or logcat).
 set -euo pipefail
 
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 APP_ID="1:1008830071001:android:0144f51dbc29e9a94abec8"
 PROJECT="lanonna-dev"
+
+ENV_FILE="${ROOT}/maestro/local.env"
+if [[ -f "${ENV_FILE}" ]]; then
+  # shellcheck disable=SC1090
+  source "${ENV_FILE}"
+fi
+
+if [[ -n "${APP_CHECK_DEBUG_TOKEN:-}" ]]; then
+  echo "Registering pinned App Check debug token from maestro/local.env"
+  firebase appcheck:debugtokens:create "${APP_CHECK_DEBUG_TOKEN}" \
+    --app "${APP_ID}" \
+    --project "${PROJECT}" \
+    --force
+  exit 0
+fi
 
 read_token() {
   adb logcat -d 2>/dev/null \
