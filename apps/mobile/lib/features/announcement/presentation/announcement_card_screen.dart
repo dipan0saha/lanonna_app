@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
 import '../../../core/input/app_text_input_kind.dart';
-import '../../../core/time/app_date_time.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
@@ -103,7 +101,6 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     if (_loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }

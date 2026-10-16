@@ -101,18 +101,17 @@ class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
   Future<void> _refresh() async {
     try {
       final store = context.read<SelectedBabyStore>();
-      final resolved = await context.read<HomeRepository>().resolveSelectedBaby(
-        store,
-      );
+      final homeRepo = context.read<HomeRepository>();
+      final notificationsRepo = context.read<NotificationsRepository>();
+      final accountRepo = context.read<AccountRepository>();
+      final resolved = await homeRepo.resolveSelectedBaby(store);
       if (!mounted) return;
-      final unread = await context
-          .read<NotificationsRepository>()
-          .unreadCount();
+      final unread = await notificationsRepo.unreadCount();
       AccountPayload? account;
       try {
-        account = await context.read<AccountRepository>().fetchAccount();
+        account = await accountRepo.fetchAccount();
       } catch (_) {
-        account = context.read<AccountRepository>().cachedAccount;
+        account = accountRepo.cachedAccount;
       }
       if (mounted) {
         setState(() {

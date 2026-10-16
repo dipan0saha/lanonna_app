@@ -9,6 +9,7 @@ import '../../../core/domain/baby_summary.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/time/app_date_time.dart';
+import '../../../core/widgets/tinted_icon_square.dart';
 import '../../../core/widgets/app_bordered_surface.dart';
 import '../../../core/widgets/app_section_title.dart';
 import '../../../core/widgets/app_semantics.dart';
@@ -52,7 +53,10 @@ class _FollowersScreenState extends State<FollowersScreen> {
       final homeRepo = context.read<HomeRepository>();
       final members = await repo.listMembers(widget.babyId);
       final invites = await repo.listInvitations(widget.babyId);
-      final baby = await homeRepo.babyById(widget.babyId);
+      // Baby name is header copy only; members/invites still render if it fails.
+      final baby = await homeRepo
+          .babyById(widget.babyId)
+          .catchError((Object _) => null);
       if (!mounted) return;
       setState(() {
         _members = members;
@@ -134,8 +138,9 @@ class _FollowersScreenState extends State<FollowersScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final followers =
-        _members.where((m) => m.role == 'follower').toList(growable: false);
+    final followers = _members
+        .where((m) => m.role == 'follower')
+        .toList(growable: false);
     final count = followers.length;
     final babyName = _baby?.name ?? 'Baby';
 
@@ -181,7 +186,9 @@ class _FollowersScreenState extends State<FollowersScreen> {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('👤', style: TextStyle(fontSize: 22)),
+                              const TintedIconSquare(
+                                icon: Icons.person_outline,
+                              ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
@@ -201,12 +208,16 @@ class _FollowersScreenState extends State<FollowersScreen> {
                                 ),
                               ),
                               if (m.canRemove)
-                                TextButton(
-                                  onPressed: () => _confirmRemove(m),
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: AppColors.error,
+                                AppSemantics.button(
+                                  'member_remove_${m.firebaseUid}',
+                                  TextButton(
+                                    onPressed: () => _confirmRemove(m),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: AppColors.error,
+                                    ),
+                                    child: const Text('Revoke'),
                                   ),
-                                  child: const Text('Revoke'),
+                                  label: l10n.memberRemoveAction,
                                 ),
                             ],
                           ),
@@ -225,11 +236,14 @@ class _FollowersScreenState extends State<FollowersScreen> {
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('✉️', style: TextStyle(fontSize: 20)),
+                                const TintedIconSquare(
+                                  icon: Icons.mail_outline,
+                                ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         _inviteTitle(inv),
@@ -240,11 +254,6 @@ class _FollowersScreenState extends State<FollowersScreen> {
                                         style: context.textStyles.bodySmall
                                             ?.copyWith(color: AppColors.muted),
                                       ),
-                                      if (inv.email.isNotEmpty)
-                                        Text(
-                                          inv.email,
-                                          style: context.textStyles.bodySmall,
-                                        ),
                                     ],
                                   ),
                                 ),
@@ -252,52 +261,60 @@ class _FollowersScreenState extends State<FollowersScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
                                     if (inv.canResendEmail)
+                                      AppSemantics.button(
+                                        'resend_invite_${inv.id}',
+                                        TextButton(
+                                          onPressed: () async {
+                                            final sent = await runMutation(
+                                              context,
+                                              () => context
+                                                  .read<AccountRepository>()
+                                                  .resendInvitation(
+                                                    widget.babyId,
+                                                    inv.id,
+                                                  ),
+                                            );
+                                            if (!sent || !mounted) return;
+                                            AppSnackBar.showInfo(
+                                              context,
+                                              'Invite email queued',
+                                            );
+                                            await _load();
+                                          },
+                                          style: TextButton.styleFrom(
+                                            foregroundColor:
+                                                AppColors.primaryDark,
+                                          ),
+                                          child: const Text('Resend'),
+                                        ),
+                                        label: 'Resend invitation',
+                                      ),
+                                    AppSemantics.button(
+                                      'revoke_invite_${inv.id}',
                                       TextButton(
                                         onPressed: () async {
-                                          final sent = await runMutation(
-                                            context,
-                                            () => context
+                                          try {
+                                            await context
                                                 .read<AccountRepository>()
-                                                .resendInvitation(
+                                                .revokeInvitation(
                                                   widget.babyId,
                                                   inv.id,
-                                                ),
-                                          );
-                                          if (!sent || !mounted) return;
-                                          AppSnackBar.showInfo(
-                                            context,
-                                            'Invite email queued',
-                                          );
-                                          await _load();
+                                                );
+                                            await _load();
+                                          } catch (e) {
+                                            if (!context.mounted) return;
+                                            AppSnackBar.showAlert(
+                                              context,
+                                              apiErrorMessage(e),
+                                            );
+                                          }
                                         },
                                         style: TextButton.styleFrom(
-                                          foregroundColor:
-                                              AppColors.primaryDark,
+                                          foregroundColor: AppColors.error,
                                         ),
-                                        child: const Text('Resend'),
+                                        child: const Text('Revoke'),
                                       ),
-                                    TextButton(
-                                      onPressed: () async {
-                                        try {
-                                          await context
-                                              .read<AccountRepository>()
-                                              .revokeInvitation(
-                                                widget.babyId,
-                                                inv.id,
-                                              );
-                                          await _load();
-                                        } catch (e) {
-                                          if (!context.mounted) return;
-                                          AppSnackBar.showAlert(
-                                            context,
-                                            apiErrorMessage(e),
-                                          );
-                                        }
-                                      },
-                                      style: TextButton.styleFrom(
-                                        foregroundColor: AppColors.error,
-                                      ),
-                                      child: const Text('Revoke'),
+                                      label: 'Revoke invitation',
                                     ),
                                   ],
                                 ),

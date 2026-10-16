@@ -85,7 +85,11 @@ class AnnouncementKeepsakeCard extends StatelessWidget {
             const CircleAvatar(
               radius: 52,
               backgroundColor: AppColors.sageTint,
-              child: Icon(Icons.child_care, size: 40, color: AppColors.primaryDark),
+              child: Icon(
+                Icons.child_care,
+                size: 40,
+                color: AppColors.primaryDark,
+              ),
             ),
           const SizedBox(height: 16),
           Text(
@@ -118,8 +122,10 @@ class AnnouncementKeepsakeCard extends StatelessWidget {
           if (showEngagementRow &&
               (squishCount != null || commentCount != null)) ...[
             const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 10,
+              runSpacing: 8,
               children: [
                 if (squishCount != null)
                   _EngagementPill(
@@ -127,8 +133,6 @@ class AnnouncementKeepsakeCard extends StatelessWidget {
                     label: '$squishCount squishes',
                     onTap: onSquishTap,
                   ),
-                if (squishCount != null && commentCount != null)
-                  const SizedBox(width: 10),
                 if (commentCount != null)
                   _EngagementPill(
                     icon: Icons.chat_bubble_outline,
@@ -144,12 +148,7 @@ class AnnouncementKeepsakeCard extends StatelessWidget {
 }
 
 class _StatsGrid extends StatelessWidget {
-  const _StatsGrid({
-    this.birthDate,
-    this.birthTime,
-    this.weight,
-    this.length,
-  });
+  const _StatsGrid({this.birthDate, this.birthTime, this.weight, this.length});
 
   final String? birthDate;
   final String? birthTime;
@@ -201,11 +200,7 @@ class _StatItem {
 }
 
 class _EngagementPill extends StatelessWidget {
-  const _EngagementPill({
-    required this.icon,
-    required this.label,
-    this.onTap,
-  });
+  const _EngagementPill({required this.icon, required this.label, this.onTap});
 
   final IconData icon;
   final String label;

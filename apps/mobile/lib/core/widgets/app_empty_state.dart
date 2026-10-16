@@ -31,30 +31,26 @@ class AppEmptyState extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 96,
-          height: 96,
+          width: AppMetrics.emptyStateIconCircle,
+          height: AppMetrics.emptyStateIconCircle,
           decoration: const BoxDecoration(
             color: AppColors.sageTint,
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, size: 40, color: AppColors.primaryDark),
-        ),
-        const SizedBox(height: 20),
-        Text(
-          title,
-          textAlign: TextAlign.center,
-          style: styles.titleSmall,
-        ),
-        if (message != null && message!.isNotEmpty) ...[
-          const SizedBox(height: 6),
-          Text(
-            message!,
-            textAlign: TextAlign.center,
-            style: styles.bodyMedium,
+          child: Icon(
+            icon,
+            size: AppMetrics.emptyStateIconSize,
+            color: AppColors.primaryDark,
           ),
+        ),
+        const SizedBox(height: AppMetrics.emptyStateTitleGap),
+        Text(title, textAlign: TextAlign.center, style: styles.titleSmall),
+        if (message != null && message!.isNotEmpty) ...[
+          const SizedBox(height: AppMetrics.emptyStateMessageGap),
+          Text(message!, textAlign: TextAlign.center, style: styles.bodyMedium),
         ],
         if (actionLabel != null && onAction != null) ...[
-          const SizedBox(height: 20),
+          const SizedBox(height: AppMetrics.emptyStateTitleGap),
           FilledButton(onPressed: onAction, child: Text(actionLabel!)),
         ],
       ],
@@ -71,7 +67,9 @@ class AppEmptyState extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 30),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppMetrics.emptyStateHorizontalInset,
+      ),
       child: Center(child: content),
     );
   }

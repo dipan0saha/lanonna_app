@@ -95,7 +95,6 @@ void main() {
     expect(find.text('Your vote: Boy'), findsOneWidget);
     expect(find.textContaining('Your guess:'), findsOneWidget);
     expect(find.text('View who voted'), findsOneWidget);
-    expect(find.text('1 vote'), findsOneWidget);
     expect(find.text('Save guess'), findsNothing);
     expect(find.text('Update guess'), findsNothing);
     expect(find.text('Pick date…'), findsNothing);

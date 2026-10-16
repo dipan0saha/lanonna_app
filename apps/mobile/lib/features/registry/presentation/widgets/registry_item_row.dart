@@ -57,14 +57,16 @@ class RegistryNeededRow extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           if (onClaim != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: AppGiftPillButton(
-                semanticsId: isOwner
-                    ? 'registry_mark_purchased'
-                    : 'registry_claim_item',
-                label: isOwner ? 'Mark as purchased' : "I'll buy this",
-                onPressed: onClaim,
+            Flexible(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: AppGiftPillButton(
+                  semanticsId: isOwner
+                      ? 'registry_mark_purchased'
+                      : 'registry_claim_item',
+                  label: isOwner ? 'Mark as purchased' : "I'll buy this",
+                  onPressed: onClaim,
+                ),
               ),
             ),
           if (isOwner) ...[

@@ -22,7 +22,10 @@ class AppGiftPillButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = showGiftEmoji ? '🎁 $label' : label;
+    final style = context.textStyles.labelMedium?.copyWith(
+      color: AppColors.primaryButtonForeground,
+      fontSize: 12.5,
+    );
     final child = Material(
       color: AppColors.primary,
       borderRadius: BorderRadius.circular(AppMetrics.buttonRadius),
@@ -30,13 +33,26 @@ class AppGiftPillButton extends StatelessWidget {
         onTap: onPressed,
         borderRadius: BorderRadius.circular(AppMetrics.buttonRadius),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-          child: Text(
-            text,
-            style: context.textStyles.labelMedium?.copyWith(
-              color: AppColors.primaryButtonForeground,
-              fontSize: 12.5,
-            ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppMetrics.compactPillHorizontalPadding,
+            vertical: AppMetrics.compactPillVerticalPadding,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (showGiftEmoji) ...[
+                ExcludeSemantics(child: Text('🎁', style: style)),
+                const SizedBox(width: 4),
+              ],
+              Flexible(
+                child: Text(
+                  label,
+                  style: style,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
         ),
       ),

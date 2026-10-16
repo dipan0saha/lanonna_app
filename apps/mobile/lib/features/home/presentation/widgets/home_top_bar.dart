@@ -162,28 +162,26 @@ class _AccountAvatar extends StatelessWidget {
           colors: [context.brand.sageTint, context.brand.peachTint],
         ),
         border: Border.all(color: AppColors.surface, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.border,
-            spreadRadius: 0.5,
-          ),
-        ],
+        boxShadow: [BoxShadow(color: AppColors.border, spreadRadius: 0.5)],
       ),
       clipBehavior: Clip.antiAlias,
       child: url != null && url.isNotEmpty
-          ? Image.network(url, fit: BoxFit.cover, errorBuilder: (_, __, ___) {
-              return _initials(displayName);
-            })
-          : _initials(displayName),
+          ? Image.network(
+              url,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) {
+                return _initials(context, displayName);
+              },
+            )
+          : _initials(context, displayName),
     );
   }
 
-  Widget _initials(String? name) {
+  Widget _initials(BuildContext context, String? name) {
     return Center(
       child: Text(
         displayInitials(name ?? 'Me'),
-        style: const TextStyle(
-          fontSize: 13,
+        style: context.textStyles.labelMedium?.copyWith(
           fontWeight: FontWeight.w700,
           color: AppColors.primaryDark,
         ),

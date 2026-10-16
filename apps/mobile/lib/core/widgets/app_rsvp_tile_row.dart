@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
+import '../theme/app_metrics.dart';
 import '../theme/la_nonna_theme.dart';
 import 'app_semantics.dart';
 
@@ -44,7 +45,7 @@ class AppRsvpTileRow extends StatelessWidget {
     final child = Material(
       color: selected ? AppColors.sageTint : AppColors.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppMetrics.selectTileRadius),
         side: BorderSide(
           color: selected ? AppColors.primaryDark : AppColors.border,
           width: selected ? 2 : 1.5,
@@ -52,10 +53,14 @@ class AppRsvpTileRow extends StatelessWidget {
       ),
       child: InkWell(
         onTap: enabled ? () => onSelect(value) : null,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppMetrics.selectTileRadius),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          child: Center(child: Text(label, style: style, textAlign: TextAlign.center)),
+          padding: const EdgeInsets.symmetric(
+            vertical: AppMetrics.selectTileVerticalPadding,
+          ),
+          child: Center(
+            child: Text(label, style: style, textAlign: TextAlign.center),
+          ),
         ),
       ),
     );

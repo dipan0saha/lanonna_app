@@ -4,11 +4,14 @@ import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/features/account/data/account_repository.dart';
 import 'package:lanonna/features/account/presentation/followers_screen.dart';
+import 'package:lanonna/features/home/data/home_repository.dart';
+import 'package:lanonna/core/domain/baby_summary.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 class _FakeAccountRepository extends AccountRepository {
-  _FakeAccountRepository() : super(ApiClient(idTokenProvider: () async => null));
+  _FakeAccountRepository()
+    : super(ApiClient(idTokenProvider: () async => null));
 
   int removeCalls = 0;
 
@@ -33,6 +36,13 @@ class _FakeAccountRepository extends AccountRepository {
   }
 }
 
+class _FakeHomeRepository extends HomeRepository {
+  _FakeHomeRepository() : super(ApiClient(idTokenProvider: () async => null));
+
+  @override
+  Future<BabySummary?> babyById(String babyId) async => null;
+}
+
 void main() {
   testWidgets('remove button visible when can_remove', (tester) async {
     final repo = _FakeAccountRepository();
@@ -41,15 +51,18 @@ void main() {
         theme: AppTheme.light,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: Provider<AccountRepository>.value(
-          value: repo,
+        home: MultiProvider(
+          providers: [
+            Provider<AccountRepository>.value(value: repo),
+            Provider<HomeRepository>.value(value: _FakeHomeRepository()),
+          ],
           child: const FollowersScreen(babyId: 'baby-1'),
         ),
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.byIcon(Icons.person_remove_outlined), findsOneWidget);
-    await tester.tap(find.byIcon(Icons.person_remove_outlined));
+    expect(find.text('Revoke'), findsOneWidget);
+    await tester.tap(find.text('Revoke'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Remove'));
     await tester.pumpAndSettle();

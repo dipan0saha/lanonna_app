@@ -11,7 +11,7 @@ import 'package:provider/provider.dart';
 
 class _RecordingFunRepository extends FunRepository {
   _RecordingFunRepository(this.payload)
-      : super(ApiClient(idTokenProvider: () async => null));
+    : super(ApiClient(idTokenProvider: () async => null));
 
   final PredictionsPayload payload;
   final List<DateTime> birthdateVotes = [];
@@ -41,7 +41,9 @@ void main() {
     genderVoters: const [],
   );
 
-  testWidgets('save guess disabled until calendar day selected', (tester) async {
+  testWidgets('save guess opens picker until calendar day selected', (
+    tester,
+  ) async {
     final repo = _RecordingFunRepository(emptyVotes);
     await tester.pumpWidget(
       MaterialApp(
@@ -66,8 +68,10 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(saveBtn, findsOneWidget);
+    // Without a selected day the CTA opens the date picker instead of saving.
     final button = tester.widget<FilledButton>(saveBtn);
-    expect(button.onPressed, isNull);
+    expect(button.onPressed, isNotNull);
+    expect(repo.birthdateVotes, isEmpty);
 
     await tester.scrollUntilVisible(
       find.text('15'),
@@ -89,7 +93,9 @@ void main() {
     expect(repo.birthdateVotes.single, DateTime(2027, 2, 15));
   });
 
-  testWidgets('tapping save without selection does not call API', (tester) async {
+  testWidgets('tapping save without selection does not call API', (
+    tester,
+  ) async {
     final repo = _RecordingFunRepository(emptyVotes);
     await tester.pumpWidget(
       MaterialApp(
