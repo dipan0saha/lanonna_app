@@ -3,6 +3,7 @@ import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
+import '../../../core/widgets/app_empty_state.dart';
 import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/async_tab_body.dart';
 import '../../../core/api/run_mutation.dart';
@@ -149,24 +150,11 @@ class _NamesTabState extends State<NamesTab> {
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
-            const SizedBox(height: 40),
-            const Icon(
-              Icons.star_outline,
-              size: 36,
-              color: AppColors.primaryDark,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'No name suggestions yet',
-              textAlign: TextAlign.center,
-              style: context.textStyles.titleMedium,
-            ),
-            const Padding(
-              padding: EdgeInsets.all(24),
-              child: Text(
-                'Suggest a name below - everyone gets a say.',
-                textAlign: TextAlign.center,
-              ),
+            AppEmptyState(
+              expand: false,
+              icon: Icons.star_outline,
+              title: 'No name suggestions yet',
+              message: 'Suggest a name below — everyone gets a say.',
             ),
             _inputCard(),
           ],

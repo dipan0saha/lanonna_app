@@ -167,6 +167,12 @@ abstract final class AppMetrics {
   static const double sheetHandleWidth = 36;
   static const double sheetHandleHeight = 4;
 
+  /// Stack paired CTAs vertically below this width (e.g. 360dp phones).
+  static const double responsiveButtonPairBreakpoint = 360;
+
+  /// Bottom scroll padding so empty states clear shell FABs.
+  static const double fabScrollClearance = 96;
+
   /// Inline action / trailing icons in rows and compact controls.
   static const double inlineIconSize = 18;
   static const double trailingIconSize = 20;

@@ -8,6 +8,7 @@ import '../../../core/api/api_client.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/presentation/tab_load_failure.dart';
 import '../../../core/presentation/tab_load_kind.dart';
+import '../../../core/widgets/app_empty_state.dart';
 import '../../../core/widgets/app_section_caps_label.dart';
 import '../../../core/widgets/async_tab_body.dart';
 import '../../../core/widgets/app_snackbar.dart';
@@ -292,25 +293,22 @@ class _GalleryScreenState extends State<GalleryScreen>
   }
 
   Widget _buildFilteredEmpty() {
-    final message = switch (widget.mode) {
-      GalleryViewMode.recent =>
-        'No photos in the last 30 days. Upload a new moment or browse the full gallery.',
-      GalleryViewMode.favorites =>
-        'No favorites yet. Squish photos you love and they will show up here.',
-      GalleryViewMode.all => '',
-    };
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Text(
-          message,
-          textAlign: TextAlign.center,
-          style: context.textStyles.bodyMedium?.copyWith(
-            color: AppColors.muted,
-          ),
-        ),
+    return switch (widget.mode) {
+      GalleryViewMode.recent => AppEmptyState(
+        expand: false,
+        icon: Icons.history,
+        title: 'No recent photos',
+        message:
+            'No photos in the last 30 days. Upload a new moment or browse the full gallery.',
       ),
-    );
+      GalleryViewMode.favorites => AppEmptyState(
+        expand: false,
+        icon: Icons.favorite_border,
+        title: 'No favorites yet',
+        message: 'Squish photos you love and they will show up here.',
+      ),
+      GalleryViewMode.all => const SizedBox.shrink(),
+    };
   }
 
   bool get _showFab =>
@@ -435,13 +433,7 @@ class _GalleryScreenState extends State<GalleryScreen>
                       AppMetrics.horizontalPadding,
                       8,
                     ),
-                    child: Text(
-                      'Recent Activity',
-                      style: context.textStyles.labelLarge?.copyWith(
-                        color: AppColors.muted,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
+                    child: const AppSectionCapsLabel('Recent activity'),
                   ),
                 ),
                 SliverToBoxAdapter(

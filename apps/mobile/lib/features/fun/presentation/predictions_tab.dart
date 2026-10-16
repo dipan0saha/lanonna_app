@@ -6,6 +6,7 @@ import '../../../core/api/api_error_message.dart';
 import '../../../core/widgets/async_tab_body.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/widgets/app_snackbar.dart';
+import '../../../core/widgets/app_modal_sheet.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_icon_button.dart';
@@ -152,17 +153,14 @@ class _PredictionsTabState extends State<PredictionsTab> {
 
   void _showVoters() {
     final voters = _payload?.genderVoters ?? [];
-    showModalBottomSheet(
+    showAppModalSheet(
       context: context,
-      builder: (context) => ListView(
-        padding: const EdgeInsets.fromLTRB(
-          AppMetrics.horizontalPadding,
-          16,
-          AppMetrics.horizontalPadding,
-          16,
-        ),
+      title: 'Who voted',
+      subtitle: voters.isEmpty ? 'No votes yet' : '${voters.length} votes',
+      bodyBuilder: (context) => ListView(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
         children: [
-          Text('Who voted', style: context.textStyles.titleMedium),
           for (final v in voters)
             ListTile(
               title: Text(v.displayName),
@@ -441,7 +439,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
             color: selected ? AppColors.primaryDark : AppColors.border,
             width: selected ? 2 : 1,
           ),
-          color: selected ? AppColors.sageTint : AppColors.surface,
+          color: AppColors.surface,
         ),
         child: Column(
           children: [

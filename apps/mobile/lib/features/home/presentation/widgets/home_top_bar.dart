@@ -6,6 +6,7 @@ import '../../../../core/theme/la_nonna_theme.dart';
 import '../../../../core/widgets/account_tinted_avatar.dart';
 import '../../../../core/widgets/app_icon_button.dart';
 import '../../../../core/widgets/app_semantics.dart';
+import '../../../../core/widgets/app_unread_dot.dart';
 
 class HomeTopBar extends StatelessWidget {
   const HomeTopBar({
@@ -110,21 +111,10 @@ class HomeTopBar extends StatelessWidget {
                 ),
               ),
               if (showUnreadDot)
-                Positioned(
+                const Positioned(
                   right: AppSpacing.sm,
                   top: AppSpacing.sm,
-                  child: Container(
-                    width: AppMetrics.shellUnreadDotSize,
-                    height: AppMetrics.shellUnreadDotSize,
-                    decoration: BoxDecoration(
-                      color: AppColors.secondaryDark,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.surface,
-                        width: AppMetrics.shellUnreadDotBorderWidth,
-                      ),
-                    ),
-                  ),
+                  child: AppUnreadDot(),
                 ),
             ],
           ),

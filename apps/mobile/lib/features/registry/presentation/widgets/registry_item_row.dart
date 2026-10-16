@@ -33,64 +33,73 @@ class RegistryNeededRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(item.name, style: context.textStyles.titleSmall),
-                if (item.description != null && item.description!.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Text(
-                      item.description!,
-                      style: context.textStyles.bodySmall?.copyWith(
-                        color: AppColors.muted,
-                      ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.name,
+                      style: context.textStyles.titleSmall,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                SizedBox(height: AppSpacing.xs),
-                RegistryPriorityChip(priority: item.priority),
-              ],
-            ),
-          ),
-          SizedBox(width: AppSpacing.sm),
-          if (onClaim != null)
-            Flexible(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: AppGiftPillButton(
-                  semanticsId: isOwner
-                      ? 'registry_mark_purchased'
-                      : 'registry_claim_item',
-                  label: isOwner ? 'Mark as purchased' : "I'll buy this",
-                  onPressed: onClaim,
+                    if (item.description != null && item.description!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          item.description!,
+                          style: context.textStyles.bodySmall?.copyWith(
+                            color: AppColors.muted,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    SizedBox(height: AppSpacing.xs),
+                    RegistryPriorityChip(priority: item.priority),
+                  ],
                 ),
               ),
-            ),
-          if (isOwner) ...[
-            AppIconButton(
-              semanticsId: 'registry_item_edit_${item.id}',
-              label: 'Edit item',
-              onPressed: onEdit,
-              icon: const Icon(
-                Icons.edit_outlined,
-                size: AppMetrics.inlineIconSize,
+              if (isOwner) ...[
+                AppIconButton(
+                  semanticsId: 'registry_item_edit_${item.id}',
+                  label: 'Edit item',
+                  onPressed: onEdit,
+                  icon: const Icon(
+                    Icons.edit_outlined,
+                    size: AppMetrics.inlineIconSize,
+                  ),
+                ),
+                AppIconButton(
+                  semanticsId: 'registry_item_delete_${item.id}',
+                  label: 'Delete item',
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    size: AppMetrics.inlineIconSize,
+                    color: AppColors.error,
+                  ),
+                  onPressed: onDelete,
+                ),
+              ],
+            ],
+          ),
+          if (onClaim != null) ...[
+            SizedBox(height: AppSpacing.sm),
+            Align(
+              alignment: Alignment.centerRight,
+              child: AppGiftPillButton(
+                semanticsId: isOwner
+                    ? 'registry_mark_purchased'
+                    : 'registry_claim_item',
+                label: isOwner ? 'Mark as purchased' : "I'll buy this",
+                onPressed: onClaim,
               ),
-            ),
-            AppIconButton(
-              semanticsId: 'registry_item_delete_${item.id}',
-              label: 'Delete item',
-              icon: const Icon(
-                Icons.delete_outline,
-                size: AppMetrics.inlineIconSize,
-                color: AppColors.error,
-              ),
-              onPressed: onDelete,
             ),
           ],
         ],

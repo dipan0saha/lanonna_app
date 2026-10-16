@@ -8,6 +8,8 @@ import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/app_section_title.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
+import '../../home/data/home_repository.dart';
+import '../../home/data/selected_baby_store.dart';
 import '../data/notifications_repository.dart';
 
 class NotificationPreferencesScreen extends StatefulWidget {
@@ -22,6 +24,7 @@ class _NotificationPreferencesScreenState extends State<NotificationPreferencesS
   NotificationPreferences? _prefs;
   var _loading = true;
   var _saving = false;
+  String? _babyName;
 
   @override
   void initState() {
@@ -31,8 +34,12 @@ class _NotificationPreferencesScreenState extends State<NotificationPreferencesS
 
   Future<void> _load() async {
     final prefs = await context.read<NotificationsRepository>().fetchPreferences();
+    final homeRepo = context.read<HomeRepository>();
+    final store = context.read<SelectedBabyStore>();
+    final baby = await homeRepo.resolveSelectedBaby(store);
     setState(() {
       _prefs = prefs;
+      _babyName = baby?.name;
       _loading = false;
     });
   }
@@ -62,13 +69,30 @@ class _NotificationPreferencesScreenState extends State<NotificationPreferencesS
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final prefs = _prefs;
+    final babyLabel = (_babyName ?? '').trim().isEmpty
+        ? 'your baby'
+        : 'Baby ${_babyName!.trim()}';
     return PrototypeSubpageScaffold(
-      title: l10n.settingsNotifications,
+      title: 'Notification preferences',
       body: _loading || prefs == null
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               padding: AppMetrics.subpageScrollPadding,
               children: [
+                Text(
+                  "Choose how often you'd like updates from $babyLabel.",
+                  style: context.textStyles.bodyMedium?.copyWith(
+                    color: AppColors.muted,
+                  ),
+                ),
+                SizedBox(height: AppSpacing.sm),
+                Text(
+                  'You can change this any time.',
+                  style: context.textStyles.bodySmall?.copyWith(
+                    color: AppColors.muted,
+                  ),
+                ),
+                SizedBox(height: AppSpacing.lg),
                 AppSectionTitle(
                   title: 'How often would you like updates?',
                   style: context.textStyles.titleSmall,

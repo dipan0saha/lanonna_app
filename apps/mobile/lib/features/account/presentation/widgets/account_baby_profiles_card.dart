@@ -4,6 +4,8 @@ import '../../../../core/domain/baby_summary.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/widgets/app_bordered_surface.dart';
+import '../../../../core/widgets/baby_profile_avatar.dart';
+import '../../../../core/widgets/membership_role_pill.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 
 class AccountBabyProfilesCard extends StatelessWidget {
@@ -57,12 +59,6 @@ class _BabyRow extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
 
-  String get _emoji {
-    if (baby.gender == 'female') return '👧';
-    if (baby.gender == 'male') return '👦';
-    return '👶';
-  }
-
   @override
   Widget build(BuildContext context) {
     final isOwner = baby.role == 'owner';
@@ -76,7 +72,7 @@ class _BabyRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Text(_emoji, style: context.textStyles.headlineSmall),
+            BabyProfileAvatar(baby: baby),
             SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
@@ -92,28 +88,7 @@ class _BabyRow extends StatelessWidget {
                 ],
               ),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppMetrics.appChipHorizontalPadding,
-                vertical: AppMetrics.appChipDenseVerticalPadding,
-              ),
-              decoration: BoxDecoration(
-                color: isOwner
-                    ? AppColors.peachTint
-                    : context.brand.surfaceSubtle,
-                borderRadius: BorderRadius.circular(AppMetrics.buttonRadius),
-                border: Border.all(
-                  color: isOwner ? AppColors.secondaryDark : AppColors.border,
-                ),
-              ),
-              child: Text(
-                isOwner ? 'OWNER' : 'FOLLOWER',
-                style: context.textStyles.labelSmall?.copyWith(
-                  color: isOwner ? AppColors.secondaryDark : AppColors.muted,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
+            MembershipRolePill(isOwner: isOwner),
           ],
         ),
       ),

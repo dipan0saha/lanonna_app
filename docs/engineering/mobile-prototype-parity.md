@@ -4,7 +4,10 @@ The Flutter app (`apps/mobile`) shares a single theme and widget library under `
 
 ## Shared building blocks
 
-- **Empty states** — `AppEmptyState` (pale-green circle icon, dark title, optional CTA). Used on Gallery, Calendar, Registry, Fun, and Notifications inbox.
+- **Empty states** — `AppEmptyState` (pale-green circle icon, dark title, optional CTA). Used on Gallery (including filtered modes), Calendar (FAB clearance), Registry, Fun (born hub + names tab), and Notifications inbox.
+- **Sheets** — `showAppModalSheet` / `AppModalSheet`: handle, title, subtitle, body, and **Close** (RSVPs, Who voted, Past events, baby switcher, photo source, etc.).
+- **Buttons** — `AppButtonLabel` (word-safe wraps), `AppResponsiveButtonPair` (stacks below 360dp), `AppGiftPillButton`, `AppCancelTextButton`, `AppSquishEngagementPill` / `AppEngagementPill`.
+- **Shell / account** — `BabyProfileAvatar`, `MembershipRolePill`, `AppUnreadDot` (orange accent).
 - **Registry** — `RegistryPriorityChip` (orange P1–P5), `AppGiftPillButton` for purchase CTAs, compact `RegistryNeededRow`.
 - **Announcement** — `AnnouncementKeepsakeCard` (white card, Dancing Script first name, four stat icons, hand-icon squish pill). Used on the announcement screen and share image rendering.
 - **Shell** — `HomeTopBar` via `shellHomeTopBar`: add baby (`+`), baby name with chevron (switcher), search, bell with unread dot (`NotificationsUnreadSignal`), account avatar.

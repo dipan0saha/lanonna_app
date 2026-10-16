@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/widgets/app_sheet_handle.dart';
-
 import 'package:go_router/go_router.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/la_nonna_theme.dart';
+import '../../../core/widgets/app_modal_sheet.dart';
 import '../../../core/widgets/app_semantics.dart';
+import '../../../core/widgets/baby_profile_avatar.dart';
+import '../../../core/widgets/membership_role_pill.dart';
 import '../../../core/api/run_mutation.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../account/data/account_repository.dart';
@@ -141,27 +142,15 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
   @override
   Widget build(BuildContext context) {
     final selectedId = _highlightedId;
-    final styles = context.textStyles;
 
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 12,
-        bottom: MediaQuery.paddingOf(context).bottom + 16,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const AppSheetHandle(),
-          Text('Switch profile', style: styles.titleSmall),
-          SizedBox(height: AppSpacing.xxs),
-          Text(
-            _switcherSubtitle(_babies),
-            style: styles.bodySmall?.copyWith(color: AppColors.muted),
-          ),
-          const SizedBox(height: 12),
+    return AppModalSheet(
+      title: 'Switch profile',
+      subtitle: _switcherSubtitle(_babies),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
           if (_loading)
             const Padding(
               padding: EdgeInsets.all(24),
@@ -170,80 +159,67 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
           else if (_babies.isEmpty)
             const Text('No baby profiles yet.')
           else
-            Flexible(
-              child: ListView(
-                shrinkWrap: true,
-                children: [
-                  for (final baby in _babies)
-                    AppSemantics.button(
-                      'baby_switcher_${baby.id.replaceAll('-', '_')}',
-                      ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: AppColors.sageTint,
-                          child: Text(
-                            baby.name.isNotEmpty
-                                ? baby.name[0].toUpperCase()
-                                : '?',
-                            style: styles.titleSmall,
-                          ),
-                        ),
-                        title: Text(baby.name),
-                        subtitle: Text(
-                          babyListSubtitle(
-                            baby,
-                            localeNameForFormatting(context),
-                          ),
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (baby.id == selectedId)
-                              const Icon(
-                                Icons.check,
-                                color: AppColors.primaryDark,
-                              ),
-                            PopupMenuButton<String>(
-                              icon: const Icon(Icons.more_vert, size: 20),
-                              onSelected: (value) async {
-                                if (value == 'leave') {
-                                  await _leaveBaby(baby);
-                                  return;
-                                }
-                                Navigator.of(context).pop();
-                                if (value == 'edit') {
-                                  context.push('/baby/${baby.id}/edit');
-                                } else if (value == 'followers') {
-                                  context.push('/baby/${baby.id}/followers');
-                                }
-                              },
-                              itemBuilder: (ctx) {
-                                final l10n = AppLocalizations.of(ctx)!;
-                                return [
-                                  if (baby.role == 'owner') ...[
-                                    const PopupMenuItem(
-                                      value: 'edit',
-                                      child: Text('Edit baby'),
-                                    ),
-                                    const PopupMenuItem(
-                                      value: 'followers',
-                                      child: Text('Manage followers'),
-                                    ),
-                                  ],
-                                  PopupMenuItem(
-                                    value: 'leave',
-                                    child: Text(l10n.memberLeaveProfile),
-                                  ),
-                                ];
-                              },
-                            ),
-                          ],
-                        ),
-                        onTap: () => _select(baby),
-                      ),
+            for (final baby in _babies)
+              AppSemantics.button(
+                'baby_switcher_${baby.id.replaceAll('-', '_')}',
+                ListTile(
+                  leading: BabyProfileAvatar(baby: baby),
+                  title: Text(baby.name),
+                  subtitle: Text(
+                    babyListSubtitle(
+                      baby,
+                      localeNameForFormatting(context),
                     ),
-                ],
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      MembershipRolePill(isOwner: baby.role == 'owner'),
+                      SizedBox(width: AppSpacing.xs),
+                      if (baby.id == selectedId)
+                        const Icon(
+                          Icons.check,
+                          color: AppColors.primaryDark,
+                        ),
+                      PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert, size: 20),
+                        onSelected: (value) async {
+                          if (value == 'leave') {
+                            await _leaveBaby(baby);
+                            return;
+                          }
+                          Navigator.of(context).pop();
+                          if (value == 'edit') {
+                            context.push('/baby/${baby.id}/edit');
+                          } else if (value == 'followers') {
+                            context.push('/baby/${baby.id}/followers');
+                          }
+                        },
+                        itemBuilder: (ctx) {
+                          final l10n = AppLocalizations.of(ctx)!;
+                          return [
+                            if (baby.role == 'owner') ...[
+                              const PopupMenuItem(
+                                value: 'edit',
+                                child: Text('Edit baby'),
+                              ),
+                              const PopupMenuItem(
+                                value: 'followers',
+                                child: Text('Manage followers'),
+                              ),
+                            ],
+                            PopupMenuItem(
+                              value: 'leave',
+                              child: Text(l10n.memberLeaveProfile),
+                            ),
+                          ];
+                        },
+                      ),
+                    ],
+                  ),
+                  onTap: () => _select(baby),
+                ),
               ),
-            ),
           const Divider(height: 24),
           ListTile(
             leading: const Icon(Icons.person_outline),
@@ -261,7 +237,8 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
               context.push('/baby/create');
             },
           ),
-        ],
+          ],
+        ),
       ),
     );
   }
