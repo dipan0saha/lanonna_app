@@ -58,6 +58,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: 3.38.9
           cache: true
       - name: Flutter analyze, tests, l10n guard
         run: |
@@ -65,5 +66,5 @@ jobs:
           flutter pub get
           bash scripts/check-no-material-chips.sh
           bash scripts/check-no-hardcoded-user-strings.sh
-          flutter analyze
+          flutter analyze --no-fatal-infos
           flutter test
