@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+
 import '../theme/app_colors.dart';
 import '../theme/app_metrics.dart';
 import '../theme/la_nonna_theme.dart';
@@ -60,7 +61,7 @@ class AppEmptyState extends StatelessWidget {
       return Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: AppMetrics.horizontalPadding,
-          vertical: 24,
+          vertical: AppSpacing.xxl,
         ),
         child: content,
       );

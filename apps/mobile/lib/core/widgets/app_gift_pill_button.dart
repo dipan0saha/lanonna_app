@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_metrics.dart';
-import '../theme/app_spacing.dart';
 import '../theme/la_nonna_theme.dart';
 import 'app_semantics.dart';
 

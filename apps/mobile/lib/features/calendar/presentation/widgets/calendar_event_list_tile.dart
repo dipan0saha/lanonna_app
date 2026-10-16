@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../../core/theme/app_metrics.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -39,7 +41,11 @@ class CalendarEventListTile extends StatelessWidget {
       title: Text(event.title),
       subtitle: subtitle.isEmpty ? null : Text(subtitle),
       trailing: showChevron
-          ? const Icon(Icons.chevron_right, color: AppColors.muted, size: 20)
+          ? const Icon(
+              Icons.chevron_right,
+              color: AppColors.muted,
+              size: AppMetrics.trailingIconSize,
+            )
           : null,
       onTap: () => context.push(CalendarRoutes.eventDetail(event.id)),
     );

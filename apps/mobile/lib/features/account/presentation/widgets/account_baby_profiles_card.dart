@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/domain/baby_summary.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
-import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_bordered_surface.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 
@@ -77,7 +76,7 @@ class _BabyRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Text(_emoji, style: const TextStyle(fontSize: 26)),
+            Text(_emoji, style: context.textStyles.headlineSmall),
             SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
@@ -99,7 +98,9 @@ class _BabyRow extends StatelessWidget {
                 vertical: AppMetrics.appChipDenseVerticalPadding,
               ),
               decoration: BoxDecoration(
-                color: isOwner ? AppColors.peachTint : context.brand.surfaceSubtle,
+                color: isOwner
+                    ? AppColors.peachTint
+                    : context.brand.surfaceSubtle,
                 borderRadius: BorderRadius.circular(AppMetrics.buttonRadius),
                 border: Border.all(
                   color: isOwner ? AppColors.secondaryDark : AppColors.border,
@@ -108,9 +109,7 @@ class _BabyRow extends StatelessWidget {
               child: Text(
                 isOwner ? 'OWNER' : 'FOLLOWER',
                 style: context.textStyles.labelSmall?.copyWith(
-                  color: isOwner
-                      ? AppColors.secondaryDark
-                      : AppColors.muted,
+                  color: isOwner ? AppColors.secondaryDark : AppColors.muted,
                   letterSpacing: 0.5,
                 ),
               ),

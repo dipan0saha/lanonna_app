@@ -102,8 +102,12 @@ abstract final class AppMetrics {
   static const double keepsakePhotoShadowBlur = 12;
   static const double keepsakeCardShadowBlur = 28;
   static const double keepsakeCardShadowYOffset = 10;
-  static const EdgeInsets keepsakeCardPadding =
-      EdgeInsets.fromLTRB(24, 28, 24, 22);
+  static const EdgeInsets keepsakeCardPadding = EdgeInsets.fromLTRB(
+    24,
+    28,
+    24,
+    22,
+  );
   static const double keepsakeScriptNameSize = 36;
   static const double keepsakeLastNameLetterSpacing = 2.4;
   static const double keepsakeStatColumnWidth = 120;
@@ -116,8 +120,10 @@ abstract final class AppMetrics {
   static const double galleryGridSpacing = 6;
   static const double galleryTileRadius = fieldRadius;
   static const double galleryTileBadgeRadius = 8;
-  static const EdgeInsets galleryTileBadgePadding =
-      EdgeInsets.symmetric(horizontal: 6, vertical: 2);
+  static const EdgeInsets galleryTileBadgePadding = EdgeInsets.symmetric(
+    horizontal: 6,
+    vertical: 2,
+  );
 
   /// AI suggestion banners (calendar + registry tabs).
   static const double aiBannerRadius = fieldRadius;
@@ -141,8 +147,10 @@ abstract final class AppMetrics {
   static const EdgeInsets monthGridCardPadding = EdgeInsets.all(12);
 
   /// Registry sort control tap target inset.
-  static const EdgeInsets sortControlPadding =
-      EdgeInsets.symmetric(horizontal: 4, vertical: 2);
+  static const EdgeInsets sortControlPadding = EdgeInsets.symmetric(
+    horizontal: 4,
+    vertical: 2,
+  );
 
   /// Two-letter weekday headers (calendar month grid).
   static const List<String> calendarWeekdayTwoLetter = [
@@ -154,4 +162,15 @@ abstract final class AppMetrics {
     'Fr',
     'Sa',
   ];
+
+  /// Modal bottom-sheet grab handle.
+  static const double sheetHandleWidth = 36;
+  static const double sheetHandleHeight = 4;
+
+  /// Inline action / trailing icons in rows and compact controls.
+  static const double inlineIconSize = 18;
+  static const double trailingIconSize = 20;
+
+  /// Next Up date block width (prototype `.next-up .date`).
+  static const double nextUpDateBlockWidth = 48;
 }

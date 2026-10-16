@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../../core/widgets/app_sheet_handle.dart';
+
 import 'package:go_router/go_router.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
@@ -151,19 +154,9 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-          ),
+          const AppSheetHandle(),
           Text('Switch profile', style: styles.titleSmall),
-          const SizedBox(height: 4),
+          SizedBox(height: AppSpacing.xxs),
           Text(
             _switcherSubtitle(_babies),
             style: styles.bodySmall?.copyWith(color: AppColors.muted),
@@ -185,63 +178,68 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
                     AppSemantics.button(
                       'baby_switcher_${baby.id.replaceAll('-', '_')}',
                       ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: AppColors.sageTint,
-                        child: Text(
-                          baby.name.isNotEmpty ? baby.name[0].toUpperCase() : '?',
-                          style: styles.titleSmall,
-                        ),
-                      ),
-                      title: Text(baby.name),
-                      subtitle: Text(
-                        babyListSubtitle(
-                          baby,
-                          localeNameForFormatting(context),
-                        ),
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (baby.id == selectedId)
-                            const Icon(Icons.check, color: AppColors.primaryDark),
-                          PopupMenuButton<String>(
-                            icon: const Icon(Icons.more_vert, size: 20),
-                            onSelected: (value) async {
-                              if (value == 'leave') {
-                                await _leaveBaby(baby);
-                                return;
-                              }
-                              Navigator.of(context).pop();
-                              if (value == 'edit') {
-                                context.push('/baby/${baby.id}/edit');
-                              } else if (value == 'followers') {
-                                context.push('/baby/${baby.id}/followers');
-                              }
-                            },
-                            itemBuilder: (ctx) {
-                              final l10n = AppLocalizations.of(ctx)!;
-                              return [
-                                if (baby.role == 'owner') ...[
-                                  const PopupMenuItem(
-                                    value: 'edit',
-                                    child: Text('Edit baby'),
-                                  ),
-                                  const PopupMenuItem(
-                                    value: 'followers',
-                                    child: Text('Manage followers'),
-                                  ),
-                                ],
-                                PopupMenuItem(
-                                  value: 'leave',
-                                  child: Text(l10n.memberLeaveProfile),
-                                ),
-                              ];
-                            },
+                        leading: CircleAvatar(
+                          backgroundColor: AppColors.sageTint,
+                          child: Text(
+                            baby.name.isNotEmpty
+                                ? baby.name[0].toUpperCase()
+                                : '?',
+                            style: styles.titleSmall,
                           ),
-                        ],
+                        ),
+                        title: Text(baby.name),
+                        subtitle: Text(
+                          babyListSubtitle(
+                            baby,
+                            localeNameForFormatting(context),
+                          ),
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (baby.id == selectedId)
+                              const Icon(
+                                Icons.check,
+                                color: AppColors.primaryDark,
+                              ),
+                            PopupMenuButton<String>(
+                              icon: const Icon(Icons.more_vert, size: 20),
+                              onSelected: (value) async {
+                                if (value == 'leave') {
+                                  await _leaveBaby(baby);
+                                  return;
+                                }
+                                Navigator.of(context).pop();
+                                if (value == 'edit') {
+                                  context.push('/baby/${baby.id}/edit');
+                                } else if (value == 'followers') {
+                                  context.push('/baby/${baby.id}/followers');
+                                }
+                              },
+                              itemBuilder: (ctx) {
+                                final l10n = AppLocalizations.of(ctx)!;
+                                return [
+                                  if (baby.role == 'owner') ...[
+                                    const PopupMenuItem(
+                                      value: 'edit',
+                                      child: Text('Edit baby'),
+                                    ),
+                                    const PopupMenuItem(
+                                      value: 'followers',
+                                      child: Text('Manage followers'),
+                                    ),
+                                  ],
+                                  PopupMenuItem(
+                                    value: 'leave',
+                                    child: Text(l10n.memberLeaveProfile),
+                                  ),
+                                ];
+                              },
+                            ),
+                          ],
+                        ),
+                        onTap: () => _select(baby),
                       ),
-                      onTap: () => _select(baby),
-                    ),
                     ),
                 ],
               ),

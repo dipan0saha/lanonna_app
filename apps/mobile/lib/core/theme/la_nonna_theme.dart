@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'app_brand_theme.dart';
-import 'app_spacing.dart';
 import 'app_text_theme.dart';
 
 export 'app_spacing.dart';
@@ -12,9 +11,9 @@ extension LaNonnaTheme on BuildContext {
 
   /// Label above text fields (onboarding and inputs); PRD §5.1 Inter semibold on surface.
   TextStyle get fieldLabelStyle => textStyles.labelMedium!.copyWith(
-        fontWeight: FontWeight.w600,
-        color: colors.onSurface,
-      );
+    fontWeight: FontWeight.w600,
+    color: colors.onSurface,
+  );
 
   /// Typed text inside bordered fields (regular weight).
   TextStyle get fieldInputStyle => AppTextTheme.fieldInput(textStyles);

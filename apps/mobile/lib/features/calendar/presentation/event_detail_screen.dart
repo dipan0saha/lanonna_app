@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../../core/api/api_error_message.dart';
@@ -333,7 +334,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 ),
                 const SizedBox(height: 12),
                 const AppSectionCapsLabel('When'),
-                const SizedBox(height: 6),
+                SizedBox(height: AppSpacing.xs),
                 Text(
                   formatEventDetailWhen(
                     detail.startsAt,
@@ -343,7 +344,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 if (detail.location != null) ...[
                   const SizedBox(height: 12),
                   const AppSectionCapsLabel('Location'),
-                  const SizedBox(height: 6),
+                  SizedBox(height: AppSpacing.xs),
                   Text('📍 ${detail.location}'),
                 ],
                 if (detail.videoCallUrl != null) ...[
@@ -389,7 +390,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   selectedStatus: detail.viewerRsvp,
                   onSelect: _setRsvp,
                 ),
-                const SizedBox(height: 10),
+                SizedBox(height: AppSpacing.smMd),
                 InkWell(
                   onTap: () => _showRsvpSheet(detail),
                   child: Row(
@@ -399,7 +400,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                             .map((a) => a.displayName)
                             .toList(),
                       ),
-                      const SizedBox(width: 10),
+                      SizedBox(width: AppSpacing.smMd),
                       Expanded(
                         child: Text(
                           _rsvpInlineSummary(l10n, detail.rsvpSummary),
@@ -424,18 +425,20 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   trailing: detail.comments.isNotEmpty
                       ? Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
+                            horizontal: AppSpacing.smMd,
+                            vertical: AppSpacing.xxs,
                           ),
                           decoration: BoxDecoration(
                             color: AppColors.sageTint,
-                            borderRadius: BorderRadius.circular(999),
+                            borderRadius: BorderRadius.circular(
+                              AppMetrics.buttonRadius,
+                            ),
                           ),
                           child: Text('${detail.comments.length}'),
                         )
                       : null,
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: AppSpacing.sm),
                 for (final c in detail.comments)
                   ListTile(
                     title: Text(c.authorDisplayName),
@@ -480,4 +483,3 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     );
   }
 }
-

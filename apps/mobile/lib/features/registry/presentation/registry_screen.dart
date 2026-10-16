@@ -14,7 +14,6 @@ import '../../../core/widgets/app_section_caps_label.dart';
 import '../../../core/widgets/app_bordered_surface.dart';
 import '../../../core/widgets/app_section_title.dart';
 import '../../../core/widgets/calendar_ai_suggestion_banner.dart';
-import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../domain/registry_item_sort.dart';
 import 'widgets/registry_sort_control.dart';

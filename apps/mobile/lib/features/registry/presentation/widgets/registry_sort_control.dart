@@ -33,7 +33,7 @@ class RegistrySortControl extends StatelessWidget {
             ),
             Icon(
               Icons.keyboard_arrow_down,
-              size: 18,
+              size: AppMetrics.inlineIconSize,
               color: AppColors.primaryDark,
             ),
           ],

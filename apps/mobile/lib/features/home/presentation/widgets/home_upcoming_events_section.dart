@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/time/app_date_time.dart';
@@ -35,7 +36,9 @@ class HomeUpcomingEventsSection extends StatelessWidget {
           return Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: AppMetrics.horizontalPadding),
+              padding: EdgeInsets.symmetric(
+                horizontal: AppMetrics.horizontalPadding,
+              ),
               child: InkWell(
                 onTap: () => context.push(CalendarRoutes.eventDetail(event.id)),
                 borderRadius: BorderRadius.circular(AppMetrics.surfaceRadius),
@@ -64,9 +67,12 @@ class HomeUpcomingEventsSection extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(event.title, style: text.titleSmall),
-                              if (dt != null || (event.location?.isNotEmpty ?? false))
+                              if (dt != null ||
+                                  (event.location?.isNotEmpty ?? false))
                                 Padding(
-                                  padding: const EdgeInsets.only(top: 4),
+                                  padding: const EdgeInsets.only(
+                                    top: AppSpacing.xxs,
+                                  ),
                                   child: Text(
                                     [
                                       if (dt != null)

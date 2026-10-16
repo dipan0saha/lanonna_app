@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_metrics.dart';
+
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../../../core/widgets/app_gift_pill_button.dart';
@@ -29,7 +32,7 @@ class RegistryNeededRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -50,12 +53,12 @@ class RegistryNeededRow extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                const SizedBox(height: 6),
+                SizedBox(height: AppSpacing.xs),
                 RegistryPriorityChip(priority: item.priority),
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: AppSpacing.sm),
           if (onClaim != null)
             Flexible(
               child: Padding(
@@ -74,14 +77,17 @@ class RegistryNeededRow extends StatelessWidget {
               semanticsId: 'registry_item_edit_${item.id}',
               label: 'Edit item',
               onPressed: onEdit,
-              icon: const Icon(Icons.edit_outlined, size: 18),
+              icon: const Icon(
+                Icons.edit_outlined,
+                size: AppMetrics.inlineIconSize,
+              ),
             ),
             AppIconButton(
               semanticsId: 'registry_item_delete_${item.id}',
               label: 'Delete item',
               icon: const Icon(
                 Icons.delete_outline,
-                size: 18,
+                size: AppMetrics.inlineIconSize,
                 color: AppColors.error,
               ),
               onPressed: onDelete,
@@ -109,7 +115,7 @@ class RegistryPurchasedRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final purchase = item.purchase;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: Row(
         children: [
           Expanded(

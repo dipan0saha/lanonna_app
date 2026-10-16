@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/account_tinted_avatar.dart';
 import '../../../../core/widgets/app_bordered_surface.dart';
 import '../../../../core/widgets/app_semantics.dart';
@@ -30,10 +29,7 @@ class AccountProfileCard extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         children: [
-          AccountTintedAvatar(
-            displayName: displayName,
-            imageUrl: avatarUrl,
-          ),
+          AccountTintedAvatar(displayName: displayName, imageUrl: avatarUrl),
           SizedBox(height: AppSpacing.md),
           Text(displayName, style: context.accountProfileNameStyle),
           if (email != null) ...[
@@ -47,16 +43,20 @@ class AccountProfileCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.textPrimary,
-                    side: const BorderSide(color: AppColors.border),
+                child: AppSemantics.button(
+                  'account_edit_profile',
+                  OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.textPrimary,
+                      side: const BorderSide(color: AppColors.border),
+                    ),
+                    onPressed: onEdit,
+                    child: const Text('Edit'),
                   ),
-                  onPressed: onEdit,
-                  child: const Text('Edit'),
+                  label: 'Edit profile',
                 ),
               ),
-              SizedBox(width: AppSpacing.sm + 2),
+              SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: AppSemantics.button(
                   'account_sign_out',

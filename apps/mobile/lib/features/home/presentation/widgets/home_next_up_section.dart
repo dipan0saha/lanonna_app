@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/time/app_date_time.dart';
@@ -47,8 +48,10 @@ class HomeNextUpSection extends StatelessWidget {
               child: Row(
                 children: [
                   Container(
-                    width: 48,
-                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    width: AppMetrics.nextUpDateBlockWidth,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.xs,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.sageTint,
                       borderRadius: BorderRadius.circular(10),
@@ -60,7 +63,7 @@ class HomeNextUpSection extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -68,7 +71,7 @@ class HomeNextUpSection extends StatelessWidget {
                         Text(event.title, style: text.titleSmall),
                         if (timeLocation.isNotEmpty)
                           Padding(
-                            padding: const EdgeInsets.only(top: 4),
+                            padding: const EdgeInsets.only(top: AppSpacing.xxs),
                             child: Text(
                               timeLocation,
                               style: text.bodySmall?.copyWith(

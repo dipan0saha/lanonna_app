@@ -1,6 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+
+import '../../../../core/widgets/app_sheet_handle.dart';
+
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/media/display_encode.dart';
@@ -12,7 +15,9 @@ Future<File?> showPhotoSourceSheet(BuildContext context) async {
   return showModalBottomSheet<File?>(
     context: context,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      borderRadius: BorderRadius.vertical(
+        top: Radius.circular(AppMetrics.surfaceRadius),
+      ),
     ),
     builder: (context) {
       return SafeArea(
@@ -27,23 +32,13 @@ Future<File?> showPhotoSourceSheet(BuildContext context) async {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: AppColors.border,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-              ),
+              const AppSheetHandle(),
               Text(
                 'Add a Photo',
                 style: context.textStyles.titleSmall,
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: AppSpacing.xxs),
               Text(
                 displayPhotoSourceHint(),
                 textAlign: TextAlign.center,
@@ -51,7 +46,7 @@ Future<File?> showPhotoSourceSheet(BuildContext context) async {
                   color: AppColors.muted,
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: AppSpacing.sm),
               ListTile(
                 leading: const Icon(Icons.photo_camera_outlined),
                 title: const Text('Take photo'),

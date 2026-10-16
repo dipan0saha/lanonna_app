@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -37,14 +38,12 @@ class HomeBirthWelcomeCard extends StatelessWidget {
       ),
       padding: const EdgeInsets.fromLTRB(22, 30, 22, 22),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [brand.peachTint, brand.sageTint],
-        ),
+        gradient: LinearGradient(colors: [brand.peachTint, brand.sageTint]),
         borderRadius: BorderRadius.circular(AppMetrics.homeHeroRadius),
       ),
       child: Column(
         children: [
-          const Text('🎉', style: TextStyle(fontSize: 28)),
+          Text('🎉', style: context.textStyles.headlineMedium),
           const SizedBox(height: 8),
           Text(
             '${welcome.babyName} is here!',
@@ -52,14 +51,14 @@ class HomeBirthWelcomeCard extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           if (bornLine != null) ...[
-            const SizedBox(height: 8),
+            SizedBox(height: AppSpacing.sm),
             Text(
               bornLine,
               textAlign: TextAlign.center,
               style: text.bodyMedium?.copyWith(color: AppColors.textPrimary),
             ),
           ],
-          const SizedBox(height: 16),
+          SizedBox(height: AppSpacing.lg),
           Row(
             children: [
               Expanded(
@@ -78,7 +77,7 @@ class HomeBirthWelcomeCard extends StatelessWidget {
                 ),
               ),
               if (showShareToInstagram) ...[
-                const SizedBox(width: 10),
+                SizedBox(width: AppSpacing.smMd),
                 Expanded(
                   child: AppSemantics.button(
                     'home_share_announcement',

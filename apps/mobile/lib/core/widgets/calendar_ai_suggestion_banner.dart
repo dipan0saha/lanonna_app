@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_metrics.dart';
-import '../theme/app_spacing.dart';
 import '../theme/la_nonna_theme.dart';
+
 /// Peach→sage gradient AI prompt (Calendar + Registry tabs).
 class CalendarAiSuggestionBanner extends StatelessWidget {
   const CalendarAiSuggestionBanner({
@@ -50,8 +50,9 @@ class CalendarAiSuggestionBanner extends StatelessWidget {
                   height: AppMetrics.aiBannerIconChipSize,
                   decoration: BoxDecoration(
                     color: AppColors.surface,
-                    borderRadius:
-                        BorderRadius.circular(AppMetrics.tintedIconSquareRadius),
+                    borderRadius: BorderRadius.circular(
+                      AppMetrics.tintedIconSquareRadius,
+                    ),
                   ),
                   alignment: Alignment.center,
                   child: Icon(
@@ -60,7 +61,7 @@ class CalendarAiSuggestionBanner extends StatelessWidget {
                     color: AppColors.primaryDark,
                   ),
                 ),
-                SizedBox(width: AppSpacing.sm + 2),
+                SizedBox(width: AppSpacing.smMd),
                 Expanded(child: Text(message, style: body)),
                 Icon(
                   Icons.chevron_right,

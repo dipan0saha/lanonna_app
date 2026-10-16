@@ -10,7 +10,6 @@ import '../../../core/widgets/app_semantics.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/theme/app_metrics.dart';
-import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_section_title.dart';
 import '../../../core/widgets/vote_count_pill.dart';
 import '../../../core/theme/la_nonna_theme.dart';
@@ -272,8 +271,9 @@ class _PredictionsTabState extends State<PredictionsTab> {
           if (genderVotes.maleProgress != null) ...[
             const SizedBox(height: 8),
             ClipRRect(
-              borderRadius:
-                  BorderRadius.circular(AppMetrics.predictionBarRadius),
+              borderRadius: BorderRadius.circular(
+                AppMetrics.predictionBarRadius,
+              ),
               child: LinearProgressIndicator(
                 value: genderVotes.maleProgress,
                 minHeight: AppMetrics.predictionBarHeight,
@@ -298,16 +298,13 @@ class _PredictionsTabState extends State<PredictionsTab> {
           const AppSectionTitle(title: 'Popular Dates'),
           if (p == null || p.birthdateHistogram.isEmpty)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
               child: Text(
                 closed ? 'No guesses yet' : 'No guesses yet - be the first!',
               ),
             )
           else
-            _PopularDatesList(
-              histogram: p.birthdateHistogram,
-              locale: locale,
-            ),
+            _PopularDatesList(histogram: p.birthdateHistogram, locale: locale),
           const SizedBox(height: AppMetrics.sectionBlockSpacing),
           const AppSectionTitle(title: 'Birthdate guesses'),
           Card(
@@ -466,10 +463,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
 }
 
 class _PopularDatesList extends StatelessWidget {
-  const _PopularDatesList({
-    required this.histogram,
-    required this.locale,
-  });
+  const _PopularDatesList({required this.histogram, required this.locale});
 
   final List<BirthdateVoteCount> histogram;
   final String locale;
@@ -484,7 +478,7 @@ class _PopularDatesList extends StatelessWidget {
       children: [
         for (final row in histogram)
           Padding(
-            padding: EdgeInsets.only(bottom: AppSpacing.sm + 2),
+            padding: EdgeInsets.only(bottom: AppSpacing.smMd),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -508,8 +502,9 @@ class _PopularDatesList extends StatelessWidget {
                 ),
                 SizedBox(height: AppSpacing.xxs),
                 ClipRRect(
-                  borderRadius:
-                      BorderRadius.circular(AppMetrics.predictionBarRadius),
+                  borderRadius: BorderRadius.circular(
+                    AppMetrics.predictionBarRadius,
+                  ),
                   child: LinearProgressIndicator(
                     value: maxCount > 0 ? row.count / maxCount : 0,
                     minHeight: AppMetrics.predictionBarHeight,

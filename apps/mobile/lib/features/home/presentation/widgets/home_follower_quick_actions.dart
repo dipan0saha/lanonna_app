@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
@@ -34,7 +35,7 @@ class HomeFollowerQuickActions extends StatelessWidget {
                 onTap: onVoteInFun,
               ),
             ),
-          if (onVoteInFun != null) const SizedBox(width: 12),
+          if (onVoteInFun != null) SizedBox(width: AppSpacing.md),
           Expanded(
             child: _QuickActionTile(
               icon: Icons.photo_library_outlined,
@@ -49,11 +50,7 @@ class HomeFollowerQuickActions extends StatelessWidget {
 }
 
 class _QuickActionTile extends StatelessWidget {
-  const _QuickActionTile({
-    required this.icon,
-    required this.label,
-    this.onTap,
-  });
+  const _QuickActionTile({required this.icon, required this.label, this.onTap});
 
   final IconData icon;
   final String label;

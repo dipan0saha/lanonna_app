@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from lanonna_api.db import get_connection
@@ -29,8 +29,6 @@ def list_events(
     if month_start is not None and month_end is not None:
         clauses.append("e.starts_at >= %s AND e.starts_at < %s")
         params.extend([month_start, month_end])
-    from datetime import timezone
-
     effective_now = now or datetime.now(timezone.utc)
     if upcoming_only:
         clauses.append("e.starts_at >= %s")

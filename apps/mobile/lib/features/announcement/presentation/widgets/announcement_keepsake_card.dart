@@ -4,7 +4,6 @@ import '../../../../core/media/cached_signed_image.dart';
 import '../../../../core/time/app_date_time.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
-import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../data/announcement_repository.dart';
 
@@ -41,7 +40,9 @@ class AnnouncementKeepsakeCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      constraints: const BoxConstraints(maxWidth: AppMetrics.keepsakeCardMaxWidth),
+      constraints: const BoxConstraints(
+        maxWidth: AppMetrics.keepsakeCardMaxWidth,
+      ),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppMetrics.keepsakeCardRadius),
@@ -128,7 +129,7 @@ class AnnouncementKeepsakeCard extends StatelessWidget {
             SizedBox(height: AppSpacing.lg),
             Wrap(
               alignment: WrapAlignment.center,
-              spacing: AppSpacing.sm + 2,
+              spacing: AppSpacing.smMd,
               runSpacing: AppSpacing.sm,
               children: [
                 if (squishCount != null)

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+
+import '../theme/app_metrics.dart';
+
 import '../theme/app_colors.dart';
 import '../theme/la_nonna_theme.dart';
 
@@ -20,18 +23,17 @@ class DashedOutlineButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppMetrics.fieldRadius),
         child: CustomPaint(
           painter: _DashedBorderPainter(color: AppColors.inputBorderStrong),
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
             alignment: Alignment.center,
             child: Text(
               label,
               style: context.textStyles.labelMedium?.copyWith(
                 color: AppColors.primaryDark,
-                fontSize: 13,
               ),
             ),
           ),
@@ -56,7 +58,7 @@ class _DashedBorderPainter extends CustomPainter {
     const gap = 4.0;
     final rrect = RRect.fromRectAndRadius(
       Rect.fromLTWH(0, 0, size.width, size.height),
-      const Radius.circular(12),
+      const Radius.circular(AppMetrics.fieldRadius),
     );
     final path = Path()..addRRect(rrect);
     for (final metric in path.computeMetrics()) {

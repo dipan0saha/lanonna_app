@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+
 import '../theme/app_colors.dart';
 import '../theme/app_metrics.dart';
 import '../theme/la_nonna_theme.dart';
@@ -23,9 +24,9 @@ class AppRsvpTileRow extends StatelessWidget {
     return Row(
       children: [
         Expanded(child: _tile(context, 'going', 'Going', 'rsvp_going')),
-        const SizedBox(width: 8),
+        SizedBox(width: AppSpacing.sm),
         Expanded(child: _tile(context, 'maybe', 'Maybe', 'rsvp_maybe')),
-        const SizedBox(width: 8),
+        SizedBox(width: AppSpacing.sm),
         Expanded(child: _tile(context, 'cant_go', "Can't go", 'rsvp_cant_go')),
       ],
     );

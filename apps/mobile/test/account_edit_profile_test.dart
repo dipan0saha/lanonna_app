@@ -113,7 +113,7 @@ void main() {
 
     expect(find.text('Fxtwo Coown'), findsOneWidget);
     expect(find.text('Weekly email summary'), findsOneWidget);
-    await tester.tap(find.text('Edit Profile'));
+    await tester.tap(find.text('Edit'));
     await tester.pumpAndSettle();
 
     final fields = find.byType(TextFormField);
