@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/input/app_text_input_kind.dart';
+import '../../../../core/theme/la_nonna_theme.dart';
+import '../../../../core/widgets/app_modal_sheet.dart';
+import '../../../../core/widgets/app_responsive_button_pair.dart';
 import '../../../../core/widgets/app_semantics.dart';
 import '../../../../core/widgets/app_text_field.dart';
 
@@ -12,10 +15,11 @@ Future<String?> showPhotoUploadCaptionSheet(
   BuildContext context, {
   required File imageFile,
 }) {
-  return showModalBottomSheet<String?>(
+  return showAppModalSheet<String?>(
     context: context,
-    isScrollControlled: true,
-    builder: (context) => _PhotoUploadCaptionSheet(imageFile: imageFile),
+    title: 'Add to gallery',
+    showClose: false,
+    bodyBuilder: (context) => _PhotoUploadCaptionSheet(imageFile: imageFile),
   );
 }
 
@@ -25,7 +29,8 @@ class _PhotoUploadCaptionSheet extends StatefulWidget {
   final File imageFile;
 
   @override
-  State<_PhotoUploadCaptionSheet> createState() => _PhotoUploadCaptionSheetState();
+  State<_PhotoUploadCaptionSheet> createState() =>
+      _PhotoUploadCaptionSheetState();
 }
 
 class _PhotoUploadCaptionSheetState extends State<_PhotoUploadCaptionSheet> {
@@ -49,64 +54,47 @@ class _PhotoUploadCaptionSheetState extends State<_PhotoUploadCaptionSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottom = MediaQuery.paddingOf(context).bottom;
-
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        AppMetrics.horizontalPadding,
-        16,
-        AppMetrics.horizontalPadding,
-        16 + bottom,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text('Add to gallery', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 200),
-                child: Image.file(widget.imageFile, fit: BoxFit.cover),
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppMetrics.fieldRadius),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxHeight: AppMetrics.sheetImagePreviewMaxHeight,
               ),
+              child: Image.file(widget.imageFile, fit: BoxFit.cover),
             ),
-            const SizedBox(height: 12),
-            AppSemantics.textField(
-              'gallery_upload_caption',
-              AppTextField(
-                kind: AppTextInputKind.prose,
-                controller: _controller,
-                maxLines: 3,
-                maxLength: 2000,
-                decoration: const InputDecoration(
-                  hintText: 'Add a caption…',
-                  counterText: '',
-                ),
-                onSubmitted: (_) => _post(),
+          ),
+          SizedBox(height: AppSpacing.md),
+          AppSemantics.textField(
+            'gallery_upload_caption',
+            AppTextField(
+              kind: AppTextInputKind.prose,
+              controller: _controller,
+              maxLines: 3,
+              maxLength: 2000,
+              decoration: const InputDecoration(
+                hintText: 'Add a caption…',
+                counterText: '',
               ),
+              onSubmitted: (_) => _post(),
             ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: AppSemantics.button(
-                    'gallery_upload_skip',
-                    OutlinedButton(onPressed: _skip, child: const Text('Skip')),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: AppSemantics.button(
-                    'gallery_upload_post',
-                    FilledButton(onPressed: _post, child: const Text('Post')),
-                  ),
-                ),
-              ],
+          ),
+          SizedBox(height: AppSpacing.md),
+          AppResponsiveButtonPair(
+            start: AppSemantics.button(
+              'gallery_upload_skip',
+              OutlinedButton(onPressed: _skip, child: const Text('Skip')),
             ),
-          ],
-        ),
+            end: AppSemantics.button(
+              'gallery_upload_post',
+              FilledButton(onPressed: _post, child: const Text('Post')),
+            ),
+          ),
+        ],
       ),
     );
   }

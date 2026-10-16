@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+
+import '../../../core/widgets/app_modal_sheet.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -158,8 +160,10 @@ class _EventFormScreenState extends State<EventFormScreen> {
     final baby = _baby;
     final id = widget.eventId;
     if (baby == null || id == null) return;
-    final detail =
-        await context.read<CalendarRepository>().fetchEvent(baby.id, id);
+    final detail = await context.read<CalendarRepository>().fetchEvent(
+      baby.id,
+      id,
+    );
     _title.text = detail.title;
     _description.text = detail.description ?? '';
     _location.text = detail.location ?? '';
@@ -189,10 +193,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
   }
 
   Future<void> _pickTime() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: _time,
-    );
+    final picked = await showTimePicker(context: context, initialTime: _time);
     if (picked != null) setState(() => _time = picked);
   }
 
@@ -205,9 +206,10 @@ class _EventFormScreenState extends State<EventFormScreen> {
     );
     final photos = page.items;
     if (!mounted) return;
-    final picked = await showModalBottomSheet<({String? id, String? thumbUrl})?>(
+    final picked = await showAppModalSheet<({String? id, String? thumbUrl})?>(
       context: context,
-      builder: (context) => SafeArea(
+      title: 'Cover photo',
+      bodyBuilder: (context) => SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -227,9 +229,9 @@ class _EventFormScreenState extends State<EventFormScreen> {
                 if (!context.mounted) return;
                 final id = await DisplayPhotoUpload(context.read<ApiClient>())
                     .uploadGalleryPhoto(
-                  babyProfileId: baby.id,
-                  imageFile: File(file.path),
-                );
+                      babyProfileId: baby.id,
+                      imageFile: File(file.path),
+                    );
                 if (!context.mounted) return;
                 notifyGalleryDataChanged(context);
                 Navigator.pop(context, (id: id, thumbUrl: null));
@@ -250,10 +252,10 @@ class _EventFormScreenState extends State<EventFormScreen> {
                       Padding(
                         padding: const EdgeInsets.all(8),
                         child: InkWell(
-                          onTap: () => Navigator.pop(
-                            context,
-                            (id: p.id, thumbUrl: p.thumbUrl),
-                          ),
+                          onTap: () => Navigator.pop(context, (
+                            id: p.id,
+                            thumbUrl: p.thumbUrl,
+                          )),
                           child: _CoverThumb(photo: p),
                         ),
                       ),
@@ -293,7 +295,10 @@ class _EventFormScreenState extends State<EventFormScreen> {
       _title.text,
     );
     if (baby == null) {
-      AppSnackBar.showAlert(context, 'Baby profile is still loading. Try again.');
+      AppSnackBar.showAlert(
+        context,
+        'Baby profile is still loading. Try again.',
+      );
       return;
     }
     if (title.isEmpty) {
@@ -421,7 +426,9 @@ class _EventFormScreenState extends State<EventFormScreen> {
           PrototypeEventCoverUpload(
             onTap: _baby == null ? null : _pickCoverPhoto,
             previewImageUrl: _coverPhotoPreviewUrl,
-            cacheKey: _coverPhotoId != null ? 'event-cover-$_coverPhotoId' : null,
+            cacheKey: _coverPhotoId != null
+                ? 'event-cover-$_coverPhotoId'
+                : null,
             onSignedUrlError: _onCoverUrlError,
           ),
           const SizedBox(height: 8),

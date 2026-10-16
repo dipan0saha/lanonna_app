@@ -1,7 +1,5 @@
 import 'package:lanonna/l10n/app_localizations.dart';
 
-import '../data/models/calendar_models.dart';
-
 String rsvpStatusLabel(AppLocalizations l10n, String status) {
   switch (status) {
     case 'going':
@@ -13,15 +11,4 @@ String rsvpStatusLabel(AppLocalizations l10n, String status) {
     default:
       return status.replaceAll('_', ' ');
   }
-}
-
-String rsvpSummaryViewAllTeaser(AppLocalizations l10n, RsvpSummary summary) {
-  String segment(int count, String status) => l10n.eventRsvpCountWithStatus(
-        count,
-        rsvpStatusLabel(l10n, status),
-      );
-  return l10n.eventRsvpViewAllTeaser(
-    segment(summary.going, 'going'),
-    segment(summary.maybe, 'maybe'),
-  );
 }

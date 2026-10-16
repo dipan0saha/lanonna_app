@@ -39,15 +39,12 @@ class InboxNotificationRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ActivitySummaryText(
-                  summary: summary,
-                  actorDisplayName: actor,
-                ),
+                ActivitySummaryText(summary: summary, actorDisplayName: actor),
                 if (notification.title.trim().isNotEmpty &&
                     notification.body.trim().isNotEmpty &&
                     actor != notification.title.trim())
                   Padding(
-                    padding: const EdgeInsets.only(top: 2),
+                    padding: const EdgeInsets.only(top: AppSpacing.hairline),
                     child: Text(
                       notification.title.trim(),
                       style: context.textStyles.labelSmall?.copyWith(
@@ -61,7 +58,7 @@ class InboxNotificationRow extends StatelessWidget {
           if (notification.readAt == null) ...[
             SizedBox(width: AppSpacing.sm),
             const Padding(
-              padding: EdgeInsets.only(top: 4),
+              padding: EdgeInsets.only(top: AppSpacing.xxs),
               child: AppUnreadDot(),
             ),
           ],

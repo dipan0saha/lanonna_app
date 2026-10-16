@@ -5,6 +5,7 @@ import 'package:lanonna/core/network/connectivity_service.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/features/fun/presentation/fun_screen.dart';
 import 'package:lanonna/features/home/data/home_refresh_signal.dart';
+import 'package:lanonna/features/home/data/home_repository.dart';
 import 'package:lanonna/features/home/data/selected_baby_store.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -28,7 +29,7 @@ void main() {
     await tester.pumpWidget(
       MultiProvider(
         providers: [
-          Provider(create: (_) => FakeHomeRepository(baby)),
+          Provider<HomeRepository>(create: (_) => FakeHomeRepository(baby)),
           ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
           Provider<HomeRefreshSignal>(create: (_) => HomeRefreshSignal()),
           ChangeNotifierProvider<ConnectivityService>(

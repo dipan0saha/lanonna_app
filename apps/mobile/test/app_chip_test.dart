@@ -5,7 +5,9 @@ import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/core/widgets/app_chip.dart';
 
 void main() {
-  testWidgets('AppToggleChip shows plus prefix and toggles selection', (tester) async {
+  testWidgets('AppToggleChip shows plus prefix and toggles selection', (
+    tester,
+  ) async {
     var selected = false;
     await tester.pumpWidget(
       MaterialApp(
@@ -71,7 +73,9 @@ void main() {
     expect(liam.style?.color, AppColors.primaryDark);
   });
 
-  testWidgets('AppRemovableChip onRemove fires from close control', (tester) async {
+  testWidgets('AppRemovableChip onRemove fires from close control', (
+    tester,
+  ) async {
     var removed = false;
     await tester.pumpWidget(
       MaterialApp(
@@ -88,19 +92,5 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.close));
     expect(removed, isTrue);
-  });
-
-  testWidgets('AppBadgeChip is not a button', (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.light,
-        home: Scaffold(
-          body: AppBadgeChip(label: '3 comments', dense: true),
-        ),
-      ),
-    );
-
-    expect(find.byType(GestureDetector), findsNothing);
-    expect(find.text('3 comments'), findsOneWidget);
   });
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_metrics.dart';
+
 import 'package:go_router/go_router.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
@@ -21,13 +23,8 @@ import '../../../core/domain/baby_list_subtitle.dart';
 import '../../../core/time/app_date_time.dart';
 
 Future<void> showBabySwitcherSheet(BuildContext context) async {
-  await showModalBottomSheet<void>(
+  await presentAppModalSheet<void>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: AppColors.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-    ),
     builder: (ctx) => const _BabySwitcherSheetBody(),
   );
 }
@@ -151,92 +148,89 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-          if (_loading)
-            const Padding(
-              padding: EdgeInsets.all(24),
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else if (_babies.isEmpty)
-            const Text('No baby profiles yet.')
-          else
-            for (final baby in _babies)
-              AppSemantics.button(
-                'baby_switcher_${baby.id.replaceAll('-', '_')}',
-                ListTile(
-                  leading: BabyProfileAvatar(baby: baby),
-                  title: Text(baby.name),
-                  subtitle: Text(
-                    babyListSubtitle(
-                      baby,
-                      localeNameForFormatting(context),
+            if (_loading)
+              const Padding(
+                padding: EdgeInsets.all(AppSpacing.xxl),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_babies.isEmpty)
+              const Text('No baby profiles yet.')
+            else
+              for (final baby in _babies)
+                AppSemantics.button(
+                  'baby_switcher_${baby.id.replaceAll('-', '_')}',
+                  ListTile(
+                    leading: BabyProfileAvatar(baby: baby),
+                    title: Text(baby.name),
+                    subtitle: Text(
+                      babyListSubtitle(baby, localeNameForFormatting(context)),
                     ),
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      MembershipRolePill(isOwner: baby.role == 'owner'),
-                      SizedBox(width: AppSpacing.xs),
-                      if (baby.id == selectedId)
-                        const Icon(
-                          Icons.check,
-                          color: AppColors.primaryDark,
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        MembershipRolePill(isOwner: baby.role == 'owner'),
+                        SizedBox(width: AppSpacing.xs),
+                        if (baby.id == selectedId)
+                          const Icon(Icons.check, color: AppColors.primaryDark),
+                        PopupMenuButton<String>(
+                          icon: const Icon(
+                            Icons.more_vert,
+                            size: AppMetrics.trailingIconSize,
+                          ),
+                          onSelected: (value) async {
+                            if (value == 'leave') {
+                              await _leaveBaby(baby);
+                              return;
+                            }
+                            Navigator.of(context).pop();
+                            if (value == 'edit') {
+                              context.push('/baby/${baby.id}/edit');
+                            } else if (value == 'followers') {
+                              context.push('/baby/${baby.id}/followers');
+                            }
+                          },
+                          itemBuilder: (ctx) {
+                            final l10n = AppLocalizations.of(ctx)!;
+                            return [
+                              if (baby.role == 'owner') ...[
+                                const PopupMenuItem(
+                                  value: 'edit',
+                                  child: Text('Edit baby'),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'followers',
+                                  child: Text('Manage followers'),
+                                ),
+                              ],
+                              PopupMenuItem(
+                                value: 'leave',
+                                child: Text(l10n.memberLeaveProfile),
+                              ),
+                            ];
+                          },
                         ),
-                      PopupMenuButton<String>(
-                        icon: const Icon(Icons.more_vert, size: 20),
-                        onSelected: (value) async {
-                          if (value == 'leave') {
-                            await _leaveBaby(baby);
-                            return;
-                          }
-                          Navigator.of(context).pop();
-                          if (value == 'edit') {
-                            context.push('/baby/${baby.id}/edit');
-                          } else if (value == 'followers') {
-                            context.push('/baby/${baby.id}/followers');
-                          }
-                        },
-                        itemBuilder: (ctx) {
-                          final l10n = AppLocalizations.of(ctx)!;
-                          return [
-                            if (baby.role == 'owner') ...[
-                              const PopupMenuItem(
-                                value: 'edit',
-                                child: Text('Edit baby'),
-                              ),
-                              const PopupMenuItem(
-                                value: 'followers',
-                                child: Text('Manage followers'),
-                              ),
-                            ],
-                            PopupMenuItem(
-                              value: 'leave',
-                              child: Text(l10n.memberLeaveProfile),
-                            ),
-                          ];
-                        },
-                      ),
-                    ],
+                      ],
+                    ),
+                    onTap: () => _select(baby),
                   ),
-                  onTap: () => _select(baby),
                 ),
-              ),
-          const Divider(height: 24),
-          ListTile(
-            leading: const Icon(Icons.person_outline),
-            title: const Text('My Account'),
-            onTap: () {
-              Navigator.of(context).pop();
-              context.push('/profile');
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.add),
-            title: const Text('Add New Baby'),
-            onTap: () {
-              Navigator.of(context).pop();
-              context.push('/baby/create');
-            },
-          ),
+            const Divider(height: AppSpacing.xxl),
+            ListTile(
+              leading: const Icon(Icons.person_outline),
+              title: const Text('My Account'),
+              onTap: () {
+                Navigator.of(context).pop();
+                context.push('/profile');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.add),
+              title: const Text('Add New Baby'),
+              onTap: () {
+                Navigator.of(context).pop();
+                context.push('/baby/create');
+              },
+            ),
           ],
         ),
       ),

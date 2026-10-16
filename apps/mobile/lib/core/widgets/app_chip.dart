@@ -166,65 +166,11 @@ class AppRemovableChip extends StatelessWidget {
               behavior: HitTestBehavior.opaque,
               child: Padding(
                 padding: const EdgeInsets.all(2),
-                child: Icon(
-                  Icons.close,
-                  size: 16,
-                  color: colors.foreground,
-                ),
+                child: Icon(Icons.close, size: 16, color: colors.foreground),
               ),
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Read-only meta pill (role, counts).
-class AppBadgeChip extends StatelessWidget {
-  const AppBadgeChip({
-    super.key,
-    required this.label,
-    this.accent = AppChipAccent.neutral,
-    this.dense = false,
-  });
-
-  final String label;
-  final AppChipAccent accent;
-  final bool dense;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = accent == AppChipAccent.neutral
-        ? const _ChipColors(
-            background: AppColors.surface,
-            border: AppColors.border,
-            foreground: AppColors.textPrimary,
-          )
-        : _filledAccentColors(accent);
-    final vertical = dense
-        ? AppMetrics.appChipDenseVerticalPadding
-        : AppMetrics.appChipVerticalPadding;
-
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: AppMetrics.appChipHorizontalPadding,
-        vertical: vertical,
-      ),
-      decoration: BoxDecoration(
-        color: colors.background,
-        borderRadius: BorderRadius.circular(AppMetrics.buttonRadius),
-        border: Border.all(
-          color: colors.border,
-          width: AppMetrics.appChipBorderWidth,
-        ),
-      ),
-      child: Text(
-        label,
-        style: context.textStyles.bodySmall?.copyWith(
-          fontWeight: FontWeight.w600,
-          color: colors.foreground,
-        ),
       ),
     );
   }

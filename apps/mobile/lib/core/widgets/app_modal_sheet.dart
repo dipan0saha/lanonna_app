@@ -6,12 +6,12 @@ import '../theme/la_nonna_theme.dart';
 import 'app_cancel_text_button.dart';
 import 'app_sheet_handle.dart';
 
-/// Shared modal bottom sheet: handle, title, optional subtitle, Close, and body.
-Future<T?> showAppModalSheet<T>({
+/// Presents any sheet body with the app's shared bottom-sheet chrome
+/// (surface colour, top radius). Prefer [showAppModalSheet] unless the body
+/// builds its own [AppModalSheet] (e.g. a stateful body).
+Future<T?> presentAppModalSheet<T>({
   required BuildContext context,
-  required String title,
-  String? subtitle,
-  required WidgetBuilder bodyBuilder,
+  required WidgetBuilder builder,
   bool isScrollControlled = true,
   bool useRootNavigator = true,
 }) {
@@ -25,9 +25,28 @@ Future<T?> showAppModalSheet<T>({
         top: Radius.circular(AppMetrics.surfaceRadius),
       ),
     ),
+    builder: builder,
+  );
+}
+
+/// Shared modal bottom sheet: handle, title, optional subtitle, Close, and body.
+Future<T?> showAppModalSheet<T>({
+  required BuildContext context,
+  required String title,
+  String? subtitle,
+  required WidgetBuilder bodyBuilder,
+  bool showClose = true,
+  bool isScrollControlled = true,
+  bool useRootNavigator = true,
+}) {
+  return presentAppModalSheet<T>(
+    context: context,
+    isScrollControlled: isScrollControlled,
+    useRootNavigator: useRootNavigator,
     builder: (ctx) => AppModalSheet(
       title: title,
       subtitle: subtitle,
+      showClose: showClose,
       child: bodyBuilder(ctx),
     ),
   );
@@ -38,16 +57,19 @@ class AppModalSheet extends StatelessWidget {
     super.key,
     required this.title,
     this.subtitle,
+    this.showClose = true,
     required this.child,
   });
 
   final String title;
   final String? subtitle;
+  final bool showClose;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final bottom = MediaQuery.paddingOf(context).bottom;
+    // SafeArea covers the system inset; viewInsets lifts content above the keyboard.
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
     final styles = context.textStyles;
     return SafeArea(
       child: Padding(
@@ -55,7 +77,7 @@ class AppModalSheet extends StatelessWidget {
           AppMetrics.horizontalPadding,
           AppSpacing.sm,
           AppMetrics.horizontalPadding,
-          AppSpacing.md + bottom,
+          AppSpacing.md + keyboard,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -72,12 +94,14 @@ class AppModalSheet extends StatelessWidget {
               ),
             ],
             SizedBox(height: AppSpacing.sm),
-            child,
-            SizedBox(height: AppSpacing.sm),
-            AppCancelTextButton(
-              label: 'Close',
-              onPressed: () => Navigator.of(context).pop(),
-            ),
+            Flexible(child: child),
+            if (showClose) ...[
+              SizedBox(height: AppSpacing.sm),
+              AppCancelTextButton(
+                label: 'Close',
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
           ],
         ),
       ),

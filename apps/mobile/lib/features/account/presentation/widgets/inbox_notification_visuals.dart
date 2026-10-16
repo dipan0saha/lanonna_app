@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_metrics.dart';
+import '../../../../core/widgets/tinted_icon_square.dart';
+
+
 
 class InboxNotificationVisual {
   const InboxNotificationVisual({required this.icon, this.emoji});
@@ -66,25 +67,13 @@ InboxNotificationVisual inboxNotificationVisual({
 
 /// Leading tinted square for an inbox row.
 Widget inboxNotificationLeading(InboxNotificationVisual visual) {
-  return Container(
-    width: AppMetrics.tintedIconSquareSize,
-    height: AppMetrics.tintedIconSquareSize,
-    decoration: BoxDecoration(
-      color: AppColors.sageTint,
-      borderRadius: BorderRadius.circular(AppMetrics.tintedIconSquareRadius),
-    ),
-    alignment: Alignment.center,
-    child: visual.emoji != null
-        ? Text(visual.emoji!, style: const TextStyle(fontSize: 18))
-        : Icon(
-            visual.icon,
-            size: AppMetrics.tintedIconSquareIconSize,
-            color: AppColors.primaryDark,
-          ),
-  );
+  return TintedIconSquare(icon: visual.icon, emoji: visual.emoji);
 }
 
-String? inboxNotificationActorName({required String title, required String body}) {
+String? inboxNotificationActorName({
+  required String title,
+  required String body,
+}) {
   final trimmedTitle = title.trim();
   if (trimmedTitle.isNotEmpty &&
       !_genericNotificationTitles.contains(trimmedTitle.toLowerCase())) {

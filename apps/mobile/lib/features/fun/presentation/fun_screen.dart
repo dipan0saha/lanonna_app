@@ -121,7 +121,9 @@ class _FunScreenState extends State<FunScreen>
             onAction: () => context.go('/gallery'),
           );
         }
-        return _segment == 0 ? NamesTab(baby: _baby!) : PredictionsTab(baby: _baby!);
+        return _segment == 0
+            ? NamesTab(baby: _baby!)
+            : PredictionsTab(baby: _baby!);
     }
   }
 
@@ -130,41 +132,44 @@ class _FunScreenState extends State<FunScreen>
     return AppSemantics.container(
       'fun_hub',
       Scaffold(
-      key: const Key('gamification_screen'),
-      backgroundColor: AppColors.background,
-      body: ShellTabLayout(
-        body: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                AppMetrics.horizontalPadding,
-                0,
-                AppMetrics.horizontalPadding,
-                8,
-              ),
-              child: Text('Family Fun', style: context.textStyles.headlineSmall),
-            ),
-            if (_baby?.lifecycleStatus != 'born')
+        key: const Key('gamification_screen'),
+        backgroundColor: AppColors.background,
+        body: ShellTabLayout(
+          body: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: OnboardingSegmentedControl(
-                  style: OnboardingSegmentedControlStyle.mini,
-                  leftLabel: 'Names',
-                  rightLabel: 'Predictions',
-                  isLeftSelected: _segment == 0,
-                  onLeftTap: () => setState(() => _segment = 0),
-                  onRightTap: () => setState(() => _segment = 1),
+                padding: EdgeInsets.fromLTRB(
+                  AppMetrics.horizontalPadding,
+                  0,
+                  AppMetrics.horizontalPadding,
+                  8,
+                ),
+                child: Text(
+                  'Family Fun',
+                  style: context.textStyles.headlineSmall,
                 ),
               ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: _funBody(),
-            ),
-          ],
+              if (_baby?.lifecycleStatus != 'born')
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xl,
+                  ),
+                  child: OnboardingSegmentedControl(
+                    style: OnboardingSegmentedControlStyle.mini,
+                    leftLabel: 'Names',
+                    rightLabel: 'Predictions',
+                    isLeftSelected: _segment == 0,
+                    onLeftTap: () => setState(() => _segment = 0),
+                    onRightTap: () => setState(() => _segment = 1),
+                  ),
+                ),
+              const SizedBox(height: 8),
+              Expanded(child: _funBody()),
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 }

@@ -179,4 +179,10 @@ abstract final class AppMetrics {
 
   /// Next Up date block width (prototype `.next-up .date`).
   static const double nextUpDateBlockWidth = 48;
+
+  /// Max height of an image preview inside a bottom sheet.
+  static const double sheetImagePreviewMaxHeight = 200;
+
+  /// Floating prev/next control over the photo hero (prototype `.photo-nav-hint`).
+  static const double photoNavButtonElevation = 2;
 }

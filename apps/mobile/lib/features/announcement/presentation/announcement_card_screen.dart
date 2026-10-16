@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../core/widgets/app_empty_state.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -106,7 +108,12 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
     }
     final d = _detail;
     if (d == null) {
-      return const Scaffold(body: Center(child: Text('No announcement yet')));
+      return const Scaffold(
+        body: AppEmptyState(
+          icon: Icons.celebration_outlined,
+          title: 'No announcement yet',
+        ),
+      );
     }
     return PrototypeSubpageScaffold(
       title: 'Announcement',

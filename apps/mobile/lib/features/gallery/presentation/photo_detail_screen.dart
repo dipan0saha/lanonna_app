@@ -176,7 +176,10 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       await _appendPhotoIdPage();
     }
     var idx = _photoIds.indexOf(widget.photoId);
-    while (mounted && _photoIdListHasMore && idx >= 0 && idx >= _photoIds.length - 1) {
+    while (mounted &&
+        _photoIdListHasMore &&
+        idx >= 0 &&
+        idx >= _photoIds.length - 1) {
       await _appendPhotoIdPage();
       idx = _photoIds.indexOf(widget.photoId);
     }
@@ -406,12 +409,12 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     context.replace(GalleryRoutes.photoDetail(_photoIds[next]));
   }
 
-  bool get _showPhotoNav {
+  bool get _hasPreviousPhoto => _photoIds.indexOf(widget.photoId) > 0;
+
+  bool get _hasNextPhoto {
     final idx = _photoIds.indexOf(widget.photoId);
     if (idx < 0) return false;
-    if (idx > 0) return true;
-    if (idx < _photoIds.length - 1) return true;
-    return _photoIdListHasMore;
+    return idx < _photoIds.length - 1 || _photoIdListHasMore;
   }
 
   @override
@@ -478,7 +481,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                             color: Colors.grey.shade300,
                             child: const Center(child: Text('Processing…')),
                           ),
-                        if (_showPhotoNav) ...[
+                        if (_hasPreviousPhoto)
                           Positioned(
                             left: 0,
                             right: 0,
@@ -492,6 +495,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                               ),
                             ),
                           ),
+                        if (_hasNextPhoto)
                           Positioned(
                             left: 0,
                             right: 0,
@@ -505,7 +509,6 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                               ),
                             ),
                           ),
-                        ],
                       ],
                     ),
                   ),
@@ -734,14 +737,19 @@ class _PhotoHeroNavButton extends StatelessWidget {
     return AppSemantics.button(
       semanticsId,
       Material(
-        color: AppColors.textPrimary.withValues(alpha: 0.45),
+        color: AppColors.surface,
         shape: const CircleBorder(),
+        elevation: AppMetrics.photoNavButtonElevation,
         child: InkWell(
           customBorder: const CircleBorder(),
           onTap: onPressed,
           child: Padding(
-            padding: const EdgeInsets.all(8),
-            child: Icon(icon, color: AppColors.surface, size: 22),
+            padding: EdgeInsets.all(AppSpacing.xs),
+            child: Icon(
+              icon,
+              color: AppColors.textPrimary,
+              size: AppMetrics.trailingIconSize,
+            ),
           ),
         ),
       ),
