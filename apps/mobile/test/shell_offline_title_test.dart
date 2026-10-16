@@ -4,6 +4,7 @@ import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/network/connectivity_service.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/features/account/data/notifications_repository.dart';
+import 'package:lanonna/features/account/data/notifications_unread_signal.dart';
 import 'package:lanonna/features/home/data/home_refresh_signal.dart';
 import 'package:lanonna/features/home/data/home_repository.dart';
 import 'package:lanonna/features/home/data/selected_baby_store.dart';
@@ -44,6 +45,9 @@ void main() {
           ),
           Provider<NotificationsRepository>(
             create: (_) => FakeNotificationsRepository(),
+          ),
+          ChangeNotifierProvider<NotificationsUnreadSignal>(
+            create: (_) => NotificationsUnreadSignal(),
           ),
         ],
         child: MaterialApp(

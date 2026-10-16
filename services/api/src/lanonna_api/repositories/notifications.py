@@ -53,3 +53,18 @@ def mark_notification_read(notification_id: uuid.UUID, firebase_uid: str) -> boo
             (notification_id, firebase_uid),
         ).fetchone()
     return row is not None
+
+
+def mark_all_notifications_read(firebase_uid: str) -> int:
+    """Mark every unread inbox row read for this user; returns rows updated."""
+    with get_connection() as conn:
+        rows = conn.execute(
+            """
+            UPDATE notifications
+            SET read_at = now()
+            WHERE firebase_uid = %s AND read_at IS NULL
+            RETURNING id
+            """,
+            (firebase_uid,),
+        ).fetchall()
+    return len(rows)

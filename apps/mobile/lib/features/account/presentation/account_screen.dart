@@ -23,6 +23,8 @@ import '../../../core/time/app_date_time.dart';
 import '../../home/domain/app_routes.dart';
 import '../../onboarding/domain/onboarding_routes.dart';
 import '../data/account_repository.dart';
+import '../data/notifications_repository.dart';
+import '../domain/notification_digest_display.dart';
 import 'widgets/account_engagement_stat_row.dart';
 import 'widgets/account_profile_card.dart';
 import 'widgets/account_storage_card.dart';
@@ -36,6 +38,7 @@ class AccountScreen extends StatefulWidget {
 
 class _AccountScreenState extends State<AccountScreen> {
   AccountPayload? _payload;
+  String? _digestSummary;
   String? _loadError;
   var _loading = true;
   AccountProfileUpdates? _profileUpdates;
@@ -79,9 +82,17 @@ class _AccountScreenState extends State<AccountScreen> {
       _loadError = null;
     });
     try {
-      final payload = await context.read<AccountRepository>().fetchAccount();
+      final accountRepo = context.read<AccountRepository>();
+      final notificationsRepo = context.read<NotificationsRepository>();
+      final results = await Future.wait([
+        accountRepo.fetchAccount(),
+        notificationsRepo.fetchPreferences(),
+      ]);
+      final payload = results[0] as AccountPayload;
+      final prefs = results[1] as NotificationPreferences;
       setState(() {
         _payload = payload;
+        _digestSummary = notificationDigestSummaryLabel(prefs.digest);
         _loading = false;
       });
     } catch (e) {
@@ -234,6 +245,26 @@ class _AccountScreenState extends State<AccountScreen> {
                           ),
                           onTap: () => context.push('/settings'),
                         ),
+                        if (_digestSummary != null)
+                          AppSemantics.button(
+                            'account_digest_frequency',
+                            ListTile(
+                              title: const Text('Digest frequency'),
+                              subtitle: Text(_digestSummary!),
+                              trailing: const Icon(
+                                Icons.chevron_right,
+                                color: AppColors.muted,
+                              ),
+                              onTap: () async {
+                                await context.push(
+                                  '/account/notification-preferences',
+                                );
+                                if (!mounted) return;
+                                await _load();
+                              },
+                            ),
+                            label: 'Digest frequency, $_digestSummary',
+                          ),
                         if (showOwnerPrefs)
                           AppSemantics.button(
                             'account_manage_followers',

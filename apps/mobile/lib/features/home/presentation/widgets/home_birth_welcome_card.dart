@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/media/cached_signed_image.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
+import '../../../../core/widgets/app_semantics.dart';
+import '../../../announcement/presentation/announcement_share.dart';
 import '../../data/models/home_summary.dart';
 
 class HomeBirthWelcomeCard extends StatelessWidget {
@@ -72,6 +75,24 @@ class HomeBirthWelcomeCard extends StatelessWidget {
                 child: OutlinedButton(
                   onPressed: () => context.push('/baby/$babyId/announcement'),
                   child: const Text('View card'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: AppSemantics.button(
+                  'home_share_announcement',
+                  OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primaryDark,
+                      side: const BorderSide(color: AppColors.primaryDark),
+                    ),
+                    onPressed: () => AnnouncementShare.shareBabyAnnouncement(
+                      context,
+                      babyId,
+                    ),
+                    child: const Text('Share to Instagram'),
+                  ),
+                  label: 'Share announcement to Instagram',
                 ),
               ),
             ],

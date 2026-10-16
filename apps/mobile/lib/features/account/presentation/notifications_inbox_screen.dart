@@ -3,9 +3,12 @@ import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
 import '../../../core/router/deep_link_navigation.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_semantics.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../data/notifications_repository.dart';
+import '../data/notifications_unread_signal.dart';
 
 class NotificationsInboxScreen extends StatefulWidget {
   const NotificationsInboxScreen({super.key});
@@ -18,7 +21,14 @@ class NotificationsInboxScreen extends StatefulWidget {
 class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
   List<InboxNotification> _items = [];
   var _loading = true;
+  var _markingAllRead = false;
   String? _loadError;
+
+  bool get _hasUnread => _items.any((n) => n.readAt == null);
+
+  void _notifyUnreadChanged() {
+    context.read<NotificationsUnreadSignal>().notifyUnreadChanged();
+  }
 
   @override
   void initState() {
@@ -47,12 +57,47 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
     }
   }
 
+  Future<void> _markAllRead() async {
+    if (_markingAllRead || !_hasUnread) return;
+    setState(() => _markingAllRead = true);
+    try {
+      await context.read<NotificationsRepository>().markAllRead();
+      if (!mounted) return;
+      _notifyUnreadChanged();
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      AppSnackBar.showAlert(context, apiErrorMessage(e));
+    } finally {
+      if (mounted) setState(() => _markingAllRead = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppSemantics.container(
       'notifications_inbox',
       PrototypeSubpageScaffold(
         title: 'Notifications',
+        actions: _loading || _loadError != null || !_hasUnread
+            ? null
+            : [
+                AppSemantics.button(
+                  'notifications_mark_all_read',
+                  TextButton(
+                    onPressed: _markingAllRead ? null : _markAllRead,
+                    child: Text(
+                      'Mark all read',
+                      style: TextStyle(
+                        color: _markingAllRead
+                            ? AppColors.muted
+                            : AppColors.primaryDark,
+                      ),
+                    ),
+                  ),
+                  label: 'Mark all read',
+                ),
+              ],
         body: _loading
             ? const Center(child: CircularProgressIndicator())
             : _loadError != null
@@ -96,6 +141,7 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
                             await context
                                 .read<NotificationsRepository>()
                                 .markRead(n.id);
+                            _notifyUnreadChanged();
                           }
                           if (n.deepLink != null && n.deepLink!.isNotEmpty) {
                             if (!context.mounted) return;
