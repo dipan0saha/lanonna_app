@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/core/widgets/activity/activity_summary_text.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/core/widgets/activity/activity_feed_card.dart';
 import 'package:lanonna/features/home/data/models/home_summary.dart';
@@ -31,9 +32,22 @@ void main() {
     expect(find.byIcon(Icons.chat_bubble_outline), findsOneWidget);
     expect(find.textContaining('Grandma Sue'), findsOneWidget);
     expect(find.textContaining('commented on'), findsOneWidget);
-    final rich = tester.widget<RichText>(find.byType(RichText));
-    final actorSpan = (rich.text as TextSpan).children!.first as TextSpan;
-    expect(actorSpan.style?.fontWeight, FontWeight.w700);
+    final rich = tester.widget<RichText>(
+      find.descendant(
+        of: find.byType(ActivitySummaryText),
+        matching: find.byType(RichText),
+      ),
+    );
+    TextSpan? actorSpan;
+    rich.text.visitChildren((span) {
+      if (span is TextSpan && span.text != null) {
+        actorSpan = span;
+        return false;
+      }
+      return true;
+    });
+    expect(actorSpan?.text?.trim(), 'Grandma Sue');
+    expect(actorSpan?.style?.fontWeight, FontWeight.w700);
     expect(
       find.bySemanticsLabel(RegExp('Grandma Sue commented on')),
       findsOneWidget,

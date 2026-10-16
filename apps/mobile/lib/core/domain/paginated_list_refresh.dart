@@ -1,3 +1,13 @@
+/// One fetched page of an offset-paginated list.
+typedef PaginatedPage<T> = ({List<T> items, bool hasMore});
+
+/// Fetches [limit] rows starting at [offset].
+typedef PaginatedPageFetcher<T> =
+    Future<PaginatedPage<T>> Function({
+      required int limit,
+      required int offset,
+    });
+
 /// Result of refreshing a paginated list while preserving scroll depth.
 class PaginatedListRefreshResult<T> {
   const PaginatedListRefreshResult({
@@ -11,55 +21,72 @@ class PaginatedListRefreshResult<T> {
   final bool hasMore;
 }
 
-/// Merges a freshly fetched first page into [currentItems] when new rows appear
-/// at the head (e.g. a new gallery photo). Otherwise re-fetches the full loaded
-/// window so metadata updates without dropping rows.
-PaginatedListRefreshResult<T> mergePaginatedListRefresh<T>({
+/// Refreshes an offset-paginated, newest-first list after a mutation without
+/// dropping rows the user already scrolled to.
+///
+/// Fetches the first page once. When it starts with rows the list has not seen
+/// and still overlaps the current list, those rows are prepended (the offset
+/// cursor stays valid because the server shifted by exactly that many rows).
+/// Otherwise the loaded window is re-fetched, reusing the first page as
+/// offset 0, so edits and deletions are reflected.
+Future<PaginatedListRefreshResult<T>> refreshPaginatedWindow<T>({
+  required PaginatedPageFetcher<T> fetchPage,
+  required int pageSize,
+  required List<T> currentItems,
+  required int loadedCount,
+  required bool previousHasMore,
+  required Object Function(T item) idOf,
+}) async {
+  final first = await fetchPage(limit: pageSize, offset: 0);
+  final merged = mergeNewHeadItems(
+    currentItems: currentItems,
+    firstPage: first.items,
+    previousHasMore: previousHasMore,
+    idOf: idOf,
+  );
+  if (merged != null) return merged;
+
+  final window = <T>[...first.items];
+  var hasMore = first.hasMore;
+  while (hasMore && window.length < loadedCount) {
+    final limit = (loadedCount - window.length).clamp(1, pageSize);
+    final page = await fetchPage(limit: limit, offset: window.length);
+    window.addAll(page.items);
+    hasMore = page.hasMore;
+    if (page.items.isEmpty) break;
+  }
+  return PaginatedListRefreshResult(
+    items: window,
+    loadedCount: window.length,
+    hasMore: hasMore,
+  );
+}
+
+/// Prepends rows at the head of [firstPage] that [currentItems] lacks, and
+/// applies fresh copies of overlapping rows. Returns null when there are no new
+/// head rows, or when the first page has no overlap (a gap may exist), in which
+/// case the caller must re-fetch the window.
+PaginatedListRefreshResult<T>? mergeNewHeadItems<T>({
   required List<T> currentItems,
   required List<T> firstPage,
-  required bool firstPageHasMore,
-  required int pageSize,
-  required int previousLoadedCount,
   required bool previousHasMore,
-  required Object idOf(T item),
-  List<T>? fullReload,
-  bool? fullReloadHasMore,
+  required Object Function(T item) idOf,
 }) {
+  if (currentItems.isEmpty) return null;
   final currentIds = currentItems.map(idOf).toSet();
-  final newAtHead =
-      firstPage.where((item) => !currentIds.contains(idOf(item))).toList();
+  final headCount = firstPage
+      .takeWhile((item) => !currentIds.contains(idOf(item)))
+      .length;
+  if (headCount == 0 || headCount == firstPage.length) return null;
 
-  if (newAtHead.isNotEmpty) {
-    final merged = <T>[...newAtHead, ...currentItems];
-    final seen = <Object>{};
-    final deduped = <T>[];
-    for (final item in merged) {
-      final id = idOf(item);
-      if (seen.add(id)) {
-        deduped.add(item);
-      }
-    }
-    final updates = <Object, T>{for (final item in firstPage) idOf(item): item};
-    for (var i = 0; i < deduped.length; i++) {
-      final updated = updates[idOf(deduped[i])];
-      if (updated != null) {
-        deduped[i] = updated;
-      }
-    }
-    return PaginatedListRefreshResult(
-      items: deduped,
-      loadedCount: deduped.length,
-      hasMore: previousHasMore,
-    );
-  }
-
-  final refreshed = fullReload ?? firstPage;
-  final loaded = refreshed.length;
-  final hasMore = fullReloadHasMore ??
-      (loaded >= pageSize && firstPageHasMore);
+  final updates = <Object, T>{for (final item in firstPage) idOf(item): item};
+  final items = <T>[
+    ...firstPage.take(headCount),
+    for (final item in currentItems) updates[idOf(item)] ?? item,
+  ];
   return PaginatedListRefreshResult(
-    items: refreshed,
-    loadedCount: loaded,
-    hasMore: hasMore,
+    items: items,
+    loadedCount: items.length,
+    hasMore: previousHasMore,
   );
 }

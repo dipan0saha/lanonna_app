@@ -20,7 +20,7 @@ void main() {
     );
 
     final rich = tester.widget<RichText>(find.byType(RichText));
-    final first = (rich.text as TextSpan).children!.first as TextSpan;
+    final first = _firstTextSpan(rich.text);
     expect(first.text, 'Grandma Sue ');
     expect(first.style?.fontWeight, FontWeight.w700);
   });
@@ -41,8 +41,20 @@ void main() {
     );
 
     final rich = tester.widget<RichText>(find.byType(RichText));
-    final first = (rich.text as TextSpan).children!.first as TextSpan;
+    final first = _firstTextSpan(rich.text);
     expect(first.style?.fontWeight, FontWeight.w700);
     expect(first.text, 'grandma sue');
   });
+}
+
+TextSpan _firstTextSpan(InlineSpan root) {
+  TextSpan? found;
+  root.visitChildren((span) {
+    if (span is TextSpan && span.text != null) {
+      found = span;
+      return false;
+    }
+    return true;
+  });
+  return found!;
 }

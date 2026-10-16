@@ -1,11 +1,7 @@
-/// User-facing label for a baby name, avoiding a duplicated "Baby" prefix.
-String babyNotificationLabel(String name) {
-  final trimmed = name.trim();
-  if (trimmed.isEmpty) {
-    return 'your baby';
-  }
-  if (trimmed.toLowerCase().startsWith('baby ')) {
-    return trimmed;
-  }
-  return 'Baby $trimmed';
+/// User-facing reference to a baby in copy: the name exactly as the owner
+/// entered it (never prefixed, so "Baby Parker" stays "Baby Parker"), or a
+/// neutral fallback while the name is unknown.
+String babyDisplayName(String? name) {
+  final trimmed = name?.trim() ?? '';
+  return trimmed.isEmpty ? 'your baby' : trimmed;
 }

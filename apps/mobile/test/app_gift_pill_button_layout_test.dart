@@ -34,8 +34,13 @@ void main() {
   }
 
   void expectNoMidWordBreak(WidgetTester tester) {
-    final label = tester.widget<Text>(find.byType(AppButtonLabel));
-    expect(label.data, isNot(contains('/')));
+    expect(tester.takeException(), isNull);
+    final label = tester.widget<Text>(
+      find.descendant(
+        of: find.byType(AppButtonLabel),
+        matching: find.byType(Text),
+      ),
+    );
     expect(label.data, 'Mark as purchased');
   }
 
