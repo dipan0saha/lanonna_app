@@ -43,7 +43,7 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
   String? _networkAvatarUrl;
   XFile? _photoFile;
 
-  bool get _isBorn => _baby?.lifecycleStatus == 'born';
+  bool get _isBorn => _baby?.isBorn == true;
   bool get _isOwner => _baby?.role == 'owner';
 
   int? get _genderPillIndex {
@@ -75,7 +75,7 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
     final babies = await context.read<HomeRepository>().listBabies();
     final baby = babies.where((b) => b.id == widget.babyId).firstOrNull;
     DateTime? parsed;
-    final born = baby?.lifecycleStatus == 'born';
+    final born = baby?.isBorn == true;
     final raw = born ? baby?.actualBirthDate : baby?.expectedBirthDate;
     if (raw != null) parsed = tryParseApiCalendarDate(raw);
     setState(() {

@@ -5,7 +5,6 @@ import 'package:lanonna/core/network/connectivity_service.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/features/calendar/data/calendar_repository.dart';
 import 'package:lanonna/features/calendar/data/models/calendar_models.dart';
-import 'package:lanonna/features/account/data/notifications_repository.dart';
 import 'package:lanonna/features/home/data/home_repository.dart';
 import 'package:lanonna/features/home/data/home_refresh_signal.dart';
 import 'package:lanonna/features/home/data/selected_baby_store.dart';
@@ -16,6 +15,7 @@ import 'package:lanonna/features/calendar/presentation/calendar_screen.dart';
 import 'support/fake_calendar_repository.dart';
 import 'support/fake_home_repository.dart';
 import 'support/fake_notifications_repository.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 void main() {
   testWidgets('CalendarRepository notifyListeners reloads upcoming list', (
@@ -39,18 +39,19 @@ void main() {
         providers: [
           ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
           ChangeNotifierProvider<CalendarRepository>.value(value: calRepo),
-          Provider<HomeRefreshSignal>(
-            create: (_) => HomeRefreshSignal(),
-          ),
+          Provider<HomeRefreshSignal>(create: (_) => HomeRefreshSignal()),
           ChangeNotifierProvider<ConnectivityService>(
             create: (_) => ConnectivityService.forTesting(),
           ),
           Provider<HomeRepository>(create: (_) => FakeHomeRepository(baby)),
-          Provider<NotificationsRepository>(
-            create: (_) => FakeNotificationsRepository(),
-          ),
+          ...shellTopBarTestProviders(),
         ],
-        child: MaterialApp(theme: AppTheme.light, home: const CalendarScreen()),
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: AppTheme.light,
+          home: const CalendarScreen(),
+        ),
       ),
     );
     await tester.pump();

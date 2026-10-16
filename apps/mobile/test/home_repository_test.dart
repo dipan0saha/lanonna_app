@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/api/api_exception.dart';
-import 'package:lanonna/features/home/data/home_refresh_signal.dart';
 import 'package:lanonna/features/home/data/home_repository.dart';
 import 'package:lanonna/features/home/data/home_summary_result.dart';
 import 'package:lanonna/features/home/data/selected_baby_store.dart';
@@ -112,14 +111,12 @@ void main() {
     expect(offline, isA<HomeSummaryLoaded>());
   });
 
-  test('babyContext refresh signal clears summary cache', () async {
-    final signal = HomeRefreshSignal();
+  test('summary cache survives switching to another baby', () async {
     final repo = HomeRepository(_SuccessApi());
-    repo.attachHomeRefreshSignal(signal);
     await repo.fetchHomeSummary('baby-1');
+    await repo.fetchHomeSummary('baby-2');
     expect(repo.cachedHomeSummary('baby-1'), isNotNull);
-    signal.notifyBabyContextChanged();
-    expect(repo.cachedHomeSummary('baby-1'), isNull);
+    expect(repo.cachedHomeSummary('baby-2'), isNotNull);
   });
 }
 
@@ -243,7 +240,7 @@ class _SuccessApi extends ApiClient {
 
   @override
   Future<Map<String, dynamic>> getJson(String path) async {
-    expect(path, '/v1/babies/baby-1/home-summary');
+    expect(path, endsWith('/home-summary'));
     return {
       'lifecycle_status': 'expecting',
       'family_insight': {
@@ -251,10 +248,7 @@ class _SuccessApi extends ApiClient {
         'vote_count': 0,
         'gender_totals': {'male': 0, 'female': 0},
       },
-      'teasers': {
-        'recent_photos': [],
-        'upcoming_events': [],
-      },
+      'teasers': {'recent_photos': [], 'upcoming_events': []},
       'recent_activity': [],
     };
   }
@@ -286,10 +280,7 @@ class _FlakySummaryApi extends ApiClient {
         'vote_count': 0,
         'gender_totals': {'male': 0, 'female': 0},
       },
-      'teasers': {
-        'recent_photos': [],
-        'upcoming_events': [],
-      },
+      'teasers': {'recent_photos': [], 'upcoming_events': []},
       'recent_activity': [],
     };
   }

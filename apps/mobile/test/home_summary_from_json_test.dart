@@ -11,17 +11,14 @@ void main() {
         'vote_count': 7,
         'gender_totals': {'male': 4.0, 'female': 3},
         'top_name': {'suggested_name': 'Milo', 'like_count': 5},
+        'show_rich_insight': true,
       },
       'teasers': {
         'recent_photos': [
           {'id': 'p1', 'thumb_url': 'https://thumb'},
         ],
         'upcoming_events': [
-          {
-            'id': 'e1',
-            'title': 'Shower',
-            'starts_at': '2026-10-02T18:00:00Z',
-          },
+          {'id': 'e1', 'title': 'Shower', 'starts_at': '2026-10-02T18:00:00Z'},
         ],
       },
       'recent_activity': [
@@ -53,29 +50,32 @@ void main() {
         'name_suggestion_count': 2,
         'vote_count': 0,
         'top_name': {'suggested_name': 'Olivia', 'like_count': 0},
+        'show_rich_insight': false,
       },
     });
     expect(summary.showRichInsight, isFalse);
   });
 
-  test('showRichInsight true when gender votes exist', () {
+  test('showRichInsight reads the server flag (votes)', () {
     final summary = HomeSummary.fromJson({
       'lifecycle_status': 'expecting',
       'family_insight': {
         'name_suggestion_count': 0,
         'vote_count': 1,
+        'show_rich_insight': true,
       },
     });
     expect(summary.showRichInsight, isTrue);
   });
 
-  test('showRichInsight true when top name has loves', () {
+  test('showRichInsight reads the server flag (loves)', () {
     final summary = HomeSummary.fromJson({
       'lifecycle_status': 'expecting',
       'family_insight': {
         'name_suggestion_count': 1,
         'vote_count': 0,
         'top_name': {'suggested_name': 'Milo', 'like_count': 1},
+        'show_rich_insight': true,
       },
     });
     expect(summary.showRichInsight, isTrue);

@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/json/json_readers.dart';
-import '../presentation/widgets/inbox_notification_visuals.dart';
+import '../domain/inbox_notification_type.dart';
 
 class NotificationPreferences {
   NotificationPreferences({

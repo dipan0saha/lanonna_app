@@ -15,6 +15,8 @@ import 'package:lanonna/features/registry/data/registry_repository.dart';
 import 'package:lanonna/features/registry/presentation/registry_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
+import 'support/fake_notifications_repository.dart';
 
 class _FakeAuthRepository extends AuthRepository {
   _FakeAuthRepository() : super(firebaseAuth: _FakeFirebaseAuth());
@@ -37,24 +39,36 @@ class _FailingHomeRepository extends HomeRepository {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('Registry shows error with retry when baby load fails', (tester) async {
+  testWidgets('Registry shows error with retry when baby load fails', (
+    tester,
+  ) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final store = SelectedBabyStore(prefs);
     final connectivity = ConnectivityService.forTesting(isOnline: false);
-    final registryRepo = RegistryRepository(ApiClient(idTokenProvider: () async => 't'));
+    final registryRepo = RegistryRepository(
+      ApiClient(idTokenProvider: () async => 't'),
+    );
 
     await tester.pumpWidget(
       MultiProvider(
         providers: [
+          ...shellTopBarTestProviders(),
           Provider<HomeRepository>.value(value: _FailingHomeRepository()),
           ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
           Provider<HomeRefreshSignal>(create: (_) => HomeRefreshSignal()),
-          ChangeNotifierProvider<ConnectivityService>.value(value: connectivity),
+          ChangeNotifierProvider<ConnectivityService>.value(
+            value: connectivity,
+          ),
           Provider<RegistryRepository>.value(value: registryRepo),
           Provider<AuthRepository>.value(value: _FakeAuthRepository()),
         ],
-        child: MaterialApp(theme: AppTheme.light, home: const RegistryScreen()),
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: AppTheme.light,
+          home: const RegistryScreen(),
+        ),
       ),
     );
     await tester.pump();

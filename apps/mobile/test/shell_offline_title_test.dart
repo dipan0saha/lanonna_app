@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/network/connectivity_service.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
-import 'package:lanonna/features/account/data/notifications_repository.dart';
 import 'package:lanonna/features/home/data/home_refresh_signal.dart';
 import 'package:lanonna/features/home/data/home_repository.dart';
 import 'package:lanonna/features/home/data/selected_baby_store.dart';
@@ -12,6 +11,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support/fake_notifications_repository.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -36,17 +36,16 @@ void main() {
             ),
           ),
           ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
-          Provider<HomeRefreshSignal>(
-            create: (_) => HomeRefreshSignal(),
-          ),
+          Provider<HomeRefreshSignal>(create: (_) => HomeRefreshSignal()),
           ChangeNotifierProvider<ConnectivityService>.value(
             value: ConnectivityService.forTesting(isOnline: false),
           ),
-          ChangeNotifierProvider<NotificationsRepository>(
-            create: (_) => FakeNotificationsRepository(),
-          ),
+          ...shellTopBarTestProviders(),
         ],
         child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
           theme: AppTheme.light,
           home: const Scaffold(body: _TitleHarness()),
         ),

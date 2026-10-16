@@ -506,7 +506,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationsInboxEmptyMessage =>
-      "When family comments, RSVPs, or joins, you'll see it here.";
+      'When family comments, RSVPs, or joins, you\'ll see it here.';
 
   @override
   String get inboxNotificationFallbackTitle => 'Notification';
@@ -516,7 +516,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeBornActivityEmpty =>
-      "Nothing yet. Once family starts commenting and squishing photos, you'll see it here.";
+      'Nothing yet. Once family starts commenting and squishing photos, you\'ll see it here.';
 
   @override
   String get calendarPastEventsTitle => 'Past events';

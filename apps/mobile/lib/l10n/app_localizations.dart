@@ -814,34 +814,94 @@ abstract class AppLocalizations {
   /// **'{count, plural, =0{0 followers} =1{1 follower} other{{count} followers}}'**
   String followerCount(int count);
 
+  /// No description provided for @actionRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
   String get actionRetry;
 
+  /// No description provided for @babyNameFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'your baby'**
   String get babyNameFallback;
 
+  /// No description provided for @notificationsInboxTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
   String get notificationsInboxTitle;
 
+  /// No description provided for @notificationsMarkAllRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all read'**
   String get notificationsMarkAllRead;
 
+  /// No description provided for @notificationsInboxEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications yet'**
   String get notificationsInboxEmptyTitle;
 
+  /// No description provided for @notificationsInboxEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'When family comments, RSVPs, or joins, you\'ll see it here.'**
   String get notificationsInboxEmptyMessage;
 
+  /// No description provided for @inboxNotificationFallbackTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification'**
   String get inboxNotificationFallbackTitle;
 
+  /// No description provided for @accountDigestFrequency.
+  ///
+  /// In en, this message translates to:
+  /// **'Digest frequency'**
   String get accountDigestFrequency;
 
+  /// No description provided for @homeBornActivityEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing yet. Once family starts commenting and squishing photos, you\'ll see it here.'**
   String get homeBornActivityEmpty;
 
+  /// No description provided for @calendarPastEventsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Past events'**
   String get calendarPastEventsTitle;
 
+  /// No description provided for @calendarPastEventsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Events that have already happened'**
   String get calendarPastEventsSubtitle;
 
+  /// No description provided for @calendarPastEventsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No past events yet.'**
   String get calendarPastEventsEmpty;
 
+  /// No description provided for @calendarLoadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Load more'**
   String get calendarLoadMore;
 
+  /// No description provided for @registrySortPriorityHighFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority: High first'**
   String get registrySortPriorityHighFirst;
 
+  /// No description provided for @registrySortPriorityLowFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority: Low first'**
   String get registrySortPriorityLowFirst;
 }
 

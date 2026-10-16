@@ -28,8 +28,7 @@ class HomePrdSections extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final teasers = summary.teasers;
-    final showActivity =
-        summary.lifecycleStatus == 'born' || summary.recentActivity.isNotEmpty;
+    final showActivity = summary.isBorn || summary.recentActivity.isNotEmpty;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -42,8 +41,7 @@ class HomePrdSections extends StatelessWidget {
             items: summary.recentActivity,
             babyId: babyId,
             showEmptyPlaceholder:
-                summary.lifecycleStatus == 'born' &&
-                summary.recentActivity.isEmpty,
+                summary.isBorn && summary.recentActivity.isEmpty,
             emptyMessage: l10n.homeBornActivityEmpty,
           ),
         if (teasers != null)

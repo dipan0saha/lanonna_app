@@ -67,6 +67,16 @@ class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
       _accountUpdates = accountRepo.profileUpdates;
       _accountUpdates!.addListener(_onAccountUpdated);
       _applyCachedAccount();
+      _loadAccount();
+    }
+  }
+
+  Future<void> _loadAccount() async {
+    try {
+      await context.read<AccountRepository>().ensureAccountLoaded();
+    } catch (e) {
+      // Avatar falls back to initials; any account screen retries the load.
+      debugPrint('shell_top_bar_account_load_failed: $e');
     }
   }
 

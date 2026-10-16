@@ -16,6 +16,7 @@ import 'package:lanonna/features/fun/data/fun_repository.dart';
 import 'package:lanonna/features/fun/data/models/fun_models.dart';
 
 import 'support/fake_home_repository.dart';
+import 'support/fake_notifications_repository.dart';
 
 class _FakeFunRepository extends FunRepository {
   _FakeFunRepository() : super(ApiClient(idTokenProvider: () async => null));
@@ -49,11 +50,14 @@ void main() {
       name: 'Parker',
       lifecycleStatus: 'born',
       role: 'owner',
+      namesClosed: true,
+      predictionsClosed: true,
     );
 
     await tester.pumpWidget(
       MultiProvider(
         providers: [
+          ...shellTopBarTestProviders(),
           Provider<HomeRepository>(create: (_) => FakeHomeRepository(baby)),
           Provider<FunRepository>(create: (_) => _FakeFunRepository()),
           ChangeNotifierProvider<SelectedBabyStore>.value(value: store),

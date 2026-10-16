@@ -52,7 +52,8 @@ class TopNameInsight {
   final int likeCount;
 
   factory TopNameInsight.fromJson(Map<String, dynamic>? json) {
-    if (json == null) return const TopNameInsight(suggestedName: '', likeCount: 0);
+    if (json == null)
+      return const TopNameInsight(suggestedName: '', likeCount: 0);
     return TopNameInsight(
       suggestedName: json['suggested_name'] as String? ?? '',
       likeCount: readInt(json['like_count']),
@@ -122,7 +123,11 @@ class GettingStartedSummary {
 
   factory GettingStartedSummary.fromJson(Map<String, dynamic>? json) {
     if (json == null) {
-      return const GettingStartedSummary(completedCount: 0, total: 0, tasks: []);
+      return const GettingStartedSummary(
+        completedCount: 0,
+        total: 0,
+        tasks: [],
+      );
     }
     final tasks = json['tasks'] as List<dynamic>? ?? [];
     return GettingStartedSummary(
@@ -151,10 +156,7 @@ class HomeTeaserPhoto {
 }
 
 class HomeTeasers {
-  const HomeTeasers({
-    required this.recentPhotos,
-    required this.upcomingEvents,
-  });
+  const HomeTeasers({required this.recentPhotos, required this.upcomingEvents});
 
   final List<HomeTeaserPhoto> recentPhotos;
   final List<NextUpEvent> upcomingEvents;
@@ -198,7 +200,8 @@ class BirthWelcomeSummary {
   final bool? everyoneNotified;
 
   factory BirthWelcomeSummary.fromJson(Map<String, dynamic>? json) {
-    if (json == null) return const BirthWelcomeSummary(babyName: '', daysSinceBirth: 0);
+    if (json == null)
+      return const BirthWelcomeSummary(babyName: '', daysSinceBirth: 0);
     final ann = json['announcement'] as Map<String, dynamic>?;
     return BirthWelcomeSummary(
       babyName: json['baby_name'] as String? ?? '',
@@ -308,6 +311,9 @@ class HomeSummary {
   final bool namesClosed;
   final bool predictionsClosed;
   final bool showRichInsight;
+
+  /// Display-only lifecycle (layout copy); write gating uses the closed flags.
+  bool get isBorn => lifecycleStatus == 'born';
   final int? daysToDue;
   final int nameSuggestionCount;
   final int voteCount;

@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/features/gallery/presentation/widgets/gallery_empty_state.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 void main() {
   testWidgets('Gallery empty state shows add button for owner', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+
         home: Scaffold(
           body: GalleryEmptyState(
             isOwner: true,

@@ -29,6 +29,8 @@ import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'support/fake_notifications_repository.dart';
+import 'package:lanonna/features/account/data/account_repository.dart';
 
 class _Home extends HomeRepository {
   _Home() : super(ApiClient(idTokenProvider: () async => 't'));
@@ -148,6 +150,9 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+
         theme: AppTheme.light,
         home: Scaffold(
           body: RegistryNeededRow(
@@ -182,17 +187,25 @@ void main() {
           ChangeNotifierProvider<SelectedBabyStore>.value(
             value: SelectedBabyStore(prefs),
           ),
-          Provider<HomeRefreshSignal>(
-            create: (_) => HomeRefreshSignal(),
-          ),
+          Provider<HomeRefreshSignal>(create: (_) => HomeRefreshSignal()),
           ChangeNotifierProvider<ConnectivityService>.value(
             value: ConnectivityService.forTesting(),
           ),
           Provider<RegistryRepository>.value(value: _Registry()),
           Provider<AuthRepository>.value(value: _Auth()),
-          Provider<NotificationsRepository>.value(value: _Inbox()),
+          ChangeNotifierProvider<NotificationsRepository>.value(
+            value: _Inbox(),
+          ),
+          Provider<AccountRepository>(
+            create: (_) => FakeShellAccountRepository(),
+          ),
         ],
-        child: MaterialApp(theme: AppTheme.light, home: const RegistryScreen()),
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: AppTheme.light,
+          home: const RegistryScreen(),
+        ),
       ),
     );
     await tester.pump();
@@ -286,6 +299,9 @@ void main() {
   testWidgets('notification rows are labeled', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+
         home: MultiProvider(
           providers: [
             ChangeNotifierProvider<NotificationsRepository>.value(
@@ -308,6 +324,9 @@ void main() {
   testWidgets('password show and hide is labeled', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+
         home: Scaffold(
           body: OnboardingPasswordField(
             controller: TextEditingController(),

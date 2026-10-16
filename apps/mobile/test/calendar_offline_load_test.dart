@@ -15,6 +15,8 @@ import 'package:lanonna/features/home/data/home_repository.dart';
 import 'package:lanonna/features/home/data/selected_baby_store.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
+import 'support/fake_notifications_repository.dart';
 
 class _OfflineHomeRepository extends HomeRepository {
   _OfflineHomeRepository() : super(ApiClient(idTokenProvider: () async => 't'));
@@ -37,13 +39,12 @@ void main() {
     await tester.pumpWidget(
       MultiProvider(
         providers: [
+          ...shellTopBarTestProviders(),
           Provider<HomeRepository>.value(value: _OfflineHomeRepository()),
           ChangeNotifierProvider<SelectedBabyStore>.value(
             value: SelectedBabyStore(prefs),
           ),
-          Provider<HomeRefreshSignal>(
-            create: (_) => HomeRefreshSignal(),
-          ),
+          Provider<HomeRefreshSignal>(create: (_) => HomeRefreshSignal()),
           ChangeNotifierProvider<ConnectivityService>.value(
             value: ConnectivityService.forTesting(isOnline: false),
           ),
@@ -52,7 +53,12 @@ void main() {
                 CalendarRepository(ApiClient(idTokenProvider: () async => 't')),
           ),
         ],
-        child: MaterialApp(theme: AppTheme.light, home: const CalendarScreen()),
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: AppTheme.light,
+          home: const CalendarScreen(),
+        ),
       ),
     );
     await tester.pump();
@@ -79,13 +85,12 @@ void main() {
     await tester.pumpWidget(
       MultiProvider(
         providers: [
+          ...shellTopBarTestProviders(),
           Provider<HomeRepository>.value(value: HomeRepository(api)),
           ChangeNotifierProvider<SelectedBabyStore>.value(
             value: SelectedBabyStore(prefs),
           ),
-          Provider<HomeRefreshSignal>(
-            create: (_) => HomeRefreshSignal(),
-          ),
+          Provider<HomeRefreshSignal>(create: (_) => HomeRefreshSignal()),
           ChangeNotifierProvider<ConnectivityService>.value(
             value: ConnectivityService.forTesting(isOnline: false),
           ),
@@ -93,7 +98,12 @@ void main() {
             create: (_) => CalendarRepository(api),
           ),
         ],
-        child: MaterialApp(theme: AppTheme.light, home: const CalendarScreen()),
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: AppTheme.light,
+          home: const CalendarScreen(),
+        ),
       ),
     );
     await tester.pump();

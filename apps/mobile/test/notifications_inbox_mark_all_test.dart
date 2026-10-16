@@ -4,6 +4,7 @@ import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/features/account/data/notifications_repository.dart';
 import 'package:lanonna/features/account/presentation/notifications_inbox_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 class _InboxRepo extends NotificationsRepository {
   _InboxRepo() : super(ApiClient(idTokenProvider: () async => 't'));
@@ -54,7 +55,11 @@ void main() {
     await tester.pumpWidget(
       ChangeNotifierProvider<NotificationsRepository>.value(
         value: repo,
-        child: const MaterialApp(home: NotificationsInboxScreen()),
+        child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: NotificationsInboxScreen(),
+        ),
       ),
     );
     await tester.pumpAndSettle();

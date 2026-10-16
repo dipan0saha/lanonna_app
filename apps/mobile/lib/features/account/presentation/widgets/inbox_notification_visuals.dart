@@ -1,38 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/widgets/tinted_icon_square.dart';
-
-enum InboxNotificationType {
-  photo,
-  event,
-  registry,
-  fun,
-  comment,
-  squish,
-  digest,
-  generic;
-
-  static InboxNotificationType fromApi(String? raw) {
-    switch (raw) {
-      case 'photo':
-        return InboxNotificationType.photo;
-      case 'event':
-        return InboxNotificationType.event;
-      case 'registry':
-        return InboxNotificationType.registry;
-      case 'fun':
-        return InboxNotificationType.fun;
-      case 'comment':
-        return InboxNotificationType.comment;
-      case 'squish':
-        return InboxNotificationType.squish;
-      case 'digest':
-        return InboxNotificationType.digest;
-      default:
-        return InboxNotificationType.generic;
-    }
-  }
-}
+import '../../domain/inbox_notification_type.dart';
 
 class InboxNotificationVisual {
   const InboxNotificationVisual({required this.icon, this.emoji});
