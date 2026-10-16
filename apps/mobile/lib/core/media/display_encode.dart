@@ -16,6 +16,15 @@ class EncodedDisplayAsset {
 const int displayMaxLongEdge = 2048;
 const int displayMaxBytes = 2_097_152;
 
+/// Hint copy for photo-source sheets; keep in sync with [displayMaxBytes].
+String displayPhotoSourceHint() {
+  final mb = displayMaxBytes / (1024 * 1024);
+  final mbLabel = mb == mb.roundToDouble()
+      ? '${mb.round()}'
+      : mb.toStringAsFixed(1);
+  return 'JPEG or PNG, up to ${mbLabel}MB';
+}
+
 const String contentTypeWebp = 'image/webp';
 const String contentTypeJpeg = 'image/jpeg';
 

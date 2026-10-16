@@ -10,6 +10,7 @@ from lanonna_api.repositories.device_tokens import delete_device_token, upsert_d
 from lanonna_api.repositories.notifications import (
     count_unread_notifications,
     list_notifications_for_user,
+    mark_all_notifications_read,
     mark_notification_read,
 )
 from lanonna_api.repositories.system_announcements import dismiss_announcement
@@ -72,6 +73,14 @@ def dismiss_system_announcement(
     if not dismiss_announcement(announcement_id, user["uid"]):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
     return {"status": "ok"}
+
+
+@router.post("/notifications/read-all")
+def mark_all_read(
+    user: dict[str, Any] = Depends(current_app_user),
+) -> dict[str, int]:
+    updated = mark_all_notifications_read(user["uid"])
+    return {"updated": updated}
 
 
 @router.patch("/notifications/{notification_id}/read")

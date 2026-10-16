@@ -7,6 +7,7 @@ import 'package:lanonna/core/domain/baby_summary.dart';
 import 'package:lanonna/core/network/connectivity_service.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/features/account/data/notifications_repository.dart';
+import 'package:lanonna/features/account/data/notifications_unread_signal.dart';
 import 'package:lanonna/features/account/presentation/notifications_inbox_screen.dart';
 import 'package:lanonna/features/announcement/data/announcement_repository.dart';
 import 'package:lanonna/features/announcement/presentation/announcement_card_screen.dart';
@@ -286,8 +287,13 @@ void main() {
   testWidgets('notification rows are labeled', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: Provider<NotificationsRepository>.value(
-          value: _Inbox(),
+        home: MultiProvider(
+          providers: [
+            Provider<NotificationsRepository>.value(value: _Inbox()),
+            ChangeNotifierProvider<NotificationsUnreadSignal>(
+              create: (_) => NotificationsUnreadSignal(),
+            ),
+          ],
           child: const NotificationsInboxScreen(),
         ),
       ),
