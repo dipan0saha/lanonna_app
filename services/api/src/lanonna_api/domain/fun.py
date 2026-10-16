@@ -5,9 +5,9 @@ from datetime import date
 from typing import Any
 
 from lanonna_api.domain.gallery import require_membership
-from lanonna_api.domain.fun_closed import ensure_fun_writes_open
-from lanonna_api.domain.prediction_errors import (
-    ensure_predictions_open,
+from lanonna_api.domain.fun_closed import (
+    PredictionsClosedError,
+    ensure_fun_writes_open,
     fun_writes_closed,
 )
 from lanonna_api.domain.name_suggestions import (
@@ -89,7 +89,6 @@ def suggest_name(
     suggested_name = normalize_suggested_name(suggested_name)
     if not suggested_name:
         raise ValueError("Name is required.")
-    membership = get_baby_membership(firebase_uid, baby_profile_id) or membership
     if find_name_suggestion_case_insensitive(baby_profile_id, suggested_name, gender):
         raise ValueError("That name is already on the list for this gender.")
     if membership and membership["role"] != "owner":
@@ -210,7 +209,7 @@ def set_gender_vote(
     gender_value: str,
 ) -> dict[str, Any]:
     membership = require_membership(firebase_uid, baby_profile_id)
-    ensure_predictions_open(membership)
+    ensure_fun_writes_open(membership, PredictionsClosedError)
     if gender_value not in ("male", "female"):
         raise ValueError("Invalid gender vote.")
     upsert_gender_vote(baby_profile_id, firebase_uid, gender_value, False)
@@ -230,6 +229,6 @@ def set_birthdate_vote(
     predicted_birth_date: date,
 ) -> dict[str, Any]:
     membership = require_membership(firebase_uid, baby_profile_id)
-    ensure_predictions_open(membership)
+    ensure_fun_writes_open(membership, PredictionsClosedError)
     upsert_birthdate_vote(baby_profile_id, firebase_uid, predicted_birth_date, False)
     return {"date": predicted_birth_date.isoformat()}

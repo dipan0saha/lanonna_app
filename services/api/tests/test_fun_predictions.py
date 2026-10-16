@@ -5,7 +5,7 @@ from unittest.mock import patch
 import pytest
 
 from lanonna_api.domain.fun import get_predictions, set_birthdate_vote, set_gender_vote
-from lanonna_api.domain.prediction_errors import PredictionsClosedError
+from lanonna_api.domain.fun_closed import PredictionsClosedError
 
 _BABY = uuid.uuid4()
 
