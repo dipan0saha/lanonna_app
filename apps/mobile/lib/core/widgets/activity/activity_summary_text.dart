@@ -16,7 +16,6 @@ class ActivitySummaryText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final base = context.textStyles.bodySmall?.copyWith(
-      fontSize: 12.5,
       height: 1.4,
       color: AppColors.textPrimary,
     );

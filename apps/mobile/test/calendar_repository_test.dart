@@ -46,6 +46,17 @@ void main() {
     expect(api.calls, 2);
   });
 
+  test('listEvents caches past list separately', () async {
+    final api = _EventsApi();
+    final repo = CalendarRepository(api);
+    await repo.listEvents('baby-1', past: true);
+    expect(api.lastPath, contains('past=true'));
+    expect(api.calls, 1);
+    await repo.listEvents('baby-1', past: true);
+    expect(api.calls, 1);
+    expect(repo.peekCachedEvents('baby-1', past: true), isNotNull);
+  });
+
   test('listEventsForSuggestionDedupe merges month and upcoming', () async {
     final api = _DedupeEventsApi();
     final repo = CalendarRepository(api);
@@ -61,12 +72,14 @@ class _EventsApi extends ApiClient {
 
   var failRequests = false;
   var calls = 0;
+  String? lastPath;
 
   @override
   Future<List<dynamic>> getJsonList(
     String path, {
     Map<String, String>? queryParameters,
   }) async {
+    lastPath = path;
     calls++;
     if (failRequests) {
       throw const SocketException('offline');

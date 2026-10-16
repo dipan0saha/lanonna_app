@@ -53,11 +53,16 @@ def list_events_route(
     baby_profile_id: uuid.UUID,
     month: str | None = Query(default=None, pattern=r"^\d{4}-\d{2}$"),
     upcoming: bool = Query(default=False),
+    past: bool = Query(default=False),
     user: dict[str, Any] = Depends(current_app_user),
 ) -> list[dict[str, Any]]:
     try:
         return calendar_domain.list_calendar_events(
-            user["uid"], baby_profile_id, month=month, upcoming=upcoming
+            user["uid"],
+            baby_profile_id,
+            month=month,
+            upcoming=upcoming,
+            past=past,
         )
     except Exception as exc:
         raise map_domain_errors(exc) from exc

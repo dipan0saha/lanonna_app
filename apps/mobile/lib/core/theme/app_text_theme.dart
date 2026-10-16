@@ -47,6 +47,13 @@ abstract final class AppTextTheme {
         fontWeight: FontWeight.w700,
         color: AppColors.textPrimary,
       ),
+      // Shell baby switcher title (prototype 17px Baloo on primary text).
+      displaySmall: GoogleFonts.baloo2(
+        fontSize: AppMetrics.shellBabySwitcherTitleSize,
+        fontWeight: FontWeight.w700,
+        color: AppColors.textPrimary,
+        height: 1.2,
+      ),
       bodyLarge: GoogleFonts.inter(
         fontSize: 15,
         fontWeight: FontWeight.w700,
@@ -87,9 +94,19 @@ abstract final class AppTextTheme {
   }
 
   /// Script display for announcement keepsake first names (prototype --font-script).
+  static TextStyle shellBabySwitcherTitle(TextTheme base) =>
+      base.displaySmall!;
+
+  static TextStyle accountProfileName(TextTheme base) =>
+      base.titleSmall!.copyWith(color: AppColors.textPrimary);
+
+  /// Visible month title on calendar / predictions month pickers.
+  static TextStyle calendarMonthTitle(TextTheme base) =>
+      base.titleMedium!.copyWith(color: AppColors.textPrimary);
+
   static TextStyle keepsakeScriptName(TextTheme base) {
     return GoogleFonts.dancingScript(
-      fontSize: 36,
+      fontSize: AppMetrics.keepsakeScriptNameSize,
       fontWeight: FontWeight.w700,
       color: AppColors.textPrimary,
       height: 1.1,

@@ -80,4 +80,78 @@ abstract final class AppMetrics {
   /// Selectable tile rows (RSVP Going / Maybe / Can't go).
   static const double selectTileRadius = fieldRadius;
   static const double selectTileVerticalPadding = 14;
+
+  /// Shell top bar (prototype `.baby-switcher-btn`).
+  static const double shellTopBarTopInset = 2;
+  static const double shellTopBarBottomInset = 14;
+  static const double shellBabySwitcherTitleSize = 17;
+  static const double shellIconSize = 20;
+  static const double shellAddIconSize = 22;
+  static const double shellAccountAvatarSize = 34;
+  static const double shellUnreadDotSize = 8;
+  static const double shellUnreadDotBorderWidth = 1.5;
+
+  /// Account profile header avatar (prototype account-main).
+  static const double accountProfileAvatarRadius = 40;
+
+  /// Announcement keepsake card.
+  static const double keepsakeCardRadius = homeHeroRadius;
+  static const double keepsakeCardMaxWidth = 360;
+  static const double keepsakePhotoSize = 120;
+  static const double keepsakePhotoBorderWidth = 3;
+  static const double keepsakePhotoShadowBlur = 12;
+  static const double keepsakeCardShadowBlur = 28;
+  static const double keepsakeCardShadowYOffset = 10;
+  static const EdgeInsets keepsakeCardPadding =
+      EdgeInsets.fromLTRB(24, 28, 24, 22);
+  static const double keepsakeScriptNameSize = 36;
+  static const double keepsakeLastNameLetterSpacing = 2.4;
+  static const double keepsakeStatColumnWidth = 120;
+  static const double keepsakeStatIconSize = shellIconSize;
+  static const double keepsakePlaceholderAvatarRadius = 52;
+  static const double keepsakePlaceholderChildIconSize = 40;
+  static const double keepsakeEngagementIconSize = 16;
+
+  /// Gallery grid tile badges and layout.
+  static const double galleryGridSpacing = 6;
+  static const double galleryTileRadius = fieldRadius;
+  static const double galleryTileBadgeRadius = 8;
+  static const EdgeInsets galleryTileBadgePadding =
+      EdgeInsets.symmetric(horizontal: 6, vertical: 2);
+
+  /// AI suggestion banners (calendar + registry tabs).
+  static const double aiBannerRadius = fieldRadius;
+  static const EdgeInsets aiBannerPadding = EdgeInsets.all(14);
+  static const double aiBannerIconChipSize = tintedIconSquareSize;
+
+  /// Calendar month grid weekday headers (two-letter).
+  static const double calendarDayCellRadius = 10;
+  static const double calendarEventDotSize = 6;
+
+  /// Popular dates progress bars (Fun predictions).
+  static const double predictionBarHeight = 8;
+  static const double predictionBarRadius = 4;
+
+  /// Follower / member list leading emoji tile.
+  static const double memberLeadingEmojiSize = 22;
+
+  /// Bordered list rows (followers, registry cards).
+  static const EdgeInsets borderedListRowPadding = aiBannerPadding;
+  static const double listRowBottomGap = 10;
+  static const EdgeInsets monthGridCardPadding = EdgeInsets.all(12);
+
+  /// Registry sort control tap target inset.
+  static const EdgeInsets sortControlPadding =
+      EdgeInsets.symmetric(horizontal: 4, vertical: 2);
+
+  /// Two-letter weekday headers (calendar month grid).
+  static const List<String> calendarWeekdayTwoLetter = [
+    'Su',
+    'Mo',
+    'Tu',
+    'We',
+    'Th',
+    'Fr',
+    'Sa',
+  ];
 }

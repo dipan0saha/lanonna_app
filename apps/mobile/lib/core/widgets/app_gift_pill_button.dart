@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_metrics.dart';
+import '../theme/app_spacing.dart';
 import '../theme/la_nonna_theme.dart';
 import 'app_semantics.dart';
 
@@ -24,7 +25,6 @@ class AppGiftPillButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = context.textStyles.labelMedium?.copyWith(
       color: AppColors.primaryButtonForeground,
-      fontSize: 12.5,
     );
     final child = Material(
       color: AppColors.primary,
@@ -42,7 +42,7 @@ class AppGiftPillButton extends StatelessWidget {
             children: [
               if (showGiftEmoji) ...[
                 ExcludeSemantics(child: Text('🎁', style: style)),
-                const SizedBox(width: 4),
+                SizedBox(width: AppSpacing.xxs),
               ],
               Flexible(
                 child: Text(

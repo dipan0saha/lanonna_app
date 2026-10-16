@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/account_tinted_avatar.dart';
 import '../../../../core/widgets/app_bordered_surface.dart';
 import '../../../../core/widgets/app_semantics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
@@ -8,16 +10,16 @@ import '../../../../core/theme/la_nonna_theme.dart';
 class AccountProfileCard extends StatelessWidget {
   const AccountProfileCard({
     super.key,
-    required this.initials,
     required this.displayName,
     this.email,
+    this.avatarUrl,
     required this.onEdit,
     required this.onLogOut,
   });
 
-  final String initials;
   final String displayName;
   final String? email;
+  final String? avatarUrl;
   final VoidCallback onEdit;
   final VoidCallback onLogOut;
 
@@ -25,33 +27,36 @@ class AccountProfileCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = context.textStyles;
     return AppBorderedSurface(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         children: [
-          CircleAvatar(
-            radius: 32,
-            backgroundColor: AppColors.sageTint,
-            child: Text(initials, style: text.titleLarge),
+          AccountTintedAvatar(
+            displayName: displayName,
+            imageUrl: avatarUrl,
           ),
-          const SizedBox(height: 12),
-          Text(displayName, style: text.titleMedium),
+          SizedBox(height: AppSpacing.md),
+          Text(displayName, style: context.accountProfileNameStyle),
           if (email != null) ...[
-            const SizedBox(height: 4),
+            SizedBox(height: AppSpacing.xxs),
             Text(
               email!,
               style: text.bodySmall?.copyWith(color: AppColors.muted),
             ),
           ],
-          const SizedBox(height: 16),
+          SizedBox(height: AppSpacing.lg),
           Row(
             children: [
               Expanded(
                 child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.textPrimary,
+                    side: const BorderSide(color: AppColors.border),
+                  ),
                   onPressed: onEdit,
-                  child: const Text('Edit Profile'),
+                  child: const Text('Edit'),
                 ),
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: AppSpacing.sm + 2),
               Expanded(
                 child: AppSemantics.button(
                   'account_sign_out',

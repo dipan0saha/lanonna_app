@@ -10,8 +10,14 @@ import '../../../core/widgets/app_semantics.dart';
 import '../../../core/widgets/async_tab_body.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
+import '../../../core/widgets/app_section_caps_label.dart';
+import '../../../core/widgets/app_bordered_surface.dart';
 import '../../../core/widgets/app_section_title.dart';
+import '../../../core/widgets/calendar_ai_suggestion_banner.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/la_nonna_theme.dart';
+import '../domain/registry_item_sort.dart';
+import 'widgets/registry_sort_control.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../home/presentation/baby_context_reload.dart';
@@ -37,6 +43,7 @@ class _RegistryScreenState extends State<RegistryScreen>
   RegistryShippingAddress? _shipping;
   var _loading = true;
   String? _loadError;
+  RegistryItemSort _neededSort = RegistryItemSort.priorityHighFirst;
 
   @override
   void initState() {
@@ -111,7 +118,10 @@ class _RegistryScreenState extends State<RegistryScreen>
   bool get _isOwner => _baby?.role == 'owner';
 
   List<RegistryItem> get _needed =>
-      _items.where((i) => !i.isPurchased).toList();
+      sortRegistryItems(
+        _items.where((i) => !i.isPurchased).toList(),
+        _neededSort,
+      );
 
   List<RegistryItem> get _purchased =>
       _items.where((i) => i.isPurchased).toList();
@@ -126,64 +136,47 @@ class _RegistryScreenState extends State<RegistryScreen>
     final hasAddress = shipping != null && !shipping.isEmpty;
     if (!_isOwner && !hasAddress) return const SizedBox.shrink();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppMetrics.horizontalPadding,
-            8,
-            AppMetrics.horizontalPadding,
-            0,
-          ),
-          child: Row(
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        AppMetrics.horizontalPadding,
+        AppSpacing.sm,
+        AppMetrics.horizontalPadding,
+        0,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
             children: [
-              Text(
-                'Shipping Address',
-                style: context.textStyles.labelLarge?.copyWith(
-                  color: AppColors.muted,
-                ),
-              ),
+              const AppSectionCapsLabel('Shipping address'),
               const Spacer(),
               if (_isOwner)
                 TextButton(
                   onPressed: _openShippingEditor,
-                  child: Text(hasAddress ? 'Edit' : 'Add shipping address'),
+                  child: Text(hasAddress ? 'Edit' : 'Add'),
                 ),
             ],
           ),
-        ),
-        if (hasAddress)
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppMetrics.horizontalPadding,
-            ),
-            child: Card(
+          SizedBox(height: AppSpacing.xs),
+          if (hasAddress)
+            AppBorderedSurface(
               child: Padding(
-                padding: const EdgeInsets.all(14),
+                padding: AppMetrics.borderedListRowPadding,
                 child: Text(
                   shipping.formatted ?? '',
                   style: context.textStyles.bodyMedium?.copyWith(height: 1.45),
                 ),
               ),
-            ),
-          )
-        else if (_isOwner)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppMetrics.horizontalPadding,
-              4,
-              AppMetrics.horizontalPadding,
-              0,
-            ),
-            child: Text(
+            )
+          else if (_isOwner)
+            Text(
               'Add an address so family knows where to send gifts.',
               style: context.textStyles.bodySmall?.copyWith(
                 color: AppColors.muted,
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -281,7 +274,9 @@ class _RegistryScreenState extends State<RegistryScreen>
             else ...[
               if (_isOwner)
                 SliverToBoxAdapter(
-                  child: _AiBanner(
+                  child: CalendarAiSuggestionBanner(
+                    message:
+                        'Not sure where to start? See AI-suggested items by stage and age.',
                     onTap: () => context.push(RegistryRoutes.aiSuggestions),
                   ),
                 ),
@@ -306,11 +301,9 @@ class _RegistryScreenState extends State<RegistryScreen>
                     ),
                     child: AppSectionTitle(
                       title: 'Needed',
-                      action: Text(
-                        'Priority: High first',
-                        style: context.textStyles.labelSmall?.copyWith(
-                          color: AppColors.muted,
-                        ),
+                      action: RegistrySortControl(
+                        sort: _neededSort,
+                        onChanged: (sort) => setState(() => _neededSort = sort),
                       ),
                     ),
                   ),
@@ -414,48 +407,6 @@ class _RegistryScreenState extends State<RegistryScreen>
               label: 'Add item',
             )
           : null,
-    );
-  }
-}
-
-class _AiBanner extends StatelessWidget {
-  const _AiBanner({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppMetrics.horizontalPadding,
-        16,
-        AppMetrics.horizontalPadding,
-        16,
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: AppColors.peachTint,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.auto_awesome_outlined),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Not sure where to start? See AI-suggested items by stage and age.',
-                  style: context.textStyles.bodyMedium,
-                ),
-              ),
-              const Icon(Icons.chevron_right),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

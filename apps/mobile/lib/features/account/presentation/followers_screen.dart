@@ -8,6 +8,7 @@ import '../../../core/api/run_mutation.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/widgets/tinted_icon_square.dart';
 import '../../../core/widgets/app_bordered_surface.dart';
@@ -153,7 +154,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
             : _loadError != null
             ? Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(AppSpacing.xxl),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -174,22 +175,24 @@ class _FollowersScreenState extends State<FollowersScreen> {
                     '$babyName · ${l10n.followerCount(count)}',
                     style: context.textStyles.titleSmall,
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: AppSpacing.lg),
                   if (followers.isEmpty && _invites.isEmpty)
                     const Text('No followers yet — invite family to join.'),
                   for (final m in followers)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.only(
+                        bottom: AppMetrics.listRowBottomGap,
+                      ),
                       child: AppBorderedSurface(
                         child: Padding(
-                          padding: const EdgeInsets.all(14),
+                          padding: AppMetrics.borderedListRowPadding,
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const TintedIconSquare(
                                 icon: Icons.person_outline,
                               ),
-                              const SizedBox(width: 12),
+                              SizedBox(width: AppSpacing.md),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -229,17 +232,19 @@ class _FollowersScreenState extends State<FollowersScreen> {
                     const AppSectionTitle(title: 'Pending invites'),
                     for (final inv in _invites)
                       Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.only(
+                          bottom: AppMetrics.listRowBottomGap,
+                        ),
                         child: AppBorderedSurface(
                           child: Padding(
-                            padding: const EdgeInsets.all(14),
+                            padding: AppMetrics.borderedListRowPadding,
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 const TintedIconSquare(
                                   icon: Icons.mail_outline,
                                 ),
-                                const SizedBox(width: 12),
+                                SizedBox(width: AppSpacing.md),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:

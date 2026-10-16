@@ -4,6 +4,7 @@ import '../../../../core/media/cached_signed_image.dart';
 import '../../../../core/time/app_date_time.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../data/announcement_repository.dart';
 
@@ -40,34 +41,37 @@ class AnnouncementKeepsakeCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      constraints: const BoxConstraints(maxWidth: 360),
+      constraints: const BoxConstraints(maxWidth: AppMetrics.keepsakeCardMaxWidth),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppMetrics.keepsakeCardRadius),
         border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
             color: AppColors.primaryDark.withValues(alpha: 0.12),
-            blurRadius: 28,
-            offset: const Offset(0, 10),
+            blurRadius: AppMetrics.keepsakeCardShadowBlur,
+            offset: Offset(0, AppMetrics.keepsakeCardShadowYOffset),
           ),
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(24, 28, 24, 22),
+      padding: AppMetrics.keepsakeCardPadding,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (d.photoDisplayUrl != null)
             Container(
-              width: 120,
-              height: 120,
+              width: AppMetrics.keepsakePhotoSize,
+              height: AppMetrics.keepsakePhotoSize,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.primaryDark, width: 3),
+                border: Border.all(
+                  color: AppColors.primaryDark,
+                  width: AppMetrics.keepsakePhotoBorderWidth,
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: AppColors.primary.withValues(alpha: 0.25),
-                    blurRadius: 12,
+                    blurRadius: AppMetrics.keepsakePhotoShadowBlur,
                   ),
                 ],
               ),
@@ -75,23 +79,23 @@ class AnnouncementKeepsakeCard extends StatelessWidget {
               child: CachedSignedImage(
                 imageUrl: d.photoDisplayUrl,
                 cacheKey: 'announcement-photo-${d.id}',
-                width: 120,
-                height: 120,
+                width: AppMetrics.keepsakePhotoSize,
+                height: AppMetrics.keepsakePhotoSize,
                 fit: BoxFit.cover,
                 onSignedUrlError: onSignedUrlError,
               ),
             )
           else
-            const CircleAvatar(
-              radius: 52,
+            CircleAvatar(
+              radius: AppMetrics.keepsakePlaceholderAvatarRadius,
               backgroundColor: AppColors.sageTint,
               child: Icon(
                 Icons.child_care,
-                size: 40,
+                size: AppMetrics.keepsakePlaceholderChildIconSize,
                 color: AppColors.primaryDark,
               ),
             ),
-          const SizedBox(height: 16),
+          SizedBox(height: AppSpacing.lg),
           Text(
             d.firstName ?? 'Baby',
             style: context.keepsakeScriptNameStyle,
@@ -99,19 +103,19 @@ class AnnouncementKeepsakeCard extends StatelessWidget {
           ),
           if (d.lastName != null && d.lastName!.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.only(top: 4),
+              padding: EdgeInsets.only(top: AppSpacing.xxs),
               child: Text(
                 d.lastName!.toUpperCase(),
                 style: context.textStyles.labelMedium?.copyWith(
-                  letterSpacing: 2.4,
+                  letterSpacing: AppMetrics.keepsakeLastNameLetterSpacing,
                   fontWeight: FontWeight.w600,
                 ),
                 textAlign: TextAlign.center,
               ),
             ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16),
-            child: Divider(height: 1, color: AppColors.border),
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+            child: const Divider(height: 1, color: AppColors.border),
           ),
           _StatsGrid(
             birthDate: birthDateLabel,
@@ -121,11 +125,11 @@ class AnnouncementKeepsakeCard extends StatelessWidget {
           ),
           if (showEngagementRow &&
               (squishCount != null || commentCount != null)) ...[
-            const SizedBox(height: 16),
+            SizedBox(height: AppSpacing.lg),
             Wrap(
               alignment: WrapAlignment.center,
-              spacing: 10,
-              runSpacing: 8,
+              spacing: AppSpacing.sm + 2,
+              runSpacing: AppSpacing.sm,
               children: [
                 if (squishCount != null)
                   _EngagementPill(
@@ -167,16 +171,20 @@ class _StatsGrid extends StatelessWidget {
     if (items.isEmpty) return const SizedBox.shrink();
     return Wrap(
       alignment: WrapAlignment.center,
-      spacing: 20,
-      runSpacing: 12,
+      spacing: AppSpacing.xl,
+      runSpacing: AppSpacing.md,
       children: items
           .map(
             (item) => SizedBox(
-              width: 120,
+              width: AppMetrics.keepsakeStatColumnWidth,
               child: Column(
                 children: [
-                  Icon(item.icon, size: 20, color: AppColors.primaryDark),
-                  const SizedBox(height: 4),
+                  Icon(
+                    item.icon,
+                    size: AppMetrics.keepsakeStatIconSize,
+                    color: AppColors.primaryDark,
+                  ),
+                  SizedBox(height: AppSpacing.xxs),
                   Text(
                     item.label,
                     textAlign: TextAlign.center,
@@ -215,7 +223,10 @@ class _EngagementPill extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppMetrics.buttonRadius),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          padding: EdgeInsets.symmetric(
+            horizontal: AppMetrics.compactPillHorizontalPadding,
+            vertical: AppMetrics.compactPillVerticalPadding,
+          ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppMetrics.buttonRadius),
             border: Border.all(color: AppColors.border),
@@ -223,8 +234,12 @@ class _EngagementPill extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 16, color: AppColors.primaryDark),
-              const SizedBox(width: 6),
+              Icon(
+                icon,
+                size: AppMetrics.keepsakeEngagementIconSize,
+                color: AppColors.primaryDark,
+              ),
+              SizedBox(width: AppSpacing.xs),
               Text(label, style: context.textStyles.labelSmall),
             ],
           ),

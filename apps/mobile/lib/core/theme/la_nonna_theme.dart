@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
 import 'app_brand_theme.dart';
+import 'app_spacing.dart';
 import 'app_text_theme.dart';
+
+export 'app_spacing.dart';
 
 /// Access the single app theme from any widget under [MaterialApp].
 extension LaNonnaTheme on BuildContext {
@@ -24,4 +27,13 @@ extension LaNonnaTheme on BuildContext {
   /// Script font for keepsake announcement names.
   TextStyle get keepsakeScriptNameStyle =>
       AppTextTheme.keepsakeScriptName(textStyles);
+
+  TextStyle get shellBabySwitcherTitleStyle =>
+      AppTextTheme.shellBabySwitcherTitle(textStyles);
+
+  TextStyle get accountProfileNameStyle =>
+      AppTextTheme.accountProfileName(textStyles);
+
+  TextStyle get calendarMonthTitleStyle =>
+      AppTextTheme.calendarMonthTitle(textStyles);
 }

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/presentation/display_initials.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
+import '../../../../core/widgets/account_tinted_avatar.dart';
 import '../../../../core/widgets/app_icon_button.dart';
 import '../../../../core/widgets/app_semantics.dart';
 
@@ -33,17 +34,12 @@ class HomeTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final titleStyle = context.textStyles.titleSmall?.copyWith(
-      fontSize: 17,
-      color: AppColors.textPrimary,
-    );
-
     return Padding(
       padding: EdgeInsets.fromLTRB(
         AppMetrics.horizontalPadding,
-        2,
+        AppMetrics.shellTopBarTopInset,
         AppMetrics.horizontalPadding,
-        14,
+        AppMetrics.shellTopBarBottomInset,
       ),
       child: Row(
         children: [
@@ -51,7 +47,11 @@ class HomeTopBar extends StatelessWidget {
             semanticsId: 'shell_add_baby',
             label: 'Add baby',
             onPressed: onAddBabyTap,
-            icon: const Icon(Icons.add, size: 22, color: AppColors.textPrimary),
+            icon: Icon(
+              Icons.add,
+              size: AppMetrics.shellAddIconSize,
+              color: AppColors.textPrimary,
+            ),
           ),
           Expanded(
             child: AppSemantics.button(
@@ -68,16 +68,16 @@ class HomeTopBar extends StatelessWidget {
                         Text(
                           centerTitle,
                           textAlign: TextAlign.center,
-                          style: titleStyle,
+                          style: context.shellBabySwitcherTitleStyle,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    const Icon(
+                    SizedBox(width: AppSpacing.xxs),
+                    Icon(
                       Icons.keyboard_arrow_down,
-                      size: 20,
+                      size: AppMetrics.shellIconSize,
                       color: AppColors.textPrimary,
                     ),
                   ],
@@ -93,7 +93,7 @@ class HomeTopBar extends StatelessWidget {
               onPressed: onSearchTap,
               icon: Icon(
                 Icons.search,
-                size: 20,
+                size: AppMetrics.shellIconSize,
                 color: context.brand.shellIconMuted,
               ),
             ),
@@ -106,85 +106,43 @@ class HomeTopBar extends StatelessWidget {
                 onPressed: onNotificationsTap,
                 icon: Icon(
                   Icons.notifications_outlined,
-                  size: 20,
+                  size: AppMetrics.shellIconSize,
                   color: context.brand.shellIconMuted,
                 ),
               ),
               if (showUnreadDot)
                 Positioned(
-                  right: 8,
-                  top: 8,
+                  right: AppSpacing.sm,
+                  top: AppSpacing.sm,
                   child: Container(
-                    width: 8,
-                    height: 8,
+                    width: AppMetrics.shellUnreadDotSize,
+                    height: AppMetrics.shellUnreadDotSize,
                     decoration: BoxDecoration(
                       color: AppColors.secondaryDark,
                       shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.surface, width: 1.5),
+                      border: Border.all(
+                        color: AppColors.surface,
+                        width: AppMetrics.shellUnreadDotBorderWidth,
+                      ),
                     ),
                   ),
                 ),
             ],
           ),
-          const SizedBox(width: 6),
+          SizedBox(width: AppSpacing.xs),
           AppSemantics.button(
             'shell_account',
             GestureDetector(
               onTap: onAccountTap,
-              child: _AccountAvatar(
+              child: AccountTintedAvatar(
                 displayName: accountDisplayName,
-                avatarUrl: accountAvatarUrl,
+                imageUrl: accountAvatarUrl,
+                radius: AppMetrics.shellAccountAvatarSize / 2,
               ),
             ),
             label: 'My account',
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _AccountAvatar extends StatelessWidget {
-  const _AccountAvatar({this.displayName, this.avatarUrl});
-
-  final String? displayName;
-  final String? avatarUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    final url = avatarUrl?.trim();
-    return Container(
-      width: 34,
-      height: 34,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          colors: [context.brand.sageTint, context.brand.peachTint],
-        ),
-        border: Border.all(color: AppColors.surface, width: 1.5),
-        boxShadow: [BoxShadow(color: AppColors.border, spreadRadius: 0.5)],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: url != null && url.isNotEmpty
-          ? Image.network(
-              url,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) {
-                return _initials(context, displayName);
-              },
-            )
-          : _initials(context, displayName),
-    );
-  }
-
-  Widget _initials(BuildContext context, String? name) {
-    return Center(
-      child: Text(
-        displayInitials(name ?? 'Me'),
-        style: context.textStyles.labelMedium?.copyWith(
-          fontWeight: FontWeight.w700,
-          color: AppColors.primaryDark,
-        ),
       ),
     );
   }

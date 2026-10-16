@@ -5,8 +5,8 @@ import 'package:provider/provider.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/auth/auth_repository.dart';
 import '../../../core/auth/session_cleanup.dart';
-import '../../../core/presentation/display_initials.dart';
 import '../../../core/theme/app_metrics.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_bordered_surface.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_semantics.dart';
@@ -26,6 +26,7 @@ import '../data/account_repository.dart';
 import '../data/notifications_repository.dart';
 import '../domain/notification_digest_display.dart';
 import 'widgets/account_engagement_stat_row.dart';
+import 'widgets/account_baby_profiles_card.dart';
 import 'widgets/account_profile_card.dart';
 import 'widgets/account_storage_card.dart';
 
@@ -126,10 +127,6 @@ class _AccountScreenState extends State<AccountScreen> {
   String _babySubtitle(BabySummary baby) =>
       babyListSubtitle(baby, localeNameForFormatting(context));
 
-  Color _roleBadgeColor(String role) {
-    return role == 'owner' ? AppColors.sageTint : AppColors.peachTint;
-  }
-
   Future<void> _openBaby(BabySummary baby) async {
     await context.read<SelectedBabyStore>().setSelectedBabyId(baby.id);
     if (mounted) {
@@ -165,7 +162,7 @@ class _AccountScreenState extends State<AccountScreen> {
           : _loadError != null
           ? Center(
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(AppSpacing.xxl),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -182,13 +179,9 @@ class _AccountScreenState extends State<AccountScreen> {
                 padding: AppMetrics.subpageScrollPadding,
                 children: [
                   AccountProfileCard(
-                    initials: displayInitials(
-                      payload?.displayName,
-                      fallbackText: email,
-                      emptyFallback: 'A',
-                    ),
                     displayName: displayName,
                     email: email,
+                    avatarUrl: payload?.avatarUrl,
                     onEdit: () => context.push('/account/edit'),
                     onLogOut: _signOut,
                   ),
@@ -203,39 +196,16 @@ class _AccountScreenState extends State<AccountScreen> {
                       child: const Text('+ Add New'),
                     ),
                   ),
-                  for (final baby in payload?.babies ?? [])
-                    AppBorderedSurface(
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: AppColors.peachTint,
-                          child: Text(
-                            baby.name.isNotEmpty
-                                ? baby.name[0].toUpperCase()
-                                : '?',
-                          ),
-                        ),
-                        title: Text(baby.name),
-                        subtitle: Text(_babySubtitle(baby)),
-                        trailing: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _roleBadgeColor(baby.role),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            baby.role == 'owner' ? 'Owner' : 'Follower',
-                            style: context.textStyles.labelSmall,
-                          ),
-                        ),
-                        onTap: () => _openBaby(baby),
-                        onLongPress: baby.role == 'owner'
-                            ? () => context.push('/baby/${baby.id}/edit')
-                            : null,
-                      ),
-                    ),
+                  AccountBabyProfilesCard(
+                    babies: payload?.babies ?? [],
+                    subtitleFor: _babySubtitle,
+                    onBabyTap: _openBaby,
+                    onBabyLongPress: (baby) {
+                      if (baby.role == 'owner') {
+                        context.push('/baby/${baby.id}/edit');
+                      }
+                    },
+                  ),
                   if (payload?.storageUsage != null) ...[
                     const SizedBox(height: AppMetrics.sectionBlockSpacing),
                     const AppSectionTitle(title: 'Storage'),

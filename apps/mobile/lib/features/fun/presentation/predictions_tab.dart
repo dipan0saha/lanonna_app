@@ -10,6 +10,7 @@ import '../../../core/widgets/app_semantics.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/theme/app_metrics.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_section_title.dart';
 import '../../../core/widgets/vote_count_pill.dart';
 import '../../../core/theme/la_nonna_theme.dart';
@@ -224,16 +225,16 @@ class _PredictionsTabState extends State<PredictionsTab> {
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(
+        padding: EdgeInsets.fromLTRB(
           AppMetrics.horizontalPadding,
-          16,
+          AppSpacing.lg,
           AppMetrics.horizontalPadding,
-          16,
+          AppSpacing.lg,
         ),
         children: [
           if (closed)
             Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: EdgeInsets.only(bottom: AppSpacing.md),
               child: Text(
                 l10n.predictionsClosedNote,
                 style: context.textStyles.bodyMedium,
@@ -271,10 +272,11 @@ class _PredictionsTabState extends State<PredictionsTab> {
           if (genderVotes.maleProgress != null) ...[
             const SizedBox(height: 8),
             ClipRRect(
-              borderRadius: BorderRadius.circular(4),
+              borderRadius:
+                  BorderRadius.circular(AppMetrics.predictionBarRadius),
               child: LinearProgressIndicator(
                 value: genderVotes.maleProgress,
-                minHeight: 8,
+                minHeight: AppMetrics.predictionBarHeight,
                 backgroundColor: AppColors.peachTint,
                 color: AppColors.primaryDark,
               ),
@@ -310,7 +312,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
           const AppSectionTitle(title: 'Birthdate guesses'),
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: AppMetrics.monthGridCardPadding,
               child: Column(
                 children: [
                   Row(
@@ -324,7 +326,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
                       ),
                       Text(
                         '${_monthName(_visibleMonth.month)} ${_visibleMonth.year}',
-                        style: context.textStyles.titleMedium,
+                        style: context.calendarMonthTitleStyle,
                       ),
                       AppIconButton(
                         semanticsId: 'predictions_next_month',
@@ -435,9 +437,9 @@ class _PredictionsTabState extends State<PredictionsTab> {
     final child = InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: AppMetrics.borderedListRowPadding,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppMetrics.fieldRadius),
           border: Border.all(
             color: selected ? AppColors.primaryDark : AppColors.border,
             width: selected ? 2 : 1,
@@ -482,7 +484,7 @@ class _PopularDatesList extends StatelessWidget {
       children: [
         for (final row in histogram)
           Padding(
-            padding: const EdgeInsets.only(bottom: 10),
+            padding: EdgeInsets.only(bottom: AppSpacing.sm + 2),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -504,12 +506,13 @@ class _PopularDatesList extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: AppSpacing.xxs),
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius:
+                      BorderRadius.circular(AppMetrics.predictionBarRadius),
                   child: LinearProgressIndicator(
                     value: maxCount > 0 ? row.count / maxCount : 0,
-                    minHeight: 8,
+                    minHeight: AppMetrics.predictionBarHeight,
                     backgroundColor: AppColors.border,
                     color: AppColors.secondaryDark,
                   ),

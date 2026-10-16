@@ -20,27 +20,38 @@ def list_events(
     month_start: datetime | None = None,
     month_end: datetime | None = None,
     upcoming_only: bool = False,
+    past_only: bool = False,
     now: datetime | None = None,
+    limit: int | None = None,
 ) -> list[dict[str, Any]]:
     clauses = ["e.baby_profile_id = %s"]
     params: list[Any] = [baby_profile_id]
     if month_start is not None and month_end is not None:
         clauses.append("e.starts_at >= %s AND e.starts_at < %s")
         params.extend([month_start, month_end])
+    from datetime import timezone
+
+    effective_now = now or datetime.now(timezone.utc)
     if upcoming_only:
         clauses.append("e.starts_at >= %s")
-        from datetime import timezone
-
-        params.append(now or datetime.now(timezone.utc))
+        params.append(effective_now)
+    if past_only:
+        clauses.append("e.starts_at < %s")
+        params.append(effective_now)
     unscoped = (
         month_start is None
         and month_end is None
         and not upcoming_only
+        and not past_only
     )
+    order = "DESC" if past_only else "ASC"
     limit_sql = ""
+    row_limit = limit
     if unscoped:
+        row_limit = row_limit or LIST_EVENTS_MAX_ROWS
+    if row_limit is not None:
         limit_sql = " LIMIT %s"
-        params.append(LIST_EVENTS_MAX_ROWS)
+        params.append(row_limit)
     where = " AND ".join(clauses)
     with get_connection() as conn:
         rows = conn.execute(
@@ -52,7 +63,7 @@ def list_events(
                 e.created_by_firebase_uid, e.created_at
             FROM events e
             WHERE {where}
-            ORDER BY e.starts_at ASC{limit_sql}
+            ORDER BY e.starts_at {order}{limit_sql}
             """,
             tuple(params),
         ).fetchall()
