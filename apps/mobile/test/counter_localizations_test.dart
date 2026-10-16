@@ -28,6 +28,14 @@ void main() {
     });
   });
 
+  group('rsvpResponseCount', () {
+    test('singular and plural', () {
+      expect(l10n.rsvpResponseCount(0), '0 responses');
+      expect(l10n.rsvpResponseCount(1), '1 response');
+      expect(l10n.rsvpResponseCount(3), '3 responses');
+    });
+  });
+
   group('nameLoveCount', () {
     test('pluralizes 0, 1, 2+', () {
       expect(l10n.nameLoveCount(0), '0 loves');

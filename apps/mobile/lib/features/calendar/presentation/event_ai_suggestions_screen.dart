@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
@@ -105,7 +106,9 @@ class _EventAiSuggestionsScreenState extends State<EventAiSuggestionsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return AiSuggestionsScaffold(
+      subtitle: l10n.aiSuggestionsSubtitle,
       tabs: _tabs,
       selectedTab: _tab,
       onTabChanged: (key) {

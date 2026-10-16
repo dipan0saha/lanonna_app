@@ -8,6 +8,9 @@ enum AppTextInputKind {
   /// Email, password, URLs, search — trim only on submit.
   none,
 
+  /// Weight, length, counts — no auto-capitalization.
+  measurement,
+
   /// Baby names, profile names — capitalize first letter per word/part; preserve casing.
   personName,
 
@@ -19,6 +22,7 @@ abstract final class AppTextInputPolicy {
   static TextCapitalization capitalization(AppTextInputKind kind) {
     switch (kind) {
       case AppTextInputKind.none:
+      case AppTextInputKind.measurement:
         return TextCapitalization.none;
       case AppTextInputKind.personName:
         return personNameTextCapitalization;
@@ -30,6 +34,7 @@ abstract final class AppTextInputPolicy {
   static List<TextInputFormatter>? formatters(AppTextInputKind kind) {
     switch (kind) {
       case AppTextInputKind.none:
+      case AppTextInputKind.measurement:
         return null;
       case AppTextInputKind.personName:
         return personNameInputFormatters;
@@ -41,6 +46,7 @@ abstract final class AppTextInputPolicy {
   static String normalizeForSubmit(AppTextInputKind kind, String raw) {
     switch (kind) {
       case AppTextInputKind.none:
+      case AppTextInputKind.measurement:
         return raw.trim();
       case AppTextInputKind.personName:
         return formatPersonName(raw);

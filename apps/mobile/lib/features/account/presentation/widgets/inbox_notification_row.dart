@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
+import '../../../../core/time/app_date_time.dart';
 import '../../../../core/widgets/activity/activity_summary_text.dart';
 import '../../../../core/widgets/app_unread_dot.dart';
 import '../../data/notifications_repository.dart';
@@ -24,9 +25,8 @@ class InboxNotificationRow extends StatelessWidget {
       title: notification.title,
       body: notification.body,
     );
-    final summary = notification.body.trim().isNotEmpty
-        ? notification.body.trim()
-        : notification.title.trim();
+    final titleLine = _titleLine(notification, actor);
+    final bodyLine = _bodyLine(context, notification);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppMetrics.listRowBottomGap),
@@ -39,19 +39,20 @@ class InboxNotificationRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ActivitySummaryText(summary: summary, actorDisplayName: actor),
-                if (notification.title.trim().isNotEmpty &&
-                    notification.body.trim().isNotEmpty &&
-                    actor != notification.title.trim())
-                  Padding(
-                    padding: const EdgeInsets.only(top: AppSpacing.hairline),
-                    child: Text(
-                      notification.title.trim(),
-                      style: context.textStyles.labelSmall?.copyWith(
-                        color: AppColors.muted,
-                      ),
+                ActivitySummaryText(
+                  summary: titleLine,
+                  actorDisplayName: actor,
+                ),
+                if (bodyLine != null) ...[
+                  SizedBox(height: AppSpacing.hairline),
+                  Text(
+                    bodyLine,
+                    style: context.textStyles.bodySmall?.copyWith(
+                      color: AppColors.muted,
+                      height: 1.35,
                     ),
                   ),
+                ],
               ],
             ),
           ),
@@ -65,5 +66,19 @@ class InboxNotificationRow extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _titleLine(InboxNotification notification, String? actor) {
+    final body = notification.body.trim();
+    final title = notification.title.trim();
+    if (body.isNotEmpty) return body;
+    if (title.isNotEmpty) return title;
+    return 'Notification';
+  }
+
+  String? _bodyLine(BuildContext context, InboxNotification notification) {
+    final created = notification.createdAt;
+    if (created == null) return null;
+    return formatRelativeTime(created, localeNameForFormatting(context));
   }
 }

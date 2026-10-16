@@ -72,6 +72,26 @@
       }
     }
   },
+  "rsvpResponseCount": "{count, plural, =0{0 responses} =1{1 response} other{{count} responses}}",
+  "@rsvpResponseCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationPreferencesIntro": "Choose how often you'd like updates from {babyName}.",
+  "@notificationPreferencesIntro": {
+    "placeholders": {
+      "babyName": {
+        "type": "String"
+      }
+    }
+  },
+  "aiSuggestionsSubtitle": "Pick a stage, then add suggestions to your calendar or registry.",
+  "@aiSuggestionsSubtitle": {
+    "description": "Subtitle under AI Suggestions app bar (calendar + registry)."
+  },
   "nameLoveCount": "{count, plural, =0{0 loves} =1{1 love} other{{count} loves}}",
   "@nameLoveCount": {
     "placeholders": {

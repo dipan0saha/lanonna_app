@@ -10,6 +10,16 @@ void main() {
       );
     });
 
+    test('measurement trims without sentence casing', () {
+      expect(
+        AppTextInputPolicy.normalizeForSubmit(
+          AppTextInputKind.measurement,
+          '  7 lbs  ',
+        ),
+        '7 lbs',
+      );
+    });
+
     test('personName capitalizes without flattening casing', () {
       expect(
         AppTextInputPolicy.normalizeForSubmit(

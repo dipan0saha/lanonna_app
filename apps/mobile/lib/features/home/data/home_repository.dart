@@ -40,6 +40,11 @@ class HomeRepository {
 
   HomeSummary? cachedHomeSummary(String babyId) => _summaryByBaby[babyId];
 
+  /// Drop cached home summary so the next fetch reflects gallery/registry/etc. changes.
+  void invalidateHomeSummary(String babyId) {
+    _summaryByBaby.remove(babyId);
+  }
+
   /// Drop the cached baby list and select [babyId] (invite accept).
   ///
   /// A list fetched before the membership existed must not overwrite this

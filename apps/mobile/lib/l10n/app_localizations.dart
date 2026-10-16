@@ -358,6 +358,24 @@ abstract class AppLocalizations {
   /// **'{count, plural, =0{0 votes} =1{1 vote} other{{count} votes}}'**
   String predictionVoteCount(int count);
 
+  /// No description provided for @rsvpResponseCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{0 responses} =1{1 response} other{{count} responses}}'**
+  String rsvpResponseCount(int count);
+
+  /// No description provided for @notificationPreferencesIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how often you'd like updates from {babyName}.'**
+  String notificationPreferencesIntro(String babyName);
+
+  /// Subtitle under AI Suggestions app bar (calendar + registry).
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a stage, then add suggestions to your calendar or registry.'**
+  String get aiSuggestionsSubtitle;
+
   /// No description provided for @nameLoveCount.
   ///
   /// In en, this message translates to:

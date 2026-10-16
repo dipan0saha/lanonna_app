@@ -15,6 +15,7 @@ import '../../../core/api/display_photo_upload.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
+import '../../../core/widgets/app_secondary_outlined_button.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../home/data/home_repository.dart';
 import '../../../core/domain/baby_summary.dart';
@@ -226,9 +227,9 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
             onPressed: _saving ? null : _save,
             child: Text(_saving ? 'Saving…' : 'Save Changes'),
           ),
-          OutlinedButton(
+          AppSecondaryOutlinedButton(
+            label: 'Cancel',
             onPressed: () => context.pop(),
-            child: const Text('Cancel'),
           ),
         ],
       ),

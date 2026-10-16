@@ -1,4 +1,5 @@
 import '../../../core/api/api_client.dart';
+import '../../../core/time/app_date_time.dart';
 
 class NotificationPreferences {
   NotificationPreferences({
@@ -63,6 +64,7 @@ class InboxNotification {
     this.readAt,
     this.deepLink,
     this.babyProfileId,
+    this.createdAt,
   });
 
   final String id;
@@ -71,8 +73,10 @@ class InboxNotification {
   final String? readAt;
   final String? deepLink;
   final String? babyProfileId;
+  final DateTime? createdAt;
 
   factory InboxNotification.fromJson(Map<String, dynamic> json) {
+    final createdRaw = json['created_at'] as String?;
     return InboxNotification(
       id: json['id']?.toString() ?? '',
       title: json['title'] as String? ?? '',
@@ -80,6 +84,7 @@ class InboxNotification {
       readAt: json['read_at'] as String?,
       deepLink: json['deep_link'] as String?,
       babyProfileId: json['baby_profile_id']?.toString(),
+      createdAt: createdRaw != null ? tryParseApiInstant(createdRaw) : null,
     );
   }
 }

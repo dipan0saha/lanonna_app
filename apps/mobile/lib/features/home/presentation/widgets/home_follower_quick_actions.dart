@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
-import '../../../../core/widgets/app_button_label.dart';
-import '../../../../core/widgets/app_responsive_button_pair.dart';
 import '../../../../core/widgets/tinted_icon_square.dart';
 
 class HomeFollowerQuickActions extends StatelessWidget {
@@ -12,13 +10,11 @@ class HomeFollowerQuickActions extends StatelessWidget {
     super.key,
     this.onVoteInFun,
     this.onViewGallery,
-    this.onViewAnnouncement,
     this.useBornOutlineActions = false,
   });
 
   final VoidCallback? onVoteInFun;
   final VoidCallback? onViewGallery;
-  final VoidCallback? onViewAnnouncement;
   final bool useBornOutlineActions;
 
   @override
@@ -31,33 +27,16 @@ class HomeFollowerQuickActions extends StatelessWidget {
         18,
       ),
       child: useBornOutlineActions
-          ? AppResponsiveButtonPair(
-              start: OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.primaryDark,
-                  side: const BorderSide(color: AppColors.primaryDark),
-                  backgroundColor: AppColors.surface,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppMetrics.buttonHorizontalPadding,
-                    vertical: AppMetrics.buttonVerticalPadding,
+          ? Row(
+              children: [
+                Expanded(
+                  child: _QuickActionTile(
+                    icon: Icons.photo_library_outlined,
+                    label: 'View Gallery',
+                    onTap: onViewGallery,
                   ),
                 ),
-                onPressed: onViewAnnouncement,
-                child: const AppButtonLabel('🎀 View Announcement'),
-              ),
-              end: OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.primaryDark,
-                  side: const BorderSide(color: AppColors.primaryDark),
-                  backgroundColor: AppColors.surface,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppMetrics.buttonHorizontalPadding,
-                    vertical: AppMetrics.buttonVerticalPadding,
-                  ),
-                ),
-                onPressed: onViewGallery,
-                child: const AppButtonLabel('View Gallery'),
-              ),
+              ],
             )
           : Row(
               children: [

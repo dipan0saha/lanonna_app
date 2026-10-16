@@ -153,10 +153,13 @@ class _PredictionsTabState extends State<PredictionsTab> {
 
   void _showVoters() {
     final voters = _payload?.genderVoters ?? [];
+    final l10n = AppLocalizations.of(context)!;
     showAppModalSheet(
       context: context,
       title: 'Who voted',
-      subtitle: voters.isEmpty ? 'No votes yet' : '${voters.length} votes',
+      subtitle: voters.isEmpty
+          ? 'No votes yet'
+          : l10n.predictionVoteCount(voters.length),
       bodyBuilder: (context) => ListView(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),

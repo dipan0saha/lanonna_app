@@ -43,7 +43,7 @@ _ChipColors _toggleColors({
   if (!selected) {
     return const _ChipColors(
       background: AppColors.surface,
-      border: AppColors.border,
+      border: AppColors.muted,
       foreground: AppColors.textPrimary,
     );
   }

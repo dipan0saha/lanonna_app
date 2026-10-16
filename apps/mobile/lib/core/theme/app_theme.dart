@@ -56,6 +56,25 @@ abstract final class AppTheme {
           side: const BorderSide(color: AppColors.border),
         ),
       ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          backgroundColor: AppColors.surface,
+          foregroundColor: AppColors.textPrimary,
+          minimumSize: const Size(88, AppMetrics.buttonMinHeight),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppMetrics.buttonHorizontalPadding,
+            vertical: AppMetrics.buttonVerticalPadding,
+          ),
+          side: const BorderSide(color: AppColors.border),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppMetrics.buttonRadius),
+          ),
+          textStyle: textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+      ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           elevation: 0,

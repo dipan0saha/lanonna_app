@@ -184,6 +184,27 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String rsvpResponseCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count responses',
+      one: '1 response',
+      zero: '0 responses',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notificationPreferencesIntro(String babyName) {
+    return 'Choose how often you\'d like updates from $babyName.';
+  }
+
+  @override
+  String get aiSuggestionsSubtitle =>
+      'Pick a stage, then add suggestions to your calendar or registry.';
+
+  @override
   String nameLoveCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
