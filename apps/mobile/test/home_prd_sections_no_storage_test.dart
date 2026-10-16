@@ -3,9 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/features/home/data/models/home_summary.dart';
 import 'package:lanonna/features/home/presentation/widgets/home_prd_sections.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 void main() {
-  testWidgets('owner HomePrdSections does not show storage meter', (tester) async {
+  testWidgets('owner HomePrdSections does not show storage meter', (
+    tester,
+  ) async {
     const summary = HomeSummary(
       lifecycleStatus: 'expecting',
       nameSuggestionCount: 0,
@@ -23,6 +26,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+
         theme: AppTheme.light,
         home: Scaffold(
           body: HomePrdSections(

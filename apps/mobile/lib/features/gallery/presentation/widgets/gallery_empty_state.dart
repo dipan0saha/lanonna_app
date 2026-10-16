@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../../../../core/domain/baby_display_label.dart';
 import '../../../../core/widgets/app_empty_state.dart';
@@ -17,7 +18,8 @@ class GalleryEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = babyDisplayName(babyName);
+    final l10n = AppLocalizations.of(context)!;
+    final name = babyDisplayName(babyName, l10n);
     return AppEmptyState(
       expand: false,
       icon: Icons.photo_outlined,

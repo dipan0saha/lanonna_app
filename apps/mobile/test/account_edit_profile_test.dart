@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/auth/auth_repository.dart';
@@ -104,9 +105,16 @@ void main() {
         providers: [
           Provider<AccountRepository>.value(value: accounts),
           Provider<AuthRepository>.value(value: _Auth()),
-          Provider<NotificationsRepository>.value(value: _Notifications()),
+          ChangeNotifierProvider<NotificationsRepository>.value(
+            value: _Notifications(),
+          ),
         ],
-        child: MaterialApp.router(theme: AppTheme.light, routerConfig: router),
+        child: MaterialApp.router(
+          theme: AppTheme.light,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          routerConfig: router,
+        ),
       ),
     );
     await tester.pumpAndSettle();

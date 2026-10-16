@@ -23,6 +23,7 @@ class FamilyInsightSummary(BaseModel):
     gender_totals: GenderTotals | None = None
     top_name: TopNameInsight | None = None
     top_birthdate_guess: str | None = None
+    show_rich_insight: bool = False
 
 
 class ActivityEventItem(BaseModel):
@@ -62,6 +63,8 @@ class HomeTeasersResponse(BaseModel):
 class HomeSummaryResponse(BaseModel):
     baby_profile_id: uuid.UUID
     lifecycle_status: str
+    names_closed: bool = False
+    predictions_closed: bool = False
     days_to_due: int | None
     birth_welcome: dict[str, Any] | None = None
     family_insight: FamilyInsightSummary

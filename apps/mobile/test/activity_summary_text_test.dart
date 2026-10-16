@@ -4,7 +4,7 @@ import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/core/widgets/activity/activity_summary_text.dart';
 
 void main() {
-  testWidgets('ActivitySummaryText bolds actor prefix case-insensitively', (
+  testWidgets('ActivitySummaryText bolds the structured actor the copy names', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -12,20 +12,25 @@ void main() {
         theme: AppTheme.light,
         home: const Scaffold(
           body: ActivitySummaryText(
-            summary: 'Added "stroller" to the registry',
+            summary: 'Grandma Sue commented on "Bump"',
             actorDisplayName: 'Grandma Sue',
           ),
         ),
       ),
     );
 
-    final rich = tester.widget<RichText>(find.byType(RichText));
-    final first = _firstTextSpan(rich.text);
-    expect(first.text, 'Grandma Sue ');
-    expect(first.style?.fontWeight, FontWeight.w700);
+    final rich = tester.widget<RichText>(find.byType(RichText).last);
+    final spans = <TextSpan>[];
+    rich.text.visitChildren((span) {
+      if (span is TextSpan && span.text != null) spans.add(span);
+      return true;
+    });
+    expect(spans.first.text, 'Grandma Sue');
+    expect(spans.first.style?.fontWeight, FontWeight.w700);
+    expect(spans.map((s) => s.text).join(), 'Grandma Sue commented on "Bump"');
   });
 
-  testWidgets('ActivitySummaryText bolds actor embedded at summary start', (
+  testWidgets('ActivitySummaryText never prefixes an actor the copy omits', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -33,28 +38,31 @@ void main() {
         theme: AppTheme.light,
         home: const Scaffold(
           body: ActivitySummaryText(
-            summary: 'grandma sue commented on "Bump"',
+            summary: 'New event: Shower',
             actorDisplayName: 'Grandma Sue',
           ),
         ),
       ),
     );
 
-    final rich = tester.widget<RichText>(find.byType(RichText));
-    final first = _firstTextSpan(rich.text);
-    expect(first.style?.fontWeight, FontWeight.w700);
-    expect(first.text, 'grandma sue');
+    expect(find.text('New event: Shower'), findsOneWidget);
+    expect(find.textContaining('Grandma Sue'), findsNothing);
   });
-}
 
-TextSpan _firstTextSpan(InlineSpan root) {
-  TextSpan? found;
-  root.visitChildren((span) {
-    if (span is TextSpan && span.text != null) {
-      found = span;
-      return false;
-    }
-    return true;
+  testWidgets('ActivitySummaryText renders summary alone without actor', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: const Scaffold(
+          body: ActivitySummaryText(summary: 'Family voted on gender'),
+        ),
+      ),
+    );
+
+    expect(find.text('Family voted on gender'), findsOneWidget);
+    final text = tester.widget<Text>(find.text('Family voted on gender'));
+    expect(text.textSpan, isNull);
   });
-  return found!;
 }

@@ -35,7 +35,7 @@ class CreateBabyFormFromSummary {
   final String girlName;
 
   factory CreateBabyFormFromSummary.fromBaby(BabySummary baby) {
-    final lifecycle = baby.lifecycleStatus == 'born'
+    final lifecycle = baby.isBorn
         ? BabyLifecycle.born
         : BabyLifecycle.expecting;
     var genderPill = genderPillFromApi(baby.gender);

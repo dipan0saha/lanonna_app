@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
@@ -154,6 +155,7 @@ class _AccountScreenState extends State<AccountScreen> {
     final displayName = payload?.displayName ?? user?.email ?? 'Account';
     final email = payload?.email ?? user?.email;
     final showOwnerPrefs = payload?.hasOwnerBaby ?? false;
+    final l10n = AppLocalizations.of(context)!;
 
     return PrototypeSubpageScaffold(
       title: 'My Account',
@@ -231,7 +233,7 @@ class _AccountScreenState extends State<AccountScreen> {
                           AppSemantics.button(
                             'account_digest_frequency',
                             ListTile(
-                              title: const Text('Digest frequency'),
+                              title: Text(l10n.accountDigestFrequency),
                               subtitle: Text(_digestSummary!),
                               trailing: const Icon(
                                 Icons.chevron_right,
@@ -245,7 +247,7 @@ class _AccountScreenState extends State<AccountScreen> {
                                 await _load();
                               },
                             ),
-                            label: 'Digest frequency, $_digestSummary',
+                            label: '${l10n.accountDigestFrequency}, $_digestSummary',
                           ),
                         if (showOwnerPrefs)
                           AppSemantics.button(

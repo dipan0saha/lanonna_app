@@ -52,7 +52,8 @@ class TopNameInsight {
   final int likeCount;
 
   factory TopNameInsight.fromJson(Map<String, dynamic>? json) {
-    if (json == null) return const TopNameInsight(suggestedName: '', likeCount: 0);
+    if (json == null)
+      return const TopNameInsight(suggestedName: '', likeCount: 0);
     return TopNameInsight(
       suggestedName: json['suggested_name'] as String? ?? '',
       likeCount: readInt(json['like_count']),
@@ -122,7 +123,11 @@ class GettingStartedSummary {
 
   factory GettingStartedSummary.fromJson(Map<String, dynamic>? json) {
     if (json == null) {
-      return const GettingStartedSummary(completedCount: 0, total: 0, tasks: []);
+      return const GettingStartedSummary(
+        completedCount: 0,
+        total: 0,
+        tasks: [],
+      );
     }
     final tasks = json['tasks'] as List<dynamic>? ?? [];
     return GettingStartedSummary(
@@ -151,10 +156,7 @@ class HomeTeaserPhoto {
 }
 
 class HomeTeasers {
-  const HomeTeasers({
-    required this.recentPhotos,
-    required this.upcomingEvents,
-  });
+  const HomeTeasers({required this.recentPhotos, required this.upcomingEvents});
 
   final List<HomeTeaserPhoto> recentPhotos;
   final List<NextUpEvent> upcomingEvents;
@@ -198,7 +200,8 @@ class BirthWelcomeSummary {
   final bool? everyoneNotified;
 
   factory BirthWelcomeSummary.fromJson(Map<String, dynamic>? json) {
-    if (json == null) return const BirthWelcomeSummary(babyName: '', daysSinceBirth: 0);
+    if (json == null)
+      return const BirthWelcomeSummary(babyName: '', daysSinceBirth: 0);
     final ann = json['announcement'] as Map<String, dynamic>?;
     return BirthWelcomeSummary(
       babyName: json['baby_name'] as String? ?? '',
@@ -288,6 +291,9 @@ class HomeSummary {
     required this.nameSuggestionCount,
     required this.voteCount,
     required this.recentActivity,
+    this.namesClosed = false,
+    this.predictionsClosed = false,
+    this.showRichInsight = false,
     this.daysToDue,
     this.genderTotals,
     this.topName,
@@ -302,6 +308,12 @@ class HomeSummary {
   });
 
   final String lifecycleStatus;
+  final bool namesClosed;
+  final bool predictionsClosed;
+  final bool showRichInsight;
+
+  /// Display-only lifecycle (layout copy); write gating uses the closed flags.
+  bool get isBorn => lifecycleStatus == 'born';
   final int? daysToDue;
   final int nameSuggestionCount;
   final int voteCount;
@@ -317,11 +329,6 @@ class HomeSummary {
   final List<HomeInviteStatusRow> inviteStatus;
   final List<HomeActivityItem> recentActivity;
 
-  /// Rich Family Insight when family has voted on gender or loved a name —
-  /// not for owner-only name drafts (suggestion count alone).
-  bool get showRichInsight =>
-      voteCount > 0 || (topName?.likeCount ?? 0) > 0;
-
   factory HomeSummary.fromJson(Map<String, dynamic> json) {
     final insight = json['family_insight'] as Map<String, dynamic>? ?? {};
     final activity = json['recent_activity'] as List<dynamic>? ?? [];
@@ -330,6 +337,9 @@ class HomeSummary {
     final invites = json['invite_status'] as List<dynamic>? ?? [];
     return HomeSummary(
       lifecycleStatus: json['lifecycle_status'] as String? ?? 'expecting',
+      namesClosed: json['names_closed'] as bool? ?? false,
+      predictionsClosed: json['predictions_closed'] as bool? ?? false,
+      showRichInsight: insight['show_rich_insight'] as bool? ?? false,
       daysToDue: json['days_to_due'] == null
           ? null
           : readInt(json['days_to_due']),

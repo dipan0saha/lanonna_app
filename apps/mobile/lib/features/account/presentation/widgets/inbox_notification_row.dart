@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
@@ -16,16 +17,10 @@ class InboxNotificationRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final visual = inboxNotificationVisual(
-      deepLink: notification.deepLink,
-      title: notification.title,
-      body: notification.body,
-    );
-    final actor = inboxNotificationActorName(
-      title: notification.title,
-      body: notification.body,
-    );
-    final titleLine = _titleLine(notification, actor);
+    final l10n = AppLocalizations.of(context)!;
+    final visual = inboxNotificationVisualForType(notification.notificationType);
+    final actor = notification.actorDisplayName?.trim();
+    final titleLine = _titleLine(notification, l10n);
     final bodyLine = _bodyLine(context, notification);
 
     return Padding(
@@ -68,12 +63,12 @@ class InboxNotificationRow extends StatelessWidget {
     );
   }
 
-  String _titleLine(InboxNotification notification, String? actor) {
+  String _titleLine(InboxNotification notification, AppLocalizations l10n) {
     final body = notification.body.trim();
     final title = notification.title.trim();
     if (body.isNotEmpty) return body;
     if (title.isNotEmpty) return title;
-    return 'Notification';
+    return l10n.inboxNotificationFallbackTitle;
   }
 
   String? _bodyLine(BuildContext context, InboxNotification notification) {

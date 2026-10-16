@@ -5,7 +5,7 @@ from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from lanonna_api.auth import current_app_user
+from lanonna_api.auth import AppUser, current_app_user
 from lanonna_api.domain.avatar_urls import normalize_avatar_for_storage
 from lanonna_api.http_errors import map_domain_errors
 from lanonna_api.domain.home import announce_arrival, build_home_summary, list_activity_events
@@ -33,9 +33,9 @@ router = APIRouter(prefix="/v1/babies", tags=["babies"])
 
 
 @router.get("", response_model=list[BabySummary])
-def list_babies(user: dict[str, Any] = Depends(current_app_user)) -> list[BabySummary]:
+def list_babies(user: AppUser = Depends(current_app_user)) -> list[BabySummary]:
     summaries: list[BabySummary] = []
-    for row in list_babies_for_user(user["uid"]):
+    for row in list_babies_for_user(user.uid):
         owner_count = count_active_owners(row["id"])
         row["can_leave"] = can_leave_baby(row["role"], owner_count)
         summaries.append(baby_summary_from_row(row))
@@ -45,7 +45,7 @@ def list_babies(user: dict[str, Any] = Depends(current_app_user)) -> list[BabySu
 @router.post("", response_model=BabySummary, status_code=status.HTTP_201_CREATED)
 def create_baby(
     body: BabyCreateRequest,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> BabySummary:
     if body.profile_name_suggestions and body.lifecycle_status != "expecting":
         raise HTTPException(
@@ -54,7 +54,7 @@ def create_baby(
         )
     try:
         row = create_baby_with_owner_membership(
-            user["uid"],
+            user.uid,
             body.name,
             body.gender,
             body.expected_birth_date,
@@ -66,7 +66,7 @@ def create_baby(
         raise map_domain_errors(exc) from exc
     if body.profile_name_suggestions:
         seed_expecting_profile_name_suggestions(
-            user["uid"],
+            user.uid,
             row["id"],
             [{"name": r.name, "gender": r.gender} for r in body.profile_name_suggestions],
             baby=row,
@@ -78,7 +78,7 @@ def create_baby(
 def patch_baby(
     baby_profile_id: uuid.UUID,
     body: BabyUpdateRequest,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> BabySummary:
     fields: dict[str, Any] = {}
     if body.name is not None:
@@ -112,13 +112,13 @@ def patch_baby(
         if announcing:
             extra = {k: v for k, v in fields.items() if k not in ("lifecycle_status", "actual_birth_date")}
             row = announce_arrival(
-                user["uid"],
+                user.uid,
                 baby_profile_id,
                 body.actual_birth_date,
                 extra_fields=extra or None,
             )
         else:
-            row = update_baby_for_owner(user["uid"], baby_profile_id, fields)
+            row = update_baby_for_owner(user.uid, baby_profile_id, fields)
     except (ValueError, PermissionError) as exc:
         raise map_domain_errors(exc) from exc
 
@@ -133,7 +133,7 @@ def patch_baby(
                 detail="profile_name_suggestions are only allowed for expecting babies.",
             )
         seed_expecting_profile_name_suggestions(
-            user["uid"],
+            user.uid,
             baby_profile_id,
             [{"name": r.name, "gender": r.gender} for r in suggestions],
             baby=row,
@@ -145,10 +145,10 @@ def patch_baby(
 @router.get("/{baby_profile_id}/home-summary", response_model=HomeSummaryResponse)
 def home_summary(
     baby_profile_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> HomeSummaryResponse:
     try:
-        data = build_home_summary(user["uid"], baby_profile_id)
+        data = build_home_summary(user.uid, baby_profile_id)
     except Exception as exc:
         raise map_domain_errors(exc) from exc
     return HomeSummaryResponse(**data)
@@ -157,14 +157,14 @@ def home_summary(
 @router.get("/{baby_profile_id}/activity-events")
 def activity_events(
     baby_profile_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
     limit: int = Query(default=20, ge=1, le=50),
     offset: int = Query(default=0, ge=0),
     scope: Literal["all", "gallery"] = Query(default="all"),
 ) -> dict[str, Any]:
     try:
         return list_activity_events(
-            user["uid"],
+            user.uid,
             baby_profile_id,
             limit=limit,
             offset=offset,
@@ -181,11 +181,11 @@ def activity_events(
 def first_moment_seed(
     baby_profile_id: uuid.UUID,
     body: FirstMomentSeedRequest,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> FirstMomentSeedResponse:
     try:
         counts = seed_first_moment(
-            user["uid"],
+            user.uid,
             baby_profile_id,
             body.event_preset_ids,
             body.registry_preset_ids,

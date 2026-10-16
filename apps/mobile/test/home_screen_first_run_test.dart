@@ -12,12 +12,14 @@ import 'package:lanonna/features/home/home_screen.dart';
 import 'package:lanonna/core/domain/baby_summary.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:lanonna/features/account/data/notifications_repository.dart';
 
 import 'support/fake_notifications_repository.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 void main() {
-  testWidgets('owner expecting home shows countdown and family insight', (tester) async {
+  testWidgets('owner expecting home shows countdown and family insight', (
+    tester,
+  ) async {
     SharedPreferences.setMockInitialValues({'selected_baby_id': 'baby-1'});
 
     final repo = _FakeHomeRepository();
@@ -28,17 +30,16 @@ void main() {
         providers: [
           Provider<HomeRepository>.value(value: repo),
           ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
-          Provider<HomeRefreshSignal>(
-            create: (_) => HomeRefreshSignal(),
-          ),
+          Provider<HomeRefreshSignal>(create: (_) => HomeRefreshSignal()),
           ChangeNotifierProvider<ConnectivityService>(
             create: (_) => ConnectivityService.forTesting(),
           ),
-          Provider<NotificationsRepository>(
-            create: (_) => FakeNotificationsRepository(),
-          ),
+          ...shellTopBarTestProviders(),
         ],
         child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
           theme: AppTheme.light,
           home: const HomeScreen(),
         ),
@@ -55,7 +56,9 @@ void main() {
     expect(find.text('Announce Arrival'), findsOneWidget);
   });
 
-  testWidgets('owner born home shows recent activity not invite', (tester) async {
+  testWidgets('owner born home shows recent activity not invite', (
+    tester,
+  ) async {
     SharedPreferences.setMockInitialValues({'selected_baby_id': 'baby-2'});
 
     final repo = _FakeHomeRepository();
@@ -66,17 +69,16 @@ void main() {
         providers: [
           Provider<HomeRepository>.value(value: repo),
           ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
-          Provider<HomeRefreshSignal>(
-            create: (_) => HomeRefreshSignal(),
-          ),
+          Provider<HomeRefreshSignal>(create: (_) => HomeRefreshSignal()),
           ChangeNotifierProvider<ConnectivityService>(
             create: (_) => ConnectivityService.forTesting(),
           ),
-          Provider<NotificationsRepository>(
-            create: (_) => FakeNotificationsRepository(),
-          ),
+          ...shellTopBarTestProviders(),
         ],
         child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
           theme: AppTheme.light,
           home: const HomeScreen(),
         ),
@@ -92,8 +94,12 @@ void main() {
     expect(find.textContaining('is here!'), findsOneWidget);
   });
 
-  testWidgets('owner born home shows empty recent activity placeholder', (tester) async {
-    SharedPreferences.setMockInitialValues({'selected_baby_id': 'baby-born-empty'});
+  testWidgets('owner born home shows empty recent activity placeholder', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({
+      'selected_baby_id': 'baby-born-empty',
+    });
 
     final repo = _FakeHomeRepository();
     final store = SelectedBabyStore(await SharedPreferences.getInstance());
@@ -103,17 +109,16 @@ void main() {
         providers: [
           Provider<HomeRepository>.value(value: repo),
           ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
-          Provider<HomeRefreshSignal>(
-            create: (_) => HomeRefreshSignal(),
-          ),
+          Provider<HomeRefreshSignal>(create: (_) => HomeRefreshSignal()),
           ChangeNotifierProvider<ConnectivityService>(
             create: (_) => ConnectivityService.forTesting(),
           ),
-          Provider<NotificationsRepository>(
-            create: (_) => FakeNotificationsRepository(),
-          ),
+          ...shellTopBarTestProviders(),
         ],
         child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
           theme: AppTheme.light,
           home: const HomeScreen(),
         ),
@@ -142,8 +147,9 @@ class _FakeHomeRepository extends HomeRepository {
         id: 'baby-1',
         name: 'Parker',
         lifecycleStatus: 'expecting',
-        expectedBirthDate:
-            DateTime.now().add(const Duration(days: 33)).toIso8601String(),
+        expectedBirthDate: DateTime.now()
+            .add(const Duration(days: 33))
+            .toIso8601String(),
         role: 'owner',
       ),
       BabySummary(
@@ -166,23 +172,25 @@ class _FakeHomeRepository extends HomeRepository {
   @override
   Future<HomeSummaryResult> fetchHomeSummary(String babyId) async {
     if (babyId == 'baby-2') {
-      return HomeSummaryLoaded(const HomeSummary(
-        lifecycleStatus: 'born',
-        nameSuggestionCount: 0,
-        voteCount: 0,
-        recentActivity: [
-          HomeActivityItem(
-            id: 'a1',
-            eventType: 'photo_shared',
-            summary: 'A new photo was shared',
-            createdAt: '2026-10-01T12:00:00Z',
+      return HomeSummaryLoaded(
+        const HomeSummary(
+          lifecycleStatus: 'born',
+          nameSuggestionCount: 0,
+          voteCount: 0,
+          recentActivity: [
+            HomeActivityItem(
+              id: 'a1',
+              eventType: 'photo_shared',
+              summary: 'A new photo was shared',
+              createdAt: '2026-10-01T12:00:00Z',
+            ),
+          ],
+          birthWelcome: BirthWelcomeSummary(
+            babyName: 'Parker',
+            daysSinceBirth: 0,
           ),
-        ],
-        birthWelcome: BirthWelcomeSummary(
-          babyName: 'Parker',
-          daysSinceBirth: 0,
         ),
-      ));
+      );
     }
     if (babyId == 'baby-born-empty') {
       return HomeSummaryLoaded(

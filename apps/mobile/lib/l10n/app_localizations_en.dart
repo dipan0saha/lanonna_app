@@ -488,4 +488,51 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get actionRetry => 'Retry';
+
+  @override
+  String get babyNameFallback => 'your baby';
+
+  @override
+  String get notificationsInboxTitle => 'Notifications';
+
+  @override
+  String get notificationsMarkAllRead => 'Mark all read';
+
+  @override
+  String get notificationsInboxEmptyTitle => 'No notifications yet';
+
+  @override
+  String get notificationsInboxEmptyMessage =>
+      'When family comments, RSVPs, or joins, you\'ll see it here.';
+
+  @override
+  String get inboxNotificationFallbackTitle => 'Notification';
+
+  @override
+  String get accountDigestFrequency => 'Digest frequency';
+
+  @override
+  String get homeBornActivityEmpty =>
+      'Nothing yet. Once family starts commenting and squishing photos, you\'ll see it here.';
+
+  @override
+  String get calendarPastEventsTitle => 'Past events';
+
+  @override
+  String get calendarPastEventsSubtitle => 'Events that have already happened';
+
+  @override
+  String get calendarPastEventsEmpty => 'No past events yet.';
+
+  @override
+  String get calendarLoadMore => 'Load more';
+
+  @override
+  String get registrySortPriorityHighFirst => 'Priority: High first';
+
+  @override
+  String get registrySortPriorityLowFirst => 'Priority: Low first';
 }

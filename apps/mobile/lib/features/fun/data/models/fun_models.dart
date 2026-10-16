@@ -42,11 +42,13 @@ class NamesPayload {
     required this.suggestions,
     this.viewerLikedMaleId,
     this.viewerLikedFemaleId,
+    this.namesClosed = false,
   });
 
   final List<NameSuggestion> suggestions;
   final String? viewerLikedMaleId;
   final String? viewerLikedFemaleId;
+  final bool namesClosed;
 
   factory NamesPayload.fromJson(Map<String, dynamic> json) {
     final list = json['suggestions'] as List<dynamic>? ?? [];
@@ -58,6 +60,7 @@ class NamesPayload {
           .toList(),
       viewerLikedMaleId: liked['male'] as String?,
       viewerLikedFemaleId: liked['female'] as String?,
+      namesClosed: json['names_closed'] as bool? ?? false,
     );
   }
 }

@@ -2,7 +2,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends
 
-from lanonna_api.auth import current_app_user
+from lanonna_api.auth import AppUser, current_app_user
 from lanonna_api.domain.onboarding import (
     complete_owner_onboarding_for_user,
     onboarding_status_for_user,
@@ -15,12 +15,12 @@ router = APIRouter(prefix="/v1/onboarding", tags=["onboarding"])
 
 @router.get("/status", response_model=OnboardingStatusResponse)
 def onboarding_status(
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> OnboardingStatusResponse:
     try:
         data = onboarding_status_for_user(
-            user["uid"],
-            email_verified=bool(user.get("email_verified", False)),
+            user.uid,
+            email_verified=bool(user.claims.get("email_verified", False)),
         )
     except LookupError as exc:
         raise map_domain_errors(exc) from exc
@@ -29,12 +29,12 @@ def onboarding_status(
 
 @router.post("/owner/complete", response_model=OnboardingStatusResponse)
 def complete_owner_onboarding_route(
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> OnboardingStatusResponse:
     try:
         data = complete_owner_onboarding_for_user(
-            user["uid"],
-            email_verified=bool(user.get("email_verified", False)),
+            user.uid,
+            email_verified=bool(user.claims.get("email_verified", False)),
         )
     except (LookupError, ValueError) as exc:
         raise map_domain_errors(exc) from exc

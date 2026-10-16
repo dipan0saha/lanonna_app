@@ -2,9 +2,24 @@ import 'package:flutter/foundation.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exception.dart';
+import '../../../core/json/json_readers.dart';
 import '../../../core/time/app_date_time.dart';
 import '../domain/calendar_event_lists.dart';
 import 'models/calendar_models.dart';
+
+class CalendarPastEventsPage {
+  CalendarPastEventsPage({
+    required this.items,
+    required this.hasMore,
+    required this.offset,
+    required this.limit,
+  });
+
+  final List<CalendarEvent> items;
+  final bool hasMore;
+  final int offset;
+  final int limit;
+}
 
 class CalendarRepository extends ChangeNotifier {
   CalendarRepository(this._api);
@@ -47,6 +62,28 @@ class CalendarRepository extends ChangeNotifier {
     return _listsByBaby[babyId]?[
       _cacheKey(month: month, upcoming: upcoming, past: past)
     ];
+  }
+
+  Future<CalendarPastEventsPage> listPastEventsPage(
+    String babyId, {
+    int offset = 0,
+    int? limit,
+  }) async {
+    final pageLimit = limit ?? 30;
+    final json = await _api.getJson(
+      '/v1/babies/$babyId/events?past=true&offset=$offset&limit=$pageLimit',
+    );
+    final rawItems = json['items'] as List<dynamic>? ?? [];
+    final items = rawItems
+        .whereType<Map<String, dynamic>>()
+        .map(CalendarEvent.fromJson)
+        .toList();
+    return CalendarPastEventsPage(
+      items: items,
+      hasMore: json['has_more'] as bool? ?? false,
+      offset: readInt(json['offset']),
+      limit: readInt(json['limit'], defaultValue: pageLimit),
+    );
   }
 
   Future<List<CalendarEvent>> listEvents(

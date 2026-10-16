@@ -206,7 +206,7 @@ def test_send_invite_email_sends_and_marks_sent(mock_settings):
 
 
 @patch("lanonna_worker.invite_email.settings")
-def test_send_invite_email_connect_error_retries_then_sends(mock_settings):
+def test_send_invite_email_connect_error_returns_retry_for_pubsub_backoff(mock_settings):
     mock_settings.mailjet_api_key = "key"
     mock_settings.mailjet_api_secret = "secret"
     mock_settings.mailjet_from_email = "lanonnaapp@gmail.com"
@@ -245,11 +245,12 @@ def test_send_invite_email_connect_error_retries_then_sends(mock_settings):
         side_effect=[httpx.ConnectError("reset"), ok_response],
     ) as post, patch(
         "lanonna_worker.invite_email.get_connection"
-    ) as mock_conn_ctx, patch("lanonna_worker.invite_email.time.sleep"):
+    ) as mock_conn_ctx:
         mock_conn_ctx.return_value.__enter__.return_value = conn
         outcome = send_invite_email(inv_id, delivery_attempt=1, final_attempt=False)
-    assert outcome == InviteSendOutcome.SENT
-    assert post.call_count == 2
+    # No in-process retry: Pub/Sub redelivers with exponential backoff.
+    assert outcome == InviteSendOutcome.RETRY
+    assert post.call_count == 1
 
 
 @patch("lanonna_worker.invite_email.settings")

@@ -1,3 +1,5 @@
+import 'package:lanonna/l10n/app_localizations.dart';
+
 import '../data/models/registry_models.dart';
 
 enum RegistryItemSort {
@@ -6,9 +8,9 @@ enum RegistryItemSort {
 }
 
 extension RegistryItemSortLabels on RegistryItemSort {
-  String get menuLabel => switch (this) {
-        RegistryItemSort.priorityHighFirst => 'Priority: High first',
-        RegistryItemSort.priorityLowFirst => 'Priority: Low first',
+  String menuLabel(AppLocalizations l10n) => switch (this) {
+        RegistryItemSort.priorityHighFirst => l10n.registrySortPriorityHighFirst,
+        RegistryItemSort.priorityLowFirst => l10n.registrySortPriorityLowFirst,
       };
 
   RegistryItemSort get toggled => switch (this) {

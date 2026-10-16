@@ -36,9 +36,14 @@ import '../domain/gallery_refresh.dart';
 import '../domain/gallery_routes.dart';
 
 class PhotoDetailScreen extends StatefulWidget {
-  const PhotoDetailScreen({super.key, required this.photoId});
+  const PhotoDetailScreen({
+    super.key,
+    required this.photoId,
+    this.gallerySort = 'default',
+  });
 
   final String photoId;
+  final String gallerySort;
 
   @override
   State<PhotoDetailScreen> createState() => _PhotoDetailScreenState();
@@ -156,6 +161,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     try {
       final page = await context.read<GalleryRepository>().listPhotosPage(
         baby.id,
+        sort: widget.gallerySort,
         offset: _photoIdPageOffset,
       );
       if (!mounted) return;
@@ -406,7 +412,9 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     if (idx < 0) return;
     final next = idx + delta;
     if (next < 0 || next >= _photoIds.length) return;
-    context.replace(GalleryRoutes.photoDetail(_photoIds[next]));
+    context.replace(
+      GalleryRoutes.photoDetail(_photoIds[next], sort: widget.gallerySort),
+    );
   }
 
   bool get _hasPreviousPhoto => _photoIds.indexOf(widget.photoId) > 0;

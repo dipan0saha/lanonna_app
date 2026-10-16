@@ -42,6 +42,8 @@ from lanonna_api.domain.date_validation import (
     utc_today as _utc_today,
     validate_actual_birth_date,
 )
+from lanonna_api.domain.fun_closed import fun_closed_flags
+from lanonna_api.domain.notification_metadata import NotificationType
 from lanonna_api.domain.notifications import (
     FanOutSpec,
     NotificationChannel,
@@ -211,6 +213,8 @@ def announce_arrival(
                 deep_link=f"/baby/{baby_profile_id}/announcement",
                 exclude_firebase_uid=firebase_uid,
                 notification_channel=NotificationChannel.CALENDAR,
+                notification_type=NotificationType.GENERIC,
+                actor_firebase_uid=firebase_uid,
             )
         )
     return result
@@ -354,9 +358,14 @@ def build_home_summary(
             if inv.get("status") == "pending"
         ][:5]
 
+    closed = fun_closed_flags(baby)
+    show_rich_insight = vote_count > 0 or int((top_name or {}).get("like_count") or 0) > 0
+
     return {
         "baby_profile_id": baby_profile_id,
         "lifecycle_status": lifecycle,
+        "names_closed": closed["names_closed"],
+        "predictions_closed": closed["predictions_closed"],
         "days_to_due": days_to_due,
         "birth_welcome": _build_birth_welcome(baby, baby_profile_id, is_owner),
         "family_insight": {
@@ -365,6 +374,7 @@ def build_home_summary(
             "gender_totals": totals,
             "top_name": top_name,
             "top_birthdate_guess": top_birthdate,
+            "show_rich_insight": show_rich_insight,
         },
         "next_up_event": next_up,
         "getting_started": getting_started,

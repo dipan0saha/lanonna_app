@@ -5,7 +5,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Query
 
-from lanonna_api.auth import current_app_user
+from lanonna_api.auth import AppUser, current_app_user
 from lanonna_api.http_errors import map_domain_errors
 from lanonna_api.domain.search import search_baby_content
 
@@ -17,9 +17,9 @@ def search_baby(
     baby_profile_id: uuid.UUID,
     q: str = Query(default="", max_length=200),
     limit: int = Query(default=20, ge=1, le=50),
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
-        return search_baby_content(user["uid"], baby_profile_id, q, limit=limit)
+        return search_baby_content(user.uid, baby_profile_id, q, limit=limit)
     except Exception as exc:
         raise map_domain_errors(exc) from exc

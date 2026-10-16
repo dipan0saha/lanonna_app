@@ -6,7 +6,7 @@ from typing import Any, Literal
 from fastapi import APIRouter, Depends, Query, Response, status
 from pydantic import BaseModel, Field
 
-from lanonna_api.auth import current_app_user
+from lanonna_api.auth import AppUser, current_app_user
 from lanonna_api.domain import gallery as gallery_domain
 from lanonna_api.http_errors import map_domain_errors
 from lanonna_api.input_limits import MAX_CAPTION_LEN, MAX_PHOTO_TAGGED_BABIES
@@ -43,7 +43,7 @@ class PhotoTagsBody(BaseModel):
 @router.post("/v1/photos/init")
 def photos_init(
     body: PhotoInitRequest,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
         caption = body.caption.strip() if body.caption else None
@@ -81,11 +81,11 @@ def list_photos(
     limit: int = Query(default=50, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     sort: Literal["default", "recent", "favorites"] = Query(default="default"),
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> list[dict[str, Any]]:
     try:
         return gallery_domain.list_gallery(
-            user["uid"], baby_profile_id, limit, offset, sort=sort
+            user.uid, baby_profile_id, limit, offset, sort=sort
         )
     except Exception as exc:
         raise map_domain_errors(exc) from exc
@@ -95,10 +95,10 @@ def list_photos(
 def photo_detail(
     baby_profile_id: uuid.UUID,
     photo_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
-        return gallery_domain.get_photo_detail(user["uid"], baby_profile_id, photo_id)
+        return gallery_domain.get_photo_detail(user.uid, baby_profile_id, photo_id)
     except Exception as exc:
         raise map_domain_errors(exc) from exc
 
@@ -108,11 +108,11 @@ def patch_photo(
     baby_profile_id: uuid.UUID,
     photo_id: uuid.UUID,
     body: CaptionPatch,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
         return gallery_domain.patch_caption(
-            user["uid"], baby_profile_id, photo_id, body.caption
+            user.uid, baby_profile_id, photo_id, body.caption
         )
     except Exception as exc:
         raise map_domain_errors(exc) from exc
@@ -122,10 +122,10 @@ def patch_photo(
 def delete_photo_route(
     baby_profile_id: uuid.UUID,
     photo_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> Response:
     try:
-        gallery_domain.remove_photo(user["uid"], baby_profile_id, photo_id)
+        gallery_domain.remove_photo(user.uid, baby_profile_id, photo_id)
     except Exception as exc:
         raise map_domain_errors(exc) from exc
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -135,10 +135,10 @@ def delete_photo_route(
 def squish(
     baby_profile_id: uuid.UUID,
     photo_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
-        return gallery_domain.squish_photo(user["uid"], baby_profile_id, photo_id)
+        return gallery_domain.squish_photo(user.uid, baby_profile_id, photo_id)
     except Exception as exc:
         raise map_domain_errors(exc) from exc
 
@@ -149,11 +149,11 @@ def patch_comment(
     photo_id: uuid.UUID,
     comment_id: uuid.UUID,
     body: CommentPatch,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
         return gallery_domain.edit_comment(
-            user["uid"], baby_profile_id, photo_id, comment_id, body.body
+            user.uid, baby_profile_id, photo_id, comment_id, body.body
         )
     except Exception as exc:
         raise map_domain_errors(exc) from exc
@@ -164,11 +164,11 @@ def put_photo_tags(
     baby_profile_id: uuid.UUID,
     photo_id: uuid.UUID,
     body: PhotoTagsBody,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
         return gallery_domain.set_photo_baby_tags(
-            user["uid"],
+            user.uid,
             baby_profile_id,
             photo_id,
             body.tagged_baby_profile_ids,
@@ -182,11 +182,11 @@ def create_comment(
     baby_profile_id: uuid.UUID,
     photo_id: uuid.UUID,
     body: CommentBody,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
         return gallery_domain.add_comment(
-            user["uid"], baby_profile_id, photo_id, body.body
+            user.uid, baby_profile_id, photo_id, body.body
         )
     except Exception as exc:
         raise map_domain_errors(exc) from exc
@@ -200,11 +200,11 @@ def delete_comment_route(
     baby_profile_id: uuid.UUID,
     photo_id: uuid.UUID,
     comment_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> Response:
     try:
         gallery_domain.delete_comment(
-            user["uid"], baby_profile_id, photo_id, comment_id
+            user.uid, baby_profile_id, photo_id, comment_id
         )
     except Exception as exc:
         raise map_domain_errors(exc) from exc

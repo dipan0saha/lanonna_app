@@ -235,7 +235,7 @@ Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps:
 | GET | `/v1/app/version?platform=` | Public force-update config (`android` \| `ios`); `minimum_version`, `store_url` (migration `020_app_versions`; no JWT / App Check) |
 | GET | `/v1/me/account` | Firebase Bearer JWT; profile + babies + `engagement` stats; `storage_usage` when user owns a baby. Auth smoke: unauthenticated request → 401. |
 | GET, PATCH | `/v1/me/notification-preferences` | Digest (`realtime`/`daily`/`weekly`), push + email digest toggles; per-channel `notify_*_enabled` (`gallery`, `calendar`, `registry`, `comments`) |
-| GET | `/v1/me/notifications` | In-app notification inbox |
+| GET | `/v1/me/notifications` | In-app notification inbox (`notification_type`, `actor_display_name`, …) |
 | GET | `/v1/me/notifications/unread-count` | Unread inbox count (shell bell dot) |
 | PATCH | `/v1/me/notifications/{id}/read` | Mark notification read |
 | POST | `/v1/me/notifications/read-all` | Mark all inbox notifications read for the current user (`updated` count) |
@@ -285,7 +285,7 @@ Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps:
 | GET, PATCH | `/v1/babies/{id}/registry/shipping-address` | JWT member read; owner PATCH. Body/response: `line1`, `line2`, `city`, `region`, `postal_code`, `country_code` (ISO-2), `formatted` (display). Save requires line1, city, postal_code, country_code; all null clears address. Mobile: `RegistryShippingAddressScreen` uses `Form` + `form_validators.dart` + `AppLabeledTextFormField` / `AppCountryDropdownField` (autovalidate after first submit). |
 | GET, POST, DELETE | `/v1/babies/{id}/fun/names` | JWT (member); follower 1 name/gender; each suggestion includes `can_delete` (owner or author); mobile renders remove from that flag (#16) |
 | POST | `/v1/babies/{id}/fun/names/{id}/like` | JWT; one like per gender column |
-| GET | `/v1/babies/{id}/fun/predictions` | JWT. Tallies, viewer votes, voters, histogram, and `predictions_closed` (true when `baby_profiles.lifecycle_status` is `born`; a birth-announcement keepsake alone does not close votes) |
+| GET | `/v1/babies/{id}/fun/predictions` | JWT. Tallies, viewer votes, voters, histogram, and `predictions_closed` (from `domain/fun_closed.fun_writes_closed`; same flag on `names` list and home/baby summaries as `names_closed`) |
 | PUT | `/v1/babies/{id}/fun/predictions/gender`, `.../birthdate` | JWT; birthdate upsert while expecting. When the baby is born, both a new vote and a change return **409** `{error: predictions_closed, message: Predictions closed — baby has arrived}` and do not write a vote or activity. Name suggest/like/delete after birth return **409** `{error: fun_closed, message: Fun is closed — baby has arrived}` (`domain/fun_closed.py`). Mobile hides gender taps, the calendar day selection, and **Save guess** / **Pick date…**, and shows that note; existing votes and tallies stay visible. Birthdate draft rules in `features/fun/domain/birthdate_prediction.dart` (never defaults a vote to the profile due date — #5) |
 
 Local API env: `services/api/.env.example`. DB password and Mailjet keys live in **Secret Manager**.

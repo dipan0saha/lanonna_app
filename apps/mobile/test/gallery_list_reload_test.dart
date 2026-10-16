@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/domain/baby_summary.dart';
 import 'package:lanonna/core/network/connectivity_service.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
-import 'package:lanonna/features/account/data/notifications_repository.dart';
 import 'package:lanonna/features/gallery/data/gallery_repository.dart';
 import 'package:lanonna/features/gallery/data/models/photo_models.dart';
 import 'package:lanonna/features/gallery/presentation/gallery_screen.dart';
@@ -57,9 +56,7 @@ void main() {
             create: (_) => ConnectivityService.forTesting(),
           ),
           Provider<HomeRepository>(create: (_) => _GalleryHomeRepository(baby)),
-          Provider<NotificationsRepository>(
-            create: (_) => FakeNotificationsRepository(),
-          ),
+          ...shellTopBarTestProviders(),
         ],
         child: MaterialApp(
           theme: AppTheme.light,

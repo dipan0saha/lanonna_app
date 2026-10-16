@@ -65,6 +65,10 @@ class PushNotificationService {
       }
     }
 
+    FirebaseMessaging.onMessage.listen((_) {
+      _notificationsRepo.notifyInboxMayHaveChanged();
+    });
+
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
       openDeepLink(message.data);
     });

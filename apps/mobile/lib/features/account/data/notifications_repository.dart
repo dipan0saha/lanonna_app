@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart';
+
 import '../../../core/api/api_client.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/json/json_readers.dart';
+import '../domain/inbox_notification_type.dart';
 
 class NotificationPreferences {
   NotificationPreferences({
@@ -66,6 +69,8 @@ class InboxNotification {
     this.deepLink,
     this.babyProfileId,
     this.createdAt,
+    this.notificationType = InboxNotificationType.generic,
+    this.actorDisplayName,
   });
 
   final String id;
@@ -75,6 +80,8 @@ class InboxNotification {
   final String? deepLink;
   final String? babyProfileId;
   final DateTime? createdAt;
+  final InboxNotificationType notificationType;
+  final String? actorDisplayName;
 
   factory InboxNotification.fromJson(Map<String, dynamic> json) {
     final createdRaw = json['created_at'] as String?;
@@ -86,14 +93,20 @@ class InboxNotification {
       deepLink: json['deep_link'] as String?,
       babyProfileId: json['baby_profile_id']?.toString(),
       createdAt: createdRaw != null ? tryParseApiInstant(createdRaw) : null,
+      notificationType: InboxNotificationType.fromApi(
+        json['notification_type'] as String?,
+      ),
+      actorDisplayName: json['actor_display_name'] as String?,
     );
   }
 }
 
-class NotificationsRepository {
+class NotificationsRepository extends ChangeNotifier {
   NotificationsRepository(this._api);
 
   final ApiClient _api;
+
+  void notifyInboxMayHaveChanged() => notifyListeners();
 
   Future<NotificationPreferences> fetchPreferences() async {
     final json = await _api.getJson('/v1/me/notification-preferences');
@@ -144,16 +157,19 @@ class NotificationsRepository {
 
   Future<void> markRead(String id) async {
     await _api.patchJson('/v1/me/notifications/$id/read', body: {});
+    notifyInboxMayHaveChanged();
   }
 
   Future<int> markAllRead() async {
     final json = await _api.postJson('/v1/me/notifications/read-all', body: {});
-    return readInt(json['updated']);
+    final updated = readInt(json['updated'], strict: true, field: 'updated');
+    notifyInboxMayHaveChanged();
+    return updated;
   }
 
   Future<int> unreadCount() async {
     final json = await _api.getJson('/v1/me/notifications/unread-count');
-    return readInt(json['count']);
+    return readInt(json['count'], strict: true, field: 'count');
   }
 
   Future<void> registerDeviceToken({

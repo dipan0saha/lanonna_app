@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import logging
-import random
-import time
 import uuid
 from enum import Enum
 from html import escape
@@ -26,7 +24,6 @@ logger = logging.getLogger("lanonna.worker.invite_email")
 _TEMPLATE_DIR = Path(__file__).resolve().parents[2] / "email_templates"
 
 _CLAIM_STALE_MINUTES = 15
-_MAILJET_IN_PROCESS_RETRIES = 3
 _ERROR_MAX_LEN = 500
 
 
@@ -254,30 +251,12 @@ def _is_transient_exception(exc: BaseException) -> bool:
 
 
 def _post_mailjet(payload: dict[str, Any]) -> httpx.Response:
-    last_exc: BaseException | None = None
-    for attempt in range(1, _MAILJET_IN_PROCESS_RETRIES + 1):
-        try:
-            response = httpx.post(
-                "https://api.mailjet.com/v3.1/send",
-                auth=(settings.mailjet_api_key, settings.mailjet_api_secret),
-                json=payload,
-                timeout=30.0,
-            )
-        except Exception as exc:
-            last_exc = exc
-            if not _is_transient_exception(exc) or attempt >= _MAILJET_IN_PROCESS_RETRIES:
-                raise
-            time.sleep(random.uniform(0.2, 0.8) * attempt)
-            continue
-        if _is_transient_http_status(response.status_code):
-            if attempt >= _MAILJET_IN_PROCESS_RETRIES:
-                return response
-            time.sleep(random.uniform(0.2, 0.8) * attempt)
-            continue
-        return response
-    if last_exc is not None:
-        raise last_exc
-    raise RuntimeError("Mailjet send failed without response")
+    return httpx.post(
+        "https://api.mailjet.com/v3.1/send",
+        auth=(settings.mailjet_api_key, settings.mailjet_api_secret),
+        json=payload,
+        timeout=30.0,
+    )
 
 
 def send_invite_email(

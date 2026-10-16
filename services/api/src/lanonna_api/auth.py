@@ -1,4 +1,4 @@
-from collections.abc import Mapping
+from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Any
 
@@ -64,48 +64,15 @@ def _user_deleted_http() -> HTTPException:
     )
 
 
-class AppUser(Mapping[str, Any]):
-    """Request-scoped app user. Claim keys stay readable for existing handlers."""
+@dataclass(frozen=True)
+class AppUser:
+    """Request-scoped app user resolved once per authenticated request."""
 
-    def __init__(
-        self,
-        *,
-        uid: str,
-        email: str | None,
-        display_name: str | None,
-        claims: Mapping[str, Any],
-        row: Mapping[str, Any],
-    ) -> None:
-        self.uid = uid
-        self.email = email
-        self.display_name = display_name
-        self.claims = MappingProxyType(dict(claims))
-        self.row = dict(row)
-
-    def __getitem__(self, key: str) -> Any:
-        if key == "uid":
-            return self.uid
-        if key == "email":
-            return self.email
-        if key == "display_name":
-            return self.display_name
-        if key in self.claims:
-            return self.claims[key]
-        raise KeyError(key)
-
-    def get(self, key: str, default: Any = None) -> Any:
-        try:
-            return self[key]
-        except KeyError:
-            return default
-
-    def __iter__(self):
-        yield "uid"
-        yield "email"
-        yield from self.claims
-
-    def __len__(self) -> int:
-        return 2 + len(self.claims)
+    uid: str
+    email: str | None
+    display_name: str | None
+    claims: MappingProxyType
+    row: dict[str, Any] = field(default_factory=dict)
 
 
 async def current_user(
@@ -135,6 +102,6 @@ def current_app_user(claims: dict[str, Any] = Depends(current_user)) -> AppUser:
         uid=str(row["firebase_uid"]),
         email=row.get("email"),
         display_name=row.get("display_name"),
-        claims=claims,
-        row=row,
+        claims=MappingProxyType(dict(claims)),
+        row=dict(row),
     )

@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Literal
 
+from lanonna_api.domain.notification_metadata import NotificationType
 from lanonna_api.pubsub import publish_notify_fan_out, publish_notify_user
 
 logger = logging.getLogger("lanonna.api.notifications")
@@ -32,6 +33,8 @@ class FanOutSpec:
     exclude_firebase_uid: str | None = None
     firebase_uids: tuple[str, ...] = ()
     notification_channel: NotificationChannel | None = None
+    notification_type: NotificationType = NotificationType.GENERIC
+    actor_firebase_uid: str | None = None
 
 
 def enqueue_fan_out(spec: FanOutSpec) -> None:
@@ -46,6 +49,8 @@ def enqueue_fan_out(spec: FanOutSpec) -> None:
         notification_channel=(
             spec.notification_channel.value if spec.notification_channel else None
         ),
+        notification_type=spec.notification_type.value,
+        actor_firebase_uid=spec.actor_firebase_uid,
     )
 
 
@@ -69,6 +74,8 @@ def enqueue_notify_user(
     deep_link: str,
     baby_profile_id: uuid.UUID | None = None,
     notification_channel: NotificationChannel | None = None,
+    notification_type: NotificationType = NotificationType.GENERIC,
+    actor_firebase_uid: str | None = None,
 ) -> None:
     publish_notify_user(
         firebase_uid=firebase_uid,
@@ -79,6 +86,8 @@ def enqueue_notify_user(
         notification_channel=(
             notification_channel.value if notification_channel else None
         ),
+        notification_type=notification_type.value,
+        actor_firebase_uid=actor_firebase_uid,
     )
 
 
@@ -90,6 +99,8 @@ def safe_enqueue_notify_user(
     deep_link: str,
     baby_profile_id: uuid.UUID | None = None,
     notification_channel: NotificationChannel | None = None,
+    notification_type: NotificationType = NotificationType.GENERIC,
+    actor_firebase_uid: str | None = None,
 ) -> None:
     """Publish notify_user without failing the HTTP request after DB commit."""
     try:
@@ -100,6 +111,8 @@ def safe_enqueue_notify_user(
             deep_link=deep_link,
             baby_profile_id=baby_profile_id,
             notification_channel=notification_channel,
+            notification_type=notification_type,
+            actor_firebase_uid=actor_firebase_uid,
         )
     except Exception:
         logger.exception(

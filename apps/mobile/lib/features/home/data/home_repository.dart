@@ -2,7 +2,6 @@ import '../../../core/api/api_client.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/domain/baby_summary.dart';
-import 'home_refresh_signal.dart';
 import 'home_summary_result.dart';
 import 'models/home_summary.dart';
 import 'selected_baby_store.dart';
@@ -16,25 +15,14 @@ class HomeRepository {
   List<BabySummary>? _cachedBabies;
   String? _cachedForUserId;
   var _listEpoch = 0;
+
+  /// Last good summary per baby: offline fallback that survives baby switches.
   final Map<String, HomeSummary> _summaryByBaby = {};
-  HomeRefreshSignal? _homeRefreshSignal;
 
   void clearCachedBabies() {
     _cachedBabies = null;
     _cachedForUserId = null;
     _listEpoch += 1;
-    _summaryByBaby.clear();
-  }
-
-  /// Clears per-baby home-summary cache when baby context changes.
-  void attachHomeRefreshSignal(HomeRefreshSignal signal) {
-    if (_homeRefreshSignal == signal) return;
-    _homeRefreshSignal?.babyContext.removeListener(_clearSummaryCache);
-    _homeRefreshSignal = signal;
-    signal.babyContext.addListener(_clearSummaryCache);
-  }
-
-  void _clearSummaryCache() {
     _summaryByBaby.clear();
   }
 

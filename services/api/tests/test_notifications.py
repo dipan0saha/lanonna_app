@@ -48,6 +48,8 @@ def test_enqueue_notify_user_publishes():
             deep_link="/gallery",
             baby_profile_id=None,
             notification_channel=None,
+            notification_type="generic",
+            actor_firebase_uid=None,
         )
 
 

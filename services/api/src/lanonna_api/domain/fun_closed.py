@@ -13,6 +13,11 @@ def fun_writes_closed(membership: dict[str, Any]) -> bool:
     return (membership.get("lifecycle_status") or "expecting") == "born"
 
 
+def fun_closed_flags(membership: dict[str, Any]) -> dict[str, bool]:
+    closed = fun_writes_closed(membership)
+    return {"names_closed": closed, "predictions_closed": closed}
+
+
 class FunWritesClosedError(Exception):
     """Base for fun-hub writes rejected after birth (mapped to HTTP 409)."""
 

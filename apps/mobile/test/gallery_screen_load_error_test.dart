@@ -13,6 +13,8 @@ import 'package:lanonna/features/home/data/home_repository.dart';
 import 'package:lanonna/features/home/data/selected_baby_store.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
+import 'support/fake_notifications_repository.dart';
 
 class _FailingHomeRepository extends HomeRepository {
   _FailingHomeRepository() : super(ApiClient(idTokenProvider: () async => 't'));
@@ -26,23 +28,35 @@ class _FailingHomeRepository extends HomeRepository {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('Gallery shows error with retry when baby load fails', (tester) async {
+  testWidgets('Gallery shows error with retry when baby load fails', (
+    tester,
+  ) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final store = SelectedBabyStore(prefs);
     final connectivity = ConnectivityService.forTesting(isOnline: false);
-    final galleryRepo = GalleryRepository(ApiClient(idTokenProvider: () async => 't'));
+    final galleryRepo = GalleryRepository(
+      ApiClient(idTokenProvider: () async => 't'),
+    );
 
     await tester.pumpWidget(
       MultiProvider(
         providers: [
+          ...shellTopBarTestProviders(),
           Provider<HomeRepository>.value(value: _FailingHomeRepository()),
           ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
           Provider<HomeRefreshSignal>(create: (_) => HomeRefreshSignal()),
-          ChangeNotifierProvider<ConnectivityService>.value(value: connectivity),
+          ChangeNotifierProvider<ConnectivityService>.value(
+            value: connectivity,
+          ),
           ChangeNotifierProvider<GalleryRepository>.value(value: galleryRepo),
         ],
-        child: MaterialApp(theme: AppTheme.light, home: const GalleryScreen()),
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: AppTheme.light,
+          home: const GalleryScreen(),
+        ),
       ),
     );
     await tester.pump();

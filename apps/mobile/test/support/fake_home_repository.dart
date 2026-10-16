@@ -6,10 +6,11 @@ import 'package:lanonna/features/home/data/selected_baby_store.dart';
 /// Offline [HomeRepository] whose selected baby is fixed. Subclass to stub more methods.
 class FakeHomeRepository extends HomeRepository {
   FakeHomeRepository(this.baby)
-      : super(ApiClient(idTokenProvider: () async => null));
+    : super(ApiClient(idTokenProvider: () async => null));
 
   final BabySummary baby;
 
   @override
-  Future<BabySummary?> resolveSelectedBaby(SelectedBabyStore store) async => baby;
+  Future<BabySummary?> resolveSelectedBaby(SelectedBabyStore store) async =>
+      baby;
 }

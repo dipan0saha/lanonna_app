@@ -43,8 +43,8 @@ def _to_profile_response(row: dict[str, Any]) -> ProfileResponse:
 @router.get("/me/account")
 def get_account(user: AppUser = Depends(current_app_user)) -> dict[str, Any]:
     row = dict(user.row)
-    babies = list_babies_for_user(user["uid"])
-    extensions = build_account_extensions(user["uid"])
+    babies = list_babies_for_user(user.uid)
+    extensions = build_account_extensions(user.uid)
     return {
         "profile": _to_profile_response(row).model_dump(),
         "babies": [
@@ -58,7 +58,7 @@ def get_account(user: AppUser = Depends(current_app_user)) -> dict[str, Any]:
 @router.patch("/profile", response_model=ProfileResponse)
 def patch_profile(
     body: ProfileUpdateRequest,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> ProfileResponse:
     changes = body.model_dump(exclude_unset=True)
     if "birth_date" in changes and changes["birth_date"] is not None:
@@ -78,7 +78,7 @@ def patch_profile(
                 detail=str(exc),
             ) from exc
     try:
-        row = patch_profile_fields(user["uid"], changes)
+        row = patch_profile_fields(user.uid, changes)
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -121,7 +121,7 @@ def get_notification_preferences(
 @router.patch("/me/notification-preferences")
 def patch_notification_preferences(
     body: NotificationPreferencesUpdate,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, Any]:
     if body.notification_digest is not None and body.notification_digest not in (
         "realtime",
@@ -133,7 +133,7 @@ def patch_notification_preferences(
             detail="Invalid notification_digest",
         )
     row = update_notification_preferences(
-        user["uid"],
+        user.uid,
         notification_digest=body.notification_digest,
         push_notifications_enabled=body.push_notifications_enabled,
         email_digest_enabled=body.email_digest_enabled,
@@ -151,9 +151,9 @@ class DeleteAccountBody(BaseModel):
 
 @router.get("/me/delete-account/eligibility")
 def get_delete_account_eligibility(
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> dict[str, Any]:
-    return delete_account_eligibility(user["uid"])
+    return delete_account_eligibility(user.uid)
 
 
 @router.post("/me/delete-account")
@@ -167,7 +167,7 @@ def post_delete_account(
             detail="confirm must be true",
         )
     try:
-        delete_account(user["uid"])
+        delete_account(user.uid)
     except PermissionError as exc:
         raise map_domain_errors(exc) from exc
     except RuntimeError as exc:

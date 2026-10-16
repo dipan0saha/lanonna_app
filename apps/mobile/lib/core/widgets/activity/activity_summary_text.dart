@@ -13,49 +13,25 @@ class ActivitySummaryText extends StatelessWidget {
   final String summary;
   final String? actorDisplayName;
 
-  int? _leadingActorLength(String text, String actor) {
-    if (actor.isEmpty || text.isEmpty) return null;
-    if (text.startsWith(actor)) return actor.length;
-    final textLower = text.toLowerCase();
-    final actorLower = actor.toLowerCase();
-    if (textLower.startsWith(actorLower)) {
-      return actor.length;
-    }
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
     final base = context.textStyles.bodySmall?.copyWith(
       height: 1.4,
       color: AppColors.textPrimary,
     );
+    // The server writes the copy and the actor name from the same user record,
+    // so a structured actor is bolded only where the copy names it. Copy that
+    // does not name the actor (e.g. "New event: …") renders as-is.
     final actor = actorDisplayName?.trim();
-    if (actor != null && actor.isNotEmpty) {
-      final prefixLength = _leadingActorLength(summary, actor);
-      if (prefixLength != null) {
-        final actorText = summary.substring(0, prefixLength);
-        final rest = summary.substring(prefixLength);
-        return Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(
-                text: actorText,
-                style: base?.copyWith(fontWeight: FontWeight.w700),
-              ),
-              TextSpan(text: rest, style: base),
-            ],
-          ),
-        );
-      }
+    if (actor != null && actor.isNotEmpty && summary.startsWith(actor)) {
       return Text.rich(
         TextSpan(
           children: [
             TextSpan(
-              text: '$actor ',
+              text: actor,
               style: base?.copyWith(fontWeight: FontWeight.w700),
             ),
-            TextSpan(text: summary, style: base),
+            TextSpan(text: summary.substring(actor.length), style: base),
           ],
         ),
       );

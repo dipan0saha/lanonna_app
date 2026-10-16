@@ -248,6 +248,13 @@ class AccountRepository {
     return payload;
   }
 
+  /// Loads the account once for passive readers (e.g. the shell top bar) and
+  /// notifies [profileUpdates] listeners. No-op when already cached.
+  Future<void> ensureAccountLoaded() async {
+    if (cachedAccount != null) return;
+    profileUpdates.publish(await fetchAccount());
+  }
+
   Future<void> updateProfile({
     required String displayName,
     String? avatarUrl,

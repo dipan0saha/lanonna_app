@@ -7,7 +7,6 @@ import 'package:lanonna/core/domain/baby_summary.dart';
 import 'package:lanonna/core/network/connectivity_service.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/features/account/data/notifications_repository.dart';
-import 'package:lanonna/features/account/data/notifications_unread_signal.dart';
 import 'package:lanonna/features/account/presentation/notifications_inbox_screen.dart';
 import 'package:lanonna/features/announcement/data/announcement_repository.dart';
 import 'package:lanonna/features/announcement/presentation/announcement_card_screen.dart';
@@ -30,6 +29,8 @@ import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'support/fake_notifications_repository.dart';
+import 'package:lanonna/features/account/data/account_repository.dart';
 
 class _Home extends HomeRepository {
   _Home() : super(ApiClient(idTokenProvider: () async => 't'));
@@ -149,6 +150,9 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+
         theme: AppTheme.light,
         home: Scaffold(
           body: RegistryNeededRow(
@@ -183,17 +187,25 @@ void main() {
           ChangeNotifierProvider<SelectedBabyStore>.value(
             value: SelectedBabyStore(prefs),
           ),
-          Provider<HomeRefreshSignal>(
-            create: (_) => HomeRefreshSignal(),
-          ),
+          Provider<HomeRefreshSignal>(create: (_) => HomeRefreshSignal()),
           ChangeNotifierProvider<ConnectivityService>.value(
             value: ConnectivityService.forTesting(),
           ),
           Provider<RegistryRepository>.value(value: _Registry()),
           Provider<AuthRepository>.value(value: _Auth()),
-          Provider<NotificationsRepository>.value(value: _Inbox()),
+          ChangeNotifierProvider<NotificationsRepository>.value(
+            value: _Inbox(),
+          ),
+          Provider<AccountRepository>(
+            create: (_) => FakeShellAccountRepository(),
+          ),
         ],
-        child: MaterialApp(theme: AppTheme.light, home: const RegistryScreen()),
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: AppTheme.light,
+          home: const RegistryScreen(),
+        ),
       ),
     );
     await tester.pump();
@@ -287,11 +299,13 @@ void main() {
   testWidgets('notification rows are labeled', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+
         home: MultiProvider(
           providers: [
-            Provider<NotificationsRepository>.value(value: _Inbox()),
-            ChangeNotifierProvider<NotificationsUnreadSignal>(
-              create: (_) => NotificationsUnreadSignal(),
+            ChangeNotifierProvider<NotificationsRepository>.value(
+              value: _Inbox(),
             ),
           ],
           child: const NotificationsInboxScreen(),
@@ -310,6 +324,9 @@ void main() {
   testWidgets('password show and hide is labeled', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+
         home: Scaffold(
           body: OnboardingPasswordField(
             controller: TextEditingController(),

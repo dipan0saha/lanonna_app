@@ -102,4 +102,4 @@ def test_current_app_user_returns_app_user_for_active_row():
         user = current_app_user({"uid": "uid-1", "email": "kept@example.com"})
     assert user.uid == "uid-1"
     assert user.email == "kept@example.com"
-    assert user["uid"] == "uid-1"
+    assert user.uid == "uid-1"

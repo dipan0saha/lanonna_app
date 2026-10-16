@@ -278,6 +278,8 @@ GoRouter createAppRouter(
                     path: 'photo/:photoId',
                     builder: (context, state) => PhotoDetailScreen(
                       photoId: state.pathParameters['photoId']!,
+                      gallerySort:
+                          state.uri.queryParameters['sort'] ?? 'default',
                     ),
                   ),
                 ],

@@ -5,7 +5,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Query, Response, status
 
-from lanonna_api.auth import current_app_user
+from lanonna_api.auth import AppUser, current_app_user
 from lanonna_api.domain.invitations import (
     BatchInviteRow,
     batch_invite,
@@ -48,10 +48,10 @@ def _invitation_json(r: dict[str, Any]) -> dict[str, Any]:
 @router.get("/{baby_profile_id}/invitations")
 def list_invitations(
     baby_profile_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> list[dict[str, Any]]:
     try:
-        rows = list_invitations_for_owner(user["uid"], baby_profile_id)
+        rows = list_invitations_for_owner(user.uid, baby_profile_id)
     except Exception as exc:
         raise map_domain_errors(exc) from exc
     return [_invitation_json(r) for r in rows]
@@ -64,10 +64,10 @@ def list_invitations(
 def resend_invitation(
     baby_profile_id: uuid.UUID,
     invitation_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> Response:
     try:
-        resend_invitation_for_owner(user["uid"], baby_profile_id, invitation_id)
+        resend_invitation_for_owner(user.uid, baby_profile_id, invitation_id)
     except Exception as exc:
         raise map_domain_errors(exc) from exc
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -80,10 +80,10 @@ def resend_invitation(
 def delete_invitation(
     baby_profile_id: uuid.UUID,
     invitation_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> Response:
     try:
-        revoke_invitation_for_owner(user["uid"], baby_profile_id, invitation_id)
+        revoke_invitation_for_owner(user.uid, baby_profile_id, invitation_id)
     except Exception as exc:
         raise map_domain_errors(exc) from exc
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -93,10 +93,10 @@ def delete_invitation(
 def membership_check(
     baby_profile_id: uuid.UUID,
     email: str = Query(min_length=3, max_length=MAX_MEMBERSHIP_CHECK_EMAIL_LEN),
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> MembershipCheckResponse:
     try:
-        result = membership_check_for_owner(user["uid"], baby_profile_id, email)
+        result = membership_check_for_owner(user.uid, baby_profile_id, email)
     except Exception as exc:
         raise map_domain_errors(exc) from exc
     return MembershipCheckResponse(**result)
@@ -106,7 +106,7 @@ def membership_check(
 def batch_invite_route(
     baby_profile_id: uuid.UUID,
     body: BatchInviteRequest,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> BatchInviteResponse:
     invite_rows = [
         BatchInviteRow(
@@ -117,7 +117,7 @@ def batch_invite_route(
         for row in body.invites
     ]
     try:
-        results = batch_invite(user["uid"], baby_profile_id, invite_rows)
+        results = batch_invite(user.uid, baby_profile_id, invite_rows)
     except Exception as exc:
         raise map_domain_errors(exc) from exc
     return BatchInviteResponse(

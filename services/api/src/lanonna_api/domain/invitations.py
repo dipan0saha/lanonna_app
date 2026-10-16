@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from lanonna_api.domain.membership import require_owner_baby
+from lanonna_api.domain.notification_metadata import NotificationType
 from lanonna_api.domain.users_display import actor_display_name
 from lanonna_api.domain.notifications import safe_enqueue_notify_user
 from lanonna_api.pubsub import publish_send_invite_email
@@ -266,5 +267,7 @@ def accept_invitation(
                 body=f"{actor} joined {baby_name}",
                 deep_link=f"/baby/{baby_id}/followers",
                 baby_profile_id=baby_id,
+                notification_type=NotificationType.GENERIC,
+                actor_firebase_uid=firebase_uid,
             )
     return result

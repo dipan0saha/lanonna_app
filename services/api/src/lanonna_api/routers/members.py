@@ -5,7 +5,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Response, status
 
-from lanonna_api.auth import current_app_user
+from lanonna_api.auth import AppUser, current_app_user
 from lanonna_api.domain.member_errors import MemberLifecycleError
 from lanonna_api.domain.member_lifecycle import (
     leave_baby_profile,
@@ -34,10 +34,10 @@ def _member_json(m: dict[str, Any]) -> dict[str, Any]:
 @router.get("/{baby_profile_id}/members")
 def list_members(
     baby_profile_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> list[dict[str, Any]]:
     try:
-        members = list_members_for_owner(user["uid"], baby_profile_id)
+        members = list_members_for_owner(user.uid, baby_profile_id)
     except Exception as exc:
         raise map_domain_errors(exc) from exc
     return [_member_json(m) for m in members]
@@ -50,10 +50,10 @@ def list_members(
 def delete_member(
     baby_profile_id: uuid.UUID,
     target_firebase_uid: str,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> Response:
     try:
-        remove_member(user["uid"], baby_profile_id, target_firebase_uid)
+        remove_member(user.uid, baby_profile_id, target_firebase_uid)
     except (PermissionError, MemberLifecycleError) as exc:
         raise map_domain_errors(exc) from exc
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -65,10 +65,10 @@ def delete_member(
 )
 def leave_baby(
     baby_profile_id: uuid.UUID,
-    user: dict[str, Any] = Depends(current_app_user),
+    user: AppUser = Depends(current_app_user),
 ) -> Response:
     try:
-        leave_baby_profile(user["uid"], baby_profile_id)
+        leave_baby_profile(user.uid, baby_profile_id)
     except MemberLifecycleError as exc:
         raise map_domain_errors(exc) from exc
     return Response(status_code=status.HTTP_204_NO_CONTENT)
