@@ -46,10 +46,10 @@ class BabyCreateRequest(BaseModel):
 
 
 class BabyUpdateRequest(BaseModel):
-    """Partial update. ``name`` is written whenever the client sends it, so an
-    explicit ``null`` (or blank) clears it; other ``null`` fields mean unchanged."""
+    """Partial update: ``null`` / omitted fields are unchanged. A blank ``name``
+    clears it (the baby becomes unnamed, stored as ``NULL``)."""
 
-    name: BabyName = None
+    name: str | None = Field(default=None, max_length=MAX_BABY_NAME_LEN)
     gender: BabyGenderValue | None = None
     expected_birth_date: date | None = None
     actual_birth_date: date | None = None

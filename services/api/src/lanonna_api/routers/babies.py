@@ -21,6 +21,7 @@ from lanonna_api.schemas.babies import (
     BabyCreateRequest,
     BabySummary,
     BabyUpdateRequest,
+    normalize_baby_name,
 )
 from lanonna_api.schemas.home import HomeSummaryResponse
 from lanonna_api.schemas.first_moment import (
@@ -82,8 +83,8 @@ def patch_baby(
     user: AppUser = Depends(current_app_user),
 ) -> BabySummary:
     fields: dict[str, Any] = {}
-    if "name" in body.model_fields_set:
-        fields["name"] = body.name
+    if body.name is not None:
+        fields["name"] = normalize_baby_name(body.name)
     if body.gender is not None:
         fields["gender"] = body.gender
     if body.expected_birth_date is not None:

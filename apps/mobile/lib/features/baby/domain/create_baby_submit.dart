@@ -139,7 +139,8 @@ Future<BabySummary> submitReviseOwnerOnboardingBaby({
 
   final baby = await homeRepo.updateBaby(
     babyId,
-    name: BabyNameWrite(payload.name),
+    // An empty name clears a previously entered one.
+    name: payload.name ?? '',
     gender: payload.gender,
     lifecycle: payload.lifecycle,
     expectedBirthDate: isBorn ? null : payload.expectedBirthDate,

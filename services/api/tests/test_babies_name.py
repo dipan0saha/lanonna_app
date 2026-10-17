@@ -46,11 +46,10 @@ def test_create_request_name_is_optional_and_blank_means_none():
     assert BabyCreateRequest().gender == "unknown"
 
 
-def test_update_request_tracks_an_explicit_null_name():
-    assert "name" not in BabyUpdateRequest().model_fields_set
-    cleared = BabyUpdateRequest(name=None)
-    assert "name" in cleared.model_fields_set and cleared.name is None
-    assert BabyUpdateRequest(name=" ").name is None
+def test_update_request_keeps_the_raw_name_so_null_means_unchanged():
+    assert BabyUpdateRequest().name is None
+    assert BabyUpdateRequest(name=None).name is None
+    assert BabyUpdateRequest(name=" ").name == " "
 
 
 def test_create_without_name_stores_null_and_returns_null():
@@ -70,7 +69,7 @@ def test_create_without_name_stores_null_and_returns_null():
     assert response.json()["name"] is None
 
 
-def test_patch_with_null_name_clears_it():
+def test_patch_with_blank_name_clears_it():
     baby_id = uuid.uuid4()
     with (
         _auth_as(),
@@ -79,14 +78,15 @@ def test_patch_with_null_name_clears_it():
             return_value=_row(baby_id, None),
         ) as update,
     ):
-        response = client.patch(f"/v1/babies/{baby_id}", json={"name": None})
+        response = client.patch(f"/v1/babies/{baby_id}", json={"name": "  "})
 
     assert response.status_code == 200
     assert update.call_args.args[2] == {"name": None}
     assert response.json()["name"] is None
 
 
-def test_patch_without_name_leaves_it_unchanged():
+def test_patch_with_null_or_missing_name_leaves_it_unchanged():
+    """Older app builds send every key, ``"name": null`` included."""
     baby_id = uuid.uuid4()
     with (
         _auth_as(),
@@ -95,7 +95,7 @@ def test_patch_without_name_leaves_it_unchanged():
             return_value=_row(baby_id, "Liam"),
         ) as update,
     ):
-        response = client.patch(f"/v1/babies/{baby_id}", json={"avatar_url": None, "gender": "male"})
+        response = client.patch(f"/v1/babies/{baby_id}", json={"name": None, "avatar_url": None, "gender": "male"})
 
     assert response.status_code == 200
     assert update.call_args.args[2] == {"gender": "male"}

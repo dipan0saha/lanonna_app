@@ -128,7 +128,7 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
       if (!mounted) return;
       await context.read<HomeRepository>().updateBaby(
         widget.babyId,
-        name: BabyNameWrite(name.isEmpty ? null : name),
+        name: name,
         gender: _gender,
         expectedBirthDate: !_isBorn ? dateIso : null,
         actualBirthDate: _isBorn ? dateIso : null,

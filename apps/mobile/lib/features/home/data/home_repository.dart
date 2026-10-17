@@ -124,11 +124,11 @@ class HomeRepository {
     return selectedOwner ?? owners.first;
   }
 
-  /// `PATCH /v1/babies/{id}`: only the arguments given are sent. [name] is
-  /// written whenever it is given, so `BabyNameWrite(null)` clears the name.
+  /// `PATCH /v1/babies/{id}`: only non-null arguments are sent. An empty
+  /// [name] clears it (the baby becomes unnamed).
   Future<BabySummary> updateBaby(
     String babyId, {
-    BabyNameWrite? name,
+    String? name,
     BabyGender? gender,
     String? expectedBirthDate,
     String? actualBirthDate,
@@ -137,7 +137,7 @@ class HomeRepository {
     List<NameSuggestionDraft> profileNameSuggestions = const [],
   }) async {
     final body = <String, dynamic>{
-      if (name != null) 'name': name.value,
+      'name': ?name,
       if (gender != null) 'gender': gender.apiValue,
       'expected_birth_date': ?expectedBirthDate,
       'actual_birth_date': ?actualBirthDate,
@@ -202,12 +202,4 @@ class ActivityPage {
 
   final List<HomeActivityItem> items;
   final bool hasMore;
-}
-
-/// The baby name to write in a profile update. `null` [value] clears the
-/// name (the baby has none yet); omit the argument to leave it unchanged.
-class BabyNameWrite {
-  const BabyNameWrite(this.value);
-
-  final String? value;
 }

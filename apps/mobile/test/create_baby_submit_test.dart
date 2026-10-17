@@ -49,12 +49,12 @@ class _TrackingHomeRepository extends HomeRepository {
   _TrackingHomeRepository() : super(ApiClient(idTokenProvider: () async => null));
 
   var updateCalls = 0;
-  BabyNameWrite? nameWrite;
+  String? nameWrite;
 
   @override
   Future<BabySummary> updateBaby(
     String babyId, {
-    BabyNameWrite? name,
+    String? name,
     BabyGender? gender,
     BabyLifecycle? lifecycle,
     String? expectedBirthDate,
@@ -113,7 +113,7 @@ home: Builder(
 
     expect(repository.createCalls, 0);
     expect(homeRepo.updateCalls, 1);
-    expect(homeRepo.nameWrite?.value, 'Liam');
+    expect(homeRepo.nameWrite, 'Liam');
   });
 
   Future<BuildContext> pumpContext(WidgetTester tester) async {
@@ -162,7 +162,7 @@ home: Builder(
     expect(repository.createdName, isNull);
   });
 
-  testWidgets('revise with the name cleared writes an explicit null name', (tester) async {
+  testWidgets('revise with the name cleared sends an empty name', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final storage = OnboardingStorage(await SharedPreferences.getInstance());
     final repository = _TrackingOnboardingRepository();
@@ -182,7 +182,6 @@ home: Builder(
     );
 
     expect(homeRepo.updateCalls, 1);
-    expect(homeRepo.nameWrite, isNotNull);
-    expect(homeRepo.nameWrite!.value, isNull);
+    expect(homeRepo.nameWrite, isEmpty);
   });
 }

@@ -267,7 +267,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | ID | Requirement | Acceptance criteria | Implementation note |
 |----|-------------|---------------------|---------------------|
 | FR-BABY-001 | Create baby | Owner creates baby (onboarding first baby or in-app add); optional names (displayed as **Baby** while unnamed; never stored as a placeholder), gender, dates, avatar; in-app reuses same UI as FR-ONB-004 without first-moment/invite | `POST /v1/babies`; [`CreateBabyScreen`](../../apps/mobile/lib/features/baby/presentation/create_baby_screen.dart) |
-| FR-BABY-002 | Edit baby | Owner edits fields; clearing the name returns the baby to unnamed (shown as **Baby**); soft delete supported | `PATCH /v1/babies/{id}` (`name: null` clears) |
+| FR-BABY-002 | Edit baby | Owner edits fields; clearing the name returns the baby to unnamed (shown as **Baby**); soft delete supported | `PATCH /v1/babies/{id}` (blank `name` clears) |
 | FR-BABY-003 | Auto-select new profile | After create, home context switches to new baby (E2E-005) | Client state |
 | FR-BABY-004 | Followers management | Lists active members (name or **Family member**, role, joined date, `can_remove` — no email or relationship on member rows) and pending invites; owner removes members with confirmation; revoke pending per FR-INV-005 | `/baby/{id}/followers`; `followers_screen.dart` |
 | FR-BABY-005 | Invite from profile | Navigate to invite screen from management; UI per FR-INV-008 | `/invite-family` |
