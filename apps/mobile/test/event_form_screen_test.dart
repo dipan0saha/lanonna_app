@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:lanonna/core/domain/baby_summary.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/features/calendar/data/calendar_repository.dart';
@@ -36,7 +37,9 @@ void main() {
           ChangeNotifierProvider<GalleryRepository>(create: (_) => FakeGalleryRepository()),
         ],
         child: MaterialApp(
-          theme: AppTheme.light,
+                  localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+theme: AppTheme.light,
           home: const EventFormScreen(),
         ),
       ),

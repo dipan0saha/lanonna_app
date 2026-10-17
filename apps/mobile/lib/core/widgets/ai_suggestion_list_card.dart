@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_metrics.dart';
 import '../theme/la_nonna_theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class AiSuggestionTab {
   const AiSuggestionTab({required this.key, required this.label});
@@ -33,6 +34,7 @@ class AiSuggestionListCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppMetrics.horizontalPadding),
       child: Card(
@@ -62,6 +64,7 @@ class AiSuggestionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final text = context.textStyles;
     final addButton = Material(
       color: AppColors.sageTint,
@@ -72,7 +75,7 @@ class AiSuggestionRow extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
           child: Text(
-            '+ Add',
+            l10n.actionAdd2,
             style: text.bodySmall?.copyWith(
               fontSize: 11.5,
               fontWeight: FontWeight.w700,

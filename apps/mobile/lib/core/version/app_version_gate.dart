@@ -69,6 +69,7 @@ class AppVersionBlockScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -79,7 +80,7 @@ class AppVersionBlockScreen extends StatelessWidget {
             children: [
               const Spacer(),
               Text(
-                'Update required',
+                l10n.versionGateUpdateRequired,
                 style: Theme.of(context).textTheme.headlineMedium,
                 textAlign: TextAlign.center,
               ),

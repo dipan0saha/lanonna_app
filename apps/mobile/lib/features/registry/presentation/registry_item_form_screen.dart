@@ -163,6 +163,7 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final mutedCaption = context.textStyles.bodySmall?.copyWith(
       fontSize: 10.5,
       color: AppColors.muted,
@@ -178,24 +179,24 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
           children: [
             AppLabeledTextFormField(
               semanticsId: 'registry_item_name',
-              label: 'Item Name',
-              hint: 'e.g. Crib & Mattress',
+              label: l10n.fieldItemName,
+              hint: l10n.labelEGCribMattress,
               kind: AppTextInputKind.prose,
               controller: _name,
               validator: validateRegistryItemName,
               autovalidateMode: _autovalidateMode,
             ),
             AppLabeledTextField(
-              label: 'Description (optional)',
-              hint: 'Standard size, GREENGUARD Gold certified…',
+              label: l10n.fieldDescriptionOptional,
+              hint: l10n.hintStandardSizeGreenguardGoldCertified,
               kind: AppTextInputKind.prose,
               controller: _desc,
               maxLines: 3,
               minLines: 3,
             ),
             AppLabeledTextFormField(
-              label: 'Link (optional)',
-              hint: 'Paste a link to the item',
+              label: l10n.fieldLinkOptional,
+              hint: l10n.hintPasteLinkItem,
               kind: AppTextInputKind.none,
               controller: _link,
               keyboardType: TextInputType.url,
@@ -247,7 +248,7 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
                 onPressed: _saving ? null : _save,
                 child: Text(widget.isEdit ? 'Save Changes' : 'Add Item'),
               ),
-              label: 'Add Item',
+              label: l10n.registryAddItemTitle,
             ),
             if (widget.isEdit) ...[
               const SizedBox(height: AppMetrics.formFieldSpacing - 4),

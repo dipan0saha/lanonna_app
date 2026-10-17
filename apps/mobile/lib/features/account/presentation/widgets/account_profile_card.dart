@@ -26,6 +26,7 @@ class AccountProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final text = context.textStyles;
     return AppBorderedSurface(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -48,7 +49,7 @@ class AccountProfileCard extends StatelessWidget {
                 child: AppSemantics.button(
                   'account_edit_profile',
                   OutlinedButton(onPressed: onEdit, child: Text(AppLocalizations.of(context)!.actionEdit)),
-                  label: 'Edit profile',
+                  label: l10n.settingsEditProfile,
                 ),
               ),
               SizedBox(width: AppSpacing.sm),
@@ -60,7 +61,7 @@ class AccountProfileCard extends StatelessWidget {
                     style: AppButtonStyles.outlinedDestructive,
                     child: Text(AppLocalizations.of(context)!.accountLogOut),
                   ),
-                  label: 'Log Out',
+                  label: l10n.accountLogOut,
                 ),
               ),
             ],

@@ -14,6 +14,7 @@ import '../../../../core/theme/la_nonna_theme.dart';
 import '../../domain/baby_gender.dart';
 import 'onboarding_fields.dart';
 import 'onboarding_typography.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Soft circular icon backdrop for onboarding carousel and verify screens.
 class OnboardingIconBlob extends StatelessWidget {
@@ -30,6 +31,7 @@ class OnboardingIconBlob extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: size,
       height: size,
@@ -256,22 +258,23 @@ class PrototypeInlineNameAdd extends StatelessWidget {
     super.key,
     required this.controller,
     required this.onAdd,
-    this.hint = 'Add a name...',
+    this.hint,
   });
 
   final TextEditingController controller;
   final VoidCallback onAdd;
-  final String hint;
+  final String? hint;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         Expanded(
           child: AppTextField(
             kind: AppTextInputKind.personName,
             controller: controller,
-            decoration: InputDecoration(hintText: hint),
+            decoration: InputDecoration(hintText: hint ?? l10n.actionAddName),
             onSubmitted: (_) => onAdd(),
           ),
         ),
@@ -285,7 +288,7 @@ class PrototypeInlineNameAdd extends StatelessWidget {
             child: InkWell(
               onTap: onAdd,
               borderRadius: BorderRadius.circular(12),
-              child: const Center(
+              child: Center(
                 child: Text(
                   '+',
                   style: TextStyle(
@@ -307,14 +310,15 @@ class PrototypeAddAnotherButton extends StatelessWidget {
   const PrototypeAddAnotherButton({
     super.key,
     required this.onTap,
-    this.label = 'Add another',
+    this.label,
   });
 
   final VoidCallback onTap;
-  final String label;
+  final String? label;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -326,7 +330,7 @@ class PrototypeAddAnotherButton extends StatelessWidget {
           border: Border.all(color: AppColors.inputBorderStrong, width: 1.5, style: BorderStyle.solid),
         ),
         child: Text(
-          '+ $label',
+          '+ ${label ?? l10n.actionAddAnother}',
           textAlign: TextAlign.center,
           style: context.textStyles.bodyMedium?.copyWith(
             fontWeight: FontWeight.w600,

@@ -94,9 +94,9 @@ class _NotificationPreferencesScreenState
     final prefs = _prefs;
     final babyLabel = babyDisplayName(_babyName, l10n);
     return PrototypeSubpageScaffold(
-      title: 'Notification preferences',
+      title: l10n.notificationPrefsTitle,
       body: _loading || prefs == null
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator())
           : ListView(
               padding: AppMetrics.subpageScrollPadding,
               children: [
@@ -108,7 +108,7 @@ class _NotificationPreferencesScreenState
                 ),
                 SizedBox(height: AppSpacing.sm),
                 Text(
-                  'You can change this any time.',
+                  l10n.messageChangeTime,
                   style: context.textStyles.bodySmall?.copyWith(
                     color: AppColors.muted,
                   ),
@@ -138,7 +138,7 @@ class _NotificationPreferencesScreenState
                 ),
                 const SizedBox(height: AppMetrics.sectionBlockSpacing),
                 AppSectionTitle(
-                  title: 'Notification channels',
+                  title: l10n.notificationPrefsChannelsTitle,
                   style: context.textStyles.titleSmall,
                 ),
                 SwitchListTile(

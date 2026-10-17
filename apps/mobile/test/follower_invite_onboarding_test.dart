@@ -50,6 +50,8 @@ void main() {
       ChangeNotifierProvider.value(
         value: coordinator,
         child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: AppTheme.light,
           home: const OnboardingFollowerInviteScreen(),
         ),
@@ -92,6 +94,8 @@ void main() {
       ChangeNotifierProvider.value(
         value: coordinator,
         child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: AppTheme.light,
           home: const OnboardingFollowerInviteScreen(),
         ),
@@ -111,6 +115,8 @@ void main() {
       ChangeNotifierProvider.value(
         value: coordinator,
         child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: AppTheme.light,
           home: const FollowerCarouselScreen(),
         ),

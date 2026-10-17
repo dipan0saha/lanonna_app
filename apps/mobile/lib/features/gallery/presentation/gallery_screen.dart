@@ -32,6 +32,7 @@ import 'sheets/photo_source_sheet.dart';
 import 'gallery_list_reload.dart';
 import 'widgets/gallery_empty_state.dart';
 import 'widgets/gallery_photo_grid.dart';
+import '../../../l10n/app_localizations.dart';
 
 enum GalleryViewMode { all, recent, favorites }
 
@@ -46,6 +47,8 @@ class GalleryScreen extends StatefulWidget {
 
 class _GalleryScreenState extends State<GalleryScreen>
     with BabyContextReload, TabLoadGenerationCache, GalleryListReload {
+  AppLocalizations get l10n => AppLocalizations.of(context)!;
+
   BabySummary? _baby;
   List<PhotoSummary> _photos = [];
   List<HomeActivityItem> _activity = [];
@@ -292,15 +295,15 @@ class _GalleryScreenState extends State<GalleryScreen>
       GalleryViewMode.recent => AppEmptyState(
         expand: false,
         icon: Icons.history,
-        title: 'No recent photos',
+        title: l10n.emptyRecentPhotos,
         message:
-            'No photos in the last 30 days. Upload a new moment or browse the full gallery.',
+            l10n.emptyPhotosLast30,
       ),
       GalleryViewMode.favorites => AppEmptyState(
         expand: false,
         icon: Icons.favorite_border,
-        title: 'No favorites yet',
-        message: 'Squish photos you love and they will show up here.',
+        title: l10n.emptyFavoritesYet,
+        message: l10n.messageSquishPhotosLove,
       ),
       GalleryViewMode.all => const SizedBox.shrink(),
     };
@@ -311,6 +314,7 @@ class _GalleryScreenState extends State<GalleryScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final headline = context.textStyles.headlineSmall;
     final kind = resolveTabLoadKind(
       loading: _loading,
@@ -353,7 +357,7 @@ class _GalleryScreenState extends State<GalleryScreen>
               SliverFillRemaining(
                 child: Center(
                   child: Text(
-                    'Create a baby profile to use Gallery.',
+                    l10n.actionCreateBabyProfileUse,
                     style: context.textStyles.bodyMedium,
                   ),
                 ),
@@ -413,7 +417,7 @@ class _GalleryScreenState extends State<GalleryScreen>
                       0,
                     ),
                     child: Text(
-                      'You\'ve reached the end of the gallery.',
+                      l10n.messageVeReachedEnd,
                       textAlign: TextAlign.center,
                       style: context.textStyles.bodySmall?.copyWith(
                         color: AppColors.muted,
@@ -449,7 +453,7 @@ class _GalleryScreenState extends State<GalleryScreen>
           ? AppSemantics.button(
               'gallery_upload_fab',
               FloatingActionButton(
-                tooltip: 'Add photo',
+                tooltip: l10n.actionAddPhoto3,
                 key: const Key('upload_photo_fab'),
                 onPressed: _uploading ? null : _onAddPhoto,
                 child: _uploading
@@ -460,7 +464,7 @@ class _GalleryScreenState extends State<GalleryScreen>
                       )
                     : const Icon(Icons.add),
               ),
-              label: 'Add photo',
+              label: l10n.actionAddPhoto3,
             )
           : null,
     );

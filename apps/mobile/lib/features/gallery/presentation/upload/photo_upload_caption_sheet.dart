@@ -18,7 +18,7 @@ Future<String?> showPhotoUploadCaptionSheet(
 }) {
   return showAppModalSheet<String?>(
     context: context,
-    title: 'Add to gallery',
+    title: AppLocalizations.of(context)!.actionAddGallery,
     showClose: false,
     bodyBuilder: (context) => _PhotoUploadCaptionSheet(imageFile: imageFile),
   );
@@ -35,6 +35,7 @@ class _PhotoUploadCaptionSheet extends StatefulWidget {
 }
 
 class _PhotoUploadCaptionSheetState extends State<_PhotoUploadCaptionSheet> {
+  AppLocalizations get l10n => AppLocalizations.of(context)!;
   final _controller = TextEditingController();
 
   @override
@@ -55,6 +56,7 @@ class _PhotoUploadCaptionSheetState extends State<_PhotoUploadCaptionSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -77,8 +79,8 @@ class _PhotoUploadCaptionSheetState extends State<_PhotoUploadCaptionSheet> {
               controller: _controller,
               maxLines: 3,
               maxLength: 2000,
-              decoration: const InputDecoration(
-                hintText: 'Add a caption…',
+              decoration: InputDecoration(
+                hintText: AppLocalizations.of(context)!.actionAddCaption,
                 counterText: '',
               ),
               onSubmitted: (_) => _post(),

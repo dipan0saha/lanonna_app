@@ -1,4 +1,5 @@
 import '../../../core/api/api_client.dart';
+import '../../../core/api/offset_page.dart';
 import 'models/registry_models.dart';
 
 class RegistryRepository {
@@ -7,11 +8,23 @@ class RegistryRepository {
   final ApiClient _api;
 
   Future<List<RegistryItem>> listItems(String babyId) async {
-    final list = await _api.getJsonList('/v1/babies/$babyId/registry/items');
-    return list
-        .whereType<Map<String, dynamic>>()
-        .map(RegistryItem.fromJson)
-        .toList();
+    const pageSize = 100;
+    final all = <RegistryItem>[];
+    var offset = 0;
+    while (true) {
+      final json = await _api.getJson(
+        '/v1/babies/$babyId/registry/items?limit=$pageSize&offset=$offset',
+      );
+      final page = parseOffsetPage(
+        json,
+        RegistryItem.fromJson,
+        defaultLimit: pageSize,
+      );
+      all.addAll(page.items);
+      if (!page.hasMore) break;
+      offset += page.items.length;
+    }
+    return all;
   }
 
   Future<RegistryItem> createItem(

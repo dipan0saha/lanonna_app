@@ -74,10 +74,7 @@ Future<EmailVerifyLinkResult> applyEmailVerificationLinkFromUri(
 
   final userAfter = auth.currentUser;
   if (userAfter == null) {
-    return const EmailVerifyLinkResult(
-      EmailVerifyLinkOutcome.noSignedInUser,
-      message: 'Email verified. Sign in with the same address to continue.',
-    );
+    return const EmailVerifyLinkResult(EmailVerifyLinkOutcome.noSignedInUser);
   }
 
   await userAfter.reload();
@@ -88,6 +85,6 @@ Future<EmailVerifyLinkResult> applyEmailVerificationLinkFromUri(
 
   return const EmailVerifyLinkResult(
     EmailVerifyLinkOutcome.success,
-    message: 'Verification complete. Tap Continue to proceed.',
+    promptTapContinue: true,
   );
 }

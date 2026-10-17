@@ -7,6 +7,7 @@ import '../../../../core/widgets/account_tinted_avatar.dart';
 import '../../../../core/widgets/app_icon_button.dart';
 import '../../../../core/widgets/app_semantics.dart';
 import '../../../../core/widgets/app_unread_dot.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class HomeTopBar extends StatelessWidget {
   const HomeTopBar({
@@ -34,6 +35,7 @@ class HomeTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: EdgeInsets.fromLTRB(
         AppMetrics.horizontalPadding,
@@ -45,7 +47,7 @@ class HomeTopBar extends StatelessWidget {
         children: [
           AppIconButton(
             semanticsId: 'shell_add_baby',
-            label: 'Add baby',
+            label: l10n.actionAddBaby2,
             onPressed: onAddBabyTap,
             icon: Icon(
               Icons.add,
@@ -83,13 +85,13 @@ class HomeTopBar extends StatelessWidget {
                   ],
                 ),
               ),
-              label: 'Switch baby profile',
+              label: l10n.actionSwitchBabyProfile,
             ),
           ),
           if (onSearchTap != null)
             AppIconButton(
               semanticsId: 'shell_search',
-              label: 'Search',
+              label: l10n.navSearch,
               onPressed: onSearchTap,
               icon: Icon(
                 Icons.search,
@@ -102,7 +104,7 @@ class HomeTopBar extends StatelessWidget {
             children: [
               AppIconButton(
                 semanticsId: 'shell_notifications',
-                label: 'Notifications',
+                label: l10n.notificationsInboxTitle,
                 onPressed: onNotificationsTap,
                 icon: Icon(
                   Icons.notifications_outlined,
@@ -129,7 +131,7 @@ class HomeTopBar extends StatelessWidget {
                 radius: AppMetrics.shellAccountAvatarSize / 2,
               ),
             ),
-            label: 'My account',
+            label: l10n.labelMyAccount,
           ),
         ],
       ),

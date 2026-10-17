@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/widgets/app_semantics.dart';
 import '../home/data/home_refresh_signal.dart';
 import 'shell_branch_index.dart';
+import '../../l10n/app_localizations.dart';
 
 class MainShellScreen extends StatelessWidget {
   const MainShellScreen({super.key, required this.navigationShell});
@@ -20,6 +21,7 @@ class MainShellScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       body: navigationShell,
       bottomNavigationBar: NavigationBar(
@@ -30,27 +32,27 @@ class MainShellScreen extends StatelessWidget {
           NavigationDestination(
             icon: AppSemantics.button('nav_home', const Icon(Icons.home_outlined)),
             selectedIcon: AppSemantics.button('nav_home', const Icon(Icons.home)),
-            label: 'Home',
+            label: l10n.navHome,
           ),
           NavigationDestination(
             icon: AppSemantics.button('nav_gallery', const Icon(Icons.photo_library_outlined)),
             selectedIcon: AppSemantics.button('nav_gallery', const Icon(Icons.photo_library)),
-            label: 'Gallery',
+            label: l10n.notificationChannelGallery,
           ),
           NavigationDestination(
             icon: AppSemantics.button('nav_calendar', const Icon(Icons.calendar_today_outlined)),
             selectedIcon: AppSemantics.button('nav_calendar', const Icon(Icons.calendar_today)),
-            label: 'Calendar',
+            label: l10n.calendarTitle,
           ),
           NavigationDestination(
             icon: AppSemantics.button('nav_registry', const Icon(Icons.card_giftcard_outlined)),
             selectedIcon: AppSemantics.button('nav_registry', const Icon(Icons.card_giftcard)),
-            label: 'Registry',
+            label: l10n.notificationChannelRegistry,
           ),
           NavigationDestination(
             icon: AppSemantics.button('nav_fun', const Icon(Icons.auto_awesome_outlined)),
             selectedIcon: AppSemantics.button('nav_fun', const Icon(Icons.auto_awesome)),
-            label: 'Fun',
+            label: l10n.navFun,
           ),
         ],
       ),

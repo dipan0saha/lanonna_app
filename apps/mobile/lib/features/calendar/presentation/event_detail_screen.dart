@@ -182,7 +182,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     final l10n = AppLocalizations.of(context)!;
     showAppModalSheet<void>(
       context: context,
-      title: 'RSVPs',
+      title: l10n.eventRsvpsTitle,
       subtitle: detail.rsvpAttendees.isEmpty
           ? 'No RSVPs yet'
           : l10n.rsvpResponseCount(detail.rsvpAttendees.length),
@@ -292,7 +292,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       hasContent: _detail != null,
       initialLoadInFlight: _initialLoadInFlight,
     )) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     final detail = _detail;
     if (detail == null) {
@@ -302,19 +302,19 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       return Scaffold(body: Center(child: Text(AppLocalizations.of(context)!.eventNotFound)));
     }
     return PrototypeSubpageScaffold(
-      title: 'Event',
+      title: l10n.eventTitle,
       actions: [
         if (_isOwner)
           AppIconButton(
             semanticsId: 'event_edit',
-            label: 'Edit event',
+            label: l10n.eventEditAction,
             onPressed: _openEdit,
             icon: const Icon(Icons.edit_outlined, size: 20),
           ),
         if (_isOwner)
           AppIconButton(
             semanticsId: 'event_delete',
-            label: 'Delete event',
+            label: l10n.eventDeleteAction,
             onPressed: _deleteEvent,
             icon: const Icon(
               Icons.delete_outline,
@@ -353,7 +353,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 if (detail.videoCallUrl != null) ...[
                   const SizedBox(height: 12),
                   Text(
-                    'Video Call',
+                    l10n.eventVideoCallLabel,
                     style: Theme.of(context).textTheme.labelLarge,
                   ),
                   TextButton(
@@ -381,7 +381,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 if (detail.description != null) ...[
                   const SizedBox(height: 12),
                   Text(
-                    'Details',
+                    l10n.eventDetailsHeading,
                     style: Theme.of(context).textTheme.labelLarge,
                   ),
                   Text(detail.description!),
@@ -413,7 +413,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                         ),
                       ),
                       Text(
-                        'View RSVPs ›',
+                        l10n.actionViewRsvps,
                         style: context.textStyles.labelSmall?.copyWith(
                           color: AppColors.primaryDark,
                           letterSpacing: 0,
@@ -453,7 +453,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                               if (c.canEdit)
                                 AppIconButton(
                                   semanticsId: 'event_comment_edit',
-                                  label: 'Edit comment',
+                                  label: l10n.commentEditTitle,
                                   icon: const Icon(
                                     Icons.edit_outlined,
                                     size: 20,
@@ -463,7 +463,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                               if (c.canDelete)
                                 AppIconButton(
                                   semanticsId: 'event_comment_delete',
-                                  label: 'Delete comment',
+                                  label: l10n.commentDeleteMenuLabel,
                                   icon: const Icon(
                                     Icons.delete_outline,
                                     size: 20,

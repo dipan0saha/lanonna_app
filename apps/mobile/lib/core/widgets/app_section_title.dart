@@ -8,7 +8,7 @@ import '../theme/la_nonna_theme.dart';
 /// For home tab sections use `HomeSectionHeader`. For form field labels use
 /// `OnboardingFieldLabel` / `AppLabeledTextField`.
 class AppSectionTitle extends StatelessWidget {
-  const AppSectionTitle({
+  AppSectionTitle({
     super.key,
     required this.title,
     this.action,

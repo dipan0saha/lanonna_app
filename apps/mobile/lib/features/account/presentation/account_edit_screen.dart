@@ -183,8 +183,9 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return PrototypeSubpageScaffold(
-      title: 'Edit Profile',
+      title: l10n.actionEditProfile,
       body: Padding(
         padding: AppMetrics.subpageScrollPadding,
         child: Form(
@@ -211,27 +212,27 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
               ),
               const SizedBox(height: 16),
               AppLabeledTextFormField(
-                label: 'First name',
+                label: l10n.fieldFirstName,
                 kind: AppTextInputKind.personName,
                 controller: _firstName,
                 autovalidateMode: _autovalidateMode,
                 validator: validateOnboardingFirstName,
               ),
               AppLabeledTextFormField(
-                label: 'Last name',
+                label: l10n.fieldLastName,
                 kind: AppTextInputKind.personName,
                 controller: _lastName,
                 autovalidateMode: _autovalidateMode,
                 validator: _validateLastName,
               ),
               AppLabeledTextFormField(
-                label: 'Email',
+                label: l10n.authPasswordResetEmailLabel,
                 kind: AppTextInputKind.none,
                 controller: _email,
                 enabled: false,
               ),
               AppLabeledTextFormField(
-                label: 'Phone number (optional)',
+                label: l10n.fieldPhoneNumberOptional,
                 controller: _phone,
                 keyboardType: TextInputType.phone,
                 autovalidateMode: _autovalidateMode,
@@ -250,13 +251,13 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
                 countries: _countries,
                 value: _countryCode,
                 enabled: !_saving,
-                decoration: const InputDecoration(
-                  labelText: 'Country (optional)',
+                decoration: InputDecoration(
+                  labelText: l10n.fieldCountryOptional,
                 ),
                 onChanged: (v) => setState(() => _countryCode = v),
               ),
               AppLabeledTextFormField(
-                label: 'Zip / Postal code (optional)',
+                label: l10n.fieldZipPostalCodeOptional,
                 controller: _postal,
               ),
               const SizedBox(height: 20),

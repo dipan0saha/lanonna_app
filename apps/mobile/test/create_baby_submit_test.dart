@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/domain/baby_summary.dart';
 import 'package:lanonna/features/baby/domain/baby_profile_write_payload.dart';
@@ -85,7 +86,9 @@ void main() {
     late BuildContext capturedContext;
     await tester.pumpWidget(
       MaterialApp(
-        home: Builder(
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+home: Builder(
           builder: (context) {
             capturedContext = context;
             return const SizedBox();

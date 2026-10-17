@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/core/version/app_version_gate.dart';
@@ -30,7 +31,9 @@ void main() {
       Provider<ApiClient>(
         create: (_) => _SlowVersionApiClient(),
         child: MaterialApp(
-          theme: AppTheme.light,
+                  localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+theme: AppTheme.light,
           home: AppVersionGate(
             child: const Scaffold(body: Text('Ready')),
           ),

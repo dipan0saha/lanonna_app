@@ -10,6 +10,7 @@ import '../../data/models/home_summary.dart';
 import 'home_scroll_section.dart';
 import 'home_section_trailing.dart';
 import 'home_upcoming_events_section.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class HomeTeasersSection extends StatelessWidget {
   const HomeTeasersSection({
@@ -25,6 +26,7 @@ class HomeTeasersSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final children = <Widget>[];
 
     if (includeUpcomingEvents && teasers.upcomingEvents.isNotEmpty) {
@@ -34,9 +36,9 @@ class HomeTeasersSection extends StatelessWidget {
     if (teasers.recentPhotos.isNotEmpty) {
       children.add(
         HomeScrollSection(
-          title: 'Recent Photos',
+          title: l10n.labelRecentPhotos,
           trailing: HomeSectionLink(
-            label: 'View all',
+            label: l10n.actionView,
             onPressed: () => context.go(GalleryRoutes.recent),
           ),
           body: _photoRow(
@@ -90,7 +92,7 @@ class HomeTeasersSection extends StatelessWidget {
                       ),
               ),
             ),
-            label: 'Open photo',
+            label: AppLocalizations.of(context)!.actionOpenPhoto,
           );
         },
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:lanonna/features/registry/data/models/registry_models.dart';
 import 'package:lanonna/features/registry/presentation/widgets/registry_item_row.dart';
 
@@ -19,7 +20,9 @@ void main() {
   testWidgets('owner needed row shows Mark as purchased', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+home: Scaffold(
           body: RegistryNeededRow(
             item: _sampleItem(),
             isOwner: true,
@@ -38,7 +41,9 @@ void main() {
   testWidgets('follower needed row shows I will buy this', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+home: Scaffold(
           body: RegistryNeededRow(
             item: _sampleItem(),
             isOwner: false,
@@ -55,7 +60,9 @@ void main() {
   testWidgets('owner needed row uses full width for long copy at phone width', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+home: Scaffold(
           body: Center(
             child: SizedBox(
               width: 360,

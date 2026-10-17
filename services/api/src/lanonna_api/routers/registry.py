@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Query, Response, status
 from pydantic import BaseModel, Field
 
 from lanonna_api.auth import AppUser, current_app_user
@@ -15,6 +15,7 @@ from lanonna_api.input_limits import (
     MAX_REGISTRY_TEXT_LEN,
 )
 from lanonna_api.schemas.registry_shipping import ShippingAddressPatch
+from lanonna_api.pagination import offset_page_from_extra_row
 
 router = APIRouter(
     prefix="/v1/babies/{baby_profile_id}/registry",
@@ -41,11 +42,15 @@ class ItemUpdate(BaseModel):
 def list_items(
     baby_profile_id: uuid.UUID,
     user: AppUser = Depends(current_app_user),
-) -> list[dict[str, Any]]:
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+) -> dict[str, Any]:
     try:
-        return registry_domain.list_items(user.uid, baby_profile_id)
+        items = registry_domain.list_items(user.uid, baby_profile_id)
     except Exception as exc:
         raise map_domain_errors(exc) from exc
+    window = items[offset : offset + limit + 1]
+    return offset_page_from_extra_row(window, offset=offset, limit=limit)
 
 
 @router.post("/items", status_code=status.HTTP_201_CREATED)

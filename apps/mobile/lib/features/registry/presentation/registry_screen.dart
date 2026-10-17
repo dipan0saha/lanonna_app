@@ -38,6 +38,8 @@ class RegistryScreen extends StatefulWidget {
 
 class _RegistryScreenState extends State<RegistryScreen>
     with BabyContextReload, TabLoadGenerationCache {
+  AppLocalizations get l10n => AppLocalizations.of(context)!;
+
   BabySummary? _baby;
   List<RegistryItem> _items = [];
   RegistryShippingAddress? _shipping;
@@ -170,7 +172,7 @@ class _RegistryScreenState extends State<RegistryScreen>
             )
           else if (_isOwner)
             Text(
-              'Add an address so family knows where to send gifts.',
+              l10n.actionAddAddressKnows,
               style: context.textStyles.bodySmall?.copyWith(
                 color: AppColors.muted,
               ),
@@ -188,8 +190,8 @@ class _RegistryScreenState extends State<RegistryScreen>
         context: context,
         builder: (ctx) => AlertDialog(
           title: Text(AppLocalizations.of(ctx)!.registryMarkPurchasedTitle),
-          content: const Text(
-            'Family will see this item as taken so no one buys it again.',
+          content: Text(
+            AppLocalizations.of(ctx)!.messageItem,
           ),
           actions: [
             TextButton(
@@ -227,6 +229,7 @@ class _RegistryScreenState extends State<RegistryScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final uid = context.read<AuthRepository>().currentUser?.uid;
     final kind = resolveTabLoadKind(
       loading: _loading,
@@ -249,7 +252,7 @@ class _RegistryScreenState extends State<RegistryScreen>
                   8,
                 ),
                 child: Text(
-                  'Registry',
+                  l10n.notificationChannelRegistry,
                   style: context.textStyles.headlineSmall,
                 ),
               ),
@@ -276,7 +279,7 @@ class _RegistryScreenState extends State<RegistryScreen>
                 SliverToBoxAdapter(
                   child: CalendarAiSuggestionBanner(
                     message:
-                        'Not sure where to start? See AI-suggested items by stage and age.',
+                        l10n.hintSureStart2,
                     onTap: () => context.push(RegistryRoutes.aiSuggestions),
                   ),
                 ),
@@ -300,7 +303,7 @@ class _RegistryScreenState extends State<RegistryScreen>
                       0,
                     ),
                     child: AppSectionTitle(
-                      title: 'Needed',
+                      title: l10n.registrySectionNeeded,
                       action: RegistrySortControl(
                         sort: _neededSort,
                         onChanged: (sort) => setState(() => _neededSort = sort),
@@ -357,7 +360,7 @@ class _RegistryScreenState extends State<RegistryScreen>
                       AppMetrics.horizontalPadding,
                       0,
                     ),
-                    child: const AppSectionTitle(title: 'Purchased'),
+                    child: AppSectionTitle(title: l10n.registrySectionPurchased),
                   ),
                 ),
                 SliverToBoxAdapter(
@@ -400,11 +403,11 @@ class _RegistryScreenState extends State<RegistryScreen>
           ? AppSemantics.button(
               'registry_create_fab',
               FloatingActionButton(
-                tooltip: 'Add item',
+                tooltip: l10n.registryAddItem,
                 onPressed: () => context.push(RegistryRoutes.createItem),
                 child: const ExcludeSemantics(child: Icon(Icons.add)),
               ),
-              label: 'Add item',
+              label: l10n.registryAddItem,
             )
           : null,
     );

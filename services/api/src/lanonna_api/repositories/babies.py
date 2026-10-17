@@ -6,10 +6,20 @@ from typing import Any
 from lanonna_api.db import get_connection
 
 
-def list_babies_for_user(firebase_uid: str) -> list[dict[str, Any]]:
+def list_babies_for_user(
+    firebase_uid: str,
+    *,
+    limit: int | None = None,
+    offset: int = 0,
+) -> list[dict[str, Any]]:
+    params: list[Any] = [firebase_uid]
+    paging = ""
+    if limit is not None:
+        paging = "LIMIT %s OFFSET %s"
+        params.extend([limit, offset])
     with get_connection() as conn:
         rows = conn.execute(
-            """
+            f"""
             SELECT
                 b.id,
                 b.name,
@@ -26,8 +36,9 @@ def list_babies_for_user(firebase_uid: str) -> list[dict[str, Any]]:
               AND m.removed_at IS NULL
               AND b.deleted_at IS NULL
             ORDER BY b.created_at ASC
+            {paging}
             """,
-            (firebase_uid,),
+            tuple(params),
         ).fetchall()
     return [dict(row) for row in rows]
 

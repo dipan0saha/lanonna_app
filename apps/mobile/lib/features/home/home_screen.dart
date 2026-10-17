@@ -192,8 +192,8 @@ class _HomeScreenState extends State<HomeScreen>
               context: context,
               builder: (ctx) => AlertDialog(
                 title: Text(AppLocalizations.of(ctx)!.homeCreateAnnouncementTitle),
-                content: const Text(
-                  'Share a keepsake card with photo and birth details for family.',
+                content: Text(
+                  AppLocalizations.of(ctx)!.actionShareKeepsakeCardPhoto,
                 ),
                 actions: [
                   TextButton(
@@ -227,6 +227,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final kind = resolveTabLoadKind(
       loading: _loading,
       hasError: _loadError != null,
@@ -243,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen>
             padding: const EdgeInsets.only(bottom: 24),
             children: [
               if (kind == TabLoadKind.loading)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.all(20),
                   child: Center(child: CircularProgressIndicator()),
                 )
@@ -263,13 +264,13 @@ class _HomeScreenState extends State<HomeScreen>
                   child: Column(
                     children: [
                       Text(
-                        'Add your first baby profile to get started.',
+                        l10n.actionAddFirstBabyProfile,
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 16),
                       OnboardingPrimaryButton(
-                        label: 'Add baby',
+                        label: l10n.actionAddBaby2,
                         onPressed: () => context.push('/baby/create'),
                       ),
                     ],

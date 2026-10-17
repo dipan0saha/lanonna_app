@@ -13,6 +13,7 @@ import 'widgets/owner_expecting_hero_card.dart';
 import 'widgets/home_next_up_section.dart';
 import 'widgets/owner_getting_started_card.dart';
 import 'widgets/owner_quick_actions_row.dart';
+import '../../../l10n/app_localizations.dart';
 
 class OwnerHomeComposer extends StatelessWidget {
   const OwnerHomeComposer({
@@ -42,6 +43,7 @@ class OwnerHomeComposer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final babyName = baby.name;
     final s = summary;
 
@@ -72,11 +74,11 @@ class OwnerHomeComposer extends StatelessWidget {
             )
           else
             HomeScrollSection(
-              title: 'Family Insight',
+              title: l10n.messageInsight,
               body: HomeInsightCard(
                 message:
-                    'No votes yet. Invite family so they can guess names, gender, and the big day.',
-                actionLabel: 'Invite',
+                    l10n.emptyVotesYetInvite,
+                actionLabel: l10n.actionInvite,
                 onAction: () => context.push(AppRoutes.inviteFamily),
               ),
             ),

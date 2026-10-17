@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/features/baby/domain/create_baby_mode.dart';
@@ -35,7 +36,9 @@ void main() {
           ChangeNotifierProvider<SelectedBabyStore>.value(value: babyStore),
         ],
         child: MaterialApp(
-          theme: AppTheme.light,
+                  localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+theme: AppTheme.light,
           home: const CreateBabyScreen(mode: CreateBabyMode.inApp),
         ),
       ),

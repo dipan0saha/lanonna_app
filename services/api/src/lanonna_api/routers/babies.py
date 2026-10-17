@@ -28,18 +28,24 @@ from lanonna_api.schemas.first_moment import (
     FirstMomentSeedRequest,
     FirstMomentSeedResponse,
 )
+from lanonna_api.pagination import offset_page_from_extra_row
 
 router = APIRouter(prefix="/v1/babies", tags=["babies"])
 
 
-@router.get("", response_model=list[BabySummary])
-def list_babies(user: AppUser = Depends(current_app_user)) -> list[BabySummary]:
-    summaries: list[BabySummary] = []
-    for row in list_babies_for_user(user.uid):
+@router.get("")
+def list_babies(
+    user: AppUser = Depends(current_app_user),
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+) -> dict[str, Any]:
+    rows = list_babies_for_user(user.uid, limit=limit + 1, offset=offset)
+    summaries: list[dict[str, Any]] = []
+    for row in rows:
         owner_count = count_active_owners(row["id"])
         row["can_leave"] = can_leave_baby(row["role"], owner_count)
-        summaries.append(baby_summary_from_row(row))
-    return summaries
+        summaries.append(baby_summary_from_row(row).model_dump(mode="json"))
+    return offset_page_from_extra_row(summaries, offset=offset, limit=limit)
 
 
 @router.post("", response_model=BabySummary, status_code=status.HTTP_201_CREATED)

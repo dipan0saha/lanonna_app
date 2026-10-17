@@ -117,6 +117,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final results = _results;
     return Scaffold(
       appBar: AppBar(
@@ -126,8 +127,8 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
             kind: AppTextInputKind.none,
             controller: _controller,
             autofocus: true,
-            decoration: const InputDecoration(
-              hintText: 'Search photos, events, registry…',
+            decoration: InputDecoration(
+              hintText: l10n.fieldSearchPhotosEventsRegistry,
               border: InputBorder.none,
             ),
             onChanged: _onQueryChanged,
@@ -144,7 +145,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               child: results == null
                   ? Center(
                       child: Text(
-                        'Type to search',
+                        l10n.hintTypeSearch,
                         style: context.textStyles.bodyMedium?.copyWith(
                           color: AppColors.muted,
                         ),
@@ -156,7 +157,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                           padding: AppMetrics.subpageScrollPadding,
                           children: [
                             if (results.photos.isNotEmpty) ...[
-                              const AppSectionTitle(title: 'Photos'),
+                              AppSectionTitle(title: l10n.searchSectionPhotos),
                               for (final p in results.photos)
                                 ListTile(
                                   leading: p.thumbUrl != null
@@ -181,7 +182,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                             ],
                             if (results.events.isNotEmpty) ...[
                               const SizedBox(height: AppMetrics.sectionBlockSpacing),
-                              const AppSectionTitle(title: 'Events'),
+                              AppSectionTitle(title: l10n.searchSectionEvents),
                               for (final e in results.events)
                                 ListTile(
                                   leading: const Icon(Icons.event_outlined),
@@ -199,7 +200,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                             ],
                             if (results.registryItems.isNotEmpty) ...[
                               const SizedBox(height: AppMetrics.sectionBlockSpacing),
-                              const AppSectionTitle(title: 'Registry'),
+                              AppSectionTitle(title: l10n.notificationChannelRegistry),
                               for (final r in results.registryItems)
                                 ListTile(
                                   leading: const Icon(Icons.card_giftcard_outlined),
@@ -209,7 +210,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                             ],
                             if (results.nameSuggestions.isNotEmpty) ...[
                               const SizedBox(height: AppMetrics.sectionBlockSpacing),
-                              const AppSectionTitle(title: 'Names'),
+                              AppSectionTitle(title: l10n.searchSectionNames),
                               for (final n in results.nameSuggestions)
                                 ListTile(
                                   leading: const Icon(Icons.favorite_outline),

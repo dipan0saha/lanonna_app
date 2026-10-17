@@ -28,6 +28,7 @@ class NamesTab extends StatefulWidget {
 }
 
 class _NamesTabState extends State<NamesTab> {
+  AppLocalizations get l10n => AppLocalizations.of(context)!;
   final _suggestFormKey = GlobalKey<FormState>();
   NamesPayload? _payload;
   final _input = TextEditingController();
@@ -170,7 +171,7 @@ class _NamesTabState extends State<NamesTab> {
             AppEmptyState(
               expand: false,
               icon: Icons.star_outline,
-              title: 'No name suggestions yet',
+              title: l10n.emptyNameSuggestionsYet,
               message: _readOnly
                   ? 'No name ideas were saved before baby arrived.'
                   : 'Suggest a name below — everyone gets a say.',
@@ -230,7 +231,7 @@ class _NamesTabState extends State<NamesTab> {
               AppTextFormField(
                 kind: AppTextInputKind.personName,
                 controller: _input,
-                decoration: const InputDecoration(hintText: 'Suggest a name…'),
+                decoration: InputDecoration(hintText: l10n.labelSuggestName2),
                 validator: validateFunNameSuggestion,
                 autovalidateMode: autovalidate,
               ),
@@ -256,7 +257,7 @@ class _NamesTabState extends State<NamesTab> {
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
-                    'You can suggest 1 name per gender.',
+                    l10n.messageSuggestName,
                     style: context.textStyles.bodySmall?.copyWith(
                       color: AppColors.muted,
                     ),

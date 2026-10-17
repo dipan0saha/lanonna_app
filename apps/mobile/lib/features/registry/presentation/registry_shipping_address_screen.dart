@@ -166,8 +166,8 @@ class _RegistryShippingAddressScreenState
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(AppLocalizations.of(ctx)!.shippingRemoveTitle),
-        content: const Text(
-          'Followers will no longer see where to send gifts.',
+        content: Text(
+          AppLocalizations.of(ctx)!.messageFollowersLonger,
         ),
         actions: [
           TextButton(
@@ -197,12 +197,13 @@ class _RegistryShippingAddressScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return PrototypeSubpageScaffold(
-      title: 'Shipping address',
+      title: l10n.shippingAddressTitle,
       body: Form(
         key: _formKey,
         autovalidateMode: _autovalidateMode,
@@ -210,7 +211,7 @@ class _RegistryShippingAddressScreenState
           padding: AppMetrics.subpageFormScrollPadding,
           children: [
             Text(
-              'Where should family send registry gifts?',
+              l10n.hintShouldSendRegistryGifts,
               style: context.textStyles.bodyMedium?.copyWith(
                 color: AppColors.muted,
               ),
@@ -218,8 +219,8 @@ class _RegistryShippingAddressScreenState
             const SizedBox(height: AppMetrics.formFieldSpacing),
             AppLabeledTextFormField(
               semanticsId: 'registry_shipping_line1',
-              label: 'Street address',
-              hint: '123 Main St',
+              label: l10n.fieldStreetAddress,
+              hint: l10n.label123MainSt,
               kind: AppTextInputKind.personName,
               controller: _line1,
               textInputAction: TextInputAction.next,
@@ -228,8 +229,8 @@ class _RegistryShippingAddressScreenState
               autovalidateMode: _autovalidateMode,
             ),
             AppLabeledTextFormField(
-              label: 'Apt, suite, etc. (optional)',
-              hint: 'Apt 4B',
+              label: l10n.fieldAptSuiteEtcOptional,
+              hint: l10n.fieldApt4b,
               kind: AppTextInputKind.personName,
               controller: _line2,
               textInputAction: TextInputAction.next,
@@ -237,8 +238,8 @@ class _RegistryShippingAddressScreenState
               autovalidateMode: _autovalidateMode,
             ),
             AppLabeledTextFormField(
-              label: 'City',
-              hint: 'Springfield',
+              label: l10n.fieldCity,
+              hint: l10n.labelSpringfield,
               kind: AppTextInputKind.personName,
               controller: _city,
               textInputAction: TextInputAction.next,
@@ -247,8 +248,8 @@ class _RegistryShippingAddressScreenState
               autovalidateMode: _autovalidateMode,
             ),
             AppLabeledTextFormField(
-              label: 'State / Province (optional)',
-              hint: 'IL',
+              label: l10n.fieldStateProvinceOptional,
+              hint: l10n.labelIl,
               kind: AppTextInputKind.personName,
               controller: _region,
               textInputAction: TextInputAction.next,
@@ -256,7 +257,7 @@ class _RegistryShippingAddressScreenState
               autovalidateMode: _autovalidateMode,
             ),
             AppLabeledTextFormField(
-              label: 'Zip / Postal code',
+              label: l10n.fieldZipPostalCode,
               hint: '62704',
               kind: AppTextInputKind.none,
               controller: _postal,
@@ -288,7 +289,7 @@ class _RegistryShippingAddressScreenState
                 onPressed: _saving ? null : _save,
                 child: Text(AppLocalizations.of(context)!.shippingSave),
               ),
-              label: 'Save address',
+              label: l10n.shippingSave,
             ),
             if (_hadAddress) ...[
               const SizedBox(height: AppMetrics.formFieldSpacing - 4),

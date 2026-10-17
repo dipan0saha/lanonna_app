@@ -4,6 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../../../core/widgets/tinted_icon_square.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class HomeFollowerQuickActions extends StatelessWidget {
   const HomeFollowerQuickActions({
@@ -19,6 +20,7 @@ class HomeFollowerQuickActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: EdgeInsets.fromLTRB(
         AppMetrics.horizontalPadding,
@@ -32,7 +34,7 @@ class HomeFollowerQuickActions extends StatelessWidget {
                 Expanded(
                   child: _QuickActionTile(
                     icon: Icons.photo_library_outlined,
-                    label: 'View Gallery',
+                    label: l10n.actionViewGallery,
                     onTap: onViewGallery,
                   ),
                 ),
@@ -44,7 +46,7 @@ class HomeFollowerQuickActions extends StatelessWidget {
                   Expanded(
                     child: _QuickActionTile(
                       icon: Icons.emoji_events_outlined,
-                      label: 'Vote in Fun',
+                      label: l10n.actionVoteFun,
                       onTap: onVoteInFun,
                     ),
                   ),
@@ -52,7 +54,7 @@ class HomeFollowerQuickActions extends StatelessWidget {
                 Expanded(
                   child: _QuickActionTile(
                     icon: Icons.photo_library_outlined,
-                    label: 'View Gallery',
+                    label: l10n.actionViewGallery,
                     onTap: onViewGallery,
                   ),
                 ),

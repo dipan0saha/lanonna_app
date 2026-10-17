@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/features/onboarding/presentation/widgets/onboarding_prototype_widgets.dart';
 
@@ -7,7 +8,9 @@ void main() {
   testWidgets('shows Add a photo when hasPhoto is false', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+theme: AppTheme.light,
         home: const Scaffold(
           body: OnboardingPhotoCaption(hasPhoto: false),
         ),
@@ -20,7 +23,9 @@ void main() {
   testWidgets('shows Change photo when hasPhoto is true', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+theme: AppTheme.light,
         home: const Scaffold(
           body: OnboardingPhotoCaption(hasPhoto: true),
         ),
@@ -33,7 +38,9 @@ void main() {
     var tapped = false;
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+theme: AppTheme.light,
         home: Scaffold(
           body: OnboardingPhotoCaption(
             hasPhoto: false,

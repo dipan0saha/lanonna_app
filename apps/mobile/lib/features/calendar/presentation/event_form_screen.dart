@@ -72,6 +72,7 @@ class EventFormScreen extends StatefulWidget {
 }
 
 class _EventFormScreenState extends State<EventFormScreen> {
+  AppLocalizations get l10n => AppLocalizations.of(context)!;
   final _title = TextEditingController();
   final _description = TextEditingController();
   final _location = TextEditingController();
@@ -209,7 +210,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
     if (!mounted) return;
     final picked = await showAppModalSheet<({String? id, String? thumbUrl})?>(
       context: context,
-      title: 'Cover photo',
+      title: l10n.fieldCoverPhoto,
       bodyBuilder: (context) => SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -362,6 +363,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final startsAtLocal = _startsAtLocal();
     final pastStart = !widget.isEdit && isEventStartInPast(startsAtLocal);
     final canSave = _baby != null && !_saving;
@@ -374,37 +376,37 @@ class _EventFormScreenState extends State<EventFormScreen> {
         children: [
           AppLabeledTextField(
             semanticsId: 'calendar_event_title',
-            label: 'Event Title',
-            hint: 'e.g. Gender Reveal Party',
+            label: l10n.fieldEventTitle,
+            hint: l10n.labelEGGenderRevealParty,
             kind: AppTextInputKind.prose,
             controller: _title,
           ),
           AppLabeledTextField(
-            label: 'Description (optional)',
-            hint: 'Add a short description…',
+            label: l10n.fieldDescriptionOptional,
+            hint: l10n.actionAddShortDescription,
             kind: AppTextInputKind.prose,
             controller: _description,
             maxLines: 5,
             minLines: 3,
           ),
           PrototypeDateField(
-            label: 'Date',
+            label: l10n.fieldDate,
             value: _date,
-            placeholder: 'Select a date',
+            placeholder: l10n.fieldSelectDate,
             onTap: _pickDate,
           ),
           const SizedBox(height: AppMetrics.formFieldSpacing),
           PrototypeTimeField(
-            label: 'Time (optional)',
+            label: l10n.fieldTimeOptional,
             time: _time,
-            placeholder: 'Select a time',
+            placeholder: l10n.fieldSelectTime,
             onTap: _pickTime,
           ),
           if (pastStart)
             Padding(
               padding: const EdgeInsets.only(top: AppMetrics.fieldLabelGap),
               child: Text(
-                'This start time is in the past. The event still appears on the month grid and under Today on Calendar, but not in Upcoming.',
+                l10n.messageStartTime,
                 style: context.textStyles.bodySmall?.copyWith(
                   color: AppColors.muted,
                 ),
@@ -412,14 +414,14 @@ class _EventFormScreenState extends State<EventFormScreen> {
             ),
           const SizedBox(height: AppMetrics.formFieldSpacing),
           AppLabeledTextField(
-            label: 'Location (optional)',
-            hint: "e.g. Grandma Sue's backyard",
+            label: l10n.fieldLocationOptional,
+            hint: l10n.labelEGGrandmaSueSBackyard,
             kind: AppTextInputKind.prose,
             controller: _location,
           ),
           AppLabeledTextField(
-            label: 'Video call link (optional)',
-            hint: 'Paste a Zoom / FaceTime link',
+            label: l10n.fieldVideoCallLinkOptional,
+            hint: l10n.hintPasteZoomFacetimeLink,
             kind: AppTextInputKind.none,
             controller: _video,
             keyboardType: TextInputType.url,

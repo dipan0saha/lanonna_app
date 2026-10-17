@@ -31,6 +31,7 @@ class RegistryNeededRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final claimButton = onClaim == null
         ? null
         : AppGiftPillButton(
@@ -88,7 +89,7 @@ class RegistryNeededRow extends StatelessWidget {
               if (isOwner) ...[
                 AppIconButton(
                   semanticsId: 'registry_item_edit_${item.id}',
-                  label: 'Edit item',
+                  label: l10n.registryEditItem,
                   onPressed: onEdit,
                   icon: const Icon(
                     Icons.edit_outlined,
@@ -97,7 +98,7 @@ class RegistryNeededRow extends StatelessWidget {
                 ),
                 AppIconButton(
                   semanticsId: 'registry_item_delete_${item.id}',
-                  label: 'Delete item',
+                  label: l10n.registryDeleteItemAction,
                   icon: const Icon(
                     Icons.delete_outline,
                     size: AppMetrics.inlineIconSize,
@@ -163,7 +164,7 @@ class RegistryPurchasedRow extends StatelessWidget {
             AppSemantics.button(
               'registry_undo_purchase',
               TextButton(onPressed: onUndo, child: Text(AppLocalizations.of(context)!.actionUndo)),
-              label: 'Undo purchase',
+              label: AppLocalizations.of(context)!.registryUndoPurchase,
             ),
         ],
       ),

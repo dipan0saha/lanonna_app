@@ -41,6 +41,27 @@ class HomeRepository {
     await store.setSelectedBabyId(babyId);
   }
 
+  static const int _babyListPageSize = 100;
+
+  Future<List<BabySummary>> _fetchAllBabies() async {
+    final all = <BabySummary>[];
+    var offset = 0;
+    while (true) {
+      final json = await _api.getJson(
+        '/v1/babies?limit=$_babyListPageSize&offset=$offset',
+      );
+      final page = parseOffsetPage(
+        json,
+        BabySummary.fromJson,
+        defaultLimit: _babyListPageSize,
+      );
+      all.addAll(page.items);
+      if (!page.hasMore) break;
+      offset += page.items.length;
+    }
+    return all;
+  }
+
   static bool _shouldServeStaleBabyCache(Object error) {
     if (error is ApiException) {
       final code = error.statusCode;
@@ -58,11 +79,7 @@ class HomeRepository {
     }
     final epoch = _listEpoch;
     try {
-      final list = await _api.getJsonList('/v1/babies');
-      final babies = list
-          .whereType<Map<String, dynamic>>()
-          .map(BabySummary.fromJson)
-          .toList();
+      final babies = await _fetchAllBabies();
       if (epoch == _listEpoch) {
         _cachedBabies = babies;
         _cachedForUserId = uid;

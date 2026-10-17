@@ -727,16 +727,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingContinueWithGoogle => 'Continue with Google';
 
   @override
-  String get onboardingAgreePrefix => 'I agree to the ';
+  String onboardingAgreeToTerms(String terms, String privacy) {
+    return 'I agree to the $terms and $privacy';
+  }
 
   @override
   String get onboardingTermsOfService => 'Terms of Service';
 
   @override
-  String get onboardingAgreeAnd => ' and ';
+  String get onboardingPrivacyPolicy => 'Privacy Policy';
 
   @override
-  String get onboardingPrivacyPolicy => 'Privacy Policy';
+  String onboardingSignupAuthPrompt(String action) {
+    return 'Already have an account? $action';
+  }
+
+  @override
+  String onboardingLoginAuthPrompt(String action) {
+    return 'Don\'t have an account? $action';
+  }
 
   @override
   String get registryPriorityLabel => 'Priority';
@@ -799,4 +808,680 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get babySwitcherAddBaby => 'Add New Baby';
+
+  @override
+  String get actionAdd2 => '+ Add';
+
+  @override
+  String get actionInviteMorePeople => '+ Invite more people';
+
+  @override
+  String get label123MainSt => '123 Main St';
+
+  @override
+  String get stage36Months => '3–6 months';
+
+  @override
+  String get stage612Months => '6–12 months';
+
+  @override
+  String get labelAccount => 'Account';
+
+  @override
+  String get actionAddBaby => 'Add Baby';
+
+  @override
+  String get actionAddEvent => 'Add Event';
+
+  @override
+  String get registryAddItemTitle => 'Add Item';
+
+  @override
+  String get actionAddPhoto => 'Add Photo';
+
+  @override
+  String get actionAddPhoto2 => 'Add a Photo';
+
+  @override
+  String get actionAddCalendarEvent => 'Add a calendar event';
+
+  @override
+  String get actionAddCaption => 'Add a caption…';
+
+  @override
+  String get actionAddName => 'Add a name...';
+
+  @override
+  String get actionAddRegistryItem => 'Add a registry item';
+
+  @override
+  String get actionAddShortDescription => 'Add a short description…';
+
+  @override
+  String get actionAddAddressKnows =>
+      'Add an address so family knows where to send gifts.';
+
+  @override
+  String get actionAddAnother => 'Add another';
+
+  @override
+  String get actionAddBaby2 => 'Add baby';
+
+  @override
+  String get registryAddItem => 'Add item';
+
+  @override
+  String get actionAddPhoto3 => 'Add photo';
+
+  @override
+  String get actionAddGallery => 'Add to gallery';
+
+  @override
+  String get actionAddFirstBabyProfile =>
+      'Add your first baby profile to get started.';
+
+  @override
+  String get messageSuggestionsStage =>
+      'All suggestions in this stage are on your calendar.';
+
+  @override
+  String get messageSuggestionsStage2 =>
+      'All suggestions in this stage are on your registry.';
+
+  @override
+  String get hintSharePhoto => 'Also share this photo in the gallery';
+
+  @override
+  String get actionAnnounceArrival => 'Announce Arrival';
+
+  @override
+  String get actionAnnounceArrival2 => 'Announce arrival';
+
+  @override
+  String get announcementTitle => 'Announcement';
+
+  @override
+  String get fieldApt4b => 'Apt 4B';
+
+  @override
+  String get fieldAptSuiteEtcOptional => 'Apt, suite, etc. (optional)';
+
+  @override
+  String get labelBoyGirl => 'BOY OR GIRL?';
+
+  @override
+  String get labelBabyProfiles => 'Baby Profiles';
+
+  @override
+  String get labelBabyShower => 'Baby Shower';
+
+  @override
+  String get labelBabyName => 'Baby name';
+
+  @override
+  String get actionBack => 'Back';
+
+  @override
+  String get presetBaptism => 'Baptism';
+
+  @override
+  String get labelBirthdateGuesses => 'Birthdate guesses';
+
+  @override
+  String get presetBottles => 'Bottles';
+
+  @override
+  String get labelBoyGirl2 => 'Boy or Girl?';
+
+  @override
+  String get labelBoySNameOptional => 'Boy\'s name (optional)';
+
+  @override
+  String get announcementCommentsHeading => 'COMMENTS';
+
+  @override
+  String get fieldCity => 'City';
+
+  @override
+  String get actionClose => 'Close';
+
+  @override
+  String get actionConfirm => 'Confirm';
+
+  @override
+  String get fieldCountryOptional => 'Country (optional)';
+
+  @override
+  String get fieldCoverPhoto => 'Cover photo';
+
+  @override
+  String get authCreateAccount => 'Create Account';
+
+  @override
+  String get actionCreateBabyProfileUse =>
+      'Create a baby profile to use Gallery.';
+
+  @override
+  String get actionCreatePassword => 'Create a password';
+
+  @override
+  String get calendarCreateEvent => 'Create event';
+
+  @override
+  String get presetCribMattress => 'Crib & Mattress';
+
+  @override
+  String get fieldDate => 'Date';
+
+  @override
+  String get eventDeleteAction => 'Delete event';
+
+  @override
+  String get registryDeleteItemAction => 'Delete item';
+
+  @override
+  String get actionDeletePhoto => 'Delete photo';
+
+  @override
+  String get fieldDescriptionOptional => 'Description (optional)';
+
+  @override
+  String get eventDetailsHeading => 'Details';
+
+  @override
+  String get presetDiapers => 'Diapers';
+
+  @override
+  String get actionDownloadJsonCopy =>
+      'Download a JSON copy of this baby\'s profile, members, photos and comments, calendar and RSVPs, registry and purchases, name ideas, predictions, the birth announcement, and recent activity.';
+
+  @override
+  String get presetDueDate => 'Due Date';
+
+  @override
+  String get actionEditBaby => 'Edit Baby';
+
+  @override
+  String get actionEditProfile => 'Edit Profile';
+
+  @override
+  String get actionEditAnnouncement => 'Edit announcement';
+
+  @override
+  String get actionEditCaption => 'Edit caption';
+
+  @override
+  String get eventEditAction => 'Edit event';
+
+  @override
+  String get registryEditItem => 'Edit item';
+
+  @override
+  String get labelEmailPhone => 'Email or phone';
+
+  @override
+  String get hintEnterPassword => 'Enter your password';
+
+  @override
+  String get eventTitle => 'Event';
+
+  @override
+  String get fieldEventTitle => 'Event Title';
+
+  @override
+  String get searchSectionEvents => 'Events';
+
+  @override
+  String get stageExpecting => 'Expecting';
+
+  @override
+  String get messageFun => 'Family Fun';
+
+  @override
+  String get messageInsight => 'Family Insight';
+
+  @override
+  String get messageItem =>
+      'Family will see this item as taken so no one buys it again.';
+
+  @override
+  String get presetFirstCheckup => 'First Checkup';
+
+  @override
+  String get presetFirstHolidays => 'First Holidays';
+
+  @override
+  String get fieldFirstName => 'First name';
+
+  @override
+  String get messageFollowersLonger =>
+      'Followers will no longer see where to send gifts.';
+
+  @override
+  String get navFun => 'Fun';
+
+  @override
+  String get labelGenderReveal => 'Gender Reveal';
+
+  @override
+  String get labelGettingStarted => 'Getting Started';
+
+  @override
+  String get labelGirlSNameOptional => 'Girl\'s name (optional)';
+
+  @override
+  String get actionGoHome => 'Go to Home';
+
+  @override
+  String get brandGoogle => 'Google';
+
+  @override
+  String get navHome => 'Home';
+
+  @override
+  String get labelIl => 'IL';
+
+  @override
+  String get labelPhoto => 'IN THIS PHOTO';
+
+  @override
+  String get actionInvite => 'Invite';
+
+  @override
+  String get actionInviteFriends => 'Invite Family & Friends';
+
+  @override
+  String get actionInviteStatus => 'Invite Status';
+
+  @override
+  String get actionInviteMorePeople2 => 'Invite more people';
+
+  @override
+  String get fieldItemName => 'Item Name';
+
+  @override
+  String get fieldLastName => 'Last name';
+
+  @override
+  String get announcementLengthLabel => 'Length';
+
+  @override
+  String get fieldLinkOptional => 'Link (optional)';
+
+  @override
+  String get fieldLocationOptional => 'Location (optional)';
+
+  @override
+  String get authLogIn => 'Log in';
+
+  @override
+  String get labelMyAccount => 'My account';
+
+  @override
+  String get labelName => 'Name';
+
+  @override
+  String get searchSectionNames => 'Names';
+
+  @override
+  String get registrySectionNeeded => 'Needed';
+
+  @override
+  String get labelNewFollowers => 'New Followers';
+
+  @override
+  String get stageNewborn03mo => 'Newborn (0–3mo)';
+
+  @override
+  String get actionNextUp => 'Next Up';
+
+  @override
+  String get actionNextMonth => 'Next month';
+
+  @override
+  String get actionNextPhoto => 'Next photo';
+
+  @override
+  String get emptyAnnouncementYet => 'No announcement yet';
+
+  @override
+  String get emptyEventsDay => 'No events this day.';
+
+  @override
+  String get emptyEventsYet => 'No events yet';
+
+  @override
+  String get emptyVotesYetCheckBack =>
+      'No family votes yet. Check back once everyone starts playing along in Fun.';
+
+  @override
+  String get emptyFavoritesYet => 'No favorites yet';
+
+  @override
+  String get emptyFurtherUpcomingEvents => 'No further upcoming events';
+
+  @override
+  String get emptyNameSuggestionsYet => 'No name suggestions yet';
+
+  @override
+  String get emptyPhotosLast30 =>
+      'No photos in the last 30 days. Upload a new moment or browse the full gallery.';
+
+  @override
+  String get emptyPhotosYet => 'No photos yet';
+
+  @override
+  String get emptyRecentPhotos => 'No recent photos';
+
+  @override
+  String get registryEmptyTitle => 'No registry items yet';
+
+  @override
+  String get calendarNoUpcomingEvents => 'No upcoming events';
+
+  @override
+  String get emptyVotesYetInvite =>
+      'No votes yet. Invite family so they can guess names, gender, and the big day.';
+
+  @override
+  String get hintSureStart =>
+      'Not sure where to start? See AI-suggested events by stage and age.';
+
+  @override
+  String get hintSureStart2 =>
+      'Not sure where to start? See AI-suggested items by stage and age.';
+
+  @override
+  String get hintWasMeant => 'Not who this was meant for?';
+
+  @override
+  String get notificationPrefsChannelsTitle => 'Notification channels';
+
+  @override
+  String get notificationPrefsTitle => 'Notification preferences';
+
+  @override
+  String get labelNotificationsProfileHelp =>
+      'Notifications, profile, and help';
+
+  @override
+  String get hintDefaultFollowers =>
+      'Off by default. Followers only see gallery photos you choose to share.';
+
+  @override
+  String get presetOnesies => 'Onesies';
+
+  @override
+  String get actionOpenPhoto => 'Open photo';
+
+  @override
+  String get labelPrivateOrganizedConnected => 'PRIVATE. ORGANIZED. CONNECTED.';
+
+  @override
+  String get fieldPassword => 'Password';
+
+  @override
+  String get hintPasteZoomFacetimeLink => 'Paste a Zoom / FaceTime link';
+
+  @override
+  String get hintPasteLinkItem => 'Paste a link to the item';
+
+  @override
+  String get labelPendingInvites => 'Pending invites';
+
+  @override
+  String get fieldPhoneNumberOptional => 'Phone number (optional)';
+
+  @override
+  String get searchSectionPhotos => 'Photos';
+
+  @override
+  String get labelPopularDates => 'Popular Dates';
+
+  @override
+  String get labelPreferences => 'Preferences';
+
+  @override
+  String get actionPreviousMonth => 'Previous month';
+
+  @override
+  String get actionPreviousPhoto => 'Previous photo';
+
+  @override
+  String get registrySectionPurchased => 'Purchased';
+
+  @override
+  String get labelQuickActions => 'Quick Actions';
+
+  @override
+  String get eventRsvpsTitle => 'RSVPs';
+
+  @override
+  String get labelRecentActivity => 'Recent Activity';
+
+  @override
+  String get labelRecentPhotos => 'Recent Photos';
+
+  @override
+  String get onboardingRemoveInvite => 'Remove invite';
+
+  @override
+  String get actionResendInvitation => 'Resend invitation';
+
+  @override
+  String get actionRevokeInvitation => 'Revoke invitation';
+
+  @override
+  String get navSearch => 'Search';
+
+  @override
+  String get fieldSearchPhotosEventsRegistry =>
+      'Search photos, events, registry…';
+
+  @override
+  String get fieldSelectCountry => 'Select a country';
+
+  @override
+  String get fieldSelectDate => 'Select a date';
+
+  @override
+  String get fieldSelectTime => 'Select a time';
+
+  @override
+  String get actionSendInvites => 'Send Invites';
+
+  @override
+  String get actionShareKeepsakeCardPhoto =>
+      'Share a keepsake card with photo and birth details for family.';
+
+  @override
+  String get actionShareAnnouncement => 'Share announcement';
+
+  @override
+  String get actionShareAnnouncementInstagram =>
+      'Share announcement to Instagram';
+
+  @override
+  String get actionShareNews =>
+      'Share the news with family. They will see a keepsake card with photo and details.';
+
+  @override
+  String get messageSharedAcrossEveryBabyProfile =>
+      'Shared across every baby profile you own. Free tier includes 15 GB.';
+
+  @override
+  String get shippingAddressTitle => 'Shipping address';
+
+  @override
+  String get authSignIn => 'Sign in';
+
+  @override
+  String get authSignUp => 'Sign up';
+
+  @override
+  String get actionSkipNow => 'Skip for now';
+
+  @override
+  String get labelSpringfield => 'Springfield';
+
+  @override
+  String get messageSquishPhotosLove =>
+      'Squish photos you love and they will show up here.';
+
+  @override
+  String get hintStandardSizeGreenguardGoldCertified =>
+      'Standard size, GREENGUARD Gold certified…';
+
+  @override
+  String get fieldStateProvinceOptional => 'State / Province (optional)';
+
+  @override
+  String get labelStorage => 'Storage';
+
+  @override
+  String get fieldStreetAddress => 'Street address';
+
+  @override
+  String get labelSuggestName => 'Suggest a name';
+
+  @override
+  String get labelSuggestName2 => 'Suggest a name…';
+
+  @override
+  String get presetSwaddles => 'Swaddles';
+
+  @override
+  String get actionSwitchBabyProfile => 'Switch baby profile';
+
+  @override
+  String get babySwitcherSwitchProfile => 'Switch profile';
+
+  @override
+  String get labelTopGuessDate => 'TOP GUESS DATE';
+
+  @override
+  String get labelTopName => 'TOP NAME';
+
+  @override
+  String get messageRemoves =>
+      'This removes it for everyone who can see it - this can\'t be undone.';
+
+  @override
+  String get messageStartTime =>
+      'This start time is in the past. The event still appears on the month grid and under Today on Calendar, but not in Upcoming.';
+
+  @override
+  String get fieldTimeOptional => 'Time (optional)';
+
+  @override
+  String get labelToday => 'Today';
+
+  @override
+  String get hintTypeSearch => 'Type to search';
+
+  @override
+  String get registryUndoPurchase => 'Undo purchase';
+
+  @override
+  String get labelUpcoming => 'Upcoming';
+
+  @override
+  String get labelUpcomingEvents => 'Upcoming Events';
+
+  @override
+  String get versionGateUpdateRequired => 'Update required';
+
+  @override
+  String get actionUploadFirstPhoto => 'Upload your first photo';
+
+  @override
+  String get messageVerificationCompleteTapContinueProceed =>
+      'Verification complete. Tap Continue to proceed.';
+
+  @override
+  String get eventVideoCallLabel => 'Video Call';
+
+  @override
+  String get fieldVideoCallLinkOptional => 'Video call link (optional)';
+
+  @override
+  String get actionViewGallery => 'View Gallery';
+
+  @override
+  String get actionViewRsvps => 'View RSVPs ›';
+
+  @override
+  String get actionView => 'View all';
+
+  @override
+  String get actionViewAnnouncement => 'View announcement';
+
+  @override
+  String get actionVoteFun => 'Vote in Fun';
+
+  @override
+  String get announcementWeightLabel => 'Weight';
+
+  @override
+  String get hintShouldSendRegistryGifts =>
+      'Where should family send registry gifts?';
+
+  @override
+  String get labelVoted => 'Who voted';
+
+  @override
+  String get messageChangeTime => 'You can change this any time.';
+
+  @override
+  String get messageSuggestName => 'You can suggest 1 name per gender.';
+
+  @override
+  String get messageReOfficiallyOwner => 'You\'re officially an Owner!';
+
+  @override
+  String get messageReOfflineCheckConnection =>
+      'You\'re offline. Check your connection.';
+
+  @override
+  String get messageVeReachedEnd => 'You\'ve reached the end of the gallery.';
+
+  @override
+  String get fieldZipPostalCode => 'Zip / Postal code';
+
+  @override
+  String get fieldZipPostalCodeOptional => 'Zip / Postal code (optional)';
+
+  @override
+  String get labelEG94103 => 'e.g. 94103';
+
+  @override
+  String get labelEGCribMattress => 'e.g. Crib & Mattress';
+
+  @override
+  String get labelEGGenderRevealParty => 'e.g. Gender Reveal Party';
+
+  @override
+  String get labelEGGrandmaSueSBackyard => 'e.g. Grandma Sue\'s backyard';
+
+  @override
+  String get labelEGLiam => 'e.g. Liam';
+
+  @override
+  String get labelEGOlivia => 'e.g. Olivia';
+
+  @override
+  String get labelSignEmail => 'or sign in with email';
+
+  @override
+  String get labelSignUpEmail => 'or sign up with email';
+
+  @override
+  String get messageEmailCom => 'you@email.com';
+
+  @override
+  String get messagePerson =>
+      '👑 This person will also be a Baby Profile Owner';
+
+  @override
+  String get commentDeleteMenuLabel => 'Delete comment';
 }

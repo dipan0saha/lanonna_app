@@ -120,7 +120,7 @@ class _OnboardingEmailVerifyScreenState extends State<OnboardingEmailVerifyScree
           ],
           const SizedBox(height: 28),
           OnboardingPrimaryButton(
-            label: 'Continue',
+            label: l10n.deleteAccountReauthPasswordAction,
             onPressed: () => _checkVerified(),
           ),
           const SizedBox(height: 12),

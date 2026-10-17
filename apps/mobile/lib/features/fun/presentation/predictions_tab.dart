@@ -172,7 +172,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
     final l10n = AppLocalizations.of(context)!;
     showAppModalSheet(
       context: context,
-      title: 'Who voted',
+      title: l10n.labelVoted,
       subtitle: voters.isEmpty
           ? 'No votes yet'
           : l10n.predictionVoteCount(voters.length),
@@ -257,7 +257,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
               ),
             ),
           AppSectionTitle(
-            title: 'Boy or Girl?',
+            title: l10n.labelBoyGirl2,
             action: total > 0 ? VoteCountPill(total: total) : null,
           ),
           Row(
@@ -312,7 +312,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
             child: Text(AppLocalizations.of(context)!.funViewWhoVoted),
           ),
           const SizedBox(height: AppMetrics.sectionBlockSpacing),
-          const AppSectionTitle(title: 'Popular Dates'),
+          AppSectionTitle(title: l10n.labelPopularDates),
           if (p == null || p.birthdateHistogram.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
@@ -323,7 +323,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
           else
             _PopularDatesList(histogram: p.birthdateHistogram, locale: locale),
           const SizedBox(height: AppMetrics.sectionBlockSpacing),
-          const AppSectionTitle(title: 'Birthdate guesses'),
+          AppSectionTitle(title: l10n.labelBirthdateGuesses),
           Card(
             child: Padding(
               padding: AppMetrics.monthGridCardPadding,
@@ -334,7 +334,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
                     children: [
                       AppIconButton(
                         semanticsId: 'predictions_previous_month',
-                        label: 'Previous month',
+                        label: l10n.actionPreviousMonth,
                         onPressed: () => _shiftMonth(-1),
                         icon: const Icon(Icons.chevron_left),
                       ),
@@ -344,7 +344,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
                       ),
                       AppIconButton(
                         semanticsId: 'predictions_next_month',
-                        label: 'Next month',
+                        label: l10n.actionNextMonth,
                         onPressed: () => _shiftMonth(1),
                         icon: const Icon(Icons.chevron_right),
                       ),

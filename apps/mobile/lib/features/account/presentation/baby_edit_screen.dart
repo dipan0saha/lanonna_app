@@ -147,11 +147,12 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     return PrototypeSubpageScaffold(
-      title: 'Edit Baby',
+      title: l10n.actionEditBaby,
       body: ListView(
         padding: AppMetrics.subpageScrollPadding,
         children: [
@@ -176,7 +177,7 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
             const SizedBox(height: 16),
           ],
           AppLabeledTextField(
-            label: 'Baby name',
+            label: l10n.labelBabyName,
             kind: AppTextInputKind.personName,
             controller: _name,
           ),

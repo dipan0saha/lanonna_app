@@ -99,7 +99,7 @@ class _FunScreenState extends State<FunScreen>
     );
     switch (kind) {
       case TabLoadKind.loading:
-        return const Center(child: CircularProgressIndicator());
+        return Center(child: CircularProgressIndicator());
       case TabLoadKind.error:
         return AsyncTabBody(
           loading: false,
@@ -121,6 +121,7 @@ class _FunScreenState extends State<FunScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return AppSemantics.container(
       'fun_hub',
       Scaffold(
@@ -138,7 +139,7 @@ class _FunScreenState extends State<FunScreen>
                   8,
                 ),
                 child: Text(
-                  'Family Fun',
+                  l10n.messageFun,
                   style: context.textStyles.headlineSmall,
                 ),
               ),

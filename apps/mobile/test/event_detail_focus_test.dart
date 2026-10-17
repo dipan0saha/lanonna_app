@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:lanonna/core/comments/comment_composer_controller.dart';
 import 'package:lanonna/core/comments/comment_thread_port.dart';
 
@@ -34,7 +35,9 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+home: Scaffold(
           body: TextField(
             focusNode: composer.focusNode,
             controller: composer.textController,

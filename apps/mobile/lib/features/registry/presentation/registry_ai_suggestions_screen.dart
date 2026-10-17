@@ -23,11 +23,11 @@ class RegistryAiSuggestionsScreen extends StatefulWidget {
 }
 
 class _RegistryAiSuggestionsScreenState extends State<RegistryAiSuggestionsScreen> {
-  static const _tabs = [
-    AiSuggestionTab(key: 'expecting', label: 'Expecting'),
-    AiSuggestionTab(key: 'newborn', label: 'Newborn (0–3mo)'),
-    AiSuggestionTab(key: '3to6', label: '3–6 months'),
-    AiSuggestionTab(key: '6to12', label: '6–12 months'),
+  List<AiSuggestionTab> _tabs(AppLocalizations l10n) => [
+    AiSuggestionTab(key: 'expecting', label: l10n.stageExpecting),
+    AiSuggestionTab(key: 'newborn', label: l10n.stageNewborn03mo),
+    AiSuggestionTab(key: '3to6', label: l10n.stage36Months),
+    AiSuggestionTab(key: '6to12', label: l10n.stage612Months),
   ];
 
   var _tab = 'expecting';
@@ -107,7 +107,7 @@ class _RegistryAiSuggestionsScreenState extends State<RegistryAiSuggestionsScree
     final l10n = AppLocalizations.of(context)!;
     return AiSuggestionsScaffold(
       subtitle: l10n.aiSuggestionsSubtitle,
-      tabs: _tabs,
+      tabs: _tabs(l10n),
       selectedTab: _tab,
       onTabChanged: (key) {
         setState(() => _tab = key);
@@ -115,7 +115,7 @@ class _RegistryAiSuggestionsScreenState extends State<RegistryAiSuggestionsScree
       },
       loading: _loading,
       onRefresh: _load,
-      emptyMessage: 'All suggestions in this stage are on your registry.',
+      emptyMessage: l10n.messageSuggestionsStage2,
       items: _items
           .map(
             (item) => AiSuggestionListItem(

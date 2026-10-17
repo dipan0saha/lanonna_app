@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/features/onboarding/domain/baby_gender.dart';
 import 'package:lanonna/features/onboarding/presentation/widgets/onboarding_fields.dart';
@@ -11,7 +12,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+theme: AppTheme.light,
         home: Scaffold(
           body: StatefulBuilder(
             builder: (context, setState) {
@@ -46,7 +49,9 @@ void main() {
   testWidgets('mini style matches first-moment Boy/Girl toggle size', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+theme: AppTheme.light,
         home: Scaffold(
           body: OnboardingSegmentedControl(
             style: OnboardingSegmentedControlStyle.mini,
@@ -70,7 +75,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+theme: AppTheme.light,
         home: Scaffold(
           body: StatefulBuilder(
             builder: (context, setState) {

@@ -12,6 +12,7 @@ import '../../../../core/widgets/app_semantics.dart';
 import '../../../announcement/presentation/announcement_share.dart';
 import '../../data/models/home_summary.dart';
 import '../../../../core/theme/app_button_styles.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class HomeBirthWelcomeCard extends StatelessWidget {
   const HomeBirthWelcomeCard({
@@ -27,6 +28,7 @@ class HomeBirthWelcomeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final text = context.textStyles;
     final brand = context.brand;
     final locale = localeNameForFormatting(context);
@@ -78,7 +80,7 @@ class HomeBirthWelcomeCard extends StatelessWidget {
                 onPressed: () => context.push('/baby/$babyId/announcement'),
                 child: const AppButtonLabel('🎀 View Announcement'),
               ),
-              label: 'View announcement',
+              label: l10n.actionViewAnnouncement,
             ),
             end: showShareToInstagram
                 ? AppSemantics.button(
@@ -91,7 +93,7 @@ class HomeBirthWelcomeCard extends StatelessWidget {
                       ),
                       child: const AppButtonLabel('📸 Share to Instagram'),
                     ),
-                    label: 'Share announcement to Instagram',
+                    label: l10n.actionShareAnnouncementInstagram,
                   )
                 : null,
           ),

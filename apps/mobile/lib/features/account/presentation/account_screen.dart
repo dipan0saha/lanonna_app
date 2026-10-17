@@ -158,9 +158,9 @@ class _AccountScreenState extends State<AccountScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     return PrototypeSubpageScaffold(
-      title: 'My Account',
+      title: l10n.babySwitcherMyAccount,
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator())
           : _loadError != null
           ? Center(
               child: Padding(
@@ -192,7 +192,7 @@ class _AccountScreenState extends State<AccountScreen> {
                     AccountEngagementStatRow(stats: payload.engagement),
                   const SizedBox(height: 20),
                   AppSectionTitle(
-                    title: 'Baby Profiles',
+                    title: l10n.labelBabyProfiles,
                     action: TextButton(
                       onPressed: () => context.push('/baby/create'),
                       child: Text(AppLocalizations.of(context)!.accountAddNewBaby),
@@ -210,18 +210,18 @@ class _AccountScreenState extends State<AccountScreen> {
                   ),
                   if (payload?.storageUsage != null) ...[
                     const SizedBox(height: AppMetrics.sectionBlockSpacing),
-                    const AppSectionTitle(title: 'Storage'),
+                    AppSectionTitle(title: l10n.labelStorage),
                     AccountStorageCard(usage: payload!.storageUsage!),
                   ],
                   const SizedBox(height: AppMetrics.sectionBlockSpacing),
-                  const AppSectionTitle(title: 'Preferences'),
+                  AppSectionTitle(title: l10n.labelPreferences),
                   AppBorderedSurface(
                     child: Column(
                       children: [
                         ListTile(
                           title: Text(AppLocalizations.of(context)!.settingsTitle),
-                          subtitle: const Text(
-                            'Notifications, profile, and help',
+                          subtitle: Text(
+                            l10n.labelNotificationsProfileHelp,
                           ),
                           trailing: const Icon(
                             Icons.chevron_right,
@@ -283,11 +283,11 @@ class _AccountScreenState extends State<AccountScreen> {
                     ),
                   ),
                   const SizedBox(height: AppMetrics.sectionBlockSpacing),
-                  const AppSectionTitle(title: 'Account'),
+                  AppSectionTitle(title: l10n.labelAccount),
                   AppBorderedSurface(
                     child: ListTile(
-                      title: const Text(
-                        'Delete account',
+                      title: Text(
+                        l10n.deleteAccountConfirmAction,
                         style: TextStyle(color: AppColors.error),
                       ),
                       trailing: const Icon(

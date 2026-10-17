@@ -216,6 +216,7 @@ class _CalendarScreenState extends State<CalendarScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final styles = context.textStyles;
     final monthLabel =
         '${_monthName(_visibleMonth.month)} ${_visibleMonth.year}';
@@ -276,7 +277,7 @@ class _CalendarScreenState extends State<CalendarScreen>
                             children: [
                               AppIconButton(
                                 semanticsId: 'calendar_previous_month',
-                                label: 'Previous month',
+                                label: l10n.actionPreviousMonth,
                                 onPressed: _monthRefreshing
                                     ? null
                                     : () => _shiftMonth(-1),
@@ -303,7 +304,7 @@ class _CalendarScreenState extends State<CalendarScreen>
                               ),
                               AppIconButton(
                                 semanticsId: 'calendar_next_month',
-                                label: 'Next month',
+                                label: l10n.actionNextMonth,
                                 onPressed: _monthRefreshing
                                     ? null
                                     : () => _shiftMonth(1),
@@ -327,7 +328,7 @@ class _CalendarScreenState extends State<CalendarScreen>
                 SliverToBoxAdapter(
                   child: CalendarAiSuggestionBanner(
                     message:
-                        'Not sure where to start? See AI-suggested events by stage and age.',
+                        l10n.hintSureStart,
                     onTap: () => context.push(CalendarRoutes.aiSuggestions),
                   ),
                 ),
@@ -381,7 +382,7 @@ class _CalendarScreenState extends State<CalendarScreen>
                         child: AppEmptyState(
                           expand: false,
                           icon: Icons.event_outlined,
-                          title: 'No events yet',
+                          title: l10n.emptyEventsYet,
                           message: _isOwner
                               ? 'Add ultrasounds, showers, or the gender reveal so family knows when to celebrate.'
                               : 'Nothing on the calendar yet — check back soon.',
@@ -408,7 +409,7 @@ class _CalendarScreenState extends State<CalendarScreen>
                 onPressed: () => _openCreateEvent(),
                 child: const Icon(Icons.add),
               ),
-              label: 'Create event',
+              label: l10n.calendarCreateEvent,
             )
           : null,
     );

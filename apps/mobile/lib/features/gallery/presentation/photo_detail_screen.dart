@@ -377,9 +377,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(AppLocalizations.of(context)!.photoDeleteConfirmTitle),
-        content: const Text(
-          'This removes it for everyone who can see it - this can\'t be undone.',
-        ),
+        content: Text(AppLocalizations.of(context)!.messageRemoves),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -433,7 +431,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       hasContent: _detail != null,
       initialLoadInFlight: _initialLoadInFlight,
     )) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     final detail = _detail;
     if (detail == null) {
@@ -449,12 +447,12 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     final baby = _baby;
     final currentBabyId = baby?.id;
     return PrototypeSubpageScaffold(
-      title: 'Photo',
+      title: l10n.eventPhotoLabel,
       actions: [
         if (_isOwner)
           AppIconButton(
             semanticsId: 'photo_delete',
-            label: 'Delete photo',
+            label: l10n.actionDeletePhoto,
             onPressed: _deletePhoto,
             icon: const Icon(
               Icons.delete_outline,
@@ -497,7 +495,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                             child: Center(
                               child: _PhotoHeroNavButton(
                                 semanticsId: 'photo_previous',
-                                label: 'Previous photo',
+                                label: l10n.actionPreviousPhoto,
                                 icon: Icons.keyboard_arrow_up,
                                 onPressed: () => unawaited(_goAdjacent(-1)),
                               ),
@@ -511,7 +509,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                             child: Center(
                               child: _PhotoHeroNavButton(
                                 semanticsId: 'photo_next',
-                                label: 'Next photo',
+                                label: l10n.actionNextPhoto,
                                 icon: Icons.keyboard_arrow_down,
                                 onPressed: () => unawaited(_goAdjacent(1)),
                               ),
@@ -534,8 +532,8 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                                   controller: _captionController,
                                   focusNode: _captionFocus,
                                   autofocus: false,
-                                  decoration: const InputDecoration(
-                                    hintText: 'Add a caption…',
+                                  decoration: InputDecoration(
+                                    hintText: l10n.actionAddCaption,
                                   ),
                                 ),
                               ),
@@ -557,7 +555,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                               if (_isOwner)
                                 AppIconButton(
                                   semanticsId: 'photo_caption_edit',
-                                  label: 'Edit caption',
+                                  label: l10n.actionEditCaption,
                                   onPressed: _beginCaptionEdit,
                                   icon: const Icon(
                                     Icons.edit_outlined,
@@ -598,7 +596,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                             )) ...[
                           const SizedBox(height: 16),
                           Text(
-                            'IN THIS PHOTO',
+                            l10n.labelPhoto,
                             style: styles.labelSmall?.copyWith(
                               color: AppColors.muted,
                               fontWeight: FontWeight.w700,
@@ -638,7 +636,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                         ],
                         const SizedBox(height: 16),
                         Text(
-                          'COMMENTS',
+                          l10n.announcementCommentsHeading,
                           style: styles.labelSmall?.copyWith(
                             color: AppColors.muted,
                             fontWeight: FontWeight.w700,
@@ -684,7 +682,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                                       if (detail.comments[i].canEdit)
                                         AppIconButton(
                                           semanticsId: 'photo_comment_edit',
-                                          label: 'Edit comment',
+                                          label: l10n.commentEditTitle,
                                           icon: const Icon(
                                             Icons.edit_outlined,
                                             size: 18,
@@ -695,7 +693,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                                       if (detail.comments[i].canDelete)
                                         AppIconButton(
                                           semanticsId: 'photo_comment_delete',
-                                          label: 'Delete comment',
+                                          label: l10n.commentDeleteMenuLabel,
                                           icon: const Icon(
                                             Icons.delete_outline,
                                             size: 18,

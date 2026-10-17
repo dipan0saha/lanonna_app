@@ -219,11 +219,12 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     return PrototypeSubpageScaffold(
-      title: 'Announce Arrival',
+      title: l10n.actionAnnounceArrival,
       body: Form(
         key: _formKey,
         autovalidateMode: _autovalidateMode,
@@ -231,7 +232,7 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
           padding: AppMetrics.subpageFormScrollPadding,
           children: [
             Text(
-              'Share the news with family. They will see a keepsake card with photo and details.',
+              l10n.actionShareNews,
               style: context.textStyles.bodyMedium?.copyWith(
                 color: AppColors.muted,
               ),
@@ -258,7 +259,7 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
             AppLabeledTextFormField(
               key: const Key('announcement_first_name'),
               semanticsId: 'announcement_first_name',
-              label: 'First name',
+              label: l10n.fieldFirstName,
               kind: AppTextInputKind.personName,
               controller: _first,
               maxLength: 50,
@@ -266,7 +267,7 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
               autovalidateMode: _autovalidateMode,
             ),
             AppLabeledTextField(
-              label: 'Last name',
+              label: l10n.fieldLastName,
               kind: AppTextInputKind.personName,
               controller: _last,
               maxLength: 50,
@@ -277,7 +278,7 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
               children: [
                 Expanded(
                   child: AppToggleChip(
-                    label: 'Boy',
+                    label: l10n.funGenderBoy,
                     selected: _gender == 'male',
                     onTap: () => setState(() => _gender = 'male'),
                   ),
@@ -285,7 +286,7 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
                 SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: AppToggleChip(
-                    label: 'Girl',
+                    label: l10n.funGenderGirl,
                     selected: _gender == 'female',
                     selectedAccent: AppChipAccent.peach,
                     onTap: () => setState(() => _gender = 'female'),
@@ -308,13 +309,13 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
               onTap: _pickTime,
             ),
             AppLabeledTextField(
-              label: 'Weight',
+              label: l10n.announcementWeightLabel,
               kind: AppTextInputKind.measurement,
               controller: _weight,
               maxLength: 40,
             ),
             AppLabeledTextField(
-              label: 'Length',
+              label: l10n.announcementLengthLabel,
               kind: AppTextInputKind.measurement,
               controller: _length,
               maxLength: 40,

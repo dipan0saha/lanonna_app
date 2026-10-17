@@ -28,6 +28,7 @@ class OnboardingSignupScreen extends StatefulWidget {
 }
 
 class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
+  AppLocalizations get l10n => AppLocalizations.of(context)!;
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -143,12 +144,12 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
             const OnboardingLogoMark(),
             const SizedBox(height: 26),
             OnboardingGoogleButton(onPressed: _busy ? null : _google, isLoading: _busy),
-            const OnboardingDivider(),
+            OnboardingDivider(),
             OnboardingTextField(
               fieldKey: const Key('onboarding_signup_email'),
               controller: _emailController,
-              label: 'Email',
-              hint: 'you@email.com',
+              label: l10n.authPasswordResetEmailLabel,
+              hint: l10n.messageEmailCom,
               keyboardType: TextInputType.emailAddress,
               validator: validateEmail,
               autovalidateMode: _autovalidateMode,
@@ -168,13 +169,13 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
             const SizedBox(height: 20),
             OnboardingPrimaryButton(
               buttonKey: const Key('onboarding_signup_submit'),
-              label: 'Create Account',
+              label: l10n.authCreateAccount,
               isLoading: _busy,
               onPressed: _busy ? null : _submit,
             ),
             OnboardingBottomLink(
-              prefix: 'Already have an account? ',
-              actionLabel: 'Log in',
+              template: l10n.onboardingSignupAuthPrompt(l10n.authLogIn),
+              actionText: l10n.authLogIn,
               onTap: _busy ? () {} : () => context.go(OnboardingRoutes.login),
             ),
             if (_error != null)

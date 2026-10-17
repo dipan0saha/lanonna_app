@@ -82,6 +82,7 @@ class BatchInviteScreen extends StatefulWidget {
 }
 
 class _BatchInviteScreenState extends State<BatchInviteScreen> {
+  AppLocalizations get l10n => AppLocalizations.of(context)!;
   late final List<InviteRelationshipOption> _relationshipOptions;
   final _rows = <_InviteRowState>[];
   var _synced = false;
@@ -344,7 +345,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
         ),
         OnboardingPrimaryButton(
           semanticsId: _isOnboarding ? null : 'batch_invite_send',
-          label: 'Send Invites',
+          label: l10n.actionSendInvites,
           isLoading: _busy,
           onPressed: _busy ? null : () => _finish(sendInvites: true),
         ),
@@ -355,10 +356,10 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
               child: GestureDetector(
                 onTap: _busy ? null : () => _finish(sendInvites: false),
                 behavior: HitTestBehavior.opaque,
-                child: const Padding(
+                child: Padding(
                   padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                   child: Text(
-                    'Skip for now',
+                    l10n.actionSkipNow,
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                       color: AppColors.primaryDark,
@@ -440,7 +441,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
       );
     }
     return PrototypeSubpageScaffold(
-      title: 'Invite Family & Friends',
+      title: l10n.actionInviteFriends,
       body: SingleChildScrollView(child: _fromHomeBody()),
     );
   }

@@ -35,6 +35,7 @@ import '../domain/create_baby_mode.dart';
 import '../domain/create_baby_submit.dart';
 import '../domain/owner_onboarding_baby_phase.dart';
 import '../../onboarding/domain/owner_onboarding_baby_resolver.dart';
+import '../../../l10n/app_localizations.dart';
 
 const _genderBoy = 'Boy';
 const _genderGirl = 'Girl';
@@ -50,6 +51,7 @@ class CreateBabyScreen extends StatefulWidget {
 }
 
 class _CreateBabyScreenState extends State<CreateBabyScreen> {
+  AppLocalizations get l10n => AppLocalizations.of(context)!;
   final _boyNameController = TextEditingController();
   final _girlNameController = TextEditingController();
   final _picker = ImagePicker();
@@ -348,8 +350,8 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
           children: [
             OnboardingTextField(
               controller: _boyNameController,
-              label: "Boy's name (optional)",
-              hint: 'e.g. Liam',
+              label: l10n.labelBoySNameOptional,
+              hint: l10n.labelEGLiam,
               kind: AppTextInputKind.personName,
               fieldKey: const Key('onboarding_baby_name'),
               onChanged: (_) => _syncDraft(),
@@ -357,8 +359,8 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
             const SizedBox(height: 16),
             OnboardingTextField(
               controller: _girlNameController,
-              label: "Girl's name (optional)",
-              hint: 'e.g. Olivia',
+              label: l10n.labelGirlSNameOptional,
+              hint: l10n.labelEGOlivia,
               kind: AppTextInputKind.personName,
               onChanged: (_) => _syncDraft(),
             ),
@@ -367,8 +369,8 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
       case OnboardingBabyNameFieldsMode.bornSingleBoy:
         return OnboardingTextField(
           controller: _boyNameController,
-          label: "Boy's name (optional)",
-          hint: 'e.g. Liam',
+          label: l10n.labelBoySNameOptional,
+          hint: l10n.labelEGLiam,
           kind: AppTextInputKind.personName,
           fieldKey: const Key('onboarding_baby_name'),
           onChanged: (_) => _syncDraft(),
@@ -376,8 +378,8 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
       case OnboardingBabyNameFieldsMode.bornSingleGirl:
         return OnboardingTextField(
           controller: _girlNameController,
-          label: "Girl's name (optional)",
-          hint: 'e.g. Olivia',
+          label: l10n.labelGirlSNameOptional,
+          hint: l10n.labelEGOlivia,
           kind: AppTextInputKind.personName,
           fieldKey: const Key('onboarding_baby_name'),
           onChanged: (_) => _syncDraft(),
@@ -422,11 +424,11 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
               contentPadding: EdgeInsets.zero,
               controlAffinity: ListTileControlAffinity.leading,
               title: Text(
-                'Also share this photo in the gallery',
+                l10n.hintSharePhoto,
                 style: text.bodyMedium,
               ),
               subtitle: Text(
-                'Off by default. Followers only see gallery photos you choose to share.',
+                l10n.hintDefaultFollowers,
                 style: text.bodySmall?.copyWith(color: AppColors.muted),
               ),
             ),
@@ -469,7 +471,7 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
         PrototypeDateField(
           label: _dateLabel,
           value: _selectedDate,
-          placeholder: 'Select a date',
+          placeholder: l10n.fieldSelectDate,
           onTap: _busy ? () {} : _pickDate,
         ),
         const SizedBox(height: 18),
@@ -527,6 +529,7 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (_isOnboarding) {
       return OnboardingScaffold(
         pinBottomCta: false,
@@ -542,7 +545,7 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
     }
 
     return PrototypeSubpageScaffold(
-      title: 'Add Baby',
+      title: l10n.actionAddBaby,
       body: ListView(
         padding: AppMetrics.subpageFormScrollPadding,
         children: [_buildFormColumn()],

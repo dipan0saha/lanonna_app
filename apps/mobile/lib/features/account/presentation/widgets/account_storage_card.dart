@@ -4,6 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_bordered_surface.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../data/account_repository.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class AccountStorageCard extends StatelessWidget {
   const AccountStorageCard({super.key, required this.usage});
@@ -19,6 +20,7 @@ class AccountStorageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final text = context.textStyles;
     return AppBorderedSurface(
       padding: const EdgeInsets.all(16),
@@ -41,7 +43,7 @@ class AccountStorageCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Shared across every baby profile you own. Free tier includes 15 GB.',
+            l10n.messageSharedAcrossEveryBabyProfile,
             style: text.bodySmall?.copyWith(color: AppColors.muted),
           ),
         ],

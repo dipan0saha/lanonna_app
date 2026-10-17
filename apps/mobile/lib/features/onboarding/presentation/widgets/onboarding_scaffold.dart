@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Shared scaffold for onboarding screens — PRD padding and pinned bottom CTA.
 class OnboardingScaffold extends StatelessWidget {
@@ -33,6 +34,7 @@ class OnboardingScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       resizeToAvoidBottomInset: resizeToAvoidBottomInset,
       body: SafeArea(
@@ -100,6 +102,7 @@ class _TopRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SizedBox(
       height: 34,
       child: Row(
@@ -107,7 +110,7 @@ class _TopRow extends StatelessWidget {
           if (showBack)
             Semantics(
               button: true,
-              label: 'Back',
+              label: l10n.actionBack,
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: onBack,

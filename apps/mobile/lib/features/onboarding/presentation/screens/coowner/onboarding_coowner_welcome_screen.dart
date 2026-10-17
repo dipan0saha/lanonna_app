@@ -7,12 +7,14 @@ import '../../onboarding_coordinator.dart';
 import '../../utils/invite_flow_navigation.dart';
 import '../../widgets/onboarding_buttons.dart';
 import '../../widgets/onboarding_scaffold.dart';
+import '../../../../../l10n/app_localizations.dart';
 
 class OnboardingCoOwnerWelcomeScreen extends StatelessWidget {
   const OnboardingCoOwnerWelcomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final coordinator = context.watch<OnboardingCoordinator>();
     final preview = coordinator.cachedInvitePreview;
     final babyName = preview?.babyName ?? 'Baby';
@@ -29,7 +31,7 @@ class OnboardingCoOwnerWelcomeScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 22),
             child: OnboardingPrimaryButton(
-              label: 'Go to Home',
+              label: l10n.actionGoHome,
               onPressed: () async {
                 await coordinator.setStep(OnboardingStep.coOwnerWelcome);
                 if (!context.mounted) return;

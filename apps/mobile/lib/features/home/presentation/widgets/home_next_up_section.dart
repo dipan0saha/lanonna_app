@@ -10,6 +10,7 @@ import '../../../calendar/domain/calendar_routes.dart';
 import '../../data/models/home_summary.dart';
 import 'home_scroll_section.dart';
 import 'home_section_trailing.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class HomeNextUpSection extends StatelessWidget {
   const HomeNextUpSection({super.key, required this.event});
@@ -18,6 +19,7 @@ class HomeNextUpSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (event.id.isEmpty) return const SizedBox.shrink();
     final text = context.textStyles;
     final locale = Localizations.localeOf(context).toString();
@@ -31,9 +33,9 @@ class HomeNextUpSection extends StatelessWidget {
     ].join(' · ');
 
     return HomeScrollSection(
-      title: 'Next Up',
+      title: l10n.actionNextUp,
       trailing: HomeSectionLink(
-        label: 'View all',
+        label: l10n.actionView,
         onPressed: () => context.push(CalendarRoutes.upcoming),
       ),
       body: Padding(

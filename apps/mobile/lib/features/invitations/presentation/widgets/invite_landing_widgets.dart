@@ -5,6 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../data/models/invitation_preview.dart';
 import '../invite_date_subtitle.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class InviteLandingHeader extends StatelessWidget {
   const InviteLandingHeader({
@@ -18,6 +19,7 @@ class InviteLandingHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final inviter = preview.inviterDisplayName ?? 'A family member';
     final line = preview.isAccepted
         ? "You're already a member"
@@ -117,13 +119,14 @@ class InviteNotForYouLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: GestureDetector(
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.only(top: 14),
           child: Text(
-            'Not who this was meant for?',
+            l10n.hintWasMeant,
             style: context.textStyles.bodyMedium?.copyWith(
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -166,6 +169,7 @@ class CoOwnerWelcomeBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final brand = context.brand;
     final text = context.textStyles;
     return Container(
@@ -178,10 +182,10 @@ class CoOwnerWelcomeBanner extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Text('👑', style: TextStyle(fontSize: 32)),
+          Text('👑', style: TextStyle(fontSize: 32)),
           const SizedBox(height: 10),
           Text(
-            "You're officially an Owner!",
+            l10n.messageReOfficiallyOwner,
             textAlign: TextAlign.center,
             style: text.titleSmall,
           ),

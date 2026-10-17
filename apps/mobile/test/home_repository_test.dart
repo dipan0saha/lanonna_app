@@ -120,15 +120,19 @@ void main() {
   });
 }
 
+Map<String, dynamic> _babiesEnvelope(List<Map<String, dynamic>> items) => {
+  'items': items,
+  'offset': 0,
+  'limit': 100,
+  'has_more': false,
+};
+
 class _MixedBabiesApi extends ApiClient {
   _MixedBabiesApi() : super(idTokenProvider: () async => 'token');
 
   @override
-  Future<List<dynamic>> getJsonList(
-    String path, {
-    Map<String, String>? queryParameters,
-  }) async {
-    return [
+  Future<Map<String, dynamic>> getJson(String path) async {
+    return _babiesEnvelope([
       {
         'id': 'baby-o',
         'name': 'Owned',
@@ -141,7 +145,7 @@ class _MixedBabiesApi extends ApiClient {
         'role': 'follower',
         'lifecycle_status': 'expecting',
       },
-    ];
+    ]);
   }
 }
 
@@ -151,14 +155,11 @@ class _FlakyBabiesApi extends ApiClient {
   var failRequests = false;
 
   @override
-  Future<List<dynamic>> getJsonList(
-    String path, {
-    Map<String, String>? queryParameters,
-  }) async {
+  Future<Map<String, dynamic>> getJson(String path) async {
     if (failRequests) {
       throw const SocketException('failed host lookup');
     }
-    return [
+    return _babiesEnvelope([
       {
         'id': 'baby-a',
         'name': 'Alpha',
@@ -171,7 +172,7 @@ class _FlakyBabiesApi extends ApiClient {
         'role': 'owner',
         'lifecycle_status': 'expecting',
       },
-    ];
+    ]);
   }
 }
 
@@ -186,13 +187,10 @@ class _GatedBabiesApi extends ApiClient {
   }
 
   @override
-  Future<List<dynamic>> getJsonList(
-    String path, {
-    Map<String, String>? queryParameters,
-  }) async {
+  Future<Map<String, dynamic>> getJson(String path) async {
     if (!started.isCompleted) started.complete();
     await _gate.future;
-    return [
+    return _babiesEnvelope([
       {
         'id': 'baby-a',
         'name': 'Alpha',
@@ -205,7 +203,7 @@ class _GatedBabiesApi extends ApiClient {
         'role': 'owner',
         'lifecycle_status': 'expecting',
       },
-    ];
+    ]);
   }
 }
 
@@ -213,12 +211,9 @@ class _BabiesApi extends ApiClient {
   _BabiesApi() : super(idTokenProvider: () async => 'token');
 
   @override
-  Future<List<dynamic>> getJsonList(
-    String path, {
-    Map<String, String>? queryParameters,
-  }) async {
-    expect(path, '/v1/babies');
-    return [
+  Future<Map<String, dynamic>> getJson(String path) async {
+    expect(path, startsWith('/v1/babies'));
+    return _babiesEnvelope([
       {
         'id': 'baby-a',
         'name': 'Alpha',
@@ -231,7 +226,7 @@ class _BabiesApi extends ApiClient {
         'role': 'owner',
         'lifecycle_status': 'expecting',
       },
-    ];
+    ]);
   }
 }
 

@@ -35,9 +35,9 @@ class HomeFamilyInsightGenderCard extends StatelessWidget {
     final locale = localeNameForFormatting(context);
 
     return HomeScrollSection.bordered(
-      title: 'Family Insight',
+      title: l10n.messageInsight,
       trailing: onViewAll != null
-          ? HomeSectionLink(label: 'View all', onPressed: onViewAll!)
+          ? HomeSectionLink(label: l10n.actionView, onPressed: onViewAll!)
           : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,7 +45,7 @@ class HomeFamilyInsightGenderCard extends StatelessWidget {
           Row(
             children: [
               Text(
-                'BOY OR GIRL?',
+                l10n.labelBoyGirl,
                 style: context.textStyles.labelSmall?.copyWith(
                   color: AppColors.muted,
                 ),
@@ -99,7 +99,7 @@ class HomeFamilyInsightGenderCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'TOP NAME',
+                        l10n.labelTopName,
                         style: context.textStyles.labelSmall?.copyWith(
                           color: AppColors.muted,
                         ),
@@ -116,7 +116,7 @@ class HomeFamilyInsightGenderCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        'TOP GUESS DATE',
+                        l10n.labelTopGuessDate,
                         style: context.textStyles.labelSmall?.copyWith(
                           color: AppColors.muted,
                         ),

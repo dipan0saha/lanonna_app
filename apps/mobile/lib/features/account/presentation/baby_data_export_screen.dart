@@ -94,18 +94,19 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final job = _job;
     return PrototypeSubpageScaffold(
-      title: 'Export baby data',
+      title: l10n.accountExportBabyData,
       body: Padding(
         padding: AppMetrics.subpageScrollPadding,
         child: _loading
-            ? const Center(child: CircularProgressIndicator())
+            ? Center(child: CircularProgressIndicator())
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Download a JSON copy of this baby\'s profile, members, photos and comments, calendar and RSVPs, registry and purchases, name ideas, predictions, the birth announcement, and recent activity.',
+                    l10n.actionDownloadJsonCopy,
                     style: context.textStyles.bodyMedium,
                   ),
                   const SizedBox(height: 16),
