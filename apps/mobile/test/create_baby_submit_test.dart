@@ -12,7 +12,11 @@ import 'package:lanonna/core/domain/baby_gender.dart';
 import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:lanonna/core/domain/name_suggestion_draft.dart';
 import 'package:lanonna/features/onboarding/presentation/onboarding_coordinator.dart';
+import 'package:lanonna/features/account/data/account_repository.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'support/fake_notifications_repository.dart';
 
 const _baby = BabySummary(
   id: 'baby-revise-1',
@@ -91,13 +95,16 @@ void main() {
     late BuildContext capturedContext;
     await tester.pumpWidget(
       MaterialApp(
-                localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-home: Builder(
-          builder: (context) {
-            capturedContext = context;
-            return const SizedBox();
-          },
+        home: Provider<AccountRepository>(
+          create: (_) => FakeShellAccountRepository(),
+          child: Builder(
+            builder: (context) {
+              capturedContext = context;
+              return const SizedBox();
+            },
+          ),
         ),
       ),
     );
@@ -122,11 +129,14 @@ home: Builder(
       MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: Builder(
-          builder: (context) {
-            capturedContext = context;
-            return const SizedBox();
-          },
+        home: Provider<AccountRepository>(
+          create: (_) => FakeShellAccountRepository(),
+          child: Builder(
+            builder: (context) {
+              capturedContext = context;
+              return const SizedBox();
+            },
+          ),
         ),
       ),
     );

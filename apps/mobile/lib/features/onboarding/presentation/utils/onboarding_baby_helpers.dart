@@ -2,6 +2,7 @@ import '../../../../core/input/app_text_input_kind.dart';
 import 'package:lanonna/core/domain/baby_gender.dart';
 import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:lanonna/core/domain/name_suggestion_draft.dart';
+import '../../../baby/domain/baby_name_resolution.dart';
 
 enum OnboardingBabyNameFieldsMode {
   expectingBoth,
@@ -113,6 +114,7 @@ String? resolveOnboardingBabyName({
   required BabyGender gender,
   String? boyName,
   String? girlName,
+  BabyNameParentContext? parentContext,
 }) {
   final boy = AppTextInputPolicy.normalizeForSubmit(
     AppTextInputKind.personName,
@@ -122,6 +124,15 @@ String? resolveOnboardingBabyName({
     AppTextInputKind.personName,
     girlName ?? '',
   );
+
+  if (status == BabyLifecycle.expecting && gender == BabyGender.unknown) {
+    if (boy.isNotEmpty && girl.isNotEmpty) {
+      return babyProfileSurnameWhenBothTentativeNamesFilled(parentContext);
+    }
+    if (boy.isNotEmpty) return boy;
+    if (girl.isNotEmpty) return girl;
+    return null;
+  }
 
   final preferGirl = status == BabyLifecycle.born && gender == BabyGender.female;
   final first = preferGirl ? girl : boy;

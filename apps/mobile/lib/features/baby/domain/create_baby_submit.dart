@@ -3,14 +3,18 @@ import 'package:lanonna/l10n/app_localizations.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/api/api_client.dart';
+import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/api/display_photo_upload.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../../gallery/domain/gallery_refresh.dart';
 import '../../gallery/presentation/upload/run_gallery_photo_upload.dart';
+import '../../account/data/account_repository.dart';
 import '../../home/data/home_repository.dart';
 import '../../onboarding/data/onboarding_repository.dart';
+import 'baby_name_resolution.dart';
 import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import '../../onboarding/presentation/onboarding_coordinator.dart';
 import 'baby_profile_write_payload.dart';
@@ -35,6 +39,52 @@ Future<String?> resolveRelationshipLabelForCreateBaby({
     }
   }
   return coordinator.completeProfileDraft?.relationshipLabel;
+}
+
+Future<BabyNameParentContext> resolveBabyNameParentContext({
+  required BuildContext context,
+  required CreateBabyMode mode,
+  required OnboardingCoordinator coordinator,
+  required HomeRepository homeRepo,
+}) async {
+  final relationshipLabel = await resolveRelationshipLabelForCreateBaby(
+    mode: mode,
+    coordinator: coordinator,
+    homeRepo: homeRepo,
+  );
+
+  var ownerLastName = _ownerLastNameFromDraft(coordinator);
+  if (ownerLastName == null) {
+    final accountRepo = context.read<AccountRepository>();
+    try {
+      await accountRepo.ensureAccountLoaded();
+    } catch (_) {
+      // Offline: use cached profile if present.
+    }
+    final displayName = accountRepo.cachedAccount?.displayName ?? '';
+    ownerLastName = profileLastNameFromDisplayName(displayName);
+    if (ownerLastName != null) {
+      ownerLastName = AppTextInputPolicy.normalizeForSubmit(
+        AppTextInputKind.personName,
+        ownerLastName,
+      );
+      if (ownerLastName.isEmpty) ownerLastName = null;
+    }
+  }
+
+  return BabyNameParentContext(
+    ownerLastName: ownerLastName,
+    relationshipLabel: relationshipLabel,
+  );
+}
+
+String? _ownerLastNameFromDraft(OnboardingCoordinator coordinator) {
+  final raw = coordinator.completeProfileDraft?.lastName ?? '';
+  final normalized = AppTextInputPolicy.normalizeForSubmit(
+    AppTextInputKind.personName,
+    raw,
+  );
+  return normalized.isEmpty ? null : normalized;
 }
 
 Future<void> _applyAvatarAndGallery({
@@ -95,13 +145,23 @@ Future<BabySummary> submitCreateBaby({
   required OnboardingCoordinator coordinator,
   void Function(String message)? onNonFatalError,
 }) async {
-  final payload = buildBabyProfileWritePayload(input);
-
-  final relationshipLabel = await resolveRelationshipLabelForCreateBaby(
+  final parentContext = await resolveBabyNameParentContext(
+    context: context,
     mode: mode,
     coordinator: coordinator,
     homeRepo: homeRepo,
   );
+  final payload = buildBabyProfileWritePayload(
+    input,
+    parentContext: parentContext,
+  );
+
+  final relationshipLabel = parentContext.relationshipLabel ??
+      await resolveRelationshipLabelForCreateBaby(
+        mode: mode,
+        coordinator: coordinator,
+        homeRepo: homeRepo,
+      );
 
   final baby = await repository.createBaby(
     name: payload.name,
@@ -132,9 +192,19 @@ Future<BabySummary> submitReviseOwnerOnboardingBaby({
   required CreateBabyFormInput input,
   required HomeRepository homeRepo,
   required ApiClient api,
+  required OnboardingCoordinator coordinator,
   void Function(String message)? onNonFatalError,
 }) async {
-  final payload = buildBabyProfileWritePayload(input);
+  final parentContext = await resolveBabyNameParentContext(
+    context: context,
+    mode: CreateBabyMode.onboarding,
+    coordinator: coordinator,
+    homeRepo: homeRepo,
+  );
+  final payload = buildBabyProfileWritePayload(
+    input,
+    parentContext: parentContext,
+  );
   final isBorn = input.status == BabyLifecycle.born;
 
   final baby = await homeRepo.updateBaby(
@@ -183,6 +253,7 @@ Future<BabySummary> submitOwnerOnboardingBaby({
       input: input,
       homeRepo: homeRepo,
       api: api,
+      coordinator: coordinator,
       onNonFatalError: onNonFatalError,
     );
   }

@@ -161,7 +161,6 @@ class _ShellLeadingIconButton extends StatelessWidget {
         semanticsId: semanticsId,
         label: label,
         onPressed: onPressed,
-        padding: AppMetrics.shellLeadingIconButtonPadding,
         constraints: const BoxConstraints(
           minWidth: AppMetrics.shellLeadingSlotWidth,
           minHeight: AppMetrics.shellLeadingSlotWidth,

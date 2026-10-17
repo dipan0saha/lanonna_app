@@ -4,6 +4,7 @@ import '../../../core/time/app_date_time.dart';
 import 'package:lanonna/core/domain/baby_gender.dart';
 import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:lanonna/core/domain/name_suggestion_draft.dart';
+import 'baby_name_resolution.dart';
 import '../../onboarding/presentation/utils/onboarding_baby_helpers.dart';
 
 class CreateBabyFormInput {
@@ -45,12 +46,16 @@ class BabyProfileWritePayload {
   final List<NameSuggestionDraft> profileNameSuggestions;
 }
 
-BabyProfileWritePayload buildBabyProfileWritePayload(CreateBabyFormInput input) {
+BabyProfileWritePayload buildBabyProfileWritePayload(
+  CreateBabyFormInput input, {
+  BabyNameParentContext? parentContext,
+}) {
   final name = resolveOnboardingBabyName(
     status: input.status,
     gender: input.gender,
     boyName: input.boyName,
     girlName: input.girlName,
+    parentContext: parentContext,
   );
 
   final expected = input.status == BabyLifecycle.expecting && input.selectedDate != null

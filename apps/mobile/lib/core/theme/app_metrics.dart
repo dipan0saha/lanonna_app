@@ -92,13 +92,6 @@ abstract final class AppMetrics {
   /// Fixed leading slot per icon in [HomeTopBar] (two slots: add baby + invite).
   static const double shellLeadingSlotWidth = 48;
 
-  static EdgeInsets get shellLeadingIconButtonPadding => EdgeInsets.only(
-        left: 0,
-        top: (shellLeadingSlotWidth - shellAddIconSize) / 2,
-        right: shellLeadingSlotWidth - shellAddIconSize,
-        bottom: (shellLeadingSlotWidth - shellAddIconSize) / 2,
-      );
-
   static const double shellAccountAvatarSize = 34;
   static const double shellUnreadDotSize = 8;
   static const double shellUnreadDotBorderWidth = 1.5;
