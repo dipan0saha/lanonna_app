@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -84,7 +85,7 @@ class _HomeScreenState extends State<HomeScreen>
           _summaryError = null;
         });
       case HomeSummaryFailed failed:
-        setState(() => _summaryError = apiErrorMessage(failed.error));
+        setState(() => _summaryError = apiErrorMessage(AppLocalizations.of(context)!, failed.error));
     }
   }
 
@@ -123,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen>
           case HomeSummaryLoaded loaded:
             summary = loaded.summary;
           case HomeSummaryFailed failed:
-            summaryError = apiErrorMessage(failed.error);
+            summaryError = apiErrorMessage(AppLocalizations.of(context)!, failed.error);
         }
       }
       if (!mounted) return;
@@ -179,7 +180,7 @@ class _HomeScreenState extends State<HomeScreen>
         try {
           final updated = await context.read<HomeRepository>().updateBaby(
             baby.id,
-            lifecycleStatus: 'born',
+            lifecycle: BabyLifecycle.born,
             actualBirthDate: formatApiBirthDate(date),
           );
           setState(() => _baby = updated);
@@ -215,7 +216,7 @@ class _HomeScreenState extends State<HomeScreen>
           if (mounted) {
             AppSnackBar.showAlert(
               context,
-              'Could not update baby: ${apiErrorMessage(e)}',
+              AppLocalizations.of(context)!.homeCouldNotUpdateBaby(apiErrorMessage(AppLocalizations.of(context)!, e)),
             );
           }
         } finally {
@@ -302,7 +303,7 @@ class _HomeScreenState extends State<HomeScreen>
                     daysToDueDate: _daysToDueDate(_baby!),
                     onRefresh: _load,
                     onTeaserSignedUrlError: _refreshSummaryOnly,
-                    onAnnounceTap: _baby!.lifecycleStatus == 'expecting'
+                    onAnnounceTap: !_baby!.isBorn
                         ? () => _onAnnounceArrival()
                         : null,
                     onAddPhoto: () => context.go('/gallery'),

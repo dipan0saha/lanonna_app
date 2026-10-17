@@ -153,17 +153,6 @@ abstract final class AppMetrics {
     vertical: 2,
   );
 
-  /// Two-letter weekday headers (calendar month grid).
-  static const List<String> calendarWeekdayTwoLetter = [
-    'Su',
-    'Mo',
-    'Tu',
-    'We',
-    'Th',
-    'Fr',
-    'Sa',
-  ];
-
   /// Modal bottom-sheet grab handle.
   static const double sheetHandleWidth = 36;
   static const double sheetHandleHeight = 4;

@@ -31,6 +31,7 @@ def test_patch_baby_born_invokes_announce_arrival():
         "actual_birth_date": birth,
         "lifecycle_status": "born",
         "role": "owner",
+        "active_owner_count": 1,
         "relationship_label": None,
         "avatar_url": None,
     }
@@ -63,6 +64,7 @@ def test_patch_baby_seeds_profile_name_suggestions_when_expecting():
         "actual_birth_date": None,
         "lifecycle_status": "expecting",
         "role": "owner",
+        "active_owner_count": 1,
         "relationship_label": None,
         "avatar_url": None,
     }

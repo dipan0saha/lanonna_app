@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lanonna/core/media/display_encode.dart';
 import 'package:lanonna/features/gallery/presentation/sheets/photo_source_sheet.dart';
 
 void main() {
@@ -31,7 +30,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Add a Photo'), findsOneWidget);
-    expect(find.text(displayPhotoSourceHint()), findsOneWidget);
+    expect(find.text('JPEG or PNG, up to 2MB'), findsOneWidget);
     expect(find.text('Take photo'), findsOneWidget);
     expect(find.text('Close'), findsOneWidget);
   });

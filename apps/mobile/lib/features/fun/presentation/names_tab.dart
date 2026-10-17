@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/person_display_label.dart';
+import 'package:lanonna/core/domain/baby_gender.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
@@ -84,7 +86,7 @@ class _NamesTabState extends State<NamesTab> {
       if (!mounted || babyId != widget.baby.id) return;
       setState(() {
         _loading = false;
-        _error = apiErrorMessage(e);
+        _error = apiErrorMessage(AppLocalizations.of(context)!, e);
       });
     }
   }
@@ -175,8 +177,8 @@ class _NamesTabState extends State<NamesTab> {
               icon: Icons.star_outline,
               title: l10n.emptyNameSuggestionsYet,
               message: _readOnly
-                  ? 'No name ideas were saved before baby arrived.'
-                  : 'Suggest a name below — everyone gets a say.',
+                  ? l10n.funNoNameIdeasWereSaved
+                  : l10n.funSuggestANameBelowEveryone,
             ),
             if (!_readOnly) _inputCard(),
           ],
@@ -208,9 +210,9 @@ class _NamesTabState extends State<NamesTab> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(child: _column('Boys', boys)),
+              Expanded(child: _column(l10n.funBoys, boys)),
               const SizedBox(width: 12),
-              Expanded(child: _column('Girls', girls)),
+              Expanded(child: _column(l10n.funGirls, girls)),
             ],
           ),
         ],
@@ -234,7 +236,7 @@ class _NamesTabState extends State<NamesTab> {
                 kind: AppTextInputKind.personName,
                 controller: _input,
                 decoration: InputDecoration(hintText: l10n.labelSuggestName2),
-                validator: validateFunNameSuggestion,
+                validator: (v) => validateFunNameSuggestion(AppLocalizations.of(context)!, v),
                 autovalidateMode: autovalidate,
               ),
               SizedBox(height: 10),
@@ -246,13 +248,13 @@ class _NamesTabState extends State<NamesTab> {
                         ButtonSegment(
                           value: 'male',
                           label: Text(
-                            AppLocalizations.of(context)!.funGenderBoy,
+                            BabyGender.male.label(AppLocalizations.of(context)!),
                           ),
                         ),
                         ButtonSegment(
                           value: 'female',
                           label: Text(
-                            AppLocalizations.of(context)!.funGenderGirl,
+                            BabyGender.female.label(AppLocalizations.of(context)!),
                           ),
                         ),
                       ],
@@ -353,7 +355,7 @@ class _NameSuggestionCard extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Text(
-              suggestion.authorDisplayName,
+              personDisplayName(AppLocalizations.of(context)!, suggestion.authorDisplayName),
               style: styles.bodySmall?.copyWith(color: AppColors.muted),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -365,8 +367,8 @@ class _NameSuggestionCard extends StatelessWidget {
                   AppIconButton(
                     semanticsId: 'name_like_${suggestion.id}',
                     label: suggestion.viewerHasLiked
-                        ? 'Unlike ${suggestion.suggestedName}'
-                        : 'Love ${suggestion.suggestedName}',
+                        ? l10n.funUnlike(suggestion.suggestedName)
+                        : l10n.funLove(suggestion.suggestedName),
                     onPressed: onLike,
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.zero,

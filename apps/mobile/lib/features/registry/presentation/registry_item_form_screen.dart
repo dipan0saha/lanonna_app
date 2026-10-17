@@ -170,7 +170,7 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
     );
 
     return PrototypeSubpageScaffold(
-      title: widget.isEdit ? 'Edit Registry Item' : 'Add Registry Item',
+      title: widget.isEdit ? AppLocalizations.of(context)!.registryEditRegistryItem : AppLocalizations.of(context)!.registryAddRegistryItem,
       body: Form(
         key: _formKey,
         autovalidateMode: _autovalidateMode,
@@ -183,7 +183,7 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
               hint: l10n.labelEGCribMattress,
               kind: AppTextInputKind.prose,
               controller: _name,
-              validator: validateRegistryItemName,
+              validator: (v) => validateRegistryItemName(AppLocalizations.of(context)!, v),
               autovalidateMode: _autovalidateMode,
             ),
             AppLabeledTextField(
@@ -200,7 +200,7 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
               kind: AppTextInputKind.none,
               controller: _link,
               keyboardType: TextInputType.url,
-              validator: validateOptionalHttpUrl,
+              validator: (v) => validateOptionalHttpUrl(AppLocalizations.of(context)!, v),
               autovalidateMode: _autovalidateMode,
             ),
             Padding(
@@ -246,7 +246,7 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
               'registry_item_save',
               FilledButton(
                 onPressed: _saving ? null : _save,
-                child: Text(widget.isEdit ? 'Save Changes' : 'Add Item'),
+                child: Text(widget.isEdit ? AppLocalizations.of(context)!.calendarSaveChanges : AppLocalizations.of(context)!.registryAddItemTitle),
               ),
               label: l10n.registryAddItemTitle,
             ),

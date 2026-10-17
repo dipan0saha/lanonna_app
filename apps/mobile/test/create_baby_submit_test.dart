@@ -8,15 +8,15 @@ import 'package:lanonna/features/baby/domain/create_baby_submit.dart';
 import 'package:lanonna/features/home/data/home_repository.dart';
 import 'package:lanonna/features/onboarding/data/onboarding_repository.dart';
 import 'package:lanonna/features/onboarding/data/onboarding_storage.dart';
-import 'package:lanonna/features/onboarding/domain/baby_gender.dart';
-import 'package:lanonna/features/onboarding/domain/baby_lifecycle.dart';
+import 'package:lanonna/core/domain/baby_gender.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:lanonna/features/onboarding/presentation/onboarding_coordinator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _baby = BabySummary(
   id: 'baby-revise-1',
   name: 'Baby',
-  lifecycleStatus: 'expecting',
+  lifecycle: BabyLifecycle.expecting,
   role: 'owner',
   gender: 'boy',
   expectedBirthDate: '2026-08-01',
@@ -33,7 +33,7 @@ class _TrackingOnboardingRepository extends OnboardingRepository {
     String? gender,
     String? expectedBirthDate,
     String? actualBirthDate,
-    String lifecycleStatus = 'expecting',
+    BabyLifecycle lifecycle = BabyLifecycle.expecting,
     String? relationshipLabel,
     List<Map<String, String>> profileNameSuggestions = const [],
   }) async {
@@ -52,7 +52,7 @@ class _TrackingHomeRepository extends HomeRepository {
     String babyId, {
     String? name,
     String? gender,
-    String? lifecycleStatus,
+    BabyLifecycle? lifecycle,
     String? expectedBirthDate,
     String? actualBirthDate,
     String? avatarUrl,

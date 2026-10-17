@@ -19,15 +19,15 @@ class GalleryEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final name = babyDisplayName(babyName, l10n);
+    final name = babyDisplayName(l10n, babyName);
     return AppEmptyState(
       expand: false,
       icon: Icons.photo_outlined,
       title: l10n.emptyPhotosYet,
       message: isOwner
-          ? 'Add your first photo to start sharing $name\'s journey with family.'
-          : 'Once a photo is shared, it will show up here for everyone to enjoy.',
-      actionLabel: isOwner ? '+ Add Photo' : null,
+          ? AppLocalizations.of(context)!.galleryAddYourFirstPhotoTo(name)
+          : AppLocalizations.of(context)!.galleryOnceAPhotoIsShared,
+      actionLabel: isOwner ? AppLocalizations.of(context)!.galleryAddPhoto : null,
       onAction: onAddPhoto,
     );
   }

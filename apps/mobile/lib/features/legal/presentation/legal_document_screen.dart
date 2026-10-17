@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
@@ -37,8 +38,8 @@ class _LegalDocumentScreenState extends State<LegalDocumentScreen> {
   @override
   Widget build(BuildContext context) {
     final title = switch (widget.kind) {
-      LegalDocumentKind.terms => 'Terms of Service',
-      LegalDocumentKind.privacy => 'Privacy Policy',
+      LegalDocumentKind.terms => AppLocalizations.of(context)!.onboardingTermsOfService,
+      LegalDocumentKind.privacy => AppLocalizations.of(context)!.onboardingPrivacyPolicy,
     };
     return PrototypeSubpageScaffold(
       title: title,

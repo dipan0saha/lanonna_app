@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:lanonna/core/domain/baby_summary.dart';
@@ -25,7 +26,7 @@ void main() {
       id: 'baby-1',
       name: 'Test Baby',
       role: 'owner',
-      lifecycleStatus: 'expecting',
+      lifecycle: BabyLifecycle.expecting,
     );
 
     await tester.pumpWidget(

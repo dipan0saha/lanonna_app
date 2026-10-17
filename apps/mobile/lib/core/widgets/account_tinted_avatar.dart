@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../presentation/display_initials.dart';
 import '../theme/app_colors.dart';
@@ -47,7 +48,7 @@ class AccountTintedAvatar extends StatelessWidget {
   Widget _initials(BuildContext context) {
     return Center(
       child: Text(
-        displayInitials(displayName ?? 'Me'),
+        displayInitials(displayName ?? AppLocalizations.of(context)!.commonMe),
         style: context.textStyles.titleMedium?.copyWith(
           color: AppColors.primaryDark,
         ),

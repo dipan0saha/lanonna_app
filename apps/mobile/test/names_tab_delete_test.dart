@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/domain/baby_summary.dart';
@@ -22,7 +23,7 @@ void main() {
   const baby = BabySummary(
     id: 'baby-1',
     name: 'Parker',
-    lifecycleStatus: 'expecting',
+    lifecycle: BabyLifecycle.expecting,
     role: 'follower',
   );
 

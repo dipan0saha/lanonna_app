@@ -17,8 +17,8 @@ import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../onboarding/data/create_baby_draft.dart';
 import '../../onboarding/data/onboarding_repository.dart';
-import '../../onboarding/domain/baby_gender.dart';
-import '../../onboarding/domain/baby_lifecycle.dart';
+import 'package:lanonna/core/domain/baby_gender.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import '../../onboarding/domain/onboarding_routes.dart';
 import '../../onboarding/domain/onboarding_step.dart';
 import '../../onboarding/presentation/app_session.dart';
@@ -36,10 +36,6 @@ import '../domain/create_baby_submit.dart';
 import '../domain/owner_onboarding_baby_phase.dart';
 import '../../onboarding/domain/owner_onboarding_baby_resolver.dart';
 import '../../../l10n/app_localizations.dart';
-
-const _genderBoy = 'Boy';
-const _genderGirl = 'Girl';
-const _genderUnsure = 'Not sure yet';
 
 class CreateBabyScreen extends StatefulWidget {
   const CreateBabyScreen({super.key, required this.mode});
@@ -59,7 +55,7 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
   var _synced = false;
   var _busy = false;
   var _babyStatus = BabyLifecycle.expecting;
-  var _genderPill = _genderUnsure;
+  var _gender = BabyGender.unknown;
   DateTime? _selectedDate;
   XFile? _selectedImage;
   var _sharePhotoToGallery = false;
@@ -67,19 +63,17 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
 
   bool get _isOnboarding => widget.mode == CreateBabyMode.onboarding;
 
-  BabyGender get _selectedGender => babyGenderFromPill(_genderPill);
-
   OnboardingBabyNameFieldsMode get _nameFieldsMode =>
       onboardingBabyNameFieldsMode(
         status: _babyStatus,
-        gender: _selectedGender,
+        gender: _gender,
       );
 
   String get _dateLabel => _babyStatus == BabyLifecycle.expecting
-      ? 'Expected Due Date'
-      : 'Date of birth';
+      ? l10n.babyExpectedDueDate
+      : l10n.announcementDateOfBirth;
 
-  String get _primaryButtonLabel => _isOnboarding ? 'Continue' : 'Create Baby';
+  String get _primaryButtonLabel => _isOnboarding ? l10n.deleteAccountReauthPasswordAction : l10n.babyCreateBaby;
 
   @override
   void dispose() {
@@ -93,8 +87,8 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
     final coordinator = context.read<OnboardingCoordinator>();
     await coordinator.saveCreateBabyDraft(
       CreateBabyDraft(
-        lifecycle: _babyStatus.apiValue,
-        genderPill: _genderPill,
+        lifecycle: _babyStatus,
+        gender: _gender,
         dateIso: _selectedDate?.toIso8601String(),
         boyName: _boyNameController.text,
         girlName: _girlNameController.text,
@@ -110,12 +104,10 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
           OwnerOnboardingBabyPhase.revise;
 
   void _applyDraft(CreateBabyDraft draft) {
-    _babyStatus = draft.lifecycle == 'born'
-        ? BabyLifecycle.born
-        : BabyLifecycle.expecting;
-    _genderPill = draft.genderPill;
-    if (_babyStatus == BabyLifecycle.born && _genderPill == _genderUnsure) {
-      _genderPill = _genderBoy;
+    _babyStatus = draft.lifecycle;
+    _gender = draft.gender;
+    if (_babyStatus == BabyLifecycle.born && _gender == BabyGender.unknown) {
+      _gender = BabyGender.male;
     }
     if (draft.dateIso != null) {
       final parsed = tryParseApiCalendarDate(draft.dateIso);
@@ -158,7 +150,7 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
     if (!hasDraftNames) {
       final fromSummary = CreateBabyFormFromSummary.fromBaby(baby);
       _babyStatus = fromSummary.lifecycle;
-      _genderPill = fromSummary.genderPill;
+      _gender = fromSummary.gender;
       _selectedDate = fromSummary.selectedDate;
       if (_boyNameController.text.trim().isEmpty) {
         _boyNameController.text = fromSummary.boyName;
@@ -198,8 +190,8 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
     if (_babyStatus == status) return;
     setState(() {
       _babyStatus = status;
-      if (status == BabyLifecycle.born && _genderPill == _genderUnsure) {
-        _genderPill = _genderBoy;
+      if (status == BabyLifecycle.born && _gender == BabyGender.unknown) {
+        _gender = BabyGender.male;
       }
       if (status == BabyLifecycle.born) {
         _selectedDate = onboardingSanitizeBornBirthDate(_selectedDate);
@@ -255,7 +247,7 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
     if (_babyStatus == BabyLifecycle.born &&
         _selectedDate != null &&
         onboardingBirthDateIsInFuture(_selectedDate!)) {
-      AppSnackBar.showAlert(context, 'Date of birth cannot be in the future.');
+      AppSnackBar.showAlert(context, l10n.homeDateOfBirthCannotBe);
       return;
     }
     if (_babyStatus == BabyLifecycle.expecting &&
@@ -263,7 +255,7 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
         onboardingDueDateIsBeforeToday(_selectedDate!)) {
       AppSnackBar.showAlert(
         context,
-        'Expected due date cannot be in the past.',
+        l10n.babyExpectedDueDateCannotBe,
       );
       return;
     }
@@ -281,7 +273,7 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
       final coordinator = context.read<OnboardingCoordinator>();
       final input = CreateBabyFormInput(
         status: _babyStatus,
-        gender: _selectedGender,
+        gender: _gender,
         selectedDate: _selectedDate,
         boyName: _boyNameController.text,
         girlName: _girlNameController.text,
@@ -337,7 +329,7 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
         context.go('/home');
       }
     } catch (e) {
-      setState(() => _error = apiErrorMessage(e));
+      setState(() => _error = apiErrorMessage(AppLocalizations.of(context)!, e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -392,7 +384,7 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const OnboardingFieldLabel('Profile photo (optional)'),
+        OnboardingFieldLabel(l10n.babyProfilePhotoOptional),
         const SizedBox(height: 8),
         Center(
           child: Column(
@@ -440,9 +432,9 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
 
   Widget _buildFormColumn() {
     final genderOptions = onboardingShowsUnsureGenderPill(_babyStatus)
-        ? [_genderBoy, _genderGirl, _genderUnsure]
-        : [_genderBoy, _genderGirl];
-    final selectedGenderIndex = genderOptions.indexOf(_genderPill);
+        ? BabyGender.values
+        : const [BabyGender.male, BabyGender.female];
+    final selectedGenderIndex = genderOptions.indexOf(_gender);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -451,18 +443,18 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
           const SizedBox(height: 10),
           OnboardingHeadline(
             _isReviseOnboarding
-                ? "Update your baby's profile"
-                : "Create your baby's profile",
+                ? l10n.babyUpdateYourBabysProfile
+                : l10n.babyCreateYourBabysProfile,
           ),
           const SizedBox(height: 8),
-          const OnboardingSupportText(
-            'You can always add or change these details later.',
+          OnboardingSupportText(
+            l10n.babyYouCanAlwaysAddOr,
           ),
           const SizedBox(height: 20),
         ],
         OnboardingSegmentedControl(
-          leftLabel: 'Expecting',
-          rightLabel: 'Already Born',
+          leftLabel: l10n.stageExpecting,
+          rightLabel: l10n.babyAlreadyBorn,
           isLeftSelected: _babyStatus == BabyLifecycle.expecting,
           onLeftTap: () => _setBabyStatus(BabyLifecycle.expecting),
           onRightTap: () => _setBabyStatus(BabyLifecycle.born),
@@ -475,14 +467,14 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
           onTap: _busy ? () {} : _pickDate,
         ),
         const SizedBox(height: 18),
-        const OnboardingFieldLabel('Gender'),
+        OnboardingFieldLabel(l10n.babyGender),
         const SizedBox(height: 8),
         OnboardingPillSelect(
           layout: OnboardingPillLayout.wrap,
-          options: genderOptions,
+          options: [for (final g in genderOptions) g.label(l10n)],
           selectedIndex: selectedGenderIndex >= 0 ? selectedGenderIndex : null,
           selectedStyleForIndex: (index) {
-            if (genderOptions[index] != _genderGirl) return null;
+            if (genderOptions[index] != BabyGender.female) return null;
             return const OnboardingPillSelectedStyle(
               background: AppColors.peachTint,
               border: AppColors.secondaryDark,
@@ -490,7 +482,7 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
             );
           },
           onSelected: (index) {
-            setState(() => _genderPill = genderOptions[index]);
+            setState(() => _gender = genderOptions[index]);
             _syncDraft();
           },
         ),
@@ -519,9 +511,9 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
             textAlign: TextAlign.center,
           ),
           if (_isOnboarding)
-            const OnboardingHelperText('Tap Continue to try again.')
+            OnboardingHelperText(l10n.babyTapContinueToTryAgain)
           else
-            const OnboardingHelperText('Tap Create Baby to try again.'),
+            OnboardingHelperText(l10n.babyTapCreateBabyToTry),
         ],
       ],
     );

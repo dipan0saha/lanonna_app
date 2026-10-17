@@ -147,8 +147,8 @@ class _FunScreenState extends State<FunScreen>
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
                 child: OnboardingSegmentedControl(
                   style: OnboardingSegmentedControlStyle.mini,
-                  leftLabel: 'Names',
-                  rightLabel: 'Predictions',
+                  leftLabel: AppLocalizations.of(context)!.searchSectionNames,
+                  rightLabel: AppLocalizations.of(context)!.funPredictions,
                   isLeftSelected: _segment == 0,
                   onLeftTap: () => setState(() => _segment = 0),
                   onRightTap: () => setState(() => _segment = 1),

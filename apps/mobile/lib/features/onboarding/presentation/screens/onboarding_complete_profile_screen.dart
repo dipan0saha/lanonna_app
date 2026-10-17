@@ -62,7 +62,7 @@ class _OnboardingCompleteProfileScreenState
   bool _acceptedTerms = false;
   XFile? _photoFile;
   String? _networkPhotoUrl;
-  String _subtext = 'Add your name and photo so family knows who\'s who.';
+  bool _prefilledFromProvider = false;
   var _hydrated = false;
   List<IsoCountry> _countries = const [];
   String? _countryCode;
@@ -218,8 +218,7 @@ class _OnboardingCompleteProfileScreenState
             if (googlePhoto != null && googlePhoto.isNotEmpty) {
               _networkPhotoUrl = googlePhoto;
             }
-            _subtext =
-                "We pulled in your details. Add a photo so family knows who's who.";
+            _prefilledFromProvider = true;
           });
         }
       } on FirebaseException {
@@ -269,9 +268,9 @@ class _OnboardingCompleteProfileScreenState
   }
 
   String? _validateLastName(String? value) {
-    final required = validateOnboardingLastName(value);
+    final required = validateOnboardingLastName(AppLocalizations.of(context)!, value);
     if (required != null) return required;
-    return validateOnboardingProfileDisplayName(
+    return validateOnboardingProfileDisplayName(AppLocalizations.of(context)!, 
       _firstNameController.text,
       value ?? '',
     );
@@ -314,7 +313,7 @@ class _OnboardingCompleteProfileScreenState
       if (!mounted) return;
       await navigateAfterCompleteProfile(context);
     } catch (e) {
-      setState(() => _error = apiErrorMessage(e));
+      setState(() => _error = apiErrorMessage(AppLocalizations.of(context)!, e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -354,9 +353,13 @@ class _OnboardingCompleteProfileScreenState
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 10),
-            const OnboardingHeadline('Complete your profile'),
+            OnboardingHeadline(AppLocalizations.of(context)!.onboardingCompleteYourProfile),
             const SizedBox(height: 8),
-            OnboardingSupportText(_subtext),
+            OnboardingSupportText(
+              _prefilledFromProvider
+                  ? l10n.onboardingWePulledInYourDetails
+                  : l10n.onboardingCompleteProfileSubtext,
+            ),
             const SizedBox(height: 20),
             Center(
               child: Column(
@@ -388,7 +391,7 @@ class _OnboardingCompleteProfileScreenState
                     hint: l10n.fieldFirstName,
                     kind: AppTextInputKind.personName,
                     autovalidateMode: _autovalidateMode,
-                    validator: validateOnboardingFirstName,
+                    validator: (v) => validateOnboardingFirstName(AppLocalizations.of(context)!, v),
                     onChanged: (_) {
                       _clearApiError();
                       _persistDraft();
@@ -415,7 +418,7 @@ class _OnboardingCompleteProfileScreenState
                     hint: '(555) 555-5555',
                     keyboardType: TextInputType.phone,
                     autovalidateMode: _autovalidateMode,
-                    validator: validateOptionalPhone,
+                    validator: (v) => validateOptionalPhone(AppLocalizations.of(context)!, v),
                     onChanged: (_) {
                       _clearApiError();
                       _persistDraft();
@@ -426,7 +429,7 @@ class _OnboardingCompleteProfileScreenState
                     OnboardingRelationshipFormField(
                       value: _relationshipLabel,
                       autovalidateMode: _autovalidateMode,
-                      validator: validateOnboardingRelationshipToBaby,
+                      validator: (v) => validateOnboardingRelationshipToBaby(AppLocalizations.of(context)!, v),
                       onSelected: (label) {
                         setState(() => _relationshipLabel = label);
                         _clearApiError();
@@ -435,7 +438,7 @@ class _OnboardingCompleteProfileScreenState
                     ),
                   ],
                   const SizedBox(height: 16),
-                  OnboardingFieldLabel('Date of birth (optional)'),
+                  OnboardingFieldLabel(AppLocalizations.of(context)!.accountDateOfBirthOptional),
                   const SizedBox(height: 8),
                   InkWell(
                     onTap: _busy ? null : _pickBirthDate,
@@ -449,7 +452,7 @@ class _OnboardingCompleteProfileScreenState
                         ),
                       ),
                       child: Text(
-                        _birthDateDisplay(context) ?? 'Select a date',
+                        _birthDateDisplay(context) ?? AppLocalizations.of(context)!.fieldSelectDate,
                         style: text.bodyMedium?.copyWith(
                           color: _birthDate == null ? AppColors.muted : null,
                         ),
@@ -457,7 +460,7 @@ class _OnboardingCompleteProfileScreenState
                     ),
                   ),
                   const SizedBox(height: 16),
-                  OnboardingFieldLabel('Country (optional)'),
+                  OnboardingFieldLabel(AppLocalizations.of(context)!.fieldCountryOptional),
                   const SizedBox(height: 8),
                   AppCountryDropdownField(
                     countries: _countries,
@@ -484,7 +487,7 @@ class _OnboardingCompleteProfileScreenState
                     value: _acceptedTerms,
                     enabled: !_busy,
                     autovalidateMode: _autovalidateMode,
-                    validator: validateTermsAccepted,
+                    validator: (v) => validateTermsAccepted(AppLocalizations.of(context)!, v),
                     onChanged: (accepted) {
                       setState(() => _acceptedTerms = accepted);
                       _clearApiError();

@@ -30,7 +30,7 @@ theme: AppTheme.light,
                     AppLabeledTextFormField(
                       label: 'Item Name',
                       controller: name,
-                      validator: validateRegistryItemName,
+                      validator: (v) => validateRegistryItemName(AppLocalizations.of(context)!, v),
                       autovalidateMode: autovalidate,
                     ),
                     FilledButton(

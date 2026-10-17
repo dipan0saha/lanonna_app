@@ -39,7 +39,7 @@ class InviteLandingProblem extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: 32),
-          const OnboardingHeadline('Invitation unavailable'),
+          OnboardingHeadline(AppLocalizations.of(context)!.invitationsInvitationUnavailable),
           const SizedBox(height: 12),
           OnboardingSupportText(message),
           const SizedBox(height: 28),

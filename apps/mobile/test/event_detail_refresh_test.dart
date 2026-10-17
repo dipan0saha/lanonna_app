@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/domain/baby_summary.dart';
 import 'package:lanonna/core/presentation/detail_screen_load.dart';
@@ -55,7 +56,7 @@ void main() {
       id: 'baby-1',
       name: 'Test Baby',
       role: 'owner',
-      lifecycleStatus: 'expecting',
+      lifecycle: BabyLifecycle.expecting,
     );
     final prefs = await SharedPreferences.getInstance();
     final store = SelectedBabyStore(prefs);

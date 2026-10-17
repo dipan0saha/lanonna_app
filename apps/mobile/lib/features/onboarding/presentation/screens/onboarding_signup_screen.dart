@@ -126,7 +126,7 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
       setState(() => _error = authErrorMessage(e, l10n, flow: AuthFlow.signUp));
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = apiErrorMessage(e));
+      setState(() => _error = apiErrorMessage(AppLocalizations.of(context)!, e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -158,7 +158,7 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
               label: l10n.authPasswordResetEmailLabel,
               hint: l10n.messageEmailCom,
               keyboardType: TextInputType.emailAddress,
-              validator: validateEmail,
+              validator: (v) => validateEmail(AppLocalizations.of(context)!, v),
               autovalidateMode: _autovalidateMode,
               onChanged: (_) => _persistEmail(),
             ),
@@ -166,12 +166,12 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
             OnboardingPasswordField(
               fieldKey: const Key('onboarding_signup_password'),
               controller: _passwordController,
-              validator: validatePassword,
+              validator: (v) => validatePassword(AppLocalizations.of(context)!, v),
               autovalidateMode: _autovalidateMode,
             ),
             const SizedBox(height: 8),
-            const OnboardingHelperText(
-              'At least 6 characters, with a number or symbol.',
+            OnboardingHelperText(
+              l10n.onboardingAtLeast6CharactersWith,
             ),
             const SizedBox(height: 20),
             OnboardingPrimaryButton(

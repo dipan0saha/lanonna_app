@@ -60,7 +60,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _eligibilityError = apiErrorMessage(e);
+          _eligibilityError = apiErrorMessage(AppLocalizations.of(context)!, e);
           _checkingEligibility = false;
         });
       }
@@ -149,7 +149,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                     labelText: l10n.fieldPassword,
                     suffixIcon: AppIconButton(
                       semanticsId: 'delete_account_password_visibility',
-                      label: obscure ? 'Show password' : 'Hide password',
+                      label: obscure ? AppLocalizations.of(context)!.accountShowPassword : AppLocalizations.of(context)!.accountHidePassword,
                       onPressed: () => setLocal(() => obscure = !obscure),
                       icon: Icon(
                         obscure
@@ -195,7 +195,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
       if (mounted) context.go(OnboardingRoutes.ownerCarousel);
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showAlert(context, apiErrorMessage(e));
+        AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
       }
     } finally {
       if (mounted) setState(() => _deleting = false);

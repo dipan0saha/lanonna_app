@@ -12,7 +12,7 @@ import '../../../../l10n/app_localizations.dart';
 class HomeTopBar extends StatelessWidget {
   const HomeTopBar({
     super.key,
-    this.centerTitle = 'La Nonna',
+    this.centerTitle,
     this.showUnreadDot = false,
     this.onAddBabyTap,
     this.onBabySwitcherTap,
@@ -23,7 +23,8 @@ class HomeTopBar extends StatelessWidget {
     this.accountAvatarUrl,
   });
 
-  final String centerTitle;
+  /// Selected baby name; the app title when null.
+  final String? centerTitle;
   final bool showUnreadDot;
   final VoidCallback? onAddBabyTap;
   final VoidCallback? onBabySwitcherTap;
@@ -68,7 +69,7 @@ class HomeTopBar extends StatelessWidget {
                       child: AppSemantics.container(
                         'shell_baby_title',
                         Text(
-                          centerTitle,
+                          centerTitle ?? AppLocalizations.of(context)!.appTitle,
                           textAlign: TextAlign.center,
                           style: context.shellBabySwitcherTitleStyle,
                           maxLines: 1,

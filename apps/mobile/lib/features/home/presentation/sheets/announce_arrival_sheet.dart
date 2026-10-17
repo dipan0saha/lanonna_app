@@ -18,7 +18,7 @@ Future<void> showAnnounceArrivalSheet(
     context: context,
     title: AppLocalizations.of(context)!.actionAnnounceArrival2,
     subtitle:
-        'Confirm the date of birth. Your home will update to celebrate your baby.',
+        AppLocalizations.of(context)!.homeConfirmTheDateOfBirth,
     bodyBuilder: (ctx) {
       var selected = onboardingDateAtMidnight(DateTime.now());
       return StatefulBuilder(
@@ -53,7 +53,7 @@ Future<void> showAnnounceArrivalSheet(
                   if (!birthDateValidForAnnounce(selected)) {
                     AppSnackBar.showAlert(
                       ctx,
-                      'Date of birth cannot be in the future.',
+                      AppLocalizations.of(context)!.homeDateOfBirthCannotBe,
                     );
                     return;
                   }

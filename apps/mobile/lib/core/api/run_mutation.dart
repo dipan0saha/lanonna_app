@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../widgets/app_snackbar.dart';
 import 'api_error_message.dart';
@@ -15,7 +16,7 @@ Future<bool> runMutation(
     return true;
   } catch (e) {
     if (context.mounted) {
-      AppSnackBar.showAlert(context, apiErrorMessage(e));
+      AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
     }
     return false;
   }

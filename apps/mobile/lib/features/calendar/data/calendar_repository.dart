@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:lanonna/core/domain/rsvp_status.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exception.dart';
@@ -184,12 +185,15 @@ class CalendarRepository extends ChangeNotifier {
     _markEventsChanged();
   }
 
-  Future<String> setRsvp(String babyId, String eventId, String status) async {
-    final json = await _api.putJson(
+  Future<void> setRsvp(
+    String babyId,
+    String eventId,
+    RsvpStatus status,
+  ) async {
+    await _api.putJson(
       '/v1/babies/$babyId/events/$eventId/rsvp',
-      body: {'status': status},
+      body: {'status': status.apiValue},
     );
-    return json['status'] as String? ?? status;
   }
 
   Future<void> addComment(String babyId, String eventId, String body) async {

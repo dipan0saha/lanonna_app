@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/features/account/domain/notification_digest.dart';
 import 'package:lanonna/features/account/data/notifications_repository.dart';
 
 void main() {
@@ -12,7 +13,7 @@ void main() {
       'notify_registry_enabled': true,
       'notify_comments_enabled': false,
     });
-    expect(prefs.digest, 'daily');
+    expect(prefs.digest, NotificationDigest.daily);
     expect(prefs.notifyGalleryEnabled, isFalse);
     expect(prefs.notifyCommentsEnabled, isFalse);
   });

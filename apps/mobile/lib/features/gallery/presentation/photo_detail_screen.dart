@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:lanonna/core/domain/person_display_label.dart';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -146,11 +147,11 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       if (!mounted) return;
       setState(() => _initialLoadInFlight = false);
       if (e is ApiException && e.statusCode == 404) {
-        AppSnackBar.showAlert(context, 'This photo is no longer available.');
+        AppSnackBar.showAlert(context, AppLocalizations.of(context)!.galleryThisPhotoIsNoLonger);
         returnToGallery(context);
         return;
       }
-      AppSnackBar.showAlert(context, apiErrorMessage(e));
+      AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
     }
   }
 
@@ -247,7 +248,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
 
   void _showApiError(Object e) {
     if (!mounted) return;
-    AppSnackBar.showAlert(context, apiErrorMessage(e));
+    AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
   }
 
   Future<void> _saveCaption() async {
@@ -554,7 +555,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                             children: [
                               Expanded(
                                 child: Text(
-                                  detail.caption ?? 'No caption',
+                                  detail.caption ?? AppLocalizations.of(context)!.galleryNoCaption,
                                   style: styles.titleSmall,
                                 ),
                               ),
@@ -573,7 +574,13 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                         Text(
                           AppLocalizations.of(
                             context,
-                          )!.photoUploadedBy(meta, detail.uploaderDisplayName),
+                          )!.photoUploadedBy(
+                            meta,
+                            personDisplayName(
+                              AppLocalizations.of(context)!,
+                              detail.uploaderDisplayName,
+                            ),
+                          ),
                           style: styles.bodySmall?.copyWith(
                             color: AppColors.muted,
                           ),
@@ -664,7 +671,10 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        detail.comments[i].authorDisplayName,
+                                        personDisplayName(
+                                          AppLocalizations.of(context)!,
+                                          detail.comments[i].authorDisplayName,
+                                        ),
                                         style: styles.labelMedium,
                                       ),
                                       if (i == detail.comments.length - 1)

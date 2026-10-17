@@ -14,9 +14,7 @@ from lanonna_api.repositories.babies import (
     list_babies_for_user,
     update_baby_for_owner,
 )
-from lanonna_api.domain.member_lifecycle import can_leave_baby
 from lanonna_api.domain.onboarding import seed_expecting_profile_name_suggestions, seed_first_moment
-from lanonna_api.repositories.memberships import count_active_owners
 from lanonna_api.domain.baby_summaries import baby_summary_from_row
 from lanonna_api.schemas.babies import (
     BabyCreateRequest,
@@ -41,12 +39,9 @@ def list_babies(
 ) -> dict[str, Any]:
     rows = list_babies_for_user(user.uid, limit=limit + 1, offset=offset)
     page = offset_page_from_extra_row(rows, offset=offset, limit=limit)
-    summaries: list[dict[str, Any]] = []
-    for row in page["items"]:
-        owner_count = count_active_owners(row["id"])
-        row["can_leave"] = can_leave_baby(row["role"], owner_count)
-        summaries.append(baby_summary_from_row(row).model_dump(mode="json"))
-    page["items"] = summaries
+    page["items"] = [
+        baby_summary_from_row(row).model_dump(mode="json") for row in page["items"]
+    ]
     return page
 
 

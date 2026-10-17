@@ -1,6 +1,6 @@
 import '../../../../core/input/app_text_input_kind.dart';
-import '../../domain/baby_gender.dart';
-import '../../domain/baby_lifecycle.dart';
+import 'package:lanonna/core/domain/baby_gender.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 
 enum OnboardingBabyNameFieldsMode {
   expectingBoth,
@@ -104,7 +104,10 @@ List<Map<String, String>> expectingProfileNameSuggestionsForFun({
   return out;
 }
 
+/// Name to store for a new baby profile; [fallbackName] (localized by the
+/// caller) when the owner has not entered one yet.
 String resolveOnboardingBabyName({
+  required String fallbackName,
   required BabyLifecycle status,
   required BabyGender gender,
   String? boyName,
@@ -129,13 +132,13 @@ String resolveOnboardingBabyName({
     if (gender == BabyGender.female && girl.isNotEmpty) return girl;
     if (boy.isNotEmpty) return boy;
     if (girl.isNotEmpty) return girl;
-    return 'Baby';
+    return fallbackName;
   }
 
   if (boy.isNotEmpty && girl.isEmpty) return boy;
   if (girl.isNotEmpty && boy.isEmpty) return girl;
   if (boy.isNotEmpty) return boy;
   if (girl.isNotEmpty) return girl;
-  return 'Baby';
+  return fallbackName;
 }
 

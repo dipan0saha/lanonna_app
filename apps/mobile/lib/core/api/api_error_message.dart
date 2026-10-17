@@ -2,31 +2,30 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:lanonna/l10n/app_localizations.dart';
 
 import 'api_exception.dart';
+import 'localized_failure.dart';
 
-const String offlineErrorMessage =
-    "You're offline. Check your connection and try again.";
-const _networkMessage =
-    "Couldn't reach the server. Check your connection and try again.";
-
-String apiErrorMessage(Object error) {
+/// Localized user copy for any failure surfaced from a repository call.
+String apiErrorMessage(AppLocalizations l10n, Object error) {
   if (error is ApiException) {
-    final code = error.detail?['error'];
-    if (error.statusCode == 401 && code == 'user_deleted') {
-      return 'This account was deleted.';
+    switch (error.errorCode) {
+      case 'user_deleted':
+        return l10n.errorAccountDeleted;
+      case 'network_unavailable':
+        return l10n.errorOffline;
+      case 'network_timeout':
+        return l10n.errorNetwork;
     }
-    if (code == 'network_unavailable') return offlineErrorMessage;
-    if (code == 'network_timeout') return _networkMessage;
-    return error.message;
+    return error.serverMessage ?? l10n.errorGeneric;
   }
-  if (error is SocketException) return offlineErrorMessage;
-  if (error is TimeoutException) return _networkMessage;
-  if (error is http.ClientException) return _networkMessage;
-  if (error is HandshakeException) return _networkMessage;
-  final text = error.toString();
-  if (text.contains('ClientException') || text.contains('SocketException')) {
-    return _networkMessage;
+  if (error is LocalizedFailure) return error.userMessage(l10n);
+  if (error is SocketException) return l10n.errorOffline;
+  if (error is TimeoutException ||
+      error is http.ClientException ||
+      error is HandshakeException) {
+    return l10n.errorNetwork;
   }
-  return text;
+  return l10n.errorGeneric;
 }

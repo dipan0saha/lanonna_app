@@ -104,15 +104,15 @@ class _GalleryScreenState extends State<GalleryScreen>
   };
 
   String get _pageTitle => switch (widget.mode) {
-    GalleryViewMode.all => 'Gallery',
-    GalleryViewMode.recent => 'Recent Photos',
-    GalleryViewMode.favorites => 'Favorites',
+    GalleryViewMode.all => l10n.notificationChannelGallery,
+    GalleryViewMode.recent => l10n.labelRecentPhotos,
+    GalleryViewMode.favorites => l10n.galleryFavorites,
   };
 
   String get _sectionLabel => switch (widget.mode) {
-    GalleryViewMode.all => 'All photos',
-    GalleryViewMode.recent => 'Recent activity',
-    GalleryViewMode.favorites => 'Favorites',
+    GalleryViewMode.all => l10n.galleryAllPhotos,
+    GalleryViewMode.recent => l10n.galleryRecentActivity,
+    GalleryViewMode.favorites => l10n.galleryFavorites,
   };
 
   @override
@@ -234,7 +234,7 @@ class _GalleryScreenState extends State<GalleryScreen>
     } catch (e) {
       if (!mounted) return;
       setState(() => _loadingMore = false);
-      AppSnackBar.showAlert(context, apiErrorMessage(e));
+      AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
     }
   }
 
@@ -257,7 +257,7 @@ class _GalleryScreenState extends State<GalleryScreen>
       );
       if (mounted) {
         notifyGalleryDataChanged(context);
-        AppSnackBar.showInfo(context, 'Photo uploaded');
+        AppSnackBar.showInfo(context, l10n.galleryPhotoUploaded);
       }
       await _pollUntilReady(baby.id, photoId);
       if (mounted) {
@@ -265,7 +265,7 @@ class _GalleryScreenState extends State<GalleryScreen>
       }
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showAlert(context, 'Upload failed: ${apiErrorMessage(e)}');
+        AppSnackBar.showAlert(context, l10n.galleryUploadFailed(apiErrorMessage(AppLocalizations.of(context)!, e)));
       }
     } finally {
       if (mounted) setState(() => _uploading = false);
@@ -285,7 +285,7 @@ class _GalleryScreenState extends State<GalleryScreen>
     if (mounted) {
       AppSnackBar.showAlert(
         context,
-        'Photo processing is taking longer than usual. Pull to refresh the gallery.',
+        l10n.galleryPhotoProcessingIsTakingLonger,
       );
     }
   }
@@ -434,7 +434,7 @@ class _GalleryScreenState extends State<GalleryScreen>
                       AppMetrics.horizontalPadding,
                       8,
                     ),
-                    child: const AppSectionCapsLabel('Recent activity'),
+                    child: AppSectionCapsLabel(l10n.galleryRecentActivity),
                   ),
                 ),
                 SliverToBoxAdapter(

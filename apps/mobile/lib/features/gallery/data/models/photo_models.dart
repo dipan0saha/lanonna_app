@@ -32,7 +32,7 @@ class PhotoSummary {
       squishCount: readInt(json['squish_count']),
       commentCount: readInt(json['comment_count']),
       uploaderDisplayName:
-          json['uploader_display_name'] as String? ?? 'Family member',
+          json['uploader_display_name'] as String? ?? '',
     );
   }
 }
@@ -46,7 +46,7 @@ class PhotoTaggedBaby {
   factory PhotoTaggedBaby.fromJson(Map<String, dynamic> json) {
     return PhotoTaggedBaby(
       id: json['id'] as String,
-      name: json['name'] as String? ?? 'Baby',
+      name: json['name'] as String,
     );
   }
 }
@@ -76,7 +76,7 @@ class PhotoComment {
       id: json['id'] as String,
       body: json['body'] as String,
       authorDisplayName:
-          json['author_display_name'] as String? ?? 'Family member',
+          json['author_display_name'] as String? ?? '',
       createdAt: parseApiInstant(json['created_at'] as String),
       isMine: isMine,
       canEdit: json['can_edit'] as bool? ?? isMine,
@@ -145,7 +145,7 @@ class PhotoDetail {
       displayUrl: json['display_url'] as String?,
       thumbUrl: json['thumb_url'] as String?,
       uploaderDisplayName:
-          json['uploader_display_name'] as String? ?? 'Family member',
+          json['uploader_display_name'] as String? ?? '',
       squishCount: readInt(json['squish_count']),
       viewerHasSquished: json['viewer_has_squished'] as bool? ?? false,
       comments: commentsRaw is List

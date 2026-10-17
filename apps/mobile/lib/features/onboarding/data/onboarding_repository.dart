@@ -1,4 +1,5 @@
 import '../../../core/api/api_client.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:lanonna/core/domain/baby_summary.dart';
 import '../../invitations/data/batch_invite_result.dart';
 import 'models/onboarding_status.dart';
@@ -42,7 +43,7 @@ class OnboardingRepository {
     String? gender,
     String? expectedBirthDate,
     String? actualBirthDate,
-    String lifecycleStatus = 'expecting',
+    BabyLifecycle lifecycle = BabyLifecycle.expecting,
     String? relationshipLabel,
     List<Map<String, String>> profileNameSuggestions = const [],
   }) async {
@@ -51,7 +52,7 @@ class OnboardingRepository {
       if (gender != null) 'gender': gender,
       if (expectedBirthDate != null) 'expected_birth_date': expectedBirthDate,
       if (actualBirthDate != null) 'actual_birth_date': actualBirthDate,
-      'lifecycle_status': lifecycleStatus,
+      'lifecycle_status': lifecycle.apiValue,
       if (relationshipLabel != null && relationshipLabel.isNotEmpty)
         'relationship_label': relationshipLabel,
       if (profileNameSuggestions.isNotEmpty)

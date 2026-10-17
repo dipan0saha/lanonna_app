@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -10,7 +11,7 @@ import '../../gallery/domain/gallery_refresh.dart';
 import '../../gallery/presentation/upload/run_gallery_photo_upload.dart';
 import '../../home/data/home_repository.dart';
 import '../../onboarding/data/onboarding_repository.dart';
-import '../../onboarding/domain/baby_lifecycle.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import '../../onboarding/presentation/onboarding_coordinator.dart';
 import 'baby_profile_write_payload.dart';
 import 'create_baby_mode.dart';
@@ -49,7 +50,7 @@ Future<void> _applyAvatarAndGallery({
 
   final imageFile = File(input.selectedImage!.path);
   var avatarSaved = false;
-  final createdLabel = isCreate ? 'Baby created' : 'Baby updated';
+  final createdLabel = isCreate ? AppLocalizations.of(context)!.babyBabyCreated : AppLocalizations.of(context)!.babyBabyUpdated;
   try {
     final avatarUrl = await DisplayPhotoUpload(api).uploadBabyAvatar(
       babyProfileId: babyProfileId,
@@ -59,7 +60,7 @@ Future<void> _applyAvatarAndGallery({
     avatarSaved = true;
   } catch (e) {
     onNonFatalError?.call(
-      '$createdLabel; profile photo failed: ${apiErrorMessage(e)}',
+      AppLocalizations.of(context)!.babyProfilePhotoFailed(createdLabel, apiErrorMessage(AppLocalizations.of(context)!, e)),
     );
   }
   if (input.sharePhotoToGallery) {
@@ -76,9 +77,9 @@ Future<void> _applyAvatarAndGallery({
       }
     } catch (e) {
       final prefix = avatarSaved
-          ? 'Profile photo saved; gallery upload failed'
-          : '$createdLabel; gallery upload failed';
-      onNonFatalError?.call('$prefix: ${apiErrorMessage(e)}');
+          ? AppLocalizations.of(context)!.babyProfilePhotoSavedGalleryUpload
+          : AppLocalizations.of(context)!.babyGalleryUploadFailed(createdLabel);
+      onNonFatalError?.call('$prefix: ${apiErrorMessage(AppLocalizations.of(context)!, e)}');
     }
   }
 }
@@ -94,7 +95,10 @@ Future<BabySummary> submitCreateBaby({
   required OnboardingCoordinator coordinator,
   void Function(String message)? onNonFatalError,
 }) async {
-  final payload = buildBabyProfileWritePayload(input);
+  final payload = buildBabyProfileWritePayload(
+    input,
+    fallbackName: AppLocalizations.of(context)!.babyNameDefault,
+  );
 
   final relationshipLabel = await resolveRelationshipLabelForCreateBaby(
     mode: mode,
@@ -105,7 +109,7 @@ Future<BabySummary> submitCreateBaby({
   final baby = await repository.createBaby(
     name: payload.name,
     gender: payload.gender,
-    lifecycleStatus: payload.lifecycleStatus,
+    lifecycle: payload.lifecycle,
     expectedBirthDate: payload.expectedBirthDate,
     actualBirthDate: payload.actualBirthDate,
     relationshipLabel: relationshipLabel,
@@ -133,14 +137,17 @@ Future<BabySummary> submitReviseOwnerOnboardingBaby({
   required ApiClient api,
   void Function(String message)? onNonFatalError,
 }) async {
-  final payload = buildBabyProfileWritePayload(input);
+  final payload = buildBabyProfileWritePayload(
+    input,
+    fallbackName: AppLocalizations.of(context)!.babyNameDefault,
+  );
   final isBorn = input.status == BabyLifecycle.born;
 
   final baby = await homeRepo.updateBaby(
     babyId,
     name: payload.name,
     gender: payload.gender,
-    lifecycleStatus: payload.lifecycleStatus,
+    lifecycle: payload.lifecycle,
     expectedBirthDate: isBorn ? null : payload.expectedBirthDate,
     actualBirthDate: isBorn ? payload.actualBirthDate : null,
     profileNameSuggestions: payload.profileNameSuggestions,

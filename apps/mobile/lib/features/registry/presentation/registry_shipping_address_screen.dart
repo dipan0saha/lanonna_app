@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/api/api_error_message.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -83,7 +84,7 @@ class _RegistryShippingAddressScreenState
         if (mounted) {
           AppSnackBar.showAlert(
             context,
-            'Only owners can edit the shipping address.',
+            AppLocalizations.of(context)!.registryOnlyOwnersCanEditThe,
           );
           context.pop();
         }
@@ -101,7 +102,7 @@ class _RegistryShippingAddressScreenState
       });
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showAlert(context, 'Could not load shipping address: $e');
+        AppSnackBar.showAlert(context, AppLocalizations.of(context)!.registryCouldNotLoadShippingAddress(apiErrorMessage(AppLocalizations.of(context)!, e)));
         context.pop();
       }
     }
@@ -225,7 +226,7 @@ class _RegistryShippingAddressScreenState
               controller: _line1,
               textInputAction: TextInputAction.next,
               enabled: !_saving,
-              validator: validateRegistryShippingLine1,
+              validator: (v) => validateRegistryShippingLine1(AppLocalizations.of(context)!, v),
               autovalidateMode: _autovalidateMode,
             ),
             AppLabeledTextFormField(
@@ -244,7 +245,7 @@ class _RegistryShippingAddressScreenState
               controller: _city,
               textInputAction: TextInputAction.next,
               enabled: !_saving,
-              validator: validateRegistryShippingCity,
+              validator: (v) => validateRegistryShippingCity(AppLocalizations.of(context)!, v),
               autovalidateMode: _autovalidateMode,
             ),
             AppLabeledTextFormField(
@@ -263,7 +264,7 @@ class _RegistryShippingAddressScreenState
               controller: _postal,
               textInputAction: TextInputAction.next,
               enabled: !_saving,
-              validator: validateRegistryShippingPostalCode,
+              validator: (v) => validateRegistryShippingPostalCode(AppLocalizations.of(context)!, v),
               autovalidateMode: _autovalidateMode,
             ),
             Padding(
@@ -278,7 +279,7 @@ class _RegistryShippingAddressScreenState
                 countries: _countries,
                 value: _countryCode,
                 enabled: !_saving,
-                validator: validateCountryCode,
+                validator: (v) => validateCountryCode(AppLocalizations.of(context)!, v),
                 autovalidateMode: _autovalidateMode,
                 onChanged: (code) => setState(() => _countryCode = code),
               ),

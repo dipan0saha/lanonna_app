@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../../domain/onboarding_step.dart';
@@ -25,36 +26,36 @@ class _FollowerCarouselScreenState extends State<FollowerCarouselScreen> {
   List<(String title, String body, Widget Function() art)> _slidesFor(bool isBorn) {
     final branch = isBorn
         ? (
-            'Relive every milestone in the Gallery',
-            'Baby is already here. See the first photos and everything since.',
+            AppLocalizations.of(context)!.onboardingReliveEveryMilestoneInThe,
+            AppLocalizations.of(context)!.onboardingBabyIsAlreadyHereSee,
             OnboardingCarouselSlideArt.photoIcon,
           )
         : (
-            'Vote & guess in Family Fun',
-            'Suggest names, vote on favorites, and guess the birthdate. Results reveal once baby arrives.',
+            AppLocalizations.of(context)!.onboardingVoteGuessInFamilyFun,
+            AppLocalizations.of(context)!.onboardingSuggestNamesVoteOnFavorites,
             OnboardingCarouselSlideArt.homeIcon,
           );
 
     return [
       (
-        "Welcome, you're in!",
-        'A private space just for the family and friends closest to your circle.',
+        AppLocalizations.of(context)!.onboardingWelcomeYoureIn,
+        AppLocalizations.of(context)!.onboardingAPrivateSpaceJustFor,
         OnboardingCarouselSlideArt.homeIcon,
       ),
       (
-        'Squish photos & leave comments',
-        'Tap the heart to "squish" any photo the family shares.',
+        AppLocalizations.of(context)!.onboardingSquishPhotosLeaveComments,
+        AppLocalizations.of(context)!.onboardingTapTheHeartToSquish,
         OnboardingCarouselSlideArt.peopleIcon,
       ),
       (
-        'Never miss what\'s next',
-        'See upcoming events, like gender reveals and baby showers, and RSVP right from the app.',
+        AppLocalizations.of(context)!.onboardingNeverMissWhatsNext,
+        AppLocalizations.of(context)!.onboardingSeeUpcomingEventsLikeGender,
         OnboardingCarouselSlideArt.calendarIcon,
       ),
       branch,
       (
-        'Get updates your way',
-        'Choose how often you hear from us: real-time, daily, or a weekly digest. You can change this anytime.',
+        AppLocalizations.of(context)!.onboardingGetUpdatesYourWay,
+        AppLocalizations.of(context)!.onboardingChooseHowOftenYouHear,
         OnboardingCarouselSlideArt.calendarIcon,
       ),
     ];
@@ -91,7 +92,7 @@ class _FollowerCarouselScreenState extends State<FollowerCarouselScreen> {
       showSkip: !isLast,
       onSkip: _finish,
       bottom: OnboardingPrimaryButton(
-        label: isLast ? 'Get Started' : 'Next',
+        label: isLast ? AppLocalizations.of(context)!.onboardingFollowerGetStarted : AppLocalizations.of(context)!.onboardingNext,
         onPressed: () {
           if (!isLast) {
             _pageController?.nextPage(

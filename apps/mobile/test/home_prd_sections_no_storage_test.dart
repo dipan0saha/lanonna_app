@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/features/invitations/domain/invitation_status.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/features/home/data/models/home_summary.dart';
@@ -10,7 +12,7 @@ void main() {
     tester,
   ) async {
     const summary = HomeSummary(
-      lifecycleStatus: 'expecting',
+      lifecycle: BabyLifecycle.expecting,
       nameSuggestionCount: 0,
       voteCount: 0,
       recentActivity: [],
@@ -18,7 +20,7 @@ void main() {
         HomeInviteStatusRow(
           id: 'inv-1',
           inviteeEmail: 'family@example.com',
-          status: 'pending',
+          status: InvitationStatus.pending,
           createdAt: '2026-10-01T12:00:00Z',
         ),
       ],

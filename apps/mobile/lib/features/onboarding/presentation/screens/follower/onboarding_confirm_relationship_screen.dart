@@ -19,9 +19,9 @@ class OnboardingConfirmRelationshipScreen extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final coordinator = context.watch<OnboardingCoordinator>();
     final preview = coordinator.cachedInvitePreview;
-    final babyName = preview?.babyName ?? 'Baby';
-    final inviter = preview?.inviterDisplayName ?? 'The owner';
-    final relationship = preview?.relationshipLabel ?? 'Family';
+    final babyName = preview?.babyName ?? AppLocalizations.of(context)!.babyNameDefault;
+    final inviter = preview?.inviterDisplayName ?? AppLocalizations.of(context)!.onboardingTheOwner;
+    final relationship = preview?.relationshipLabel ?? AppLocalizations.of(context)!.announcementFamily;
 
     return OnboardingScaffold(
       pinBottomCta: false,
@@ -32,20 +32,19 @@ class OnboardingConfirmRelationshipScreen extends StatelessWidget {
         children: [
           const SizedBox(height: 20),
           OnboardingHeadline(
-            'Welcome to $babyName\'s circle',
+            AppLocalizations.of(context)!.onboardingWelcomeToSCircle(babyName),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           OnboardingSupportText(
-            '$inviter added you as',
+            AppLocalizations.of(context)!.onboardingAddedYouAs(inviter),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
           Center(child: RelationshipConfirmChip(label: relationship)),
           const SizedBox(height: 22),
           OnboardingSupportText(
-            'This is how you\'ll appear to the rest of the family. '
-            '$inviter can update it anytime from their side.',
+            AppLocalizations.of(context)!.onboardingThisIsHowYoullAppear(inviter),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 28),

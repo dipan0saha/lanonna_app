@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:lanonna/features/account/domain/notification_digest.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/offset_page.dart';
@@ -17,7 +18,7 @@ class NotificationPreferences {
     required this.notifyCommentsEnabled,
   });
 
-  final String digest;
+  final NotificationDigest digest;
   final bool pushEnabled;
   final bool emailDigestEnabled;
   final bool notifyGalleryEnabled;
@@ -26,7 +27,7 @@ class NotificationPreferences {
   final bool notifyCommentsEnabled;
 
   NotificationPreferences copyWith({
-    String? digest,
+    NotificationDigest? digest,
     bool? pushEnabled,
     bool? emailDigestEnabled,
     bool? notifyGalleryEnabled,
@@ -50,7 +51,7 @@ class NotificationPreferences {
 
   factory NotificationPreferences.fromJson(Map<String, dynamic> json) {
     return NotificationPreferences(
-      digest: json['notification_digest'] as String? ?? 'realtime',
+      digest: NotificationDigest.fromApi(json['notification_digest'] as String?),
       pushEnabled: json['push_notifications_enabled'] as bool? ?? true,
       emailDigestEnabled: json['email_digest_enabled'] as bool? ?? true,
       notifyGalleryEnabled: json['notify_gallery_enabled'] as bool? ?? true,
@@ -115,7 +116,7 @@ class NotificationsRepository extends ChangeNotifier {
   }
 
   Future<NotificationPreferences> updatePreferences({
-    String? digest,
+    NotificationDigest? digest,
     bool? pushEnabled,
     bool? emailDigestEnabled,
     bool? notifyGalleryEnabled,
@@ -124,7 +125,7 @@ class NotificationsRepository extends ChangeNotifier {
     bool? notifyCommentsEnabled,
   }) async {
     final body = <String, dynamic>{};
-    if (digest != null) body['notification_digest'] = digest;
+    if (digest != null) body['notification_digest'] = digest.apiValue;
     if (pushEnabled != null) body['push_notifications_enabled'] = pushEnabled;
     if (emailDigestEnabled != null) {
       body['email_digest_enabled'] = emailDigestEnabled;

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/person_display_label.dart';
+import 'package:lanonna/core/domain/rsvp_status.dart';
 
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
@@ -29,18 +31,17 @@ import '../data/event_comment_thread.dart';
 import '../data/models/calendar_models.dart';
 import '../domain/calendar_navigation.dart';
 import '../domain/calendar_routes.dart';
-import '../domain/rsvp_status_labels.dart';
 
 String _rsvpInlineSummary(AppLocalizations l10n, RsvpSummary summary) {
   final parts = <String>[];
   if (summary.going > 0) {
-    parts.add('${summary.going} going');
+    parts.add(l10n.eventRsvpGoingCount(summary.going));
   }
   if (summary.maybe > 0) {
-    parts.add('${summary.maybe} maybe');
+    parts.add(l10n.eventRsvpMaybeCount(summary.maybe));
   }
   if (parts.isEmpty) {
-    return 'No RSVPs yet';
+    return l10n.eventNoRsvps;
   }
   return parts.join(' · ');
 }
@@ -132,7 +133,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _initialLoadInFlight = false);
-      AppSnackBar.showAlert(context, apiErrorMessage(e));
+      AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
       returnToCalendar(context);
     }
   }
@@ -167,7 +168,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
   void _showApiError(Object e) {
     if (!mounted) return;
-    AppSnackBar.showAlert(context, apiErrorMessage(e));
+    AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
   }
 
   bool get _isOwner => _baby?.role == 'owner';
@@ -184,7 +185,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       context: context,
       title: l10n.eventRsvpsTitle,
       subtitle: detail.rsvpAttendees.isEmpty
-          ? 'No RSVPs yet'
+          ? AppLocalizations.of(context)!.eventNoRsvps
           : l10n.rsvpResponseCount(detail.rsvpAttendees.length),
       bodyBuilder: (ctx) {
         final l10n = AppLocalizations.of(ctx)!;
@@ -197,8 +198,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             else
               for (final a in detail.rsvpAttendees)
                 ListTile(
-                  title: Text(a.displayName),
-                  trailing: Text(rsvpStatusLabel(l10n, a.status)),
+                  title: Text(personDisplayName(AppLocalizations.of(context)!, a.displayName)),
+                  trailing: Text(a.status?.label(l10n) ?? ''),
                 ),
           ],
         );
@@ -206,7 +207,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     );
   }
 
-  Future<void> _setRsvp(String status) async {
+  Future<void> _setRsvp(RsvpStatus status) async {
     final baby = _baby;
     if (baby == null) return;
     try {
@@ -336,7 +337,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 12),
-                const AppSectionCapsLabel('When'),
+                AppSectionCapsLabel(AppLocalizations.of(context)!.calendarWhen),
                 SizedBox(height: AppSpacing.xs),
                 Text(
                   formatEventDetailWhen(
@@ -346,7 +347,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 ),
                 if (detail.location != null) ...[
                   const SizedBox(height: 12),
-                  const AppSectionCapsLabel('Location'),
+                  AppSectionCapsLabel(AppLocalizations.of(context)!.calendarLocation),
                   SizedBox(height: AppSpacing.xs),
                   Text('📍 ${detail.location}'),
                 ],
@@ -387,7 +388,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   Text(detail.description!),
                 ],
                 const SizedBox(height: 16),
-                const AppSectionCapsLabel('Your RSVP'),
+                AppSectionCapsLabel(AppLocalizations.of(context)!.calendarYourRsvp),
                 const SizedBox(height: 8),
                 AppRsvpTileRow(
                   selectedStatus: detail.viewerRsvp,
@@ -400,7 +401,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     children: [
                       AvatarStack(
                         displayNames: detail.rsvpAttendees
-                            .map((a) => a.displayName)
+                            .map((a) => personDisplayName(AppLocalizations.of(context)!, a.displayName))
                             .toList(),
                       ),
                       SizedBox(width: AppSpacing.smMd),
@@ -424,7 +425,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 ),
                 const Divider(height: 24),
                 AppSectionCapsLabel(
-                  'Comments',
+                  AppLocalizations.of(context)!.calendarComments,
                   trailing: detail.comments.isNotEmpty
                       ? Container(
                           padding: const EdgeInsets.symmetric(
@@ -444,7 +445,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 SizedBox(height: AppSpacing.sm),
                 for (final c in detail.comments)
                   ListTile(
-                    title: Text(c.authorDisplayName),
+                    title: Text(personDisplayName(AppLocalizations.of(context)!, c.authorDisplayName)),
                     subtitle: Text(c.body),
                     trailing: (c.canEdit || c.canDelete)
                         ? Row(

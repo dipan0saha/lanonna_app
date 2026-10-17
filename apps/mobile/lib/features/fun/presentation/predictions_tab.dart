@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/person_display_label.dart';
+import 'package:lanonna/core/domain/baby_gender.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
@@ -85,7 +87,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
       if (!mounted || babyId != widget.baby.id) return;
       setState(() {
         _loading = false;
-        _error = apiErrorMessage(e);
+        _error = apiErrorMessage(AppLocalizations.of(context)!, e);
       });
     }
   }
@@ -99,7 +101,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
       await context.read<FunRepository>().setGenderVote(widget.baby.id, gender);
       await _load();
     } catch (e) {
-      if (mounted) AppSnackBar.showAlert(context, apiErrorMessage(e));
+      if (mounted) AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
     }
   }
 
@@ -146,7 +148,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
       if (!mounted) return;
       await _load();
     } catch (e) {
-      if (mounted) AppSnackBar.showAlert(context, apiErrorMessage(e));
+      if (mounted) AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
     }
   }
 
@@ -174,7 +176,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
       context: context,
       title: l10n.labelVoted,
       subtitle: voters.isEmpty
-          ? 'No votes yet'
+          ? AppLocalizations.of(context)!.funNoVotesYet
           : l10n.predictionVoteCount(voters.length),
       bodyBuilder: (context) => ListView(
         shrinkWrap: true,
@@ -182,8 +184,12 @@ class _PredictionsTabState extends State<PredictionsTab> {
         children: [
           for (final v in voters)
             ListTile(
-              title: Text(v.displayName),
-              subtitle: Text(v.gender == 'male' ? 'Boy' : 'Girl'),
+              title: Text(personDisplayName(AppLocalizations.of(context)!, v.displayName)),
+              subtitle: Text(
+                BabyGender.fromApi(v.gender).label(
+                  AppLocalizations.of(context)!,
+                ),
+              ),
             ),
         ],
       ),
@@ -264,8 +270,8 @@ class _PredictionsTabState extends State<PredictionsTab> {
             children: [
               Expanded(
                 child: _genderBox(
-                  'Boy',
-                  p?.viewerGenderVote == 'male',
+                  BabyGender.male.label(l10n),
+                  p?.viewerGenderVote == BabyGender.male.apiValue,
                   closed ? null : () => _voteGender('male'),
                   genderVotes.displayPercentForMale(),
                   p?.maleVotes ?? 0,
@@ -275,8 +281,8 @@ class _PredictionsTabState extends State<PredictionsTab> {
               const SizedBox(width: 10),
               Expanded(
                 child: _genderBox(
-                  'Girl',
-                  p?.viewerGenderVote == 'female',
+                  BabyGender.female.label(l10n),
+                  p?.viewerGenderVote == BabyGender.female.apiValue,
                   closed ? null : () => _voteGender('female'),
                   genderVotes.displayPercentForFemale(),
                   p?.femaleVotes ?? 0,
@@ -305,8 +311,8 @@ class _PredictionsTabState extends State<PredictionsTab> {
               child: Text(
                 AppLocalizations.of(context)!.predictionYourGenderVote(
                   p!.viewerGenderVote == 'male'
-                      ? AppLocalizations.of(context)!.funGenderBoy
-                      : AppLocalizations.of(context)!.funGenderGirl,
+                      ? BabyGender.male.label(AppLocalizations.of(context)!)
+                      : BabyGender.female.label(AppLocalizations.of(context)!),
                 ),
                 style: context.textStyles.bodySmall,
               ),
@@ -321,7 +327,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
               child: Text(
-                closed ? 'No guesses yet' : 'No guesses yet - be the first!',
+                closed ? AppLocalizations.of(context)!.funNoGuessesYet : AppLocalizations.of(context)!.funNoGuessesYetBeThe,
               ),
             )
           else
@@ -343,7 +349,10 @@ class _PredictionsTabState extends State<PredictionsTab> {
                         icon: const Icon(Icons.chevron_left),
                       ),
                       Text(
-                        '${_monthName(_visibleMonth.month)} ${_visibleMonth.year}',
+                        formatMonthYear(
+                          _visibleMonth,
+                          localeNameForFormatting(context),
+                        ),
                         style: context.calendarMonthTitleStyle,
                       ),
                       AppIconButton(
@@ -369,7 +378,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
                       padding: const EdgeInsets.only(top: 8),
                       child: Text(
                         l10n.funBirthdateDueDate(
-                          '${_monthName(due.month)} ${due.day}',
+                          formatMonthDay(due, localeNameForFormatting(context)),
                         ),
                         style: context.textStyles.bodySmall?.copyWith(
                           color: AppColors.primaryDark,
@@ -421,24 +430,6 @@ class _PredictionsTabState extends State<PredictionsTab> {
         ],
       ),
     );
-  }
-
-  String _monthName(int m) {
-    const names = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ];
-    return names[m - 1];
   }
 
   Widget _genderBox(

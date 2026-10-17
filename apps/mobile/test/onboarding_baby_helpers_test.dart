@@ -1,12 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lanonna/features/onboarding/domain/baby_gender.dart';
-import 'package:lanonna/features/onboarding/domain/baby_lifecycle.dart';
+import 'package:lanonna/core/domain/baby_gender.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:lanonna/features/onboarding/presentation/utils/onboarding_baby_helpers.dart';
 
 void main() {
-  test('resolveOnboardingBabyName uses Baby when empty', () {
+  test('resolveOnboardingBabyName uses the fallback when empty', () {
     expect(
       resolveOnboardingBabyName(
+        fallbackName: 'Baby',
         status: BabyLifecycle.expecting,
         gender: BabyGender.unknown,
       ),
@@ -68,6 +69,7 @@ void main() {
   test('resolveOnboardingBabyName prefers boy name', () {
     expect(
       resolveOnboardingBabyName(
+        fallbackName: 'Baby',
         status: BabyLifecycle.expecting,
         gender: BabyGender.unknown,
         boyName: 'Liam',

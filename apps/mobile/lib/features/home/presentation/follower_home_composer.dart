@@ -36,7 +36,7 @@ class FollowerHomeComposer extends StatelessWidget {
   final VoidCallback onViewGallery;
   final bool hideVoteInFun;
 
-  bool get _isExpecting => baby.lifecycleStatus == 'expecting';
+  bool get _isExpecting => !baby.isBorn;
 
   String? _formattedDueDate(BuildContext context) {
     final raw = baby.expectedBirthDate;
@@ -64,7 +64,7 @@ class FollowerHomeComposer extends StatelessWidget {
             showAnnounceCta: false,
             dueDateLabel: _formattedDueDate(context),
             followerFootnote:
-                "You'll be notified the moment $babyName arrives.",
+                AppLocalizations.of(context)!.homeYoullBeNotifiedTheMoment(babyName),
           ),
           HomeScrollSection(
             title: l10n.labelQuickActions,

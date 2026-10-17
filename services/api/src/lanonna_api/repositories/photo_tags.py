@@ -39,12 +39,13 @@ def replace_photo_baby_tags(
             "DELETE FROM photo_baby_tags WHERE photo_id = %s",
             (photo_id,),
         )
-        for baby_id in tagged_baby_profile_ids:
+        if tagged_baby_profile_ids:
             conn.execute(
                 """
                 INSERT INTO photo_baby_tags (photo_id, tagged_baby_profile_id)
-                VALUES (%s, %s)
+                SELECT %s, tagged
+                FROM unnest(%s::uuid[]) AS tagged
                 ON CONFLICT DO NOTHING
                 """,
-                (photo_id, baby_id),
+                (photo_id, list(tagged_baby_profile_ids)),
             )

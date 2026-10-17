@@ -19,12 +19,12 @@ class InviteLandingHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final inviter = preview.inviterDisplayName ?? 'A family member';
+    final inviter = preview.inviterDisplayName ?? AppLocalizations.of(context)!.invitationsAFamilyMember;
     final line = preview.isAccepted
-        ? "You're already a member"
+        ? AppLocalizations.of(context)!.invitationsYoureAlreadyAMember
         : isCoOwner
-        ? '$inviter invited you to co-own'
-        : '$inviter invited you to follow';
+        ? AppLocalizations.of(context)!.invitationsInvitedYouToCoOwn(inviter)
+        : AppLocalizations.of(context)!.invitationsInvitedYouToFollow(inviter);
     return Padding(
       padding: const EdgeInsets.only(top: 22),
       child: Text(
@@ -43,8 +43,9 @@ class InviteBabyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final babyName = preview.babyName ?? 'Baby';
+    final babyName = preview.babyName ?? AppLocalizations.of(context)!.babyNameDefault;
     final subtitle = inviteBabyDateSubtitle(
+      AppLocalizations.of(context)!,
       preview,
       localeNameForFormatting(context),
     );
@@ -82,8 +83,8 @@ class InviteReassureRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = isCoOwner
-        ? "As a co-owner, you'll have full access to edit, invite, and manage, just like the person who invited you."
-        : 'A private space just for family & friends. Nothing here is public.';
+        ? AppLocalizations.of(context)!.invitationsAsACoOwnerYoull
+        : AppLocalizations.of(context)!.invitationsAPrivateSpaceJustFor;
     return Padding(
       padding: const EdgeInsets.fromLTRB(22, 18, 22, 0),
       child: Row(

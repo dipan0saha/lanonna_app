@@ -25,7 +25,6 @@ import '../../home/domain/app_routes.dart';
 import '../../onboarding/domain/onboarding_routes.dart';
 import '../data/account_repository.dart';
 import '../data/notifications_repository.dart';
-import '../domain/notification_digest_display.dart';
 import 'widgets/account_engagement_stat_row.dart';
 import 'widgets/account_baby_profiles_card.dart';
 import 'widgets/account_profile_card.dart';
@@ -94,7 +93,7 @@ class _AccountScreenState extends State<AccountScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _loadError = apiErrorMessage(e);
+        _loadError = apiErrorMessage(AppLocalizations.of(context)!, e);
         _loading = false;
       });
       return;
@@ -109,7 +108,9 @@ class _AccountScreenState extends State<AccountScreen> {
       final prefs = await repo.fetchPreferences();
       if (!mounted) return;
       setState(() {
-        _digestSummary = notificationDigestSummaryLabel(prefs.digest);
+        _digestSummary = prefs.digest.summaryLabel(
+          AppLocalizations.of(context)!,
+        );
       });
     } catch (_) {
       if (!mounted) return;
@@ -126,7 +127,11 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   String _babySubtitle(BabySummary baby) =>
-      babyListSubtitle(baby, localeNameForFormatting(context));
+      babyListSubtitle(
+        AppLocalizations.of(context)!,
+        baby,
+        localeNameForFormatting(context),
+      );
 
   Future<void> _openBaby(BabySummary baby) async {
     await context.read<SelectedBabyStore>().setSelectedBabyId(baby.id);
@@ -142,7 +147,7 @@ class _AccountScreenState extends State<AccountScreen> {
     );
     if (!mounted) return;
     if (owner == null) {
-      AppSnackBar.showAlert(context, 'No baby profile you own yet.');
+      AppSnackBar.showAlert(context, AppLocalizations.of(context)!.accountNoBabyProfileYouOwn);
       return;
     }
     context.push('/baby/${owner.id}/followers');
@@ -152,7 +157,7 @@ class _AccountScreenState extends State<AccountScreen> {
   Widget build(BuildContext context) {
     final user = context.read<AuthRepository>().currentUser;
     final payload = _payload;
-    final displayName = payload?.displayName ?? user?.email ?? 'Account';
+    final displayName = payload?.displayName ?? user?.email ?? AppLocalizations.of(context)!.labelAccount;
     final email = payload?.email ?? user?.email;
     final showOwnerPrefs = payload?.hasOwnerBaby ?? false;
     final l10n = AppLocalizations.of(context)!;

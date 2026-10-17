@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 import 'package:image/image.dart' as img;
 
@@ -16,14 +17,15 @@ class EncodedDisplayAsset {
 const int displayMaxLongEdge = 2048;
 const int displayMaxBytes = 2_097_152;
 
-/// Hint copy for photo-source sheets; keep in sync with [displayMaxBytes].
-String displayPhotoSourceHint() {
-  final mb = displayMaxBytes / (1024 * 1024);
-  final mbLabel = mb == mb.roundToDouble()
-      ? '${mb.round()}'
-      : mb.toStringAsFixed(1);
-  return 'JPEG or PNG, up to ${mbLabel}MB';
+/// [bytes] as whole or one-decimal megabytes (`2`, `1.5`) for user copy.
+String megabytesLabel(int bytes) {
+  final mb = bytes / (1024 * 1024);
+  return mb == mb.roundToDouble() ? '${mb.round()}' : mb.toStringAsFixed(1);
 }
+
+/// Hint copy for photo-source sheets; follows [displayMaxBytes].
+String displayPhotoSourceHint(AppLocalizations l10n) =>
+    l10n.photoSourceHint(megabytesLabel(displayMaxBytes));
 
 const String contentTypeWebp = 'image/webp';
 const String contentTypeJpeg = 'image/jpeg';
@@ -32,7 +34,7 @@ const String contentTypeJpeg = 'image/jpeg';
 EncodedDisplayAsset encodeDisplayAsset(Uint8List rawBytes) {
   final decoded = img.decodeImage(rawBytes);
   if (decoded == null) {
-    throw FormatException('Could not decode image');
+    throw const FormatException('image_decode_failed');
   }
   var image = img.bakeOrientation(decoded);
   image = _fitLongEdge(image, displayMaxLongEdge);

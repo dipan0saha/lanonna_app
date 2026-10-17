@@ -1,3 +1,4 @@
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
@@ -17,15 +18,8 @@ class RegistrySuggestion {
 abstract final class RegistrySuggestionsCatalog {
   static Map<String, List<RegistrySuggestion>>? _cache;
 
-  static String defaultTabForLifecycle(String? lifecycleStatus) {
-    switch (lifecycleStatus) {
-      case 'born':
-      case 'newborn':
-        return 'newborn';
-      default:
-        return 'expecting';
-    }
-  }
+  static String defaultTabForLifecycle(BabyLifecycle? lifecycle) =>
+      lifecycle == BabyLifecycle.born ? 'newborn' : 'expecting';
 
   static Future<List<RegistrySuggestion>> forTab(String key) async {
     _cache ??= await _load();

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/network/connectivity_service.dart';
@@ -146,7 +147,7 @@ class _FakeHomeRepository extends HomeRepository {
       BabySummary(
         id: 'baby-1',
         name: 'Parker',
-        lifecycleStatus: 'expecting',
+        lifecycle: BabyLifecycle.expecting,
         expectedBirthDate: DateTime.now()
             .add(const Duration(days: 33))
             .toIso8601String(),
@@ -155,14 +156,14 @@ class _FakeHomeRepository extends HomeRepository {
       BabySummary(
         id: 'baby-2',
         name: 'Parker',
-        lifecycleStatus: 'born',
+        lifecycle: BabyLifecycle.born,
         actualBirthDate: DateTime.now().toIso8601String(),
         role: 'owner',
       ),
       BabySummary(
         id: 'baby-born-empty',
         name: 'Liam',
-        lifecycleStatus: 'born',
+        lifecycle: BabyLifecycle.born,
         actualBirthDate: DateTime.now().toIso8601String(),
         role: 'owner',
       ),
@@ -174,7 +175,7 @@ class _FakeHomeRepository extends HomeRepository {
     if (babyId == 'baby-2') {
       return HomeSummaryLoaded(
         const HomeSummary(
-          lifecycleStatus: 'born',
+          lifecycle: BabyLifecycle.born,
           nameSuggestionCount: 0,
           voteCount: 0,
           recentActivity: [
@@ -195,7 +196,7 @@ class _FakeHomeRepository extends HomeRepository {
     if (babyId == 'baby-born-empty') {
       return HomeSummaryLoaded(
         const HomeSummary(
-          lifecycleStatus: 'born',
+          lifecycle: BabyLifecycle.born,
           nameSuggestionCount: 0,
           voteCount: 0,
           recentActivity: [],
@@ -208,7 +209,7 @@ class _FakeHomeRepository extends HomeRepository {
     }
     return HomeSummaryLoaded(
       HomeSummary(
-        lifecycleStatus: 'expecting',
+        lifecycle: BabyLifecycle.expecting,
         nameSuggestionCount: 0,
         voteCount: 0,
         recentActivity: const [],

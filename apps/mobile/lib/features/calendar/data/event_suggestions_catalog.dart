@@ -1,3 +1,4 @@
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
@@ -22,15 +23,8 @@ abstract final class EventSuggestionsCatalog {
     return _cache![key] ?? [];
   }
 
-  static String defaultTabForLifecycle(String? lifecycleStatus) {
-    switch (lifecycleStatus) {
-      case 'born':
-      case 'newborn':
-        return 'newborn';
-      default:
-        return 'expecting';
-    }
-  }
+  static String defaultTabForLifecycle(BabyLifecycle? lifecycle) =>
+      lifecycle == BabyLifecycle.born ? 'newborn' : 'expecting';
 
   static Future<Map<String, List<EventSuggestion>>> _load() async {
     final raw = await rootBundle.loadString(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/features/account/domain/notification_digest.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -92,7 +93,7 @@ class _NotificationPreferencesScreenState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final prefs = _prefs;
-    final babyLabel = babyDisplayName(_babyName, l10n);
+    final babyLabel = babyDisplayName(l10n, _babyName);
     return PrototypeSubpageScaffold(
       title: l10n.notificationPrefsTitle,
       body: _loading || prefs == null
@@ -120,9 +121,8 @@ class _NotificationPreferencesScreenState
                   )!.notificationPrefsFrequencyTitle(babyLabel),
                   style: context.textStyles.titleSmall,
                 ),
-                _digestTile('realtime', 'Real-time', prefs),
-                _digestTile('daily', 'Daily digest', prefs),
-                _digestTile('weekly', 'Weekly digest', prefs),
+                for (final digest in NotificationDigest.values)
+                  _digestTile(digest, prefs),
                 SwitchListTile(
                   title: Text(
                     AppLocalizations.of(context)!.notificationPrefsPushTitle,
@@ -199,18 +199,14 @@ class _NotificationPreferencesScreenState
     );
   }
 
-  Widget _digestTile(
-    String value,
-    String label,
-    NotificationPreferences prefs,
-  ) {
+  Widget _digestTile(NotificationDigest value, NotificationPreferences prefs) {
     final selected = prefs.digest == value;
     return ListTile(
       leading: Icon(
         selected ? Icons.radio_button_checked : Icons.radio_button_off,
         color: selected ? AppColors.primaryDark : AppColors.muted,
       ),
-      title: Text(label),
+      title: Text(value.label(AppLocalizations.of(context)!)),
       onTap: () => setState(() => _prefs = prefs.copyWith(digest: value)),
     );
   }

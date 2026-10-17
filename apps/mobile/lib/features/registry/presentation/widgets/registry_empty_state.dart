@@ -21,9 +21,9 @@ class RegistryEmptyState extends StatelessWidget {
       icon: Icons.card_giftcard_outlined,
       title: l10n.registryEmptyTitle,
       message: isOwner
-          ? 'Add the things your baby will need so family knows what to bring.'
-          : "Nothing's been added to the registry yet — check back soon.",
-      actionLabel: isOwner ? '+ Add Item' : null,
+          ? AppLocalizations.of(context)!.registryAddTheThingsYourBaby
+          : AppLocalizations.of(context)!.registryNothingsBeenAddedToThe,
+      actionLabel: isOwner ? AppLocalizations.of(context)!.registryAddItemCta : null,
       onAction: onAddItem,
     );
   }

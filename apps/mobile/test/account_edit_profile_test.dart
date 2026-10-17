@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:lanonna/features/account/domain/notification_digest.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
@@ -69,7 +70,7 @@ class _Notifications extends NotificationsRepository {
   @override
   Future<NotificationPreferences> fetchPreferences() async {
     return NotificationPreferences(
-      digest: 'weekly',
+      digest: NotificationDigest.weekly,
       pushEnabled: true,
       emailDigestEnabled: true,
       notifyGalleryEnabled: true,

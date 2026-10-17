@@ -53,7 +53,7 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _job = null);
-        AppSnackBar.showAlert(context, apiErrorMessage(e));
+        AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -73,7 +73,7 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
       if (mounted) setState(() => _job = job);
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showAlert(context, apiErrorMessage(e));
+        AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
       }
     } finally {
       if (mounted) setState(() => _requesting = false);
@@ -88,7 +88,7 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
     await openExternalLink(
       context,
       uri,
-      failureMessage: "Couldn't open the download. Copy link?",
+      failureMessage: AppLocalizations.of(context)!.accountCouldntOpenTheDownloadCopy,
     );
   }
 
@@ -114,7 +114,7 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
                     AppSectionTitle(
                       title: AppLocalizations.of(
                         context,
-                      )!.statusLabel(job.status),
+                      )!.statusLabel(job.status.label(l10n)),
                     ),
                     if (job.errorMessage != null)
                       Text(
@@ -128,7 +128,7 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
                   FilledButton(
                     onPressed: _requesting ? null : _requestExport,
                     child: Text(
-                      _requesting ? 'Requesting…' : 'Request new export',
+                      _requesting ? AppLocalizations.of(context)!.accountRequesting : AppLocalizations.of(context)!.accountRequestNewExport,
                     ),
                   ),
                   const SizedBox(height: 8),

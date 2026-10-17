@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/baby_gender.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -60,7 +61,7 @@ class HomeFamilyInsightGenderCard extends StatelessWidget {
               Expanded(
                 child: _voteBox(
                   context,
-                  AppLocalizations.of(context)!.funGenderBoy,
+                  BabyGender.male.label(AppLocalizations.of(context)!),
                   genderVotes.displayPercentForMale(),
                   totals.male,
                   leading: totals.male > totals.female,
@@ -70,7 +71,7 @@ class HomeFamilyInsightGenderCard extends StatelessWidget {
               Expanded(
                 child: _voteBox(
                   context,
-                  AppLocalizations.of(context)!.funGenderGirl,
+                  BabyGender.female.label(AppLocalizations.of(context)!),
                   genderVotes.displayPercentForFemale(),
                   totals.female,
                   leading: totals.female > totals.male,

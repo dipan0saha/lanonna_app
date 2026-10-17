@@ -17,8 +17,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_chip.dart';
 import '../../data/create_baby_draft.dart';
 import '../../data/onboarding_repository.dart';
-import '../../domain/baby_gender.dart';
-import '../../domain/baby_lifecycle.dart';
+import 'package:lanonna/core/domain/baby_gender.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import '../../domain/onboarding_routes.dart';
 import '../../domain/onboarding_step.dart';
 import '../../domain/owner_onboarding_baby_resolver.dart';
@@ -207,7 +207,7 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
       await context.read<OnboardingCoordinator>().setStep(OnboardingStep.batchInvite);
       if (mounted) context.go(OnboardingRoutes.ownerInvite);
     } catch (e) {
-      setState(() => _error = apiErrorMessage(e));
+      setState(() => _error = apiErrorMessage(AppLocalizations.of(context)!, e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -269,8 +269,8 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
     final registry = isExpecting
         ? FirstMomentPresets.expectingRegistry
         : FirstMomentPresets.bornRegistry;
-    const eventSubtitle = 'AI-suggested by stage and age';
-    const registrySubtitle = 'AI-suggested by stage and age';
+    final eventSubtitle = AppLocalizations.of(context)!.onboardingAiSuggestedByStageAnd;
+    final registrySubtitle = AppLocalizations.of(context)!.onboardingAiSuggestedByStageAnd;
 
     return OnboardingScaffold(
       pinBottomCta: false,
@@ -285,13 +285,13 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: 10),
-          const OnboardingHeadline(
-            'Add your first moment',
+          OnboardingHeadline(
+            AppLocalizations.of(context)!.onboardingAddYourFirstMoment,
             key: Key('onboarding_first_moment_title'),
           ),
           const SizedBox(height: 8),
-          const OnboardingSupportText(
-            'Totally optional, but it helps family feel like there\'s already something here.',
+          OnboardingSupportText(
+            AppLocalizations.of(context)!.onboardingTotallyOptionalButItHelps,
           ),
           const SizedBox(height: 20),
           if (isExpecting) ...[
@@ -299,7 +299,7 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
               iconBackground: AppColors.sageTint,
               icon: Icon(Icons.star_outline, size: 17, color: AppColors.primaryDark),
               title: l10n.labelSuggestName,
-              subtitle: 'Seeds the vote in Family Fun',
+              subtitle: AppLocalizations.of(context)!.onboardingSeedsTheVoteInFamily,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -357,7 +357,7 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
               iconBackground: AppColors.peachTint,
               icon: Icon(Icons.photo_camera_outlined, size: 17, color: AppColors.secondaryDark),
               title: l10n.actionUploadFirstPhoto,
-              subtitle: 'From your camera or library',
+              subtitle: AppLocalizations.of(context)!.onboardingFromYourCameraOrLibrary,
               child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,

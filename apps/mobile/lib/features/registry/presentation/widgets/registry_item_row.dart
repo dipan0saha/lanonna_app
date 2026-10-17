@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/person_display_label.dart';
 
 import '../../../../core/theme/app_metrics.dart';
 
@@ -38,7 +39,7 @@ class RegistryNeededRow extends StatelessWidget {
             semanticsId: isOwner
                 ? 'registry_mark_purchased'
                 : 'registry_claim_item',
-            label: isOwner ? 'Mark as purchased' : "I'll buy this",
+            label: isOwner ? AppLocalizations.of(context)!.registryMarkPurchased : AppLocalizations.of(context)!.registryIllBuyThis,
             onPressed: onClaim,
           );
 
@@ -154,7 +155,12 @@ class RegistryPurchasedRow extends StatelessWidget {
                   Text(
                     AppLocalizations.of(
                       context,
-                    )!.registryPurchasedBy(purchase.purchaserDisplayName),
+                    )!.registryPurchasedBy(
+                      personDisplayName(
+                        AppLocalizations.of(context)!,
+                        purchase.purchaserDisplayName,
+                      ),
+                    ),
                     style: context.textStyles.bodySmall,
                   ),
               ],

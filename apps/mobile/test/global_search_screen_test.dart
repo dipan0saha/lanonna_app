@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 
 import 'package:flutter/material.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
@@ -23,7 +24,7 @@ class _BabyHomeRepository extends HomeRepository {
     return const BabySummary(
       id: 'baby-1',
       name: 'Parker',
-      lifecycleStatus: 'born',
+      lifecycle: BabyLifecycle.born,
       role: 'owner',
     );
   }

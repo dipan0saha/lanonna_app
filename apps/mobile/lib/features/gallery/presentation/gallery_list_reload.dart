@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -105,7 +106,7 @@ mixin GalleryListReload<T extends StatefulWidget> on State<T> {
       );
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showAlert(context, apiErrorMessage(e));
+        AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
       }
     } finally {
       _incrementalRefreshInFlight = false;

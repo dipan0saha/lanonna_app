@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 import 'auth_link_config.dart';
 import 'email_verify_link_result.dart';
@@ -15,24 +16,29 @@ ActionCodeSettings buildEmailVerificationActionCodeSettings() {
   );
 }
 
-String userFacingAuthError(FirebaseAuthException e) {
+/// User copy for a failed "resend verification email" call.
+String userFacingAuthError(AppLocalizations l10n, FirebaseAuthException e) {
   switch (e.code) {
     case 'too-many-requests':
-      return 'Too many attempts. Wait a few minutes, then try Resend email again.';
+      return l10n.authErrorTooManyAttempts;
     case 'network-request-failed':
-      return 'Network error. Check your connection and try again.';
+      return l10n.authErrorNetwork;
     default:
-      return 'Could not send verification email. Please try again.';
+      return l10n.onboardingCouldNotSendVerificationEmail;
   }
 }
 
-String userFacingApplyLinkError(FirebaseAuthException e) {
-  switch (e.code) {
+/// User copy for a verification link Firebase rejected ([firebaseErrorCode]).
+String userFacingApplyLinkError(
+  AppLocalizations l10n,
+  String? firebaseErrorCode,
+) {
+  switch (firebaseErrorCode) {
     case 'expired-action-code':
     case 'invalid-action-code':
-      return 'This verification link has expired or was already used. Tap Resend email for a new link.';
+      return l10n.authErrorVerifyLinkExpired;
     default:
-      return 'Could not verify your email from this link. Try Resend email or open the newest message in your inbox.';
+      return l10n.authErrorVerifyLinkFailed;
   }
 }
 
@@ -54,7 +60,7 @@ Future<EmailVerifyLinkResult> applyEmailVerificationLinkFromUri(
   } on FirebaseAuthException catch (e) {
     return EmailVerifyLinkResult(
       EmailVerifyLinkOutcome.invalidOrExpired,
-      message: userFacingApplyLinkError(e),
+      firebaseErrorCode: e.code,
     );
   }
 
@@ -68,7 +74,7 @@ Future<EmailVerifyLinkResult> applyEmailVerificationLinkFromUri(
   } on FirebaseAuthException catch (e) {
     return EmailVerifyLinkResult(
       EmailVerifyLinkOutcome.invalidOrExpired,
-      message: userFacingApplyLinkError(e),
+      firebaseErrorCode: e.code,
     );
   }
 

@@ -2,9 +2,12 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../media/display_encode.dart';
 import 'api_client.dart';
+import 'api_exception.dart';
+import 'localized_failure.dart';
 
 class DisplayPhotoUpload {
   DisplayPhotoUpload(this._api);
@@ -61,7 +64,10 @@ class DisplayPhotoUpload {
       body: encoded.bytes,
     );
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception('Avatar upload failed (${response.statusCode})');
+      throw ApiException(
+        'avatar_upload_http_${response.statusCode}',
+        statusCode: response.statusCode,
+      );
     }
     return objectPath;
   }
@@ -93,7 +99,10 @@ class DisplayPhotoUpload {
       body: body,
     );
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception('Photo upload failed (${response.statusCode})');
+      throw ApiException(
+        'photo_upload_http_${response.statusCode}',
+        statusCode: response.statusCode,
+      );
     }
     return photoId;
   }
@@ -121,8 +130,22 @@ class DisplayPhotoUpload {
     );
     headers['Content-Type'] = contentType;
     if (byteLength > displayMaxBytes) {
-      throw Exception('Photo exceeds maximum size (2 MB).');
+      throw const PhotoTooLargeException(displayMaxBytes);
     }
     return headers;
   }
+}
+
+/// The encoded photo is still above the upload cap.
+class PhotoTooLargeException implements LocalizedFailure {
+  const PhotoTooLargeException(this.maxBytes);
+
+  final int maxBytes;
+
+  @override
+  String userMessage(AppLocalizations l10n) =>
+      l10n.errorPhotoTooLarge(megabytesLabel(maxBytes));
+
+  @override
+  String toString() => 'photo_too_large max_bytes=$maxBytes';
 }

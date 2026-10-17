@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
-import 'package:lanonna/features/onboarding/domain/baby_gender.dart';
+import 'package:lanonna/core/domain/baby_gender.dart';
 import 'package:lanonna/features/onboarding/presentation/widgets/onboarding_fields.dart';
 import 'package:lanonna/features/onboarding/presentation/widgets/onboarding_prototype_widgets.dart';
 

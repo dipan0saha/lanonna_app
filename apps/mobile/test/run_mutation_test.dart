@@ -22,8 +22,10 @@ theme: AppTheme.light,
                     context,
                     () async {
                       throw ApiException(
-                        'You already suggested a name for this gender.',
+                        'http_403',
                         statusCode: 403,
+                        serverMessage:
+                            'You already suggested a name for this gender.',
                       );
                     },
                   );

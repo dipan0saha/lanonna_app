@@ -60,8 +60,8 @@ class OwnerExpectingHeroCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             dueDateLabel != null
-                ? 'Days to due date · $dueDateLabel'
-                : 'DAYS TO DUE DATE',
+                ? AppLocalizations.of(context)!.homeDaysToDueDate(dueDateLabel!)
+                : AppLocalizations.of(context)!.homeDaysToDueDateHeading,
             style: text.labelSmall?.copyWith(letterSpacing: 0.06 * 11),
           ),
           if (followerFootnote != null) ...[

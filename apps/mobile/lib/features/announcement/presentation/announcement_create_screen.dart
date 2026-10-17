@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:lanonna/core/domain/baby_gender.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -101,7 +102,7 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
       }
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showAlert(context, apiErrorMessage(e));
+        AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -209,7 +210,7 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
       if (mounted) showAnnouncementCardAfterSave(context, widget.babyId);
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showAlert(context, apiErrorMessage(e));
+        AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -263,7 +264,7 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
               kind: AppTextInputKind.personName,
               controller: _first,
               maxLength: 50,
-              validator: validateOnboardingFirstName,
+              validator: (v) => validateOnboardingFirstName(AppLocalizations.of(context)!, v),
               autovalidateMode: _autovalidateMode,
             ),
             AppLabeledTextField(
@@ -272,13 +273,13 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
               controller: _last,
               maxLength: 50,
             ),
-            const OnboardingFieldLabel('Gender'),
+            OnboardingFieldLabel(AppLocalizations.of(context)!.babyGender),
             const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
                   child: AppToggleChip(
-                    label: l10n.funGenderBoy,
+                    label: BabyGender.male.label(l10n),
                     selected: _gender == 'male',
                     onTap: () => setState(() => _gender = 'male'),
                   ),
@@ -286,7 +287,7 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
                 SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: AppToggleChip(
-                    label: l10n.funGenderGirl,
+                    label: BabyGender.female.label(l10n),
                     selected: _gender == 'female',
                     selectedAccent: AppChipAccent.peach,
                     onTap: () => setState(() => _gender = 'female'),
@@ -297,14 +298,14 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: Text(AppLocalizations.of(context)!.announcementDateOfBirth),
-              subtitle: Text(_birthDateDisplay(context) ?? 'Tap to choose'),
+              subtitle: Text(_birthDateDisplay(context) ?? AppLocalizations.of(context)!.accountTapToChoose),
               trailing: const Icon(Icons.calendar_today_outlined, size: 20),
               onTap: _pickDate,
             ),
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: Text(AppLocalizations.of(context)!.announcementTimeOfBirth),
-              subtitle: Text(_birthTimeLabel(context) ?? 'Optional'),
+              subtitle: Text(_birthTimeLabel(context) ?? AppLocalizations.of(context)!.announcementOptional),
               trailing: const Icon(Icons.schedule_outlined, size: 20),
               onTap: _pickTime,
             ),
@@ -324,7 +325,7 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
             const SizedBox(height: 20),
             FilledButton(
               onPressed: _saving ? null : _save,
-              child: Text(_saving ? 'Saving…' : 'Save Announcement'),
+              child: Text(_saving ? AppLocalizations.of(context)!.notificationPrefsSaving : AppLocalizations.of(context)!.announcementSaveAnnouncement),
             ),
           ],
         ),

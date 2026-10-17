@@ -1,8 +1,10 @@
+import 'baby_lifecycle.dart';
+
 class BabySummary {
   const BabySummary({
     required this.id,
     required this.name,
-    required this.lifecycleStatus,
+    required this.lifecycle,
     required this.role,
     this.gender,
     this.expectedBirthDate,
@@ -19,7 +21,7 @@ class BabySummary {
   final String? gender;
   final String? expectedBirthDate;
   final String? actualBirthDate;
-  final String lifecycleStatus;
+  final BabyLifecycle lifecycle;
   final String role;
   final String? avatarUrl;
   final String? relationshipLabel;
@@ -27,7 +29,7 @@ class BabySummary {
   final bool namesClosed;
   final bool predictionsClosed;
 
-  bool get isBorn => lifecycleStatus == 'born';
+  bool get isBorn => lifecycle == BabyLifecycle.born;
 
   factory BabySummary.fromJson(Map<String, dynamic> json) {
     return BabySummary(
@@ -36,7 +38,7 @@ class BabySummary {
       gender: json['gender'] as String?,
       expectedBirthDate: json['expected_birth_date']?.toString(),
       actualBirthDate: json['actual_birth_date']?.toString(),
-      lifecycleStatus: json['lifecycle_status'] as String? ?? 'expecting',
+      lifecycle: BabyLifecycle.fromApi(json['lifecycle_status'] as String?),
       role: json['role'] as String? ?? 'follower',
       avatarUrl: json['avatar_url'] as String?,
       relationshipLabel: json['relationship_label'] as String?,

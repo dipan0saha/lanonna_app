@@ -87,9 +87,9 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
 
   String _loginSubtext(OnboardingCoordinator coordinator) {
     if (coordinator.isInvitePath) {
-      return 'Sign in to accept your invitation and continue.';
+      return AppLocalizations.of(context)!.onboardingSignInToAcceptYour;
     }
-    return 'Sign in to continue setting up your family space.';
+    return AppLocalizations.of(context)!.onboardingSignInToContinueSetting;
   }
 
   Future<void> _signInEmail() async {
@@ -126,7 +126,7 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
     if (_busy) return;
     final l10n = AppLocalizations.of(context)!;
     var email = _emailController.text.trim();
-    if (validateEmail(email) != null) {
+    if (validateEmail(AppLocalizations.of(context)!, email) != null) {
       final chosen = await showForgotPasswordEmailDialog(
         context,
         initialEmail: email,
@@ -169,12 +169,11 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
       final l10n = AppLocalizations.of(context)!;
       setState(() => _error = authErrorMessage(e, l10n, flow: AuthFlow.signIn));
     } catch (e) {
-      final msg = apiErrorMessage(e);
+      final msg = apiErrorMessage(AppLocalizations.of(context)!, e);
       if (msg.contains('ApiException: 10') || msg.contains('DEVELOPER_ERROR')) {
         setState(
           () => _error =
-              'Google Sign-In is not configured for this Android build yet. '
-              'Use email/password, or enable Google in Firebase for lanonna-dev.',
+              AppLocalizations.of(context)!.onboardingGoogleSignInIsNot,
         );
       } else {
         setState(() => _error = msg);
@@ -199,7 +198,7 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
           const SizedBox(height: 6),
           const OnboardingLogoMark(),
           const SizedBox(height: 20),
-          const OnboardingHeadline('Welcome back'),
+          OnboardingHeadline(AppLocalizations.of(context)!.onboardingWelcomeBack),
           const SizedBox(height: 8),
           OnboardingSupportText(_loginSubtext(coordinator)),
           const SizedBox(height: 24),
@@ -228,7 +227,7 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
                   label: l10n.authPasswordResetEmailLabel,
                   hint: l10n.messageEmailCom,
                   keyboardType: TextInputType.emailAddress,
-                  validator: validateEmail,
+                  validator: (v) => validateEmail(AppLocalizations.of(context)!, v),
                   autovalidateMode: _autovalidateMode,
                   onChanged: (_) => _persistEmail(),
                 ),
@@ -239,7 +238,7 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
                   controller: _passwordController,
                   label: l10n.fieldPassword,
                   hint: l10n.hintEnterPassword,
-                  validator: validatePassword,
+                  validator: (v) => validatePassword(AppLocalizations.of(context)!, v),
                   autovalidateMode: _autovalidateMode,
                 ),
                 Align(

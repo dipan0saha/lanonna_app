@@ -100,9 +100,9 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
   }
 
   String? _validateLastName(String? value) {
-    final required = validateOnboardingLastName(value);
+    final required = validateOnboardingLastName(AppLocalizations.of(context)!, value);
     if (required != null) return required;
-    return validateOnboardingProfileDisplayName(_firstName.text, value ?? '');
+    return validateOnboardingProfileDisplayName(AppLocalizations.of(context)!, _firstName.text, value ?? '');
   }
 
   Future<void> _pickPhoto() async {
@@ -174,7 +174,7 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
       if (mounted) context.pop();
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showAlert(context, apiErrorMessage(e));
+        AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -216,7 +216,7 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
                 kind: AppTextInputKind.personName,
                 controller: _firstName,
                 autovalidateMode: _autovalidateMode,
-                validator: validateOnboardingFirstName,
+                validator: (v) => validateOnboardingFirstName(AppLocalizations.of(context)!, v),
               ),
               AppLabeledTextFormField(
                 label: l10n.fieldLastName,
@@ -236,13 +236,13 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
                 controller: _phone,
                 keyboardType: TextInputType.phone,
                 autovalidateMode: _autovalidateMode,
-                validator: validateOptionalPhone,
+                validator: (v) => validateOptionalPhone(AppLocalizations.of(context)!, v),
               ),
               const SizedBox(height: 8),
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(AppLocalizations.of(context)!.accountDateOfBirthOptional),
-                subtitle: Text(_birthDateDisplay(context) ?? 'Select a date'),
+                subtitle: Text(_birthDateDisplay(context) ?? AppLocalizations.of(context)!.fieldSelectDate),
                 trailing: const Icon(Icons.calendar_today_outlined),
                 onTap: _saving ? null : _pickBirthDate,
               ),
@@ -263,7 +263,7 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
               const SizedBox(height: 20),
               FilledButton(
                 onPressed: _saving ? null : _save,
-                child: Text(_saving ? 'Saving…' : 'Save'),
+                child: Text(_saving ? AppLocalizations.of(context)!.notificationPrefsSaving : AppLocalizations.of(context)!.notificationPrefsSave),
               ),
             ],
           ),

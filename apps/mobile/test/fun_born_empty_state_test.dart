@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/domain/baby_summary.dart';
 import 'package:lanonna/core/network/connectivity_service.dart';
@@ -48,7 +49,7 @@ void main() {
     final baby = const BabySummary(
       id: 'b1',
       name: 'Parker',
-      lifecycleStatus: 'born',
+      lifecycle: BabyLifecycle.born,
       role: 'owner',
       namesClosed: true,
       predictionsClosed: true,

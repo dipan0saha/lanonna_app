@@ -313,8 +313,6 @@
     }
   },
   "actionRemove": "Remove",
-  "funGenderBoy": "Boy",
-  "funGenderGirl": "Girl",
   "actionAdd": "Add",
   "funViewWhoVoted": "View who voted",
   "photoDeleteConfirmTitle": "Delete this photo?",
@@ -731,5 +729,473 @@
         "type": "String"
       }
     }
-  }
+  },
+  "lifecycleBorn": "Born",
+  "genderBoy": "Boy",
+  "genderGirl": "Girl",
+  "genderNotSure": "Not sure yet",
+  "exportStatusPending": "Queued",
+  "exportStatusRunning": "Preparing",
+  "exportStatusReady": "Ready",
+  "exportStatusFailed": "Failed",
+  "digestRealtime": "Real-time",
+  "digestDaily": "Daily digest",
+  "digestWeekly": "Weekly digest",
+  "digestSummaryRealtime": "Real-time updates",
+  "digestSummaryDaily": "Daily email summary",
+  "digestSummaryWeekly": "Weekly email summary",
+  "invitationStatusPending": "Pending",
+  "invitationStatusAccepted": "Accepted",
+  "invitationStatusExpired": "Expired",
+  "invitationStatusRevoked": "Revoked",
+  "inviteEmailPending": "Pending — email sending",
+  "inviteEmailSent": "Invite email sent",
+  "inviteEmailFailed": "Email failed to send",
+  "commonMe": "Me",
+  "settingsCouldNotOpenEmailTo": "Could not open email to {supportEmail}. Copy link?",
+  "@settingsCouldNotOpenEmailTo": {
+    "placeholders": {
+      "supportEmail": {
+        "type": "String"
+      }
+    }
+  },
+  "homeConfirmTheDateOfBirth": "Confirm the date of birth. Your home will update to celebrate your baby.",
+  "homeDateOfBirthCannotBe": "Date of birth cannot be in the future.",
+  "homeYoullBeNotifiedTheMoment": "You'll be notified the moment {babyName} arrives.",
+  "@homeYoullBeNotifiedTheMoment": {
+    "placeholders": {
+      "babyName": {
+        "type": "String"
+      }
+    }
+  },
+  "homeViewAnnouncement": "🎀 View Announcement",
+  "homeShareToInstagram": "📸 Share to Instagram",
+  "homeEveryoneYouveInvitedHasBeen": "Everyone you've invited has been notified.",
+  "homeDaysToDueDate": "Days to due date · {dueDateLabel}",
+  "@homeDaysToDueDate": {
+    "placeholders": {
+      "dueDateLabel": {
+        "type": "String"
+      }
+    }
+  },
+  "homeDaysToDueDateHeading": "DAYS TO DUE DATE",
+  "homeCouldNotUpdateBaby": "Could not update baby: {reason}",
+  "@homeCouldNotUpdateBaby": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "calendarOnlyOwnersCanCreateOr": "Only owners can create or edit calendar events.",
+  "calendarBabyProfileIsStillLoading": "Baby profile is still loading. Try again.",
+  "calendarEnterAnEventTitleTo": "Enter an event title to continue.",
+  "calendarSaveChanges": "Save Changes",
+  "calendarSaveEvent": "Save Event",
+  "calendarEditEvent": "Edit Event",
+  "calendarNewEvent": "New Event",
+  "calendarAddUltrasoundsShowersOrThe": "Add ultrasounds, showers, or the gender reveal so family knows when to celebrate.",
+  "calendarNothingOnTheCalendarYet": "Nothing on the calendar yet — check back soon.",
+  "calendarAddEventCta": "+ Add Event",
+  "calendarCouldNotLoadEventsPull": "Could not load events. Pull to refresh or try again.",
+  "calendarWhen": "When",
+  "calendarLocation": "Location",
+  "calendarYourRsvp": "Your RSVP",
+  "calendarComments": "Comments",
+  "suggestionsLoadFailed": "Could not load suggestions: {reason}",
+  "@suggestionsLoadFailed": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "calendarEventAddedToCalendar": "Event added to calendar",
+  "calendarPhotoOptional": "Photo (optional)",
+  "shellYoureTheOwnerOfOne": "You're the Owner of one and a Follower of another.",
+  "shellChooseWhichBabyProfileTo": "Choose which baby profile to view.",
+  "galleryFavorites": "Favorites",
+  "galleryAllPhotos": "All photos",
+  "galleryRecentActivity": "Recent activity",
+  "galleryPhotoUploaded": "Photo uploaded",
+  "galleryUploadFailed": "Upload failed: {reason}",
+  "@galleryUploadFailed": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "galleryPhotoProcessingIsTakingLonger": "Photo processing is taking longer than usual. Pull to refresh the gallery.",
+  "galleryThisPhotoIsNoLonger": "This photo is no longer available.",
+  "galleryNoCaption": "No caption",
+  "galleryAddYourFirstPhotoTo": "Add your first photo to start sharing {name}'s journey with family.",
+  "@galleryAddYourFirstPhotoTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "galleryOnceAPhotoIsShared": "Once a photo is shared, it will show up here for everyone to enjoy.",
+  "galleryAddPhoto": "+ Add Photo",
+  "funPredictions": "Predictions",
+  "funNoVotesYet": "No votes yet",
+  "funNoGuessesYet": "No guesses yet",
+  "funNoGuessesYetBeThe": "No guesses yet - be the first!",
+  "funNoNameIdeasWereSaved": "No name ideas were saved before baby arrived.",
+  "funSuggestANameBelowEveryone": "Suggest a name below — everyone gets a say.",
+  "funBoys": "Boys",
+  "funGirls": "Girls",
+  "funUnlike": "Unlike {suggestedName}",
+  "@funUnlike": {
+    "placeholders": {
+      "suggestedName": {
+        "type": "String"
+      }
+    }
+  },
+  "funLove": "Love {suggestedName}",
+  "@funLove": {
+    "placeholders": {
+      "suggestedName": {
+        "type": "String"
+      }
+    }
+  },
+  "registryOnlyOwnersCanEditThe": "Only owners can edit the shipping address.",
+  "registryCouldNotLoadShippingAddress": "Could not load shipping address: {e}",
+  "@registryCouldNotLoadShippingAddress": {
+    "placeholders": {
+      "e": {
+        "type": "String"
+      }
+    }
+  },
+  "registryEditRegistryItem": "Edit Registry Item",
+  "registryAddRegistryItem": "Add Registry Item",
+  "registryIllBuyThis": "I'll buy this",
+  "registryAddTheThingsYourBaby": "Add the things your baby will need so family knows what to bring.",
+  "registryNothingsBeenAddedToThe": "Nothing's been added to the registry yet — check back soon.",
+  "registryAddItemCta": "+ Add Item",
+  "babyBabyCreated": "Baby created",
+  "babyBabyUpdated": "Baby updated",
+  "babyProfilePhotoFailed": "{createdLabel}; profile photo failed: {reason}",
+  "@babyProfilePhotoFailed": {
+    "placeholders": {
+      "createdLabel": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "babyProfilePhotoSavedGalleryUpload": "Profile photo saved; gallery upload failed",
+  "babyGalleryUploadFailed": "{createdLabel}; gallery upload failed",
+  "@babyGalleryUploadFailed": {
+    "placeholders": {
+      "createdLabel": {
+        "type": "String"
+      }
+    }
+  },
+  "babyExpectedDueDate": "Expected Due Date",
+  "babyCreateBaby": "Create Baby",
+  "babyExpectedDueDateCannotBe": "Expected due date cannot be in the past.",
+  "babyProfilePhotoOptional": "Profile photo (optional)",
+  "babyUpdateYourBabysProfile": "Update your baby's profile",
+  "babyCreateYourBabysProfile": "Create your baby's profile",
+  "babyYouCanAlwaysAddOr": "You can always add or change these details later.",
+  "babyAlreadyBorn": "Already Born",
+  "babyGender": "Gender",
+  "babyTapContinueToTryAgain": "Tap Continue to try again.",
+  "babyTapCreateBabyToTry": "Tap Create Baby to try again.",
+  "accountShowPassword": "Show password",
+  "accountHidePassword": "Hide password",
+  "accountNoBabyProfileYouOwn": "No baby profile you own yet.",
+  "accountExpectedDueDate": "Expected due date",
+  "accountTapToChoose": "Tap to choose",
+  "accountCouldntOpenTheDownloadCopy": "Couldn't open the download. Copy link?",
+  "accountRequesting": "Requesting…",
+  "accountRequestNewExport": "Request new export",
+  "accountPhotosSquished": "Photos Squished",
+  "accountEventsAttended": "Events Attended",
+  "accountItemsBought": "Items Bought",
+  "accountPendingInvite": "Pending invite",
+  "accountAccepted": "Accepted · {formatted}",
+  "@accountAccepted": {
+    "placeholders": {
+      "formatted": {
+        "type": "String"
+      }
+    }
+  },
+  "accountInviteEmailQueued": "Invite email queued",
+  "announcementFamily": "Family",
+  "announcementOptional": "Optional",
+  "announcementSaveAnnouncement": "Save Announcement",
+  "announcementOurBabyAnnouncementIsHere": "Our baby announcement is here!",
+  "announcementMeet": "Meet {name}!",
+  "@announcementMeet": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "announcementBabyAnnouncement": "Baby announcement",
+  "onboardingWeCouldntLoadYourBaby": "We couldn't load your baby profile. Check your connection and try again.",
+  "onboardingAtLeast6CharactersWith": "At least 6 characters, with a number or symbol.",
+  "onboardingWePulledInYourDetails": "We pulled in your details. Add a photo so family knows who's who.",
+  "onboardingCompleteYourProfile": "Complete your profile",
+  "onboardingGetStarted": "Get started",
+  "onboardingNext": "Next",
+  "onboardingCouldNotSendVerificationEmail": "Could not send verification email. Please try again.",
+  "onboardingYourEmail": "your email",
+  "onboardingTheOwner": "The owner",
+  "onboardingWelcomeToSCircle": "Welcome to {babyName}'s circle",
+  "@onboardingWelcomeToSCircle": {
+    "placeholders": {
+      "babyName": {
+        "type": "String"
+      }
+    }
+  },
+  "onboardingAddedYouAs": "{inviter} added you as",
+  "@onboardingAddedYouAs": {
+    "placeholders": {
+      "inviter": {
+        "type": "String"
+      }
+    }
+  },
+  "onboardingThisIsHowYoullAppear": "This is how you'll appear to the rest of the family. {inviter} can update it anytime from their side.",
+  "@onboardingThisIsHowYoullAppear": {
+    "placeholders": {
+      "inviter": {
+        "type": "String"
+      }
+    }
+  },
+  "onboardingOpen": "Open",
+  "onboardingAcceptInvitation": "Accept Invitation",
+  "onboardingReliveEveryMilestoneInThe": "Relive every milestone in the Gallery",
+  "onboardingBabyIsAlreadyHereSee": "Baby is already here. See the first photos and everything since.",
+  "onboardingVoteGuessInFamilyFun": "Vote & guess in Family Fun",
+  "onboardingSuggestNamesVoteOnFavorites": "Suggest names, vote on favorites, and guess the birthdate. Results reveal once baby arrives.",
+  "onboardingWelcomeYoureIn": "Welcome, you're in!",
+  "onboardingAPrivateSpaceJustFor": "A private space just for the family and friends closest to your circle.",
+  "onboardingSquishPhotosLeaveComments": "Squish photos & leave comments",
+  "onboardingTapTheHeartToSquish": "Tap the heart to \"squish\" any photo the family shares.",
+  "onboardingNeverMissWhatsNext": "Never miss what's next",
+  "onboardingSeeUpcomingEventsLikeGender": "See upcoming events, like gender reveals and baby showers, and RSVP right from the app.",
+  "onboardingGetUpdatesYourWay": "Get updates your way",
+  "onboardingChooseHowOftenYouHear": "Choose how often you hear from us: real-time, daily, or a weekly digest. You can change this anytime.",
+  "onboardingFollowerGetStarted": "Get Started",
+  "onboardingAcceptJoinAsOwner": "Accept & Join as Owner",
+  "onboardingYourCoParent": "your co-parent",
+  "onboardingSignInToAcceptYour": "Sign in to accept your invitation and continue.",
+  "onboardingSignInToContinueSetting": "Sign in to continue setting up your family space.",
+  "onboardingGoogleSignInIsNot": "Google Sign-In is not configured for this Android build yet. Use email/password, or enable Google in Firebase for lanonna-dev.",
+  "onboardingWelcomeBack": "Welcome back",
+  "onboardingAiSuggestedByStageAnd": "AI-suggested by stage and age",
+  "onboardingAddYourFirstMoment": "Add your first moment",
+  "onboardingTotallyOptionalButItHelps": "Totally optional, but it helps family feel like there's already something here.",
+  "onboardingSeedsTheVoteInFamily": "Seeds the vote in Family Fun",
+  "onboardingFromYourCameraOrLibrary": "From your camera or library",
+  "onboardingYourRelationshipToBaby": "Your relationship to baby",
+  "invitationsAlreadyOnTheFamily": "Already on the family",
+  "invitationsInvitationAlreadyPending": "Invitation already pending",
+  "invitationsAddAnotherPerson": "Add another person",
+  "invitationsInviteFamilyFriends": "Invite family & friends",
+  "invitationsAddThePeopleYouWant": "Add the people you want to share this with. You can always invite more later.",
+  "invitationsWellSendEachPersonA": "We'll send each person a private link. It expires in 14 days.",
+  "invitationsAFamilyMember": "A family member",
+  "invitationsYoureAlreadyAMember": "You're already a member",
+  "invitationsAsACoOwnerYoull": "As a co-owner, you'll have full access to edit, invite, and manage, just like the person who invited you.",
+  "invitationsAPrivateSpaceJustFor": "A private space just for family & friends. Nothing here is public.",
+  "invitationsInvitationUnavailable": "Invitation unavailable",
+  "homeInvitesNotifiedWithLine": "{line}. Everyone you've invited has been notified.",
+  "@homeInvitesNotifiedWithLine": {
+    "placeholders": {
+      "line": {
+        "type": "String"
+      }
+    }
+  },
+  "invitationsInvitedYouToCoOwn": "{inviter} invited you to co-own",
+  "@invitationsInvitedYouToCoOwn": {
+    "placeholders": {
+      "inviter": {
+        "type": "String"
+      }
+    }
+  },
+  "invitationsInvitedYouToFollow": "{inviter} invited you to follow",
+  "@invitationsInvitedYouToFollow": {
+    "placeholders": {
+      "inviter": {
+        "type": "String"
+      }
+    }
+  },
+  "eventRsvpGoingCount": "{count} going",
+  "@eventRsvpGoingCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "eventRsvpMaybeCount": "{count} maybe",
+  "@eventRsvpMaybeCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "errorAccountDeleted": "This account was deleted.",
+  "errorOffline": "You're offline. Check your connection and try again.",
+  "errorNetwork": "Couldn't reach the server. Check your connection and try again.",
+  "errorGeneric": "Something went wrong. Please try again.",
+  "errorPhotoTooLarge": "Photo exceeds the maximum size ({megabytes} MB).",
+  "@errorPhotoTooLarge": {
+    "placeholders": {
+      "megabytes": {
+        "type": "String"
+      }
+    }
+  },
+  "photoSourceHint": "JPEG or PNG, up to {megabytes}MB",
+  "@photoSourceHint": {
+    "placeholders": {
+      "megabytes": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteErrorExpired": "This invitation has expired. Ask the family to send a new invite.",
+  "inviteErrorRevoked": "This invitation was revoked. Ask the family to send a new invite.",
+  "inviteErrorAlreadyUsed": "This invitation was already used. Sign in with the account that accepted it.",
+  "inviteErrorNotFound": "This invitation link is invalid or was revoked.",
+  "inviteErrorMaxOwners": "This baby already has the maximum number of owners.",
+  "inviteErrorAlreadyMember": "You are already part of this baby's circle.",
+  "inviteErrorEmailMismatch": "Sign in with the email address that received the invitation.",
+  "inviteErrorGeneric": "Could not accept this invitation. Please try again.",
+  "inviteErrorOffline": "Connect to the internet to open this invitation.",
+  "inviteErrorLoadFailed": "Could not load this invitation. Try again.",
+  "validationEmailRequired": "Email is required",
+  "validationEmailInvalid": "Enter a valid email",
+  "validationPasswordTooShort": "Password must be at least 6 characters",
+  "validationPasswordNeedsSymbol": "Include a number or symbol",
+  "validationDisplayNameRequired": "Display name is required",
+  "validationDisplayNameTooLong": "Display name is too long",
+  "validationFirstNameRequired": "First name is required",
+  "validationLastNameRequired": "Last name is required",
+  "validationPhoneInvalid": "Enter a valid phone number",
+  "validationTermsRequired": "Please accept the terms to continue",
+  "validationRelationshipRequired": "Select your relationship to baby",
+  "validationNameRequired": "Name is required",
+  "validationItemNameRequired": "Item name is required",
+  "validationStreetRequired": "Street address is required",
+  "validationCityRequired": "City is required",
+  "validationPostalCodeRequired": "Zip / Postal code is required",
+  "validationCountryRequired": "Select a country",
+  "validationUrlInvalid": "Enter a valid link, e.g. https://…",
+  "authErrorTooManyAttempts": "Too many attempts. Wait a few minutes, then try Resend email again.",
+  "authErrorVerifyLinkExpired": "This verification link has expired or was already used. Tap Resend email for a new link.",
+  "authErrorVerifyLinkFailed": "Could not verify your email from this link. Try Resend email or open the newest message in your inbox.",
+  "linkOpenFailedCopy": "Couldn't open the link. Copy link?",
+  "linkCopyAction": "Copy link",
+  "linkCopied": "Link copied",
+  "storeOpenFailedCopy": "Couldn't open the store. Copy link?",
+  "inviteBabyAlreadyHere": "Already here",
+  "inviteBabyOnTheWay": "On the way",
+  "inviteBabyArriving": "Arriving {date}",
+  "@inviteBabyArriving": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "lifecycleBornOn": "Born {date}",
+  "@lifecycleBornOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "lifecycleDueOn": "Due {date}",
+  "@lifecycleDueOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "ownerCarouselTitle1": "Your baby's story, in one private place",
+  "ownerCarouselBody1": "Photos, updates, and everything in between, visible only to the people you invite.",
+  "ownerCarouselTitle2": "Everyone gets to feel close",
+  "ownerCarouselBody2": "Grandparents, aunts, uncles, and friends can follow along, no matter how far away they live.",
+  "ownerCarouselTitle3": "Celebrate every milestone together",
+  "ownerCarouselBody3": "Calendar events, a shared registry, and fun ways to mark the big days.",
+  "ownerCarouselTitle4": "Never lose a moment",
+  "ownerCarouselBody4": "Every photo and comment, saved in one safe place, for good.",
+  "relativeTimeJustNow": "Just now",
+  "relativeTimeYesterday": "Yesterday",
+  "relativeTimeMinutesAgo": "{count, plural, =1{1 minute ago} other{{count} minutes ago}}",
+  "@relativeTimeMinutesAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "relativeTimeHoursAgo": "{count, plural, =1{1 hour ago} other{{count} hours ago}}",
+  "@relativeTimeHoursAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "relativeTimeDaysAgo": "{count, plural, =1{1 day ago} other{{count} days ago}}",
+  "@relativeTimeDaysAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "calendarWeekdaySun": "Su",
+  "calendarWeekdayMon": "Mo",
+  "calendarWeekdayTue": "Tu",
+  "calendarWeekdayWed": "We",
+  "calendarWeekdayThu": "Th",
+  "calendarWeekdayFri": "Fr",
+  "calendarWeekdaySat": "Sa",
+  "onboardingCompleteProfileSubtext": "Add your name and photo so family knows who's who.",
+  "activityEmptyDefault": "Nothing yet - activity will show up here.",
+  "photoAddAction": "Add a photo",
+  "photoChangeAction": "Change photo",
+  "babyNameDefault": "Baby",
+  "personNameFallback": "Family member",
+  "relationshipWife": "Wife",
+  "relationshipHusband": "Husband",
+  "relationshipMother": "Mother",
+  "relationshipFather": "Father",
+  "relationshipGrandma": "Grandma",
+  "relationshipGrandpa": "Grandpa",
+  "relationshipAunt": "Aunt",
+  "relationshipUncle": "Uncle",
+  "relationshipGodmother": "Godmother",
+  "relationshipGodfather": "Godfather",
+  "relationshipFamilyFriend": "Family Friend"
 }

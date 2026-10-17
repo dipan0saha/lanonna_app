@@ -90,7 +90,7 @@ class GalleryPhotoGrid extends StatelessWidget {
         final label =
             (photo.caption != null && photo.caption!.trim().isNotEmpty)
             ? photo.caption!.trim()
-            : 'Photo';
+            : AppLocalizations.of(context)!.eventPhotoLabel;
         return AppSemantics.button(
           index == 0 ? 'gallery_photo_first' : 'gallery_photo_${photo.id}',
           tile,

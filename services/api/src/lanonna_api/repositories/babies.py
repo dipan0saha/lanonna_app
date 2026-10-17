@@ -6,6 +6,19 @@ from typing import Any
 from lanonna_api.db import get_connection
 from lanonna_api.repositories._paging import limit_offset_clause
 
+# Active owners of baby `b`, computed inside the same statement as the baby row
+# so list endpoints never issue a follow-up query per baby. Every baby summary
+# row carries it; `baby_summary_from_row` derives `can_leave` from it.
+ACTIVE_OWNER_COUNT_COLUMN = """
+    (
+        SELECT COUNT(*)::int
+        FROM baby_memberships owners
+        WHERE owners.baby_profile_id = b.id
+          AND owners.role = 'owner'
+          AND owners.removed_at IS NULL
+    ) AS active_owner_count
+"""
+
 
 def list_babies_for_user(
     firebase_uid: str,
@@ -26,7 +39,8 @@ def list_babies_for_user(
                 b.lifecycle_status,
                 b.avatar_url,
                 m.role,
-                m.relationship_label
+                m.relationship_label,
+                {ACTIVE_OWNER_COUNT_COLUMN}
             FROM baby_memberships m
             JOIN baby_profiles b ON b.id = m.baby_profile_id
             WHERE m.firebase_uid = %s
@@ -86,6 +100,7 @@ def create_baby_with_owner_membership(
     result = dict(baby)
     result["role"] = "owner"
     result["relationship_label"] = relationship_label
+    result["active_owner_count"] = 1  # the creator is the only member yet
     return result
 
 
@@ -118,7 +133,8 @@ def update_baby_for_owner(
               AND m.removed_at IS NULL
               AND b.deleted_at IS NULL
             RETURNING b.id, b.name, b.gender, b.expected_birth_date,
-                      b.actual_birth_date, b.lifecycle_status, b.avatar_url
+                      b.actual_birth_date, b.lifecycle_status, b.avatar_url,
+                      {ACTIVE_OWNER_COUNT_COLUMN}
             """,
             values,
         ).fetchone()
@@ -136,11 +152,12 @@ def get_baby_for_owner(
 ) -> dict[str, Any] | None:
     with get_connection() as conn:
         row = conn.execute(
-            """
+            f"""
             SELECT
                 b.id, b.name, b.gender, b.expected_birth_date,
                 b.actual_birth_date, b.lifecycle_status, b.avatar_url,
-                m.role, m.relationship_label
+                m.role, m.relationship_label,
+                {ACTIVE_OWNER_COUNT_COLUMN}
             FROM baby_profiles b
             JOIN baby_memberships m ON m.baby_profile_id = b.id
             WHERE b.id = %s
@@ -160,11 +177,12 @@ def get_baby_membership(
 ) -> dict[str, Any] | None:
     with get_connection() as conn:
         row = conn.execute(
-            """
+            f"""
             SELECT
                 b.id, b.name, b.gender, b.expected_birth_date,
                 b.actual_birth_date, b.lifecycle_status, b.avatar_url,
-                m.role, m.relationship_label
+                m.role, m.relationship_label,
+                {ACTIVE_OWNER_COUNT_COLUMN}
             FROM baby_profiles b
             JOIN baby_memberships m ON m.baby_profile_id = b.id
             WHERE b.id = %s

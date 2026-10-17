@@ -71,5 +71,5 @@ Future<bool> confirmDeleteComment(BuildContext context) async {
 }
 
 void showCommentError(BuildContext context, Object error) {
-  AppSnackBar.showAlert(context, apiErrorMessage(error));
+  AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, error));
 }

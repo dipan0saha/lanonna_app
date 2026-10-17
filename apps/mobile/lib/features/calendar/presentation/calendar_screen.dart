@@ -219,7 +219,7 @@ class _CalendarScreenState extends State<CalendarScreen>
     final l10n = AppLocalizations.of(context)!;
     final styles = context.textStyles;
     final monthLabel =
-        '${_monthName(_visibleMonth.month)} ${_visibleMonth.year}';
+        formatMonthYear(_visibleMonth, localeNameForFormatting(context));
     final daysWithEvents = _eventDays();
     final kind = resolveTabLoadKind(
       loading: _loading,
@@ -353,7 +353,7 @@ class _CalendarScreenState extends State<CalendarScreen>
                     ),
                     child: Row(
                       children: [
-                        const AppSectionCapsLabel('Upcoming'),
+                        AppSectionCapsLabel(AppLocalizations.of(context)!.labelUpcoming),
                         const Spacer(),
                         TextButton(
                           onPressed: _baby == null
@@ -384,9 +384,9 @@ class _CalendarScreenState extends State<CalendarScreen>
                           icon: Icons.event_outlined,
                           title: l10n.emptyEventsYet,
                           message: _isOwner
-                              ? 'Add ultrasounds, showers, or the gender reveal so family knows when to celebrate.'
-                              : 'Nothing on the calendar yet — check back soon.',
-                          actionLabel: _isOwner ? '+ Add Event' : null,
+                              ? AppLocalizations.of(context)!.calendarAddUltrasoundsShowersOrThe
+                              : AppLocalizations.of(context)!.calendarNothingOnTheCalendarYet,
+                          actionLabel: _isOwner ? AppLocalizations.of(context)!.calendarAddEventCta : null,
                           onAction: _isOwner ? _openCreateEvent : null,
                         ),
                       ),
@@ -414,24 +414,6 @@ class _CalendarScreenState extends State<CalendarScreen>
           : null,
     );
   }
-
-  String _monthName(int m) {
-    const names = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ];
-    return names[m - 1];
-  }
 }
 
 class _MonthGrid extends StatelessWidget {
@@ -455,7 +437,7 @@ class _MonthGrid extends StatelessWidget {
     final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
     final startWeekday = first.weekday % 7;
     final cells = <Widget>[
-      for (final label in AppMetrics.calendarWeekdayTwoLetter)
+      for (final label in calendarWeekdayHeaders(AppLocalizations.of(context)!))
         Center(child: Text(label, style: styles.labelSmall)),
     ];
     for (var i = 0; i < startWeekday; i++) {

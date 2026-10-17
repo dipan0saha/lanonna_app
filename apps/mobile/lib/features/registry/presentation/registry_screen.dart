@@ -150,12 +150,12 @@ class _RegistryScreenState extends State<RegistryScreen>
         children: [
           Row(
             children: [
-              const AppSectionCapsLabel('Shipping address'),
+              AppSectionCapsLabel(l10n.shippingAddressTitle),
               const Spacer(),
               if (_isOwner)
                 TextButton(
                   onPressed: _openShippingEditor,
-                  child: Text(hasAddress ? 'Edit' : 'Add'),
+                  child: Text(hasAddress ? l10n.actionEdit : l10n.actionAdd),
                 ),
             ],
           ),

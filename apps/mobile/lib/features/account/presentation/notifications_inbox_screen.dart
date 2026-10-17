@@ -50,7 +50,7 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _loadError = apiErrorMessage(e);
+        _loadError = apiErrorMessage(AppLocalizations.of(context)!, e);
         _loading = false;
       });
     }
@@ -65,7 +65,7 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
       await _load();
     } catch (e) {
       if (!mounted) return;
-      AppSnackBar.showAlert(context, apiErrorMessage(e));
+      AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
     } finally {
       if (mounted) setState(() => _markingAllRead = false);
     }

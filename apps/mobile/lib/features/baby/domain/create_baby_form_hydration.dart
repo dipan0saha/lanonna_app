@@ -1,35 +1,21 @@
 import '../../../core/domain/baby_summary.dart';
 import '../../../core/time/app_date_time.dart';
-import '../../onboarding/domain/baby_lifecycle.dart';
+import 'package:lanonna/core/domain/baby_gender.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import '../../onboarding/presentation/utils/onboarding_baby_helpers.dart';
-
-const _genderBoy = 'Boy';
-const _genderGirl = 'Girl';
-const _genderUnsure = 'Not sure yet';
-
-String genderPillFromApi(String? gender) {
-  switch (gender) {
-    case 'female':
-      return _genderGirl;
-    case 'male':
-      return _genderBoy;
-    default:
-      return _genderUnsure;
-  }
-}
 
 /// Maps server baby into onboarding create-baby form state when local draft is absent.
 class CreateBabyFormFromSummary {
   const CreateBabyFormFromSummary({
     required this.lifecycle,
-    required this.genderPill,
+    required this.gender,
     this.selectedDate,
     this.boyName = '',
     this.girlName = '',
   });
 
   final BabyLifecycle lifecycle;
-  final String genderPill;
+  final BabyGender gender;
   final DateTime? selectedDate;
   final String boyName;
   final String girlName;
@@ -38,9 +24,9 @@ class CreateBabyFormFromSummary {
     final lifecycle = baby.isBorn
         ? BabyLifecycle.born
         : BabyLifecycle.expecting;
-    var genderPill = genderPillFromApi(baby.gender);
-    if (lifecycle == BabyLifecycle.born && genderPill == _genderUnsure) {
-      genderPill = _genderBoy;
+    var gender = BabyGender.fromApi(baby.gender);
+    if (lifecycle == BabyLifecycle.born && gender == BabyGender.unknown) {
+      gender = BabyGender.male;
     }
 
     DateTime? selectedDate;
@@ -74,7 +60,7 @@ class CreateBabyFormFromSummary {
 
     return CreateBabyFormFromSummary(
       lifecycle: lifecycle,
-      genderPill: genderPill,
+      gender: gender,
       selectedDate: selectedDate,
       boyName: boyName,
       girlName: girlName,

@@ -1,4 +1,5 @@
 import '../../../../core/time/app_date_time.dart';
+import 'package:lanonna/core/domain/rsvp_status.dart';
 import '../../../../core/json/json_readers.dart';
 
 class CalendarEvent {
@@ -65,14 +66,14 @@ class RsvpAttendee {
   });
 
   final String firebaseUid;
-  final String status;
+  final RsvpStatus? status;
   final String displayName;
 
   factory RsvpAttendee.fromJson(Map<String, dynamic> json) {
     return RsvpAttendee(
       firebaseUid: json['firebase_uid'] as String? ?? '',
-      status: json['status'] as String? ?? '',
-      displayName: json['display_name'] as String? ?? 'Family member',
+      status: RsvpStatus.fromApi(json['status'] as String?),
+      displayName: json['display_name'] as String? ?? '',
     );
   }
 }
@@ -100,7 +101,7 @@ class EventComment {
       id: json['id'] as String,
       body: json['body'] as String,
       authorDisplayName:
-          json['author_display_name'] as String? ?? 'Family member',
+          json['author_display_name'] as String? ?? '',
       isMine: isMine,
       canEdit: json['can_edit'] as bool? ?? isMine,
       canDelete: json['can_delete'] as bool? ?? isMine,
@@ -127,7 +128,7 @@ class EventDetail extends CalendarEvent {
 
   final String? coverPhotoDisplayUrl;
   final RsvpSummary rsvpSummary;
-  final String? viewerRsvp;
+  final RsvpStatus? viewerRsvp;
   final List<RsvpAttendee> rsvpAttendees;
   final List<EventComment> comments;
 
@@ -148,7 +149,7 @@ class EventDetail extends CalendarEvent {
       rsvpSummary: RsvpSummary.fromJson(
         json['rsvp_summary'] as Map<String, dynamic>? ?? {},
       ),
-      viewerRsvp: json['viewer_rsvp'] as String?,
+      viewerRsvp: RsvpStatus.fromApi(json['viewer_rsvp'] as String?),
       rsvpAttendees: (json['rsvp_attendees'] as List<dynamic>? ?? [])
           .whereType<Map<String, dynamic>>()
           .map(RsvpAttendee.fromJson)

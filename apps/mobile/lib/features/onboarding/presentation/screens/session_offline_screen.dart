@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../core/api/api_error_message.dart';
 import '../../../../core/widgets/async_tab_body.dart';
 import '../app_session.dart';
 
@@ -16,7 +16,7 @@ class SessionOfflineScreen extends StatelessWidget {
     return Scaffold(
       body: AsyncTabBody(
         loading: session.isLoading,
-        error: offlineErrorMessage,
+        error: AppLocalizations.of(context)!.errorOffline,
         onRetry: session.refreshFromApi,
         child: const SizedBox.shrink(),
       ),

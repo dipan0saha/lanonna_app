@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/api/api_error_message.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -66,7 +68,8 @@ class _OnboardingCoOwnerInviteScreenState
       setState(() {
         _loading = false;
         _problemMessage = inviteAcceptUserMessage(
-          invitePreviewProblemCode(preview),
+            AppLocalizations.of(context)!,
+            invitePreviewProblemCode(preview),
         );
       });
       return;
@@ -85,7 +88,7 @@ class _OnboardingCoOwnerInviteScreenState
       } catch (e) {
         if (mounted) {
           setState(() {
-            _problemMessage = inviteLandingAcceptErrorMessage(e);
+            _problemMessage = apiErrorMessage(AppLocalizations.of(context)!, e);
           });
         }
       }
@@ -124,7 +127,7 @@ class _OnboardingCoOwnerInviteScreenState
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 22),
             child: OnboardingPrimaryButton(
-              label: preview.isAccepted ? 'Open' : 'Accept & Join as Owner',
+              label: preview.isAccepted ? AppLocalizations.of(context)!.onboardingOpen : AppLocalizations.of(context)!.onboardingAcceptJoinAsOwner,
               onPressed: () => preview.isAccepted
                   ? openAcceptedInvitePreview(context)
                   : _accept(preview),

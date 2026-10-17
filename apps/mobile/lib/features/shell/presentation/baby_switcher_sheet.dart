@@ -70,7 +70,7 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _loadError = apiErrorMessage(e);
+        _loadError = apiErrorMessage(AppLocalizations.of(context)!, e);
       });
     }
   }
@@ -131,12 +131,12 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
     final owners = babies.where((b) => b.role == 'owner').length;
     final followers = babies.where((b) => b.role == 'follower').length;
     if (owners > 0 && followers > 0) {
-      return "You're the Owner of one and a Follower of another.";
+      return l10n.shellYoureTheOwnerOfOne;
     }
     if (owners > 1) {
-      return 'Choose which baby profile to view.';
+      return l10n.shellChooseWhichBabyProfileTo;
     }
-    return 'Choose which baby profile to view.';
+    return l10n.shellChooseWhichBabyProfileTo;
   }
 
   Future<void> _select(BabySummary baby) async {
@@ -186,7 +186,11 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
                     leading: BabyProfileAvatar(baby: baby),
                     title: Text(baby.name),
                     subtitle: Text(
-                      babyListSubtitle(baby, localeNameForFormatting(context)),
+                      babyListSubtitle(
+        AppLocalizations.of(context)!,
+        baby,
+        localeNameForFormatting(context),
+      ),
                     ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,

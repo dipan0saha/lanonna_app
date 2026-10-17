@@ -22,7 +22,7 @@ void main() {
                     OnboardingTermsFormField(
                       value: accepted,
                       autovalidateMode: AutovalidateMode.disabled,
-                      validator: validateTermsAccepted,
+                      validator: (v) => validateTermsAccepted(AppLocalizations.of(context)!, v),
                       onChanged: (v) => setState(() => accepted = v),
                       onTermsTap: () {},
                       onPrivacyTap: () {},
@@ -63,7 +63,7 @@ void main() {
                     OnboardingRelationshipFormField(
                       value: relationship,
                       autovalidateMode: AutovalidateMode.disabled,
-                      validator: validateOnboardingRelationshipToBaby,
+                      validator: (v) => validateOnboardingRelationshipToBaby(AppLocalizations.of(context)!, v),
                       onSelected: (label) =>
                           setState(() => relationship = label),
                     ),

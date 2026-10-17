@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/domain/baby_summary.dart';
@@ -18,7 +19,7 @@ class _Home extends HomeRepository {
   static const baby = BabySummary(
     id: 'baby-1',
     name: 'Parker',
-    lifecycleStatus: 'born',
+    lifecycle: BabyLifecycle.born,
     role: 'owner',
   );
 

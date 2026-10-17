@@ -383,35 +383,32 @@ def process_weekly_notification_digest(
         ):
             logger.info("weekly_digest_skip_http_cron_duplicate")
             return
+        # Unread counts are aggregated in the same statement as the candidate
+        # users, so the digest run does not issue one COUNT query per user.
         rows = conn.execute(
             """
-            SELECT firebase_uid
-            FROM app_users
-            WHERE deleted_at IS NULL
-              AND push_notifications_enabled = true
-              AND notification_digest = 'weekly'
+            SELECT u.firebase_uid, unread.n AS unread_count
+            FROM app_users u
+            JOIN LATERAL (
+                SELECT COUNT(*)::int AS n
+                FROM notifications n
+                WHERE n.firebase_uid = u.firebase_uid
+                  AND n.created_at >= now() - interval '7 days'
+                  AND n.read_at IS NULL
+            ) unread ON unread.n > 0
+            WHERE u.deleted_at IS NULL
+              AND u.push_notifications_enabled = true
+              AND u.notification_digest = 'weekly'
               AND (
-                last_weekly_digest_at IS NULL
-                OR last_weekly_digest_at < now() - interval '7 days'
+                u.last_weekly_digest_at IS NULL
+                OR u.last_weekly_digest_at < now() - interval '7 days'
               )
             """
         ).fetchall()
 
         for row in rows:
             uid = row["firebase_uid"]
-            count_row = conn.execute(
-                """
-                SELECT COUNT(*)::int AS n
-                FROM notifications
-                WHERE firebase_uid = %s
-                  AND created_at >= now() - interval '7 days'
-                  AND read_at IS NULL
-                """,
-                (uid,),
-            ).fetchone()
-            count = int(count_row["n"]) if count_row else 0
-            if count <= 0:
-                continue
+            count = int(row["unread_count"])
 
             title = "Your weekly update"
             body = (

@@ -74,6 +74,10 @@ class InboxNotificationRow extends StatelessWidget {
   String? _bodyLine(BuildContext context, InboxNotification notification) {
     final created = notification.createdAt;
     if (created == null) return null;
-    return formatRelativeTime(created, localeNameForFormatting(context));
+    return formatRelativeTime(
+      AppLocalizations.of(context)!,
+      created,
+      localeNameForFormatting(context),
+    );
   }
 }

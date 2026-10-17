@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -50,6 +51,7 @@ class _InviteAcceptBootstrapScreenState extends State<InviteAcceptBootstrapScree
         setState(() {
           _loading = false;
           _problemMessage = inviteAcceptUserMessage(
+            AppLocalizations.of(context)!,
             invitePreviewProblemCode(preview),
           );
         });
@@ -67,7 +69,11 @@ class _InviteAcceptBootstrapScreenState extends State<InviteAcceptBootstrapScree
       final canRetry = invitePreviewFetchCanRetry(e, offline: offline);
       setState(() {
         _loading = false;
-        _problemMessage = invitePreviewFetchUserMessage(e, offline: offline);
+        _problemMessage = invitePreviewFetchUserMessage(
+          AppLocalizations.of(context)!,
+          e,
+          offline: offline,
+        );
         _retryBootstrap = canRetry ? () => _bootstrap() : null;
       });
     }

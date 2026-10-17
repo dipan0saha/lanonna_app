@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../features/gallery/domain/gallery_routes.dart';
 import '../../../features/home/data/models/home_summary.dart';
 import '../app_semantics.dart';
 import '../../theme/app_colors.dart';
+import '../../time/app_date_time.dart';
 import '../../theme/app_metrics.dart';
 import '../../theme/la_nonna_theme.dart';
 import 'activity_event_icon.dart';
@@ -21,9 +23,6 @@ class ActivityFeedCard extends StatelessWidget {
       horizontal: AppMetrics.horizontalPadding,
     ),
   });
-
-  static const defaultEmptyMessage =
-      'Nothing yet - activity will show up here.';
 
   final List<HomeActivityItem> items;
   final bool showEmptyState;
@@ -51,7 +50,8 @@ class ActivityFeedCard extends StatelessWidget {
               ? Padding(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   child: Text(
-                    emptyMessage ?? defaultEmptyMessage,
+                    emptyMessage ??
+                        AppLocalizations.of(context)!.activityEmptyDefault,
                     textAlign: TextAlign.center,
                     style: context.textStyles.bodySmall?.copyWith(
                       fontSize: 12.5,
@@ -107,7 +107,11 @@ class _ActivityRow extends StatelessWidget {
                   actorDisplayName: item.actorDisplayName,
                 ),
                 const SizedBox(height: 2),
-                Text(formatActivityWhen(item.createdAt), style: timeStyle),
+                Text(formatActivityWhen(
+                    AppLocalizations.of(context)!,
+                    item.createdAt,
+                    localeNameForFormatting(context),
+                  ), style: timeStyle),
               ],
             ),
           ),
@@ -123,7 +127,7 @@ class _ActivityRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         child: content,
       ),
-      label: summary.isEmpty ? 'Activity' : summary,
+      label: summary.isEmpty ? AppLocalizations.of(context)!.activityTitle : summary,
     );
   }
 }
