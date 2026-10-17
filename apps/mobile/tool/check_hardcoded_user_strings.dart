@@ -92,18 +92,19 @@ final _letter = RegExp(r'\p{L}', unicode: true);
 final _wordSpaceWord = RegExp(r'\p{L}[^\n]*\s+[^\s]*\p{L}', unicode: true);
 final _leadingUpper = RegExp(r'^\s*\p{Lu}', unicode: true);
 
-/// The literal text a string expression contributes, with interpolated
-/// expressions dropped (taken from the AST, not by pattern-matching `$`).
-String? _literalText(StringLiteral node) {
+/// The literal text a string expression contributes, taken from the AST (not
+/// by pattern-matching `$`). Interpolated expressions become [slot], so
+/// `'$count going'` reads as `X going` (prose) while `'$a · $b'` has no
+/// letters of its own and is ignored.
+String? _literalText(StringLiteral node, {String slot = ''}) {
   if (node is SimpleStringLiteral) return node.value;
   if (node is StringInterpolation) {
     return node.elements
-        .whereType<InterpolationString>()
-        .map((e) => e.value)
+        .map((e) => e is InterpolationString ? e.value : slot)
         .join();
   }
   if (node is AdjacentStrings) {
-    final parts = node.strings.map(_literalText);
+    final parts = node.strings.map((s) => _literalText(s, slot: slot));
     if (parts.any((p) => p == null)) return null;
     return parts.join();
   }
@@ -112,14 +113,15 @@ String? _literalText(StringLiteral node) {
 
 final _allCapsToken = RegExp(r'^[A-Z0-9_-]+$');
 
-bool _readsAsProse(String text) {
-  if (!_letter.hasMatch(text)) return false;
-  final trimmed = text.trim();
+bool _readsAsProse(StringLiteral node) {
+  final text = _literalText(node);
+  if (text == null || !_letter.hasMatch(text)) return false;
+  final shaped = _literalText(node, slot: 'X')!.trim();
   // Route/API paths and URLs are identifiers, not copy.
-  if (trimmed.startsWith('/') || trimmed.contains('://')) return false;
+  if (shaped.startsWith('/') || shaped.contains('://')) return false;
   // HTTP verbs, env names, constants.
-  if (_allCapsToken.hasMatch(trimmed)) return false;
-  return _wordSpaceWord.hasMatch(text) || _leadingUpper.hasMatch(text);
+  if (_allCapsToken.hasMatch(text.trim())) return false;
+  return _wordSpaceWord.hasMatch(shaped) || _leadingUpper.hasMatch(text);
 }
 
 /// Callees whose string arguments are never rendered to users.
@@ -154,8 +156,7 @@ class _UserStringVisitor extends RecursiveAstVisitor<void> {
 
   void _check(StringLiteral node) {
     if (node.parent is AdjacentStrings) return; // reported as a whole
-    final text = _literalText(node);
-    if (text == null || !_readsAsProse(text)) return;
+    if (!_readsAsProse(node)) return;
     if (_inNonUserContext(node)) return;
     final value = node is SimpleStringLiteral ? node.value : node.toSource();
     if (allowlist.contains((relPath, value))) return;

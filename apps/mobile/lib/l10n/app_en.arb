@@ -1113,5 +1113,53 @@
   },
   "invitationsAsACoOwnerYoull": "As a co-owner, you'll have full access to edit, invite, and manage, just like the person who invited you.",
   "invitationsAPrivateSpaceJustFor": "A private space just for family & friends. Nothing here is public.",
-  "invitationsInvitationUnavailable": "Invitation unavailable"
+  "invitationsInvitationUnavailable": "Invitation unavailable",
+  "homeBorn2": "Born {formatted}",
+  "@homeBorn2": {
+    "placeholders": {
+      "formatted": {
+        "type": "String"
+      }
+    }
+  },
+  "homeEveryoneYouveInvitedHasBeen2": "{line}. Everyone you've invited has been notified.",
+  "@homeEveryoneYouveInvitedHasBeen2": {
+    "placeholders": {
+      "line": {
+        "type": "String"
+      }
+    }
+  },
+  "invitationsInvitedYouToCoOwn2": "{inviter} invited you to co-own",
+  "@invitationsInvitedYouToCoOwn2": {
+    "placeholders": {
+      "inviter": {
+        "type": "String"
+      }
+    }
+  },
+  "invitationsInvitedYouToFollow2": "{inviter} invited you to follow",
+  "@invitationsInvitedYouToFollow2": {
+    "placeholders": {
+      "inviter": {
+        "type": "String"
+      }
+    }
+  },
+  "eventRsvpGoingCount": "{count} going",
+  "@eventRsvpGoingCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "eventRsvpMaybeCount": "{count} maybe",
+  "@eventRsvpMaybeCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

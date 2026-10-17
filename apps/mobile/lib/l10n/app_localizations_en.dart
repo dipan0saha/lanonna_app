@@ -2301,4 +2301,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get invitationsInvitationUnavailable => 'Invitation unavailable';
+
+  @override
+  String homeBorn2(String formatted) {
+    return 'Born $formatted';
+  }
+
+  @override
+  String homeEveryoneYouveInvitedHasBeen2(String line) {
+    return '$line. Everyone you\'ve invited has been notified.';
+  }
+
+  @override
+  String invitationsInvitedYouToCoOwn2(String inviter) {
+    return '$inviter invited you to co-own';
+  }
+
+  @override
+  String invitationsInvitedYouToFollow2(String inviter) {
+    return '$inviter invited you to follow';
+  }
+
+  @override
+  String eventRsvpGoingCount(int count) {
+    return '$count going';
+  }
+
+  @override
+  String eventRsvpMaybeCount(int count) {
+    return '$count maybe';
+  }
 }

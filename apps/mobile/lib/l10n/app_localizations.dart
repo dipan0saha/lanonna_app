@@ -4077,6 +4077,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Invitation unavailable'**
   String get invitationsInvitationUnavailable;
+
+  /// No description provided for @homeBorn2.
+  ///
+  /// In en, this message translates to:
+  /// **'Born {formatted}'**
+  String homeBorn2(String formatted);
+
+  /// No description provided for @homeEveryoneYouveInvitedHasBeen2.
+  ///
+  /// In en, this message translates to:
+  /// **'{line}. Everyone you\'ve invited has been notified.'**
+  String homeEveryoneYouveInvitedHasBeen2(String line);
+
+  /// No description provided for @invitationsInvitedYouToCoOwn2.
+  ///
+  /// In en, this message translates to:
+  /// **'{inviter} invited you to co-own'**
+  String invitationsInvitedYouToCoOwn2(String inviter);
+
+  /// No description provided for @invitationsInvitedYouToFollow2.
+  ///
+  /// In en, this message translates to:
+  /// **'{inviter} invited you to follow'**
+  String invitationsInvitedYouToFollow2(String inviter);
+
+  /// No description provided for @eventRsvpGoingCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} going'**
+  String eventRsvpGoingCount(int count);
+
+  /// No description provided for @eventRsvpMaybeCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} maybe'**
+  String eventRsvpMaybeCount(int count);
 }
 
 class _AppLocalizationsDelegate

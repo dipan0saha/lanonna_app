@@ -80,7 +80,7 @@ class HomeBirthWelcomeCard extends StatelessWidget {
                   ),
                 ),
                 onPressed: () => context.push('/baby/$babyId/announcement'),
-                child: const AppButtonLabel('🎀 View Announcement'),
+                child: AppButtonLabel(AppLocalizations.of(context)!.homeViewAnnouncement),
               ),
               label: l10n.actionViewAnnouncement,
             ),
@@ -93,7 +93,7 @@ class HomeBirthWelcomeCard extends StatelessWidget {
                         context,
                         babyId,
                       ),
-                      child: const AppButtonLabel('📸 Share to Instagram'),
+                      child: AppButtonLabel(AppLocalizations.of(context)!.homeShareToInstagram),
                     ),
                     label: l10n.actionShareAnnouncementInstagram,
                   )
@@ -110,7 +110,7 @@ class HomeBirthWelcomeCard extends StatelessWidget {
     if (rawDate != null && rawDate.isNotEmpty) {
       final formatted = formatApiCalendarDate(rawDate, locale);
       if (formatted.isNotEmpty) {
-        parts.add('Born $formatted');
+        parts.add(AppLocalizations.of(context)!.homeBorn2(formatted));
       }
     }
     final weight = welcome.weightText?.trim();
@@ -123,8 +123,8 @@ class HomeBirthWelcomeCard extends StatelessWidget {
     var line = parts.join(' · ');
     if (welcome.everyoneNotified == true) {
       line = line.isEmpty
-          ? "Everyone you've invited has been notified."
-          : '$line. Everyone you\'ve invited has been notified.';
+          ? AppLocalizations.of(context)!.homeEveryoneYouveInvitedHasBeen
+          : AppLocalizations.of(context)!.homeEveryoneYouveInvitedHasBeen2(line);
     }
     return line.isEmpty ? null : line;
   }
