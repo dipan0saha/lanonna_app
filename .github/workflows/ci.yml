@@ -31,6 +31,8 @@ jobs:
           python -m venv /tmp/api-venv
           /tmp/api-venv/bin/pip install -q -r services/api/requirements.txt -r services/api/requirements-dev.txt
           /tmp/api-venv/bin/pip install -q -e packages/lanonna_activity_copy -e services/api
+      - name: Shared vocabulary package tests
+        run: /tmp/api-venv/bin/pytest -q packages/lanonna_activity_copy/tests
       - name: API unit + integration tests
         run: |
           PYTHONPATH=services/api/src /tmp/api-venv/bin/pytest -q services/api/tests

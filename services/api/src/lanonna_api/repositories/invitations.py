@@ -7,6 +7,17 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from lanonna_api.db import get_connection
+from lanonna_api.domain.errors import (
+    ConflictError,
+    ErrorCode,
+    ForbiddenError,
+    GoneError,
+    NotFoundError,
+)
+from lanonna_api.domain.owner_limit import (
+    ensure_owner_slot_for_accept,
+    owner_slots_remaining,
+)
 from lanonna_api.repositories._paging import limit_offset_clause
 from lanonna_api.repositories.memberships import (
     count_active_owners,
@@ -144,24 +155,57 @@ def prepare_invitation_for_resend(
     return invitation_id if invitation_id in prepared else None
 
 
+def _count_reserved_owner_slots(conn: Any, baby_profile_id: uuid.UUID) -> tuple[int, int]:
+    """(active owners, pending unexpired owner invites) for the owner limit."""
+    row = conn.execute(
+        """
+        SELECT
+            (SELECT COUNT(*)::int FROM baby_memberships
+             WHERE baby_profile_id = %s AND role = 'owner' AND removed_at IS NULL)
+                AS active_owners,
+            (SELECT COUNT(*)::int FROM invitations
+             WHERE baby_profile_id = %s AND role = 'owner' AND status = 'pending'
+               AND expires_at > now())
+                AS pending_owner_invites
+        """,
+        (baby_profile_id, baby_profile_id),
+    ).fetchone()
+    return int(row["active_owners"]), int(row["pending_owner_invites"])
+
+
 def write_batch_invitations(
     baby_profile_id: uuid.UUID,
     inviter_firebase_uid: str,
     *,
     resend_ids: list[uuid.UUID],
     new_invites: list[tuple[str, str, str | None]],
-) -> tuple[set[uuid.UUID], dict[str, uuid.UUID]]:
+) -> tuple[set[uuid.UUID], dict[str, uuid.UUID], set[str]]:
     """Re-arm undelivered invites and insert new ones in one transaction.
 
     ``new_invites`` rows are ``(normalized_email, role, relationship_label)``.
-    Returns the re-armed ids and ``email -> new invitation id``. An email that
-    gained a pending invite concurrently is left out of the map (the partial
-    unique index ``uq_invitations_pending_email`` decides), so callers report
-    it as a duplicate instead of failing the batch.
+    Returns the re-armed ids, ``email -> new invitation id``, and the emails of
+    new owner invites refused by the owner limit (``domain/owner_limit.py``:
+    active owners plus pending owner invites, counted under the baby row lock,
+    in submission order). An email that gained a pending invite concurrently is
+    left out of the map (the partial unique index ``uq_invitations_pending_email``
+    decides), so callers report it as a duplicate instead of failing the batch.
     """
     with get_connection() as conn:
         prepared = _prepare_for_resend(conn, baby_profile_id, resend_ids)
         created: dict[str, uuid.UUID] = {}
+        over_owner_limit: set[str] = set()
+        if any(role == "owner" for _, role, _ in new_invites):
+            lock_baby_profile_for_update(baby_profile_id, conn)
+            slots = owner_slots_remaining(*_count_reserved_owner_slots(conn, baby_profile_id))
+            allowed: list[tuple[str, str, str | None]] = []
+            for invite in new_invites:
+                if invite[1] == "owner":
+                    if slots == 0:
+                        over_owner_limit.add(invite[0])
+                        continue
+                    slots -= 1
+                allowed.append(invite)
+            new_invites = allowed
         if new_invites:
             expires_at = datetime.now(timezone.utc) + INVITE_EXPIRY
             tokens = [secrets.token_urlsafe(32) for _ in new_invites]
@@ -193,7 +237,7 @@ def write_batch_invitations(
                 ),
             ).fetchall()
             created = {row["invitee_email"]: row["id"] for row in rows}
-    return prepared, created
+    return prepared, created, over_owner_limit
 
 
 def fetch_invitation_preview_row(token: str) -> dict[str, Any] | None:
@@ -214,7 +258,7 @@ def fetch_invitation_preview_row(token: str) -> dict[str, Any] | None:
                 b.lifecycle_status,
                 b.expected_birth_date,
                 b.actual_birth_date,
-                COALESCE(u.display_name, 'A family member') AS inviter_display_name
+                NULLIF(TRIM(u.display_name), '') AS inviter_display_name
             FROM invitations i
             JOIN baby_profiles b ON b.id = i.baby_profile_id AND b.deleted_at IS NULL
             JOIN app_users u ON u.firebase_uid = i.inviter_firebase_uid
@@ -226,13 +270,32 @@ def fetch_invitation_preview_row(token: str) -> dict[str, Any] | None:
     return dict(row) if row else None
 
 
+def _email_mismatch(invitee_email: str | None, signed_in_email: str | None) -> ForbiddenError:
+    return ForbiddenError(
+        ErrorCode.EMAIL_MISMATCH,
+        "Signed-in email does not match the invitation",
+        params={"invitee_email": invitee_email, "signed_in_email": signed_in_email},
+    )
+
+
+def _invitation_not_found() -> NotFoundError:
+    return NotFoundError(ErrorCode.NOT_FOUND, "Invitation not found")
+
+
 def accept_invitation_by_token(
     token: str,
     firebase_uid: str,
     user_email: str | None,
 ) -> dict[str, Any]:
+    """Accept an invitation in one transaction; raises typed errors on refusal.
+
+    Refusals: ``not_found`` (404), ``email_mismatch`` (403, invitee and
+    signed-in emails in ``params``), ``revoked`` / ``expired`` (410),
+    ``already_used`` / ``max_owners`` (409). A caller who is already a member
+    gets ``already_member: True`` instead of an error.
+    """
     if not user_email or not user_email.strip():
-        return {"error": "email_mismatch", "invitee_email": None, "signed_in_email": user_email}
+        raise _email_mismatch(None, user_email)
 
     token_hash = lookup_token_hash(token)
     normalized_user_email = user_email.strip().lower()
@@ -248,16 +311,12 @@ def accept_invitation_by_token(
             (token_hash,),
         ).fetchone()
         if inv is None:
-            return {"error": "not_found"}
+            raise _invitation_not_found()
 
         inv = dict(inv)
         invitee_email = str(inv["invitee_email"]).strip().lower()
         if normalized_user_email != invitee_email:
-            return {
-                "error": "email_mismatch",
-                "invitee_email": invitee_email,
-                "signed_in_email": normalized_user_email,
-            }
+            raise _email_mismatch(invitee_email, normalized_user_email)
 
         baby_profile_id = inv["baby_profile_id"]
         existing = conn.execute(
@@ -276,7 +335,9 @@ def accept_invitation_by_token(
             "SELECT name FROM baby_profiles WHERE id = %s AND deleted_at IS NULL",
             (baby_profile_id,),
         ).fetchone()
-        baby_name = baby_row["name"] if baby_row else "Baby"
+        if baby_row is None:
+            raise _invitation_not_found()
+        baby_name = baby_row["name"]
 
         if existing is not None:
             return {
@@ -288,27 +349,25 @@ def accept_invitation_by_token(
 
         invite_status = inv["status"]
         if invite_status == "revoked":
-            return {"error": "revoked"}
+            raise GoneError(ErrorCode.REVOKED, "Invitation revoked")
         if invite_status == "accepted":
-            return {"error": "already_used"}
-
+            raise ConflictError(ErrorCode.ALREADY_USED, "Invitation already accepted")
         if invite_status != "pending":
-            return {"error": "expired"}
+            raise GoneError(ErrorCode.EXPIRED, "Invitation expired")
 
         expires_at = inv["expires_at"]
         if expires_at.tzinfo is None:
             expires_at = expires_at.replace(tzinfo=timezone.utc)
         if expires_at < datetime.now(timezone.utc):
-            return {"error": "expired"}
+            raise GoneError(ErrorCode.EXPIRED, "Invitation expired")
 
         invited_role = inv["role"]
         if invited_role == "owner":
             # Serialize concurrent co-owner accepts per baby: the lock is held until this
             # transaction commits, so the owner count below cannot go stale (M-02).
             if lock_baby_profile_for_update(baby_profile_id, conn) is None:
-                return {"error": "not_found"}
-            if count_active_owners(baby_profile_id, conn) >= 2:
-                return {"error": "max_owners"}
+                raise _invitation_not_found()
+            ensure_owner_slot_for_accept(count_active_owners(baby_profile_id, conn))
 
         removed_row = conn.execute(
             """
@@ -361,5 +420,3 @@ def accept_invitation_by_token(
         "baby_name": baby_name,
         "inviter_firebase_uid": inv["inviter_firebase_uid"],
     }
-
-

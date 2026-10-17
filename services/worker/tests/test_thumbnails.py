@@ -60,6 +60,10 @@ def test_process_gcs_finalize_happy_path(
     assert payload["baby_profile_id"] == str(baby_id)
     assert payload["deep_link"] == f"/gallery/photo/{photo_id}"
     assert payload["notification_channel"] == "gallery"
+    assert payload["kind"] == "photo_shared"
+    assert payload["params"] == {}
+    assert payload["actor_firebase_uid"] == payload["exclude_firebase_uid"]
+    assert "title" not in payload and "body" not in payload
 
 
 @patch("lanonna_worker.thumbnails.mark_photo_ready")

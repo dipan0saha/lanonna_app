@@ -146,8 +146,6 @@ class MemberRow {
     required this.displayName,
     required this.role,
     required this.canRemove,
-    this.email,
-    this.relationshipLabel,
     this.joinedAt,
   });
 
@@ -155,8 +153,6 @@ class MemberRow {
   final String displayName;
   final String role;
   final bool canRemove;
-  final String? email;
-  final String? relationshipLabel;
   final String? joinedAt;
 
   factory MemberRow.fromJson(Map<String, dynamic> json) {
@@ -165,8 +161,6 @@ class MemberRow {
       displayName: json['display_name'] as String? ?? '',
       role: json['role'] as String? ?? 'follower',
       canRemove: json['can_remove'] as bool? ?? false,
-      email: json['email'] as String?,
-      relationshipLabel: json['relationship_label'] as String?,
       joinedAt: json['joined_at'] as String?,
     );
   }
@@ -397,9 +391,9 @@ class AccountRepository {
     await _api.postJson('/v1/me/delete-account', body: {'confirm': true});
   }
 
-  Future<DeleteAccountEligibility> fetchDeleteAccountEligibility() async {
-    final json = await _api.getJson('/v1/me/delete-account/eligibility');
-    return DeleteAccountEligibility.fromJson(json);
+  Future<DeleteAccountPreview> fetchDeleteAccountPreview() async {
+    final json = await _api.getJson('/v1/me/delete-account/preview');
+    return DeleteAccountPreview.fromJson(json);
   }
 }
 
@@ -410,23 +404,18 @@ class SoleOwnedBaby {
   final String name;
 }
 
-class DeleteAccountEligibility {
-  const DeleteAccountEligibility({
-    required this.allowed,
-    required this.blockers,
-    this.soleOwnedBabies = const [],
-  });
+/// What deleting the account will do (`GET /v1/me/delete-account/preview`).
+///
+/// Deletion is never blocked (FR-SET-005); the preview lists the baby profiles
+/// the caller owns alone, which are deleted with the account.
+class DeleteAccountPreview {
+  const DeleteAccountPreview({this.soleOwnedBabies = const []});
 
-  final bool allowed;
-  final List<String> blockers;
   final List<SoleOwnedBaby> soleOwnedBabies;
 
-  factory DeleteAccountEligibility.fromJson(Map<String, dynamic> json) {
-    final raw = json['blockers'];
+  factory DeleteAccountPreview.fromJson(Map<String, dynamic> json) {
     final babies = json['sole_owned_babies'];
-    return DeleteAccountEligibility(
-      allowed: json['allowed'] as bool? ?? false,
-      blockers: raw is List ? raw.map((e) => e.toString()).toList() : const [],
+    return DeleteAccountPreview(
       soleOwnedBabies: babies is List
           ? babies.whereType<Map<String, dynamic>>().map((row) {
               return SoleOwnedBaby(

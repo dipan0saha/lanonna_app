@@ -5,6 +5,9 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 
+import pytest
+
+from lanonna_api.domain.owner_limit import MaxOwnersError
 from lanonna_api.repositories.invitations import accept_invitation_by_token
 
 
@@ -40,8 +43,8 @@ def _mock_conn(inv_row: dict, owner_count: int):
             result.fetchone.return_value = None
         elif "removed_at IS NOT NULL" in sql:
             result.fetchone.return_value = None
-        elif "FOR UPDATE" in sql:
-            result.fetchone.return_value = {"name": "Baby"}
+        elif "FOR UPDATE" in sql or "FROM baby_profiles" in sql:
+            result.fetchone.return_value = {"name": "Parker"}
         else:
             result.fetchone.return_value = None
         return result
@@ -82,19 +85,22 @@ def test_accept_owner_invite_locks_baby_before_owner_count():
 
         result = accept_invitation_by_token("token", "uid-co", "co@test.com")
 
-    assert result.get("error") is None
+    assert result["already_member"] is False
+    assert result["baby_name"] == "Parker"
     assert order == ["lock", "count"]
     lock_baby.assert_called_once()
     count_owners.assert_called_once()
 
 
-def test_accept_owner_invite_returns_max_owners_after_lock_when_full():
+def test_accept_owner_invite_raises_max_owners_after_lock_when_full():
     baby_id = uuid.uuid4()
     inv = _pending_invite_row(baby_id)
 
     with _mock_conn(inv, owner_count=2) as (_, count_owners, lock_baby):
-        result = accept_invitation_by_token("token", "uid-co", "co@test.com")
+        with pytest.raises(MaxOwnersError) as exc:
+            accept_invitation_by_token("token", "uid-co", "co@test.com")
 
-    assert result == {"error": "max_owners"}
+    assert exc.value.code == "max_owners"
+    assert exc.value.status_code == 409
     lock_baby.assert_called_once()
     count_owners.assert_called_once()

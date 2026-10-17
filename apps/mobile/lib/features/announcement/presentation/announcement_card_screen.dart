@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
+import '../../../core/domain/person_display_label.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/theme/app_metrics.dart';
@@ -177,7 +178,10 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          c['author_display_name'] as String? ?? l10n.announcementFamily,
+                          personDisplayName(
+                            l10n,
+                            c['author_display_name'] as String?,
+                          ),
                           style: context.textStyles.labelMedium,
                         ),
                         Text(c['body'] as String? ?? ''),

@@ -113,7 +113,7 @@ def list_comments(announcement_id: uuid.UUID) -> list[dict[str, Any]]:
         rows = conn.execute(
             """
             SELECT c.id, c.body, c.created_at, c.author_firebase_uid,
-                   COALESCE(u.display_name, 'Family member') AS author_display_name
+                   NULLIF(TRIM(u.display_name), '') AS author_display_name
             FROM announcement_comments c
             JOIN app_users u ON u.firebase_uid = c.author_firebase_uid
             WHERE c.announcement_id = %s AND c.deleted_at IS NULL

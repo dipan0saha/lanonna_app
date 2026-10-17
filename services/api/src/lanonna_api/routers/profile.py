@@ -8,7 +8,7 @@ from lanonna_api.domain.date_validation import validate_user_birth_date
 from lanonna_api.domain.avatar_urls import normalize_avatar_for_storage, signed_avatar_url
 from lanonna_api.http_errors import api_error, map_domain_errors
 from lanonna_api.domain.account import build_account_extensions
-from lanonna_api.domain.account_delete import delete_account, delete_account_eligibility
+from lanonna_api.domain.account_delete import delete_account, delete_account_preview
 from lanonna_api.repositories.babies import list_babies_for_user
 from lanonna_api.repositories.users import (
     patch_profile_fields,
@@ -138,11 +138,11 @@ class DeleteAccountBody(BaseModel):
     confirm: bool = False
 
 
-@router.get("/me/delete-account/eligibility")
-def get_delete_account_eligibility(
+@router.get("/me/delete-account/preview")
+def get_delete_account_preview(
     user: AppUser = Depends(current_app_user),
 ) -> dict[str, Any]:
-    return delete_account_eligibility(user.uid)
+    return delete_account_preview(user.uid)
 
 
 @router.post("/me/delete-account")

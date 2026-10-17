@@ -274,11 +274,14 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
               .read<OnboardingRepository>()
               .sendBatchInvites(babyId, invites);
           if (!mounted) return;
-          if (response.emailQueueFailedCount > 0) {
-            AppSnackBar.showAlert(
-              context,
+          final alerts = [
+            if (response.maxOwnersSkippedCount > 0)
+              l10n.batchInviteMaxOwnersSkipped(response.maxOwnersSkippedCount),
+            if (response.emailQueueFailedCount > 0)
               l10n.batchInviteEmailQueueFailed(response.emailQueueFailedCount),
-            );
+          ];
+          if (alerts.isNotEmpty) {
+            AppSnackBar.showAlert(context, alerts.join('\n'));
           }
         }
       });

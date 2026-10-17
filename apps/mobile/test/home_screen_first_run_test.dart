@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/core/domain/activity_event_type.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/network/connectivity_service.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
@@ -181,7 +182,7 @@ class _FakeHomeRepository extends HomeRepository {
           recentActivity: [
             HomeActivityItem(
               id: 'a1',
-              eventType: 'photo_shared',
+              eventType: ActivityEventType.photoShared,
               summary: 'A new photo was shared',
               createdAt: '2026-10-01T12:00:00Z',
             ),

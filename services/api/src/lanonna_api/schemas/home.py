@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class GenderTotals(BaseModel):
@@ -27,11 +27,17 @@ class FamilyInsightSummary(BaseModel):
 
 
 class ActivityEventItem(BaseModel):
+    """Structured feed row; the app renders the sentence from ``event_type`` + ``params``."""
+
     id: uuid.UUID
     event_type: str
+    params: dict[str, str] = Field(default_factory=dict)
+    # English diagnostic copy; shown only by an app that does not know the type.
     summary: str
     created_at: str
+    # Current display names; null when the person has none (app shows its fallback).
     actor_display_name: str | None = None
+    target_display_name: str | None = None
     photo_id: uuid.UUID | None = None
 
 

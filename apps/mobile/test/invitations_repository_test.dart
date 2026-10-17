@@ -26,8 +26,11 @@ class _AcceptErrorApi extends ApiClient {
       statusCode: 403,
       detail: {
         'error': 'email_mismatch',
-        'invitee_email': 'invited@test.com',
-        'signed_in_email': 'signed@test.com',
+        'message': 'Signed-in email does not match the invitation',
+        'params': {
+          'invitee_email': 'invited@test.com',
+          'signed_in_email': 'signed@test.com',
+        },
       },
     );
   }

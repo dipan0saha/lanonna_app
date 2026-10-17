@@ -38,7 +38,10 @@ class BatchInviteResponse {
     );
   }
 
-  int get emailQueueFailedCount => results
-      .where((r) => r.status == InviteRowStatus.emailQueueFailed)
-      .length;
+  int _count(InviteRowStatus status) =>
+      results.where((r) => r.status == status).length;
+
+  int get emailQueueFailedCount => _count(InviteRowStatus.emailQueueFailed);
+
+  int get maxOwnersSkippedCount => _count(InviteRowStatus.skippedMaxOwners);
 }

@@ -128,9 +128,6 @@ def test_set_rsvp_succeeds_when_notify_enqueue_fails():
     ), patch(
         "lanonna_api.domain.calendar.upsert_rsvp",
     ), patch(
-        "lanonna_api.domain.calendar.actor_display_name",
-        return_value="Alex",
-    ), patch(
         "lanonna_api.domain.notifications.publish_notify_user",
         side_effect=RuntimeError("pubsub down"),
     ):
@@ -155,9 +152,6 @@ def test_add_event_comment_succeeds_when_notify_enqueue_fails():
             "body": "See you there",
             "created_at": datetime(2026, 6, 1, tzinfo=timezone.utc),
         },
-    ), patch(
-        "lanonna_api.domain.calendar.actor_display_name",
-        return_value="Alex",
     ), patch(
         "lanonna_api.domain.notifications.publish_notify_user",
         side_effect=RuntimeError("pubsub down"),

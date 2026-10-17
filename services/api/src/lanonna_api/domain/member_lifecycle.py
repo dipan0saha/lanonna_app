@@ -6,7 +6,7 @@ from typing import Any
 from lanonna_api.domain.errors import ErrorCode
 from lanonna_api.domain.member_errors import MemberLifecycleError
 from lanonna_api.domain.membership import require_owner_baby
-from lanonna_api.domain.users_display import actor_display_name
+from lanonna_activity_copy import ActivityEventType
 from lanonna_api.repositories.activity_events import insert_activity_event
 from lanonna_api.repositories.memberships import (
     count_active_owners,
@@ -81,19 +81,16 @@ def remove_member(
                 ErrorCode.LAST_OWNER,
                 "Cannot remove the last owner of this baby profile.",
             )
-    target_name = target.get("display_name") or "Family member"
     if not soft_remove_membership(baby_profile_id, target_uid):
         raise MemberLifecycleError(
             ErrorCode.TARGET_NOT_MEMBER,
             "That person is not a member of this baby profile.",
         )
-    actor_name = actor_display_name(actor_uid)
     insert_activity_event(
         baby_profile_id,
         actor_uid,
-        "member_removed",
-        f"{actor_name} removed {target_name} from the family",
-        {"target_firebase_uid": target_uid},
+        ActivityEventType.MEMBER_REMOVED,
+        payload={"target_firebase_uid": target_uid},
     )
 
 
@@ -115,11 +112,8 @@ def leave_baby_profile(firebase_uid: str, baby_profile_id: uuid.UUID) -> None:
             ErrorCode.NOT_MEMBER,
             "You are not a member of this baby profile.",
         )
-    actor_name = actor_display_name(firebase_uid)
     insert_activity_event(
         baby_profile_id,
         firebase_uid,
-        "member_left",
-        f"{actor_name} left the family",
-        None,
+        ActivityEventType.MEMBER_LEFT,
     )

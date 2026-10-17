@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/domain/person_display_label.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_icon_button.dart';
 import '../../../account/data/account_repository.dart';
@@ -30,12 +31,12 @@ class HomeNewFollowersSection extends StatelessWidget {
         children: [
           for (final f in followers)
             ListTile(
-              title: Text(f.displayName),
+              title: Text(personDisplayName(l10n, f.displayName)),
               trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
             ),
           TextButton(
             onPressed: () => context.push('/baby/$babyId/followers'),
-            child: Text(AppLocalizations.of(context)!.actionManageFollowers),
+            child: Text(l10n.actionManageFollowers),
           ),
         ],
       ),

@@ -1,32 +1,50 @@
+import '../../../../core/domain/activity_event_type.dart';
 import '../../../../core/domain/baby_lifecycle.dart';
+import '../../../../core/domain/feed_params.dart';
 import '../../../invitations/domain/invitation_status.dart';
 import '../../../../core/json/json_readers.dart';
 import '../../../../core/time/app_date_time.dart';
 
+/// One structured feed row (`GET …/activity`, home `recent_activity`).
+///
+/// [eventType] + [params] + the people's names are rendered from ARB by
+/// `activitySentence`; [summary] is the server's English diagnostic copy, shown
+/// only when [eventType] is unknown to this build (null).
 class HomeActivityItem {
   const HomeActivityItem({
     required this.id,
     required this.eventType,
     required this.summary,
     required this.createdAt,
+    this.params = const {},
     this.actorDisplayName,
+    this.targetDisplayName,
     this.photoId,
   });
 
   final String id;
-  final String eventType;
+  final ActivityEventType? eventType;
+  final Map<String, String> params;
   final String summary;
   final String createdAt;
+
+  /// Null when the actor has no display name (or is hidden, e.g. a registry
+  /// claim); the app shows its own fallback.
   final String? actorDisplayName;
+
+  /// The removed member for `member_removed`; null when unnamed.
+  final String? targetDisplayName;
   final String? photoId;
 
   factory HomeActivityItem.fromJson(Map<String, dynamic> json) {
     return HomeActivityItem(
       id: json['id']?.toString() ?? '',
-      eventType: json['event_type'] as String? ?? '',
+      eventType: ActivityEventType.fromApi(json['event_type'] as String?),
+      params: readFeedParams(json['params']),
       summary: json['summary'] as String? ?? '',
       createdAt: json['created_at'] as String? ?? '',
       actorDisplayName: json['actor_display_name'] as String?,
+      targetDisplayName: json['target_display_name'] as String?,
       photoId: json['photo_id']?.toString(),
     );
   }

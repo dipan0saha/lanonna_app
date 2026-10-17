@@ -7,9 +7,8 @@ from typing import Any
 
 from lanonna_api.domain.errors import ErrorCode, ServiceUnavailableError
 from lanonna_api.domain.membership import require_owner_baby
-from lanonna_api.domain.notification_metadata import NotificationType
-from lanonna_api.domain.users_display import actor_display_name
-from lanonna_api.domain.notifications import safe_enqueue_notify_user
+from lanonna_activity_copy import NotificationKind, params
+from lanonna_api.domain.notifications import NotifyUserSpec, safe_enqueue_notify_user
 from lanonna_api.pubsub import publish_send_invite_email
 from lanonna_api.schemas.invitations import InviteRowStatus
 from lanonna_api.repositories.invitations import (
@@ -117,7 +116,8 @@ def batch_invite(
     Set-based: one read loads membership and pending-invite state for every
     email, one transaction re-arms undelivered invites and inserts the new
     ones, then each invite email is queued. A repeated email in the same
-    request reports ``skipped_duplicate``.
+    request reports ``skipped_duplicate``; an owner (co-owner) row the owner
+    limit cannot hold (``domain/owner_limit.py``) reports ``skipped_max_owners``.
     """
     require_owner_baby(firebase_uid, baby_profile_id)
     emails = [row.email.strip().lower() for row in invites]
@@ -145,7 +145,7 @@ def batch_invite(
             new_invites.append((email, row.role, row.relationship_label))
             planned.append((email, None, None))
 
-    prepared, created = write_batch_invitations(
+    prepared, created, over_owner_limit = write_batch_invitations(
         baby_profile_id,
         firebase_uid,
         resend_ids=resend_ids,
@@ -156,6 +156,9 @@ def batch_invite(
     for email, status, pending_id in planned:
         if status is not None:
             results.append(_row_result(email, status, pending_id))
+            continue
+        if email in over_owner_limit:
+            results.append(_row_result(email, InviteRowStatus.SKIPPED_MAX_OWNERS))
             continue
         if pending_id is not None:
             sent_status = InviteRowStatus.RESENT
@@ -222,35 +225,25 @@ def preview_invitation(token: str) -> dict[str, Any] | None:
     return _preview_payload_from_row(data, "pending")
 
 
-def format_preview_expires(expires_at: datetime | None) -> str | None:
-    if expires_at is None:
-        return None
-    if expires_at.tzinfo is None:
-        expires_at = expires_at.replace(tzinfo=timezone.utc)
-    return expires_at.strftime("%B %d, %Y")
-
-
 def accept_invitation(
     token: str,
     firebase_uid: str,
     user_email: str | None,
 ) -> dict[str, Any]:
+    """Accept an invite (typed errors from the repository) and tell the inviter."""
     result = accept_invitation_by_token(token, firebase_uid, user_email)
-    if "error" in result:
-        return result
     if not result.get("already_member"):
         inviter = result.get("inviter_firebase_uid")
         baby_id = result.get("baby_profile_id")
         if inviter and baby_id:
-            actor = actor_display_name(firebase_uid)
-            baby_name = result.get("baby_name") or "your baby"
             safe_enqueue_notify_user(
-                inviter,
-                title="Invite accepted",
-                body=f"{actor} joined {baby_name}",
-                deep_link=f"/baby/{baby_id}/followers",
-                baby_profile_id=baby_id,
-                notification_type=NotificationType.GENERIC,
-                actor_firebase_uid=firebase_uid,
+                NotifyUserSpec(
+                    firebase_uid=inviter,
+                    kind=NotificationKind.INVITE_ACCEPTED,
+                    params={params.BABY_NAME: result.get("baby_name") or ""},
+                    deep_link=f"/baby/{baby_id}/followers",
+                    actor_firebase_uid=firebase_uid,
+                    baby_profile_id=baby_id,
+                )
             )
     return result

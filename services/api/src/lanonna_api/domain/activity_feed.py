@@ -1,24 +1,20 @@
+"""Activity feed rows as the API returns them.
+
+Each item is structured: ``event_type``, ``params`` (display values captured
+when it happened) and the people involved, resolved at read time. The app
+renders the sentence from ARB; ``summary`` is the English diagnostic copy and
+is only shown by an app build that does not know the type yet.
+"""
+
 from __future__ import annotations
 
 import uuid
 from typing import Any
 
-from lanonna_activity_copy import (
-    EVENT_PHOTO_COMMENT,
-    EVENT_PHOTO_SQUISH,
-    GALLERY_ACTIVITY_EVENT_TYPES,
-    photo_comment_summary,
-    photo_squish_summary,
-)
+from lanonna_activity_copy import ACTOR_HIDDEN_EVENT_TYPES
 
 __all__ = [
-    "EVENT_PHOTO_SQUISH",
-    "EVENT_PHOTO_COMMENT",
-    "GALLERY_ACTIVITY_EVENT_TYPES",
-    "photo_squish_summary",
-    "photo_comment_summary",
     "photo_id_from_payload",
-    "actor_name_from_row",
     "serialize_activity_item",
 ]
 
@@ -35,25 +31,27 @@ def photo_id_from_payload(payload: Any) -> uuid.UUID | None:
         return None
 
 
-def actor_name_from_row(row: dict[str, Any]) -> str | None:
-    name = row.get("actor_display_name")
-    if name is None:
-        return None
-    text = str(name).strip()
+def _trimmed(value: Any) -> str | None:
+    text = str(value).strip() if value is not None else ""
     return text or None
 
 
 def serialize_activity_item(row: dict[str, Any]) -> dict[str, Any]:
     created = row["created_at"]
     photo_id = photo_id_from_payload(row.get("payload"))
-    actor = actor_name_from_row(row)
+    actor_hidden = row["event_type"] in ACTOR_HIDDEN_EVENT_TYPES
+    params = row.get("params")
     return {
         "id": row["id"],
         "event_type": row["event_type"],
+        "params": dict(params) if isinstance(params, dict) else {},
         "summary": row["summary"],
         "created_at": created.isoformat()
         if hasattr(created, "isoformat")
         else str(created),
-        "actor_display_name": actor,
+        "actor_display_name": None
+        if actor_hidden
+        else _trimmed(row.get("actor_display_name")),
+        "target_display_name": _trimmed(row.get("target_display_name")),
         "photo_id": str(photo_id) if photo_id else None,
     }

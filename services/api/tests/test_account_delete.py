@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 from lanonna_api.auth import current_user
 from lanonna_api.domain.account_delete import (
     delete_account,
-    delete_account_eligibility,
+    delete_account_preview,
 )
 from lanonna_api.main import app
 
@@ -25,18 +25,17 @@ def _auth_as(uid: str = "uid-1", email: str = "user@test.com"):
         app.dependency_overrides.pop(current_user, None)
 
 
-def test_eligibility_lists_sole_owned_babies():
+def test_preview_lists_sole_owned_babies_only():
+    """Deletion is never blocked (FR-SET-005); the preview has no gate fields."""
     with patch(
         "lanonna_api.domain.account_delete.list_sole_owned_baby_names",
         return_value=[{"id": "baby-1", "name": "Liam"}],
     ):
-        result = delete_account_eligibility("uid")
-    assert result["allowed"] is True
-    assert result["blockers"] == []
-    assert result["sole_owned_babies"] == [{"id": "baby-1", "name": "Liam"}]
+        result = delete_account_preview("uid")
+    assert result == {"sole_owned_babies": [{"id": "baby-1", "name": "Liam"}]}
 
 
-def test_delete_account_eligibility_route():
+def test_delete_account_preview_route():
     babies = [{"id": "baby-1", "name": "Liam"}]
     with (
         _auth_as(),
@@ -45,13 +44,10 @@ def test_delete_account_eligibility_route():
             return_value=babies,
         ),
     ):
-        response = client.get("/v1/me/delete-account/eligibility")
+        response = client.get("/v1/me/delete-account/preview")
     assert response.status_code == 200
-    assert response.json() == {
-        "allowed": True,
-        "blockers": [],
-        "sole_owned_babies": babies,
-    }
+    assert response.json() == {"sole_owned_babies": babies}
+    assert client.get("/v1/me/delete-account/eligibility").status_code == 404
 
 
 def test_delete_account_sql_before_firebase():

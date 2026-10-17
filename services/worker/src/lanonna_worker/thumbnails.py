@@ -15,6 +15,7 @@ from lanonna_worker.db import (
     get_ready_photo_by_display_path,
     mark_photo_ready,
 )
+from lanonna_activity_copy import NotificationKind
 from lanonna_worker.notifications import process_notify_fan_out
 
 logger = logging.getLogger("lanonna.worker")
@@ -144,8 +145,9 @@ def _maybe_notify_photo_ready(
             "type": "notify_fan_out",
             "dedupe_key": dedupe_key,
             "baby_profile_id": str(ready_row["baby_profile_id"]),
-            "title": "New photo",
-            "body": "A new photo was shared",
+            "kind": NotificationKind.PHOTO_SHARED.value,
+            "params": {},
+            "actor_firebase_uid": ready_row["uploader_firebase_uid"],
             "deep_link": f"/gallery/photo/{ready_row['id']}",
             "recipient_mode": "baby_members",
             "exclude_firebase_uid": ready_row["uploader_firebase_uid"],

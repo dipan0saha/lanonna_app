@@ -53,10 +53,19 @@ def test_notify_fan_out_invalid_baby_uuid_is_acked(client):
                 {
                     "type": "notify_fan_out",
                     "baby_profile_id": "bad",
-                    "title": "t",
-                    "body": "b",
+                    "kind": "photo_shared",
                 }
             ),
+        )
+    assert resp.status_code == 204
+    proc.assert_not_called()
+
+
+def test_notify_user_legacy_title_body_payload_is_acked(client):
+    with patch("lanonna_worker.main.process_notify_user") as proc:
+        resp = client.post(
+            "/pubsub/push",
+            json=_push({"type": "notify_user", "firebase_uid": "u1", "title": "t", "body": "b"}),
         )
     assert resp.status_code == 204
     proc.assert_not_called()

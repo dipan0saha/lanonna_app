@@ -23,9 +23,9 @@ The Flutter app (`apps/mobile`) shares a single theme and widget library under `
 - **Gallery** — `GalleryTileBadge` for squish/comment counts on grid tiles (API fields `squish_count`, `comment_count`).
 - **Events** — `AppSectionCapsLabel`, `AppRsvpTileRow`, `AvatarStack` on event detail.
 - **Home** — `HomeNextUpSection`, `TintedIconSquare` quick actions, `HomeBirthWelcomeCard` (born summary for owners and followers; share reuses `AnnouncementShare`).
-- **Notifications inbox** — two-line rows with a `TintedIconSquare` icon chosen from the server `notification_type`, structured actor name, `AppUnreadDot`, and **Mark all read**.
+- **Notifications inbox** — two-line rows with a `TintedIconSquare` icon chosen from the server `notification_type`, an ARB sentence built from `notification_kind` + `params` with the actor in bold, `AppUnreadDot`, and **Mark all read**.
 - **Fun after birth** — Names and Predictions stay visible with a compact read-only note (`namesClosedNote` / `predictionsClosedNote`), driven by server `names_closed` / `predictions_closed`.
-- **Copy helpers** — `babyDisplayName` (never prefixes the baby name), `TappablePlaceholderRichText` (localized sentences with tappable placeholders, e.g. terms links).
+- **Copy helpers** — `babyDisplayName` (never prefixes the baby name), `personDisplayName`, `PlaceholderRichText` (localized sentences with styled placeholders: tappable terms links, bold names in activity and inbox rows).
 - **Tab reload** — tabs mix in `BabyContextReload` (baby switch + reconnect) and `TabLoadGenerationCache`; paginated lists refresh with `refreshPaginatedWindow`.
 
 ## Backend

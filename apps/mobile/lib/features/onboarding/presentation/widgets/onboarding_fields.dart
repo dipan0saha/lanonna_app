@@ -6,7 +6,7 @@ import '../../../../core/widgets/app_icon_button.dart';
 import '../../../../core/widgets/app_semantics.dart';
 import '../../../../core/widgets/app_text_form_field.dart';
 import '../../../../core/theme/app_brand_theme.dart';
-import '../../../../core/l10n/tappable_placeholder_rich_text.dart';
+import '../../../../core/l10n/placeholder_rich_text.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
@@ -310,16 +310,16 @@ class OnboardingTermsAgreementCheckbox extends StatelessWidget {
         Expanded(
           child: Padding(
             padding: const EdgeInsets.only(top: 10),
-            child: TappablePlaceholderRichText(
+            child: PlaceholderRichText(
               message: (t) => l10n.onboardingAgreeToTerms(t[0], t[1]),
               style: muted,
-              linkStyle: link,
-              links: [
-                PlaceholderLink(
+              placeholderStyle: link,
+              placeholders: [
+                MessagePlaceholder(
                   label: l10n.onboardingTermsOfService,
                   onTap: onTermsTap,
                 ),
-                PlaceholderLink(
+                MessagePlaceholder(
                   label: l10n.onboardingPrivacyPolicy,
                   onTap: onPrivacyTap,
                 ),
@@ -481,12 +481,12 @@ class OnboardingBottomLink extends StatelessWidget {
       child: GestureDetector(
         key: actionKey,
         onTap: onTap,
-        child: TappablePlaceholderRichText(
+        child: PlaceholderRichText(
           message: (t) => message(t[0]),
           style: muted,
-          linkStyle: link,
+          placeholderStyle: link,
           textAlign: TextAlign.center,
-          links: [PlaceholderLink(label: actionText, onTap: onTap)],
+          placeholders: [MessagePlaceholder(label: actionText, onTap: onTap)],
         ),
       ),
     );

@@ -45,10 +45,14 @@ def list_my_notifications(
             "baby_profile_id": str(r["baby_profile_id"])
             if r.get("baby_profile_id")
             else None,
+            # English diagnostic copy; the app renders kind + params from ARB and
+            # shows these only for rows without a kind it knows.
             "title": r["title"],
             "body": r["body"],
             "deep_link": r.get("deep_link"),
             "notification_type": r.get("notification_type") or "generic",
+            "notification_kind": r.get("notification_kind"),
+            "params": r.get("params") or {},
             "actor_firebase_uid": r.get("actor_firebase_uid"),
             "actor_display_name": r.get("actor_display_name"),
             "read_at": r["read_at"].isoformat() if r.get("read_at") else None,

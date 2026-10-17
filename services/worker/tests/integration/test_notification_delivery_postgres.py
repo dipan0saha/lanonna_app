@@ -95,17 +95,18 @@ def test_fan_out_writes_inbox_rows_and_pushes_with_their_ids():
     pushes: list[dict] = []
 
     def fake_push(conn, *, firebase_uid, tokens, title, body, data):
-        pushes.append({"uid": firebase_uid, "tokens": tokens, "data": data})
+        pushes.append(
+            {"uid": firebase_uid, "tokens": tokens, "title": title, "body": body, "data": data}
+        )
 
     with patch.object(notifications, "_send_push", side_effect=fake_push):
         notifications.process_notify_fan_out(
             {
                 "baby_profile_id": str(baby_id),
-                "title": "New photo",
-                "body": "Sarah shared a photo",
+                "kind": "photo_commented",
+                "params": {"caption": "Nursery"},
                 "exclude_firebase_uid": owner,
                 "notification_channel": "gallery",
-                "notification_type": "photo",
                 "actor_firebase_uid": owner,
             },
             pubsub_message_id=f"msg-{uuid.uuid4()}",
@@ -113,17 +114,22 @@ def test_fan_out_writes_inbox_rows_and_pushes_with_their_ids():
 
     with get_connection() as conn:
         rows = conn.execute(
-            "SELECT id, firebase_uid, actor_display_name, notification_type"
-            " FROM notifications ORDER BY firebase_uid"
+            "SELECT id, firebase_uid, actor_display_name, notification_type,"
+            " notification_kind, params, title FROM notifications ORDER BY firebase_uid"
         ).fetchall()
     assert {r["firebase_uid"] for r in rows} == {on, weekly}
     assert {r["actor_display_name"] for r in rows} == {"Sarah"}
-    assert {r["notification_type"] for r in rows} == {"photo"}
+    assert {r["notification_type"] for r in rows} == {"comment"}
+    assert {r["notification_kind"] for r in rows} == {"photo_commented"}
+    assert all(r["params"] == {"caption": "Nursery"} for r in rows)
+    assert {r["title"] for r in rows} == {"New comment"}
     inbox_id = next(r["id"] for r in rows if r["firebase_uid"] == on)
     assert pushes == [
         {
             "uid": on,
             "tokens": ["tok-on"],
+            "title": "New comment",
+            "body": "Sarah commented on your photo",
             "data": {
                 "deep_link": "/home",
                 "notification_id": str(inbox_id),
@@ -170,3 +176,36 @@ def test_weekly_digest_sends_to_token_holders_and_marks_them_once():
             "SELECT firebase_uid FROM app_users WHERE last_weekly_digest_at IS NOT NULL"
         ).fetchall()
     assert [r["firebase_uid"] for r in marked] == [with_tokens]
+
+
+def test_notify_user_without_display_name_uses_neutral_actor_and_null_name():
+    owner = _user("owner")
+    actor = _user("actor")
+    pushes: list[tuple[str, str]] = []
+
+    def fake_push(conn, *, firebase_uid, tokens, title, body, data):
+        pushes.append((title, body))
+
+    _tokens(owner, "tok-owner")
+    with patch.object(notifications, "_send_push", side_effect=fake_push):
+        notifications.process_notify_user(
+            {
+                "firebase_uid": owner,
+                "kind": "event_rsvp",
+                "params": {"event_title": "Shower", "rsvp_status": "cant_go"},
+                "actor_firebase_uid": actor,
+                "notification_channel": "calendar",
+            },
+            pubsub_message_id=f"msg-{uuid.uuid4()}",
+        )
+
+    with get_connection() as conn:
+        row = conn.execute(
+            "SELECT actor_display_name, notification_kind, params FROM notifications"
+            " WHERE firebase_uid = %s",
+            (owner,),
+        ).fetchone()
+    assert row["actor_display_name"] is None
+    assert row["notification_kind"] == "event_rsvp"
+    assert row["params"] == {"event_title": "Shower", "rsvp_status": "cant_go"}
+    assert pushes == [("New RSVP", 'Someone can\'t make it to "Shower"')]

@@ -298,7 +298,7 @@ def collect_baby_export(
     activity = _rows(
         conn,
         """
-        SELECT e.id, e.actor_firebase_uid, e.event_type, e.summary, e.payload,
+        SELECT e.id, e.actor_firebase_uid, e.event_type, e.summary, e.params, e.payload,
                e.created_at, u.display_name AS actor_display_name
         FROM activity_events e
         LEFT JOIN app_users u ON u.firebase_uid = e.actor_firebase_uid

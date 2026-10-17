@@ -94,12 +94,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteAccountDeleting => 'Deleting…';
 
   @override
-  String get deleteAccountChecking =>
-      'Checking whether your account can be deleted…';
-
-  @override
-  String get deleteAccountBlocked =>
-      'Your account cannot be deleted right now.';
+  String get deleteAccountChecking => 'Loading account details…';
 
   @override
   String get deleteAccountConfirmTitle => 'Delete your account permanently?';
@@ -114,6 +109,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get deleteAccountSoleOwnedHeading =>
       'These baby profiles will be deleted:';
+
+  @override
+  String deleteAccountSoleOwnedBaby(String name) {
+    return '• $name';
+  }
 
   @override
   String get deleteAccountReauthPasswordTitle => 'Confirm your password';
@@ -2578,4 +2578,158 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get relationshipFamilyFriend => 'Family Friend';
+
+  @override
+  String activityPhotoShared(String actor) {
+    return '$actor shared a photo';
+  }
+
+  @override
+  String activityPhotoSharedCaption(String actor, String caption) {
+    return '$actor shared \"$caption\"';
+  }
+
+  @override
+  String activityPhotoSquish(String actor) {
+    return '$actor squished a photo';
+  }
+
+  @override
+  String activityPhotoSquishCaption(String actor, String caption) {
+    return '$actor squished \"$caption\"';
+  }
+
+  @override
+  String activityPhotoComment(String actor) {
+    return '$actor commented on a photo';
+  }
+
+  @override
+  String activityPhotoCommentCaption(String actor, String caption) {
+    return '$actor commented on \"$caption\"';
+  }
+
+  @override
+  String activityRegistryItemAdded(String actor, String item) {
+    return '$actor added \"$item\" to the registry';
+  }
+
+  @override
+  String activityRegistryPurchased(String actor, String item) {
+    return '$actor marked \"$item\" as purchased';
+  }
+
+  @override
+  String activityRegistryClaimed(String item) {
+    return 'Someone is buying \"$item\"';
+  }
+
+  @override
+  String activityEventCreated(String actor, String title) {
+    return '$actor added \"$title\" to the calendar';
+  }
+
+  @override
+  String activityNameSuggested(String actor, String name) {
+    return '$actor suggested the name \"$name\"';
+  }
+
+  @override
+  String activityGenderVoteCast(String actor, String gender) {
+    String _temp0 = intl.Intl.selectLogic(gender, {
+      'male': '$actor guessed boy',
+      'female': '$actor guessed girl',
+      'other': '$actor made a gender guess',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String activityBabyArrived(String baby) {
+    return '$baby has arrived!';
+  }
+
+  @override
+  String activityMemberRemoved(String actor, String member) {
+    return '$actor removed $member from the family';
+  }
+
+  @override
+  String activityMemberRemovedUnnamed(String actor) {
+    return '$actor removed a member from the family';
+  }
+
+  @override
+  String activityMemberLeft(String actor) {
+    return '$actor left the family';
+  }
+
+  @override
+  String inboxPhotoShared(String actor) {
+    return '$actor shared a new photo';
+  }
+
+  @override
+  String inboxPhotoSquished(String actor) {
+    return '$actor squished your photo';
+  }
+
+  @override
+  String inboxPhotoCommented(String actor) {
+    return '$actor commented on your photo';
+  }
+
+  @override
+  String inboxEventCreated(String actor, String title) {
+    return '$actor added \"$title\" to the calendar';
+  }
+
+  @override
+  String inboxEventRsvp(String actor, String title, String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'going': '$actor is going to \"$title\"',
+      'maybe': '$actor might go to \"$title\"',
+      'cant_go': '$actor can\'t make it to \"$title\"',
+      'other': '$actor replied to \"$title\"',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String inboxEventCommented(String actor, String title) {
+    return '$actor commented on \"$title\"';
+  }
+
+  @override
+  String inboxRegistryPurchased(String actor, String item) {
+    return '$actor marked \"$item\" as purchased';
+  }
+
+  @override
+  String inboxRegistryBuying(String actor, String item) {
+    return '$actor is buying \"$item\"';
+  }
+
+  @override
+  String inboxInviteAccepted(String actor, String baby) {
+    return '$actor joined $baby';
+  }
+
+  @override
+  String inboxBabyArrived(String baby) {
+    return '$baby has arrived! See the announcement.';
+  }
+
+  @override
+  String batchInviteMaxOwnersSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count co-owner invites were not sent: this baby profile already has the most owners it can have, counting pending co-owner invites.',
+      one:
+          '1 co-owner invite was not sent: this baby profile already has the most owners it can have, counting pending co-owner invites.',
+    );
+    return '$_temp0';
+  }
 }

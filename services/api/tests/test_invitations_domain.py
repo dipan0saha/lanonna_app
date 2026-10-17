@@ -11,7 +11,7 @@ from lanonna_api.domain.invitations import (
 )
 
 
-def _batch(rows, *, targets, prepared=(), created=None, publish=None):
+def _batch(rows, *, targets, prepared=(), created=None, publish=None, over_owner_limit=()):
     baby_id = uuid.uuid4()
     with (
         patch(
@@ -24,7 +24,7 @@ def _batch(rows, *, targets, prepared=(), created=None, publish=None):
         ) as load,
         patch(
             "lanonna_api.domain.invitations.write_batch_invitations",
-            return_value=(set(prepared), created or {}),
+            return_value=(set(prepared), created or {}, set(over_owner_limit)),
         ) as write,
         patch(
             "lanonna_api.domain.invitations.publish_send_invite_email",
@@ -34,7 +34,10 @@ def _batch(rows, *, targets, prepared=(), created=None, publish=None):
         results = batch_invite(
             "owner-1",
             baby_id,
-            [BatchInviteRow(email, "follower", None) for email in rows],
+            [
+                row if isinstance(row, BatchInviteRow) else BatchInviteRow(row, "follower", None)
+                for row in rows
+            ],
         )
     return results, load, write, pub
 
@@ -87,6 +90,28 @@ def test_batch_invite_email_queue_failed_returns_row_not_raises():
     ]
 
 
+def test_batch_invite_owner_rows_over_the_limit_are_skipped():
+    new_id = uuid.uuid4()
+    results, _, write, pub = _batch(
+        [
+            BatchInviteRow("dad@test.com", "owner", "Father"),
+            BatchInviteRow("mum@test.com", "owner", "Mother"),
+        ],
+        targets={},
+        created={"dad@test.com": new_id},
+        over_owner_limit={"mum@test.com"},
+    )
+    assert write.call_args.kwargs["new_invites"] == [
+        ("dad@test.com", "owner", "Father"),
+        ("mum@test.com", "owner", "Mother"),
+    ]
+    assert [(r["email"], r["status"]) for r in results] == [
+        ("dad@test.com", "created"),
+        ("mum@test.com", "skipped_max_owners"),
+    ]
+    assert [c.args[0] for c in pub.call_args_list] == [new_id]
+
+
 def test_revoke_invitation_not_found_raises_lookup():
     baby_id = uuid.uuid4()
     with (
@@ -115,14 +140,14 @@ def test_accept_invitation_enqueues_notify_on_success():
         patch(
             "lanonna_api.domain.invitations.safe_enqueue_notify_user",
         ) as notify,
-        patch(
-            "lanonna_api.domain.invitations.actor_display_name",
-            return_value="Alex",
-        ),
     ):
         result = accept_invitation("token", "uid-1", "a@test.com")
     assert result["baby_profile_id"] == baby_id
-    notify.assert_called_once()
+    spec = notify.call_args[0][0]
+    assert spec.firebase_uid == "owner-1"
+    assert spec.kind == "invite_accepted"
+    assert spec.params == {"baby_name": "Luna"}
+    assert spec.actor_firebase_uid == "uid-1"
 
 
 def test_accept_invitation_idempotent_already_member():

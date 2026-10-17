@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/features/account/domain/inbox_notification_kind.dart';
 import 'package:lanonna/features/account/domain/inbox_notification_type.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/features/account/data/notifications_repository.dart';
@@ -19,7 +20,9 @@ void main() {
             notification: InboxNotification(
               id: 'n1',
               title: 'New comment',
-              body: 'Sarah commented on "First Ultrasound"',
+              body: 'English push copy',
+              kind: InboxNotificationKind.eventCommented,
+              params: const {'event_title': 'First Ultrasound'},
               actorDisplayName: 'Sarah',
               notificationType: InboxNotificationType.comment,
               createdAt: created,
@@ -29,8 +32,11 @@ void main() {
       ),
     );
 
-    expect(find.textContaining('Sarah'), findsOneWidget);
-    expect(find.textContaining('commented on'), findsOneWidget);
+    expect(
+      find.text('Sarah commented on "First Ultrasound"', findRichText: true),
+      findsOneWidget,
+    );
+    expect(find.textContaining('English push copy'), findsNothing);
     expect(find.textContaining('minutes ago'), findsOneWidget);
   });
 }

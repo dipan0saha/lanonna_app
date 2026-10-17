@@ -25,15 +25,15 @@ class DeleteAccountScreen extends StatefulWidget {
 
 class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
   var _deleting = false;
-  var _checkingEligibility = true;
-  DeleteAccountEligibility? _eligibility;
-  String? _eligibilityError;
+  var _loadingPreview = true;
+  DeleteAccountPreview? _preview;
+  String? _previewError;
   final _passwordController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _loadEligibility();
+    _loadPreview();
   }
 
   @override
@@ -42,26 +42,25 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
     super.dispose();
   }
 
-  Future<void> _loadEligibility() async {
+  Future<void> _loadPreview() async {
     setState(() {
-      _checkingEligibility = true;
-      _eligibilityError = null;
+      _loadingPreview = true;
+      _previewError = null;
     });
     try {
-      final eligibility = await context
-          .read<AccountRepository>()
-          .fetchDeleteAccountEligibility();
+      final preview =
+          await context.read<AccountRepository>().fetchDeleteAccountPreview();
       if (mounted) {
         setState(() {
-          _eligibility = eligibility;
-          _checkingEligibility = false;
+          _preview = preview;
+          _loadingPreview = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _eligibilityError = apiErrorMessage(AppLocalizations.of(context)!, e);
-          _checkingEligibility = false;
+          _previewError = apiErrorMessage(AppLocalizations.of(context)!, e);
+          _loadingPreview = false;
         });
       }
     }
@@ -69,13 +68,18 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
 
   Future<bool> _confirmDelete() async {
     final l10n = AppLocalizations.of(context)!;
-    final names = (_eligibility?.soleOwnedBabies ?? const <SoleOwnedBaby>[])
-        .map((baby) => baby.name.trim())
-        .where((name) => name.isNotEmpty)
-        .toList();
-    final body = names.isEmpty
+    final babies = _preview?.soleOwnedBabies ?? const <SoleOwnedBaby>[];
+    final body = babies.isEmpty
         ? l10n.deleteAccountConfirmBody
-        : '${l10n.deleteAccountConfirmBody}\n\n${l10n.deleteAccountSoleOwnedHeading}\n${names.map((name) => '• $name').join('\n')}';
+        : [
+            l10n.deleteAccountConfirmBody,
+            '',
+            l10n.deleteAccountSoleOwnedHeading,
+            for (final baby in babies)
+              l10n.deleteAccountSoleOwnedBaby(
+                baby.name.trim().isEmpty ? l10n.babyNameDefault : baby.name.trim(),
+              ),
+          ].join('\n');
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -205,10 +209,8 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final allowed = _eligibility?.allowed ?? false;
-    final blockers = _eligibility?.blockers ?? const [];
     final canDelete =
-        allowed && !_checkingEligibility && _eligibilityError == null;
+        _preview != null && !_loadingPreview && _previewError == null;
 
     return PrototypeSubpageScaffold(
       title: l10n.deleteAccountTitle,
@@ -218,7 +220,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(l10n.deleteAccountBody, style: context.textStyles.bodyMedium),
-            if (_checkingEligibility) ...[
+            if (_loadingPreview) ...[
               const SizedBox(height: 24),
               Text(
                 l10n.deleteAccountChecking,
@@ -227,26 +229,14 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                 ),
               ),
             ],
-            if (_eligibilityError != null) ...[
+            if (_previewError != null) ...[
               const SizedBox(height: 16),
               Text(
-                _eligibilityError!,
+                _previewError!,
                 style: context.textStyles.bodySmall?.copyWith(
                   color: AppColors.error,
                 ),
               ),
-            ],
-            if (!allowed && blockers.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Text(
-                l10n.deleteAccountBlocked,
-                style: context.textStyles.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 8),
-              for (final blocker in blockers)
-                Text('• $blocker', style: context.textStyles.bodySmall),
             ],
             const SizedBox(height: 24),
             FilledButton(

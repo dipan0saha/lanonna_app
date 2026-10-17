@@ -113,9 +113,6 @@ def test_squish_photo_inserts_activity_when_active():
         "lanonna_api.domain.gallery.toggle_squish",
         return_value=True,
     ), patch(
-        "lanonna_api.domain.gallery.actor_display_name",
-        return_value="Grandma Sue",
-    ), patch(
         "lanonna_api.domain.gallery.insert_activity_event",
     ) as activity_mock, patch(
         "lanonna_api.domain.gallery.safe_enqueue_notify_user",
@@ -123,8 +120,7 @@ def test_squish_photo_inserts_activity_when_active():
         squish_photo("uid", baby_id, photo_id)
         activity_mock.assert_called_once()
         assert activity_mock.call_args[0][2] == "photo_squish"
-        assert "Grandma Sue" in activity_mock.call_args[0][3]
-        assert "First ultrasound" in activity_mock.call_args[0][3]
+        assert activity_mock.call_args[0][3] == {"caption": "First ultrasound"}
 
 
 def test_add_comment_inserts_activity():
@@ -148,9 +144,6 @@ def test_add_comment_inserts_activity():
             ),
         },
     ), patch(
-        "lanonna_api.domain.gallery.actor_display_name",
-        return_value="Aunt Carol",
-    ), patch(
         "lanonna_api.domain.gallery.insert_activity_event",
     ) as activity_mock, patch(
         "lanonna_api.domain.gallery.safe_enqueue_notify_user",
@@ -158,8 +151,7 @@ def test_add_comment_inserts_activity():
         add_comment("uid", baby_id, photo_id, "Nice!")
         activity_mock.assert_called_once()
         assert activity_mock.call_args[0][2] == "photo_comment"
-        assert "Aunt Carol" in activity_mock.call_args[0][3]
-        assert "Bump update" in activity_mock.call_args[0][3]
+        assert activity_mock.call_args[0][3] == {"caption": "Bump update"}
 
 
 def test_squish_photo_succeeds_when_notify_enqueue_fails():
@@ -176,9 +168,6 @@ def test_squish_photo_succeeds_when_notify_enqueue_fails():
     ), patch(
         "lanonna_api.domain.gallery.toggle_squish",
         return_value=True,
-    ), patch(
-        "lanonna_api.domain.gallery.actor_display_name",
-        return_value="Grandma Sue",
     ), patch(
         "lanonna_api.domain.gallery.insert_activity_event",
     ), patch(

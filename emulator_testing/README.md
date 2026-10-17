@@ -128,7 +128,7 @@ Successful delete (#388): `display_name = 'Deleted user'`, `email` NULL, `delete
 
 ### API
 
-With a valid token **before** delete: `GET /v1/me/delete-account/eligibility` → `allowed: true`, `blockers: []`.  
+With a valid token **before** delete: `GET /v1/me/delete-account/preview` → `sole_owned_babies` (profiles that will be deleted).  
 `POST /v1/me/delete-account` body `{"confirm": true}` → `{"status":"deleted"}`.
 
 ---
