@@ -1,13 +1,12 @@
-import 'dart:io';
 import 'package:lanonna/l10n/app_localizations.dart';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/api/display_photo_upload.dart';
+import '../../gallery/data/gallery_repository.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../../gallery/domain/gallery_refresh.dart';
 import '../../gallery/presentation/upload/run_gallery_photo_upload.dart';
@@ -96,9 +95,9 @@ Future<void> _applyAvatarAndGallery({
   required bool isCreate,
   void Function(String message)? onNonFatalError,
 }) async {
-  if (input.selectedImage == null || kIsWeb) return;
+  final imageFile = input.selectedImage;
+  if (imageFile == null) return;
 
-  final imageFile = File(input.selectedImage!.path);
   var avatarSaved = false;
   final createdLabel = isCreate ? AppLocalizations.of(context)!.babyBabyCreated : AppLocalizations.of(context)!.babyBabyUpdated;
   try {
@@ -120,7 +119,7 @@ Future<void> _applyAvatarAndGallery({
         context: context,
         babyProfileId: babyProfileId,
         imageFile: imageFile,
-        api: api,
+        gallery: context.read<GalleryRepository>(),
       );
       if (context.mounted) {
         notifyGalleryDataChanged(context);

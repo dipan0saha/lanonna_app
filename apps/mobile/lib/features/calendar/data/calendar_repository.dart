@@ -154,25 +154,27 @@ class CalendarRepository extends ChangeNotifier {
     return event;
   }
 
+  /// Saves the edit form. Every form field is sent, and `null` clears an
+  /// optional one (description, location, video link, cover photo); the API
+  /// treats a missing key as "unchanged".
   Future<CalendarEvent> updateEvent(
     String babyId,
     String eventId, {
-    String? title,
-    DateTime? startsAt,
-    DateTime? endsAt,
-    String? description,
-    String? location,
-    String? videoCallUrl,
-    String? coverPhotoId,
+    required String title,
+    required DateTime startsAt,
+    required String? description,
+    required String? location,
+    required String? videoCallUrl,
+    required String? coverPhotoId,
   }) async {
-    final body = <String, dynamic>{};
-    if (title != null) body['title'] = title;
-    if (startsAt != null) body['starts_at'] = toApiInstant(startsAt);
-    if (endsAt != null) body['ends_at'] = toApiInstant(endsAt);
-    if (description != null) body['description'] = description;
-    if (location != null) body['location'] = location;
-    if (videoCallUrl != null) body['video_call_url'] = videoCallUrl;
-    if (coverPhotoId != null) body['cover_photo_id'] = coverPhotoId;
+    final body = <String, dynamic>{
+      'title': title,
+      'starts_at': toApiInstant(startsAt),
+      'description': description,
+      'location': location,
+      'video_call_url': videoCallUrl,
+      'cover_photo_id': coverPhotoId,
+    };
     final json =
         await _api.patchJson('/v1/babies/$babyId/events/$eventId', body: body);
     final event = CalendarEvent.fromJson(json);

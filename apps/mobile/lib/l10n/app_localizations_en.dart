@@ -2530,6 +2530,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get photoChangeAction => 'Change photo';
 
   @override
+  String get photoUploadingLabel => 'Uploading photo…';
+
+  @override
   String get babyNameDefault => 'Baby';
 
   @override

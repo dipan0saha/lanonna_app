@@ -1,6 +1,5 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart' show XFile;
 
 import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/input/app_text_input_kind.dart';
@@ -9,12 +8,13 @@ import '../../../../core/widgets/app_modal_sheet.dart';
 import '../../../../core/widgets/app_responsive_button_pair.dart';
 import '../../../../core/widgets/app_semantics.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../../core/widgets/photo_selection_preview.dart';
 import '../../../../l10n/app_localizations.dart';
 
 /// Optional caption before uploading a gallery photo. Returns trimmed caption or `null` if skipped.
 Future<String?> showPhotoUploadCaptionSheet(
   BuildContext context, {
-  required File imageFile,
+  required XFile imageFile,
 }) {
   return showAppModalSheet<String?>(
     context: context,
@@ -27,7 +27,7 @@ Future<String?> showPhotoUploadCaptionSheet(
 class _PhotoUploadCaptionSheet extends StatefulWidget {
   const _PhotoUploadCaptionSheet({required this.imageFile});
 
-  final File imageFile;
+  final XFile imageFile;
 
   @override
   State<_PhotoUploadCaptionSheet> createState() =>
@@ -67,7 +67,7 @@ class _PhotoUploadCaptionSheetState extends State<_PhotoUploadCaptionSheet> {
               constraints: const BoxConstraints(
                 maxHeight: AppMetrics.sheetImagePreviewMaxHeight,
               ),
-              child: Image.file(widget.imageFile, fit: BoxFit.cover),
+              child: LocalPhotoImage(file: widget.imageFile),
             ),
           ),
           SizedBox(height: AppSpacing.md),

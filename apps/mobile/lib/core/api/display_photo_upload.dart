@@ -1,7 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart' show XFile;
 import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../media/display_encode.dart';
@@ -16,7 +15,7 @@ class DisplayPhotoUpload {
 
   /// Uploads a user profile avatar; returns the GCS object path to persist as `avatar_url`.
   Future<String> uploadProfileAvatar({
-    required File imageFile,
+    required XFile imageFile,
     String? contentType,
   }) async {
     return _uploadAvatar(
@@ -28,7 +27,7 @@ class DisplayPhotoUpload {
   /// Uploads a baby profile avatar; returns the GCS object path to persist as `avatar_url`.
   Future<String> uploadBabyAvatar({
     required String babyProfileId,
-    required File imageFile,
+    required XFile imageFile,
     String? contentType,
   }) async {
     return _uploadAvatar(
@@ -39,11 +38,11 @@ class DisplayPhotoUpload {
   }
 
   Future<String> _uploadAvatar({
-    required File imageFile,
+    required XFile imageFile,
     String? contentType,
     String? babyProfileId,
   }) async {
-    final encoded = encodeDisplayAsset(await imageFile.readAsBytes());
+    final encoded = await _encode(imageFile);
     final resolvedType = contentType ?? encoded.contentType;
     final initBody = <String, dynamic>{
       'content_type': resolvedType,
@@ -74,11 +73,11 @@ class DisplayPhotoUpload {
 
   Future<String> uploadGalleryPhoto({
     required String babyProfileId,
-    required File imageFile,
+    required XFile imageFile,
     String? contentType,
     String? caption,
   }) async {
-    final encoded = encodeDisplayAsset(await imageFile.readAsBytes());
+    final encoded = await _encode(imageFile);
     final resolvedType = contentType ?? encoded.contentType;
     final body = encoded.bytes;
     final trimmedCaption = caption?.trim();
@@ -106,6 +105,11 @@ class DisplayPhotoUpload {
     }
     return photoId;
   }
+
+  /// Decode/resize/encode is CPU-heavy; run it off the UI isolate so upload
+  /// spinners keep animating.
+  static Future<EncodedDisplayAsset> _encode(XFile imageFile) async =>
+      compute(encodeDisplayAsset, await imageFile.readAsBytes());
 
   /// GCS V4 signed PUTs require every header that was included at sign time.
   @visibleForTesting

@@ -13,6 +13,7 @@ class AnnouncementDetail {
     this.birthTime,
     this.weightText,
     this.lengthText,
+    this.photoId,
     this.photoDisplayUrl,
     required this.squishCount,
     required this.commentCount,
@@ -29,6 +30,9 @@ class AnnouncementDetail {
   final String? birthTime;
   final String? weightText;
   final String? lengthText;
+
+  /// Gallery photo shown on the card; [photoDisplayUrl] is its signed URL.
+  final String? photoId;
   final String? photoDisplayUrl;
   final int squishCount;
   final int commentCount;
@@ -45,6 +49,7 @@ class AnnouncementDetail {
       birthTime: json['birth_time'] as String?,
       weightText: json['weight_text'] as String?,
       lengthText: json['length_text'] as String?,
+      photoId: json['photo_id'] as String?,
       photoDisplayUrl: json['photo_display_url'] as String?,
       squishCount: readInt(json['squish_count']),
       commentCount: readInt(json['comment_count']),

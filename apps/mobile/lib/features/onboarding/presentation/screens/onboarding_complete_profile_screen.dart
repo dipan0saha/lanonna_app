@@ -1,11 +1,9 @@
-import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:image_picker/image_picker.dart' show XFile;
 import 'package:provider/provider.dart';
 
 import '../../../../core/api/api_client.dart';
@@ -13,6 +11,8 @@ import '../../../../core/api/api_error_message.dart';
 import '../../../../core/data/iso_countries.dart';
 import '../../../../core/input/app_text_input_kind.dart';
 import '../../../../core/api/display_photo_upload.dart';
+import '../../../../core/media/photo_selection.dart';
+import '../../../../core/media/pick_display_photo.dart';
 import '../../../../core/time/app_date_time.dart';
 import '../../../../core/validation/form_validators.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -56,7 +56,6 @@ class _OnboardingCompleteProfileScreenState
   final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _postalController = TextEditingController();
-  final _picker = ImagePicker();
   String? _error;
   bool _busy = false;
   bool _acceptedTerms = false;
@@ -74,11 +73,10 @@ class _OnboardingCompleteProfileScreenState
     return coordinator.onboardingPath == OnboardingPath.owner;
   }
 
-  bool get _hasProfilePhoto {
-    if (_photoFile != null) return true;
-    final url = _networkPhotoUrl?.trim();
-    return url != null && url.isNotEmpty;
-  }
+  /// The picked file wins over the provider/server photo until upload.
+  PhotoSelection get _photo => _photoFile != null
+      ? PhotoSelection.local(_photoFile!)
+      : PhotoSelection.fromStored(_networkPhotoUrl, previewUrl: _networkPhotoUrl);
 
   @override
   void dispose() {
@@ -228,10 +226,7 @@ class _OnboardingCompleteProfileScreenState
   }
 
   Future<void> _pickPhoto() async {
-    final file = await _picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
-    );
+    final file = await pickDisplayPhoto();
     if (file == null) return;
     setState(() => _photoFile = file);
     await _persistDraft();
@@ -293,10 +288,11 @@ class _OnboardingCompleteProfileScreenState
     });
     try {
       String? avatarUrl = _networkPhotoUrl;
-      if (_photoFile != null && !kIsWeb) {
+      final file = _photoFile;
+      if (file != null) {
         avatarUrl = await DisplayPhotoUpload(
           context.read<ApiClient>(),
-        ).uploadProfileAvatar(imageFile: File(_photoFile!.path));
+        ).uploadProfileAvatar(imageFile: file);
       }
       if (!mounted) return;
       await context.read<OnboardingRepository>().updateProfile(
@@ -366,12 +362,12 @@ class _OnboardingCompleteProfileScreenState
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   PrototypePhotoUpload(
-                    imageFile: _photoFile,
-                    imageUrl: _photoFile == null ? _networkPhotoUrl : null,
+                    selection: _photo,
                     onTap: _busy ? null : _pickPhoto,
+                    busy: _busy && _photo.needsUpload,
                   ),
                   OnboardingPhotoCaption(
-                    hasPhoto: _hasProfilePhoto,
+                    hasPhoto: _photo.hasPhoto,
                     onTap: _busy ? null : _pickPhoto,
                   ),
                 ],

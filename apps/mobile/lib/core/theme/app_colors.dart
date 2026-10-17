@@ -24,5 +24,8 @@ abstract final class AppColors {
   static const Color surfaceElevated = Color(0xFFFCFCFD);
   static const Color scaffoldStripe = Color(0xFFF2F2F3);
   static const Color fieldShadow = Color(0x14000000);
+
+  /// Dims a photo under a progress indicator (upload in progress).
+  static const Color mediaBusyScrim = Color(0x66000000);
   static const Color hintOnSage = Color(0xFF3A5A2E);
 }

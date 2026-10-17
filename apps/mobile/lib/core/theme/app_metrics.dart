@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'app_spacing.dart';
+
 abstract final class AppMetrics {
   /// Onboarding pages and in-app sections (PRD §5.1).
   static const double horizontalPadding = 26;
@@ -176,6 +178,20 @@ abstract final class AppMetrics {
 
   /// Max height of an image preview inside a bottom sheet.
   static const double sheetImagePreviewMaxHeight = 200;
+
+  /// Form photo slots ([PhotoSelectionPreview]): avatar circle, event cover
+  /// strip, and the cover sheet's gallery thumbnails.
+  static const double photoPickerAvatarSize = 88;
+  static const double photoPickerAvatarSizeLarge = 100;
+  static const double photoPickerCoverHeight = 70;
+  static const double photoPickerCoverRadius = 14;
+  static const double photoPickerBorderWidth = 1.5;
+  static const double photoPickerIconSize = 26;
+  static const double photoPickerBusyIndicatorSize = 24;
+  static const double photoPickerBusyStrokeWidth = 2.5;
+  static const double photoSheetThumbSize = 88;
+  static const double photoSheetThumbRadius = galleryTileBadgeRadius;
+  static const double photoSheetThumbGap = AppSpacing.sm;
 
   /// Floating prev/next control over the photo hero (prototype `.photo-nav-hint`).
   static const double photoNavButtonElevation = 2;

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:image_picker/image_picker.dart' show XFile;
 import 'package:provider/provider.dart';
 
+import '../../../core/media/photo_selection.dart';
+import '../../../core/media/pick_display_photo.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../../../core/time/app_date_time.dart';
@@ -50,7 +52,6 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
   AppLocalizations get l10n => AppLocalizations.of(context)!;
   final _boyNameController = TextEditingController();
   final _girlNameController = TextEditingController();
-  final _picker = ImagePicker();
 
   var _synced = false;
   var _busy = false;
@@ -228,10 +229,7 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
   }
 
   Future<void> _pickPhoto() async {
-    final file = await _picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
-    );
+    final file = await pickDisplayPhoto();
     if (file == null) return;
     setState(() {
       _selectedImage = file;
@@ -391,8 +389,9 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               PrototypePhotoUpload(
-                imageFile: _selectedImage,
+                selection: PhotoSelection.fromPicked(_selectedImage),
                 onTap: _busy ? null : _pickPhoto,
+                busy: _busy && _selectedImage != null,
               ),
               OnboardingPhotoCaption(
                 hasPhoto: _selectedImage != null,

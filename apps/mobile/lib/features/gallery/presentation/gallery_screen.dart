@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/api/api_client.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/presentation/tab_load_failure.dart';
 import '../../../core/presentation/tab_load_kind.dart';
@@ -248,12 +247,11 @@ class _GalleryScreenState extends State<GalleryScreen>
     if (!mounted) return;
     setState(() => _uploading = true);
     try {
-      final api = context.read<ApiClient>();
       final photoId = await runGalleryPhotoUpload(
         context: context,
         babyProfileId: baby.id,
         imageFile: file,
-        api: api,
+        gallery: context.read<GalleryRepository>(),
       );
       if (mounted) {
         notifyGalleryDataChanged(context);
