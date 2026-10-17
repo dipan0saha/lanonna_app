@@ -5,6 +5,7 @@ from typing import Any
 
 from lanonna_api.domain.avatar_urls import signed_avatar_url
 from lanonna_api.domain.fun_closed import fun_closed_flags
+from lanonna_api.domain.member_lifecycle import can_leave_baby
 from lanonna_api.schemas.babies import BabySummary
 
 
@@ -20,7 +21,7 @@ def baby_summary_from_row(row: dict[str, Any]) -> BabySummary:
         role=row["role"],
         relationship_label=row.get("relationship_label"),
         avatar_url=signed_avatar_url(row.get("avatar_url")),
-        can_leave=bool(row.get("can_leave", True)),
+        can_leave=can_leave_baby(row["role"], row["active_owner_count"]),
         names_closed=closed["names_closed"],
         predictions_closed=closed["predictions_closed"],
     )

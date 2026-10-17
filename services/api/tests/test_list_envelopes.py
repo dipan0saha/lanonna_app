@@ -82,19 +82,20 @@ def test_baby_scoped_lists_fetch_one_extra_row(path, target, row):
     assert len(body["items"]) == 2
 
 
-def test_list_babies_envelope_and_no_work_for_extra_row():
-    rows = [{"id": uuid.uuid4(), "role": "owner"} for _ in range(3)]
+def test_list_babies_envelope_builds_summaries_from_list_rows_only():
+    rows = [{"id": uuid.uuid4(), "role": "owner", "active_owner_count": 1} for _ in range(3)]
     summary = SimpleNamespace(model_dump=lambda mode: {"id": "b"})
     with (
         as_user(),
         patch("lanonna_api.routers.babies.list_babies_for_user", return_value=rows) as fetch,
-        patch("lanonna_api.routers.babies.count_active_owners", return_value=1) as owners,
-        patch("lanonna_api.routers.babies.baby_summary_from_row", return_value=summary),
+        patch("lanonna_api.routers.babies.baby_summary_from_row", return_value=summary) as build,
     ):
         resp = client.get("/v1/babies?limit=2")
     assert resp.status_code == 200
     assert fetch.call_args.kwargs == {"limit": 3, "offset": 0}
-    assert owners.call_count == 2
+    # Owner counts arrive on the list rows; no follow-up query per baby, and
+    # the extra has_more probe row is never summarised.
+    assert [c.args[0] for c in build.call_args_list] == rows[:2]
     body = resp.json()
     assert body["has_more"] is True and len(body["items"]) == 2
 
