@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker/image_picker.dart' show XFile;
 import 'package:lanonna/features/gallery/presentation/upload/photo_upload_caption_sheet.dart';
 
 final _tinyPng = base64Decode(
@@ -32,7 +33,7 @@ void main() {
               onPressed: () async {
                 result = await showPhotoUploadCaptionSheet(
                   context,
-                  imageFile: imageFile,
+                  imageFile: XFile(imageFile.path),
                 );
               },
               child: const Text('open'),
@@ -63,7 +64,7 @@ void main() {
               onPressed: () async {
                 result = await showPhotoUploadCaptionSheet(
                   context,
-                  imageFile: imageFile,
+                  imageFile: XFile(imageFile.path),
                 );
               },
               child: const Text('open'),

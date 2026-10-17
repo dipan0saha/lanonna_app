@@ -46,6 +46,33 @@ void main() {
     expect(api.calls, 2);
   });
 
+  test('updateEvent sends cleared optional fields as explicit nulls', () async {
+    final api = _EventsApi();
+    final repo = CalendarRepository(api);
+    await repo.updateEvent(
+      'baby-1',
+      'ev-1',
+      title: 'Edited',
+      startsAt: DateTime.utc(2026, 3, 10),
+      description: null,
+      location: null,
+      videoCallUrl: null,
+      coverPhotoId: null,
+    );
+    expect(api.lastPatchPath, '/v1/babies/baby-1/events/ev-1');
+    final body = api.lastPatchBody!;
+    for (final key in [
+      'description',
+      'location',
+      'video_call_url',
+      'cover_photo_id',
+    ]) {
+      expect(body.containsKey(key), isTrue, reason: '$key must be sent');
+      expect(body[key], isNull);
+    }
+    expect(body['title'], 'Edited');
+  });
+
   test('listEventsForSuggestionDedupe merges month and upcoming', () async {
     final api = _DedupeEventsApi();
     final repo = CalendarRepository(api);
@@ -86,6 +113,23 @@ class _EventsApi extends ApiClient {
   }) async {
     return {
       'id': 'ev-new',
+      'title': body?['title'],
+      'starts_at': body?['starts_at'],
+    };
+  }
+
+  String? lastPatchPath;
+  Map<String, dynamic>? lastPatchBody;
+
+  @override
+  Future<Map<String, dynamic>> patchJson(
+    String path, {
+    Map<String, dynamic>? body,
+  }) async {
+    lastPatchPath = path;
+    lastPatchBody = body;
+    return {
+      'id': 'ev-1',
       'title': body?['title'],
       'starts_at': body?['starts_at'],
     };

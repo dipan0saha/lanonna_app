@@ -1221,6 +1221,7 @@
   "activityEmptyDefault": "Nothing yet - activity will show up here.",
   "photoAddAction": "Add a photo",
   "photoChangeAction": "Change photo",
+  "photoUploadingLabel": "Uploading photo…",
   "babyNameDefault": "Baby",
   "personNameFallback": "Family member",
   "relationshipWife": "Wife",

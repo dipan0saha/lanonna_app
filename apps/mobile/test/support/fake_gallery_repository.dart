@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:image_picker/image_picker.dart' show XFile;
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/features/gallery/data/gallery_repository.dart';
 import 'package:lanonna/features/gallery/data/models/photo_models.dart';
@@ -8,6 +11,27 @@ class FakeGalleryRepository extends GalleryRepository {
 
   int listCalls = 0;
   List<PhotoSummary> photos = const [];
+
+  /// Files passed to [uploadPhoto], in order.
+  final uploadedFiles = <XFile>[];
+
+  /// Each [uploadPhoto] call waits on the next queued completer (tests drive
+  /// the upload's progress and outcome); with none queued it returns
+  /// `uploaded-<n>` at once.
+  final uploadResults = <Completer<String>>[];
+
+  @override
+  Future<String> uploadPhoto(
+    String babyId,
+    XFile imageFile, {
+    String? caption,
+  }) {
+    uploadedFiles.add(imageFile);
+    if (uploadResults.isEmpty) {
+      return Future.value('uploaded-${uploadedFiles.length}');
+    }
+    return uploadResults.removeAt(0).future;
+  }
 
   @override
   Future<PhotoListPage> listPhotosPage(

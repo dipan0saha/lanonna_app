@@ -1,13 +1,9 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 import '../../../core/widgets/app_modal_sheet.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/api/api_client.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/input/app_text_input_kind.dart';
@@ -18,8 +14,9 @@ import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_labeled_text_field.dart';
 import '../../../core/widgets/app_semantics.dart';
-import '../../../core/media/cached_signed_image.dart';
-import '../../../core/api/display_photo_upload.dart';
+import '../../../core/media/photo_selection.dart';
+import '../../../core/media/pick_display_photo.dart';
+import '../../../core/widgets/photo_selection_preview.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../gallery/data/gallery_repository.dart';
 import '../../gallery/data/models/photo_models.dart';
@@ -80,8 +77,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
   DateTime _date = DateTime.now();
   TimeOfDay _time = TimeOfDay.now();
   BabySummary? _baby;
-  String? _coverPhotoId;
-  String? _coverPhotoPreviewUrl;
+  PhotoSelection _cover = const PhotoSelection.none();
   var _saving = false;
 
   @override
@@ -129,31 +125,24 @@ class _EventFormScreenState extends State<EventFormScreen> {
     setState(() => _baby = baby);
   }
 
-  void _onCoverUrlError() {
-    _refreshCoverPreview();
-  }
-
+  /// The cover's signed read URL expired: fetch a fresh one for the same
+  /// photo without touching anything else the user has edited.
   Future<void> _refreshCoverPreview() async {
     final baby = _baby;
-    if (baby == null) return;
-    if (widget.isEdit && widget.eventId != null) {
-      await _loadEvent();
-      return;
-    }
-    final photoId = _coverPhotoId;
-    if (photoId == null) return;
+    final photoId = _cover.remoteRef;
+    if (baby == null || photoId == null || _cover.localFile != null) return;
     try {
       final detail = await context.read<GalleryRepository>().fetchPhoto(
         baby.id,
         photoId,
       );
-      if (!mounted) return;
+      if (!mounted || _cover.remoteRef != photoId) return;
       setState(() {
-        _coverPhotoPreviewUrl = detail.thumbUrl ?? detail.displayUrl;
+        _cover = _cover.withPreviewUrl(detail.thumbUrl ?? detail.displayUrl);
       });
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
+        AppSnackBar.showAlert(context, apiErrorMessage(l10n, e));
       }
     }
   }
@@ -179,8 +168,10 @@ class _EventFormScreenState extends State<EventFormScreen> {
       hour: eventWallTime(detail.startsAt).hour,
       minute: eventWallTime(detail.startsAt).minute,
     );
-    _coverPhotoId = detail.coverPhotoId;
-    _coverPhotoPreviewUrl = detail.coverPhotoDisplayUrl;
+    _cover = PhotoSelection.fromStored(
+      detail.coverPhotoId,
+      previewUrl: detail.coverPhotoDisplayUrl,
+    );
     if (mounted) setState(() {});
   }
 
@@ -199,85 +190,48 @@ class _EventFormScreenState extends State<EventFormScreen> {
     if (picked != null) setState(() => _time = picked);
   }
 
+  /// Lets the owner pick a new photo from the device, reuse a gallery photo,
+  /// or remove the cover. Nothing is uploaded here: a new photo previews
+  /// immediately and uploads when the event is saved (same as every other
+  /// photo form).
   Future<void> _pickCoverPhoto() async {
     final baby = _baby;
-    if (baby == null) return;
-    final page = await context.read<GalleryRepository>().listPhotosPage(
-      baby.id,
-      limit: 40,
-    );
-    final photos = page.items;
+    if (baby == null || _saving) return;
+    var photos = const <PhotoSummary>[];
+    try {
+      final page = await context.read<GalleryRepository>().listPhotosPage(
+        baby.id,
+        limit: 40,
+      );
+      photos = page.items;
+    } catch (e) {
+      // The device picker and "No cover photo" still work without the list.
+      if (mounted) AppSnackBar.showAlert(context, apiErrorMessage(l10n, e));
+    }
     if (!mounted) return;
-    final picked = await showAppModalSheet<({String? id, String? thumbUrl})?>(
+    final picked = await showAppModalSheet<PhotoSelection>(
       context: context,
       title: l10n.fieldCoverPhoto,
-      bodyBuilder: (context) => SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined),
-              title: Text(AppLocalizations.of(context)!.eventCoverUploadNew),
-              onTap: () async {
-                final file = await ImagePicker().pickImage(
-                  source: ImageSource.gallery,
-                  imageQuality: 85,
-                );
-                if (file == null) {
-                  if (!context.mounted) return;
-                  Navigator.pop(context);
-                  return;
-                }
-                if (!context.mounted) return;
-                final id = await DisplayPhotoUpload(context.read<ApiClient>())
-                    .uploadGalleryPhoto(
-                      babyProfileId: baby.id,
-                      imageFile: File(file.path),
-                    );
-                if (!context.mounted) return;
-                notifyGalleryDataChanged(context);
-                Navigator.pop(context, (id: id, thumbUrl: null));
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.clear),
-              title: Text(AppLocalizations.of(context)!.eventCoverNone),
-              onTap: () => Navigator.pop(context, (id: '', thumbUrl: null)),
-            ),
-            if (photos.isNotEmpty)
-              SizedBox(
-                height: 120,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    for (final p in photos)
-                      Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: InkWell(
-                          onTap: () => Navigator.pop(context, (
-                            id: p.id,
-                            thumbUrl: p.thumbUrl,
-                          )),
-                          child: _CoverThumb(photo: p),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-          ],
-        ),
-      ),
+      bodyBuilder: (context) => _CoverPhotoSheetBody(photos: photos),
     );
-    if (picked == null) return;
-    setState(() {
-      if (picked.id == null || picked.id!.isEmpty) {
-        _coverPhotoId = null;
-        _coverPhotoPreviewUrl = null;
-      } else {
-        _coverPhotoId = picked.id;
-        _coverPhotoPreviewUrl = picked.thumbUrl;
-      }
-    });
+    if (picked == null || !mounted) return;
+    setState(() => _cover = picked);
+  }
+
+  /// Uploads a newly picked cover so the event can reference it. Marks the
+  /// selection uploaded, so retrying a failed save does not upload twice.
+  Future<String?> _coverPhotoIdForSave(String babyId) async {
+    final file = _cover.localFile;
+    if (!_cover.needsUpload || file == null) return _cover.remoteRef;
+    final photoId = await context.read<GalleryRepository>().uploadPhoto(
+      babyId,
+      file,
+    );
+    if (mounted) {
+      setState(() => _cover = _cover.uploaded(photoId));
+      notifyGalleryDataChanged(context);
+    }
+    return photoId;
   }
 
   DateTime _startsAtLocal() {
@@ -325,6 +279,8 @@ class _EventFormScreenState extends State<EventFormScreen> {
     try {
       final repo = context.read<CalendarRepository>();
       final startsAt = _startsAtLocal();
+      final coverPhotoId = await _coverPhotoIdForSave(baby.id);
+      if (!mounted) return;
       if (widget.isEdit) {
         await repo.updateEvent(
           baby.id,
@@ -334,7 +290,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
           description: description.isEmpty ? null : description,
           location: location.isEmpty ? null : location,
           videoCallUrl: videoCallUrl,
-          coverPhotoId: _coverPhotoId,
+          coverPhotoId: coverPhotoId,
         );
       } else {
         await repo.createEvent(
@@ -344,7 +300,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
           description: description.isEmpty ? null : description,
           location: location.isEmpty ? null : location,
           videoCallUrl: videoCallUrl,
-          coverPhotoId: _coverPhotoId,
+          coverPhotoId: coverPhotoId,
           catalogSuggestionId: widget.initialCatalogSuggestionId,
         );
       }
@@ -354,7 +310,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
       }
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
+        AppSnackBar.showAlert(context, apiErrorMessage(l10n, e));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -427,14 +383,12 @@ class _EventFormScreenState extends State<EventFormScreen> {
             keyboardType: TextInputType.url,
           ),
           PrototypeEventCoverUpload(
-            onTap: _baby == null ? null : _pickCoverPhoto,
-            previewImageUrl: _coverPhotoPreviewUrl,
-            cacheKey: _coverPhotoId != null
-                ? 'event-cover-$_coverPhotoId'
-                : null,
-            onSignedUrlError: _onCoverUrlError,
+            selection: _cover,
+            onTap: _baby == null || _saving ? null : _pickCoverPhoto,
+            busy: _saving && _cover.needsUpload,
+            onSignedUrlError: _refreshCoverPreview,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           AppSemantics.button(
             'calendar_event_save',
             FilledButton(
@@ -449,30 +403,69 @@ class _EventFormScreenState extends State<EventFormScreen> {
   }
 }
 
-class _CoverThumb extends StatelessWidget {
-  const _CoverThumb({required this.photo});
+/// Cover sheet: pick from the device, remove the cover, or reuse a gallery
+/// photo. Pops the chosen [PhotoSelection]; a cancelled device picker keeps
+/// the sheet open.
+class _CoverPhotoSheetBody extends StatelessWidget {
+  const _CoverPhotoSheetBody({required this.photos});
 
-  final PhotoSummary photo;
+  final List<PhotoSummary> photos;
 
   @override
   Widget build(BuildContext context) {
-    final url = photo.thumbUrl;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: url != null
-          ? CachedSignedImage(
-              imageUrl: url,
-              cacheKey: 'thumb-${photo.id}',
-              width: 88,
-              height: 88,
-              fit: BoxFit.cover,
-            )
-          : Container(
-              width: 88,
-              height: 88,
-              color: Colors.grey.shade300,
-              child: const Icon(Icons.image),
+    final l10n = AppLocalizations.of(context)!;
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.photo_library_outlined),
+            title: Text(l10n.eventCoverUploadNew),
+            onTap: () async {
+              final file = await pickDisplayPhoto();
+              if (file == null || !context.mounted) return;
+              Navigator.pop(context, PhotoSelection.local(file));
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.clear),
+            title: Text(l10n.eventCoverNone),
+            onTap: () => Navigator.pop(context, const PhotoSelection.none()),
+          ),
+          if (photos.isNotEmpty)
+            SizedBox(
+              height:
+                  AppMetrics.photoSheetThumbSize + 2 * AppMetrics.photoSheetThumbGap,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  for (final p in photos)
+                    Padding(
+                      padding: const EdgeInsets.all(AppMetrics.photoSheetThumbGap),
+                      child: InkWell(
+                        onTap: () => Navigator.pop(
+                          context,
+                          PhotoSelection.remote(ref: p.id, previewUrl: p.thumbUrl),
+                        ),
+                        child: PhotoSelectionPreview(
+                          selection: PhotoSelection.remote(
+                            ref: p.id,
+                            previewUrl: p.thumbUrl,
+                          ),
+                          width: AppMetrics.photoSheetThumbSize,
+                          height: AppMetrics.photoSheetThumbSize,
+                          borderRadius: AppMetrics.photoSheetThumbRadius,
+                          framed: false,
+                          cacheKey: 'thumb-${p.id}',
+                          placeholderIcon: Icons.image_outlined,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
+        ],
+      ),
     );
   }
 }

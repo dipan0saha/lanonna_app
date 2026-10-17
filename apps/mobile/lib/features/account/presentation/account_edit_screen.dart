@@ -1,9 +1,5 @@
-import 'dart:io';
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_client.dart';
@@ -15,6 +11,8 @@ import '../../../core/widgets/app_country_dropdown_field.dart';
 import '../../../core/validation/form_validators.dart';
 import '../../../core/widgets/app_labeled_text_form_field.dart';
 import '../../../core/api/display_photo_upload.dart';
+import '../../../core/media/photo_selection.dart';
+import '../../../core/media/pick_display_photo.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
@@ -35,9 +33,7 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
   final _email = TextEditingController();
   final _phone = TextEditingController();
   final _postal = TextEditingController();
-  final _picker = ImagePicker();
-  String? _networkAvatarUrl;
-  XFile? _photoFile;
+  PhotoSelection _avatar = const PhotoSelection.none();
   DateTime? _birthDate;
   String? _countryCode;
   List<IsoCountry> _countries = const [];
@@ -48,12 +44,6 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
   AutovalidateMode get _autovalidateMode => _validateOnInteraction
       ? AutovalidateMode.onUserInteraction
       : AutovalidateMode.disabled;
-
-  bool get _hasAvatarPhoto {
-    if (_photoFile != null) return true;
-    final url = _networkAvatarUrl?.trim();
-    return url != null && url.isNotEmpty;
-  }
 
   @override
   void initState() {
@@ -95,7 +85,10 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
     if (account.birthDate != null && account.birthDate!.isNotEmpty) {
       _birthDate = tryParseApiCalendarDate(account.birthDate);
     }
-    _networkAvatarUrl = account.avatarUrl;
+    _avatar = PhotoSelection.fromStored(
+      account.avatarUrl,
+      previewUrl: account.avatarUrl,
+    );
     setState(() {});
   }
 
@@ -106,12 +99,9 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
   }
 
   Future<void> _pickPhoto() async {
-    final file = await _picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
-    );
-    if (file == null) return;
-    setState(() => _photoFile = file);
+    final file = await pickDisplayPhoto();
+    if (file == null || !mounted) return;
+    setState(() => _avatar = PhotoSelection.local(file));
   }
 
   Future<void> _pickBirthDate() async {
@@ -155,12 +145,15 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
         _lastName.text,
       );
       final displayName = '$first $last'.trim();
-      String? avatarUrl = _networkAvatarUrl;
-      if (_photoFile != null && !kIsWeb) {
-        avatarUrl = await DisplayPhotoUpload(
+      final file = _avatar.localFile;
+      if (_avatar.needsUpload && file != null) {
+        final objectPath = await DisplayPhotoUpload(
           context.read<ApiClient>(),
-        ).uploadProfileAvatar(imageFile: File(_photoFile!.path));
+        ).uploadProfileAvatar(imageFile: file);
+        if (!mounted) return;
+        setState(() => _avatar = _avatar.uploaded(objectPath));
       }
+      final avatarUrl = _avatar.remoteRef;
       if (!mounted) return;
       await context.read<AccountRepository>().updateProfile(
         displayName: displayName,
@@ -198,13 +191,13 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     PrototypePhotoUpload(
-                      imageFile: _photoFile,
-                      imageUrl: _photoFile == null ? _networkAvatarUrl : null,
+                      selection: _avatar,
                       onTap: _saving ? null : _pickPhoto,
+                      busy: _saving && _avatar.needsUpload,
                       onSignedUrlError: _load,
                     ),
                     OnboardingPhotoCaption(
-                      hasPhoto: _hasAvatarPhoto,
+                      hasPhoto: _avatar.hasPhoto,
                       onTap: _saving ? null : _pickPhoto,
                     ),
                   ],

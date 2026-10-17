@@ -1,13 +1,13 @@
-import 'dart:io';
 import 'package:lanonna/core/domain/name_suggestion_draft.dart';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:image_picker/image_picker.dart' show XFile;
 import 'package:provider/provider.dart';
 
-import '../../../../core/api/api_client.dart';
+import '../../../gallery/data/gallery_repository.dart';
+import '../../../../core/media/photo_selection.dart';
+import '../../../../core/media/pick_display_photo.dart';
 import '../../../../core/api/api_error_message.dart';
 import '../../../../core/input/app_text_input_kind.dart';
 import '../../../gallery/presentation/upload/run_gallery_photo_upload.dart';
@@ -43,7 +43,6 @@ class OnboardingFirstMomentScreen extends StatefulWidget {
 
 class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScreen> {
   final _nameInputController = TextEditingController();
-  final _picker = ImagePicker();
 
   var _synced = false;
   var _busy = false;
@@ -145,7 +144,7 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
   }
 
   Future<void> _pickPhoto() async {
-    final file = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    final file = await pickDisplayPhoto();
     if (file == null) return;
     setState(() => _photoFile = file);
     await _syncDraft();
@@ -180,7 +179,6 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
     });
     try {
       final repo = context.read<OnboardingRepository>();
-      final api = context.read<ApiClient>();
 
       if (seed) {
         await repo.seedFirstMoment(
@@ -191,15 +189,14 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
         );
       }
 
-      if (_photoFile != null &&
-          _lifecycle == BabyLifecycle.born &&
-          !kIsWeb) {
+      final photo = _photoFile;
+      if (photo != null && _lifecycle == BabyLifecycle.born) {
         if (!mounted) return;
         await runGalleryPhotoUpload(
           context: context,
           babyProfileId: babyId,
-          imageFile: File(_photoFile!.path),
-          api: api,
+          imageFile: photo,
+          gallery: context.read<GalleryRepository>(),
         );
         if (mounted) notifyGalleryDataChanged(context);
       }
@@ -364,8 +361,9 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     PrototypePhotoUpload(
-                      imageFile: _photoFile,
+                      selection: PhotoSelection.fromPicked(_photoFile),
                       onTap: _busy ? null : _pickPhoto,
+                      busy: _busy && _photoFile != null,
                     ),
                     OnboardingPhotoCaption(
                       hasPhoto: _photoFile != null,

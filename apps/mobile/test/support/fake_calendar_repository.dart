@@ -16,6 +16,58 @@ class FakeCalendarRepository extends CalendarRepository {
   int fetchCalls = 0;
   List<CalendarEvent> upcomingEvents = const [];
 
+  /// `cover_photo_id` of each [createEvent] / [updateEvent] call, in order.
+  final createdCoverIds = <String?>[];
+  final updatedCoverIds = <String?>[];
+
+  /// Thrown (once) by the next create or update, to test a failed save.
+  Object? nextSaveError;
+
+  CalendarEvent _saved(String title, DateTime startsAt, String? coverPhotoId) {
+    final error = nextSaveError;
+    if (error != null) {
+      nextSaveError = null;
+      throw error;
+    }
+    return CalendarEvent(
+      id: 'ev-saved',
+      title: title,
+      startsAt: startsAt,
+      coverPhotoId: coverPhotoId,
+    );
+  }
+
+  @override
+  Future<CalendarEvent> createEvent(
+    String babyId, {
+    required String title,
+    required DateTime startsAt,
+    DateTime? endsAt,
+    String? description,
+    String? location,
+    String? videoCallUrl,
+    String? coverPhotoId,
+    String? catalogSuggestionId,
+  }) async {
+    createdCoverIds.add(coverPhotoId);
+    return _saved(title, startsAt, coverPhotoId);
+  }
+
+  @override
+  Future<CalendarEvent> updateEvent(
+    String babyId,
+    String eventId, {
+    required String title,
+    required DateTime startsAt,
+    required String? description,
+    required String? location,
+    required String? videoCallUrl,
+    required String? coverPhotoId,
+  }) async {
+    updatedCoverIds.add(coverPhotoId);
+    return _saved(title, startsAt, coverPhotoId);
+  }
+
   @override
   Future<List<CalendarEvent>> listEvents(
     String babyId, {

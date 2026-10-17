@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart' show XFile;
 
 import '../../../core/api/api_client.dart';
+import '../../../core/api/display_photo_upload.dart';
 import '../../../core/api/offset_page.dart';
 import 'models/photo_models.dart';
 
@@ -11,8 +13,24 @@ class GalleryRepository extends ChangeNotifier {
 
   void _markGalleryChanged() => notifyListeners();
 
-  /// Uploads and other flows outside this repository call this after mutating gallery data.
+  /// Flows outside this repository call this after mutating gallery data.
   void markGalleryChanged() => _markGalleryChanged();
+
+  /// Uploads [imageFile] to the baby's gallery and returns the new photo id.
+  /// The photo is `pending` until the worker has made its thumbnails.
+  Future<String> uploadPhoto(
+    String babyId,
+    XFile imageFile, {
+    String? caption,
+  }) async {
+    final photoId = await DisplayPhotoUpload(_api).uploadGalleryPhoto(
+      babyProfileId: babyId,
+      imageFile: imageFile,
+      caption: caption,
+    );
+    _markGalleryChanged();
+    return photoId;
+  }
 
   static const int pageSize = 50;
 

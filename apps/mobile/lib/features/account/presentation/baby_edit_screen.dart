@@ -1,10 +1,7 @@
-import 'dart:io';
 import 'package:lanonna/core/domain/baby_gender.dart';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_client.dart';
@@ -13,6 +10,8 @@ import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/widgets/app_labeled_text_field.dart';
 import '../../../core/api/display_photo_upload.dart';
+import '../../../core/media/photo_selection.dart';
+import '../../../core/media/pick_display_photo.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
@@ -41,9 +40,7 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
   var _saving = false;
   BabyGender? _gender;
   DateTime? _date;
-  final _picker = ImagePicker();
-  String? _networkAvatarUrl;
-  XFile? _photoFile;
+  PhotoSelection _avatar = const PhotoSelection.none();
 
   bool get _isBorn => _baby?.isBorn == true;
   bool get _isOwner => _baby?.role == 'owner';
@@ -56,12 +53,6 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
       return _isBorn ? null : BabyGender.unknown.index;
     }
     return gender.index;
-  }
-
-  bool get _hasAvatarPhoto {
-    if (_photoFile != null) return true;
-    final url = _networkAvatarUrl?.trim();
-    return url != null && url.isNotEmpty;
   }
 
   @override
@@ -82,19 +73,19 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
       _name.text = baby?.name ?? '';
       _gender = baby?.gender;
       _date = parsed;
-      _networkAvatarUrl = baby?.avatarUrl;
+      _avatar = PhotoSelection.fromStored(
+        baby?.avatarUrl,
+        previewUrl: baby?.avatarUrl,
+      );
       _loading = false;
     });
   }
 
   Future<void> _pickPhoto() async {
     if (!_isOwner) return;
-    final file = await _picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
-    );
-    if (file == null) return;
-    setState(() => _photoFile = file);
+    final file = await pickDisplayPhoto();
+    if (file == null || !mounted) return;
+    setState(() => _avatar = PhotoSelection.local(file));
   }
 
   Future<void> _pickDate() async {
@@ -117,14 +108,17 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
     setState(() => _saving = true);
     try {
       final dateIso = _date != null ? toApiCalendarDate(_date!) : null;
-      String? avatarUrl = _networkAvatarUrl;
-      if (_photoFile != null && !kIsWeb) {
-        avatarUrl = await DisplayPhotoUpload(context.read<ApiClient>())
+      final file = _avatar.localFile;
+      if (_avatar.needsUpload && file != null) {
+        final objectPath = await DisplayPhotoUpload(context.read<ApiClient>())
             .uploadBabyAvatar(
               babyProfileId: widget.babyId,
-              imageFile: File(_photoFile!.path),
+              imageFile: file,
             );
+        if (!mounted) return;
+        setState(() => _avatar = _avatar.uploaded(objectPath));
       }
+      final avatarUrl = _avatar.remoteRef;
       if (!mounted) return;
       await context.read<HomeRepository>().updateBaby(
         widget.babyId,
@@ -161,13 +155,13 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   PrototypePhotoUpload(
-                    imageFile: _photoFile,
-                    imageUrl: _photoFile == null ? _networkAvatarUrl : null,
+                    selection: _avatar,
                     onTap: _saving ? null : _pickPhoto,
+                    busy: _saving && _avatar.needsUpload,
                     onSignedUrlError: _load,
                   ),
                   OnboardingPhotoCaption(
-                    hasPhoto: _hasAvatarPhoto,
+                    hasPhoto: _avatar.hasPhoto,
                     onTap: _saving ? null : _pickPhoto,
                   ),
                 ],

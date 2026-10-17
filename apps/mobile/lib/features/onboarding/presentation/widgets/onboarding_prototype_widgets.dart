@@ -1,12 +1,10 @@
-import 'dart:io';
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/time/app_date_time.dart';
-import 'package:image_picker/image_picker.dart';
 
-import '../../../../core/media/cached_signed_image.dart';
+import '../../../../core/media/photo_selection.dart';
+import '../../../../core/theme/app_metrics.dart';
+import '../../../../core/widgets/photo_selection_preview.dart';
 import '../../../../core/input/app_text_input_kind.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -77,68 +75,39 @@ class OnboardingPhotoCaption extends StatelessWidget {
   }
 }
 
+/// Circular form photo slot (avatars, announcement photo): previews the
+/// [selection] immediately and shows an upload spinner while [busy].
 class PrototypePhotoUpload extends StatelessWidget {
   const PrototypePhotoUpload({
     super.key,
-    this.imageFile,
-    this.imageUrl,
+    required this.selection,
     this.onTap,
     this.onSignedUrlError,
-    this.size = 88,
+    this.busy = false,
+    this.size = AppMetrics.photoPickerAvatarSize,
   });
 
-  final XFile? imageFile;
-  final String? imageUrl;
+  final PhotoSelection selection;
   final VoidCallback? onTap;
   final VoidCallback? onSignedUrlError;
+  final bool busy;
   final double size;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
+      onTap: busy ? null : onTap,
+      child: PhotoSelectionPreview(
+        selection: selection,
         width: size,
         height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: AppColors.inputFill,
-          border: Border.all(color: AppColors.inputBorderStrong, width: 1.5),
-        ),
-        alignment: Alignment.center,
-        child: _buildAvatarContent(size),
+        circle: true,
+        busy: busy,
+        cacheKey: selection.remoteRef == null
+            ? null
+            : 'avatar-preview-${selection.remoteRef}',
+        onSignedUrlError: onSignedUrlError,
       ),
-    );
-  }
-
-  Widget _buildAvatarContent(double size) {
-    if (imageFile != null && !kIsWeb) {
-      return ClipOval(
-        child: Image.file(
-          File(imageFile!.path),
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-        ),
-      );
-    }
-    final url = imageUrl?.trim();
-    if (url != null && url.isNotEmpty) {
-      return ClipOval(
-        child: CachedSignedImage(
-          imageUrl: url,
-          cacheKey: 'avatar-preview-$url',
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-          onSignedUrlError: onSignedUrlError,
-        ),
-      );
-    }
-    return const Icon(
-      Icons.photo_camera_outlined,
-      size: 26,
-      color: AppColors.muted,
     );
   }
 }

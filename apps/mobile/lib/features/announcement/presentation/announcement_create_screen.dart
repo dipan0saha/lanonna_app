@@ -1,19 +1,16 @@
-import 'dart:io';
 import 'package:lanonna/core/domain/baby_gender.dart';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/api/api_client.dart';
 import '../../../core/api/api_error_message.dart';
+import '../../../core/media/photo_selection.dart';
+import '../../../core/media/pick_display_photo.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/validation/form_validators.dart';
 import '../../../core/widgets/app_labeled_text_field.dart';
 import '../../../core/widgets/app_labeled_text_form_field.dart';
-import '../../../core/api/display_photo_upload.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
@@ -22,6 +19,7 @@ import '../../../core/widgets/app_chip.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../onboarding/presentation/widgets/onboarding_prototype_widgets.dart';
 import '../../onboarding/presentation/widgets/onboarding_typography.dart';
+import '../../gallery/data/gallery_repository.dart';
 import '../../gallery/domain/gallery_refresh.dart';
 import '../data/announcement_repository.dart';
 import '../domain/announcement_navigation.dart';
@@ -44,21 +42,13 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
   final _last = TextEditingController();
   final _weight = TextEditingController();
   final _length = TextEditingController();
-  final _picker = ImagePicker();
 
   var _saving = false;
   var _loading = true;
   BabyGender? _gender;
   DateTime? _birthDate;
   TimeOfDay? _birthTime;
-  XFile? _photo;
-  String? _existingPhotoUrl;
-
-  bool get _hasAnnouncementPhoto {
-    if (_photo != null) return true;
-    final url = _existingPhotoUrl?.trim();
-    return url != null && url.isNotEmpty;
-  }
+  PhotoSelection _photo = const PhotoSelection.none();
 
   @override
   void initState() {
@@ -98,7 +88,10 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
           );
         }
       }
-        _existingPhotoUrl = detail.photoDisplayUrl;
+        _photo = PhotoSelection.fromStored(
+          detail.photoId,
+          previewUrl: detail.photoDisplayUrl,
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -110,8 +103,24 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
   }
 
   Future<void> _pickPhoto() async {
-    final file = await _picker.pickImage(source: ImageSource.gallery);
-    if (file != null) setState(() => _photo = file);
+    final file = await pickDisplayPhoto();
+    if (file != null && mounted) setState(() => _photo = PhotoSelection.local(file));
+  }
+
+  /// Uploads a newly picked photo to the gallery. Marks the selection
+  /// uploaded, so retrying a failed save does not upload twice.
+  Future<String?> _photoIdForSave() async {
+    final file = _photo.localFile;
+    if (!_photo.needsUpload || file == null) return _photo.remoteRef;
+    final photoId = await context.read<GalleryRepository>().uploadPhoto(
+      widget.babyId,
+      file,
+    );
+    if (mounted) {
+      setState(() => _photo = _photo.uploaded(photoId));
+      notifyGalleryDataChanged(context);
+    }
+    return photoId;
   }
 
   Future<void> _pickDate() async {
@@ -186,15 +195,7 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
     );
     setState(() => _saving = true);
     try {
-      String? photoId;
-      if (_photo != null && !kIsWeb) {
-        photoId = await DisplayPhotoUpload(context.read<ApiClient>())
-            .uploadGalleryPhoto(
-              babyProfileId: widget.babyId,
-              imageFile: File(_photo!.path),
-            );
-        if (mounted) notifyGalleryDataChanged(context);
-      }
+      final photoId = await _photoIdForSave();
       if (!mounted) return;
       await context.read<AnnouncementRepository>().save(
         widget.babyId,
@@ -244,14 +245,14 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   PrototypePhotoUpload(
-                    imageFile: _photo,
-                    imageUrl: _existingPhotoUrl,
-                    onTap: _pickPhoto,
-                    size: 100,
+                    selection: _photo,
+                    onTap: _saving ? null : _pickPhoto,
+                    busy: _saving && _photo.needsUpload,
+                    size: AppMetrics.photoPickerAvatarSizeLarge,
                   ),
                   OnboardingPhotoCaption(
-                    hasPhoto: _hasAnnouncementPhoto,
-                    onTap: _pickPhoto,
+                    hasPhoto: _photo.hasPhoto,
+                    onTap: _saving ? null : _pickPhoto,
                   ),
                 ],
               ),

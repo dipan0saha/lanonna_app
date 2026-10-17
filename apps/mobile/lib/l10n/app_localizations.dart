@@ -4420,6 +4420,12 @@ abstract class AppLocalizations {
   /// **'Change photo'**
   String get photoChangeAction;
 
+  /// No description provided for @photoUploadingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading photo…'**
+  String get photoUploadingLabel;
+
   /// No description provided for @babyNameDefault.
   ///
   /// In en, this message translates to:
