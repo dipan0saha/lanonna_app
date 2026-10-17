@@ -1,7 +1,7 @@
 # La Nonna — platform architecture (GCP)
 
-**Document version:** 1.9  
-**Last updated:** 2026-10-11  
+**Document version:** 1.10  
+**Last updated:** 2026-10-16  
 **Location:** `docs/engineering/platform-architecture.md` (this repository)  
 **Status:** Operational on `lanonna-dev`; design reference for prod
 
@@ -37,7 +37,7 @@
 8. **Region discipline** — primary **`us-central1`** (free-tier eligible for Run; co-locate SQL, GCS, Run, Pub/Sub).
 9. **Notify, don’t poll** — **FCM** for new content; batch/paginate API reads to stay within Run free tier.
 
-**Implemented on dev (2026):** separate **Cloud Run `api`** and **`worker`**; GCS display + thumbnails; Pub/Sub push (OIDC + DLQ) for finalize and async commands; Pub/Sub finalize → worker thumb + `photo_shared` activity + **member notify** on photo ready; API JWT, signed upload/read URLs, baby-scoped CRUD for gallery (comments PATCH, photo baby tags), calendar (day selection + shared Today/Upcoming lists), registry, and fun; SQL migrations through **`035`** ([migrations/README.md](../../infra/db/migrations/README.md)); Flutter owner/follower home (slim teasers: recent photos + upcoming events), gallery sub-routes, baby **avatar_url**, account (export/delete/notifications inbox), search, birth announcement, optional **biometric app lock** (profile flag); **Firebase Hosting** invite + email-verified continue pages; **FCM** device tokens + worker notification writers + weekly digest Scheduler (Pub/Sub). See [development.md](development.md) for the route list and [operations.md](operations.md) for the dev readiness gate.
+**Implemented on dev (2026):** separate **Cloud Run `api`** and **`worker`**; GCS display + thumbnails; Pub/Sub push (OIDC + DLQ) for finalize and async commands; Pub/Sub finalize → worker thumb + `photo_shared` activity + **member notify** on photo ready; API JWT, signed upload/read URLs, baby-scoped CRUD for gallery (comments PATCH, photo baby tags), calendar (day selection + shared Today/Upcoming lists), registry, and fun; SQL migrations through **`037`** ([migrations/README.md](../../infra/db/migrations/README.md)); Flutter owner/follower home (slim teasers: recent photos + upcoming events), gallery sub-routes, baby **avatar_url**, account (export/delete/notifications inbox), search, birth announcement, optional **biometric app lock** (profile flag); **Firebase Hosting** invite + email-verified continue pages; **FCM** device tokens + worker notification writers + weekly digest Scheduler (Pub/Sub). See [development.md](development.md) for the route list and [operations.md](operations.md) for the dev readiness gate.
 
 **Deferred (initial years):**
 
@@ -147,6 +147,14 @@ HTTP handlers  →  auth middleware (Firebase JWT + optional App Check)
 ```
 
 Keep handlers thin; put business rules in domain services so workers can reuse the same modules.
+
+**Cross-cutting API conventions (Oct 2026):**
+
+- **Domain errors → HTTP in one place.** Domain code raises `PermissionError` / `LookupError` / `ValueError` or a typed domain error; `http_errors.map_domain_errors` maps them to 403 / 404 / 400 / 409 with a JSON `detail` (`{error, message}` for typed errors; 500s are sanitized). Example: `domain/fun_closed.py` owns the "Fun closes at birth" rule — `FunWritesClosedError` (base, `fun_closed`) and `PredictionsClosedError` (`predictions_closed`) both map to **409**, and read payloads derive `names_closed` / `predictions_closed` from the same `fun_writes_closed` predicate.
+- **Server-owned capability flags.** Clients read flags such as `names_closed` / `predictions_closed` (home summary, baby summaries, Fun payloads) instead of re-deriving rules from `lifecycle_status`.
+- **One list envelope.** Every app-facing collection returns `{items, offset, limit, has_more}` from `lanonna_api.pagination` (`offset_page_from_extra_row`: repositories fetch `limit + 1` rows with a stable `ORDER BY` tiebreak via `repositories/_paging.py`). Paging happens in SQL, never by slicing in Python. Calendar month/upcoming views use the same envelope with a server safety cap.
+- **No per-row queries in list paths.** Aggregates needed per row are part of the list query (e.g. `active_owner_count` as a subquery in the babies query, used by `can_leave`; one grouped unread-count query for the weekly digest; bulk photo-tag writes).
+- **Structured notifications.** The API publishes `notification_type` + `actor_firebase_uid`; the worker snapshots `actor_display_name` from `app_users` in the same `INSERT` (migrations `036`/`037`). Clients map the type enum to icons and never parse notification copy.
 
 Embedded gallery data (e.g. `tagged_babies` on photo detail) must be **viewer-scoped** the same way as top-level routes: join `baby_memberships` on each referenced baby profile id so followers never receive names of babies they were not invited to (FR-GAL-008 / #9). Writes may still store cross-baby tags for owners; reads filter in `repositories/photo_tags.py`.
 
@@ -342,6 +350,7 @@ Isolates **storage + egress** if behavior drifts from §2.5 (SQL/Run/email held 
 
 - [ ] Pub/Sub push: Run invoker + OIDC at edge; worker should validate OIDC JWT in-app ([open-gaps.md](open-gaps.md) H-04); validate message shape before side effects
 - [x] Push subscriptions: dead-letter topic + max delivery attempts on dev ([operations.md](operations.md))
+- [x] Transient failures are retried by **Pub/Sub backoff only** — handlers return non-2xx (e.g. invite email `InviteSendOutcome.RETRY` → 500); no in-process `sleep` retries inside a push request
 - [x] Thumbnail handler idempotent on `bucket/object/generation` to prevent duplicate rows on retry
 - [ ] Invite tokens: high entropy, single-use or expiring; hash at rest if stored for lookup
 

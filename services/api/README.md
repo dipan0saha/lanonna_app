@@ -4,7 +4,7 @@ Cloud Run service **`api`** in `lanonna-dev`.
 
 **Canonical route list:** [docs/engineering/development.md](../../docs/engineering/development.md).
 
-**Layout:** `src/lanonna_api/` — `routers/`, `domain/`, `repositories/`.
+**Layout:** `src/lanonna_api/` — `routers/` (thin HTTP) → `domain/` (rules, permissions) → `repositories/` (parameterized SQL only). Shared pieces: `http_errors.map_domain_errors` (domain errors → 400/403/404/409; e.g. `domain/fun_closed.FunWritesClosedError` → 409), `pagination.py` (`{items, offset, limit, has_more}` envelope for every list route) with SQL paging in `repositories/_paging.py`. Conventions: [platform-architecture.md §2.3](../../docs/engineering/platform-architecture.md#23-api-internal-layering-single-cloud-run-service).
 
 ## Deploy
 
@@ -31,3 +31,5 @@ uvicorn lanonna_api.main:app --reload --app-dir src
 ```bash
 PYTHONPATH=src pytest -q
 ```
+
+Integration tests (`tests/integration/`) need local Postgres on 5432: `docker compose -f docker-compose.test.yml up -d` from the repo root. CI runs unit + integration tests on every PR ([`ci.yml`](../../.github/workflows/ci.yml)).

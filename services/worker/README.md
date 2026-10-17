@@ -2,7 +2,7 @@
 
 Pub/Sub push handler: **thumbnails** from `display/` objects, **Mailjet** invite email, **notifications** inbox + FCM (including weekly digest), **baby data export**, **expire pending invitations**.
 
-Non-2xx responses on `/pubsub/push` cause Pub/Sub to retry with exponential backoff (`10s`–`600s` in `pubsub.tf`). Both push subscriptions dead-letter after `max_delivery_attempts` (**12**, mirrored by `PUBSUB_MAX_DELIVERY_ATTEMPTS`) to `lanonna-async-commands-dlq`, which is retained 7 days on the `…-dlq-pull` subscription (inspect/replay: [operations.md](../../docs/engineering/operations.md#dead-letter-queue)). Invite email records `email_delivery_status` / `email_last_error` on the invitation row; transient Mailjet errors return 500, permanent failures ack 204.
+Non-2xx responses on `/pubsub/push` cause Pub/Sub to retry with exponential backoff (`10s`–`600s` in `pubsub.tf`). Both push subscriptions dead-letter after `max_delivery_attempts` (**12**, mirrored by `PUBSUB_MAX_DELIVERY_ATTEMPTS`) to `lanonna-async-commands-dlq`, which is retained 7 days on the `…-dlq-pull` subscription (inspect/replay: [operations.md](../../docs/engineering/operations.md#dead-letter-queue)). Invite email records `email_delivery_status` / `email_last_error` on the invitation row; transient Mailjet errors return `InviteSendOutcome.RETRY` → 500 (Pub/Sub backoff is the only retry — no in-process `sleep`), permanent failures ack 204.
 
 **Layout:** `src/lanonna_worker/` — `main.py`, `pubsub_payload.py`, `thumbnails.py`, `notifications.py`, `invite_email.py`, `invite_cleanup.py`, `baby_data_export.py` (job lifecycle), `export/` (version 2 document), `idempotency.py`, `db.py`, `config.py`.
 
@@ -14,6 +14,8 @@ Pub/Sub handlers are **idempotent** (migration `021`+). Duplicate push deliverie
 - **Invite link:** `INVITE_DEEP_LINK_BASE` is an https origin. Mail uses `https://{host}/invite?token=…`. The token is not logged. Hosting deploy is `scripts/deploy-invite-hosting.sh`.
 - **Pub/Sub push:** malformed or permanently invalid payloads are **acked (204)** with `pubsub_payload_permanent_reject` logs (`pubsub_payload.py`); transient handler failures still return **500** for retry/DLQ. Push subscription **ack deadline** and Cloud Run **request timeout** are both **300 s** (Terraform + `deploy.sh`).
 - **Invite email:** user-derived fields in HTML are escaped before Mailjet send.
+- **Inbox rows:** `notify_fan_out` / `notify_user` payloads carry `notification_type` and `actor_firebase_uid`; the worker snapshots `actor_display_name` from `app_users` in the same `INSERT` (unknown type → `generic`, unknown actor → `NULL`; migrations `036`/`037`).
+- **Weekly digest:** unread counts for all recipients come from one grouped query; FCM tokens are still read per recipient ([open-gaps.md](../../docs/engineering/open-gaps.md) L-31).
 
 ## Deploy
 

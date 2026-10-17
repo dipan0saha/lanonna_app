@@ -41,6 +41,8 @@ Apply in **lexicographic order** (filename prefix):
 | `033_drop_ended_membership_participation.sql` | Delete those same presence rows when the person is no longer a current member (FR-INV-009 / FR-INV-010) |
 | `034_invitation_email_delivery_status.sql` | `email_delivery_status`, `email_last_error`, `email_send_attempts` on invitations (#62) |
 | `035_app_users_biometric_unlock.sql` | `app_users.biometric_unlock_enabled` (PRD §5.3 / M-31) |
+| `036_notification_type_and_actor.sql` | `notifications.notification_type` (`photo` \| `event` \| `registry` \| `fun` \| `comment` \| `squish` \| `digest` \| `generic`, CHECK constraint), `actor_firebase_uid`, `actor_display_name`; backfills legacy types from fixed API titles and deep-link routes (no body-text matching) |
+| `037_notification_actor_backfill.sql` | Backfills `actor_firebase_uid` / `actor_display_name` on legacy inbox rows from structured source rows only (time-bounded, one unambiguous candidate, never the recipient); ambiguous rows stay `NULL` |
 
 ## Apply (dev)
 
@@ -55,7 +57,7 @@ cd infra/db
 DB_PASSWORD="$PGPASSWORD" python apply_migrations.py
 ```
 
-`apply_migrations.py` runs every `*.sql` in lexicographic order and **skips** files whose version stem is already in `schema_migrations` (DDL in files remains idempotent for manual re-run).
+`apply_migrations.py` runs every `*.sql` in lexicographic order and **skips** files whose version stem is already in `schema_migrations` (DDL in files remains idempotent for manual re-run). Confirm with `./scripts/verify-dev-migrations.sh` from the repo root (37 files as of `037`).
 
 **Manual:** `psql -h 127.0.0.1 -U lanonna_app -d lanonna -f infra/db/migrations/00N_….sql` for each file in order.
 
@@ -81,4 +83,4 @@ For disposable QA accounts (not Maestro smoke / `lanonna.dev.qa.*` fixtures):
 
 Sole-owned baby profiles and media are removed from Cloud SQL and GCS; co-owned babies stay; Firebase Auth user is deleted. Use `--dry-run`, `--skip-gcs`, or `--skip-firebase` as needed.
 
-See also [docs/engineering/operations.md](../../docs/engineering/operations.md).
+See also [docs/engineering/operations.md](../../../docs/engineering/operations.md).

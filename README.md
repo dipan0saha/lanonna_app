@@ -21,7 +21,7 @@ cd apps/mobile && flutter pub get && flutter run
 
 ## Status
 
-Active monorepo: Flutter client, FastAPI on Cloud Run, worker for Pub/Sub jobs, PostgreSQL migrations. Local gate: `./scripts/verify-dev-prerequisites.sh`. See [docs/engineering/development.md](docs/engineering/development.md).
+Active monorepo: Flutter client, FastAPI on Cloud Run, worker for Pub/Sub jobs, PostgreSQL migrations (`001`–`037`). Local gate: `./scripts/verify-dev-prerequisites.sh`. CI: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs API (with Postgres integration tests), worker, and Flutter checks on every pull request and push to `main`. See [docs/engineering/development.md](docs/engineering/development.md).
 
 ## License
 
