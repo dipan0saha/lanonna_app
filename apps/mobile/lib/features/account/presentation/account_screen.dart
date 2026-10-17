@@ -127,7 +127,11 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   String _babySubtitle(BabySummary baby) =>
-      babyListSubtitle(baby, localeNameForFormatting(context));
+      babyListSubtitle(
+        AppLocalizations.of(context)!,
+        baby,
+        localeNameForFormatting(context),
+      );
 
   Future<void> _openBaby(BabySummary baby) async {
     await context.read<SelectedBabyStore>().setSelectedBabyId(baby.id);

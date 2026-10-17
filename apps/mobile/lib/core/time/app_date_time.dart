@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 
 /// API stores instants in UTC (ISO-8601). UI uses device-local wall time.
@@ -57,6 +58,25 @@ String formatEventMonthBadge(DateTime startsAt, [String? localeName]) {
 }
 
 int formatEventDayBadge(DateTime startsAt) => eventWallTime(startsAt).day;
+
+/// Month heading for calendar grids (e.g. "March 2026").
+String formatMonthYear(DateTime month, [String? localeName]) =>
+    DateFormat.yMMMM(localeName).format(month);
+
+/// Month and day without year (e.g. "March 5").
+String formatMonthDay(DateTime date, [String? localeName]) =>
+    DateFormat.MMMMd(localeName).format(date);
+
+/// Weekday column headers for a Sunday-first month grid.
+List<String> calendarWeekdayHeaders(AppLocalizations l10n) => [
+      l10n.calendarWeekdaySun,
+      l10n.calendarWeekdayMon,
+      l10n.calendarWeekdayTue,
+      l10n.calendarWeekdayWed,
+      l10n.calendarWeekdayThu,
+      l10n.calendarWeekdayFri,
+      l10n.calendarWeekdaySat,
+    ];
 
 /// Locale string for `DateFormat` (full tag, e.g. `en_US`).
 String localeNameForFormatting(BuildContext context) {
@@ -117,30 +137,31 @@ String toApiCalendarDate(DateTime date) {
 }
 
 /// Inbox / activity relative time (e.g. "2 minutes ago", "Yesterday").
-String formatRelativeTime(DateTime instant, [String? localeName]) {
+String formatRelativeTime(
+  AppLocalizations l10n,
+  DateTime instant, [
+  String? localeName,
+]) {
   final local = eventWallTime(instant);
   final now = DateTime.now();
   final diff = now.difference(local);
   if (diff.isNegative || diff.inSeconds < 45) {
-    return 'Just now';
+    return l10n.relativeTimeJustNow;
   }
   if (diff.inMinutes < 60) {
-    final m = diff.inMinutes;
-    return m == 1 ? '1 minute ago' : '$m minutes ago';
+    return l10n.relativeTimeMinutesAgo(diff.inMinutes);
   }
   if (diff.inHours < 24 && now.day == local.day) {
-    final h = diff.inHours;
-    return h == 1 ? '1 hour ago' : '$h hours ago';
+    return l10n.relativeTimeHoursAgo(diff.inHours);
   }
   final yesterday = DateTime(now.year, now.month, now.day - 1);
   if (local.year == yesterday.year &&
       local.month == yesterday.month &&
       local.day == yesterday.day) {
-    return 'Yesterday';
+    return l10n.relativeTimeYesterday;
   }
   if (diff.inDays < 7) {
-    final d = diff.inDays;
-    return d == 1 ? '1 day ago' : '$d days ago';
+    return l10n.relativeTimeDaysAgo(diff.inDays);
   }
   return DateFormat.yMMMd(localeName).format(local);
 }

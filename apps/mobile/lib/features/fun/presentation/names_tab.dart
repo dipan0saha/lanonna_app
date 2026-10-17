@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/person_display_label.dart';
 import 'package:lanonna/core/domain/baby_gender.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
@@ -354,7 +355,7 @@ class _NameSuggestionCard extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Text(
-              suggestion.authorDisplayName,
+              personDisplayName(AppLocalizations.of(context)!, suggestion.authorDisplayName),
               style: styles.bodySmall?.copyWith(color: AppColors.muted),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

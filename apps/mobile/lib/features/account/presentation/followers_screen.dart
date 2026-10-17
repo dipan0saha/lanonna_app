@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/person_display_label.dart';
 import 'package:lanonna/features/invitations/domain/invitation_status.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
@@ -107,7 +108,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(l10n.memberRemoveConfirmTitle),
-        content: Text(l10n.memberRemoveConfirmBody(member.displayName)),
+        content: Text(l10n.memberRemoveConfirmBody(personDisplayName(l10n, member.displayName))),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -195,7 +196,10 @@ class _FollowersScreenState extends State<FollowersScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      m.displayName,
+                                      personDisplayName(
+                                        AppLocalizations.of(context)!,
+                                        m.displayName,
+                                      ),
                                       style: context.textStyles.titleSmall,
                                     ),
                                     if (_acceptedLabel(m) != null)

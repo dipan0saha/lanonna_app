@@ -23,7 +23,7 @@ class _ShellTopBarLoader extends StatefulWidget {
 }
 
 class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
-  String _centerTitle = 'La Nonna';
+  String? _babyName;
   var _unreadCount = 0;
   String? _accountName;
   String? _accountAvatarUrl;
@@ -140,7 +140,7 @@ class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
       final unread = await notificationsRepo.unreadCount();
       if (mounted) {
         setState(() {
-          if (resolved != null) _centerTitle = resolved.name;
+          if (resolved != null) _babyName = resolved.name;
           _unreadCount = unread;
           _applyCachedAccount();
         });
@@ -150,11 +150,11 @@ class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
     }
   }
 
-  String get _title {
-    if (_centerTitle != 'La Nonna') return _centerTitle;
+  String? get _title {
+    if (_babyName != null) return _babyName;
     final cached = context.read<SelectedBabyStore>().selectedBabyName;
     if (cached != null && cached.isNotEmpty) return cached;
-    return _centerTitle;
+    return null;
   }
 
   @override

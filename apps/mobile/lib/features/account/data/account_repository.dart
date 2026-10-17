@@ -162,7 +162,7 @@ class MemberRow {
   factory MemberRow.fromJson(Map<String, dynamic> json) {
     return MemberRow(
       firebaseUid: json['firebase_uid'] as String? ?? '',
-      displayName: json['display_name'] as String? ?? 'Member',
+      displayName: json['display_name'] as String? ?? '',
       role: json['role'] as String? ?? 'follower',
       canRemove: json['can_remove'] as bool? ?? false,
       email: json['email'] as String?,

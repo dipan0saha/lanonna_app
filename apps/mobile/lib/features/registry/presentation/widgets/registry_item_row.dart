@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/person_display_label.dart';
 
 import '../../../../core/theme/app_metrics.dart';
 
@@ -154,7 +155,12 @@ class RegistryPurchasedRow extends StatelessWidget {
                   Text(
                     AppLocalizations.of(
                       context,
-                    )!.registryPurchasedBy(purchase.purchaserDisplayName),
+                    )!.registryPurchasedBy(
+                      personDisplayName(
+                        AppLocalizations.of(context)!,
+                        purchase.purchaserDisplayName,
+                      ),
+                    ),
                     style: context.textStyles.bodySmall,
                   ),
               ],

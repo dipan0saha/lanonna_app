@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/person_display_label.dart';
 import 'package:lanonna/core/domain/rsvp_status.dart';
 
 import 'package:lanonna/l10n/app_localizations.dart';
@@ -197,7 +198,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             else
               for (final a in detail.rsvpAttendees)
                 ListTile(
-                  title: Text(a.displayName),
+                  title: Text(personDisplayName(AppLocalizations.of(context)!, a.displayName)),
                   trailing: Text(a.status?.label(l10n) ?? ''),
                 ),
           ],
@@ -400,7 +401,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     children: [
                       AvatarStack(
                         displayNames: detail.rsvpAttendees
-                            .map((a) => a.displayName)
+                            .map((a) => personDisplayName(AppLocalizations.of(context)!, a.displayName))
                             .toList(),
                       ),
                       SizedBox(width: AppSpacing.smMd),
@@ -444,7 +445,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 SizedBox(height: AppSpacing.sm),
                 for (final c in detail.comments)
                   ListTile(
-                    title: Text(c.authorDisplayName),
+                    title: Text(personDisplayName(AppLocalizations.of(context)!, c.authorDisplayName)),
                     subtitle: Text(c.body),
                     trailing: (c.canEdit || c.canDelete)
                         ? Row(

@@ -73,7 +73,7 @@ class RsvpAttendee {
     return RsvpAttendee(
       firebaseUid: json['firebase_uid'] as String? ?? '',
       status: RsvpStatus.fromApi(json['status'] as String?),
-      displayName: json['display_name'] as String? ?? 'Family member',
+      displayName: json['display_name'] as String? ?? '',
     );
   }
 }
@@ -101,7 +101,7 @@ class EventComment {
       id: json['id'] as String,
       body: json['body'] as String,
       authorDisplayName:
-          json['author_display_name'] as String? ?? 'Family member',
+          json['author_display_name'] as String? ?? '',
       isMine: isMine,
       canEdit: json['can_edit'] as bool? ?? isMine,
       canDelete: json['can_delete'] as bool? ?? isMine,

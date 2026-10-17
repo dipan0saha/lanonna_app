@@ -186,7 +186,11 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
                     leading: BabyProfileAvatar(baby: baby),
                     title: Text(baby.name),
                     subtitle: Text(
-                      babyListSubtitle(baby, localeNameForFormatting(context)),
+                      babyListSubtitle(
+        AppLocalizations.of(context)!,
+        baby,
+        localeNameForFormatting(context),
+      ),
                     ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,

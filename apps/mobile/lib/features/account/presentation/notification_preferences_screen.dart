@@ -93,7 +93,7 @@ class _NotificationPreferencesScreenState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final prefs = _prefs;
-    final babyLabel = babyDisplayName(_babyName, l10n);
+    final babyLabel = babyDisplayName(l10n, _babyName);
     return PrototypeSubpageScaffold(
       title: l10n.notificationPrefsTitle,
       body: _loading || prefs == null

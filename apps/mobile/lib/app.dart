@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'core/auth/auth_email_verification.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -112,9 +113,7 @@ class _LaNonnaAppState extends State<LaNonnaApp> {
         if (!mounted) return;
         _router.go(OnboardingRoutes.completeProfile);
         final l10n = AppLocalizations.of(context)!;
-        if (result.message != null) {
-          AppSnackBar.showInfoWithMessenger(messenger, result.message!);
-        } else if (result.promptTapContinue) {
+        if (result.promptTapContinue) {
           AppSnackBar.showInfoWithMessenger(
             messenger,
             l10n.messageVerificationCompleteTapContinueProceed,
@@ -125,14 +124,16 @@ class _LaNonnaAppState extends State<LaNonnaApp> {
         final l10n = AppLocalizations.of(context)!;
         AppSnackBar.showAlertWithMessenger(
           messenger,
-          result.message ?? l10n.appEmailVerifiedSignIn,
+          l10n.appEmailVerifiedSignIn,
         );
       case EmailVerifyLinkOutcome.invalidOrExpired:
       case EmailVerifyLinkOutcome.wrongMode:
         final l10n = AppLocalizations.of(context)!;
         AppSnackBar.showAlertWithMessenger(
           messenger,
-          result.message ?? l10n.appEmailVerifyLinkFailed,
+          result.outcome == EmailVerifyLinkOutcome.invalidOrExpired
+              ? userFacingApplyLinkError(l10n, result.firebaseErrorCode)
+              : l10n.appEmailVerifyLinkFailed,
         );
     }
   }

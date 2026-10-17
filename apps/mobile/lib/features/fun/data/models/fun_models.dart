@@ -32,7 +32,7 @@ class NameSuggestion {
       isMine: isMine,
       canDelete: json['can_delete'] as bool? ?? isMine,
       authorDisplayName:
-          json['author_display_name'] as String? ?? 'Family member',
+          json['author_display_name'] as String? ?? '',
     );
   }
 }
@@ -131,7 +131,7 @@ class GenderVoterRow {
   factory GenderVoterRow.fromJson(Map<String, dynamic> json) {
     return GenderVoterRow(
       gender: json['gender'] as String? ?? '',
-      displayName: json['display_name'] as String? ?? 'Anonymous',
+      displayName: json['display_name'] as String? ?? '',
     );
   }
 }

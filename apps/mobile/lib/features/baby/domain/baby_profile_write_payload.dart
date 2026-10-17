@@ -43,8 +43,12 @@ class BabyProfileWritePayload {
   final List<Map<String, String>> profileNameSuggestions;
 }
 
-BabyProfileWritePayload buildBabyProfileWritePayload(CreateBabyFormInput input) {
+BabyProfileWritePayload buildBabyProfileWritePayload(
+  CreateBabyFormInput input, {
+  required String fallbackName,
+}) {
   final name = resolveOnboardingBabyName(
+    fallbackName: fallbackName,
     status: input.status,
     gender: input.gender,
     boyName: input.boyName,

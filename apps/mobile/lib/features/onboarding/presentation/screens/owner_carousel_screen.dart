@@ -113,7 +113,10 @@ class _OwnerCarouselScreenState extends State<OwnerCarouselScreen> {
               onPageChanged: (i) => setState(() => _index = i),
               artBuilder: (context, index) => _slideArt[index](),
               captionBuilder: (context, index) {
-                final slide = ownerCarouselSlide(index);
+                final slide = ownerCarouselSlide(
+                  AppLocalizations.of(context)!,
+                  index,
+                );
                 return OnboardingCarouselCaption(
                   title: slide.$1,
                   body: slide.$2,

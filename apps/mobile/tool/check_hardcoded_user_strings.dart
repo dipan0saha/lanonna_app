@@ -15,7 +15,7 @@ import 'package:analyzer/source/line_info.dart';
 /// messages, etc., so every literal that reads as prose is a violation unless
 /// it sits in a context that is structurally never shown to users (directives,
 /// annotations, map/index keys, comparisons and case patterns, logging, keys,
-/// URIs, regexes, programmer-error throws).
+/// URIs, regexes, programmer-error and diagnostic throws, `toString()`).
 ///
 /// A literal "reads as prose" when its literal text (interpolations dropped)
 /// contains a letter and either whitespace between words or starts with an
@@ -38,7 +38,7 @@ void main(List<String> args) {
     if (entity is! File || !entity.path.endsWith('.dart')) continue;
     final rel = _relativePath(root, entity.path);
     if (rel.startsWith('lib/l10n/')) continue;
-    if (rel.endsWith('.g.dart') || rel.endsWith('.freezed.dart')) continue;
+    if (_isGenerated(rel)) continue;
 
     final parseResult = parseFile(
       path: entity.path,
@@ -62,6 +62,12 @@ void main(List<String> args) {
   }
   print('OK: no hardcoded user-facing string literals.');
 }
+
+/// Tool-generated sources (build_runner, FlutterFire) are not hand-written copy.
+bool _isGenerated(String rel) =>
+    rel.endsWith('.g.dart') ||
+    rel.endsWith('.freezed.dart') ||
+    rel == 'lib/firebase_options.dart';
 
 Set<(String, String)> _loadAllowlist(String path) {
   final file = File(path);
@@ -131,6 +137,9 @@ const _nonUserCallees = {
   'DateFormat', 'StateError', 'ArgumentError', 'UnimplementedError',
   'UnsupportedError', 'AssertionError', 'FlutterError', 'MethodChannel',
   'EventChannel', 'recordError', 'Symbol', 'fromEnvironment',
+  // Diagnostic-only exceptions: user copy comes from apiErrorMessage /
+  // LocalizedFailure, never from these messages.
+  'FormatException', 'ApiException',
 };
 
 class _UserStringVisitor extends RecursiveAstVisitor<void> {
@@ -165,6 +174,9 @@ class _UserStringVisitor extends RecursiveAstVisitor<void> {
   }
 
   bool _inNonUserContext(AstNode literal) {
+    // toString() is a debugging representation, never rendered as copy.
+    final method = literal.thisOrAncestorOfType<MethodDeclaration>();
+    if (method != null && method.name.lexeme == 'toString') return true;
     AstNode child = literal;
     for (var p = literal.parent; p != null; child = p, p = p.parent) {
       if (p is Directive || p is Annotation) return true;

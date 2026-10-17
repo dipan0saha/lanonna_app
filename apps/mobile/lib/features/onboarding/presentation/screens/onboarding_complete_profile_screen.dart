@@ -62,7 +62,7 @@ class _OnboardingCompleteProfileScreenState
   bool _acceptedTerms = false;
   XFile? _photoFile;
   String? _networkPhotoUrl;
-  String _subtext = 'Add your name and photo so family knows who\'s who.';
+  bool _prefilledFromProvider = false;
   var _hydrated = false;
   List<IsoCountry> _countries = const [];
   String? _countryCode;
@@ -218,8 +218,7 @@ class _OnboardingCompleteProfileScreenState
             if (googlePhoto != null && googlePhoto.isNotEmpty) {
               _networkPhotoUrl = googlePhoto;
             }
-            _subtext =
-                AppLocalizations.of(context)!.onboardingWePulledInYourDetails;
+            _prefilledFromProvider = true;
           });
         }
       } on FirebaseException {
@@ -356,7 +355,11 @@ class _OnboardingCompleteProfileScreenState
             const SizedBox(height: 10),
             OnboardingHeadline(AppLocalizations.of(context)!.onboardingCompleteYourProfile),
             const SizedBox(height: 8),
-            OnboardingSupportText(_subtext),
+            OnboardingSupportText(
+              _prefilledFromProvider
+                  ? l10n.onboardingWePulledInYourDetails
+                  : l10n.onboardingCompleteProfileSubtext,
+            ),
             const SizedBox(height: 20),
             Center(
               child: Column(

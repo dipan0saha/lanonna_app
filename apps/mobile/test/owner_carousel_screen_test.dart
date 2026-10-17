@@ -57,10 +57,15 @@ Future<void> _pumpCarousel(WidgetTester tester) async {
 }
 
 void main() {
-  test('ownerCarouselSlide returns four distinct slides', () {
+  test('ownerCarouselSlide returns four distinct slides', () async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     expect(ownerCarouselSlideCount, 4);
-    expect(ownerCarouselSlide(0).$1, contains('private place'));
-    expect(ownerCarouselSlide(3).$1, 'Never lose a moment');
+    final titles = {
+      for (var i = 0; i < ownerCarouselSlideCount; i++)
+        ownerCarouselSlide(l10n, i).$1,
+    };
+    expect(titles, hasLength(4));
+    expect(ownerCarouselSlide(l10n, 3).$1, l10n.ownerCarouselTitle4);
   });
 
   testWidgets('owner carousel shows Next then Get started on last slide', (

@@ -3070,78 +3070,6 @@ abstract class AppLocalizations {
   /// **'+ Add Event'**
   String get calendarAddEventCta;
 
-  /// No description provided for @calendarJanuary.
-  ///
-  /// In en, this message translates to:
-  /// **'January'**
-  String get calendarJanuary;
-
-  /// No description provided for @calendarFebruary.
-  ///
-  /// In en, this message translates to:
-  /// **'February'**
-  String get calendarFebruary;
-
-  /// No description provided for @calendarMarch.
-  ///
-  /// In en, this message translates to:
-  /// **'March'**
-  String get calendarMarch;
-
-  /// No description provided for @calendarApril.
-  ///
-  /// In en, this message translates to:
-  /// **'April'**
-  String get calendarApril;
-
-  /// No description provided for @calendarMay.
-  ///
-  /// In en, this message translates to:
-  /// **'May'**
-  String get calendarMay;
-
-  /// No description provided for @calendarJune.
-  ///
-  /// In en, this message translates to:
-  /// **'June'**
-  String get calendarJune;
-
-  /// No description provided for @calendarJuly.
-  ///
-  /// In en, this message translates to:
-  /// **'July'**
-  String get calendarJuly;
-
-  /// No description provided for @calendarAugust.
-  ///
-  /// In en, this message translates to:
-  /// **'August'**
-  String get calendarAugust;
-
-  /// No description provided for @calendarSeptember.
-  ///
-  /// In en, this message translates to:
-  /// **'September'**
-  String get calendarSeptember;
-
-  /// No description provided for @calendarOctober.
-  ///
-  /// In en, this message translates to:
-  /// **'October'**
-  String get calendarOctober;
-
-  /// No description provided for @calendarNovember.
-  ///
-  /// In en, this message translates to:
-  /// **'November'**
-  String get calendarNovember;
-
-  /// No description provided for @calendarDecember.
-  ///
-  /// In en, this message translates to:
-  /// **'December'**
-  String get calendarDecember;
-
   /// No description provided for @calendarCouldNotLoadEventsPull.
   ///
   /// In en, this message translates to:
@@ -4317,6 +4245,300 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter a valid link, e.g. https://…'**
   String get validationUrlInvalid;
+
+  /// No description provided for @authErrorTooManyAttempts.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many attempts. Wait a few minutes, then try Resend email again.'**
+  String get authErrorTooManyAttempts;
+
+  /// No description provided for @authErrorVerifyLinkExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'This verification link has expired or was already used. Tap Resend email for a new link.'**
+  String get authErrorVerifyLinkExpired;
+
+  /// No description provided for @authErrorVerifyLinkFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not verify your email from this link. Try Resend email or open the newest message in your inbox.'**
+  String get authErrorVerifyLinkFailed;
+
+  /// No description provided for @linkOpenFailedCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the link. Copy link?'**
+  String get linkOpenFailedCopy;
+
+  /// No description provided for @linkCopyAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy link'**
+  String get linkCopyAction;
+
+  /// No description provided for @linkCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied'**
+  String get linkCopied;
+
+  /// No description provided for @storeOpenFailedCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the store. Copy link?'**
+  String get storeOpenFailedCopy;
+
+  /// No description provided for @inviteBabyAlreadyHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Already here'**
+  String get inviteBabyAlreadyHere;
+
+  /// No description provided for @inviteBabyOnTheWay.
+  ///
+  /// In en, this message translates to:
+  /// **'On the way'**
+  String get inviteBabyOnTheWay;
+
+  /// No description provided for @inviteBabyArriving.
+  ///
+  /// In en, this message translates to:
+  /// **'Arriving {date}'**
+  String inviteBabyArriving(String date);
+
+  /// No description provided for @lifecycleBornOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Born {date}'**
+  String lifecycleBornOn(String date);
+
+  /// No description provided for @lifecycleDueOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Due {date}'**
+  String lifecycleDueOn(String date);
+
+  /// No description provided for @ownerCarouselTitle1.
+  ///
+  /// In en, this message translates to:
+  /// **'Your baby\'s story, in one private place'**
+  String get ownerCarouselTitle1;
+
+  /// No description provided for @ownerCarouselBody1.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos, updates, and everything in between, visible only to the people you invite.'**
+  String get ownerCarouselBody1;
+
+  /// No description provided for @ownerCarouselTitle2.
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone gets to feel close'**
+  String get ownerCarouselTitle2;
+
+  /// No description provided for @ownerCarouselBody2.
+  ///
+  /// In en, this message translates to:
+  /// **'Grandparents, aunts, uncles, and friends can follow along, no matter how far away they live.'**
+  String get ownerCarouselBody2;
+
+  /// No description provided for @ownerCarouselTitle3.
+  ///
+  /// In en, this message translates to:
+  /// **'Celebrate every milestone together'**
+  String get ownerCarouselTitle3;
+
+  /// No description provided for @ownerCarouselBody3.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar events, a shared registry, and fun ways to mark the big days.'**
+  String get ownerCarouselBody3;
+
+  /// No description provided for @ownerCarouselTitle4.
+  ///
+  /// In en, this message translates to:
+  /// **'Never lose a moment'**
+  String get ownerCarouselTitle4;
+
+  /// No description provided for @ownerCarouselBody4.
+  ///
+  /// In en, this message translates to:
+  /// **'Every photo and comment, saved in one safe place, for good.'**
+  String get ownerCarouselBody4;
+
+  /// No description provided for @relativeTimeJustNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Just now'**
+  String get relativeTimeJustNow;
+
+  /// No description provided for @relativeTimeYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get relativeTimeYesterday;
+
+  /// No description provided for @relativeTimeMinutesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 minute ago} other{{count} minutes ago}}'**
+  String relativeTimeMinutesAgo(int count);
+
+  /// No description provided for @relativeTimeHoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 hour ago} other{{count} hours ago}}'**
+  String relativeTimeHoursAgo(int count);
+
+  /// No description provided for @relativeTimeDaysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day ago} other{{count} days ago}}'**
+  String relativeTimeDaysAgo(int count);
+
+  /// No description provided for @calendarWeekdaySun.
+  ///
+  /// In en, this message translates to:
+  /// **'Su'**
+  String get calendarWeekdaySun;
+
+  /// No description provided for @calendarWeekdayMon.
+  ///
+  /// In en, this message translates to:
+  /// **'Mo'**
+  String get calendarWeekdayMon;
+
+  /// No description provided for @calendarWeekdayTue.
+  ///
+  /// In en, this message translates to:
+  /// **'Tu'**
+  String get calendarWeekdayTue;
+
+  /// No description provided for @calendarWeekdayWed.
+  ///
+  /// In en, this message translates to:
+  /// **'We'**
+  String get calendarWeekdayWed;
+
+  /// No description provided for @calendarWeekdayThu.
+  ///
+  /// In en, this message translates to:
+  /// **'Th'**
+  String get calendarWeekdayThu;
+
+  /// No description provided for @calendarWeekdayFri.
+  ///
+  /// In en, this message translates to:
+  /// **'Fr'**
+  String get calendarWeekdayFri;
+
+  /// No description provided for @calendarWeekdaySat.
+  ///
+  /// In en, this message translates to:
+  /// **'Sa'**
+  String get calendarWeekdaySat;
+
+  /// No description provided for @onboardingCompleteProfileSubtext.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your name and photo so family knows who\'s who.'**
+  String get onboardingCompleteProfileSubtext;
+
+  /// No description provided for @activityEmptyDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing yet - activity will show up here.'**
+  String get activityEmptyDefault;
+
+  /// No description provided for @photoAddAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a photo'**
+  String get photoAddAction;
+
+  /// No description provided for @photoChangeAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Change photo'**
+  String get photoChangeAction;
+
+  /// No description provided for @babyNameDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Baby'**
+  String get babyNameDefault;
+
+  /// No description provided for @personNameFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Family member'**
+  String get personNameFallback;
+
+  /// No description provided for @relationshipWife.
+  ///
+  /// In en, this message translates to:
+  /// **'Wife'**
+  String get relationshipWife;
+
+  /// No description provided for @relationshipHusband.
+  ///
+  /// In en, this message translates to:
+  /// **'Husband'**
+  String get relationshipHusband;
+
+  /// No description provided for @relationshipMother.
+  ///
+  /// In en, this message translates to:
+  /// **'Mother'**
+  String get relationshipMother;
+
+  /// No description provided for @relationshipFather.
+  ///
+  /// In en, this message translates to:
+  /// **'Father'**
+  String get relationshipFather;
+
+  /// No description provided for @relationshipGrandma.
+  ///
+  /// In en, this message translates to:
+  /// **'Grandma'**
+  String get relationshipGrandma;
+
+  /// No description provided for @relationshipGrandpa.
+  ///
+  /// In en, this message translates to:
+  /// **'Grandpa'**
+  String get relationshipGrandpa;
+
+  /// No description provided for @relationshipAunt.
+  ///
+  /// In en, this message translates to:
+  /// **'Aunt'**
+  String get relationshipAunt;
+
+  /// No description provided for @relationshipUncle.
+  ///
+  /// In en, this message translates to:
+  /// **'Uncle'**
+  String get relationshipUncle;
+
+  /// No description provided for @relationshipGodmother.
+  ///
+  /// In en, this message translates to:
+  /// **'Godmother'**
+  String get relationshipGodmother;
+
+  /// No description provided for @relationshipGodfather.
+  ///
+  /// In en, this message translates to:
+  /// **'Godfather'**
+  String get relationshipGodfather;
+
+  /// No description provided for @relationshipFamilyFriend.
+  ///
+  /// In en, this message translates to:
+  /// **'Family Friend'**
+  String get relationshipFamilyFriend;
 }
 
 class _AppLocalizationsDelegate

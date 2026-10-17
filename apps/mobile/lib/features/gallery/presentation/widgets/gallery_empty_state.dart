@@ -19,7 +19,7 @@ class GalleryEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final name = babyDisplayName(babyName, l10n);
+    final name = babyDisplayName(l10n, babyName);
     return AppEmptyState(
       expand: false,
       icon: Icons.photo_outlined,

@@ -63,7 +63,7 @@ class AppVersionBlockScreen extends StatelessWidget {
     await openExternalLink(
       context,
       uri,
-      failureMessage: "Couldn't open the store. Copy link?",
+      failureMessage: AppLocalizations.of(context)!.storeOpenFailedCopy,
     );
   }
 

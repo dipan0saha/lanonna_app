@@ -817,18 +817,6 @@
   "calendarAddUltrasoundsShowersOrThe": "Add ultrasounds, showers, or the gender reveal so family knows when to celebrate.",
   "calendarNothingOnTheCalendarYet": "Nothing on the calendar yet — check back soon.",
   "calendarAddEventCta": "+ Add Event",
-  "calendarJanuary": "January",
-  "calendarFebruary": "February",
-  "calendarMarch": "March",
-  "calendarApril": "April",
-  "calendarMay": "May",
-  "calendarJune": "June",
-  "calendarJuly": "July",
-  "calendarAugust": "August",
-  "calendarSeptember": "September",
-  "calendarOctober": "October",
-  "calendarNovember": "November",
-  "calendarDecember": "December",
   "calendarCouldNotLoadEventsPull": "Could not load events. Pull to refresh or try again.",
   "calendarWhen": "When",
   "calendarLocation": "Location",
@@ -1209,5 +1197,96 @@
   "validationCityRequired": "City is required",
   "validationPostalCodeRequired": "Zip / Postal code is required",
   "validationCountryRequired": "Select a country",
-  "validationUrlInvalid": "Enter a valid link, e.g. https://…"
+  "validationUrlInvalid": "Enter a valid link, e.g. https://…",
+  "authErrorTooManyAttempts": "Too many attempts. Wait a few minutes, then try Resend email again.",
+  "authErrorVerifyLinkExpired": "This verification link has expired or was already used. Tap Resend email for a new link.",
+  "authErrorVerifyLinkFailed": "Could not verify your email from this link. Try Resend email or open the newest message in your inbox.",
+  "linkOpenFailedCopy": "Couldn't open the link. Copy link?",
+  "linkCopyAction": "Copy link",
+  "linkCopied": "Link copied",
+  "storeOpenFailedCopy": "Couldn't open the store. Copy link?",
+  "inviteBabyAlreadyHere": "Already here",
+  "inviteBabyOnTheWay": "On the way",
+  "inviteBabyArriving": "Arriving {date}",
+  "@inviteBabyArriving": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "lifecycleBornOn": "Born {date}",
+  "@lifecycleBornOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "lifecycleDueOn": "Due {date}",
+  "@lifecycleDueOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "ownerCarouselTitle1": "Your baby's story, in one private place",
+  "ownerCarouselBody1": "Photos, updates, and everything in between, visible only to the people you invite.",
+  "ownerCarouselTitle2": "Everyone gets to feel close",
+  "ownerCarouselBody2": "Grandparents, aunts, uncles, and friends can follow along, no matter how far away they live.",
+  "ownerCarouselTitle3": "Celebrate every milestone together",
+  "ownerCarouselBody3": "Calendar events, a shared registry, and fun ways to mark the big days.",
+  "ownerCarouselTitle4": "Never lose a moment",
+  "ownerCarouselBody4": "Every photo and comment, saved in one safe place, for good.",
+  "relativeTimeJustNow": "Just now",
+  "relativeTimeYesterday": "Yesterday",
+  "relativeTimeMinutesAgo": "{count, plural, =1{1 minute ago} other{{count} minutes ago}}",
+  "@relativeTimeMinutesAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "relativeTimeHoursAgo": "{count, plural, =1{1 hour ago} other{{count} hours ago}}",
+  "@relativeTimeHoursAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "relativeTimeDaysAgo": "{count, plural, =1{1 day ago} other{{count} days ago}}",
+  "@relativeTimeDaysAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "calendarWeekdaySun": "Su",
+  "calendarWeekdayMon": "Mo",
+  "calendarWeekdayTue": "Tu",
+  "calendarWeekdayWed": "We",
+  "calendarWeekdayThu": "Th",
+  "calendarWeekdayFri": "Fr",
+  "calendarWeekdaySat": "Sa",
+  "onboardingCompleteProfileSubtext": "Add your name and photo so family knows who's who.",
+  "activityEmptyDefault": "Nothing yet - activity will show up here.",
+  "photoAddAction": "Add a photo",
+  "photoChangeAction": "Change photo",
+  "babyNameDefault": "Baby",
+  "personNameFallback": "Family member",
+  "relationshipWife": "Wife",
+  "relationshipHusband": "Husband",
+  "relationshipMother": "Mother",
+  "relationshipFather": "Father",
+  "relationshipGrandma": "Grandma",
+  "relationshipGrandpa": "Grandpa",
+  "relationshipAunt": "Aunt",
+  "relationshipUncle": "Uncle",
+  "relationshipGodmother": "Godmother",
+  "relationshipGodfather": "Godfather",
+  "relationshipFamilyFriend": "Family Friend"
 }

@@ -1,19 +1,24 @@
 import '../time/app_date_time.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'baby_summary.dart';
 
-String babyLifecycleSubtitle(BabySummary baby, [String? localeName]) {
-  if (baby.isBorn) {
-    final bornLabel = formatApiCalendarDate(baby.actualBirthDate, localeName);
-    if (bornLabel.isNotEmpty) return 'Born $bornLabel';
-    return 'Born';
-  }
-  final dueLabel = formatApiCalendarDate(baby.expectedBirthDate, localeName);
-  if (dueLabel.isNotEmpty) return 'Due $dueLabel';
-  return 'Expecting';
+String babyLifecycleSubtitle(
+  AppLocalizations l10n,
+  BabySummary baby, [
+  String? localeName,
+]) {
+  final raw = baby.isBorn ? baby.actualBirthDate : baby.expectedBirthDate;
+  final date = formatApiCalendarDate(raw, localeName);
+  if (date.isEmpty) return baby.lifecycle.label(l10n);
+  return baby.isBorn ? l10n.lifecycleBornOn(date) : l10n.lifecycleDueOn(date);
 }
 
-String babyListSubtitle(BabySummary baby, [String? localeName]) {
-  final lifecycle = babyLifecycleSubtitle(baby, localeName);
+String babyListSubtitle(
+  AppLocalizations l10n,
+  BabySummary baby, [
+  String? localeName,
+]) {
+  final lifecycle = babyLifecycleSubtitle(l10n, baby, localeName);
   final label = baby.relationshipLabel?.trim();
   if (label != null && label.isNotEmpty) {
     return '$label · $lifecycle';

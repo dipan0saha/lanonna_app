@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/person_display_label.dart';
 import 'package:lanonna/core/domain/baby_gender.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
@@ -183,7 +184,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
         children: [
           for (final v in voters)
             ListTile(
-              title: Text(v.displayName),
+              title: Text(personDisplayName(AppLocalizations.of(context)!, v.displayName)),
               subtitle: Text(
                 BabyGender.fromApi(v.gender).label(
                   AppLocalizations.of(context)!,
@@ -348,7 +349,10 @@ class _PredictionsTabState extends State<PredictionsTab> {
                         icon: const Icon(Icons.chevron_left),
                       ),
                       Text(
-                        '${_monthName(_visibleMonth.month)} ${_visibleMonth.year}',
+                        formatMonthYear(
+                          _visibleMonth,
+                          localeNameForFormatting(context),
+                        ),
                         style: context.calendarMonthTitleStyle,
                       ),
                       AppIconButton(
@@ -374,7 +378,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
                       padding: const EdgeInsets.only(top: 8),
                       child: Text(
                         l10n.funBirthdateDueDate(
-                          '${_monthName(due.month)} ${due.day}',
+                          formatMonthDay(due, localeNameForFormatting(context)),
                         ),
                         style: context.textStyles.bodySmall?.copyWith(
                           color: AppColors.primaryDark,
@@ -426,24 +430,6 @@ class _PredictionsTabState extends State<PredictionsTab> {
         ],
       ),
     );
-  }
-
-  String _monthName(int m) {
-    final names = [
-      AppLocalizations.of(context)!.calendarJanuary,
-      AppLocalizations.of(context)!.calendarFebruary,
-      AppLocalizations.of(context)!.calendarMarch,
-      AppLocalizations.of(context)!.calendarApril,
-      AppLocalizations.of(context)!.calendarMay,
-      AppLocalizations.of(context)!.calendarJune,
-      AppLocalizations.of(context)!.calendarJuly,
-      AppLocalizations.of(context)!.calendarAugust,
-      AppLocalizations.of(context)!.calendarSeptember,
-      AppLocalizations.of(context)!.calendarOctober,
-      AppLocalizations.of(context)!.calendarNovember,
-      AppLocalizations.of(context)!.calendarDecember,
-    ];
-    return names[m - 1];
   }
 
   Widget _genderBox(

@@ -95,7 +95,10 @@ Future<BabySummary> submitCreateBaby({
   required OnboardingCoordinator coordinator,
   void Function(String message)? onNonFatalError,
 }) async {
-  final payload = buildBabyProfileWritePayload(input);
+  final payload = buildBabyProfileWritePayload(
+    input,
+    fallbackName: AppLocalizations.of(context)!.babyNameDefault,
+  );
 
   final relationshipLabel = await resolveRelationshipLabelForCreateBaby(
     mode: mode,
@@ -134,7 +137,10 @@ Future<BabySummary> submitReviseOwnerOnboardingBaby({
   required ApiClient api,
   void Function(String message)? onNonFatalError,
 }) async {
-  final payload = buildBabyProfileWritePayload(input);
+  final payload = buildBabyProfileWritePayload(
+    input,
+    fallbackName: AppLocalizations.of(context)!.babyNameDefault,
+  );
   final isBorn = input.status == BabyLifecycle.born;
 
   final baby = await homeRepo.updateBaby(

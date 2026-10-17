@@ -72,7 +72,7 @@ class _OnboardingEmailVerifyScreenState
       await context.read<AuthRepository>().sendEmailVerification();
       setState(() => _message = l10n.emailVerifySent);
     } on FirebaseAuthException catch (e) {
-      setState(() => _message = userFacingAuthError(e));
+      setState(() => _message = userFacingAuthError(l10n, e));
     } catch (_) {
       setState(
         () => _message = AppLocalizations.of(context)!.onboardingCouldNotSendVerificationEmail,

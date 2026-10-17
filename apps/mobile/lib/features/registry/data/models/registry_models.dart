@@ -81,7 +81,7 @@ class RegistryPurchaseInfo {
     }
     return RegistryPurchaseInfo(
       purchaserDisplayName:
-          json['purchaser_display_name'] as String? ?? 'Family member',
+          json['purchaser_display_name'] as String? ?? '',
       purchasedAt: json['purchased_at'] as String?,
       purchasedByFirebaseUid: json['purchased_by_firebase_uid'] as String?,
     );

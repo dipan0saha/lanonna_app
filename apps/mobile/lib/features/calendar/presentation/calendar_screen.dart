@@ -219,7 +219,7 @@ class _CalendarScreenState extends State<CalendarScreen>
     final l10n = AppLocalizations.of(context)!;
     final styles = context.textStyles;
     final monthLabel =
-        '${_monthName(_visibleMonth.month)} ${_visibleMonth.year}';
+        formatMonthYear(_visibleMonth, localeNameForFormatting(context));
     final daysWithEvents = _eventDays();
     final kind = resolveTabLoadKind(
       loading: _loading,
@@ -414,24 +414,6 @@ class _CalendarScreenState extends State<CalendarScreen>
           : null,
     );
   }
-
-  String _monthName(int m) {
-    final names = [
-      AppLocalizations.of(context)!.calendarJanuary,
-      AppLocalizations.of(context)!.calendarFebruary,
-      AppLocalizations.of(context)!.calendarMarch,
-      AppLocalizations.of(context)!.calendarApril,
-      AppLocalizations.of(context)!.calendarMay,
-      AppLocalizations.of(context)!.calendarJune,
-      AppLocalizations.of(context)!.calendarJuly,
-      AppLocalizations.of(context)!.calendarAugust,
-      AppLocalizations.of(context)!.calendarSeptember,
-      AppLocalizations.of(context)!.calendarOctober,
-      AppLocalizations.of(context)!.calendarNovember,
-      AppLocalizations.of(context)!.calendarDecember,
-    ];
-    return names[m - 1];
-  }
 }
 
 class _MonthGrid extends StatelessWidget {
@@ -455,7 +437,7 @@ class _MonthGrid extends StatelessWidget {
     final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
     final startWeekday = first.weekday % 7;
     final cells = <Widget>[
-      for (final label in AppMetrics.calendarWeekdayTwoLetter)
+      for (final label in calendarWeekdayHeaders(AppLocalizations.of(context)!))
         Center(child: Text(label, style: styles.labelSmall)),
     ];
     for (var i = 0; i < startWeekday; i++) {

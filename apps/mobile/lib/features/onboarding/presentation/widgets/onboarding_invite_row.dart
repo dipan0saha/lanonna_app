@@ -4,7 +4,7 @@ import '../../../../core/widgets/app_icon_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
-import '../models/invite_relationship_option.dart';
+import '../../../invitations/domain/relationship_preset.dart';
 import '../../../../l10n/app_localizations.dart';
 
 class OnboardingInviteRow extends StatelessWidget {
@@ -19,19 +19,19 @@ class OnboardingInviteRow extends StatelessWidget {
     this.onFieldChanged,
     this.onEmailEditingComplete,
     this.membershipHint,
-    this.relationshipOptions = kInviteRelationshipOptions,
+    this.relationshipOptions = RelationshipPreset.onboardingOptions,
   });
 
   final TextEditingController nameController;
   final TextEditingController emailController;
-  final InviteRelationshipOption relationship;
-  final ValueChanged<InviteRelationshipOption> onRelationshipChanged;
+  final RelationshipPreset relationship;
+  final ValueChanged<RelationshipPreset> onRelationshipChanged;
   final bool showOwnerBadge;
   final VoidCallback? onRemove;
   final VoidCallback? onFieldChanged;
   final VoidCallback? onEmailEditingComplete;
   final String? membershipHint;
-  final List<InviteRelationshipOption> relationshipOptions;
+  final List<RelationshipPreset> relationshipOptions;
 
   @override
   Widget build(BuildContext context) {
@@ -117,7 +117,7 @@ class OnboardingInviteRow extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 8),
-          DropdownButtonFormField<InviteRelationshipOption>(
+          DropdownButtonFormField<RelationshipPreset>(
             value: relationship,
             isExpanded: true,
             decoration: InputDecoration(
@@ -128,7 +128,10 @@ class OnboardingInviteRow extends StatelessWidget {
             ),
             items: relationshipOptions
                 .map(
-                  (o) => DropdownMenuItem(value: o, child: Text(o.pickerLabel)),
+                  (o) => DropdownMenuItem(
+                    value: o,
+                    child: Text(o.label(AppLocalizations.of(context)!)),
+                  ),
                 )
                 .toList(),
             onChanged: (v) {

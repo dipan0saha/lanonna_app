@@ -18,7 +18,7 @@ import '../../onboarding/domain/onboarding_routes.dart';
 import '../../onboarding/domain/onboarding_step.dart';
 import '../../onboarding/domain/owner_onboarding_baby_resolver.dart';
 import '../../onboarding/presentation/app_session.dart';
-import '../../onboarding/presentation/models/invite_relationship_option.dart';
+import '../domain/relationship_preset.dart';
 import '../../onboarding/presentation/onboarding_coordinator.dart';
 import '../../onboarding/presentation/utils/onboarding_back_navigation.dart';
 import '../../onboarding/presentation/utils/owner_onboarding_baby_missing.dart';
@@ -34,17 +34,15 @@ enum BatchInviteMode { onboarding, fromHome }
 
 class _InviteRowState {
   _InviteRowState({
-    required List<InviteRelationshipOption> relationshipOptions,
     String name = '',
     String email = '',
-    InviteRelationshipOption? relationship,
+    this.relationship = RelationshipPreset.initial,
   })  : nameController = TextEditingController(text: name),
-        emailController = TextEditingController(text: email),
-        relationship = relationship ?? relationshipOptions[2];
+        emailController = TextEditingController(text: email);
 
   final TextEditingController nameController;
   final TextEditingController emailController;
-  InviteRelationshipOption relationship;
+  RelationshipPreset relationship;
   String? membershipHint;
 
   void dispose() {
@@ -57,18 +55,20 @@ class _InviteRowState {
   InviteRowDraft toDraft() => InviteRowDraft(
         name: nameController.text,
         email: emailController.text,
-        relationshipPickerLabel: relationship.pickerLabel,
+        relationship: relationship,
       );
 
+  /// [options] guards against a draft saved from the other invite flow.
   static _InviteRowState fromDraft(
     InviteRowDraft draft,
-    List<InviteRelationshipOption> relationshipOptions,
+    List<RelationshipPreset> options,
   ) =>
       _InviteRowState(
-        relationshipOptions: relationshipOptions,
         name: draft.name,
         email: draft.email,
-        relationship: inviteRelationshipByPickerLabel(draft.relationshipPickerLabel),
+        relationship: options.contains(draft.relationship)
+            ? draft.relationship
+            : RelationshipPreset.initial,
       );
 }
 
@@ -83,7 +83,7 @@ class BatchInviteScreen extends StatefulWidget {
 
 class _BatchInviteScreenState extends State<BatchInviteScreen> {
   AppLocalizations get l10n => AppLocalizations.of(context)!;
-  late final List<InviteRelationshipOption> _relationshipOptions;
+  late final List<RelationshipPreset> _relationshipOptions;
   final _rows = <_InviteRowState>[];
   var _synced = false;
   var _busy = false;
@@ -95,8 +95,8 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
   void initState() {
     super.initState();
     _relationshipOptions =
-        _isOnboarding ? kInviteRelationshipOptions : kAppBatchInviteRelationshipOptions;
-    _rows.add(_InviteRowState(relationshipOptions: _relationshipOptions));
+        _isOnboarding ? RelationshipPreset.onboardingOptions : RelationshipPreset.appOptions;
+    _rows.add(_InviteRowState());
   }
 
   @override
@@ -151,7 +151,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
             ),
           );
         if (_rows.isEmpty) {
-          _rows.add(_InviteRowState(relationshipOptions: _relationshipOptions));
+          _rows.add(_InviteRowState());
         }
         setState(() {});
       }
@@ -159,7 +159,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
   }
 
   void _addRow() {
-    setState(() => _rows.add(_InviteRowState(relationshipOptions: _relationshipOptions)));
+    setState(() => _rows.add(_InviteRowState()));
     _persistDraft();
   }
 

@@ -1,3 +1,5 @@
+import 'package:lanonna/features/invitations/domain/relationship_preset.dart';
+
 class CompleteProfileDraft {
   const CompleteProfileDraft({
     this.firstName = '',
@@ -78,25 +80,24 @@ class InviteRowDraft {
   const InviteRowDraft({
     this.name = '',
     this.email = '',
-    this.relationshipPickerLabel = 'Grandma',
+    this.relationship = RelationshipPreset.initial,
   });
 
   final String name;
   final String email;
-  final String relationshipPickerLabel;
+  final RelationshipPreset relationship;
 
   Map<String, dynamic> toJson() => {
         'name': name,
         'email': email,
-        'relationshipPickerLabel': relationshipPickerLabel,
+        'relationship': relationship.name,
       };
 
   static InviteRowDraft fromJson(Map<String, dynamic> json) {
     return InviteRowDraft(
       name: json['name'] as String? ?? '',
       email: json['email'] as String? ?? '',
-      relationshipPickerLabel:
-          json['relationshipPickerLabel'] as String? ?? 'Grandma',
+      relationship: RelationshipPreset.fromDraft(json['relationship'] as String?),
     );
   }
 }

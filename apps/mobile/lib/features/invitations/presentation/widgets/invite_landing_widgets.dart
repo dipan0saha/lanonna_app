@@ -45,6 +45,7 @@ class InviteBabyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final babyName = preview.babyName ?? AppLocalizations.of(context)!.galleryBaby;
     final subtitle = inviteBabyDateSubtitle(
+      AppLocalizations.of(context)!,
       preview,
       localeNameForFormatting(context),
     );

@@ -13,7 +13,6 @@ class OnboardingScaffold extends StatelessWidget {
     this.showSkip = false,
     this.onBack,
     this.onSkip,
-    this.skipLabel = 'Skip',
     this.bottom,
     this.pinBottomCta = true,
     this.resizeToAvoidBottomInset = true,
@@ -25,7 +24,6 @@ class OnboardingScaffold extends StatelessWidget {
   final bool showSkip;
   final VoidCallback? onBack;
   final VoidCallback? onSkip;
-  final String skipLabel;
   final Widget? bottom;
   final bool pinBottomCta;
   final bool resizeToAvoidBottomInset;
@@ -48,7 +46,6 @@ class OnboardingScaffold extends StatelessWidget {
                 showSkip: showSkip,
                 onBack: onBack,
                 onSkip: onSkip,
-                skipLabel: skipLabel,
               ),
             ),
             Expanded(
@@ -91,14 +88,12 @@ class _TopRow extends StatelessWidget {
     required this.showSkip,
     this.onBack,
     this.onSkip,
-    required this.skipLabel,
   });
 
   final bool showBack;
   final bool showSkip;
   final VoidCallback? onBack;
   final VoidCallback? onSkip;
-  final String skipLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -138,7 +133,7 @@ class _TopRow extends StatelessWidget {
             GestureDetector(
               onTap: onSkip,
               child: Text(
-                skipLabel,
+                AppLocalizations.of(context)!.actionSkip,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColors.muted,
                   fontWeight: FontWeight.w500,

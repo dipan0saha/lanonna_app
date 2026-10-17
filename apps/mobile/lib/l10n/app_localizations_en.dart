@@ -1711,42 +1711,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get calendarAddEventCta => '+ Add Event';
 
   @override
-  String get calendarJanuary => 'January';
-
-  @override
-  String get calendarFebruary => 'February';
-
-  @override
-  String get calendarMarch => 'March';
-
-  @override
-  String get calendarApril => 'April';
-
-  @override
-  String get calendarMay => 'May';
-
-  @override
-  String get calendarJune => 'June';
-
-  @override
-  String get calendarJuly => 'July';
-
-  @override
-  String get calendarAugust => 'August';
-
-  @override
-  String get calendarSeptember => 'September';
-
-  @override
-  String get calendarOctober => 'October';
-
-  @override
-  String get calendarNovember => 'November';
-
-  @override
-  String get calendarDecember => 'December';
-
-  @override
   String get calendarCouldNotLoadEventsPull =>
       'Could not load events. Pull to refresh or try again.';
 
@@ -2451,4 +2415,190 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get validationUrlInvalid => 'Enter a valid link, e.g. https://…';
+
+  @override
+  String get authErrorTooManyAttempts =>
+      'Too many attempts. Wait a few minutes, then try Resend email again.';
+
+  @override
+  String get authErrorVerifyLinkExpired =>
+      'This verification link has expired or was already used. Tap Resend email for a new link.';
+
+  @override
+  String get authErrorVerifyLinkFailed =>
+      'Could not verify your email from this link. Try Resend email or open the newest message in your inbox.';
+
+  @override
+  String get linkOpenFailedCopy => 'Couldn\'t open the link. Copy link?';
+
+  @override
+  String get linkCopyAction => 'Copy link';
+
+  @override
+  String get linkCopied => 'Link copied';
+
+  @override
+  String get storeOpenFailedCopy => 'Couldn\'t open the store. Copy link?';
+
+  @override
+  String get inviteBabyAlreadyHere => 'Already here';
+
+  @override
+  String get inviteBabyOnTheWay => 'On the way';
+
+  @override
+  String inviteBabyArriving(String date) {
+    return 'Arriving $date';
+  }
+
+  @override
+  String lifecycleBornOn(String date) {
+    return 'Born $date';
+  }
+
+  @override
+  String lifecycleDueOn(String date) {
+    return 'Due $date';
+  }
+
+  @override
+  String get ownerCarouselTitle1 => 'Your baby\'s story, in one private place';
+
+  @override
+  String get ownerCarouselBody1 =>
+      'Photos, updates, and everything in between, visible only to the people you invite.';
+
+  @override
+  String get ownerCarouselTitle2 => 'Everyone gets to feel close';
+
+  @override
+  String get ownerCarouselBody2 =>
+      'Grandparents, aunts, uncles, and friends can follow along, no matter how far away they live.';
+
+  @override
+  String get ownerCarouselTitle3 => 'Celebrate every milestone together';
+
+  @override
+  String get ownerCarouselBody3 =>
+      'Calendar events, a shared registry, and fun ways to mark the big days.';
+
+  @override
+  String get ownerCarouselTitle4 => 'Never lose a moment';
+
+  @override
+  String get ownerCarouselBody4 =>
+      'Every photo and comment, saved in one safe place, for good.';
+
+  @override
+  String get relativeTimeJustNow => 'Just now';
+
+  @override
+  String get relativeTimeYesterday => 'Yesterday';
+
+  @override
+  String relativeTimeMinutesAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count minutes ago',
+      one: '1 minute ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String relativeTimeHoursAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hours ago',
+      one: '1 hour ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String relativeTimeDaysAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days ago',
+      one: '1 day ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get calendarWeekdaySun => 'Su';
+
+  @override
+  String get calendarWeekdayMon => 'Mo';
+
+  @override
+  String get calendarWeekdayTue => 'Tu';
+
+  @override
+  String get calendarWeekdayWed => 'We';
+
+  @override
+  String get calendarWeekdayThu => 'Th';
+
+  @override
+  String get calendarWeekdayFri => 'Fr';
+
+  @override
+  String get calendarWeekdaySat => 'Sa';
+
+  @override
+  String get onboardingCompleteProfileSubtext =>
+      'Add your name and photo so family knows who\'s who.';
+
+  @override
+  String get activityEmptyDefault =>
+      'Nothing yet - activity will show up here.';
+
+  @override
+  String get photoAddAction => 'Add a photo';
+
+  @override
+  String get photoChangeAction => 'Change photo';
+
+  @override
+  String get babyNameDefault => 'Baby';
+
+  @override
+  String get personNameFallback => 'Family member';
+
+  @override
+  String get relationshipWife => 'Wife';
+
+  @override
+  String get relationshipHusband => 'Husband';
+
+  @override
+  String get relationshipMother => 'Mother';
+
+  @override
+  String get relationshipFather => 'Father';
+
+  @override
+  String get relationshipGrandma => 'Grandma';
+
+  @override
+  String get relationshipGrandpa => 'Grandpa';
+
+  @override
+  String get relationshipAunt => 'Aunt';
+
+  @override
+  String get relationshipUncle => 'Uncle';
+
+  @override
+  String get relationshipGodmother => 'Godmother';
+
+  @override
+  String get relationshipGodfather => 'Godfather';
+
+  @override
+  String get relationshipFamilyFriend => 'Family Friend';
 }

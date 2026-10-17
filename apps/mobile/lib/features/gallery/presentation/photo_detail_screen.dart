@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:lanonna/core/domain/person_display_label.dart';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -573,7 +574,13 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                         Text(
                           AppLocalizations.of(
                             context,
-                          )!.photoUploadedBy(meta, detail.uploaderDisplayName),
+                          )!.photoUploadedBy(
+                            meta,
+                            personDisplayName(
+                              AppLocalizations.of(context)!,
+                              detail.uploaderDisplayName,
+                            ),
+                          ),
                           style: styles.bodySmall?.copyWith(
                             color: AppColors.muted,
                           ),
@@ -664,7 +671,10 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        detail.comments[i].authorDisplayName,
+                                        personDisplayName(
+                                          AppLocalizations.of(context)!,
+                                          detail.comments[i].authorDisplayName,
+                                        ),
                                         style: styles.labelMedium,
                                       ),
                                       if (i == detail.comments.length - 1)

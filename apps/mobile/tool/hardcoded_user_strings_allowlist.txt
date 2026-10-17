@@ -1,3 +1,15 @@
 # Exceptions to tool/check_hardcoded_user_strings.dart (run via scripts/check-no-hardcoded-user-strings.sh).
 # Format: path|exact literal|justification (why it is not user-facing copy).
 # Symbol/number-only literals are already ignored by the check.
+lib/config/app_config.dart|Release builds must set API_BASE_URL via --dart-define-from-file=flavors/dev.json|Build-time configuration error for developers; never shown in a running app.
+lib/core/api/api_client.dart|'Bearer $token'|HTTP Authorization header value.
+lib/core/theme/bundled_font_licenses.dart|Dancing Script|Font family name registered with the license registry.
+lib/features/invitations/domain/relationship_preset.dart|Mother|Stored relationship_label value; shown via RelationshipPreset.label.
+lib/features/invitations/domain/relationship_preset.dart|Father|Stored relationship_label value; shown via RelationshipPreset.label.
+lib/features/invitations/domain/relationship_preset.dart|Grandma|Stored relationship_label value; shown via RelationshipPreset.label.
+lib/features/invitations/domain/relationship_preset.dart|Grandpa|Stored relationship_label value; shown via RelationshipPreset.label.
+lib/features/invitations/domain/relationship_preset.dart|Aunt|Stored relationship_label value; shown via RelationshipPreset.label.
+lib/features/invitations/domain/relationship_preset.dart|Uncle|Stored relationship_label value; shown via RelationshipPreset.label.
+lib/features/invitations/domain/relationship_preset.dart|Godmother|Stored relationship_label value; shown via RelationshipPreset.label.
+lib/features/invitations/domain/relationship_preset.dart|Godfather|Stored relationship_label value; shown via RelationshipPreset.label.
+lib/features/invitations/domain/relationship_preset.dart|Family Friend|Stored relationship_label value; shown via RelationshipPreset.label.

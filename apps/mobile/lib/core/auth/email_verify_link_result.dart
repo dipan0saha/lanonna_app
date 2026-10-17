@@ -9,11 +9,12 @@ enum EmailVerifyLinkOutcome {
 class EmailVerifyLinkResult {
   const EmailVerifyLinkResult(
     this.outcome, {
-    this.message,
+    this.firebaseErrorCode,
     this.promptTapContinue = false,
   });
 
   final EmailVerifyLinkOutcome outcome;
-  final String? message;
+  /// Firebase error code when the link was rejected (`invalid-action-code`, …).
+  final String? firebaseErrorCode;
   final bool promptTapContinue;
 }

@@ -47,18 +47,15 @@ class OnboardingPhotoCaption extends StatelessWidget {
     super.key,
     required this.hasPhoto,
     this.onTap,
-    this.addLabel = 'Add a photo',
-    this.changeLabel = 'Change photo',
   });
 
   final bool hasPhoto;
   final VoidCallback? onTap;
-  final String addLabel;
-  final String changeLabel;
 
   @override
   Widget build(BuildContext context) {
-    final label = hasPhoto ? changeLabel : addLabel;
+    final l10n = AppLocalizations.of(context)!;
+    final label = hasPhoto ? l10n.photoChangeAction : l10n.photoAddAction;
     final style = context.textStyles.bodyMedium?.copyWith(
       fontSize: 12,
       color: AppColors.muted,

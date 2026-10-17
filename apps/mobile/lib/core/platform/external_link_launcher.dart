@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,11 +15,11 @@ Future<void> openExternalLink(
   BuildContext context,
   Uri uri, {
   bool copyFallback = true,
-  String failureMessage = "Couldn't open the link. Copy link?",
-  String copyActionLabel = 'Copy link',
-  String copiedMessage = 'Link copied',
+  String? failureMessage,
   ExternalUrlLauncher? launch,
 }) async {
+  final l10n = AppLocalizations.of(context)!;
+  final failure = failureMessage ?? l10n.linkOpenFailedCopy;
   final opener = launch ?? _launchExternal;
   var opened = false;
   try {
@@ -28,14 +29,14 @@ Future<void> openExternalLink(
   }
   if (opened || !context.mounted) return;
   if (!copyFallback) {
-    AppSnackBar.showAlert(context, failureMessage);
+    AppSnackBar.showAlert(context, failure);
     return;
   }
   final messenger = ScaffoldMessenger.of(context);
   final controller = AppSnackBar.showAlertWithAction(
     context,
-    failureMessage,
-    actionLabel: copyActionLabel,
+    failure,
+    actionLabel: l10n.linkCopyAction,
     onAction: () {
       Clipboard.setData(ClipboardData(text: uri.toString()));
     },
@@ -45,7 +46,7 @@ Future<void> openExternalLink(
       if (reason != SnackBarClosedReason.action) return;
       messenger.showSnackBar(
         SnackBar(
-          content: Text(copiedMessage),
+          content: Text(l10n.linkCopied),
           duration: AppSnackBar.infoDuration,
           persist: false,
         ),
