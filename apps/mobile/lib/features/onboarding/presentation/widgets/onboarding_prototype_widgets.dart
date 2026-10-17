@@ -11,7 +11,7 @@ import '../../../../core/input/app_text_input_kind.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
-import '../../domain/baby_gender.dart';
+import 'package:lanonna/core/domain/baby_gender.dart';
 import 'onboarding_fields.dart';
 import 'onboarding_typography.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -232,13 +232,14 @@ class PrototypeMiniGenderToggle extends StatelessWidget {
       selected == BabyGender.male || selected == BabyGender.female,
       'Name suggestion gender is Boy or Girl only',
     );
+    final l10n = AppLocalizations.of(context)!;
 
     return OnboardingSegmentedControl(
       style: OnboardingSegmentedControlStyle.mini,
       leftSegmentKey: const Key('prototype_mini_gender_boy'),
       rightSegmentKey: const Key('prototype_mini_gender_girl'),
-      leftLabel: 'Boy',
-      rightLabel: 'Girl',
+      leftLabel: BabyGender.male.label(l10n),
+      rightLabel: BabyGender.female.label(l10n),
       isLeftSelected: selected == BabyGender.male,
       onLeftTap: () {
         if (selected != BabyGender.male) onSelected(BabyGender.male);

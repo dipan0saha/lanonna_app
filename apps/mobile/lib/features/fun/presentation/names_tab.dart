@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/baby_gender.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
@@ -246,13 +247,13 @@ class _NamesTabState extends State<NamesTab> {
                         ButtonSegment(
                           value: 'male',
                           label: Text(
-                            AppLocalizations.of(context)!.funGenderBoy,
+                            BabyGender.male.label(AppLocalizations.of(context)!),
                           ),
                         ),
                         ButtonSegment(
                           value: 'female',
                           label: Text(
-                            AppLocalizations.of(context)!.funGenderGirl,
+                            BabyGender.female.label(AppLocalizations.of(context)!),
                           ),
                         ),
                       ],

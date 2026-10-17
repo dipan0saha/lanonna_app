@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:lanonna/core/domain/baby_summary.dart';
 import 'package:lanonna/features/fun/domain/birthdate_prediction.dart';
 
@@ -6,7 +7,7 @@ void main() {
   const babyWithDue = BabySummary(
     id: 'b1',
     name: 'Parker',
-    lifecycleStatus: 'expecting',
+    lifecycle: BabyLifecycle.expecting,
     role: 'follower',
     expectedBirthDate: '2027-02-01',
   );

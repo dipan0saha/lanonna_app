@@ -114,7 +114,7 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
                     AppSectionTitle(
                       title: AppLocalizations.of(
                         context,
-                      )!.statusLabel(job.status),
+                      )!.statusLabel(job.status.label(l10n)),
                     ),
                     if (job.errorMessage != null)
                       Text(

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -32,7 +33,7 @@ class _ConnectivityHomeRepository extends HomeRepository {
     return const BabySummary(
       id: 'baby-1',
       name: 'Parker',
-      lifecycleStatus: 'expecting',
+      lifecycle: BabyLifecycle.expecting,
       role: 'owner',
     );
   }
@@ -41,7 +42,7 @@ class _ConnectivityHomeRepository extends HomeRepository {
   Future<HomeSummaryResult> fetchHomeSummary(String babyId) async {
     return HomeSummaryLoaded(
       HomeSummary(
-        lifecycleStatus: 'expecting',
+        lifecycle: BabyLifecycle.expecting,
         nameSuggestionCount: 0,
         voteCount: 0,
         recentActivity: const [],

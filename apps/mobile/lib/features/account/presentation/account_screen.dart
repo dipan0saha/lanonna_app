@@ -25,7 +25,6 @@ import '../../home/domain/app_routes.dart';
 import '../../onboarding/domain/onboarding_routes.dart';
 import '../data/account_repository.dart';
 import '../data/notifications_repository.dart';
-import '../domain/notification_digest_display.dart';
 import 'widgets/account_engagement_stat_row.dart';
 import 'widgets/account_baby_profiles_card.dart';
 import 'widgets/account_profile_card.dart';
@@ -109,7 +108,9 @@ class _AccountScreenState extends State<AccountScreen> {
       final prefs = await repo.fetchPreferences();
       if (!mounted) return;
       setState(() {
-        _digestSummary = notificationDigestSummaryLabel(prefs.digest);
+        _digestSummary = prefs.digest.summaryLabel(
+          AppLocalizations.of(context)!,
+        );
       });
     } catch (_) {
       if (!mounted) return;

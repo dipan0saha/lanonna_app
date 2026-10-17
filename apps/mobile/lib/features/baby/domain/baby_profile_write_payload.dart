@@ -1,8 +1,8 @@
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/time/app_date_time.dart';
-import '../../onboarding/domain/baby_gender.dart';
-import '../../onboarding/domain/baby_lifecycle.dart';
+import 'package:lanonna/core/domain/baby_gender.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import '../../onboarding/presentation/utils/onboarding_baby_helpers.dart';
 
 class CreateBabyFormInput {
@@ -29,7 +29,7 @@ class BabyProfileWritePayload {
   const BabyProfileWritePayload({
     required this.name,
     required this.gender,
-    required this.lifecycleStatus,
+    required this.lifecycle,
     this.expectedBirthDate,
     this.actualBirthDate,
     this.profileNameSuggestions = const [],
@@ -37,7 +37,7 @@ class BabyProfileWritePayload {
 
   final String name;
   final String? gender;
-  final String lifecycleStatus;
+  final BabyLifecycle lifecycle;
   final String? expectedBirthDate;
   final String? actualBirthDate;
   final List<Map<String, String>> profileNameSuggestions;
@@ -68,7 +68,7 @@ BabyProfileWritePayload buildBabyProfileWritePayload(CreateBabyFormInput input) 
   return BabyProfileWritePayload(
     name: name,
     gender: input.gender.apiValue,
-    lifecycleStatus: input.status.apiValue,
+    lifecycle: input.status,
     expectedBirthDate: expected,
     actualBirthDate: actual,
     profileNameSuggestions: profileNameSuggestions,

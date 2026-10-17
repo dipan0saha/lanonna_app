@@ -661,12 +661,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionRemove => 'Remove';
 
   @override
-  String get funGenderBoy => 'Boy';
-
-  @override
-  String get funGenderGirl => 'Girl';
-
-  @override
   String get actionAdd => 'Add';
 
   @override
@@ -1561,4 +1555,67 @@ class AppLocalizationsEn extends AppLocalizations {
   String statusLabel(String status) {
     return 'Status: $status';
   }
+
+  @override
+  String get lifecycleBorn => 'Born';
+
+  @override
+  String get genderBoy => 'Boy';
+
+  @override
+  String get genderGirl => 'Girl';
+
+  @override
+  String get genderNotSure => 'Not sure yet';
+
+  @override
+  String get exportStatusPending => 'Queued';
+
+  @override
+  String get exportStatusRunning => 'Preparing';
+
+  @override
+  String get exportStatusReady => 'Ready';
+
+  @override
+  String get exportStatusFailed => 'Failed';
+
+  @override
+  String get digestRealtime => 'Real-time';
+
+  @override
+  String get digestDaily => 'Daily digest';
+
+  @override
+  String get digestWeekly => 'Weekly digest';
+
+  @override
+  String get digestSummaryRealtime => 'Real-time updates';
+
+  @override
+  String get digestSummaryDaily => 'Daily email summary';
+
+  @override
+  String get digestSummaryWeekly => 'Weekly email summary';
+
+  @override
+  String get invitationStatusPending => 'Pending';
+
+  @override
+  String get invitationStatusAccepted => 'Accepted';
+
+  @override
+  String get invitationStatusExpired => 'Expired';
+
+  @override
+  String get invitationStatusRevoked => 'Revoked';
+
+  @override
+  String get inviteEmailPending => 'Pending — email sending';
+
+  @override
+  String get inviteEmailSent => 'Invite email sent';
+
+  @override
+  String get inviteEmailFailed => 'Email failed to send';
 }

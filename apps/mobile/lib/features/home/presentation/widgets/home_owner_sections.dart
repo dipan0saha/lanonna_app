@@ -67,7 +67,7 @@ class HomeInviteStatusSection extends StatelessWidget {
           for (final inv in invites)
             ListTile(
               title: Text(inv.inviteeEmail),
-              subtitle: Text(inv.status),
+              subtitle: Text(inv.status.label(l10n)),
               trailing: AppIconButton(
                 semanticsId: 'home_revoke_invite_${inv.id}',
                 label: l10n.actionRevokeInvitation,

@@ -1,3 +1,5 @@
+import '../../../../core/domain/baby_lifecycle.dart';
+import '../../../invitations/domain/invitation_status.dart';
 import '../../../../core/json/json_readers.dart';
 import '../../../../core/time/app_date_time.dart';
 
@@ -272,14 +274,14 @@ class HomeInviteStatusRow {
 
   final String id;
   final String inviteeEmail;
-  final String status;
+  final InvitationStatus status;
   final String createdAt;
 
   factory HomeInviteStatusRow.fromJson(Map<String, dynamic> json) {
     return HomeInviteStatusRow(
       id: json['id']?.toString() ?? '',
       inviteeEmail: json['invitee_email'] as String? ?? '',
-      status: json['status'] as String? ?? '',
+      status: InvitationStatus.fromApi(json['status'] as String?),
       createdAt: json['created_at'] as String? ?? '',
     );
   }
@@ -287,7 +289,7 @@ class HomeInviteStatusRow {
 
 class HomeSummary {
   const HomeSummary({
-    required this.lifecycleStatus,
+    required this.lifecycle,
     required this.nameSuggestionCount,
     required this.voteCount,
     required this.recentActivity,
@@ -307,13 +309,13 @@ class HomeSummary {
     this.inviteStatus = const [],
   });
 
-  final String lifecycleStatus;
+  final BabyLifecycle lifecycle;
   final bool namesClosed;
   final bool predictionsClosed;
   final bool showRichInsight;
 
   /// Display-only lifecycle (layout copy); write gating uses the closed flags.
-  bool get isBorn => lifecycleStatus == 'born';
+  bool get isBorn => lifecycle == BabyLifecycle.born;
   final int? daysToDue;
   final int nameSuggestionCount;
   final int voteCount;
@@ -336,7 +338,7 @@ class HomeSummary {
     final followers = json['new_followers'] as List<dynamic>? ?? [];
     final invites = json['invite_status'] as List<dynamic>? ?? [];
     return HomeSummary(
-      lifecycleStatus: json['lifecycle_status'] as String? ?? 'expecting',
+      lifecycle: BabyLifecycle.fromApi(json['lifecycle_status'] as String?),
       namesClosed: json['names_closed'] as bool? ?? false,
       predictionsClosed: json['predictions_closed'] as bool? ?? false,
       showRichInsight: insight['show_rich_insight'] as bool? ?? false,

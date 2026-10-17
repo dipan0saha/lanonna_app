@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
@@ -12,7 +13,7 @@ void main() {
     const baby = BabySummary(
       id: 'b1',
       name: 'Parker',
-      lifecycleStatus: 'expecting',
+      lifecycle: BabyLifecycle.expecting,
       expectedBirthDate: '2026-10-08',
       role: 'follower',
     );
@@ -47,12 +48,12 @@ void main() {
     const baby = BabySummary(
       id: 'b1',
       name: 'Parker',
-      lifecycleStatus: 'expecting',
+      lifecycle: BabyLifecycle.expecting,
       expectedBirthDate: '2026-10-08',
       role: 'follower',
     );
     final summary = HomeSummary(
-      lifecycleStatus: 'expecting',
+      lifecycle: BabyLifecycle.expecting,
       nameSuggestionCount: 0,
       voteCount: 5,
       recentActivity: const [],

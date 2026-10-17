@@ -8,7 +8,19 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/source/line_info.dart';
 
-/// Flags string literals that flow into user-facing widget parameters under lib/.
+/// Flags prose string literals anywhere under lib/ (outside lib/l10n/).
+///
+/// The check is sink-agnostic: user copy reaches the screen through widget
+/// arguments, return values, ternaries, switch arms, exceptions surfaced as
+/// messages, etc., so every literal that reads as prose is a violation unless
+/// it sits in a context that is structurally never shown to users (directives,
+/// annotations, map/index keys, comparisons and case patterns, logging, keys,
+/// URIs, regexes, programmer-error throws).
+///
+/// A literal "reads as prose" when its literal text (interpolations dropped)
+/// contains a letter and either whitespace between words or starts with an
+/// uppercase letter. Lowercase single tokens (`'pending'`, `'image/jpeg'`,
+/// `'yyyy-MM-dd'`) are API/format identifiers and are ignored.
 void main(List<String> args) {
   final root = args.isNotEmpty ? args.first : '.';
   final libDir = Directory('$root/lib');
@@ -26,15 +38,16 @@ void main(List<String> args) {
     if (entity is! File || !entity.path.endsWith('.dart')) continue;
     final rel = _relativePath(root, entity.path);
     if (rel.startsWith('lib/l10n/')) continue;
+    if (rel.endsWith('.g.dart') || rel.endsWith('.freezed.dart')) continue;
 
     final parseResult = parseFile(
       path: entity.path,
       featureSet: FeatureSet.latestLanguageVersion(),
       throwIfDiagnostics: false,
     );
-    final lineInfo = parseResult.lineInfo;
-    final unit = parseResult.unit;
-    unit.accept(_UserStringVisitor(rel, allowlist, violations, lineInfo));
+    parseResult.unit.accept(
+      _UserStringVisitor(rel, allowlist, violations, parseResult.lineInfo),
+    );
   }
 
   final sorted = violations.toList()..sort();
@@ -76,10 +89,12 @@ String _relativePath(String root, String filePath) {
 }
 
 final _letter = RegExp(r'\p{L}', unicode: true);
+final _wordSpaceWord = RegExp(r'\p{L}[^\n]*\s+[^\s]*\p{L}', unicode: true);
+final _leadingUpper = RegExp(r'^\s*\p{Lu}', unicode: true);
 
 /// The literal text a string expression contributes, with interpolated
 /// expressions dropped (taken from the AST, not by pattern-matching `$`).
-String? _literalText(Expression node) {
+String? _literalText(StringLiteral node) {
   if (node is SimpleStringLiteral) return node.value;
   if (node is StringInterpolation) {
     return node.elements
@@ -95,111 +110,95 @@ String? _literalText(Expression node) {
   return null;
 }
 
+final _allCapsToken = RegExp(r'^[A-Z0-9_-]+$');
+
+bool _readsAsProse(String text) {
+  if (!_letter.hasMatch(text)) return false;
+  final trimmed = text.trim();
+  // Route/API paths and URLs are identifiers, not copy.
+  if (trimmed.startsWith('/') || trimmed.contains('://')) return false;
+  // HTTP verbs, env names, constants.
+  if (_allCapsToken.hasMatch(trimmed)) return false;
+  return _wordSpaceWord.hasMatch(text) || _leadingUpper.hasMatch(text);
+}
+
+/// Callees whose string arguments are never rendered to users.
+const _nonUserCallees = {
+  'Uri', 'parse', 'tryParse', 'RegExp', 'Key', 'ValueKey', 'ObjectKey',
+  'PageStorageKey', 'GlobalObjectKey', 'debugPrint', 'print', 'log',
+  'DateFormat', 'StateError', 'ArgumentError', 'UnimplementedError',
+  'UnsupportedError', 'AssertionError', 'FlutterError', 'MethodChannel',
+  'EventChannel', 'recordError', 'Symbol', 'fromEnvironment',
+};
+
 class _UserStringVisitor extends RecursiveAstVisitor<void> {
-  _UserStringVisitor(
-    this.relPath,
-    this.allowlist,
-    this.violations,
-    this.lineInfo,
-  );
+  _UserStringVisitor(this.relPath, this.allowlist, this.violations,
+      this.lineInfo);
 
   final String relPath;
   final Set<(String, String)> allowlist;
   final Set<String> violations;
   final LineInfo lineInfo;
 
-  static const _namedParamLabels = {
-    'label',
-    'hintText',
-    'labelText',
-    'tooltip',
-    'semanticsLabel',
-    'title',
-    'message',
-    'helperText',
-    'errorText',
-    'content',
-    'actionLabel',
-    'prefix',
-    'hint',
-    'text',
-    'emptyMessage',
-    'saveLabel',
-    'buttonLabel',
-    'placeholder',
-    'confirmLabel',
-    'cancelLabel',
-  };
+  @override
+  void visitSimpleStringLiteral(SimpleStringLiteral node) => _check(node);
 
-  void _checkLiteral(Expression node, {String? namedParam}) {
+  @override
+  void visitStringInterpolation(StringInterpolation node) {
+    _check(node);
+    super.visitStringInterpolation(node); // nested literals in ${...}
+  }
+
+  @override
+  void visitAdjacentStrings(AdjacentStrings node) => _check(node);
+
+  void _check(StringLiteral node) {
+    if (node.parent is AdjacentStrings) return; // reported as a whole
     final text = _literalText(node);
-    if (text == null || !_letter.hasMatch(text)) return;
-    final lexeme = node.toSource();
-    final value = node is SimpleStringLiteral ? node.value : lexeme;
+    if (text == null || !_readsAsProse(text)) return;
+    if (_inNonUserContext(node)) return;
+    final value = node is SimpleStringLiteral ? node.value : node.toSource();
     if (allowlist.contains((relPath, value))) return;
     final line = lineInfo.getLocation(node.offset).lineNumber;
-    final context = namedParam != null ? ' ($namedParam)' : '';
-    violations.add('$relPath:$line:$context $lexeme');
+    violations.add('$relPath:$line: ${node.toSource()}');
   }
 
-  void _visitArgumentList(ArgumentList args, {String? callee}) {
-    if (callee == 'Text') {
-      final positional = args.arguments;
-      if (positional.isNotEmpty && positional.first is! NamedExpression) {
-        final first = positional.first;
-        if (first is StringLiteral) _checkLiteral(first);
+  bool _inNonUserContext(AstNode literal) {
+    AstNode child = literal;
+    for (var p = literal.parent; p != null; child = p, p = p.parent) {
+      if (p is Directive || p is Annotation) return true;
+      if (p is IndexExpression && identical(p.index, child)) return true;
+      if (p is MapLiteralEntry && identical(p.key, child)) return true;
+      if (p is CaseClause || p is SwitchPatternCase || p is ConstantPattern) {
+        return true;
       }
-    }
-    if (callee == 'TextSpan') {
-      for (final arg in args.arguments) {
-        if (arg is NamedExpression && arg.name.label.name == 'text') {
-          final expr = arg.expression;
-          if (expr is StringLiteral) {
-            _checkLiteral(expr, namedParam: 'text');
-          }
+      if (p is BinaryExpression) {
+        final op = p.operator.lexeme;
+        if (op == '==' || op == '!=') return true;
+      }
+      if (p is AssertStatement || p is AssertInitializer) return true;
+      if (p is MethodInvocation &&
+          identical(p.argumentList, child) &&
+          (_nonUserCallees.contains(p.methodName.name) ||
+              _isStringIdentityCall(p.methodName.name))) {
+        return true;
+      }
+      if (p is InstanceCreationExpression &&
+          identical(p.argumentList, child)) {
+        final ctor = p.constructorName;
+        if (_nonUserCallees.contains(ctor.type.name2.lexeme) ||
+            _nonUserCallees.contains(ctor.name?.name)) {
+          return true;
         }
       }
+      // Stop climbing at statement / declaration boundaries.
+      if (p is Statement || p is Declaration) return false;
     }
-    for (final arg in args.arguments) {
-      if (arg is NamedExpression) {
-        final name = arg.name.label.name;
-        if (_namedParamLabels.contains(name)) {
-          final expr = arg.expression;
-          if (expr is StringLiteral) {
-            _checkLiteral(expr, namedParam: name);
-          }
-        }
-      }
-    }
+    return false;
   }
 
-  @override
-  void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    final typeName = node.constructorName.type.name2.lexeme;
-    _visitArgumentList(node.argumentList, callee: typeName);
-    super.visitInstanceCreationExpression(node);
-  }
-
-  @override
-  void visitMethodInvocation(MethodInvocation node) {
-    // Unresolved widget constructors are parsed as method invocations.
-    _visitArgumentList(node.argumentList, callee: node.methodName.name);
-    super.visitMethodInvocation(node);
-  }
-
-  @override
-  void visitDefaultFormalParameter(DefaultFormalParameter node) {
-    final name = node.parameter.name?.lexeme;
-    if (name == null) {
-      super.visitDefaultFormalParameter(node);
-      return;
-    }
-    if (_namedParamLabels.contains(name)) {
-      final defaultValue = node.defaultValue;
-      if (defaultValue is StringLiteral) {
-        _checkLiteral(defaultValue, namedParam: name);
-      }
-    }
-    super.visitDefaultFormalParameter(node);
-  }
+  static bool _isStringIdentityCall(String name) => const {
+        'startsWith', 'endsWith', 'contains', 'replaceAll', 'replaceFirst',
+        'split', 'indexOf',
+      }.contains(name);
 }

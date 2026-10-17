@@ -313,8 +313,6 @@
     }
   },
   "actionRemove": "Remove",
-  "funGenderBoy": "Boy",
-  "funGenderGirl": "Girl",
   "actionAdd": "Add",
   "funViewWhoVoted": "View who voted",
   "photoDeleteConfirmTitle": "Delete this photo?",
@@ -731,5 +729,26 @@
         "type": "String"
       }
     }
-  }
+  },
+  "lifecycleBorn": "Born",
+  "genderBoy": "Boy",
+  "genderGirl": "Girl",
+  "genderNotSure": "Not sure yet",
+  "exportStatusPending": "Queued",
+  "exportStatusRunning": "Preparing",
+  "exportStatusReady": "Ready",
+  "exportStatusFailed": "Failed",
+  "digestRealtime": "Real-time",
+  "digestDaily": "Daily digest",
+  "digestWeekly": "Weekly digest",
+  "digestSummaryRealtime": "Real-time updates",
+  "digestSummaryDaily": "Daily email summary",
+  "digestSummaryWeekly": "Weekly email summary",
+  "invitationStatusPending": "Pending",
+  "invitationStatusAccepted": "Accepted",
+  "invitationStatusExpired": "Expired",
+  "invitationStatusRevoked": "Revoked",
+  "inviteEmailPending": "Pending — email sending",
+  "inviteEmailSent": "Invite email sent",
+  "inviteEmailFailed": "Email failed to send"
 }

@@ -106,13 +106,13 @@ class OnboardingCoordinator extends ChangeNotifier {
 
   Map<String, dynamic> _previewToJson(InvitationPreview preview) {
     return {
-      'status': preview.status,
+      'status': preview.status.apiValue,
       'baby_name': preview.babyName,
       'inviter_display_name': preview.inviterDisplayName,
       'relationship_label': preview.relationshipLabel,
       'invited_role': preview.invitedRole,
       'baby_profile_id': preview.babyProfileId,
-      'lifecycle_status': preview.lifecycleStatus,
+      'lifecycle_status': preview.lifecycle?.apiValue,
       'expected_birth_date': preview.expectedBirthDate,
       'actual_birth_date': preview.actualBirthDate,
     };

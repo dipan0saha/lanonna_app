@@ -1,4 +1,5 @@
 import '../../../core/api/api_client.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import '../../../core/api/offset_page.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/api/api_exception.dart';
@@ -130,7 +131,7 @@ class HomeRepository {
     String? gender,
     String? expectedBirthDate,
     String? actualBirthDate,
-    String? lifecycleStatus,
+    BabyLifecycle? lifecycle,
     String? avatarUrl,
     List<Map<String, String>>? profileNameSuggestions,
   }) async {
@@ -139,7 +140,7 @@ class HomeRepository {
       'gender': gender,
       'expected_birth_date': expectedBirthDate,
       'actual_birth_date': actualBirthDate,
-      'lifecycle_status': lifecycleStatus,
+      'lifecycle_status': lifecycle?.apiValue,
       'avatar_url': avatarUrl,
     };
     if (profileNameSuggestions != null && profileNameSuggestions.isNotEmpty) {

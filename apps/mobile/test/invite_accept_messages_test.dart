@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:lanonna/features/invitations/domain/invitation_status.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/api/api_exception.dart';
@@ -15,7 +16,7 @@ void main() {
 
   test('invitePreviewProblemCode maps preview status', () {
     const accepted = InvitationPreview(
-      status: 'accepted',
+      status: InvitationStatus.accepted,
       invitedRole: 'follower',
       inviteeEmail: 'a@b.com',
       babyName: 'Baby',
@@ -23,7 +24,7 @@ void main() {
     expect(accepted.canContinueInviteFlow, isTrue);
 
     const revoked = InvitationPreview(
-      status: 'revoked',
+      status: InvitationStatus.revoked,
       invitedRole: 'follower',
       inviteeEmail: 'a@b.com',
       babyName: 'Baby',

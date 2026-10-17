@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -16,7 +17,7 @@ void main() {
 
     expect(result, isA<HomeSummaryLoaded>());
     final loaded = result as HomeSummaryLoaded;
-    expect(loaded.summary.lifecycleStatus, 'expecting');
+    expect(loaded.summary.lifecycle, BabyLifecycle.expecting);
     expect(loaded.summary.teasers?.upcomingEvents, isEmpty);
     expect(loaded.summary.recentActivity, isEmpty);
   });
@@ -104,7 +105,7 @@ void main() {
     final repo = HomeRepository(api);
     final online = await repo.fetchHomeSummary('baby-1');
     expect(online, isA<HomeSummaryLoaded>());
-    expect(repo.cachedHomeSummary('baby-1')?.lifecycleStatus, 'expecting');
+    expect(repo.cachedHomeSummary('baby-1')?.lifecycle, BabyLifecycle.expecting);
 
     api.failRequests = true;
     final offline = await repo.fetchHomeSummary('baby-1');

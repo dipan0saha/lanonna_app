@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/rsvp_status.dart';
 
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
@@ -29,7 +30,6 @@ import '../data/event_comment_thread.dart';
 import '../data/models/calendar_models.dart';
 import '../domain/calendar_navigation.dart';
 import '../domain/calendar_routes.dart';
-import '../domain/rsvp_status_labels.dart';
 
 String _rsvpInlineSummary(AppLocalizations l10n, RsvpSummary summary) {
   final parts = <String>[];
@@ -198,7 +198,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               for (final a in detail.rsvpAttendees)
                 ListTile(
                   title: Text(a.displayName),
-                  trailing: Text(rsvpStatusLabel(l10n, a.status)),
+                  trailing: Text(a.status?.label(l10n) ?? ''),
                 ),
           ],
         );
@@ -206,7 +206,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     );
   }
 
-  Future<void> _setRsvp(String status) async {
+  Future<void> _setRsvp(RsvpStatus status) async {
     final baby = _baby;
     if (baby == null) return;
     try {

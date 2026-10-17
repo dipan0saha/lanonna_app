@@ -39,7 +39,7 @@ class OwnerHomeComposer extends StatelessWidget {
   final VoidCallback? onAddEvent;
   final VoidCallback? onRegistry;
 
-  bool get _isExpecting => baby.lifecycleStatus == 'expecting';
+  bool get _isExpecting => !baby.isBorn;
 
   @override
   Widget build(BuildContext context) {

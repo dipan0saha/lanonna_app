@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -179,7 +180,7 @@ class _HomeScreenState extends State<HomeScreen>
         try {
           final updated = await context.read<HomeRepository>().updateBaby(
             baby.id,
-            lifecycleStatus: 'born',
+            lifecycle: BabyLifecycle.born,
             actualBirthDate: formatApiBirthDate(date),
           );
           setState(() => _baby = updated);
@@ -302,7 +303,7 @@ class _HomeScreenState extends State<HomeScreen>
                     daysToDueDate: _daysToDueDate(_baby!),
                     onRefresh: _load,
                     onTeaserSignedUrlError: _refreshSummaryOnly,
-                    onAnnounceTap: _baby!.lifecycleStatus == 'expecting'
+                    onAnnounceTap: !_baby!.isBorn
                         ? () => _onAnnounceArrival()
                         : null,
                     onAddPhoto: () => context.go('/gallery'),

@@ -50,7 +50,7 @@ class _RegistryAiSuggestionsScreenState extends State<RegistryAiSuggestionsScree
     if (mounted) {
       setState(() {
         _tab = RegistrySuggestionsCatalog.defaultTabForLifecycle(
-          baby?.lifecycleStatus,
+          baby?.lifecycle,
         );
       });
     }

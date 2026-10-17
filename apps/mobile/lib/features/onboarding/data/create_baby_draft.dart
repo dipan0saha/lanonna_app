@@ -1,7 +1,10 @@
+import 'package:lanonna/core/domain/baby_gender.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
+
 class CreateBabyDraft {
   const CreateBabyDraft({
-    this.lifecycle = 'expecting',
-    this.genderPill = 'Not sure yet',
+    this.lifecycle = BabyLifecycle.expecting,
+    this.gender = BabyGender.unknown,
     this.dateIso,
     this.boyName = '',
     this.girlName = '',
@@ -9,8 +12,8 @@ class CreateBabyDraft {
     this.sharePhotoToGallery = false,
   });
 
-  final String lifecycle;
-  final String genderPill;
+  final BabyLifecycle lifecycle;
+  final BabyGender gender;
   final String? dateIso;
   final String boyName;
   final String girlName;
@@ -18,8 +21,8 @@ class CreateBabyDraft {
   final bool sharePhotoToGallery;
 
   Map<String, dynamic> toJson() => {
-        'lifecycle': lifecycle,
-        'genderPill': genderPill,
+        'lifecycle': lifecycle.apiValue,
+        'gender': gender.apiValue,
         if (dateIso != null) 'dateIso': dateIso,
         'boyName': boyName,
         'girlName': girlName,
@@ -29,8 +32,10 @@ class CreateBabyDraft {
 
   static CreateBabyDraft fromJson(Map<String, dynamic> json) {
     return CreateBabyDraft(
-      lifecycle: json['lifecycle'] as String? ?? 'expecting',
-      genderPill: json['genderPill'] as String? ?? 'Not sure yet',
+      lifecycle: BabyLifecycle.fromApi(json['lifecycle'] as String?),
+      gender: json.containsKey('gender')
+          ? BabyGender.fromApi(json['gender'] as String?)
+          : _legacyPillGender(json['genderPill'] as String?),
       dateIso: json['dateIso'] as String?,
       boyName: json['boyName'] as String? ?? '',
       girlName: json['girlName'] as String? ?? '',
@@ -39,6 +44,14 @@ class CreateBabyDraft {
     );
   }
 }
+
+/// Drafts saved before gender was stored as an API value kept the English pill
+/// label; map those once so in-progress onboarding survives the upgrade.
+BabyGender _legacyPillGender(String? pill) => switch (pill) {
+      'Boy' => BabyGender.male,
+      'Girl' => BabyGender.female,
+      _ => BabyGender.unknown,
+    };
 
 class FirstMomentDraft {
   const FirstMomentDraft({

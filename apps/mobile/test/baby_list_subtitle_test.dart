@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:lanonna/core/domain/baby_list_subtitle.dart';
 import 'package:lanonna/core/domain/baby_summary.dart';
 import 'package:lanonna/core/time/app_date_time.dart';
@@ -8,7 +9,7 @@ void main() {
     const baby = BabySummary(
       id: '1',
       name: 'Baby',
-      lifecycleStatus: 'expecting',
+      lifecycle: BabyLifecycle.expecting,
       role: 'owner',
       expectedBirthDate: '2026-12-01',
       relationshipLabel: 'Mother',
@@ -21,7 +22,7 @@ void main() {
     const baby = BabySummary(
       id: '1',
       name: 'Baby',
-      lifecycleStatus: 'expecting',
+      lifecycle: BabyLifecycle.expecting,
       role: 'follower',
       expectedBirthDate: '2026-12-01',
     );

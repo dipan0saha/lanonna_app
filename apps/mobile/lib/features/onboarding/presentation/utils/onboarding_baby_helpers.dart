@@ -1,6 +1,6 @@
 import '../../../../core/input/app_text_input_kind.dart';
-import '../../domain/baby_gender.dart';
-import '../../domain/baby_lifecycle.dart';
+import 'package:lanonna/core/domain/baby_gender.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 
 enum OnboardingBabyNameFieldsMode {
   expectingBoth,

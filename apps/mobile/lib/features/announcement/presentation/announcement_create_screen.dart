@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:lanonna/core/domain/baby_gender.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -278,7 +279,7 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
               children: [
                 Expanded(
                   child: AppToggleChip(
-                    label: l10n.funGenderBoy,
+                    label: BabyGender.male.label(l10n),
                     selected: _gender == 'male',
                     onTap: () => setState(() => _gender = 'male'),
                   ),
@@ -286,7 +287,7 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
                 SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: AppToggleChip(
-                    label: l10n.funGenderGirl,
+                    label: BabyGender.female.label(l10n),
                     selected: _gender == 'female',
                     selectedAccent: AppChipAccent.peach,
                     onTap: () => setState(() => _gender = 'female'),

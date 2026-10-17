@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:lanonna/core/domain/baby_gender.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -48,16 +49,8 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
   bool get _isOwner => _baby?.role == 'owner';
 
   int? get _genderPillIndex {
-    switch (_gender) {
-      case 'male':
-        return 0;
-      case 'female':
-        return 1;
-      case 'unknown':
-        return 2;
-      default:
-        return _isBorn ? null : 2;
-    }
+    if (_gender == null) return _isBorn ? null : BabyGender.unknown.index;
+    return BabyGender.fromApi(_gender).index;
   }
 
   bool get _hasAvatarPhoto {
@@ -184,15 +177,11 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
           const OnboardingFieldLabel('Gender'),
           const SizedBox(height: 8),
           OnboardingPillSelect(
-            options: const ['Boy', 'Girl', 'Not sure yet'],
+            options: [for (final g in BabyGender.values) g.label(l10n)],
             selectedIndex: _genderPillIndex,
             onSelected: (index) {
               setState(() {
-                _gender = switch (index) {
-                  0 => 'male',
-                  1 => 'female',
-                  _ => 'unknown',
-                };
+                _gender = BabyGender.values[index].apiValue;
               });
             },
             selectedStyleForIndex: (index) {
@@ -223,7 +212,7 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
               child: Text(
                 AppLocalizations.of(
                   context,
-                )!.statusLabel(_baby!.lifecycleStatus),
+                )!.statusLabel(_baby!.lifecycle.label(l10n)),
                 style: context.textStyles.bodySmall?.copyWith(
                   color: AppColors.muted,
                 ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/domain/baby_summary.dart';
@@ -66,13 +67,13 @@ void main() {
         id: 'baby-a',
         name: 'Baby Parker',
         role: 'owner',
-        lifecycleStatus: 'expecting',
+        lifecycle: BabyLifecycle.expecting,
       ),
       const BabySummary(
         id: 'baby-b',
         name: 'Lily Born',
         role: 'owner',
-        lifecycleStatus: 'born',
+        lifecycle: BabyLifecycle.born,
       ),
     ];
     final homeRepo = _SwitchHomeRepository(babies);

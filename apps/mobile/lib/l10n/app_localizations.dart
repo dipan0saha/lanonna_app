@@ -1144,18 +1144,6 @@ abstract class AppLocalizations {
   /// **'Remove'**
   String get actionRemove;
 
-  /// No description provided for @funGenderBoy.
-  ///
-  /// In en, this message translates to:
-  /// **'Boy'**
-  String get funGenderBoy;
-
-  /// No description provided for @funGenderGirl.
-  ///
-  /// In en, this message translates to:
-  /// **'Girl'**
-  String get funGenderGirl;
-
   /// No description provided for @actionAdd.
   ///
   /// In en, this message translates to:
@@ -2811,6 +2799,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Status: {status}'**
   String statusLabel(String status);
+
+  /// No description provided for @lifecycleBorn.
+  ///
+  /// In en, this message translates to:
+  /// **'Born'**
+  String get lifecycleBorn;
+
+  /// No description provided for @genderBoy.
+  ///
+  /// In en, this message translates to:
+  /// **'Boy'**
+  String get genderBoy;
+
+  /// No description provided for @genderGirl.
+  ///
+  /// In en, this message translates to:
+  /// **'Girl'**
+  String get genderGirl;
+
+  /// No description provided for @genderNotSure.
+  ///
+  /// In en, this message translates to:
+  /// **'Not sure yet'**
+  String get genderNotSure;
+
+  /// No description provided for @exportStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Queued'**
+  String get exportStatusPending;
+
+  /// No description provided for @exportStatusRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing'**
+  String get exportStatusRunning;
+
+  /// No description provided for @exportStatusReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get exportStatusReady;
+
+  /// No description provided for @exportStatusFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get exportStatusFailed;
+
+  /// No description provided for @digestRealtime.
+  ///
+  /// In en, this message translates to:
+  /// **'Real-time'**
+  String get digestRealtime;
+
+  /// No description provided for @digestDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily digest'**
+  String get digestDaily;
+
+  /// No description provided for @digestWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly digest'**
+  String get digestWeekly;
+
+  /// No description provided for @digestSummaryRealtime.
+  ///
+  /// In en, this message translates to:
+  /// **'Real-time updates'**
+  String get digestSummaryRealtime;
+
+  /// No description provided for @digestSummaryDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily email summary'**
+  String get digestSummaryDaily;
+
+  /// No description provided for @digestSummaryWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly email summary'**
+  String get digestSummaryWeekly;
+
+  /// No description provided for @invitationStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get invitationStatusPending;
+
+  /// No description provided for @invitationStatusAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepted'**
+  String get invitationStatusAccepted;
+
+  /// No description provided for @invitationStatusExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get invitationStatusExpired;
+
+  /// No description provided for @invitationStatusRevoked.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoked'**
+  String get invitationStatusRevoked;
+
+  /// No description provided for @inviteEmailPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending — email sending'**
+  String get inviteEmailPending;
+
+  /// No description provided for @inviteEmailSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite email sent'**
+  String get inviteEmailSent;
+
+  /// No description provided for @inviteEmailFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Email failed to send'**
+  String get inviteEmailFailed;
 }
 
 class _AppLocalizationsDelegate

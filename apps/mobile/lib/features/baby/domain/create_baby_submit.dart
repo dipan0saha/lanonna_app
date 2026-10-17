@@ -10,7 +10,7 @@ import '../../gallery/domain/gallery_refresh.dart';
 import '../../gallery/presentation/upload/run_gallery_photo_upload.dart';
 import '../../home/data/home_repository.dart';
 import '../../onboarding/data/onboarding_repository.dart';
-import '../../onboarding/domain/baby_lifecycle.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import '../../onboarding/presentation/onboarding_coordinator.dart';
 import 'baby_profile_write_payload.dart';
 import 'create_baby_mode.dart';
@@ -105,7 +105,7 @@ Future<BabySummary> submitCreateBaby({
   final baby = await repository.createBaby(
     name: payload.name,
     gender: payload.gender,
-    lifecycleStatus: payload.lifecycleStatus,
+    lifecycle: payload.lifecycle,
     expectedBirthDate: payload.expectedBirthDate,
     actualBirthDate: payload.actualBirthDate,
     relationshipLabel: relationshipLabel,
@@ -140,7 +140,7 @@ Future<BabySummary> submitReviseOwnerOnboardingBaby({
     babyId,
     name: payload.name,
     gender: payload.gender,
-    lifecycleStatus: payload.lifecycleStatus,
+    lifecycle: payload.lifecycle,
     expectedBirthDate: isBorn ? null : payload.expectedBirthDate,
     actualBirthDate: isBorn ? payload.actualBirthDate : null,
     profileNameSuggestions: payload.profileNameSuggestions,

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/features/invitations/domain/invitation_status.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lanonna/core/api/api_client.dart';
@@ -17,13 +19,13 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _preview = InvitationPreview(
-  status: 'pending',
+  status: InvitationStatus.pending,
   babyName: 'Liam',
   inviterDisplayName: 'Alex',
   inviteeEmail: 'grandma@test.com',
   relationshipLabel: 'Grandma',
   invitedRole: 'follower',
-  lifecycleStatus: 'expecting',
+  lifecycle: BabyLifecycle.expecting,
   expectedBirthDate: '2026-06-01',
 );
 
@@ -78,14 +80,14 @@ void main() {
     await coordinator.bindInviteFromPreview(
       'test-token',
       const InvitationPreview(
-        status: 'accepted',
+        status: InvitationStatus.accepted,
         babyName: 'Liam',
         inviterDisplayName: 'Alex',
         inviteeEmail: 'grandma@test.com',
         relationshipLabel: 'Grandma',
         invitedRole: 'follower',
         babyProfileId: 'baby-1',
-        lifecycleStatus: 'expecting',
+        lifecycle: BabyLifecycle.expecting,
         expectedBirthDate: '2026-06-01',
       ),
     );

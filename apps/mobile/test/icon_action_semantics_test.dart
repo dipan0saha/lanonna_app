@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/api/api_client.dart';
@@ -38,7 +39,7 @@ class _Home extends HomeRepository {
   static const baby = BabySummary(
     id: 'baby-1',
     name: 'Parker',
-    lifecycleStatus: 'born',
+    lifecycle: BabyLifecycle.born,
     role: 'owner',
   );
 
@@ -218,7 +219,7 @@ void main() {
     const baby = BabySummary(
       id: 'baby-1',
       name: 'Parker',
-      lifecycleStatus: 'born',
+      lifecycle: BabyLifecycle.born,
       role: 'owner',
     );
     await tester.pumpWidget(
@@ -259,7 +260,7 @@ void main() {
     const baby = BabySummary(
       id: 'baby-1',
       name: 'Parker',
-      lifecycleStatus: 'expecting',
+      lifecycle: BabyLifecycle.expecting,
       role: 'follower',
       expectedBirthDate: '2027-02-01',
     );

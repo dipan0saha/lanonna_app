@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:lanonna/features/account/domain/data_export_status.dart';
+import 'package:lanonna/features/invitations/domain/invitation_status.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exception.dart';
@@ -182,21 +184,24 @@ class InvitationRow {
 
   final String id;
   final String email;
-  final String status;
+  final InvitationStatus status;
   final String? relationshipLabel;
-  final String? emailDeliveryStatus;
+  final InviteEmailDeliveryStatus? emailDeliveryStatus;
   final String? emailLastError;
 
   bool get canResendEmail =>
-      status == 'pending' && emailDeliveryStatus != 'sent';
+      status == InvitationStatus.pending &&
+      emailDeliveryStatus != InviteEmailDeliveryStatus.sent;
 
   factory InvitationRow.fromJson(Map<String, dynamic> json) {
     return InvitationRow(
       id: json['id']?.toString() ?? '',
       email: json['invitee_email'] as String? ?? '',
-      status: json['status'] as String? ?? '',
+      status: InvitationStatus.fromApi(json['status'] as String?),
       relationshipLabel: json['relationship_label'] as String?,
-      emailDeliveryStatus: json['email_delivery_status'] as String?,
+      emailDeliveryStatus: InviteEmailDeliveryStatus.fromApi(
+        json['email_delivery_status'] as String?,
+      ),
       emailLastError: json['email_last_error'] as String?,
     );
   }
@@ -211,13 +216,13 @@ class DataExportJob {
   });
 
   final String id;
-  final String status;
+  final DataExportStatus status;
   final String? downloadUrl;
   final String? errorMessage;
 
   factory DataExportJob.fromJson(Map<String, dynamic> json) => DataExportJob(
     id: json['id']?.toString() ?? '',
-    status: json['status'] as String? ?? 'pending',
+    status: DataExportStatus.fromApi(json['status'] as String?),
     downloadUrl: json['download_url'] as String?,
     errorMessage: json['error_message'] as String?,
   );

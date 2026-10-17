@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/baby_gender.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
@@ -183,7 +184,11 @@ class _PredictionsTabState extends State<PredictionsTab> {
           for (final v in voters)
             ListTile(
               title: Text(v.displayName),
-              subtitle: Text(v.gender == 'male' ? 'Boy' : 'Girl'),
+              subtitle: Text(
+                BabyGender.fromApi(v.gender).label(
+                  AppLocalizations.of(context)!,
+                ),
+              ),
             ),
         ],
       ),
@@ -264,8 +269,8 @@ class _PredictionsTabState extends State<PredictionsTab> {
             children: [
               Expanded(
                 child: _genderBox(
-                  'Boy',
-                  p?.viewerGenderVote == 'male',
+                  BabyGender.male.label(l10n),
+                  p?.viewerGenderVote == BabyGender.male.apiValue,
                   closed ? null : () => _voteGender('male'),
                   genderVotes.displayPercentForMale(),
                   p?.maleVotes ?? 0,
@@ -275,8 +280,8 @@ class _PredictionsTabState extends State<PredictionsTab> {
               const SizedBox(width: 10),
               Expanded(
                 child: _genderBox(
-                  'Girl',
-                  p?.viewerGenderVote == 'female',
+                  BabyGender.female.label(l10n),
+                  p?.viewerGenderVote == BabyGender.female.apiValue,
                   closed ? null : () => _voteGender('female'),
                   genderVotes.displayPercentForFemale(),
                   p?.femaleVotes ?? 0,
@@ -305,8 +310,8 @@ class _PredictionsTabState extends State<PredictionsTab> {
               child: Text(
                 AppLocalizations.of(context)!.predictionYourGenderVote(
                   p!.viewerGenderVote == 'male'
-                      ? AppLocalizations.of(context)!.funGenderBoy
-                      : AppLocalizations.of(context)!.funGenderGirl,
+                      ? BabyGender.male.label(AppLocalizations.of(context)!)
+                      : BabyGender.female.label(AppLocalizations.of(context)!),
                 ),
                 style: context.textStyles.bodySmall,
               ),

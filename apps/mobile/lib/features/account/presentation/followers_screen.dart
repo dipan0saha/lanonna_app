@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/features/invitations/domain/invitation_status.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
@@ -60,7 +61,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
       if (!mounted) return;
       setState(() {
         _members = members;
-        _invites = invites.where((i) => i.status == 'pending').toList();
+        _invites = invites.where((i) => i.status == InvitationStatus.pending).toList();
         _baby = baby;
         _loading = false;
       });
@@ -80,16 +81,13 @@ class _FollowersScreenState extends State<FollowersScreen> {
   }
 
   String _inviteSubtitle(InvitationRow inv) {
-    if (inv.emailDeliveryStatus == 'failed') {
-      return inv.emailLastError ?? 'Email failed to send';
-    }
-    if (inv.emailDeliveryStatus == 'sent') {
-      return 'Invite email sent';
-    }
-    if (inv.emailDeliveryStatus == 'pending') {
-      return 'Pending — email sending';
-    }
-    return inv.email;
+    final l10n = AppLocalizations.of(context)!;
+    return switch (inv.emailDeliveryStatus) {
+      InviteEmailDeliveryStatus.failed =>
+        inv.emailLastError ?? InviteEmailDeliveryStatus.failed.label(l10n),
+      final InviteEmailDeliveryStatus status => status.label(l10n),
+      null => inv.email,
+    };
   }
 
   String? _acceptedLabel(MemberRow member) {

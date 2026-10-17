@@ -50,7 +50,7 @@ class _EventAiSuggestionsScreenState extends State<EventAiSuggestionsScreen> {
     if (mounted) {
       setState(() {
         _tab = EventSuggestionsCatalog.defaultTabForLifecycle(
-          baby?.lifecycleStatus,
+          baby?.lifecycle,
         );
       });
     }
