@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/baby_display_label.dart';
 
 import 'package:go_router/go_router.dart';
 
@@ -53,7 +54,9 @@ class HomeBirthWelcomeCard extends StatelessWidget {
           Text(
             AppLocalizations.of(
               context,
-            )!.homeBirthWelcomeTitle(welcome.babyName),
+            )!.homeBirthWelcomeTitle(
+              babyNameLabel(AppLocalizations.of(context)!, welcome.babyName),
+            ),
             style: text.titleSmall,
             textAlign: TextAlign.center,
           ),

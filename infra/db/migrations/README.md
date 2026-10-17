@@ -44,6 +44,7 @@ Apply in **lexicographic order** (filename prefix):
 | `036_notification_type_and_actor.sql` | `notifications.notification_type` (`photo` \| `event` \| `registry` \| `fun` \| `comment` \| `squish` \| `digest` \| `generic`, CHECK constraint), `actor_firebase_uid`, `actor_display_name`; backfills legacy types from fixed API titles and deep-link routes (no body-text matching) |
 | `037_notification_actor_backfill.sql` | Backfills `actor_firebase_uid` / `actor_display_name` on legacy inbox rows from structured source rows only (time-bounded, one unambiguous candidate, never the recipient); ambiguous rows stay `NULL` |
 | `038_structured_notification_activity_params.sql` | `notifications.notification_kind` + `params`, `activity_events.params`: rows record what happened and its display values; the app renders the copy from ARB (title/body/summary stay as English diagnostics). Backfills legacy rows from the fixed API titles and referenced source rows only; follower registry claims become `registry_claimed`; rows that cannot be derived keep their stored text |
+| `039_baby_name_nullable_gender_not_null.sql` | `baby_profiles.name` nullable (unnamed baby = `NULL`) with `CHECK (name IS NULL OR btrim(name) <> '')`; clears names stored as exactly `'Baby'` (the app's persisted default — the only locale was English and the value was sent verbatim) or blank, and strips the matching snapshotted `baby_name` params from those babies' activity / inbox rows; `gender` `NOT NULL DEFAULT 'unknown'` after backfilling `NULL` (L-36) |
 
 ## Apply (dev)
 
@@ -58,7 +59,7 @@ cd infra/db
 DB_PASSWORD="$PGPASSWORD" python apply_migrations.py
 ```
 
-`apply_migrations.py` runs every `*.sql` in lexicographic order and **skips** files whose version stem is already in `schema_migrations` (DDL in files remains idempotent for manual re-run). Confirm with `./scripts/verify-dev-migrations.sh` from the repo root (37 files as of `037`).
+`apply_migrations.py` runs every `*.sql` in lexicographic order and **skips** files whose version stem is already in `schema_migrations` (DDL in files remains idempotent for manual re-run). Confirm with `./scripts/verify-dev-migrations.sh` from the repo root (39 files as of `039`).
 
 **Manual:** `psql -h 127.0.0.1 -U lanonna_app -d lanonna -f infra/db/migrations/00N_….sql` for each file in order.
 

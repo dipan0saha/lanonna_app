@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/baby_display_label.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../../../../core/domain/baby_summary.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -78,7 +80,10 @@ class _BabyRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(baby.name, style: context.textStyles.titleSmall),
+                  Text(
+                    babyNameLabel(AppLocalizations.of(context)!, baby.name),
+                    style: context.textStyles.titleSmall,
+                  ),
                   Text(
                     subtitle,
                     style: context.textStyles.bodySmall?.copyWith(

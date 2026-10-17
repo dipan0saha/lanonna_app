@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:lanonna/core/domain/baby_display_label.dart';
 import 'package:lanonna/core/domain/person_display_label.dart';
 
 import 'package:flutter/material.dart';
@@ -625,7 +626,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                               for (final b in _memberBabies)
                                 if (b.id != currentBabyId)
                                   AppToggleChip(
-                                    label: b.name,
+                                    label: babyNameLabel(AppLocalizations.of(context)!, b.name),
                                     selected: _taggedBabyIds.contains(b.id),
                                     onTap: () {
                                       setState(() {
@@ -644,7 +645,9 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                           const SizedBox(height: 16),
                           Text(
                             AppLocalizations.of(context)!.photoTaggedBabies(
-                              detail.taggedBabies.map((t) => t.name).join(', '),
+                              detail.taggedBabies
+                                  .map((t) => babyNameLabel(AppLocalizations.of(context)!, t.name))
+                                  .join(', '),
                             ),
                             style: styles.bodySmall?.copyWith(
                               color: AppColors.muted,

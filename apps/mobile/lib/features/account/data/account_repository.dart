@@ -398,10 +398,12 @@ class AccountRepository {
 }
 
 class SoleOwnedBaby {
-  const SoleOwnedBaby({required this.id, required this.name});
+  const SoleOwnedBaby({required this.id, this.name});
 
   final String id;
-  final String name;
+
+  /// `null` for an unnamed baby (display via `babyNameLabel`).
+  final String? name;
 }
 
 /// What deleting the account will do (`GET /v1/me/delete-account/preview`).
@@ -420,7 +422,7 @@ class DeleteAccountPreview {
           ? babies.whereType<Map<String, dynamic>>().map((row) {
               return SoleOwnedBaby(
                 id: row['id']?.toString() ?? '',
-                name: row['name']?.toString() ?? '',
+                name: row['name'] as String?,
               );
             }).toList()
           : const [],

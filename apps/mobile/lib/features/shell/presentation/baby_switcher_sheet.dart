@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/baby_display_label.dart';
 
 import '../../../core/theme/app_metrics.dart';
 
@@ -184,7 +185,7 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
                   'baby_switcher_${baby.id.replaceAll('-', '_')}',
                   ListTile(
                     leading: BabyProfileAvatar(baby: baby),
-                    title: Text(baby.name),
+                    title: Text(babyNameLabel(AppLocalizations.of(context)!, baby.name)),
                     subtitle: Text(
                       babyListSubtitle(
         AppLocalizations.of(context)!,

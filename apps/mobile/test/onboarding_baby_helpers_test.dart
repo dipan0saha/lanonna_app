@@ -4,14 +4,27 @@ import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:lanonna/features/onboarding/presentation/utils/onboarding_baby_helpers.dart';
 
 void main() {
-  test('resolveOnboardingBabyName uses the fallback when empty', () {
+  test('resolveOnboardingBabyName is null when no name was entered', () {
+    // The display fallback ("Baby") is never stored (L-36).
     expect(
       resolveOnboardingBabyName(
-        fallbackName: 'Baby',
         status: BabyLifecycle.expecting,
         gender: BabyGender.unknown,
+        boyName: '  ',
       ),
-      'Baby',
+      isNull,
+    );
+  });
+
+  test('resolveOnboardingBabyName prefers the girl field for a born girl', () {
+    expect(
+      resolveOnboardingBabyName(
+        status: BabyLifecycle.born,
+        gender: BabyGender.female,
+        boyName: 'Leo',
+        girlName: 'Mia',
+      ),
+      'Mia',
     );
   });
 
@@ -37,7 +50,7 @@ void main() {
       boyName: 'Liam',
       girlName: 'Olivia',
     );
-    expect(suggestions, [
+    expect(suggestions.map((s) => s.toJson()), [
       {'name': 'Liam', 'gender': 'male'},
       {'name': 'Olivia', 'gender': 'female'},
     ]);
@@ -51,7 +64,7 @@ void main() {
       girlName: 'sky',
     );
     expect(suggestions.length, 1);
-    expect(suggestions.first['name'], 'Sky');
+    expect(suggestions.first.name, 'Sky');
   });
 
   test('expectingProfileNameSuggestionsForFun empty when born', () {
@@ -69,7 +82,6 @@ void main() {
   test('resolveOnboardingBabyName prefers boy name', () {
     expect(
       resolveOnboardingBabyName(
-        fallbackName: 'Baby',
         status: BabyLifecycle.expecting,
         gender: BabyGender.unknown,
         boyName: 'Liam',

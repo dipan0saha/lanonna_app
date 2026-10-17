@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/baby_display_label.dart';
 import 'package:lanonna/core/domain/person_display_label.dart';
 import 'package:lanonna/features/invitations/domain/invitation_status.dart';
 import 'package:go_router/go_router.dart';
@@ -138,7 +139,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
         .where((m) => m.role == 'follower')
         .toList(growable: false);
     final count = followers.length;
-    final babyName = _baby?.name ?? AppLocalizations.of(context)!.babyNameDefault;
+    final babyName = babyNameLabel(l10n, _baby?.name);
 
     return AppSemantics.container(
       'followers_screen',

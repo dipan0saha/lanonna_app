@@ -1,6 +1,8 @@
 import '../../../core/api/api_client.dart';
+import 'package:lanonna/core/domain/baby_gender.dart';
 import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:lanonna/core/domain/baby_summary.dart';
+import 'package:lanonna/core/domain/name_suggestion_draft.dart';
 import '../../invitations/data/batch_invite_result.dart';
 import 'models/onboarding_status.dart';
 
@@ -39,26 +41,25 @@ class OnboardingRepository {
   }
 
   Future<BabySummary> createBaby({
-    required String name,
-    String? gender,
+    String? name,
+    BabyGender gender = BabyGender.unknown,
     String? expectedBirthDate,
     String? actualBirthDate,
     BabyLifecycle lifecycle = BabyLifecycle.expecting,
     String? relationshipLabel,
-    List<Map<String, String>> profileNameSuggestions = const [],
+    List<NameSuggestionDraft> profileNameSuggestions = const [],
   }) async {
     final json = await _api.postJson('/v1/babies', body: {
-      'name': name,
-      if (gender != null) 'gender': gender,
+      if (name != null) 'name': name,
+      'gender': gender.apiValue,
       if (expectedBirthDate != null) 'expected_birth_date': expectedBirthDate,
       if (actualBirthDate != null) 'actual_birth_date': actualBirthDate,
       'lifecycle_status': lifecycle.apiValue,
       if (relationshipLabel != null && relationshipLabel.isNotEmpty)
         'relationship_label': relationshipLabel,
       if (profileNameSuggestions.isNotEmpty)
-        'profile_name_suggestions': profileNameSuggestions
-            .map((r) => {'name': r['name'], 'gender': r['gender'] ?? 'unknown'})
-            .toList(),
+        'profile_name_suggestions':
+            profileNameSuggestions.map((r) => r.toJson()).toList(),
     });
     return BabySummary.fromJson(json);
   }
@@ -77,14 +78,12 @@ class OnboardingRepository {
     String babyId, {
     List<String> eventPresetIds = const [],
     List<String> registryPresetIds = const [],
-    List<Map<String, String>> nameSuggestions = const [],
+    List<NameSuggestionDraft> nameSuggestions = const [],
   }) async {
     await _api.postJson('/v1/babies/$babyId/onboarding/first-moment', body: {
       'event_preset_ids': eventPresetIds,
       'registry_preset_ids': registryPresetIds,
-      'name_suggestions': nameSuggestions
-          .map((r) => {'name': r['name'], 'gender': r['gender'] ?? 'unknown'})
-          .toList(),
+      'name_suggestions': nameSuggestions.map((r) => r.toJson()).toList(),
     });
   }
 }

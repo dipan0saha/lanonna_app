@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/baby_gender.dart';
 import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/domain/baby_summary.dart';
@@ -28,7 +29,7 @@ class _FakeFunRepository extends FunRepository {
       NameSuggestion(
         id: 'n1',
         suggestedName: 'Luca',
-        gender: 'male',
+        gender: BabyGender.male,
         likeCount: 2,
         viewerHasLiked: false,
         isMine: true,

@@ -1,4 +1,5 @@
 import '../../../core/api/api_client.dart';
+import 'package:lanonna/core/domain/baby_gender.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/json/json_readers.dart';
 
@@ -21,7 +22,9 @@ class AnnouncementDetail {
   final String id;
   final String? firstName;
   final String? lastName;
-  final String? gender;
+
+  /// Male or female when the owner picked one.
+  final BabyGender? gender;
   final String? birthDate;
   final String? birthTime;
   final String? weightText;
@@ -37,7 +40,7 @@ class AnnouncementDetail {
       id: json['id']?.toString() ?? '',
       firstName: json['first_name'] as String?,
       lastName: json['last_name'] as String?,
-      gender: json['gender'] as String?,
+      gender: BabyGender.tryFromApi(json['gender'] as String?),
       birthDate: json['birth_date'] as String?,
       birthTime: json['birth_time'] as String?,
       weightText: json['weight_text'] as String?,
@@ -69,7 +72,7 @@ class AnnouncementRepository {
     String babyId, {
     required String firstName,
     String? lastName,
-    String? gender,
+    BabyGender? gender,
     String? birthDate,
     String? birthTime,
     String? weightText,
@@ -81,7 +84,7 @@ class AnnouncementRepository {
       body: {
         'first_name': firstName,
         'last_name': lastName,
-        'gender': gender,
+        'gender': gender?.apiValue,
         'birth_date': birthDate,
         'birth_time': birthTime,
         'weight_text': weightText,

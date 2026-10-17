@@ -11,19 +11,20 @@ enum BabyGender {
   final String apiValue;
 
   /// Missing or unrecognised values are [unknown].
-  static BabyGender fromApi(String? raw) => values.firstWhere(
-        (g) => g.apiValue == raw,
-        orElse: () => BabyGender.unknown,
-      );
+  static BabyGender fromApi(String? raw) => tryFromApi(raw) ?? BabyGender.unknown;
+
+  /// For optional choices (a vote, an announcement): `null` when the value is
+  /// missing or unrecognised.
+  static BabyGender? tryFromApi(String? raw) {
+    for (final g in values) {
+      if (g.apiValue == raw) return g;
+    }
+    return null;
+  }
 
   String label(AppLocalizations l10n) => switch (this) {
         BabyGender.male => l10n.genderBoy,
         BabyGender.female => l10n.genderGirl,
         BabyGender.unknown => l10n.genderNotSure,
       };
-}
-
-/// First-moment name suggestions store `male` / `female` in drafts and API payloads.
-BabyGender nameSuggestionGenderFromDraft(String value) {
-  return value == 'female' ? BabyGender.female : BabyGender.male;
 }

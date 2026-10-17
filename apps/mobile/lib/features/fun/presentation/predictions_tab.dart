@@ -95,7 +95,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
   bool get _predictionsClosed =>
       widget.baby.predictionsClosed || (_payload?.predictionsClosed ?? false);
 
-  Future<void> _voteGender(String gender) async {
+  Future<void> _voteGender(BabyGender gender) async {
     if (_predictionsClosed) return;
     try {
       await context.read<FunRepository>().setGenderVote(widget.baby.id, gender);
@@ -186,9 +186,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
             ListTile(
               title: Text(personDisplayName(AppLocalizations.of(context)!, v.displayName)),
               subtitle: Text(
-                BabyGender.fromApi(v.gender).label(
-                  AppLocalizations.of(context)!,
-                ),
+                v.gender.label(AppLocalizations.of(context)!),
               ),
             ),
         ],
@@ -271,8 +269,8 @@ class _PredictionsTabState extends State<PredictionsTab> {
               Expanded(
                 child: _genderBox(
                   BabyGender.male.label(l10n),
-                  p?.viewerGenderVote == BabyGender.male.apiValue,
-                  closed ? null : () => _voteGender('male'),
+                  p?.viewerGenderVote == BabyGender.male,
+                  closed ? null : () => _voteGender(BabyGender.male),
                   genderVotes.displayPercentForMale(),
                   p?.maleVotes ?? 0,
                   semanticsId: 'fun_vote_boy',
@@ -282,8 +280,8 @@ class _PredictionsTabState extends State<PredictionsTab> {
               Expanded(
                 child: _genderBox(
                   BabyGender.female.label(l10n),
-                  p?.viewerGenderVote == BabyGender.female.apiValue,
-                  closed ? null : () => _voteGender('female'),
+                  p?.viewerGenderVote == BabyGender.female,
+                  closed ? null : () => _voteGender(BabyGender.female),
                   genderVotes.displayPercentForFemale(),
                   p?.femaleVotes ?? 0,
                   semanticsId: 'fun_vote_girl',
@@ -310,9 +308,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
               padding: const EdgeInsets.only(top: 8),
               child: Text(
                 AppLocalizations.of(context)!.predictionYourGenderVote(
-                  p!.viewerGenderVote == 'male'
-                      ? BabyGender.male.label(AppLocalizations.of(context)!)
-                      : BabyGender.female.label(AppLocalizations.of(context)!),
+                  p!.viewerGenderVote!.label(AppLocalizations.of(context)!),
                 ),
                 style: context.textStyles.bodySmall,
               ),

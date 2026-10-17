@@ -20,7 +20,7 @@ def _sample_ctx(role: str) -> dict:
         "role": role,
         "relationship_label": "Mom",
         "expires_at": datetime(2026, 12, 1, tzinfo=timezone.utc),
-        "baby_name": "Baby",
+        "baby_name": "Parker",
         "inviter_display_name": "Alex",
     }
 
@@ -56,11 +56,27 @@ def test_render_invite_email_follower_uses_follow_copy():
         _sample_ctx("follower"),
         "lanonna://app/invite-accept?token=abc",
     )
-    assert subject == "Alex invited you to Baby on La Nonna"
+    assert subject == "Alex invited you to Parker on La Nonna"
     assert "invited you to follow" in text
     assert "co-owner" not in text.lower()
     assert "invited you to follow" in html
     assert "co-owner" not in html.lower()
+
+
+@pytest.mark.parametrize("stored", [None, "  "])
+def test_render_invite_email_unnamed_baby_reads_their_baby(stored):
+    for role, subject_text in (
+        ("follower", "Alex invited you to their baby on La Nonna"),
+        ("owner", "Alex invited you to co-manage their baby on La Nonna"),
+    ):
+        ctx = _sample_ctx(role)
+        ctx["baby_name"] = stored
+        subject, html, text = _render_invite_email(ctx, "https://x.example/invite?token=t")
+        assert subject == subject_text
+        assert "their baby's" in text
+        assert "their baby's" in html
+        assert "None" not in subject + html + text
+        assert "Baby" not in subject
 
 
 def test_render_invite_email_escapes_markup_names_for_both_roles():
@@ -100,7 +116,7 @@ def test_render_invite_email_owner_uses_coowner_copy():
         _sample_ctx("owner"),
         "lanonna://app/invite-accept?token=abc&role=owner",
     )
-    assert subject == "Alex invited you to co-manage Baby on La Nonna"
+    assert subject == "Alex invited you to co-manage Parker on La Nonna"
     assert "co-owner" in text
     assert "follow" not in text.lower()
     assert "co-owner" in html

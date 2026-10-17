@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../domain/baby_gender.dart';
 import '../domain/baby_summary.dart';
 import '../theme/app_metrics.dart';
 import '../theme/la_nonna_theme.dart';
@@ -11,11 +12,11 @@ class BabyProfileAvatar extends StatelessWidget {
   final BabySummary baby;
   final double? size;
 
-  static String emojiForBaby(BabySummary baby) {
-    if (baby.gender == 'female') return '👧';
-    if (baby.gender == 'male') return '👦';
-    return '👶';
-  }
+  static String emojiForBaby(BabySummary baby) => switch (baby.gender) {
+        BabyGender.female => '👧',
+        BabyGender.male => '👦',
+        BabyGender.unknown => '👶',
+      };
 
   @override
   Widget build(BuildContext context) {

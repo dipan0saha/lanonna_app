@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/baby_display_label.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../invitations/presentation/widgets/invite_landing_widgets.dart';
@@ -17,7 +18,7 @@ class OnboardingCoOwnerWelcomeScreen extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final coordinator = context.watch<OnboardingCoordinator>();
     final preview = coordinator.cachedInvitePreview;
-    final babyName = preview?.babyName ?? AppLocalizations.of(context)!.babyNameDefault;
+    final babyName = babyNameLabel(AppLocalizations.of(context)!, preview?.babyName);
     final inviter = preview?.inviterDisplayName ?? AppLocalizations.of(context)!.onboardingYourCoParent;
 
     return OnboardingScaffold(

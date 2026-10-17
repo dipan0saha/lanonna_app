@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/baby_gender.dart';
 import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/api/api_client.dart';
@@ -32,7 +33,7 @@ void main() {
       NameSuggestion(
         id: 'mine',
         suggestedName: 'Mine',
-        gender: 'male',
+        gender: BabyGender.male,
         likeCount: 0,
         viewerHasLiked: false,
         isMine: true,
@@ -42,7 +43,7 @@ void main() {
       NameSuggestion(
         id: 'theirs',
         suggestedName: 'Theirs',
-        gender: 'male',
+        gender: BabyGender.male,
         likeCount: 1,
         viewerHasLiked: false,
         isMine: false,

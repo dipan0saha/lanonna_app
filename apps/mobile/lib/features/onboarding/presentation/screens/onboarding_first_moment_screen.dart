@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:lanonna/core/domain/name_suggestion_draft.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -46,8 +47,8 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
 
   var _synced = false;
   var _busy = false;
-  var _nameGender = 'male';
-  final _nameDrafts = <Map<String, String>>[];
+  var _nameGender = BabyGender.male;
+  final _nameDrafts = <NameSuggestionDraft>[];
   final _selectedEvents = <String>{};
   final _selectedRegistry = <String>{};
   XFile? _photoFile;
@@ -130,7 +131,7 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
     );
     if (name.isEmpty) return;
     setState(() {
-      _nameDrafts.add({'name': name, 'gender': _nameGender});
+      _nameDrafts.add(NameSuggestionDraft(name: name, gender: _nameGender));
       _nameInputController.clear();
       _syncDraft();
     });
@@ -138,7 +139,7 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
 
   void _setNameSuggestionGender(BabyGender gender) {
     setState(() {
-      _nameGender = gender.apiValue;
+      _nameGender = gender;
       _syncDraft();
     });
   }
@@ -240,8 +241,8 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
         children: _nameDrafts
             .map(
               (d) => AppRemovableChip(
-                label: d['name'] ?? '',
-                accent: d['gender'] == 'female'
+                label: d.name,
+                accent: d.gender == BabyGender.female
                     ? AppChipAccent.peach
                     : AppChipAccent.sage,
                 onRemove: _busy
@@ -304,7 +305,7 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   PrototypeMiniGenderToggle(
-                    selected: nameSuggestionGenderFromDraft(_nameGender),
+                    selected: _nameGender,
                     onSelected: _setNameSuggestionGender,
                   ),
                   const SizedBox(height: 10),

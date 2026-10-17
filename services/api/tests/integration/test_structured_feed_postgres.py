@@ -37,7 +37,7 @@ def _user(tag: str, display_name: str | None = None) -> str:
     return uid
 
 
-def _baby(owner: str, *followers: str, name: str = "Parker") -> uuid.UUID:
+def _baby(owner: str, *followers: str, name: str | None = "Parker") -> uuid.UUID:
     baby_id = uuid.uuid4()
     with get_connection() as conn:
         conn.execute(
@@ -127,7 +127,7 @@ def test_migration_038_backfills_legacy_rows_from_structured_sources():
     owner = _user("owner", "Sarah")
     follower = _user("follower", "Ann")
     baby_id = _baby(owner, follower)
-    unnamed_baby = _baby(owner, name="  ")
+    unnamed_baby = _baby(owner, name=None)
     event_id, item_id, suggestion_id, photo_id = (uuid.uuid4() for _ in range(4))
     with get_connection() as conn:
         conn.execute(

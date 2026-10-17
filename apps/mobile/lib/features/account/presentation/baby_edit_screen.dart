@@ -39,7 +39,7 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
   BabySummary? _baby;
   var _loading = true;
   var _saving = false;
-  String? _gender;
+  BabyGender? _gender;
   DateTime? _date;
   final _picker = ImagePicker();
   String? _networkAvatarUrl;
@@ -48,9 +48,14 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
   bool get _isBorn => _baby?.isBorn == true;
   bool get _isOwner => _baby?.role == 'owner';
 
+  /// A born baby with no recorded gender shows no pill selected until the
+  /// owner picks one.
   int? get _genderPillIndex {
-    if (_gender == null) return _isBorn ? null : BabyGender.unknown.index;
-    return BabyGender.fromApi(_gender).index;
+    final gender = _gender;
+    if (gender == null || (_isBorn && gender == BabyGender.unknown)) {
+      return _isBorn ? null : BabyGender.unknown.index;
+    }
+    return gender.index;
   }
 
   bool get _hasAvatarPhoto {
@@ -103,11 +108,12 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
   }
 
   Future<void> _save() async {
+    // The name is optional: clearing the field removes it and the app
+    // shows the localized fallback (FR-ONB-004).
     final name = AppTextInputPolicy.normalizeForSubmit(
       AppTextInputKind.personName,
       _name.text,
     );
-    if (name.isEmpty) return;
     setState(() => _saving = true);
     try {
       final dateIso = _date != null ? toApiCalendarDate(_date!) : null;
@@ -181,7 +187,7 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
             selectedIndex: _genderPillIndex,
             onSelected: (index) {
               setState(() {
-                _gender = BabyGender.values[index].apiValue;
+                _gender = BabyGender.values[index];
               });
             },
             selectedStyleForIndex: (index) {

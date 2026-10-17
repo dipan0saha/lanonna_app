@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/baby_display_label.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -20,7 +21,7 @@ class OnboardingConfirmRelationshipScreen extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final coordinator = context.watch<OnboardingCoordinator>();
     final preview = coordinator.cachedInvitePreview;
-    final babyName = preview?.babyName ?? AppLocalizations.of(context)!.babyNameDefault;
+    final babyName = babyNameLabel(AppLocalizations.of(context)!, preview?.babyName);
     final inviter = preview?.inviterDisplayName ?? AppLocalizations.of(context)!.onboardingTheOwner;
     final relationship = relationshipDisplayLabel(l10n, preview?.relationshipLabel) ??
         l10n.announcementFamily;

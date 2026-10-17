@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/domain/baby_display_label.dart';
 import '../../../core/network/connectivity_service.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../account/data/account_repository.dart';
 import '../../account/data/notifications_repository.dart';
 import '../../home/data/home_refresh_signal.dart';
@@ -23,7 +25,6 @@ class _ShellTopBarLoader extends StatefulWidget {
 }
 
 class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
-  String? _babyName;
   var _unreadCount = 0;
   String? _accountName;
   String? _accountAvatarUrl;
@@ -135,12 +136,11 @@ class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
       final store = context.read<SelectedBabyStore>();
       final homeRepo = context.read<HomeRepository>();
       final notificationsRepo = context.read<NotificationsRepository>();
-      final resolved = await homeRepo.resolveSelectedBaby(store);
+      await homeRepo.resolveSelectedBaby(store);
       if (!mounted) return;
       final unread = await notificationsRepo.unreadCount();
       if (mounted) {
         setState(() {
-          if (resolved != null) _babyName = resolved.name;
           _unreadCount = unread;
           _applyCachedAccount();
         });
@@ -150,11 +150,12 @@ class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
     }
   }
 
+  /// The selected baby's name as last resolved from the server (kept by
+  /// [SelectedBabyStore] so it survives an offline cold start).
   String? get _title {
-    if (_babyName != null) return _babyName;
-    final cached = context.read<SelectedBabyStore>().selectedBabyName;
-    if (cached != null && cached.isNotEmpty) return cached;
-    return null;
+    final store = context.read<SelectedBabyStore>();
+    if (!store.hasResolvedSelectedBaby) return null;
+    return babyNameLabel(AppLocalizations.of(context)!, store.selectedBabyName);
   }
 
   @override

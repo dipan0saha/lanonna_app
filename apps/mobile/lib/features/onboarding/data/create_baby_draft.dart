@@ -1,4 +1,5 @@
 import 'package:lanonna/core/domain/baby_gender.dart';
+import 'package:lanonna/core/domain/name_suggestion_draft.dart';
 import 'package:lanonna/core/domain/baby_lifecycle.dart';
 
 class CreateBabyDraft {
@@ -59,23 +60,23 @@ class FirstMomentDraft {
     this.selectedRegistry = const [],
     this.nameDrafts = const [],
     this.nameInput = '',
-    this.nameGender = 'male',
+    this.nameGender = BabyGender.male,
     this.photoPath,
   });
 
   final List<String> selectedEvents;
   final List<String> selectedRegistry;
-  final List<Map<String, String>> nameDrafts;
+  final List<NameSuggestionDraft> nameDrafts;
   final String nameInput;
-  final String nameGender;
+  final BabyGender nameGender;
   final String? photoPath;
 
   Map<String, dynamic> toJson() => {
         'selectedEvents': selectedEvents,
         'selectedRegistry': selectedRegistry,
-        'nameDrafts': nameDrafts,
+        'nameDrafts': nameDrafts.map((d) => d.toJson()).toList(),
         'nameInput': nameInput,
-        'nameGender': nameGender,
+        'nameGender': nameGender.apiValue,
         if (photoPath != null) 'photoPath': photoPath,
       };
 
@@ -90,11 +91,13 @@ class FirstMomentDraft {
               .toList() ??
           const [],
       nameDrafts: (json['nameDrafts'] as List<dynamic>?)
-              ?.map((e) => Map<String, String>.from(e as Map))
+              ?.whereType<Map<dynamic, dynamic>>()
+              .map(NameSuggestionDraft.fromJson)
               .toList() ??
           const [],
       nameInput: json['nameInput'] as String? ?? '',
-      nameGender: json['nameGender'] as String? ?? 'male',
+      nameGender:
+          nameIdeaGender(BabyGender.fromApi(json['nameGender'] as String?)),
       photoPath: json['photoPath'] as String?,
     );
   }

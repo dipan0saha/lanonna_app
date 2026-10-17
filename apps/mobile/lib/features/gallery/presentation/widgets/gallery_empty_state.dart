@@ -13,7 +13,7 @@ class GalleryEmptyState extends StatelessWidget {
   });
 
   final bool isOwner;
-  final String babyName;
+  final String? babyName;
   final VoidCallback? onAddPhoto;
 
   @override

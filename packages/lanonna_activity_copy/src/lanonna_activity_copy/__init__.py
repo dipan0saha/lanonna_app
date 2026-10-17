@@ -9,6 +9,7 @@ from lanonna_activity_copy.activity import (
     GALLERY_ACTIVITY_EVENT_TYPES,
     ActivityEventType,
     activity_summary,
+    baby_name_params,
     caption_params,
 )
 from lanonna_activity_copy.notifications import (
@@ -24,6 +25,7 @@ __all__ = [
     "GALLERY_ACTIVITY_EVENT_TYPES",
     "ActivityEventType",
     "activity_summary",
+    "baby_name_params",
     "caption_params",
     "NOTIFICATION_TYPE_BY_KIND",
     "NotificationKind",

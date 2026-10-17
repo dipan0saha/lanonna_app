@@ -16,14 +16,7 @@ import 'package:lanonna/l10n/app_localizations.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('offline shell title uses the last resolved baby name', (
-    tester,
-  ) async {
-    SharedPreferences.setMockInitialValues({});
-    final prefs = await SharedPreferences.getInstance();
-    final store = SelectedBabyStore(prefs);
-    await store.rememberResolvedBaby('baby-1', 'Parker');
-
+  Future<void> pumpOfflineShell(WidgetTester tester, SelectedBabyStore store) async {
     await tester.pumpWidget(
       MultiProvider(
         providers: [
@@ -45,7 +38,6 @@ void main() {
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-
           theme: AppTheme.light,
           home: const Scaffold(body: _TitleHarness()),
         ),
@@ -53,9 +45,31 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
+  }
+
+  testWidgets('offline shell title uses the last resolved baby name', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final store = SelectedBabyStore(await SharedPreferences.getInstance());
+    await store.rememberResolvedBaby('baby-1', 'Parker');
+
+    await pumpOfflineShell(tester, store);
 
     expect(find.text('Parker'), findsOneWidget);
     expect(find.text('La Nonna'), findsNothing);
+  });
+
+  testWidgets('offline shell title shows the fallback for an unnamed baby', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final store = SelectedBabyStore(await SharedPreferences.getInstance());
+    await store.rememberResolvedBaby('baby-1', null);
+
+    await pumpOfflineShell(tester, store);
+
+    expect(find.text('Baby'), findsOneWidget);
   });
 }
 

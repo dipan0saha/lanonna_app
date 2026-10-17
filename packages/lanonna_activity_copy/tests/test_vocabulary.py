@@ -4,6 +4,7 @@ from lanonna_activity_copy import (
     NOTIFICATION_TYPE_BY_KIND,
     NotificationKind,
     activity_summary,
+    baby_name_params,
     caption_params,
     notification_kind_from_payload,
     push_copy,
@@ -14,6 +15,12 @@ def test_caption_params_only_when_present():
     assert caption_params("  Bump update ") == {"caption": "Bump update"}
     assert caption_params("   ") == {}
     assert caption_params(None) == {}
+
+
+def test_baby_name_params_only_when_named():
+    assert baby_name_params(" Parker ") == {"baby_name": "Parker"}
+    assert baby_name_params(None) == {}
+    assert baby_name_params("  ") == {}
 
 
 def test_activity_summary_is_diagnostic_english():

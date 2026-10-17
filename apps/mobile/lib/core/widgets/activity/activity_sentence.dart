@@ -1,4 +1,6 @@
 import 'package:lanonna/l10n/app_localizations.dart';
+import 'package:lanonna/core/domain/baby_gender.dart';
+import 'package:lanonna/core/domain/baby_display_label.dart';
 
 import '../../../features/home/data/models/home_summary.dart';
 import '../../domain/activity_event_type.dart';
@@ -9,7 +11,7 @@ import 'feed_sentence.dart';
 /// The ARB sentence for one activity row.
 ///
 /// Names the API returned as null use the shared fallbacks
-/// (`personDisplayName`, `babyNameDefault`). A row whose type this build does
+/// (`personDisplayName`, `babyNameLabel`). A row whose type this build does
 /// not know, or a legacy row missing a value its sentence needs (its source
 /// was deleted before migration 038 backfilled params), shows the stored
 /// English summary.
@@ -54,12 +56,12 @@ FeedSentence activitySentence(AppLocalizations l10n, HomeActivityItem item) {
     ActivityEventType.genderVoteCast => byActor(
         (a) => l10n.activityGenderVoteCast(
           a,
-          params.text(FeedParam.gender) ?? '',
+          BabyGender.fromApi(params.text(FeedParam.gender)).apiValue,
         ),
       ),
     ActivityEventType.babyArrived => FeedSentence(
         (_) => l10n.activityBabyArrived(
-          params.text(FeedParam.babyName) ?? l10n.babyNameDefault,
+          babyNameLabel(l10n, params.text(FeedParam.babyName)),
         ),
       ),
     ActivityEventType.memberRemoved => item.targetDisplayName?.trim().isNotEmpty ==

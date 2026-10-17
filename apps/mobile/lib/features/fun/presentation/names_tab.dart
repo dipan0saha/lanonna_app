@@ -34,7 +34,7 @@ class _NamesTabState extends State<NamesTab> {
   final _suggestFormKey = GlobalKey<FormState>();
   NamesPayload? _payload;
   final _input = TextEditingController();
-  var _gender = 'male';
+  var _gender = BabyGender.male;
   var _loading = true;
   String? _error;
   var _validateSuggestOnInteraction = false;
@@ -185,8 +185,10 @@ class _NamesTabState extends State<NamesTab> {
         ),
       );
     }
-    final boys = suggestions.where((s) => s.gender == 'male').toList();
-    final girls = suggestions.where((s) => s.gender == 'female').toList();
+    final boys =
+        suggestions.where((s) => s.gender == BabyGender.male).toList();
+    final girls =
+        suggestions.where((s) => s.gender == BabyGender.female).toList();
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(
@@ -243,16 +245,16 @@ class _NamesTabState extends State<NamesTab> {
               Row(
                 children: [
                   Expanded(
-                    child: SegmentedButton<String>(
+                    child: SegmentedButton<BabyGender>(
                       segments: [
                         ButtonSegment(
-                          value: 'male',
+                          value: BabyGender.male,
                           label: Text(
                             BabyGender.male.label(AppLocalizations.of(context)!),
                           ),
                         ),
                         ButtonSegment(
-                          value: 'female',
+                          value: BabyGender.female,
                           label: Text(
                             BabyGender.female.label(AppLocalizations.of(context)!),
                           ),

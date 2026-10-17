@@ -2,16 +2,39 @@ from __future__ import annotations
 
 import uuid
 from datetime import date
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import AfterValidator, BaseModel, Field
 
+from lanonna_api.input_limits import MAX_BABY_NAME_LEN
 from lanonna_api.schemas.first_moment import NameSuggestionRow
 
 
+BabyGenderValue = Literal["male", "female", "unknown"]
+
+
+def normalize_baby_name(value: str | None) -> str | None:
+    """Trim the owner-entered name; blank means the baby has no name yet.
+
+    An unnamed baby is stored as ``NULL``. The server never substitutes a
+    placeholder ("Baby"); the app shows its localized fallback (FR-ONB-004).
+    """
+    if value is None:
+        return None
+    trimmed = value.strip()
+    return trimmed or None
+
+
+BabyName = Annotated[
+    str | None,
+    Field(max_length=MAX_BABY_NAME_LEN),
+    AfterValidator(normalize_baby_name),
+]
+
+
 class BabyCreateRequest(BaseModel):
-    name: str = Field(min_length=1, max_length=120)
-    gender: Literal["male", "female", "unknown"] | None = None
+    name: BabyName = None
+    gender: BabyGenderValue = "unknown"
     expected_birth_date: date | None = None
     actual_birth_date: date | None = None
     lifecycle_status: Literal["expecting", "born"] = "expecting"
@@ -21,18 +44,13 @@ class BabyCreateRequest(BaseModel):
         max_length=5,
     )
 
-    @field_validator("name")
-    @classmethod
-    def strip_name(cls, value: str) -> str:
-        trimmed = value.strip()
-        if not trimmed:
-            raise ValueError("Baby name is required.")
-        return trimmed
-
 
 class BabyUpdateRequest(BaseModel):
-    name: str | None = Field(default=None, min_length=1, max_length=120)
-    gender: Literal["male", "female", "unknown"] | None = None
+    """Partial update: ``null`` / omitted fields are unchanged. A blank ``name``
+    clears it (the baby becomes unnamed, stored as ``NULL``)."""
+
+    name: str | None = Field(default=None, max_length=MAX_BABY_NAME_LEN)
+    gender: BabyGenderValue | None = None
     expected_birth_date: date | None = None
     actual_birth_date: date | None = None
     lifecycle_status: Literal["expecting", "born"] | None = None
@@ -45,8 +63,8 @@ class BabyUpdateRequest(BaseModel):
 
 class BabySummary(BaseModel):
     id: uuid.UUID
-    name: str
-    gender: str | None
+    name: str | None
+    gender: BabyGenderValue
     expected_birth_date: date | None
     actual_birth_date: date | None
     lifecycle_status: str

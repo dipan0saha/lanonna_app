@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:lanonna/core/domain/baby_display_label.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
@@ -76,9 +77,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
             '',
             l10n.deleteAccountSoleOwnedHeading,
             for (final baby in babies)
-              l10n.deleteAccountSoleOwnedBaby(
-                baby.name.trim().isEmpty ? l10n.babyNameDefault : baby.name.trim(),
-              ),
+              l10n.deleteAccountSoleOwnedBaby(babyNameLabel(l10n, baby.name)),
           ].join('\n');
     final ok = await showDialog<bool>(
       context: context,

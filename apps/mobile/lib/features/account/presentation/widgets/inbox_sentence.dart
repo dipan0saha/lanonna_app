@@ -44,7 +44,7 @@ FeedSentence inboxSentence(AppLocalizations l10n, InboxNotification n) {
         (a) => l10n.inboxInviteAccepted(a, babyDisplayName(l10n, babyName)),
       ),
     InboxNotificationKind.babyArrived => FeedSentence(
-        (_) => l10n.inboxBabyArrived(babyName ?? l10n.babyNameDefault),
+        (_) => l10n.inboxBabyArrived(babyNameLabel(l10n, babyName)),
       ),
     _ => FeedSentence.stored(_storedText(l10n, n)),
   };

@@ -11,4 +11,11 @@ void main() {
     expect(babyDisplayName(l10n, ''), 'your baby');
     expect(babyDisplayName(l10n, null), 'your baby');
   });
+
+  test('babyNameLabel falls back to "Baby" for an unnamed baby', () {
+    expect(babyNameLabel(l10n, 'Baby Parker'), 'Baby Parker');
+    expect(babyNameLabel(l10n, ' Parker '), 'Parker');
+    expect(babyNameLabel(l10n, '  '), 'Baby');
+    expect(babyNameLabel(l10n, null), 'Baby');
+  });
 }
