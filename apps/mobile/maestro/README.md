@@ -81,7 +81,7 @@ Single flow: `maestro test maestro/flows/features/foo.yaml "${MAESTRO_ENV_ARGS[@
 
 ### Flutter integration tests (device / emulator)
 
-CI runs `flutter test` (unit/widget) only. Device integration tests live under `integration_test/` and are run manually when you have smoke credentials in `maestro/local.env`:
+CI ([`ci.yml`](../../../.github/workflows/ci.yml)) runs the chip and l10n guards, `flutter analyze --no-fatal-infos`, and `flutter test --exclude-tags golden` (unit/widget) only — no device or Maestro flows. Device integration tests live under `integration_test/` and are run manually when you have smoke credentials in `maestro/local.env`:
 
 ```bash
 source maestro/scripts/load-env.sh

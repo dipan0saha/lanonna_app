@@ -1,6 +1,6 @@
 # Open gaps (pre-beta)
 
-Open engineering gaps for La Nonna. Seeded from the Oct 2026 full-stack review and extended by a second full code review on **2026-10-11** (API, data layer, worker, mobile, infra/docs) plus live test runs.
+Open engineering gaps for La Nonna. Seeded from the Oct 2026 full-stack review and extended by a second full code review on **2026-10-11** (API, data layer, worker, mobile, infra/docs), live test runs, and the **2026-10-16** architecture review of the fix stream (see below).
 
 **Legend:** **✅** = resolved in repo **or** accepted intentional dev decision ([intentional-dev-decisions.md](intentional-dev-decisions.md)); entry kept for audit. **Verified** — gap confirmed by code/tests; **Reported** — suspected, not fully traced.
 
@@ -12,12 +12,13 @@ Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [op
 
 | Check | Result |
 |-------|--------|
-| API `pytest` (`services/api`, `-m "not integration"`) | 236 passed (13 integration tests deselected; they need Postgres) |
-| Worker `pytest` | 89 passed (`tests/test_pubsub_terraform.py` asserts live `pubsub.tf` retry policy) |
-| `flutter test` | 335 passed (verified 2026-10-16) |
-| `flutter analyze` | 0 errors, 0 warnings, 47 infos (L-26) |
+| API `pytest` (`services/api`, unit + Postgres integration) | 278 passed at `a547b37` |
+| Worker `pytest` | 93 passed (`tests/test_pubsub_terraform.py` asserts live `pubsub.tf` retry policy) |
+| `flutter test` (`--exclude-tags golden` in CI) | 386 passed at `a547b37` |
+| `flutter analyze` | 0 errors, 0 warnings; infos do not fail CI (`--no-fatal-infos`, L-26) |
+| l10n guard (`tool/check_hardcoded_user_strings.dart`) | 0 violations; allowlist entries all carry a justification |
 
-Run all three suites before every ship; the suites are the only automated gate (no CI).
+Run all three suites before every ship. GitHub Actions CI ([`.github/workflows/ci.yml`](../../.github/workflows/ci.yml)) runs them on every pull request and push to `main` (Flutter 3.38.9 pinned; macOS-rendered goldens excluded on Linux). Merge only with CI green.
 
 ---
 
@@ -27,7 +28,7 @@ Run all three suites before every ship; the suites are the only automated gate (
 |----------|------|--------|
 | High | 3 | Release signing, worker OIDC, App Check enforce |
 | Medium | 16 | Export memory limits (beta), infra/IAM/prod parity (M-19 dev slice done), mobile error/async/date handling |
-| Low | 6 | Accessibility/i18n, infra GCS, Docker, lint remainder, deferred consolidation backlog |
+| Low | 10 | Accessibility, server error copy i18n, infra GCS, Docker, lint remainder, batch/digest query shape, deferred consolidation backlog |
 
 ---
 
@@ -124,7 +125,7 @@ Run all three suites before every ship; the suites are the only automated gate (
 |----|-------|-------|-----|
 | ✅ M-11 | Export jobs: stale `running`, missing failure path, retry not wired to Pub/Sub | `worker/baby_data_export.py`, migrations `026` | `started_at`, reclaim stale runs, mark failed; pairs with **H-09** |
 | ✅ M-12 | Duplicate Pub/Sub invite deliveries could double-send email | `worker/invite_email.py`, migration `027` | Claim invite send in DB before Mailjet |
-| ✅ M-63 | Transient Mailjet/network errors left invites without resend path; delivery state opaque | `worker/invite_email.py`, migration `034`, `invitations` domain/API (#62) | `email_delivery_status` / `email_send_attempts`; HTTP **500** retries via Pub/Sub; **resend** + undelivered duplicate resend; DLQ alert in `monitoring.tf` |
+| ✅ M-63 | Transient Mailjet/network errors left invites without resend path; delivery state opaque | `worker/invite_email.py`, migration `034`, `invitations` domain/API (#62) | `email_delivery_status` / `email_send_attempts`; HTTP **500** retries via Pub/Sub; **resend** + undelivered duplicate resend; DLQ alert in `monitoring.tf`. In-process `time.sleep` retries removed (#322): `InviteSendOutcome.RETRY` → 500 and Pub/Sub backoff is the only retry |
 | ✅ M-15 | Thumbnail download loads whole object in memory, no size/dimension cap | `worker/thumbnails.py` | `MAX_DISPLAY_BYTES` / pixel cap; skip oversize or decompression bombs |
 | ✅ M-16 | Worker config defaults to dev project/buckets if env unset | `worker/config.py` | `validate_worker_settings()` at startup; non-dev rejects dev defaults |
 | ✅ M-41 | Raw `invite_token` on Pub/Sub + full payload logging | `api/pubsub.py`, `worker/main.py`, migration `028` | Publish `invitation_id` only; `email_invite_token` in DB until send; safe payload summary in logs |
@@ -181,7 +182,7 @@ Run all three suites before every ship; the suites are the only automated gate (
 |----|-------|-------|
 | ✅ L-07 | Default API base URL baked in source; release builds must use `--dart-define-from-file` | `app_config.dart` — const `String.fromEnvironment('API_BASE_URL')`; release/profile compilation fails with a const integer-division error when it is empty (asserts are stripped from those builds). Debug omits the define and uses the dev URL. |
 | L-08 | Accessibility: icon-only `IconButton`s go through `AppIconButton` (required label). Subpage Back, calendar and prediction month arrows, home photo thumbnails, tappable activity rows, registry edit/delete/add, name love/remove, notification rows, and password show/hide are labeled (#49). Other controls can still be unlabeled (WCAG AA is the PRD baseline) | mobile |
-| L-09 | Hardcoded UI strings vs `app_en.arb` (FR-SET-002) | e.g. `account_edit_screen.dart`, `home_screen.dart` |
+| ✅ L-09 | Hardcoded UI strings vs `app_en.arb` (FR-SET-002) | **Fixed (2026-10-16, #322–#325):** all client copy (screens, validators, domain failures, link sentences) moved to ARB; sink-agnostic AST guard `tool/check_hardcoded_user_strings.dart` runs in CI with a justified allowlist |
 | ✅ L-10 | No CORS middleware (fine for mobile-only; needs policy if a web client is added) | `main.py`, `config.py` — `CORS_ALLOW_ORIGINS` comma-list; off when empty |
 | L-14 | Poison/unknown Pub/Sub messages are logged and acked (204) with no metric; permanent rejects log `pubsub_payload_permanent_reject` (**M-46**). DLQ depth has a Monitoring alert policy in `monitoring.tf` (#62); wire a notification channel in Cloud Console. | `worker/main.py`, `worker/pubsub_payload.py`, `modules/platform/pubsub.tf`, `modules/platform/monitoring.tf` |
 | L-15 | Dockerfiles run as root; Cloud Build only builds/pushes (no tests); base images use floating `python:3.12-slim` tags | `services/*/Dockerfile`, `cloudbuild.yaml` |
@@ -197,9 +198,28 @@ Run all three suites before every ship; the suites are the only automated gate (
 | ✅ L-25 | Mobile convention: hex colors, ARB strings, `runMutation`, count/plural hygiene | `AppColors` tokens; `app_en.arb`; batch invite, wrong-email, gallery semantics, fun/account counts |
 | L-26 | `flutter analyze` infos — `use_null_aware_elements`, `unnecessary_underscores`, deprecated form `value` (**partial:** login/signup `mounted` guards; `home_repository` null-aware map) | mobile `lib/`, `test/` |
 | ✅ L-27 | Legacy `photo_ready_notification_log` unused after fan-out `dedupe_key` | migration `029` — `DROP TABLE photo_ready_notification_log` |
+| L-29 | Server-written error messages (`detail.message`) are English only; the app shows them verbatim when it has no mapping for the `detail.error` code | `services/api` domain errors, `apps/mobile/lib/core/api/api_error_message.dart` — **Plan:** every error carries a stable `error` code; the app maps codes through `apiErrorMessage` to ARB copy; the English message stays for debugging only |
+| L-30 | Batch invites validate each row with its own queries (capped at 20 rows per request) | `domain/invitations.py` `batch_invite` — **Plan:** load existing members/pending invites for all rows in one query, then insert in one transaction with a per-row result |
+| L-31 | Weekly digest looks up FCM tokens one user at a time (unread counts are already one grouped query) | `services/worker/src/lanonna_worker/notifications.py` (`_list_fcm_tokens` in the digest loop) — **Plan:** fetch tokens for all digest recipients in one query |
 | L-28 | **Consolidation backlog (deferred, medium risk — live request paths):** gallery vs calendar comment domain logic and photo/event comment SQL; router `try/except map_domain_errors` boilerplate; dynamic `UPDATE … SET` builders; mobile comment composer, tab empty states, AI-suggestions screen state machine, labeled-field shell, wider `runMutation` use; shared `get_connection` for API + worker, `infra/db` shared `connect()` and invite-hash helper; Terraform push-subscription `for_each` and dev/prod API-list dedupe; scheduler script merge; PUT/PATCH announcement alias. Request-scoped `upsert_app_user` calls were replaced by `current_app_user` (#36). | `services/api`, `apps/mobile`, `infra/` |
 
 ---
+
+## Architecture review follow-ups (2026-10-16) — resolved
+
+A review of the Oct 2026 fix stream (#45–#63, #317–#320, `8e084a3`) found patch-like or duplicated logic; all items were fixed at the root in #321–#325:
+
+| Item | Fix |
+|------|-----|
+| ✅ Inbox type/actor inferred from English copy (#319) | Migrations `036` / `037`: `notification_type`, `actor_firebase_uid`, `actor_display_name`; worker writes them; app maps `InboxNotificationType` → icon; heuristics deleted |
+| ✅ "Born" rule duplicated in the client; names writable after birth | `domain/fun_closed.py` (`FunWritesClosedError` → 409 `fun_closed` / `predictions_closed`); `names_closed` / `predictions_closed` on home summary, baby summaries and Fun payloads; Fun stays visible read-only |
+| ✅ Past events capped at 30 with no paging; mixed list shapes | One `{items, offset, limit, has_more}` envelope (`pagination.py` / `offset_page.dart`), SQL paging with stable tiebreaks on every list route incl. calendar |
+| ✅ Silent `catch (_)` on API calls; English `Exception` text | `apiErrorMessage(l10n, e)` + `AppSnackBar.showAlert`; `LocalizedFailure` for client domain failures; announcement fetch returns null only on 404 |
+| ✅ `NotificationsUnreadSignal` side channel | `NotificationsRepository` is the `ChangeNotifier` (mark-read, mark-all-read, FCM foreground) |
+| ✅ Worker in-process retries | Pub/Sub backoff only (M-63) |
+| ✅ Raw API status strings in UI | Typed enums with `apiValue` / `fromApi` / `label(l10n)`; `RelationshipPreset` stores canonical labels |
+| ✅ N+1 owner count per baby | `active_owner_count` subquery in the babies query; digest unread counts in one query; bulk photo-tag writes |
+| ✅ Photo prev/next ignored grid sort; home cache dropped on baby switch; `AppUser` Mapping shim; silent `readInt` coercion | `?sort=` on photo detail route; per-baby home summary cache kept until sign-out; routers use `user.uid`; `readInt(strict:)` + debug log |
 
 ## Test coverage gaps (still thin)
 
@@ -214,4 +234,4 @@ Run all three suites before every ship; the suites are the only automated gate (
 1. **Pre-beta security:** H-01, H-04, H-05, M-27, M-57
 2. **Mobile correctness:** M-56, M-59 (remaining `mounted` guards), M-57
 3. **Infra + prod parity:** M-19–M-22, M-47–M-52
-4. **Ops / polish:** M-09, M-31, L-08–L-09, L-14–L-16, L-22, L-26; then the L-28 consolidation backlog
+4. **Ops / polish:** M-09, L-08, L-14–L-16, L-22, L-26, L-29–L-31; then the L-28 consolidation backlog

@@ -104,7 +104,7 @@ Use a **throwaway** Firebase account (not Maestro smoke user).
 
 ## 13. Regression smoke
 
-- [ ] `flutter test`, API `pytest`, and worker `pytest` green (see [development.md](development.md#automated-tests)); `verify-dev-prerequisites.sh` includes `check-no-material-chips.sh`.
+- [ ] `flutter test`, API `pytest`, and worker `pytest` green (see [development.md](development.md#automated-tests)); `verify-dev-prerequisites.sh` includes `check-no-material-chips.sh`; GitHub Actions CI green on the merge commit (also runs the l10n guard `tool/check_hardcoded_user_strings.dart`).
 - [ ] Optional: `flutter build apk --release --dart-define-from-file=flavors/dev.json` (R8 shrink) installs and launches on a device.
 - [ ] Optional: `flutter test integration_test/home_summary_load_test.dart` on emulator.
 - [ ] Owner onboarding + gallery + calendar still usable.
