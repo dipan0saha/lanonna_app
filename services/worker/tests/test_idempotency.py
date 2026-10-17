@@ -45,8 +45,8 @@ def test_notify_user_skips_duplicate_delivery(mock_conn_ctx):
     process_notify_user(
         {
             "firebase_uid": "u1",
-            "title": "T",
-            "body": "B",
+            "kind": "event_rsvp",
+            "params": {},
         },
         pubsub_message_id="dup-msg",
     )
@@ -72,8 +72,8 @@ def test_notify_fan_out_claims_delivery_key(
     process_notify_fan_out(
         {
             "baby_profile_id": str(baby_id),
-            "title": "T",
-            "body": "B",
+            "kind": "photo_shared",
+            "params": {},
             "deep_link": "/home",
         },
         pubsub_message_id="msg-fan-out",

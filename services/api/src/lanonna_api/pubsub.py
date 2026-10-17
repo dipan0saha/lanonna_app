@@ -69,26 +69,24 @@ def _publish_worker_payload(payload: dict) -> None:
 def publish_notify_fan_out(
     *,
     baby_profile_id: uuid.UUID,
-    title: str,
-    body: str,
+    kind: str,
+    params: dict,
     deep_link: str,
     recipient_mode: str,
     exclude_firebase_uid: str | None,
     firebase_uids: list[str],
     notification_channel: str | None = None,
-    notification_type: str = "generic",
     actor_firebase_uid: str | None = None,
 ) -> None:
     payload = {
         "type": "notify_fan_out",
         "baby_profile_id": str(baby_profile_id),
-        "title": title,
-        "body": body,
+        "kind": kind,
+        "params": params,
         "deep_link": deep_link,
         "recipient_mode": recipient_mode,
         "exclude_firebase_uid": exclude_firebase_uid,
         "firebase_uids": firebase_uids,
-        "notification_type": notification_type,
         "actor_firebase_uid": actor_firebase_uid,
     }
     if notification_channel:
@@ -99,22 +97,20 @@ def publish_notify_fan_out(
 def publish_notify_user(
     *,
     firebase_uid: str,
-    title: str,
-    body: str,
+    kind: str,
+    params: dict,
     deep_link: str,
     baby_profile_id: uuid.UUID | None,
     notification_channel: str | None = None,
-    notification_type: str = "generic",
     actor_firebase_uid: str | None = None,
 ) -> None:
     payload = {
         "type": "notify_user",
         "firebase_uid": firebase_uid,
-        "title": title,
-        "body": body,
+        "kind": kind,
+        "params": params,
         "deep_link": deep_link,
         "baby_profile_id": str(baby_profile_id) if baby_profile_id else None,
-        "notification_type": notification_type,
         "actor_firebase_uid": actor_firebase_uid,
     }
     if notification_channel:

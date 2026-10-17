@@ -25,10 +25,8 @@ def list_baby_members(
             SELECT
                 m.firebase_uid,
                 m.role,
-                m.relationship_label,
                 m.created_at,
-                COALESCE(NULLIF(TRIM(u.display_name), ''), 'Family member') AS display_name,
-                u.email
+                NULLIF(TRIM(u.display_name), '') AS display_name
             FROM baby_memberships m
             JOIN app_users u ON u.firebase_uid = m.firebase_uid
             WHERE m.baby_profile_id = %s
@@ -117,14 +115,8 @@ def get_active_membership(
     with get_connection() as conn:
         row = conn.execute(
             """
-            SELECT
-                m.firebase_uid,
-                m.role,
-                m.relationship_label,
-                m.created_at,
-                COALESCE(NULLIF(TRIM(u.display_name), ''), 'Family member') AS display_name
+            SELECT m.firebase_uid, m.role
             FROM baby_memberships m
-            JOIN app_users u ON u.firebase_uid = m.firebase_uid
             WHERE m.baby_profile_id = %s
               AND m.firebase_uid = %s
               AND m.removed_at IS NULL

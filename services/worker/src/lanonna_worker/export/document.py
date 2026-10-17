@@ -10,6 +10,8 @@ from lanonna_worker.export.collect import ACTIVITY_EXPORT_MAX_ROWS
 from lanonna_worker.export.media import EXPORT_MEDIA_URL_TTL_SECONDS
 from lanonna_worker.export.people import (
     ANONYMOUS_LABEL,
+    FAMILY_MEMBER_LABEL,
+    UNKNOWN_ACTOR_LABEL,
     assert_export_privacy,
     export_display_name,
     person_id_for,
@@ -109,7 +111,7 @@ class _People:
                 "joined_via": joined_via,
             }
             return pid
-        if display_name and current["display_name"] in ("Family member", "Someone"):
+        if display_name and current["display_name"] in (FAMILY_MEMBER_LABEL, UNKNOWN_ACTOR_LABEL):
             current["display_name"] = export_display_name(display_name)
         if role is not None:
             current["role"] = role
@@ -421,6 +423,7 @@ def build_export_document(
                 "id": str(row["id"]),
                 "actor": actor,
                 "event_type": row.get("event_type"),
+                "params": row.get("params") or {},
                 "summary": row.get("summary"),
                 "payload": scrub_payload(row.get("payload"), uid_to_person),
                 "created_at": _iso(row.get("created_at")),

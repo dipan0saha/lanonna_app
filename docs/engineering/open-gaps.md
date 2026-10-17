@@ -8,13 +8,13 @@ Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [op
 
 ---
 
-## Health snapshot (2026-10-16)
+## Health snapshot (2026-10-17)
 
 | Check | Result |
 |-------|--------|
-| API `pytest` (`services/api`, unit + Postgres integration) | 278 passed at `a547b37` |
-| Worker `pytest` | 93 passed (`tests/test_pubsub_terraform.py` asserts live `pubsub.tf` retry policy) |
-| `flutter test` (`--exclude-tags golden` in CI) | 386 passed at `a547b37` |
+| API `pytest` (`services/api`, unit + Postgres integration) | 315 passed (plus 9 in `packages/lanonna_activity_copy/tests`) |
+| Worker `pytest` | 97 passed (`tests/test_pubsub_terraform.py` asserts live `pubsub.tf` retry policy) |
+| `flutter test` (`--exclude-tags golden` in CI) | 396 passed |
 | `flutter analyze` | 0 errors, 0 warnings; infos do not fail CI (`--no-fatal-infos`, L-26) |
 | l10n guard (`tool/check_hardcoded_user_strings.dart`) | 0 violations; allowlist entries all carry a justification |
 
@@ -28,7 +28,7 @@ Run all three suites before every ship. GitHub Actions CI ([`.github/workflows/c
 |----------|------|--------|
 | High | 3 | Release signing, worker OIDC, App Check enforce |
 | Medium | 16 | Export memory limits (beta), infra/IAM/prod parity (M-19 dev slice done), mobile error/async/date handling |
-| Low | 10 | Accessibility, server error copy i18n, infra GCS, Docker, lint remainder, batch/digest query shape, deferred consolidation backlog |
+| Low | 11 | Accessibility, infra GCS, Docker, lint remainder, deferred consolidation backlog, create-baby default-name hydration (L-36) |
 
 ---
 
@@ -201,6 +201,11 @@ Run all three suites before every ship. GitHub Actions CI ([`.github/workflows/c
 | ✅ L-29 | Server-written error messages (`detail.message`) were English only and the app showed them verbatim when it had no mapping for `detail.error` | **Fixed (2026-10-16):** `domain/errors.py` `ErrorCode` + typed `DomainError` subclasses; every HTTP error (domain, `HTTPException`, 404/405, 422, 429, 500) is `{error, message[, params]}` via `http_errors` + `main.py` handlers; app `ApiErrorCode` (`core/api/api_error_code.dart`) maps codes to ARB copy in `apiErrorMessage`, server text is diagnostics only; `test_error_code_parity.py` keeps the Python/Dart enums in sync |
 | ✅ L-30 | Batch invites validated each row with its own queries | **Fixed (2026-10-16):** `repositories/invitations.py` `load_invite_targets` (one `unnest` query for members + pending invites) and `write_batch_invitations` (resends + inserts in one transaction, `ON CONFLICT … DO NOTHING` on the pending-invite index); typed `InviteRowStatus` per row; emails enqueued after commit; Postgres integration test `test_batch_invite_postgres.py` |
 | ✅ L-31 | Weekly digest looked up FCM tokens one user at a time | **Fixed (2026-10-16):** digest query aggregates tokens with a `LATERAL` join; inbox/push fan-out and notify-user share `_load_recipients` (one query for prefs + tokens), one `unnest` notification insert and one stale-token delete; Postgres integration test `test_notification_delivery_postgres.py` |
+| ✅ L-32 | Notification and activity text was English built on the server (`title` / `body` / `summary`), names defaulted to English in SQL and Python ("Family member", "Someone", "Baby", "A family member"), the app bolded the actor with a `startsWith` heuristic, RSVP status and gender guesses showed raw API values, the photo-ready push had no type or actor, and the worker derived the photo actor from the email local part | **Fixed (2026-10-17):** shared vocabulary `packages/lanonna_activity_copy` (`NotificationKind`, `ActivityEventType`, param keys, `push_copy`); publishers send `kind` + `params` (`FanOutSpec` / `NotifyUserSpec`), activity rows store `params` (migration `038`, backfilled from structured sources); names are `null` when unset and the app applies `personDisplayName` / `babyDisplayName`; the app renders every inbox and activity sentence from ARB (`inboxSentence`, `activitySentence`, `PlaceholderRichText` for bold names); push copy stays server-side by design (OS-rendered); `test_feed_vocabulary_parity.py` pins the Dart enums |
+| ✅ L-33 | Max-owners limit enforced only at accept: batch invite created co-owner invites that could never be accepted | **Fixed (2026-10-17):** `domain/owner_limit.py` is the one rule; batch invite counts active owners plus pending unexpired owner invites under the baby row lock and returns `skipped_max_owners` per row (app alert `batchInviteMaxOwnersSkipped`); accept raises `MaxOwnersError` (typed `DomainError`, the accept router's private error table was removed); Postgres tests `test_owner_limit_postgres.py` |
+| ✅ L-34 | Delete-account `allowed` / `blockers` were always `true` / `[]` and the app rendered blockers with a hardcoded bullet | **Fixed (2026-10-17):** deletion is never blocked (FR-SET-005), so the dead contract was removed: `GET /v1/me/delete-account/preview` returns `sole_owned_babies` only; app `DeleteAccountPreview`; bullets come from ARB (`deleteAccountSoleOwnedBaby`) and unnamed babies are listed as **Baby** instead of being dropped |
+| ✅ L-35 | Members API returned `email` and `relationship_label` that no screen used (`MemberRow`) | **Fixed (2026-10-17):** removed from the members SQL, response and `MemberRow` (Manage followers shows name, role and joined date per the prototype) |
+| L-36 | Create-baby revise hydration treats a stored name equal to the literal `'Baby'` as "no name" and switches on raw gender strings | `apps/mobile/lib/features/baby/domain/create_baby_form_hydration.dart` — the onboarding default name is persisted as data, so the check depends on the English default; fix by storing an empty name (display fallback `babyNameDefault`) and using `BabyGender` |
 | L-28 | **Consolidation backlog (deferred, medium risk — live request paths):** gallery vs calendar comment domain logic and photo/event comment SQL; router `try/except map_domain_errors` boilerplate; dynamic `UPDATE … SET` builders; mobile comment composer, tab empty states, AI-suggestions screen state machine, labeled-field shell, wider `runMutation` use; shared `get_connection` for API + worker, `infra/db` shared `connect()` and invite-hash helper; Terraform push-subscription `for_each` and dev/prod API-list dedupe; scheduler script merge; PUT/PATCH announcement alias. Request-scoped `upsert_app_user` calls were replaced by `current_app_user` (#36). | `services/api`, `apps/mobile`, `infra/` |
 
 ---

@@ -5,6 +5,8 @@ import '../../../core/api/api_client.dart';
 import '../../../core/api/offset_page.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/json/json_readers.dart';
+import '../../../core/domain/feed_params.dart';
+import '../domain/inbox_notification_kind.dart';
 import '../domain/inbox_notification_type.dart';
 
 class NotificationPreferences {
@@ -62,11 +64,18 @@ class NotificationPreferences {
   }
 }
 
+/// One inbox row (`GET /v1/me/notifications`).
+///
+/// [kind] + [params] + [actorDisplayName] are rendered from ARB by
+/// `inboxSentence`. [title] / [body] are the English push copy the worker sent;
+/// they are shown only for a row with no (or an unknown) kind.
 class InboxNotification {
   InboxNotification({
     required this.id,
-    required this.title,
-    required this.body,
+    this.title = '',
+    this.body = '',
+    this.kind,
+    this.params = const {},
     this.readAt,
     this.deepLink,
     this.babyProfileId,
@@ -78,6 +87,8 @@ class InboxNotification {
   final String id;
   final String title;
   final String body;
+  final InboxNotificationKind? kind;
+  final Map<String, String> params;
   final String? readAt;
   final String? deepLink;
   final String? babyProfileId;
@@ -91,6 +102,8 @@ class InboxNotification {
       id: json['id']?.toString() ?? '',
       title: json['title'] as String? ?? '',
       body: json['body'] as String? ?? '',
+      kind: InboxNotificationKind.fromApi(json['notification_kind'] as String?),
+      params: readFeedParams(json['params']),
       readAt: json['read_at'] as String?,
       deepLink: json['deep_link'] as String?,
       babyProfileId: json['baby_profile_id']?.toString(),

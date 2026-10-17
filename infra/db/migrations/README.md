@@ -43,6 +43,7 @@ Apply in **lexicographic order** (filename prefix):
 | `035_app_users_biometric_unlock.sql` | `app_users.biometric_unlock_enabled` (PRD §5.3 / M-31) |
 | `036_notification_type_and_actor.sql` | `notifications.notification_type` (`photo` \| `event` \| `registry` \| `fun` \| `comment` \| `squish` \| `digest` \| `generic`, CHECK constraint), `actor_firebase_uid`, `actor_display_name`; backfills legacy types from fixed API titles and deep-link routes (no body-text matching) |
 | `037_notification_actor_backfill.sql` | Backfills `actor_firebase_uid` / `actor_display_name` on legacy inbox rows from structured source rows only (time-bounded, one unambiguous candidate, never the recipient); ambiguous rows stay `NULL` |
+| `038_structured_notification_activity_params.sql` | `notifications.notification_kind` + `params`, `activity_events.params`: rows record what happened and its display values; the app renders the copy from ARB (title/body/summary stay as English diagnostics). Backfills legacy rows from the fixed API titles and referenced source rows only; follower registry claims become `registry_claimed`; rows that cannot be derived keep their stored text |
 
 ## Apply (dev)
 

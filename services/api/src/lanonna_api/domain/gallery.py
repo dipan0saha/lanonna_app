@@ -33,19 +33,16 @@ from lanonna_api.repositories.photos import (
     update_photo_caption,
     update_photo_comment,
 )
-from lanonna_api.domain.activity_copy import (
-    EVENT_PHOTO_COMMENT,
-    EVENT_PHOTO_SQUISH,
-    photo_comment_summary,
-    photo_squish_summary,
-)
-from lanonna_api.domain.users_display import actor_display_name
+from lanonna_activity_copy import ActivityEventType, NotificationKind, caption_params
 from lanonna_api.domain.users_display import (
     author_display_name_from_row,
     uploader_display_name_from_row,
 )
-from lanonna_api.domain.notification_metadata import NotificationType
-from lanonna_api.domain.notifications import NotificationChannel, safe_enqueue_notify_user
+from lanonna_api.domain.notifications import (
+    NotificationChannel,
+    NotifyUserSpec,
+    safe_enqueue_notify_user,
+)
 from lanonna_api.repositories.activity_events import insert_activity_event
 from lanonna_api.auth import AppUser
 from lanonna_api.config import settings
@@ -198,26 +195,24 @@ def squish_photo(
         raise LookupError("Photo not found.")
     active = toggle_squish(photo_id, firebase_uid)
     if active:
-        actor = actor_display_name(firebase_uid)
         insert_activity_event(
             baby_profile_id,
             firebase_uid,
-            EVENT_PHOTO_SQUISH,
-            photo_squish_summary(actor, row.get("caption")),
+            ActivityEventType.PHOTO_SQUISH,
+            caption_params(row.get("caption")),
             {"photo_id": str(photo_id)},
         )
     uploader = row["uploader_firebase_uid"]
     if active and uploader != firebase_uid:
-        actor = actor_display_name(firebase_uid)
         safe_enqueue_notify_user(
-            uploader,
-            title="New squish",
-            body=f"{actor} squished your photo",
-            deep_link=f"/gallery/photo/{photo_id}",
-            baby_profile_id=baby_profile_id,
-            notification_channel=NotificationChannel.GALLERY,
-            notification_type=NotificationType.SQUISH,
-            actor_firebase_uid=firebase_uid,
+            NotifyUserSpec(
+                firebase_uid=uploader,
+                kind=NotificationKind.PHOTO_SQUISHED,
+                deep_link=f"/gallery/photo/{photo_id}",
+                actor_firebase_uid=firebase_uid,
+                baby_profile_id=baby_profile_id,
+                notification_channel=NotificationChannel.GALLERY,
+            )
         )
     return {"squished": active}
 
@@ -235,26 +230,24 @@ def add_comment(
     if not body.strip():
         raise InvalidInputError(ErrorCode.COMMENT_REQUIRED, "Comment body required.")
     c = insert_photo_comment(photo_id, firebase_uid, body)
-    actor = actor_display_name(firebase_uid)
     insert_activity_event(
         baby_profile_id,
         firebase_uid,
-        EVENT_PHOTO_COMMENT,
-        photo_comment_summary(actor, row.get("caption")),
+        ActivityEventType.PHOTO_COMMENT,
+        caption_params(row.get("caption")),
         {"photo_id": str(photo_id), "comment_id": str(c["id"])},
     )
     uploader = row["uploader_firebase_uid"]
     if uploader != firebase_uid:
-        actor = actor_display_name(firebase_uid)
         safe_enqueue_notify_user(
-            uploader,
-            title="New comment",
-            body=f"{actor} commented on your photo",
-            deep_link=f"/gallery/photo/{photo_id}",
-            baby_profile_id=baby_profile_id,
-            notification_channel=NotificationChannel.COMMENTS,
-            notification_type=NotificationType.COMMENT,
-            actor_firebase_uid=firebase_uid,
+            NotifyUserSpec(
+                firebase_uid=uploader,
+                kind=NotificationKind.PHOTO_COMMENTED,
+                deep_link=f"/gallery/photo/{photo_id}",
+                actor_firebase_uid=firebase_uid,
+                baby_profile_id=baby_profile_id,
+                notification_channel=NotificationChannel.COMMENTS,
+            )
         )
     return {
         "id": str(c["id"]),

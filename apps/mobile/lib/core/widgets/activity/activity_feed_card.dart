@@ -10,7 +10,8 @@ import '../../time/app_date_time.dart';
 import '../../theme/app_metrics.dart';
 import '../../theme/la_nonna_theme.dart';
 import 'activity_event_icon.dart';
-import 'activity_summary_text.dart';
+import 'activity_sentence.dart';
+import 'feed_sentence.dart';
 import 'format_activity_when.dart';
 
 class ActivityFeedCard extends StatelessWidget {
@@ -91,6 +92,8 @@ class _ActivityRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final sentence = activitySentence(l10n, item);
     final content = Padding(
       padding: const EdgeInsets.symmetric(vertical: 11),
       child: Row(
@@ -102,16 +105,16 @@ class _ActivityRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ActivitySummaryText(
-                  summary: item.summary,
-                  actorDisplayName: item.actorDisplayName,
-                ),
+                FeedSentenceText(sentence: sentence),
                 const SizedBox(height: 2),
-                Text(formatActivityWhen(
-                    AppLocalizations.of(context)!,
+                Text(
+                  formatActivityWhen(
+                    l10n,
                     item.createdAt,
                     localeNameForFormatting(context),
-                  ), style: timeStyle),
+                  ),
+                  style: timeStyle,
+                ),
               ],
             ),
           ),
@@ -119,7 +122,7 @@ class _ActivityRow extends StatelessWidget {
       ),
     );
     if (onTap == null) return content;
-    final summary = item.summary.trim();
+    final label = sentence.plainText.trim();
     return AppSemantics.button(
       'activity_${item.id}',
       InkWell(
@@ -127,7 +130,7 @@ class _ActivityRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         child: content,
       ),
-      label: summary.isEmpty ? AppLocalizations.of(context)!.activityTitle : summary,
+      label: label.isEmpty ? l10n.activityTitle : label,
     );
   }
 }

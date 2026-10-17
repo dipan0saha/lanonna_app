@@ -137,5 +137,9 @@ class ConflictError(DomainError):
     status_code = 409
 
 
+class GoneError(DomainError):
+    status_code = 410
+
+
 class ServiceUnavailableError(DomainError, RuntimeError):
     status_code = 503

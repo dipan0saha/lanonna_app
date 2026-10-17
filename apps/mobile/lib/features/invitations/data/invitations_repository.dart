@@ -49,7 +49,7 @@ class InvitationsRepository {
     } on ApiException catch (e) {
       final detail = e.detail;
       if (detail != null && detail['error'] != null) {
-        return InvitationAcceptResult.fromJson(detail);
+        return InvitationAcceptResult.fromErrorDetail(detail);
       }
       rethrow;
     }

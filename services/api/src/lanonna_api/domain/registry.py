@@ -8,8 +8,8 @@ from lanonna_api.domain import assert_owner_membership
 from lanonna_api.domain.catalog_suggestion_ids import normalize_catalog_suggestion_id
 from lanonna_api.domain.url_validation import normalize_optional_http_url
 from lanonna_api.domain.gallery import require_membership
-from lanonna_api.domain.notification_metadata import NotificationType
-from lanonna_api.domain.users_display import actor_display_name
+from lanonna_activity_copy import ActivityEventType, NotificationKind
+from lanonna_activity_copy import params
 from lanonna_api.domain.users_display import purchaser_display_name_from_row
 from lanonna_api.domain.notifications import (
     FanOutSpec,
@@ -116,8 +116,8 @@ def create_item(
     insert_activity_event(
         baby_profile_id,
         firebase_uid,
-        "registry_item_added",
-        f'Added "{row["name"]}" to the registry',
+        ActivityEventType.REGISTRY_ITEM_ADDED,
+        {params.ITEM_NAME: row["name"]},
         {"registry_item_id": str(row["id"])},
     )
     return {
@@ -181,41 +181,26 @@ def claim_purchase(
     purchase = create_purchase(item_id, firebase_uid)
     if purchase["purchased_by_firebase_uid"] != firebase_uid:
         raise ForbiddenError(ErrorCode.REGISTRY_ITEM_PURCHASED, "This item is already purchased.")
-    item_name = item["name"]
-    if is_owner:
-        activity_text = f'Marked "{item_name}" as purchased'
-        actor = actor_display_name(firebase_uid)
-        fan_out = FanOutSpec(
-            baby_profile_id=baby_profile_id,
-            title="Registry update",
-            body=f'{actor} marked "{item_name}" as purchased',
-            deep_link="/registry",
-            recipient_mode="baby_members",
-            exclude_firebase_uid=firebase_uid,
-            notification_channel=NotificationChannel.REGISTRY,
-            notification_type=NotificationType.REGISTRY,
-            actor_firebase_uid=firebase_uid,
-        )
-    else:
-        activity_text = f'Someone is buying "{item_name}"'
-        actor = actor_display_name(firebase_uid)
-        fan_out = FanOutSpec(
-            baby_profile_id=baby_profile_id,
-            title="Registry update",
-            body=f'{actor} is buying "{item_name}"',
-            deep_link="/registry",
-            recipient_mode="baby_owners",
-            exclude_firebase_uid=firebase_uid,
-            notification_channel=NotificationChannel.REGISTRY,
-            notification_type=NotificationType.REGISTRY,
-            actor_firebase_uid=firebase_uid,
-        )
+    # An owner marking an item purchased tells every member and is named in the
+    # feed; a follower's claim tells only the owners and stays anonymous in the
+    # feed so the gift remains a surprise to other followers.
+    display_params = {params.ITEM_NAME: item["name"]}
     insert_activity_event(
         baby_profile_id,
         firebase_uid,
-        "registry_purchased",
-        activity_text,
+        ActivityEventType.REGISTRY_PURCHASED if is_owner else ActivityEventType.REGISTRY_CLAIMED,
+        display_params,
         {"registry_item_id": str(item_id)},
+    )
+    fan_out = FanOutSpec(
+        baby_profile_id=baby_profile_id,
+        kind=NotificationKind.REGISTRY_PURCHASED if is_owner else NotificationKind.REGISTRY_BUYING,
+        params=display_params,
+        deep_link="/registry",
+        actor_firebase_uid=firebase_uid,
+        recipient_mode="baby_members" if is_owner else "baby_owners",
+        exclude_firebase_uid=firebase_uid,
+        notification_channel=NotificationChannel.REGISTRY,
     )
     safe_enqueue_fan_out(fan_out)
     return {"status": "claimed"}

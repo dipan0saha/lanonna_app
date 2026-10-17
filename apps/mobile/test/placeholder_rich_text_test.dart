@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lanonna/core/l10n/tappable_placeholder_rich_text.dart';
+import 'package:lanonna/core/l10n/placeholder_rich_text.dart';
 
 Future<void> _pump(WidgetTester tester, Widget child) {
   return tester.pumpWidget(
@@ -24,11 +24,11 @@ void main() {
     var terms = 0;
     await _pump(
       tester,
-      TappablePlaceholderRichText(
+      PlaceholderRichText(
         message: (t) => 'Terms matter: read {${t[1]}} then {${t[0]}}.',
-        links: [
-          PlaceholderLink(label: 'Terms', onTap: () => terms++),
-          PlaceholderLink(label: 'Privacy', onTap: () => privacy++),
+        placeholders: [
+          MessagePlaceholder(label: 'Terms', onTap: () => terms++),
+          MessagePlaceholder(label: 'Privacy', onTap: () => privacy++),
         ],
       ),
     );
@@ -51,9 +51,9 @@ void main() {
     var taps = 0;
     await _pump(
       tester,
-      TappablePlaceholderRichText(
+      PlaceholderRichText(
         message: (t) => 'Already have an account? ${t[0]}',
-        links: [PlaceholderLink(label: 'Log in', onTap: () => taps++)],
+        placeholders: [MessagePlaceholder(label: 'Log in', onTap: () => taps++)],
       ),
     );
     await tester.tapOnText(find.textRange.ofSubstring('Log in'));
@@ -68,5 +68,40 @@ void main() {
       findsOneWidget,
     );
     handle.dispose();
+  });
+
+  testWidgets('non-tappable spans are styled without a recognizer', (
+    tester,
+  ) async {
+    const bold = TextStyle(fontWeight: FontWeight.w700);
+    await _pump(
+      tester,
+      PlaceholderRichText(
+        message: (t) => '${t[0]} removed ${t[1]} from the family',
+        placeholderStyle: bold,
+        placeholders: const [
+          MessagePlaceholder(label: 'Sarah'),
+          MessagePlaceholder(label: 'Ann', style: TextStyle(color: Colors.red)),
+        ],
+      ),
+    );
+    expect(_plain(tester), 'Sarah removed Ann from the family');
+    final spans = <TextSpan>[];
+    tester.widget<RichText>(find.byType(RichText).first).text.visitChildren((
+      s,
+    ) {
+      if (s is TextSpan && (s.text == 'Sarah' || s.text == 'Ann')) spans.add(s);
+      return true;
+    });
+    expect(spans.map((s) => s.recognizer), [null, null]);
+    expect(spans[0].style?.fontWeight, FontWeight.w700);
+    expect(spans[1].style?.color, Colors.red);
+    expect(
+      PlaceholderRichText.plainText(
+        (t) => '${t[0]} left',
+        const [MessagePlaceholder(label: 'Sarah')],
+      ),
+      'Sarah left',
+    );
   });
 }

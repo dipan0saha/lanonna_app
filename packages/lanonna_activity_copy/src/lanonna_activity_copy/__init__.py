@@ -1,35 +1,33 @@
-"""Shared activity event copy for API and worker."""
+"""Shared activity and notification vocabulary for the La Nonna API and worker.
 
-EVENT_PHOTO_SHARED = "photo_shared"
-EVENT_PHOTO_SQUISH = "photo_squish"
-EVENT_PHOTO_COMMENT = "photo_comment"
+Server code records *what happened* (a type, the actor, display params); the
+app owns user-facing copy (ARB). See ``activity.py`` and ``notifications.py``.
+"""
 
-GALLERY_ACTIVITY_EVENT_TYPES: frozenset[str] = frozenset(
-    {EVENT_PHOTO_SQUISH, EVENT_PHOTO_COMMENT}
+from lanonna_activity_copy.activity import (
+    ACTOR_HIDDEN_EVENT_TYPES,
+    GALLERY_ACTIVITY_EVENT_TYPES,
+    ActivityEventType,
+    activity_summary,
+    caption_params,
+)
+from lanonna_activity_copy.notifications import (
+    NOTIFICATION_TYPE_BY_KIND,
+    NotificationKind,
+    NotificationType,
+    notification_kind_from_payload,
+    push_copy,
 )
 
-
-def _truncate_caption(caption: str | None, max_len: int = 60) -> str:
-    text = (caption or "").strip()
-    if not text:
-        return "a photo"
-    if len(text) <= max_len:
-        return text
-    return f"{text[: max_len - 1].rstrip()}…"
-
-
-def photo_shared_summary(actor: str, caption: str | None) -> str:
-    label = _truncate_caption(caption)
-    if caption and caption.strip():
-        return f'{actor} added "{label}"'
-    return f"{actor} shared a photo"
-
-
-def photo_squish_summary(actor: str, caption: str | None) -> str:
-    label = _truncate_caption(caption)
-    return f'{actor} squished "{label}"'
-
-
-def photo_comment_summary(actor: str, caption: str | None) -> str:
-    label = _truncate_caption(caption)
-    return f'{actor} commented on "{label}"'
+__all__ = [
+    "ACTOR_HIDDEN_EVENT_TYPES",
+    "GALLERY_ACTIVITY_EVENT_TYPES",
+    "ActivityEventType",
+    "activity_summary",
+    "caption_params",
+    "NOTIFICATION_TYPE_BY_KIND",
+    "NotificationKind",
+    "NotificationType",
+    "notification_kind_from_payload",
+    "push_copy",
+]

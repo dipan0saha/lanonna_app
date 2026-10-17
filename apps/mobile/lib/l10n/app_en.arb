@@ -26,12 +26,20 @@
   "deleteAccountBody": "This permanently deletes your La Nonna account. Any Baby Profiles solely owned by your account will also be deleted. Baby Profiles with a co owner will not be deleted; ownership will transfer fully to the co owner.",
   "deleteAccountButton": "Delete my account",
   "deleteAccountDeleting": "Deleting…",
-  "deleteAccountChecking": "Checking whether your account can be deleted…",
-  "deleteAccountBlocked": "Your account cannot be deleted right now.",
+  "deleteAccountChecking": "Loading account details…",
   "deleteAccountConfirmTitle": "Delete your account permanently?",
   "deleteAccountConfirmBody": "This permanently deletes your La Nonna account. Any Baby Profiles solely owned by your account will also be deleted. Baby Profiles with a co owner will not be deleted; ownership will transfer fully to the co owner.",
   "deleteAccountConfirmAction": "Delete account",
   "deleteAccountSoleOwnedHeading": "These baby profiles will be deleted:",
+  "deleteAccountSoleOwnedBaby": "• {name}",
+  "@deleteAccountSoleOwnedBaby": {
+    "description": "One bullet in the list of baby profiles deleted with the account.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "deleteAccountReauthPasswordTitle": "Confirm your password",
   "deleteAccountReauthPasswordBody": "Enter your password to delete your account.",
   "deleteAccountReauthPasswordAction": "Continue",
@@ -1235,5 +1243,296 @@
   "relationshipUncle": "Uncle",
   "relationshipGodmother": "Godmother",
   "relationshipGodfather": "Godfather",
-  "relationshipFamilyFriend": "Family Friend"
+  "relationshipFamilyFriend": "Family Friend",
+  "activityPhotoShared": "{actor} shared a photo",
+  "@activityPhotoShared": {
+    "description": "Activity feed row. {actor} is the member's display name (bold).",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      }
+    }
+  },
+  "activityPhotoSharedCaption": "{actor} shared \"{caption}\"",
+  "@activityPhotoSharedCaption": {
+    "description": "Activity feed row. {actor} is the member's display name (bold). {caption} is the photo caption.",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      },
+      "caption": {
+        "type": "String"
+      }
+    }
+  },
+  "activityPhotoSquish": "{actor} squished a photo",
+  "@activityPhotoSquish": {
+    "description": "Activity feed row. {actor} is the member's display name (bold).",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      }
+    }
+  },
+  "activityPhotoSquishCaption": "{actor} squished \"{caption}\"",
+  "@activityPhotoSquishCaption": {
+    "description": "Activity feed row. {actor} is the member's display name (bold). {caption} is the photo caption.",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      },
+      "caption": {
+        "type": "String"
+      }
+    }
+  },
+  "activityPhotoComment": "{actor} commented on a photo",
+  "@activityPhotoComment": {
+    "description": "Activity feed row. {actor} is the member's display name (bold).",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      }
+    }
+  },
+  "activityPhotoCommentCaption": "{actor} commented on \"{caption}\"",
+  "@activityPhotoCommentCaption": {
+    "description": "Activity feed row. {actor} is the member's display name (bold). {caption} is the photo caption.",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      },
+      "caption": {
+        "type": "String"
+      }
+    }
+  },
+  "activityRegistryItemAdded": "{actor} added \"{item}\" to the registry",
+  "@activityRegistryItemAdded": {
+    "description": "Activity feed row. {actor} is the member's display name (bold).",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      },
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "activityRegistryPurchased": "{actor} marked \"{item}\" as purchased",
+  "@activityRegistryPurchased": {
+    "description": "Activity feed row. {actor} is the member's display name (bold).",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      },
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "activityRegistryClaimed": "Someone is buying \"{item}\"",
+  "@activityRegistryClaimed": {
+    "description": "Activity feed row for a follower's registry claim; the buyer stays anonymous.",
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "activityEventCreated": "{actor} added \"{title}\" to the calendar",
+  "@activityEventCreated": {
+    "description": "Activity feed row. {actor} is the member's display name (bold).",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      },
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "activityNameSuggested": "{actor} suggested the name \"{name}\"",
+  "@activityNameSuggested": {
+    "description": "Activity feed row. {actor} is the member's display name (bold).",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "activityGenderVoteCast": "{gender, select, male{{actor} guessed boy} female{{actor} guessed girl} other{{actor} made a gender guess}}",
+  "@activityGenderVoteCast": {
+    "description": "Activity feed row. {actor} is the member's display name (bold). {gender} is the API gender value.",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      },
+      "gender": {
+        "type": "String"
+      }
+    }
+  },
+  "activityBabyArrived": "{baby} has arrived!",
+  "@activityBabyArrived": {
+    "description": "Activity feed row. {baby} is the baby's name.",
+    "placeholders": {
+      "baby": {
+        "type": "String"
+      }
+    }
+  },
+  "activityMemberRemoved": "{actor} removed {member} from the family",
+  "@activityMemberRemoved": {
+    "description": "Activity feed row. {actor} is the member's display name (bold). {member} is the removed member's name (bold).",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      },
+      "member": {
+        "type": "String"
+      }
+    }
+  },
+  "activityMemberRemovedUnnamed": "{actor} removed a member from the family",
+  "@activityMemberRemovedUnnamed": {
+    "description": "Activity feed row. {actor} is the member's display name (bold).",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      }
+    }
+  },
+  "activityMemberLeft": "{actor} left the family",
+  "@activityMemberLeft": {
+    "description": "Activity feed row. {actor} is the member's display name (bold).",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      }
+    }
+  },
+  "inboxPhotoShared": "{actor} shared a new photo",
+  "@inboxPhotoShared": {
+    "description": "Inbox notification row. {actor} is the sender's display name (bold).",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      }
+    }
+  },
+  "inboxPhotoSquished": "{actor} squished your photo",
+  "@inboxPhotoSquished": {
+    "description": "Inbox notification row. {actor} is the sender's display name (bold).",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      }
+    }
+  },
+  "inboxPhotoCommented": "{actor} commented on your photo",
+  "@inboxPhotoCommented": {
+    "description": "Inbox notification row. {actor} is the sender's display name (bold).",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      }
+    }
+  },
+  "inboxEventCreated": "{actor} added \"{title}\" to the calendar",
+  "@inboxEventCreated": {
+    "description": "Inbox notification row. {actor} is the sender's display name (bold).",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      },
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "inboxEventRsvp": "{status, select, going{{actor} is going to \"{title}\"} maybe{{actor} might go to \"{title}\"} cant_go{{actor} can't make it to \"{title}\"} other{{actor} replied to \"{title}\"}}",
+  "@inboxEventRsvp": {
+    "description": "Inbox notification row. {actor} is the sender's display name (bold). {status} is the API RSVP value.",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      },
+      "title": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "inboxEventCommented": "{actor} commented on \"{title}\"",
+  "@inboxEventCommented": {
+    "description": "Inbox notification row. {actor} is the sender's display name (bold).",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      },
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "inboxRegistryPurchased": "{actor} marked \"{item}\" as purchased",
+  "@inboxRegistryPurchased": {
+    "description": "Inbox notification row. {actor} is the sender's display name (bold).",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      },
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "inboxRegistryBuying": "{actor} is buying \"{item}\"",
+  "@inboxRegistryBuying": {
+    "description": "Inbox notification row. {actor} is the sender's display name (bold).",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      },
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "inboxInviteAccepted": "{actor} joined {baby}",
+  "@inboxInviteAccepted": {
+    "description": "Inbox notification row. {actor} is the sender's display name (bold). {baby} is the baby's name.",
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      },
+      "baby": {
+        "type": "String"
+      }
+    }
+  },
+  "inboxBabyArrived": "{baby} has arrived! See the announcement.",
+  "@inboxBabyArrived": {
+    "description": "Inbox notification row. {baby} is the baby's name.",
+    "placeholders": {
+      "baby": {
+        "type": "String"
+      }
+    }
+  },
+  "batchInviteMaxOwnersSkipped": "{count, plural, =1{1 co-owner invite was not sent: this baby profile already has the most owners it can have, counting pending co-owner invites.} other{{count} co-owner invites were not sent: this baby profile already has the most owners it can have, counting pending co-owner invites.}}",
+  "@batchInviteMaxOwnersSkipped": {
+    "description": "Batch invite alert for rows the server skipped because of the owner limit.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

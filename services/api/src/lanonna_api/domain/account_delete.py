@@ -13,13 +13,14 @@ from lanonna_api.repositories.account_delete import (
 )
 
 
-def delete_account_eligibility(firebase_uid: str) -> dict[str, Any]:
-    """Always allowed in v1. ``sole_owned_babies`` names the profiles delete will remove."""
-    return {
-        "allowed": True,
-        "blockers": [],
-        "sole_owned_babies": list_sole_owned_baby_names(firebase_uid),
-    }
+def delete_account_preview(firebase_uid: str) -> dict[str, Any]:
+    """What deleting this account will remove, for the confirm dialog.
+
+    Deletion is never blocked (FR-SET-005): sole-owned baby profiles are deleted
+    with the account and co-owned ones pass to the remaining owner, so the only
+    thing to preview is ``sole_owned_babies``.
+    """
+    return {"sole_owned_babies": list_sole_owned_baby_names(firebase_uid)}
 
 
 def _delete_firebase_user(firebase_uid: str) -> None:

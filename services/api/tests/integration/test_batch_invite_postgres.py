@@ -118,7 +118,7 @@ def test_concurrent_pending_invite_is_skipped_not_raised():
     baby_id = _baby(owner, follower)
     _pending(baby_id, owner, "race@example.test", sent=False)
 
-    prepared, created = write_batch_invitations(
+    prepared, created, over_owner_limit = write_batch_invitations(
         baby_id,
         owner,
         resend_ids=[],
@@ -127,3 +127,4 @@ def test_concurrent_pending_invite_is_skipped_not_raised():
 
     assert prepared == set()
     assert list(created) == ["ok@example.test"]
+    assert over_owner_limit == set()

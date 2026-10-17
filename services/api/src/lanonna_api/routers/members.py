@@ -22,9 +22,7 @@ def _member_json(m: dict[str, Any]) -> dict[str, Any]:
     return {
         "firebase_uid": m["firebase_uid"],
         "display_name": m["display_name"],
-        "email": m.get("email"),
         "role": m["role"],
-        "relationship_label": m.get("relationship_label"),
         "can_remove": m.get("can_remove", False),
         "joined_at": m["created_at"].isoformat()
         if hasattr(m["created_at"], "isoformat")

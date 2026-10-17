@@ -107,17 +107,17 @@ def test_claim_purchase_follower_notifies_owners():
     ), patch(
         "lanonna_api.domain.registry.insert_activity_event",
     ) as activity_mock, patch(
-        "lanonna_api.domain.registry.actor_display_name",
-        return_value="Aunt",
-    ), patch(
         "lanonna_api.domain.registry.safe_enqueue_fan_out",
     ) as fan_out_mock:
         claim_purchase("follower_uid", baby_id, item_id)
         activity_mock.assert_called_once()
-        assert activity_mock.call_args[0][3] == 'Someone is buying "Car seat"'
+        assert activity_mock.call_args[0][2] == "registry_claimed"
+        assert activity_mock.call_args[0][3] == {"item_name": "Car seat"}
         spec = fan_out_mock.call_args[0][0]
         assert spec.recipient_mode == "baby_owners"
-        assert spec.body == 'Aunt is buying "Car seat"'
+        assert spec.kind == "registry_buying"
+        assert spec.params == {"item_name": "Car seat"}
+        assert spec.actor_firebase_uid == "follower_uid"
 
 
 def test_claim_purchase_owner_notifies_members():
@@ -143,17 +143,16 @@ def test_claim_purchase_owner_notifies_members():
     ), patch(
         "lanonna_api.domain.registry.insert_activity_event",
     ) as activity_mock, patch(
-        "lanonna_api.domain.registry.actor_display_name",
-        return_value="Mom",
-    ), patch(
         "lanonna_api.domain.registry.safe_enqueue_fan_out",
     ) as fan_out_mock:
         claim_purchase("owner_uid", baby_id, item_id)
         activity_mock.assert_called_once()
-        assert activity_mock.call_args[0][3] == 'Marked "Car seat" as purchased'
+        assert activity_mock.call_args[0][2] == "registry_purchased"
+        assert activity_mock.call_args[0][3] == {"item_name": "Car seat"}
         spec = fan_out_mock.call_args[0][0]
         assert spec.recipient_mode == "baby_members"
-        assert spec.body == 'Mom marked "Car seat" as purchased'
+        assert spec.kind == "registry_purchased"
+        assert spec.actor_firebase_uid == "owner_uid"
 
 
 def test_claim_purchase_rejects_when_another_user_won_race():

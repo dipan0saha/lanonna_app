@@ -4,7 +4,7 @@ import uuid
 from enum import StrEnum
 from typing import Literal
 
-from datetime import date
+from datetime import date, datetime
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -26,6 +26,7 @@ class InviteRowStatus(StrEnum):
     RESENT = "resent"
     SKIPPED_MEMBER = "skipped_member"
     SKIPPED_DUPLICATE = "skipped_duplicate"
+    SKIPPED_MAX_OWNERS = "skipped_max_owners"
     EMAIL_QUEUE_FAILED = "email_queue_failed"
 
 
@@ -53,7 +54,7 @@ class InvitationPreviewResponse(BaseModel):
     invitee_email: str | None = None
     relationship_label: str | None = None
     invited_role: Literal["owner", "follower"] | None = None
-    expires_at: str | None = None
+    expires_at: datetime | None = None
     lifecycle_status: Literal["expecting", "born"] | None = None
     expected_birth_date: date | None = None
     actual_birth_date: date | None = None

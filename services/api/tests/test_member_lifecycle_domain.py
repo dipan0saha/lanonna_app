@@ -101,7 +101,6 @@ def test_remove_follower_records_activity():
             "lanonna_api.domain.member_lifecycle.soft_remove_membership",
             return_value=True,
         ) as soft_remove,
-        patch("lanonna_api.domain.member_lifecycle.actor_display_name", return_value="Owner"),
         patch(
             "lanonna_api.domain.member_lifecycle.insert_activity_event",
         ) as activity,
@@ -110,6 +109,8 @@ def test_remove_follower_records_activity():
     soft_remove.assert_called_once_with(baby_id, "follower-1")
     activity.assert_called_once()
     assert activity.call_args[0][2] == "member_removed"
+    # The removed member is referenced by uid; their name is resolved at read time.
+    assert activity.call_args.kwargs["payload"] == {"target_firebase_uid": "follower-1"}
 
 
 def test_leave_sole_owner_blocked():
@@ -140,7 +141,6 @@ def test_leave_follower_succeeds():
             "lanonna_api.domain.member_lifecycle.soft_remove_membership",
             return_value=True,
         ),
-        patch("lanonna_api.domain.member_lifecycle.actor_display_name", return_value="Fan"),
         patch("lanonna_api.domain.member_lifecycle.insert_activity_event"),
     ):
         leave_baby_profile("follower-1", baby_id)

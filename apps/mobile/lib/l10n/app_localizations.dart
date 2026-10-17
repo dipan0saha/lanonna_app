@@ -253,14 +253,8 @@ abstract class AppLocalizations {
   /// No description provided for @deleteAccountChecking.
   ///
   /// In en, this message translates to:
-  /// **'Checking whether your account can be deleted…'**
+  /// **'Loading account details…'**
   String get deleteAccountChecking;
-
-  /// No description provided for @deleteAccountBlocked.
-  ///
-  /// In en, this message translates to:
-  /// **'Your account cannot be deleted right now.'**
-  String get deleteAccountBlocked;
 
   /// No description provided for @deleteAccountConfirmTitle.
   ///
@@ -285,6 +279,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'These baby profiles will be deleted:'**
   String get deleteAccountSoleOwnedHeading;
+
+  /// One bullet in the list of baby profiles deleted with the account.
+  ///
+  /// In en, this message translates to:
+  /// **'• {name}'**
+  String deleteAccountSoleOwnedBaby(String name);
 
   /// No description provided for @deleteAccountReauthPasswordTitle.
   ///
@@ -4515,6 +4515,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Family Friend'**
   String get relationshipFamilyFriend;
+
+  /// Activity feed row. {actor} is the member's display name (bold).
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} shared a photo'**
+  String activityPhotoShared(String actor);
+
+  /// Activity feed row. {actor} is the member's display name (bold). {caption} is the photo caption.
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} shared \"{caption}\"'**
+  String activityPhotoSharedCaption(String actor, String caption);
+
+  /// Activity feed row. {actor} is the member's display name (bold).
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} squished a photo'**
+  String activityPhotoSquish(String actor);
+
+  /// Activity feed row. {actor} is the member's display name (bold). {caption} is the photo caption.
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} squished \"{caption}\"'**
+  String activityPhotoSquishCaption(String actor, String caption);
+
+  /// Activity feed row. {actor} is the member's display name (bold).
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} commented on a photo'**
+  String activityPhotoComment(String actor);
+
+  /// Activity feed row. {actor} is the member's display name (bold). {caption} is the photo caption.
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} commented on \"{caption}\"'**
+  String activityPhotoCommentCaption(String actor, String caption);
+
+  /// Activity feed row. {actor} is the member's display name (bold).
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} added \"{item}\" to the registry'**
+  String activityRegistryItemAdded(String actor, String item);
+
+  /// Activity feed row. {actor} is the member's display name (bold).
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} marked \"{item}\" as purchased'**
+  String activityRegistryPurchased(String actor, String item);
+
+  /// Activity feed row for a follower's registry claim; the buyer stays anonymous.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone is buying \"{item}\"'**
+  String activityRegistryClaimed(String item);
+
+  /// Activity feed row. {actor} is the member's display name (bold).
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} added \"{title}\" to the calendar'**
+  String activityEventCreated(String actor, String title);
+
+  /// Activity feed row. {actor} is the member's display name (bold).
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} suggested the name \"{name}\"'**
+  String activityNameSuggested(String actor, String name);
+
+  /// Activity feed row. {actor} is the member's display name (bold). {gender} is the API gender value.
+  ///
+  /// In en, this message translates to:
+  /// **'{gender, select, male{{actor} guessed boy} female{{actor} guessed girl} other{{actor} made a gender guess}}'**
+  String activityGenderVoteCast(String actor, String gender);
+
+  /// Activity feed row. {baby} is the baby's name.
+  ///
+  /// In en, this message translates to:
+  /// **'{baby} has arrived!'**
+  String activityBabyArrived(String baby);
+
+  /// Activity feed row. {actor} is the member's display name (bold). {member} is the removed member's name (bold).
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} removed {member} from the family'**
+  String activityMemberRemoved(String actor, String member);
+
+  /// Activity feed row. {actor} is the member's display name (bold).
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} removed a member from the family'**
+  String activityMemberRemovedUnnamed(String actor);
+
+  /// Activity feed row. {actor} is the member's display name (bold).
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} left the family'**
+  String activityMemberLeft(String actor);
+
+  /// Inbox notification row. {actor} is the sender's display name (bold).
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} shared a new photo'**
+  String inboxPhotoShared(String actor);
+
+  /// Inbox notification row. {actor} is the sender's display name (bold).
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} squished your photo'**
+  String inboxPhotoSquished(String actor);
+
+  /// Inbox notification row. {actor} is the sender's display name (bold).
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} commented on your photo'**
+  String inboxPhotoCommented(String actor);
+
+  /// Inbox notification row. {actor} is the sender's display name (bold).
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} added \"{title}\" to the calendar'**
+  String inboxEventCreated(String actor, String title);
+
+  /// Inbox notification row. {actor} is the sender's display name (bold). {status} is the API RSVP value.
+  ///
+  /// In en, this message translates to:
+  /// **'{status, select, going{{actor} is going to \"{title}\"} maybe{{actor} might go to \"{title}\"} cant_go{{actor} can\'t make it to \"{title}\"} other{{actor} replied to \"{title}\"}}'**
+  String inboxEventRsvp(String actor, String title, String status);
+
+  /// Inbox notification row. {actor} is the sender's display name (bold).
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} commented on \"{title}\"'**
+  String inboxEventCommented(String actor, String title);
+
+  /// Inbox notification row. {actor} is the sender's display name (bold).
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} marked \"{item}\" as purchased'**
+  String inboxRegistryPurchased(String actor, String item);
+
+  /// Inbox notification row. {actor} is the sender's display name (bold).
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} is buying \"{item}\"'**
+  String inboxRegistryBuying(String actor, String item);
+
+  /// Inbox notification row. {actor} is the sender's display name (bold). {baby} is the baby's name.
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} joined {baby}'**
+  String inboxInviteAccepted(String actor, String baby);
+
+  /// Inbox notification row. {baby} is the baby's name.
+  ///
+  /// In en, this message translates to:
+  /// **'{baby} has arrived! See the announcement.'**
+  String inboxBabyArrived(String baby);
+
+  /// Batch invite alert for rows the server skipped because of the owner limit.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 co-owner invite was not sent: this baby profile already has the most owners it can have, counting pending co-owner invites.} other{{count} co-owner invites were not sent: this baby profile already has the most owners it can have, counting pending co-owner invites.}}'**
+  String batchInviteMaxOwnersSkipped(int count);
 }
 
 class _AppLocalizationsDelegate

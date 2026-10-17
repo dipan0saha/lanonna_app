@@ -19,6 +19,7 @@ from lanonna_api.domain.users_display import (
     author_display_name_from_row,
     member_display_name_from_row,
 )
+from lanonna_activity_copy import ActivityEventType, params
 from lanonna_api.repositories.activity_events import insert_activity_event
 from lanonna_api.repositories.babies import get_baby_membership
 from lanonna_api.db import get_connection
@@ -119,8 +120,8 @@ def suggest_name(
     insert_activity_event(
         baby_profile_id,
         firebase_uid,
-        "name_suggested",
-        f'Suggested the name "{row["suggested_name"]}"',
+        ActivityEventType.NAME_SUGGESTED,
+        {params.SUGGESTED_NAME: row["suggested_name"]},
         {"name_suggestion_id": str(row["id"])},
     )
     return {
@@ -219,9 +220,8 @@ def set_gender_vote(
     insert_activity_event(
         baby_profile_id,
         firebase_uid,
-        "gender_vote_cast",
-        f'Guessed "{gender_value}"',
-        {},
+        ActivityEventType.GENDER_VOTE_CAST,
+        {params.GENDER: gender_value},
     )
     return {"gender": gender_value}
 

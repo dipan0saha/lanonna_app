@@ -26,7 +26,8 @@ def test_mark_photo_ready_inserts_photo_shared_activity():
                 "caption": "Hello",
             }
         elif "FROM app_users" in sql_text:
-            result.fetchone.return_value = {"actor_name": "Alex"}
+            assert "email" not in sql_text
+            result.fetchone.return_value = {"name": "Alex"}
         elif "INSERT INTO activity_events" in sql_text:
             inserts.append((sql_text, params))
             result.fetchone.return_value = None
@@ -53,10 +54,9 @@ def test_mark_photo_ready_inserts_photo_shared_activity():
     assert len(inserts) == 1
     sql_text, params = inserts[0]
     assert params[3] == "photo_shared"
-    assert "Alex" in params[4]
-    payload = params[5]
-    photo_id_value = payload.obj if hasattr(payload, "obj") else payload
-    assert photo_id_value["photo_id"] == str(photo_id)
+    assert params[4] == 'Alex shared "Hello"'
+    assert params[5].obj == {"caption": "Hello"}
+    assert params[6].obj == {"photo_id": str(photo_id)}
 
 
 def test_mark_photo_ready_idempotent_generation():

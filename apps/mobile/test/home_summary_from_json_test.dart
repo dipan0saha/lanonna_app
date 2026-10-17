@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/core/domain/activity_event_type.dart';
 import 'package:lanonna/features/home/data/models/home_summary.dart';
 
 void main() {
@@ -39,7 +40,10 @@ void main() {
     expect(summary.teasers?.recentPhotos.single.id, 'p1');
     expect(summary.teasers?.upcomingEvents.single.title, 'Shower');
     expect(summary.recentActivity, hasLength(1));
-    expect(summary.recentActivity.first.eventType, 'registry_item_added');
+    expect(
+      summary.recentActivity.first.eventType,
+      ActivityEventType.registryItemAdded,
+    );
     expect(summary.showRichInsight, isTrue);
   });
 

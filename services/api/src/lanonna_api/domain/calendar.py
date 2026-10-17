@@ -14,11 +14,12 @@ from lanonna_api.domain.content_permissions import (
     member_content_can_edit,
 )
 from lanonna_api.domain.gallery import require_membership
-from lanonna_api.domain.notification_metadata import NotificationType
-from lanonna_api.domain.users_display import actor_display_name
+from lanonna_activity_copy import ActivityEventType, NotificationKind
+from lanonna_activity_copy import params
 from lanonna_api.domain.notifications import (
     FanOutSpec,
     NotificationChannel,
+    NotifyUserSpec,
     safe_enqueue_notify_user,
     safe_enqueue_fan_out,
 )
@@ -212,20 +213,19 @@ def create_calendar_event(
     insert_activity_event(
         baby_profile_id,
         firebase_uid,
-        "event_created",
-        f"New event: {row['title']}",
+        ActivityEventType.EVENT_CREATED,
+        {params.EVENT_TITLE: row["title"]},
         payload={"event_id": str(row["id"])},
     )
     safe_enqueue_fan_out(
         FanOutSpec(
             baby_profile_id=baby_profile_id,
-            title="New event",
-            body=f'"{row["title"]}" was added to the calendar',
+            kind=NotificationKind.EVENT_CREATED,
+            params={params.EVENT_TITLE: row["title"]},
             deep_link=f"/calendar/event/{row['id']}",
+            actor_firebase_uid=firebase_uid,
             exclude_firebase_uid=firebase_uid,
             notification_channel=NotificationChannel.CALENDAR,
-            notification_type=NotificationType.EVENT,
-            actor_firebase_uid=firebase_uid,
         )
     )
     return _event_row_to_json(row)
@@ -282,16 +282,16 @@ def set_rsvp(
     upsert_rsvp(event_id, firebase_uid, status)
     creator = event.get("created_by_firebase_uid")
     if creator and creator != firebase_uid:
-        actor = actor_display_name(firebase_uid)
         safe_enqueue_notify_user(
-            creator,
-            title="New RSVP",
-            body=f'{actor} responded "{status}" to {event["title"]}',
-            deep_link=f"/calendar/event/{event_id}",
-            baby_profile_id=baby_profile_id,
-            notification_channel=NotificationChannel.CALENDAR,
-            notification_type=NotificationType.EVENT,
-            actor_firebase_uid=firebase_uid,
+            NotifyUserSpec(
+                firebase_uid=creator,
+                kind=NotificationKind.EVENT_RSVP,
+                params={params.EVENT_TITLE: event["title"], params.RSVP_STATUS: status},
+                deep_link=f"/calendar/event/{event_id}",
+                actor_firebase_uid=firebase_uid,
+                baby_profile_id=baby_profile_id,
+                notification_channel=NotificationChannel.CALENDAR,
+            )
         )
     return {"status": status}
 
@@ -311,16 +311,16 @@ def add_event_comment(
     c = insert_event_comment(event_id, firebase_uid, body)
     creator = event.get("created_by_firebase_uid")
     if creator and creator != firebase_uid:
-        actor = actor_display_name(firebase_uid)
         safe_enqueue_notify_user(
-            creator,
-            title="New comment",
-            body=f'{actor} commented on "{event["title"]}"',
-            deep_link=f"/calendar/event/{event_id}",
-            baby_profile_id=baby_profile_id,
-            notification_channel=NotificationChannel.COMMENTS,
-            notification_type=NotificationType.COMMENT,
-            actor_firebase_uid=firebase_uid,
+            NotifyUserSpec(
+                firebase_uid=creator,
+                kind=NotificationKind.EVENT_COMMENTED,
+                params={params.EVENT_TITLE: event["title"]},
+                deep_link=f"/calendar/event/{event_id}",
+                actor_firebase_uid=firebase_uid,
+                baby_profile_id=baby_profile_id,
+                notification_channel=NotificationChannel.COMMENTS,
+            )
         )
     return {
         "id": str(c["id"]),

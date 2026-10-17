@@ -55,6 +55,10 @@ enum InviteRowStatus {
   resent('resent'),
   skippedMember('skipped_member'),
   skippedDuplicate('skipped_duplicate'),
+
+  /// A co-owner row the owner limit could not hold (active owners plus
+  /// pending co-owner invites); nothing was saved for it.
+  skippedMaxOwners('skipped_max_owners'),
   emailQueueFailed('email_queue_failed');
 
   const InviteRowStatus(this.apiValue);

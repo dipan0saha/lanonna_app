@@ -12,11 +12,13 @@ from firebase_admin import messaging
 
 from lanonna_worker.db import get_connection
 from lanonna_worker.idempotency import resolve_delivery_key, try_claim_delivery
-from lanonna_worker.notification_metadata import (
-    GENERIC,
-    actor_uid_from_payload,
-    notification_type_from_payload,
+from lanonna_activity_copy import (
+    NOTIFICATION_TYPE_BY_KIND,
+    NotificationKind,
+    params as copy_params,
+    push_copy,
 )
+from psycopg.types.json import Json
 
 logger = logging.getLogger("lanonna.worker.notifications")
 
@@ -161,18 +163,58 @@ def _load_recipients(
     return [by_uid[uid] for uid in dict.fromkeys(firebase_uids) if uid in by_uid]
 
 
+@dataclass(frozen=True)
+class _Message:
+    """One structured notification plus its English push copy."""
+
+    kind: NotificationKind
+    params: dict[str, Any]
+    actor_firebase_uid: str | None
+    title: str
+    body: str
+
+    @property
+    def notification_type(self) -> str:
+        return NOTIFICATION_TYPE_BY_KIND[self.kind].value
+
+
+def _actor_display_name(conn: Any, actor_firebase_uid: str | None) -> str | None:
+    """Current display name, never derived from email (#7); None when unset."""
+    if not actor_firebase_uid:
+        return None
+    row = conn.execute(
+        "SELECT NULLIF(TRIM(display_name), '') AS name FROM app_users WHERE firebase_uid = %s",
+        (actor_firebase_uid,),
+    ).fetchone()
+    return row["name"] if row else None
+
+
+def _message_from_payload(conn: Any, payload: dict[str, Any]) -> _Message:
+    """Build the message from a validated notify payload (``kind`` + ``params``)."""
+    kind = NotificationKind(str(payload["kind"]))
+    params = dict(payload.get("params") or {})
+    raw_actor = payload.get("actor_firebase_uid")
+    actor_uid = str(raw_actor) if raw_actor else None
+    title, body = push_copy(kind, params, actor=_actor_display_name(conn, actor_uid))
+    return _Message(
+        kind=kind, params=params, actor_firebase_uid=actor_uid, title=title, body=body
+    )
+
+
 def _insert_notifications(
     conn: Any,
     *,
     firebase_uids: list[str],
-    title: str,
-    body: str,
+    message: _Message,
     deep_link: str | None,
     baby_profile_id: uuid.UUID | None,
-    notification_type: str = GENERIC,
-    actor_firebase_uid: str | None = None,
 ) -> dict[str, uuid.UUID]:
-    """Write one inbox row per recipient in a single statement; uid -> row id."""
+    """Write one inbox row per recipient in a single statement; uid -> row id.
+
+    The row stores ``notification_kind`` + ``params`` (the app renders them from
+    ARB) and the actor's display name at send time; ``title`` / ``body`` hold
+    the English push copy for logs.
+    """
     if not firebase_uids:
         return {}
     ids = {uid: uuid.uuid4() for uid in firebase_uids}
@@ -180,22 +222,25 @@ def _insert_notifications(
         """
         INSERT INTO notifications (
             id, firebase_uid, baby_profile_id, title, body, deep_link,
-            notification_type, actor_firebase_uid, actor_display_name
+            notification_type, notification_kind, params,
+            actor_firebase_uid, actor_display_name
         )
-        SELECT r.id, r.firebase_uid, %s, %s, %s, %s, %s, a.firebase_uid,
+        SELECT r.id, r.firebase_uid, %s, %s, %s, %s, %s, %s, %s, a.firebase_uid,
             NULLIF(TRIM(a.display_name), '')
         FROM unnest(%s::uuid[], %s::text[]) AS r(id, firebase_uid)
         LEFT JOIN app_users a ON a.firebase_uid = %s
         """,
         (
             baby_profile_id,
-            title,
-            body,
+            message.title,
+            message.body,
             deep_link,
-            notification_type,
+            message.notification_type,
+            message.kind.value,
+            Json(message.params),
             list(ids.values()),
             list(ids.keys()),
-            actor_firebase_uid,
+            message.actor_firebase_uid,
         ),
     )
     return ids
@@ -281,24 +326,18 @@ def _deliver_to_inbox_and_push(
     conn: Any,
     recipients: list[_Recipient],
     *,
-    title: str,
-    body: str,
+    message: _Message,
     deep_link: str | None,
     baby_profile_id: uuid.UUID | None,
-    notification_type: str,
-    actor_firebase_uid: str | None,
 ) -> None:
     """Shared tail of notify-user and fan-out: inbox rows, then realtime push."""
     opted_in = [r for r in recipients if r.channel_enabled]
     notification_ids = _insert_notifications(
         conn,
         firebase_uids=[r.firebase_uid for r in opted_in],
-        title=title,
-        body=body,
+        message=message,
         deep_link=deep_link,
         baby_profile_id=baby_profile_id,
-        notification_type=notification_type,
-        actor_firebase_uid=actor_firebase_uid,
     )
     for recipient in opted_in:
         if not recipient.realtime_push or not recipient.fcm_tokens:
@@ -313,8 +352,8 @@ def _deliver_to_inbox_and_push(
             conn,
             firebase_uid=recipient.firebase_uid,
             tokens=list(recipient.fcm_tokens),
-            title=title,
-            body=body,
+            title=message.title,
+            body=message.body,
             data=data,
         )
 
@@ -325,15 +364,11 @@ def process_notify_fan_out(
     pubsub_message_id: str | None = None,
 ) -> None:
     baby_id = uuid.UUID(str(payload["baby_profile_id"]))
-    title = str(payload["title"])
-    body = str(payload["body"])
     deep_link = payload.get("deep_link")
     recipient_mode = str(payload.get("recipient_mode") or "baby_members")
     exclude = payload.get("exclude_firebase_uid")
     explicit_uids = [str(u) for u in payload.get("firebase_uids") or []]
     channel = payload.get("notification_channel")
-    notification_type = notification_type_from_payload(payload)
-    actor_firebase_uid = actor_uid_from_payload(payload)
     delivery_key = resolve_delivery_key(payload, pubsub_message_id=pubsub_message_id)
 
     with get_connection() as conn:
@@ -350,12 +385,9 @@ def process_notify_fan_out(
         _deliver_to_inbox_and_push(
             conn,
             _load_recipients(conn, uids, channel),
-            title=title,
-            body=body,
+            message=_message_from_payload(conn, payload),
             deep_link=deep_link,
             baby_profile_id=baby_id,
-            notification_type=notification_type,
-            actor_firebase_uid=actor_firebase_uid,
         )
 
 
@@ -365,14 +397,10 @@ def process_notify_user(
     pubsub_message_id: str | None = None,
 ) -> None:
     uid = str(payload["firebase_uid"])
-    title = str(payload["title"])
-    body = str(payload["body"])
     deep_link = payload.get("deep_link")
     baby_raw = payload.get("baby_profile_id")
     baby_id = uuid.UUID(str(baby_raw)) if baby_raw else None
     channel = payload.get("notification_channel")
-    notification_type = notification_type_from_payload(payload)
-    actor_firebase_uid = actor_uid_from_payload(payload)
     delivery_key = resolve_delivery_key(payload, pubsub_message_id=pubsub_message_id)
 
     with get_connection() as conn:
@@ -382,12 +410,9 @@ def process_notify_user(
         _deliver_to_inbox_and_push(
             conn,
             _load_recipients(conn, [uid], channel),
-            title=title,
-            body=body,
+            message=_message_from_payload(conn, payload),
             deep_link=deep_link,
             baby_profile_id=baby_id,
-            notification_type=notification_type,
-            actor_firebase_uid=actor_firebase_uid,
         )
 
 
@@ -440,16 +465,17 @@ def process_weekly_notification_digest(
         sent_uids: list[str] = []
         for row in rows:
             uid = row["firebase_uid"]
-            count = int(row["unread_count"])
+            title, body = push_copy(
+                NotificationKind.WEEKLY_DIGEST,
+                {copy_params.UNREAD_COUNT: int(row["unread_count"])},
+                actor=None,
+            )
             _send_push(
                 conn,
                 firebase_uid=uid,
                 tokens=list(row["fcm_tokens"]),
-                title="Your weekly update",
-                body=(
-                    f"You have {count} unread update{'s' if count != 1 else ''} "
-                    "from La Nonna"
-                ),
+                title=title,
+                body=body,
                 data={"deep_link": "/notifications/inbox", "notification_id": ""},
             )
             sent_uids.append(uid)

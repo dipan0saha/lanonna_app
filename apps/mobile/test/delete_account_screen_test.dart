@@ -54,15 +54,15 @@ class _Auth extends AuthRepository {
 }
 
 class _Accounts extends AccountRepository {
-  _Accounts(this.eligibility)
+  _Accounts(this.preview)
     : super(ApiClient(idTokenProvider: () async => 't'));
 
-  final DeleteAccountEligibility eligibility;
+  final DeleteAccountPreview preview;
   var deletes = 0;
 
   @override
-  Future<DeleteAccountEligibility> fetchDeleteAccountEligibility() async {
-    return eligibility;
+  Future<DeleteAccountPreview> fetchDeleteAccountPreview() async {
+    return preview;
   }
 
   @override
@@ -150,10 +150,11 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final accounts = _Accounts(
-      const DeleteAccountEligibility(
-        allowed: true,
-        blockers: [],
-        soleOwnedBabies: [SoleOwnedBaby(id: 'b1', name: 'Liam')],
+      const DeleteAccountPreview(
+        soleOwnedBabies: [
+          SoleOwnedBaby(id: 'b1', name: 'Liam'),
+          SoleOwnedBaby(id: 'b2', name: ' '),
+        ],
       ),
     );
     final auth = _Auth();
@@ -168,7 +169,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Delete your account permanently?'), findsOneWidget);
-    expect(find.textContaining('Liam'), findsOneWidget);
+    expect(find.textContaining('• Liam'), findsOneWidget);
+    expect(find.textContaining('• Baby'), findsOneWidget);
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
 
@@ -181,7 +183,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final accounts = _Accounts(
-      const DeleteAccountEligibility(allowed: true, blockers: []),
+      const DeleteAccountPreview(),
     );
     final auth = _Auth();
     final cleanup = _Cleanup(prefs);
@@ -202,7 +204,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final accounts = _Accounts(
-      const DeleteAccountEligibility(allowed: true, blockers: []),
+      const DeleteAccountPreview(),
     );
     final auth = _Auth(password: true);
     await _pump(
@@ -239,7 +241,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final accounts = _Accounts(
-      const DeleteAccountEligibility(allowed: true, blockers: []),
+      const DeleteAccountPreview(),
     );
     final auth = _Auth(google: true);
     await _pump(

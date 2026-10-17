@@ -4,10 +4,13 @@ import uuid
 from datetime import date, timedelta
 from typing import Any, Literal
 
-from lanonna_api.domain.activity_copy import (
+from lanonna_activity_copy import (
     GALLERY_ACTIVITY_EVENT_TYPES,
-    serialize_activity_item,
+    ActivityEventType,
+    NotificationKind,
+    params,
 )
+from lanonna_api.domain.activity_feed import serialize_activity_item
 from lanonna_api.repositories.activity_events import (
     count_name_suggestions,
     insert_activity_event,
@@ -44,7 +47,6 @@ from lanonna_api.domain.date_validation import (
 )
 from lanonna_api.domain.fun_closed import fun_closed_flags
 from lanonna_api.pagination import offset_page_from_extra_row
-from lanonna_api.domain.notification_metadata import NotificationType
 from lanonna_api.domain.notifications import (
     FanOutSpec,
     NotificationChannel,
@@ -94,7 +96,6 @@ def _build_birth_welcome(
     if days_since > _BIRTH_WELCOME_VISIBLE_DAYS:
         return None
     welcome_until = birth + timedelta(days=_BIRTH_WELCOME_VISIBLE_DAYS)
-    baby_name = baby.get("name") or "Baby"
     ann = get_announcement(baby_profile_id)
     announcement_preview = None
     weight_text = None
@@ -110,7 +111,7 @@ def _build_birth_welcome(
     birth_iso = birth.isoformat()
     everyone_notified = is_owner and ann is not None
     return {
-        "baby_name": baby_name,
+        "baby_name": baby.get("name"),
         "days_since_birth": days_since,
         "welcome_visible_until": welcome_until.isoformat(),
         "birth_date": birth_iso,
@@ -175,7 +176,6 @@ def announce_arrival(
     if baby is None:
         raise PermissionError("Owner access required for this baby profile.")
 
-    baby_name = baby.get("name") or "Baby"
     record_arrival_event = baby.get("lifecycle_status") == "expecting"
     fields: dict[str, Any] = {
         "lifecycle_status": "born",
@@ -191,25 +191,23 @@ def announce_arrival(
         raise PermissionError("Owner access required for this baby profile.")
 
     if record_arrival_event:
+        arrival_params = {params.BABY_NAME: row.get("name") or ""}
         insert_activity_event(
             baby_profile_id,
             firebase_uid,
-            "baby_arrived",
-            f"{baby_name} has arrived!",
+            ActivityEventType.BABY_ARRIVED,
+            arrival_params,
             {"actual_birth_date": actual_birth_date.isoformat()},
         )
-
-    if record_arrival_event:
         safe_enqueue_fan_out(
             FanOutSpec(
                 baby_profile_id=baby_profile_id,
-                title="Baby has arrived!",
-                body=f"{baby_name} has arrived - see the announcement",
+                kind=NotificationKind.BABY_ARRIVED,
+                params=arrival_params,
                 deep_link=f"/baby/{baby_profile_id}/announcement",
+                actor_firebase_uid=firebase_uid,
                 exclude_firebase_uid=firebase_uid,
                 notification_channel=NotificationChannel.CALENDAR,
-                notification_type=NotificationType.GENERIC,
-                actor_firebase_uid=firebase_uid,
             )
         )
     return row

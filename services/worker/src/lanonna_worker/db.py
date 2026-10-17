@@ -8,7 +8,7 @@ import psycopg
 from psycopg.rows import dict_row
 from psycopg.types.json import Json
 
-from lanonna_activity_copy import EVENT_PHOTO_SHARED, photo_shared_summary
+from lanonna_activity_copy import ActivityEventType, activity_summary, caption_params
 from lanonna_worker.config import settings
 
 
@@ -82,39 +82,38 @@ def mark_photo_ready(
             (thumb_path, object_generation, byte_length, display_path),
         ).fetchone()
         if row is not None:
+            # Structured feed row (lanonna_activity_copy.activity): the app renders
+            # it from ARB; the actor's name is resolved at read time, never from
+            # an email (#7). ``summary`` is English diagnostic copy only.
             actor_row = conn.execute(
                 """
-                SELECT COALESCE(
-                    NULLIF(TRIM(display_name), ''),
-                    split_part(email, '@', 1),
-                    'Someone'
-                ) AS actor_name
+                SELECT NULLIF(TRIM(display_name), '') AS name
                 FROM app_users
                 WHERE firebase_uid = %s
                 """,
                 (row["uploader_firebase_uid"],),
             ).fetchone()
-            actor = (
-                actor_row["actor_name"]
-                if actor_row and actor_row.get("actor_name")
-                else "Someone"
+            params = caption_params(row.get("caption"))
+            summary = activity_summary(
+                ActivityEventType.PHOTO_SHARED,
+                params,
+                actor=(actor_row and actor_row["name"]) or "Someone",
             )
-            caption = row.get("caption")
-            summary = photo_shared_summary(actor, caption)
             conn.execute(
                 """
                 INSERT INTO activity_events (
                     id, baby_profile_id, actor_firebase_uid,
-                    event_type, summary, payload
+                    event_type, summary, params, payload
                 )
-                VALUES (%s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """,
                 (
                     uuid.uuid4(),
                     row["baby_profile_id"],
                     row["uploader_firebase_uid"],
-                    EVENT_PHOTO_SHARED,
+                    ActivityEventType.PHOTO_SHARED.value,
                     summary,
+                    Json(params),
                     Json({"photo_id": str(row["id"])}),
                 ),
             )
