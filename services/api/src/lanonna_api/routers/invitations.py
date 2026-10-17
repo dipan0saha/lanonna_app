@@ -54,16 +54,14 @@ def list_invitations(
     offset: int = Query(default=0, ge=0),
 ) -> dict[str, Any]:
     try:
-        rows = list_invitations_for_owner(user.uid, baby_profile_id)
+        rows = list_invitations_for_owner(
+            user.uid, baby_profile_id, limit=limit + 1, offset=offset
+        )
     except Exception as exc:
         raise map_domain_errors(exc) from exc
-    window = rows[offset : offset + limit + 1]
-    page = offset_page_from_extra_row(
-        [_invitation_json(r) for r in window],
-        offset=offset,
-        limit=limit,
+    return offset_page_from_extra_row(
+        [_invitation_json(r) for r in rows], offset=offset, limit=limit
     )
-    return page
 
 
 @router.post(

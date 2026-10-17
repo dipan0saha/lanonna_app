@@ -40,16 +40,14 @@ def list_members(
     offset: int = Query(default=0, ge=0),
 ) -> dict[str, Any]:
     try:
-        members = list_members_for_owner(user.uid, baby_profile_id)
+        members = list_members_for_owner(
+            user.uid, baby_profile_id, limit=limit + 1, offset=offset
+        )
     except Exception as exc:
         raise map_domain_errors(exc) from exc
-    window = members[offset : offset + limit + 1]
-    page = offset_page_from_extra_row(
-        [_member_json(m) for m in window],
-        offset=offset,
-        limit=limit,
+    return offset_page_from_extra_row(
+        [_member_json(m) for m in members], offset=offset, limit=limit
     )
-    return page
 
 
 @router.delete(

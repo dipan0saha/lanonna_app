@@ -46,11 +46,12 @@ def list_items(
     offset: int = Query(default=0, ge=0),
 ) -> dict[str, Any]:
     try:
-        items = registry_domain.list_items(user.uid, baby_profile_id)
+        items = registry_domain.list_items(
+            user.uid, baby_profile_id, limit=limit + 1, offset=offset
+        )
     except Exception as exc:
         raise map_domain_errors(exc) from exc
-    window = items[offset : offset + limit + 1]
-    return offset_page_from_extra_row(window, offset=offset, limit=limit)
+    return offset_page_from_extra_row(items, offset=offset, limit=limit)
 
 
 @router.post("/items", status_code=status.HTTP_201_CREATED)

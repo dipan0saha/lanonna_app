@@ -61,9 +61,16 @@ def _item_json(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def list_items(firebase_uid: str, baby_profile_id: uuid.UUID) -> list[dict[str, Any]]:
+def list_items(
+    firebase_uid: str,
+    baby_profile_id: uuid.UUID,
+    *,
+    limit: int,
+    offset: int,
+) -> list[dict[str, Any]]:
     require_membership(firebase_uid, baby_profile_id)
-    return [_item_json(r) for r in list_registry_items(baby_profile_id)]
+    rows = list_registry_items(baby_profile_id, limit=limit, offset=offset)
+    return [_item_json(r) for r in rows]
 
 
 def get_item(

@@ -40,12 +40,14 @@ def list_babies(
     offset: int = Query(default=0, ge=0),
 ) -> dict[str, Any]:
     rows = list_babies_for_user(user.uid, limit=limit + 1, offset=offset)
+    page = offset_page_from_extra_row(rows, offset=offset, limit=limit)
     summaries: list[dict[str, Any]] = []
-    for row in rows:
+    for row in page["items"]:
         owner_count = count_active_owners(row["id"])
         row["can_leave"] = can_leave_baby(row["role"], owner_count)
         summaries.append(baby_summary_from_row(row).model_dump(mode="json"))
-    return offset_page_from_extra_row(summaries, offset=offset, limit=limit)
+    page["items"] = summaries
+    return page
 
 
 @router.post("", response_model=BabySummary, status_code=status.HTTP_201_CREATED)

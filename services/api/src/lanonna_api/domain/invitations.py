@@ -31,9 +31,12 @@ EMAIL_QUEUE_FAILED_MESSAGE = (
 def list_invitations_for_owner(
     firebase_uid: str,
     baby_profile_id: uuid.UUID,
+    *,
+    limit: int,
+    offset: int,
 ) -> list[dict[str, Any]]:
     require_owner_baby(firebase_uid, baby_profile_id)
-    return list_invitations_for_baby(baby_profile_id)
+    return list_invitations_for_baby(baby_profile_id, limit=limit, offset=offset)
 
 
 def revoke_invitation_for_owner(
