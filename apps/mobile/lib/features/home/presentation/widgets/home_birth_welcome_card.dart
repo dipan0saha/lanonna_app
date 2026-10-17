@@ -51,7 +51,9 @@ class HomeBirthWelcomeCard extends StatelessWidget {
           Text('🎉', style: context.textStyles.headlineMedium),
           const SizedBox(height: 8),
           Text(
-            '${welcome.babyName} is here!',
+            AppLocalizations.of(
+              context,
+            )!.homeBirthWelcomeTitle(welcome.babyName),
             style: text.titleSmall,
             textAlign: TextAlign.center,
           ),

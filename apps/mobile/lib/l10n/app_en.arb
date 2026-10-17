@@ -338,8 +338,12 @@
   "onboardingAgreeToTerms": "I agree to the {terms} and {privacy}",
   "@onboardingAgreeToTerms": {
     "placeholders": {
-      "terms": {"type": "String"},
-      "privacy": {"type": "String"}
+      "terms": {
+        "type": "String"
+      },
+      "privacy": {
+        "type": "String"
+      }
     }
   },
   "onboardingTermsOfService": "Terms of Service",
@@ -347,13 +351,17 @@
   "onboardingSignupAuthPrompt": "Already have an account? {action}",
   "@onboardingSignupAuthPrompt": {
     "placeholders": {
-      "action": {"type": "String"}
+      "action": {
+        "type": "String"
+      }
     }
   },
   "onboardingLoginAuthPrompt": "Don't have an account? {action}",
   "@onboardingLoginAuthPrompt": {
     "placeholders": {
-      "action": {"type": "String"}
+      "action": {
+        "type": "String"
+      }
     }
   },
   "registryPriorityLabel": "Priority",
@@ -598,5 +606,130 @@
   "labelSignUpEmail": "or sign up with email",
   "messageEmailCom": "you@email.com",
   "messagePerson": "👑 This person will also be a Baby Profile Owner",
-  "commentDeleteMenuLabel": "Delete comment"
+  "commentDeleteMenuLabel": "Delete comment",
+  "versionGateUnsupported": "This version ({installedVersion}) is no longer supported. Install {minimumVersion} or newer to continue.",
+  "@versionGateUnsupported": {
+    "placeholders": {
+      "installedVersion": {
+        "type": "String"
+      },
+      "minimumVersion": {
+        "type": "String"
+      }
+    }
+  },
+  "chipRemoveSemantics": "Remove {label}",
+  "@chipRemoveSemantics": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "registryPriorityShort": "P{priority}",
+  "@registryPriorityShort": {
+    "placeholders": {
+      "priority": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationPrefsFrequencyTitle": "How often would you like updates for {babyLabel}?",
+  "@notificationPrefsFrequencyTitle": {
+    "placeholders": {
+      "babyLabel": {
+        "type": "String"
+      }
+    }
+  },
+  "accountStorageUsed": "{used} of {quota} used",
+  "@accountStorageUsed": {
+    "placeholders": {
+      "used": {
+        "type": "String"
+      },
+      "quota": {
+        "type": "String"
+      }
+    }
+  },
+  "funRemoveNameSemantics": "Remove {name}",
+  "@funRemoveNameSemantics": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "predictionYourGenderVote": "Your vote: {vote}",
+  "@predictionYourGenderVote": {
+    "placeholders": {
+      "vote": {
+        "type": "String"
+      }
+    }
+  },
+  "photoUploadedBy": "Uploaded {meta} by {name}",
+  "@photoUploadedBy": {
+    "placeholders": {
+      "meta": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "photoTaggedBabies": "In this photo: {names}",
+  "@photoTaggedBabies": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "homeBirthWelcomeTitle": "{name} is here!",
+  "@homeBirthWelcomeTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "homeWaitingFor": "Waiting for {name}",
+  "@homeWaitingFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteCoOwnerAccessBody": "You now have full access to edit {babyName}''s profile, add events, manage the registry, and invite others, just like {inviterName}.",
+  "@inviteCoOwnerAccessBody": {
+    "placeholders": {
+      "babyName": {
+        "type": "String"
+      },
+      "inviterName": {
+        "type": "String"
+      }
+    }
+  },
+  "emailVerifyDevAddressHint": "This looks like a dev-only address - it may not receive mail. Mark the account verified in Firebase Console, or use a real email.",
+  "registryPurchasedBy": "Purchased by {name}",
+  "@registryPurchasedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "statusLabel": "Status: {status}",
+  "@statusLabel": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  }
 }

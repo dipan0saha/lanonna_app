@@ -63,8 +63,9 @@ class RegistryNeededRow extends StatelessWidget {
                     if (item.description != null &&
                         item.description!.isNotEmpty)
                       Padding(
-                        padding:
-                            const EdgeInsets.only(top: AppSpacing.hairline),
+                        padding: const EdgeInsets.only(
+                          top: AppSpacing.hairline,
+                        ),
                         child: Text(
                           item.description!,
                           style: context.textStyles.bodySmall?.copyWith(
@@ -111,10 +112,7 @@ class RegistryNeededRow extends StatelessWidget {
           ),
           if (isOwner && claimButton != null) ...[
             SizedBox(height: AppSpacing.sm),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: claimButton,
-            ),
+            Align(alignment: Alignment.centerLeft, child: claimButton),
           ],
         ],
       ),
@@ -154,7 +152,9 @@ class RegistryPurchasedRow extends StatelessWidget {
                 ),
                 if (purchase != null)
                   Text(
-                    'Purchased by ${purchase.purchaserDisplayName}',
+                    AppLocalizations.of(
+                      context,
+                    )!.registryPurchasedBy(purchase.purchaserDisplayName),
                     style: context.textStyles.bodySmall,
                   ),
               ],
@@ -163,7 +163,10 @@ class RegistryPurchasedRow extends StatelessWidget {
           if (canUndo && onUndo != null)
             AppSemantics.button(
               'registry_undo_purchase',
-              TextButton(onPressed: onUndo, child: Text(AppLocalizations.of(context)!.actionUndo)),
+              TextButton(
+                onPressed: onUndo,
+                child: Text(AppLocalizations.of(context)!.actionUndo),
+              ),
               label: AppLocalizations.of(context)!.registryUndoPurchase,
             ),
         ],

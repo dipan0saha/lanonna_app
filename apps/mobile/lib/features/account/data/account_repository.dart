@@ -334,10 +334,7 @@ class AccountRepository {
   }
 
   Future<List<MemberRow>> listMembers(String babyId) async {
-    return _fetchOffsetList(
-      '/v1/babies/$babyId/members',
-      MemberRow.fromJson,
-    );
+    return _fetchOffsetList('/v1/babies/$babyId/members', MemberRow.fromJson);
   }
 
   Future<List<InvitationRow>> listInvitations(String babyId) async {
@@ -350,18 +347,11 @@ class AccountRepository {
   Future<List<T>> _fetchOffsetList<T>(
     String path,
     T Function(Map<String, dynamic>) mapItem,
-  ) async {
-    const pageSize = 100;
-    final all = <T>[];
-    var offset = 0;
-    while (true) {
-      final json = await _api.getJson('$path?limit=$pageSize&offset=$offset');
-      final page = parseOffsetPage(json, mapItem, defaultLimit: pageSize);
-      all.addAll(page.items);
-      if (!page.hasMore) break;
-      offset += page.items.length;
-    }
-    return all;
+  ) {
+    return fetchAllOffsetPages(
+      (limit, offset) => _api.getJson('$path?limit=$limit&offset=$offset'),
+      mapItem,
+    );
   }
 
   Future<void> revokeInvitation(String babyId, String invitationId) async {

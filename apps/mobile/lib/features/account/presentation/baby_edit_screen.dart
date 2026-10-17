@@ -221,7 +221,9 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Text(
-                'Status: ${_baby!.lifecycleStatus}',
+                AppLocalizations.of(
+                  context,
+                )!.statusLabel(_baby!.lifecycleStatus),
                 style: context.textStyles.bodySmall?.copyWith(
                   color: AppColors.muted,
                 ),

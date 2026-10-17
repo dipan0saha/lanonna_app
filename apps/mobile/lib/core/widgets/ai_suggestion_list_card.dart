@@ -34,9 +34,10 @@ class AiSuggestionListCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppMetrics.horizontalPadding),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppMetrics.horizontalPadding,
+      ),
       child: Card(
         margin: EdgeInsets.zero,
         child: Padding(

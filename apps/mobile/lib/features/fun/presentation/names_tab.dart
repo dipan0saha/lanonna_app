@@ -125,7 +125,9 @@ class _NamesTabState extends State<NamesTab> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(AppLocalizations.of(ctx)!.funRemoveNameTitle),
-        content: Text(AppLocalizations.of(ctx)!.funRemoveNameBody(s.suggestedName)),
+        content: Text(
+          AppLocalizations.of(ctx)!.funRemoveNameBody(s.suggestedName),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -241,8 +243,18 @@ class _NamesTabState extends State<NamesTab> {
                   Expanded(
                     child: SegmentedButton<String>(
                       segments: [
-                        ButtonSegment(value: 'male', label: Text(AppLocalizations.of(context)!.funGenderBoy)),
-                        ButtonSegment(value: 'female', label: Text(AppLocalizations.of(context)!.funGenderGirl)),
+                        ButtonSegment(
+                          value: 'male',
+                          label: Text(
+                            AppLocalizations.of(context)!.funGenderBoy,
+                          ),
+                        ),
+                        ButtonSegment(
+                          value: 'female',
+                          label: Text(
+                            AppLocalizations.of(context)!.funGenderGirl,
+                          ),
+                        ),
                       ],
                       selected: {_gender},
                       onSelectionChanged: (s) =>
@@ -250,7 +262,10 @@ class _NamesTabState extends State<NamesTab> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  FilledButton(onPressed: _submit, child: Text(AppLocalizations.of(context)!.actionAdd)),
+                  FilledButton(
+                    onPressed: _submit,
+                    child: Text(AppLocalizations.of(context)!.actionAdd),
+                  ),
                 ],
               ),
               if (!_isOwner)
@@ -381,7 +396,9 @@ class _NameSuggestionCard extends StatelessWidget {
                 if (!readOnly && suggestion.canDelete)
                   AppIconButton(
                     semanticsId: 'name_remove_${suggestion.id}',
-                    label: 'Remove ${suggestion.suggestedName}',
+                    label: AppLocalizations.of(
+                      context,
+                    )!.funRemoveNameSemantics(suggestion.suggestedName),
                     onPressed: onDelete,
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.zero,

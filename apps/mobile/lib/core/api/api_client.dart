@@ -93,18 +93,6 @@ class ApiClient {
     return _decodeObject(response);
   }
 
-  Future<List<dynamic>> getJsonList(
-    String path, {
-    Map<String, String>? queryParameters,
-  }) async {
-    final response = await _authorizedRequest(
-      'GET',
-      path,
-      queryParameters: queryParameters,
-    );
-    return _decodeList(response);
-  }
-
   Future<Map<String, dynamic>> postJson(
     String path, {
     Map<String, dynamic>? body,
@@ -301,11 +289,5 @@ class ApiClient {
     final decoded = jsonDecode(response.body);
     if (decoded is Map<String, dynamic>) return decoded;
     throw ApiException('Expected JSON object');
-  }
-
-  List<dynamic> _decodeList(http.Response response) {
-    final decoded = jsonDecode(response.body);
-    if (decoded is List) return decoded;
-    throw ApiException('Expected JSON list');
   }
 }

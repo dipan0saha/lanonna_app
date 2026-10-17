@@ -485,7 +485,11 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                         else
                           ColoredBox(
                             color: Colors.grey.shade300,
-                            child: Center(child: Text(AppLocalizations.of(context)!.photoProcessing)),
+                            child: Center(
+                              child: Text(
+                                AppLocalizations.of(context)!.photoProcessing,
+                              ),
+                            ),
                           ),
                         if (_hasPreviousPhoto)
                           Positioned(
@@ -539,7 +543,9 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                               ),
                               TextButton(
                                 onPressed: _saveCaption,
-                                child: Text(AppLocalizations.of(context)!.actionSave),
+                                child: Text(
+                                  AppLocalizations.of(context)!.actionSave,
+                                ),
                               ),
                             ],
                           )
@@ -565,7 +571,9 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                             ],
                           ),
                         Text(
-                          'Uploaded $meta by ${detail.uploaderDisplayName}',
+                          AppLocalizations.of(
+                            context,
+                          )!.photoUploadedBy(meta, detail.uploaderDisplayName),
                           style: styles.bodySmall?.copyWith(
                             color: AppColors.muted,
                           ),
@@ -628,7 +636,9 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                         ] else if (detail.taggedBabies.isNotEmpty) ...[
                           const SizedBox(height: 16),
                           Text(
-                            'In this photo: ${detail.taggedBabies.map((t) => t.name).join(', ')}',
+                            AppLocalizations.of(context)!.photoTaggedBabies(
+                              detail.taggedBabies.map((t) => t.name).join(', '),
+                            ),
                             style: styles.bodySmall?.copyWith(
                               color: AppColors.muted,
                             ),

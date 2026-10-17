@@ -22,17 +22,22 @@ class OnboardingEmailVerifyScreen extends StatefulWidget {
   const OnboardingEmailVerifyScreen({super.key});
 
   @override
-  State<OnboardingEmailVerifyScreen> createState() => _OnboardingEmailVerifyScreenState();
+  State<OnboardingEmailVerifyScreen> createState() =>
+      _OnboardingEmailVerifyScreenState();
 }
 
-class _OnboardingEmailVerifyScreenState extends State<OnboardingEmailVerifyScreen> {
+class _OnboardingEmailVerifyScreenState
+    extends State<OnboardingEmailVerifyScreen> {
   Timer? _pollTimer;
   String? _message;
 
   @override
   void initState() {
     super.initState();
-    _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) => _checkVerified(silent: true));
+    _pollTimer = Timer.periodic(
+      const Duration(seconds: 3),
+      (_) => _checkVerified(silent: true),
+    );
   }
 
   @override
@@ -69,7 +74,9 @@ class _OnboardingEmailVerifyScreenState extends State<OnboardingEmailVerifyScree
     } on FirebaseAuthException catch (e) {
       setState(() => _message = userFacingAuthError(e));
     } catch (_) {
-      setState(() => _message = 'Could not send verification email. Please try again.');
+      setState(
+        () => _message = 'Could not send verification email. Please try again.',
+      );
     }
   }
 
@@ -95,11 +102,18 @@ class _OnboardingEmailVerifyScreenState extends State<OnboardingEmailVerifyScree
             child: OnboardingIconBlob(
               size: 96,
               backgroundColor: AppColors.sageTint,
-              child: Icon(Icons.mail_outline, size: 38, color: AppColors.primaryDark),
+              child: Icon(
+                Icons.mail_outline,
+                size: 38,
+                color: AppColors.primaryDark,
+              ),
             ),
           ),
           const SizedBox(height: 22),
-          OnboardingHeadline(l10n.emailVerifyHeadline, textAlign: TextAlign.center),
+          OnboardingHeadline(
+            l10n.emailVerifyHeadline,
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 12),
           OnboardingSupportText(
             l10n.emailVerifyBody(email),
@@ -111,8 +125,7 @@ class _OnboardingEmailVerifyScreenState extends State<OnboardingEmailVerifyScree
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Text(
-                  'This looks like a dev-only address - it may not receive mail. '
-                  'Mark the account verified in Firebase Console, or use a real email.',
+                  AppLocalizations.of(context)!.emailVerifyDevAddressHint,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ),

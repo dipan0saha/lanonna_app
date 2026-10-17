@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_metrics.dart';
@@ -160,7 +161,7 @@ class AppRemovableChip extends StatelessWidget {
           const SizedBox(width: 4),
           Semantics(
             button: canRemove,
-            label: 'Remove $label',
+            label: AppLocalizations.of(context)!.chipRemoveSemantics(label),
             child: GestureDetector(
               onTap: canRemove ? onRemove : null,
               behavior: HitTestBehavior.opaque,

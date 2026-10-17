@@ -86,14 +86,17 @@ class AppVersionBlockScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'This version ($installedVersion) is no longer supported. '
-                'Install $minimumVersion or newer to continue.',
+                AppLocalizations.of(
+                  context,
+                )!.versionGateUnsupported(installedVersion, minimumVersion),
                 textAlign: TextAlign.center,
               ),
               const Spacer(),
               FilledButton(
                 onPressed: () => _openStore(context),
-                child: Text(AppLocalizations.of(context)!.versionGateUpdateInStore),
+                child: Text(
+                  AppLocalizations.of(context)!.versionGateUpdateInStore,
+                ),
               ),
             ],
           ),

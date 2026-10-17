@@ -7,24 +7,13 @@ class RegistryRepository {
 
   final ApiClient _api;
 
-  Future<List<RegistryItem>> listItems(String babyId) async {
-    const pageSize = 100;
-    final all = <RegistryItem>[];
-    var offset = 0;
-    while (true) {
-      final json = await _api.getJson(
-        '/v1/babies/$babyId/registry/items?limit=$pageSize&offset=$offset',
-      );
-      final page = parseOffsetPage(
-        json,
-        RegistryItem.fromJson,
-        defaultLimit: pageSize,
-      );
-      all.addAll(page.items);
-      if (!page.hasMore) break;
-      offset += page.items.length;
-    }
-    return all;
+  Future<List<RegistryItem>> listItems(String babyId) {
+    return fetchAllOffsetPages(
+      (limit, offset) => _api.getJson(
+        '/v1/babies/$babyId/registry/items?limit=$limit&offset=$offset',
+      ),
+      RegistryItem.fromJson,
+    );
   }
 
   Future<RegistryItem> createItem(
@@ -35,14 +24,17 @@ class RegistryRepository {
     required int priority,
     String? catalogSuggestionId,
   }) async {
-    final json = await _api.postJson('/v1/babies/$babyId/registry/items', body: {
-      'name': name,
-      if (description != null) 'description': description,
-      if (productUrl != null) 'product_url': productUrl,
-      'priority': priority,
-      if (catalogSuggestionId != null)
-        'catalog_suggestion_id': catalogSuggestionId,
-    });
+    final json = await _api.postJson(
+      '/v1/babies/$babyId/registry/items',
+      body: {
+        'name': name,
+        if (description != null) 'description': description,
+        if (productUrl != null) 'product_url': productUrl,
+        'priority': priority,
+        if (catalogSuggestionId != null)
+          'catalog_suggestion_id': catalogSuggestionId,
+      },
+    );
     return RegistryItem.fromJson(json);
   }
 
@@ -79,8 +71,9 @@ class RegistryRepository {
   }
 
   Future<RegistryShippingAddress> getShippingAddress(String babyId) async {
-    final json =
-        await _api.getJson('/v1/babies/$babyId/registry/shipping-address');
+    final json = await _api.getJson(
+      '/v1/babies/$babyId/registry/shipping-address',
+    );
     return RegistryShippingAddress.fromJson(json);
   }
 

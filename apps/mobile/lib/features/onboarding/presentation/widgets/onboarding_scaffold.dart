@@ -29,12 +29,12 @@ class OnboardingScaffold extends StatelessWidget {
   final Widget? bottom;
   final bool pinBottomCta;
   final bool resizeToAvoidBottomInset;
+
   /// When false, [body] fills the area below the top row (e.g. carousels in [Expanded]).
   final bool scrollBody;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       resizeToAvoidBottomInset: resizeToAvoidBottomInset,
       body: SafeArea(
@@ -125,10 +125,10 @@ class _TopRow extends StatelessWidget {
                   child: Text(
                     '←',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontSize: 16,
-                          height: 1,
-                          color: AppColors.textPrimary,
-                        ),
+                      fontSize: 16,
+                      height: 1,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
               ),
@@ -140,10 +140,10 @@ class _TopRow extends StatelessWidget {
               child: Text(
                 skipLabel,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.muted,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
-                    ),
+                  color: AppColors.muted,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                ),
               ),
             ),
         ],

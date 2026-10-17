@@ -89,17 +89,19 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
     });
     try {
       await context.read<AuthRepository>().signUpWithEmail(
-            _emailController.text,
-            _passwordController.text,
-          );
+        _emailController.text,
+        _passwordController.text,
+      );
       if (!mounted) return;
-      await navigateAfterOnboardingAuth(context, isSignUp: true, usedOAuth: false);
+      await navigateAfterOnboardingAuth(
+        context,
+        isSignUp: true,
+        usedOAuth: false,
+      );
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       final l10n = AppLocalizations.of(context)!;
-      setState(
-        () => _error = authErrorMessage(e, l10n, flow: AuthFlow.signUp),
-      );
+      setState(() => _error = authErrorMessage(e, l10n, flow: AuthFlow.signUp));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -113,13 +115,15 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
     try {
       await context.read<AuthRepository>().signInWithGoogle();
       if (!mounted) return;
-      await navigateAfterOnboardingAuth(context, isSignUp: true, usedOAuth: true);
+      await navigateAfterOnboardingAuth(
+        context,
+        isSignUp: true,
+        usedOAuth: true,
+      );
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       final l10n = AppLocalizations.of(context)!;
-      setState(
-        () => _error = authErrorMessage(e, l10n, flow: AuthFlow.signUp),
-      );
+      setState(() => _error = authErrorMessage(e, l10n, flow: AuthFlow.signUp));
     } catch (e) {
       if (!mounted) return;
       setState(() => _error = apiErrorMessage(e));
@@ -143,7 +147,10 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
             const SizedBox(height: 6),
             const OnboardingLogoMark(),
             const SizedBox(height: 26),
-            OnboardingGoogleButton(onPressed: _busy ? null : _google, isLoading: _busy),
+            OnboardingGoogleButton(
+              onPressed: _busy ? null : _google,
+              isLoading: _busy,
+            ),
             OnboardingDivider(),
             OnboardingTextField(
               fieldKey: const Key('onboarding_signup_email'),
@@ -174,12 +181,15 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
               onPressed: _busy ? null : _submit,
             ),
             OnboardingBottomLink(
-              template: l10n.onboardingSignupAuthPrompt(l10n.authLogIn),
+              message: l10n.onboardingSignupAuthPrompt,
               actionText: l10n.authLogIn,
               onTap: _busy ? () {} : () => context.go(OnboardingRoutes.login),
             ),
             if (_error != null)
-              Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+              Text(
+                _error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
             const SizedBox(height: 26),
           ],
         ),

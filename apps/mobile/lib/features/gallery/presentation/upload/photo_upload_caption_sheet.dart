@@ -56,7 +56,6 @@ class _PhotoUploadCaptionSheetState extends State<_PhotoUploadCaptionSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     return SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -90,11 +89,17 @@ class _PhotoUploadCaptionSheetState extends State<_PhotoUploadCaptionSheet> {
           AppResponsiveButtonPair(
             start: AppSemantics.button(
               'gallery_upload_skip',
-              OutlinedButton(onPressed: _skip, child: Text(AppLocalizations.of(context)!.actionSkip)),
+              OutlinedButton(
+                onPressed: _skip,
+                child: Text(AppLocalizations.of(context)!.actionSkip),
+              ),
             ),
             end: AppSemantics.button(
               'gallery_upload_post',
-              FilledButton(onPressed: _post, child: Text(AppLocalizations.of(context)!.actionPost)),
+              FilledButton(
+                onPressed: _post,
+                child: Text(AppLocalizations.of(context)!.actionPost),
+              ),
             ),
           ),
         ],

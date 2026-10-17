@@ -115,22 +115,34 @@ class _NotificationPreferencesScreenState
                 ),
                 SizedBox(height: AppSpacing.lg),
                 AppSectionTitle(
-                  title: 'How often would you like updates for $babyLabel?',
+                  title: AppLocalizations.of(
+                    context,
+                  )!.notificationPrefsFrequencyTitle(babyLabel),
                   style: context.textStyles.titleSmall,
                 ),
                 _digestTile('realtime', 'Real-time', prefs),
                 _digestTile('daily', 'Daily digest', prefs),
                 _digestTile('weekly', 'Weekly digest', prefs),
                 SwitchListTile(
-                  title: Text(AppLocalizations.of(context)!.notificationPrefsPushTitle),
-                  subtitle: Text(AppLocalizations.of(context)!.notificationPrefsPushSubtitle),
+                  title: Text(
+                    AppLocalizations.of(context)!.notificationPrefsPushTitle,
+                  ),
+                  subtitle: Text(
+                    AppLocalizations.of(context)!.notificationPrefsPushSubtitle,
+                  ),
                   value: prefs.pushEnabled,
                   onChanged: (v) =>
                       setState(() => _prefs = prefs.copyWith(pushEnabled: v)),
                 ),
                 SwitchListTile(
-                  title: Text(AppLocalizations.of(context)!.notificationPrefsDigestTitle),
-                  subtitle: Text(AppLocalizations.of(context)!.notificationPrefsDigestSubtitle),
+                  title: Text(
+                    AppLocalizations.of(context)!.notificationPrefsDigestTitle,
+                  ),
+                  subtitle: Text(
+                    AppLocalizations.of(
+                      context,
+                    )!.notificationPrefsDigestSubtitle,
+                  ),
                   value: prefs.emailDigestEnabled,
                   onChanged: (v) => setState(
                     () => _prefs = prefs.copyWith(emailDigestEnabled: v),

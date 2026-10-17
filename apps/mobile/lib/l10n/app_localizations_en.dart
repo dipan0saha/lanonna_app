@@ -1484,4 +1484,81 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commentDeleteMenuLabel => 'Delete comment';
+
+  @override
+  String versionGateUnsupported(
+    String installedVersion,
+    String minimumVersion,
+  ) {
+    return 'This version ($installedVersion) is no longer supported. Install $minimumVersion or newer to continue.';
+  }
+
+  @override
+  String chipRemoveSemantics(String label) {
+    return 'Remove $label';
+  }
+
+  @override
+  String registryPriorityShort(int priority) {
+    return 'P$priority';
+  }
+
+  @override
+  String notificationPrefsFrequencyTitle(String babyLabel) {
+    return 'How often would you like updates for $babyLabel?';
+  }
+
+  @override
+  String accountStorageUsed(String used, String quota) {
+    return '$used of $quota used';
+  }
+
+  @override
+  String funRemoveNameSemantics(String name) {
+    return 'Remove $name';
+  }
+
+  @override
+  String predictionYourGenderVote(String vote) {
+    return 'Your vote: $vote';
+  }
+
+  @override
+  String photoUploadedBy(String meta, String name) {
+    return 'Uploaded $meta by $name';
+  }
+
+  @override
+  String photoTaggedBabies(String names) {
+    return 'In this photo: $names';
+  }
+
+  @override
+  String homeBirthWelcomeTitle(String name) {
+    return '$name is here!';
+  }
+
+  @override
+  String homeWaitingFor(String name) {
+    return 'Waiting for $name';
+  }
+
+  @override
+  String inviteCoOwnerAccessBody(String babyName, String inviterName) {
+    return 'You now have full access to edit $babyName\'\'s profile, add events, manage the registry, and invite others, just like $inviterName.';
+  }
+
+  @override
+  String get emailVerifyDevAddressHint =>
+      'This looks like a dev-only address - it may not receive mail. Mark the account verified in Firebase Console, or use a real email.';
+
+  @override
+  String registryPurchasedBy(String name) {
+    return 'Purchased by $name';
+  }
+
+  @override
+  String statusLabel(String status) {
+    return 'Status: $status';
+  }
 }

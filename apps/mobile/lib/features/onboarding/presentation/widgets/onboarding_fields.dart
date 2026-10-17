@@ -57,7 +57,6 @@ class OnboardingTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -285,6 +284,7 @@ class OnboardingTermsAgreementCheckbox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final muted = context.textStyles.bodySmall?.copyWith(
       color: AppColors.muted,
     );
@@ -306,19 +306,16 @@ class OnboardingTermsAgreementCheckbox extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.only(top: 10),
             child: TappablePlaceholderRichText(
-              template: AppLocalizations.of(context)!.onboardingAgreeToTerms(
-                AppLocalizations.of(context)!.onboardingTermsOfService,
-                AppLocalizations.of(context)!.onboardingPrivacyPolicy,
-              ),
+              message: (t) => l10n.onboardingAgreeToTerms(t[0], t[1]),
               style: muted,
               linkStyle: link,
-              spans: [
-                TappableTextSpan(
-                  text: AppLocalizations.of(context)!.onboardingTermsOfService,
+              links: [
+                PlaceholderLink(
+                  label: l10n.onboardingTermsOfService,
                   onTap: onTermsTap,
                 ),
-                TappableTextSpan(
-                  text: AppLocalizations.of(context)!.onboardingPrivacyPolicy,
+                PlaceholderLink(
+                  label: l10n.onboardingPrivacyPolicy,
                   onTap: onPrivacyTap,
                 ),
               ],
@@ -453,14 +450,14 @@ class OnboardingHelperText extends StatelessWidget {
 class OnboardingBottomLink extends StatelessWidget {
   const OnboardingBottomLink({
     super.key,
-    required this.template,
+    required this.message,
     required this.actionText,
     required this.onTap,
     this.actionKey,
   });
 
-  /// Full localized sentence with [actionText] substituted for `{action}`.
-  final String template;
+  /// gen-l10n method for the sentence; its `{action}` placeholder becomes the link.
+  final String Function(String action) message;
   final String actionText;
   final VoidCallback onTap;
   final Key? actionKey;
@@ -480,13 +477,11 @@ class OnboardingBottomLink extends StatelessWidget {
         key: actionKey,
         onTap: onTap,
         child: TappablePlaceholderRichText(
-          template: template,
+          message: (t) => message(t[0]),
           style: muted,
           linkStyle: link,
           textAlign: TextAlign.center,
-          spans: [
-            TappableTextSpan(text: actionText, onTap: onTap),
-          ],
+          links: [PlaceholderLink(label: actionText, onTap: onTap)],
         ),
       ),
     );

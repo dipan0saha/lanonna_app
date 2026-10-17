@@ -28,7 +28,10 @@ class AccountStorageCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            '${_formatGb(usage.usedBytes)} of ${_formatGb(usage.quotaBytes)} used',
+            AppLocalizations.of(context)!.accountStorageUsed(
+              _formatGb(usage.usedBytes),
+              _formatGb(usage.quotaBytes),
+            ),
             style: text.titleSmall,
           ),
           const SizedBox(height: 10),

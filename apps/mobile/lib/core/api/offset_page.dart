@@ -32,3 +32,29 @@ OffsetPage<T> parseOffsetPage<T>(
     limit: readInt(json['limit'], defaultValue: defaultLimit),
   );
 }
+
+/// Largest page the API accepts (`limit` max on every list endpoint).
+const int maxOffsetPageLimit = 100;
+
+/// Fetches every page of an offset-paginated collection.
+///
+/// [fetchPage] receives `limit` and `offset` and returns the decoded envelope.
+/// Used for collections the UI needs whole (babies, members, registry).
+Future<List<T>> fetchAllOffsetPages<T>(
+  Future<Map<String, dynamic>> Function(int limit, int offset) fetchPage,
+  T Function(Map<String, dynamic> row) mapItem, {
+  int pageSize = maxOffsetPageLimit,
+}) async {
+  final all = <T>[];
+  var offset = 0;
+  while (true) {
+    final page = parseOffsetPage(
+      await fetchPage(pageSize, offset),
+      mapItem,
+      defaultLimit: pageSize,
+    );
+    all.addAll(page.items);
+    if (!page.hasMore || page.items.isEmpty) return all;
+    offset += page.items.length;
+  }
+}

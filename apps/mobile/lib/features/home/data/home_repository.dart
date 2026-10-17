@@ -41,25 +41,11 @@ class HomeRepository {
     await store.setSelectedBabyId(babyId);
   }
 
-  static const int _babyListPageSize = 100;
-
-  Future<List<BabySummary>> _fetchAllBabies() async {
-    final all = <BabySummary>[];
-    var offset = 0;
-    while (true) {
-      final json = await _api.getJson(
-        '/v1/babies?limit=$_babyListPageSize&offset=$offset',
-      );
-      final page = parseOffsetPage(
-        json,
-        BabySummary.fromJson,
-        defaultLimit: _babyListPageSize,
-      );
-      all.addAll(page.items);
-      if (!page.hasMore) break;
-      offset += page.items.length;
-    }
-    return all;
+  Future<List<BabySummary>> _fetchAllBabies() {
+    return fetchAllOffsetPages(
+      (limit, offset) => _api.getJson('/v1/babies?limit=$limit&offset=$offset'),
+      BabySummary.fromJson,
+    );
   }
 
   static bool _shouldServeStaleBabyCache(Object error) {
@@ -202,7 +188,11 @@ class HomeRepository {
     final json = await _api.getJson(
       '/v1/babies/$babyId/activity-events?limit=$limit&offset=$offset&scope=$scope',
     );
-    final page = parseOffsetPage(json, HomeActivityItem.fromJson, defaultLimit: limit);
+    final page = parseOffsetPage(
+      json,
+      HomeActivityItem.fromJson,
+      defaultLimit: limit,
+    );
     return ActivityPage(items: page.items, hasMore: page.hasMore);
   }
 }

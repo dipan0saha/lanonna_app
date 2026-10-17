@@ -52,14 +52,11 @@ class OwnerExpectingHeroCard extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            'Waiting for $babyName',
+            AppLocalizations.of(context)!.homeWaitingFor(babyName),
             style: text.bodyLarge,
           ),
           const SizedBox(height: 12),
-          Text(
-            daysToDueDate?.toString() ?? '-',
-            style: text.displayLarge,
-          ),
+          Text(daysToDueDate?.toString() ?? '-', style: text.displayLarge),
           const SizedBox(height: 4),
           Text(
             dueDateLabel != null

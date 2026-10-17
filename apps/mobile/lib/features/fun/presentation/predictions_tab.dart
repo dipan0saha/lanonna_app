@@ -303,7 +303,11 @@ class _PredictionsTabState extends State<PredictionsTab> {
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Text(
-                'Your vote: ${p!.viewerGenderVote == 'male' ? 'Boy' : 'Girl'}',
+                AppLocalizations.of(context)!.predictionYourGenderVote(
+                  p!.viewerGenderVote == 'male'
+                      ? AppLocalizations.of(context)!.funGenderBoy
+                      : AppLocalizations.of(context)!.funGenderGirl,
+                ),
                 style: context.textStyles.bodySmall,
               ),
             ),

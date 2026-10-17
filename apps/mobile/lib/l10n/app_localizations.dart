@@ -2721,6 +2721,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete comment'**
   String get commentDeleteMenuLabel;
+
+  /// No description provided for @versionGateUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This version ({installedVersion}) is no longer supported. Install {minimumVersion} or newer to continue.'**
+  String versionGateUnsupported(String installedVersion, String minimumVersion);
+
+  /// No description provided for @chipRemoveSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {label}'**
+  String chipRemoveSemantics(String label);
+
+  /// No description provided for @registryPriorityShort.
+  ///
+  /// In en, this message translates to:
+  /// **'P{priority}'**
+  String registryPriorityShort(int priority);
+
+  /// No description provided for @notificationPrefsFrequencyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How often would you like updates for {babyLabel}?'**
+  String notificationPrefsFrequencyTitle(String babyLabel);
+
+  /// No description provided for @accountStorageUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'{used} of {quota} used'**
+  String accountStorageUsed(String used, String quota);
+
+  /// No description provided for @funRemoveNameSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name}'**
+  String funRemoveNameSemantics(String name);
+
+  /// No description provided for @predictionYourGenderVote.
+  ///
+  /// In en, this message translates to:
+  /// **'Your vote: {vote}'**
+  String predictionYourGenderVote(String vote);
+
+  /// No description provided for @photoUploadedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploaded {meta} by {name}'**
+  String photoUploadedBy(String meta, String name);
+
+  /// No description provided for @photoTaggedBabies.
+  ///
+  /// In en, this message translates to:
+  /// **'In this photo: {names}'**
+  String photoTaggedBabies(String names);
+
+  /// No description provided for @homeBirthWelcomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is here!'**
+  String homeBirthWelcomeTitle(String name);
+
+  /// No description provided for @homeWaitingFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for {name}'**
+  String homeWaitingFor(String name);
+
+  /// No description provided for @inviteCoOwnerAccessBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You now have full access to edit {babyName}\'\'s profile, add events, manage the registry, and invite others, just like {inviterName}.'**
+  String inviteCoOwnerAccessBody(String babyName, String inviterName);
+
+  /// No description provided for @emailVerifyDevAddressHint.
+  ///
+  /// In en, this message translates to:
+  /// **'This looks like a dev-only address - it may not receive mail. Mark the account verified in Firebase Console, or use a real email.'**
+  String get emailVerifyDevAddressHint;
+
+  /// No description provided for @registryPurchasedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchased by {name}'**
+  String registryPurchasedBy(String name);
+
+  /// No description provided for @statusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Status: {status}'**
+  String statusLabel(String status);
 }
 
 class _AppLocalizationsDelegate

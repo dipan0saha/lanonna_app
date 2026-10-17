@@ -19,7 +19,6 @@ class InviteLandingHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     final inviter = preview.inviterDisplayName ?? 'A family member';
     final line = preview.isAccepted
         ? "You're already a member"
@@ -191,7 +190,9 @@ class CoOwnerWelcomeBanner extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'You now have full access to edit $babyName\'s profile, add events, manage the registry, and invite others, just like $inviterName.',
+            AppLocalizations.of(
+              context,
+            )!.inviteCoOwnerAccessBody(babyName, inviterName),
             textAlign: TextAlign.center,
             style: text.bodySmall?.copyWith(
               height: 1.45,

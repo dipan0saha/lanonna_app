@@ -10,7 +10,6 @@ class InviteLandingLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     return const OnboardingScaffold(
       showBack: false,
       body: Center(child: CircularProgressIndicator()),
@@ -45,10 +44,16 @@ class InviteLandingProblem extends StatelessWidget {
           OnboardingSupportText(message),
           const SizedBox(height: 28),
           if (onRetry != null) ...[
-            OnboardingPrimaryButton(label: l10n.actionTryAgain, onPressed: onRetry!),
+            OnboardingPrimaryButton(
+              label: l10n.actionTryAgain,
+              onPressed: onRetry!,
+            ),
             const SizedBox(height: 12),
           ],
-          OnboardingPrimaryButton(label: l10n.deleteAccountReauthPasswordAction, onPressed: onContinue),
+          OnboardingPrimaryButton(
+            label: l10n.deleteAccountReauthPasswordAction,
+            onPressed: onContinue,
+          ),
         ],
       ),
     );

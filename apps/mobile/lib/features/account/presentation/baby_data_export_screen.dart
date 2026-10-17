@@ -111,7 +111,11 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
                   ),
                   const SizedBox(height: 16),
                   if (job != null) ...[
-                    AppSectionTitle(title: 'Status: ${job.status}'),
+                    AppSectionTitle(
+                      title: AppLocalizations.of(
+                        context,
+                      )!.statusLabel(job.status),
+                    ),
                     if (job.errorMessage != null)
                       Text(
                         job.errorMessage!,
@@ -135,7 +139,9 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
                   const SizedBox(height: 8),
                   TextButton(
                     onPressed: _refresh,
-                    child: Text(AppLocalizations.of(context)!.exportRefreshStatus),
+                    child: Text(
+                      AppLocalizations.of(context)!.exportRefreshStatus,
+                    ),
                   ),
                 ],
               ),
