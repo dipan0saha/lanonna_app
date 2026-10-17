@@ -179,7 +179,6 @@ class InvitationRow {
     required this.status,
     this.relationshipLabel,
     this.emailDeliveryStatus,
-    this.emailLastError,
   });
 
   final String id;
@@ -187,7 +186,6 @@ class InvitationRow {
   final InvitationStatus status;
   final String? relationshipLabel;
   final InviteEmailDeliveryStatus? emailDeliveryStatus;
-  final String? emailLastError;
 
   bool get canResendEmail =>
       status == InvitationStatus.pending &&
@@ -202,7 +200,6 @@ class InvitationRow {
       emailDeliveryStatus: InviteEmailDeliveryStatus.fromApi(
         json['email_delivery_status'] as String?,
       ),
-      emailLastError: json['email_last_error'] as String?,
     );
   }
 }

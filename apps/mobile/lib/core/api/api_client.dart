@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../config/app_config.dart';
+import 'api_error_code.dart';
 import 'api_exception.dart';
 
 typedef IdTokenProvider = Future<String?> Function();
@@ -18,26 +19,6 @@ typedef ApiSessionInvalidatedHandler =
 /// Invoked when baby membership was ended (removed or left) while the app is open.
 typedef ApiMembershipEndedHandler =
     Future<void> Function(ApiException exception);
-
-String formatApiErrorDetail(Object? detail) {
-  if (detail == null) return '';
-  if (detail is String) return detail;
-  if (detail is List) {
-    final parts = <String>[];
-    for (final entry in detail) {
-      if (entry is Map) {
-        final msg = entry['msg'];
-        if (msg != null) {
-          parts.add(msg.toString());
-          continue;
-        }
-      }
-      parts.add(entry.toString());
-    }
-    if (parts.isNotEmpty) return parts.join('; ');
-  }
-  return detail.toString();
-}
 
 /// How long one token read or HTTP call may run before [TimeoutException].
 const Duration apiRequestTimeout = Duration(seconds: 20);
@@ -65,10 +46,12 @@ class ApiClient {
   final Duration _timeout;
   final bool Function()? _isOffline;
 
-  ApiException get _offlineException => ApiException(
-    'network_unavailable',
-    detail: const {'error': 'network_unavailable'},
-  );
+  ApiException get _offlineException =>
+      _clientFailure(ApiErrorCode.networkUnavailable);
+
+  /// A failure that never reached the API, coded like a server error.
+  static ApiException _clientFailure(ApiErrorCode code) =>
+      ApiException(code.apiValue, detail: {'error': code.apiValue});
 
   void _throwIfOffline() {
     if (_isOffline?.call() == true) {
@@ -118,14 +101,8 @@ class ApiClient {
   }
 
   Future<void> deleteJson(String path, {Map<String, dynamic>? body}) async {
-    final response = await _authorizedRequest('DELETE', path, body: body);
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      return;
-    }
-    throw ApiException(
-      'http_${response.statusCode}',
-      statusCode: response.statusCode,
-    );
+    // Non-2xx responses already throw in [_authorizedRequest].
+    await _authorizedRequest('DELETE', path, body: body);
   }
 
   Future<http.Response> _publicRequest(
@@ -157,10 +134,7 @@ class ApiClient {
     } on SocketException {
       throw _offlineException;
     } on TimeoutException {
-      throw ApiException(
-        'network_timeout',
-        detail: const {'error': 'network_timeout'},
-      );
+      throw _clientFailure(ApiErrorCode.networkTimeout);
     } on http.ClientException {
       throw _offlineException;
     } on HandshakeException {
@@ -224,32 +198,23 @@ class ApiClient {
     } on SocketException {
       throw _offlineException;
     } on TimeoutException {
-      throw ApiException(
-        'network_timeout',
-        detail: const {'error': 'network_timeout'},
-      );
+      throw _clientFailure(ApiErrorCode.networkTimeout);
     } on http.ClientException {
-      throw ApiException(
-        'network_unavailable',
-        detail: const {'error': 'network_unavailable'},
-      );
+      throw _offlineException;
     } on HandshakeException {
-      throw ApiException(
-        'network_unavailable',
-        detail: const {'error': 'network_unavailable'},
-      );
+      throw _offlineException;
     }
   }
 
   Future<http.Response> _failAuthorizedResponse(http.Response response) async {
     final exception = _apiExceptionFromResponse(response);
     if (exception.statusCode == 401 &&
-        exception.detail?['error'] == 'user_deleted' &&
+        exception.code == ApiErrorCode.userDeleted &&
         _onSessionInvalidated != null) {
       await _onSessionInvalidated(exception);
     }
     if (exception.statusCode == 403 &&
-        exception.detail?['error'] == 'membership_ended' &&
+        exception.code == ApiErrorCode.membershipEnded &&
         _onMembershipEnded != null) {
       await _onMembershipEnded!(exception);
     }
@@ -259,21 +224,13 @@ class ApiClient {
   ApiException _apiExceptionFromResponse(http.Response response) {
     var message = 'http_${response.statusCode}';
     Map<String, dynamic>? detail;
-    String? serverMessage;
     try {
       final decoded = jsonDecode(response.body);
-      if (decoded is Map && decoded['detail'] != null) {
-        final raw = decoded['detail'];
-        if (raw is Map) {
-          detail = Map<String, dynamic>.from(raw);
-          final code = detail['error'];
-          if (code is String && code.isNotEmpty) message = code;
-          final text = detail['message'];
-          if (text is String && text.trim().isNotEmpty) serverMessage = text;
-        } else {
-          final formatted = formatApiErrorDetail(raw);
-          if (formatted.isNotEmpty) serverMessage = formatted;
-        }
+      final raw = decoded is Map ? decoded['detail'] : null;
+      if (raw is Map) {
+        detail = Map<String, dynamic>.from(raw);
+        final code = detail['error'];
+        if (code is String && code.isNotEmpty) message = code;
       }
     } catch (e, st) {
       debugPrint('api_client_error_body_parse_failed: $e\n$st');
@@ -282,7 +239,6 @@ class ApiClient {
       message,
       statusCode: response.statusCode,
       detail: detail,
-      serverMessage: serverMessage,
     );
   }
 

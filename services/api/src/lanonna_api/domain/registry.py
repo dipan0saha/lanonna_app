@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
+from lanonna_api.domain.errors import ErrorCode, ForbiddenError, InvalidInputError
 from lanonna_api.domain import assert_owner_membership
 from lanonna_api.domain.catalog_suggestion_ids import normalize_catalog_suggestion_id
 from lanonna_api.domain.url_validation import normalize_optional_http_url
@@ -97,12 +98,12 @@ def create_item(
 ) -> dict[str, Any]:
     assert_owner_membership(firebase_uid, baby_profile_id)
     if not name.strip():
-        raise ValueError("Item name is required.")
+        raise InvalidInputError(ErrorCode.ITEM_NAME_REQUIRED, "Item name is required.")
     product_url = normalize_optional_http_url(product_url)
     priority = max(1, min(5, priority))
     catalog_id = normalize_catalog_suggestion_id(catalog_suggestion_id)
     if catalog_id and catalog_suggestion_claimed(baby_profile_id, catalog_id):
-        raise ValueError("This suggestion is already on the registry.")
+        raise InvalidInputError(ErrorCode.ALREADY_ON_REGISTRY, "This suggestion is already on the registry.")
     row = create_registry_item(
         baby_profile_id,
         firebase_uid,
@@ -139,7 +140,7 @@ def patch_item(
 ) -> dict[str, Any]:
     assert_owner_membership(firebase_uid, baby_profile_id)
     if item_has_purchase(item_id):
-        raise PermissionError("Cannot edit a purchased registry item.")
+        raise ForbiddenError(ErrorCode.REGISTRY_ITEM_PURCHASED, "Cannot edit a purchased registry item.")
     if "product_url" in fields:
         fields["product_url"] = normalize_optional_http_url(fields["product_url"])
     if "priority" in fields and fields["priority"] is not None:
@@ -176,10 +177,10 @@ def claim_purchase(
     if item.get("purchase_id"):
         if item.get("purchased_by_firebase_uid") == firebase_uid:
             return {"status": "already_claimed"}
-        raise PermissionError("This item is already purchased.")
+        raise ForbiddenError(ErrorCode.REGISTRY_ITEM_PURCHASED, "This item is already purchased.")
     purchase = create_purchase(item_id, firebase_uid)
     if purchase["purchased_by_firebase_uid"] != firebase_uid:
-        raise PermissionError("This item is already purchased.")
+        raise ForbiddenError(ErrorCode.REGISTRY_ITEM_PURCHASED, "This item is already purchased.")
     item_name = item["name"]
     if is_owner:
         activity_text = f'Marked "{item_name}" as purchased'

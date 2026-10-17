@@ -132,7 +132,6 @@ def batch_invite_route(
             InviteRowResult(
                 email=r["email"],
                 status=r["status"],
-                message=r.get("message"),
                 invitation_id=r.get("invitation_id"),
             )
             for r in results

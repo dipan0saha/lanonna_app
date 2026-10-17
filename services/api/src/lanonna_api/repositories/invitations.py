@@ -23,23 +23,6 @@ def lookup_token_hash(token: str) -> str:
     return _hash_token(token.strip())
 
 
-def email_is_member(baby_profile_id: uuid.UUID, email: str) -> bool:
-    with get_connection() as conn:
-        row = conn.execute(
-            """
-            SELECT 1
-            FROM baby_memberships m
-            JOIN app_users u ON u.firebase_uid = m.firebase_uid
-            WHERE m.baby_profile_id = %s
-              AND m.removed_at IS NULL
-              AND lower(u.email) = lower(%s)
-            LIMIT 1
-            """,
-            (baby_profile_id, email),
-        ).fetchone()
-    return row is not None
-
-
 def list_invitations_for_baby(
     baby_profile_id: uuid.UUID,
     *,
@@ -76,104 +59,141 @@ def revoke_invitation(baby_profile_id: uuid.UUID, invitation_id: uuid.UUID) -> b
     return cur.rowcount > 0
 
 
-def email_has_pending_invite(baby_profile_id: uuid.UUID, email: str) -> bool:
-    with get_connection() as conn:
-        row = conn.execute(
-            """
-            SELECT 1
-            FROM invitations
-            WHERE baby_profile_id = %s
-              AND lower(invitee_email) = lower(%s)
-              AND status = 'pending'
-            LIMIT 1
-            """,
-            (baby_profile_id, email),
-        ).fetchone()
-    return row is not None
+INVITE_EXPIRY = timedelta(days=14)
 
 
-def fetch_pending_invitation_by_email(
+def load_invite_targets(
     baby_profile_id: uuid.UUID,
-    email: str,
-) -> dict[str, Any] | None:
+    emails: list[str],
+) -> dict[str, dict[str, Any]]:
+    """Membership and pending-invite state for every email in one statement.
+
+    Keys are the normalized (trimmed, lower-case) emails. ``pending_id`` is the
+    baby's pending invitation for that email, if any; ``pending_email_sent``
+    tells whether its email was already delivered.
+    """
+    normalized = list(dict.fromkeys(e.strip().lower() for e in emails if e.strip()))
+    if not normalized:
+        return {}
     with get_connection() as conn:
-        row = conn.execute(
+        rows = conn.execute(
             """
-            SELECT id, invitee_email, email_sent_at, email_delivery_status
-            FROM invitations
-            WHERE baby_profile_id = %s
-              AND lower(invitee_email) = lower(%s)
-              AND status = 'pending'
-            LIMIT 1
+            SELECT
+                e.email,
+                EXISTS (
+                    SELECT 1
+                    FROM baby_memberships m
+                    JOIN app_users u ON u.firebase_uid = m.firebase_uid
+                    WHERE m.baby_profile_id = %s
+                      AND m.removed_at IS NULL
+                      AND lower(u.email) = e.email
+                ) AS is_member,
+                p.id AS pending_id,
+                (p.email_sent_at IS NOT NULL) AS pending_email_sent
+            FROM unnest(%s::text[]) AS e(email)
+            LEFT JOIN invitations p
+              ON p.baby_profile_id = %s
+             AND lower(p.invitee_email) = e.email
+             AND p.status = 'pending'
             """,
-            (baby_profile_id, email.strip().lower()),
-        ).fetchone()
-    return dict(row) if row else None
+            (baby_profile_id, normalized, baby_profile_id),
+        ).fetchall()
+    return {
+        row["email"]: {
+            "is_member": bool(row["is_member"]),
+            "pending_id": row["pending_id"],
+            "pending_email_sent": bool(row["pending_email_sent"]),
+        }
+        for row in rows
+    }
+
+
+def _prepare_for_resend(
+    conn: Any,
+    baby_profile_id: uuid.UUID,
+    invitation_ids: list[uuid.UUID],
+) -> set[uuid.UUID]:
+    """Clear stale send claims on still-undelivered pending invites; ids that qualified."""
+    if not invitation_ids:
+        return set()
+    rows = conn.execute(
+        """
+        UPDATE invitations
+        SET email_send_claimed_at = NULL,
+            email_delivery_status = 'pending',
+            email_last_error = NULL,
+            updated_at = now()
+        WHERE id = ANY(%s)
+          AND baby_profile_id = %s
+          AND status = 'pending'
+          AND email_sent_at IS NULL
+        RETURNING id
+        """,
+        (invitation_ids, baby_profile_id),
+    ).fetchall()
+    return {row["id"] for row in rows}
 
 
 def prepare_invitation_for_resend(
     baby_profile_id: uuid.UUID,
     invitation_id: uuid.UUID,
-) -> dict[str, Any] | None:
-    """Clear a stale send claim and allow another delivery attempt."""
+) -> uuid.UUID | None:
+    """Allow another delivery attempt for one undelivered pending invite."""
     with get_connection() as conn:
-        row = conn.execute(
-            """
-            UPDATE invitations
-            SET email_send_claimed_at = NULL,
-                email_delivery_status = 'pending',
-                email_last_error = NULL,
-                updated_at = now()
-            WHERE id = %s
-              AND baby_profile_id = %s
-              AND status = 'pending'
-              AND email_sent_at IS NULL
-            RETURNING id, invitee_email
-            """,
-            (invitation_id, baby_profile_id),
-        ).fetchone()
-    return dict(row) if row else None
+        prepared = _prepare_for_resend(conn, baby_profile_id, [invitation_id])
+    return invitation_id if invitation_id in prepared else None
 
 
-def create_invitation(
+def write_batch_invitations(
     baby_profile_id: uuid.UUID,
     inviter_firebase_uid: str,
-    invitee_email: str,
-    role: str,
-    relationship_label: str | None,
-) -> dict[str, Any]:
-    token = secrets.token_urlsafe(32)
-    token_hash = _hash_token(token)
-    expires_at = datetime.now(timezone.utc) + timedelta(days=14)
-    invite_id = uuid.uuid4()
+    *,
+    resend_ids: list[uuid.UUID],
+    new_invites: list[tuple[str, str, str | None]],
+) -> tuple[set[uuid.UUID], dict[str, uuid.UUID]]:
+    """Re-arm undelivered invites and insert new ones in one transaction.
+
+    ``new_invites`` rows are ``(normalized_email, role, relationship_label)``.
+    Returns the re-armed ids and ``email -> new invitation id``. An email that
+    gained a pending invite concurrently is left out of the map (the partial
+    unique index ``uq_invitations_pending_email`` decides), so callers report
+    it as a duplicate instead of failing the batch.
+    """
     with get_connection() as conn:
-        row = conn.execute(
-            """
-            INSERT INTO invitations (
-                id, baby_profile_id, inviter_firebase_uid,
-                invitee_email, role, relationship_label,
-                token_hash, expires_at, email_invite_token
-            )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-            RETURNING id, invitee_email, role, status, expires_at, created_at
-            """,
-            (
-                invite_id,
-                baby_profile_id,
-                inviter_firebase_uid,
-                invitee_email.lower(),
-                role,
-                relationship_label,
-                token_hash,
-                expires_at,
-                token,
-            ),
-        ).fetchone()
-    if row is None:
-        raise RuntimeError("create_invitation returned no row")
-    result = dict(row)
-    result["invite_token"] = token  # in-process callers; worker reads email_invite_token from DB
-    return result
+        prepared = _prepare_for_resend(conn, baby_profile_id, resend_ids)
+        created: dict[str, uuid.UUID] = {}
+        if new_invites:
+            expires_at = datetime.now(timezone.utc) + INVITE_EXPIRY
+            tokens = [secrets.token_urlsafe(32) for _ in new_invites]
+            rows = conn.execute(
+                """
+                INSERT INTO invitations (
+                    baby_profile_id, inviter_firebase_uid,
+                    invitee_email, role, relationship_label,
+                    token_hash, expires_at, email_invite_token
+                )
+                SELECT %s, %s, r.email, r.role, r.relationship_label,
+                       r.token_hash, %s, r.token
+                FROM unnest(%s::text[], %s::text[], %s::text[], %s::text[], %s::text[])
+                    AS r(email, role, relationship_label, token_hash, token)
+                ON CONFLICT (baby_profile_id, lower(invitee_email))
+                    WHERE status = 'pending'
+                    DO NOTHING
+                RETURNING id, invitee_email
+                """,
+                (
+                    baby_profile_id,
+                    inviter_firebase_uid,
+                    expires_at,
+                    [email for email, _, _ in new_invites],
+                    [role for _, role, _ in new_invites],
+                    [label for _, _, label in new_invites],
+                    [_hash_token(token) for token in tokens],
+                    tokens,
+                ),
+            ).fetchall()
+            created = {row["invitee_email"]: row["id"] for row in rows}
+    return prepared, created
 
 
 def fetch_invitation_preview_row(token: str) -> dict[str, Any] | None:

@@ -6,6 +6,8 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from lanonna_api.app_check import require_app_check
+from lanonna_api.domain.errors import ErrorCode, error_detail
+from lanonna_api.http_errors import api_error
 from lanonna_api.auth import AppUser, current_app_user
 from lanonna_api.domain.invitations import (
     accept_invitation,
@@ -20,26 +22,27 @@ from lanonna_api.schemas.invitations import (
 
 router = APIRouter(prefix="/v1/invitations", tags=["invitations"])
 
-_ACCEPT_ERROR_STATUS: dict[str, int] = {
-    "not_found": status.HTTP_404_NOT_FOUND,
-    "expired": status.HTTP_410_GONE,
-    "revoked": status.HTTP_410_GONE,
-    "email_mismatch": status.HTTP_403_FORBIDDEN,
-    "max_owners": status.HTTP_409_CONFLICT,
-    "already_used": status.HTTP_409_CONFLICT,
+_ACCEPT_ERRORS: dict[ErrorCode, tuple[int, str]] = {
+    ErrorCode.NOT_FOUND: (status.HTTP_404_NOT_FOUND, "Invitation not found"),
+    ErrorCode.EXPIRED: (status.HTTP_410_GONE, "Invitation expired"),
+    ErrorCode.REVOKED: (status.HTTP_410_GONE, "Invitation revoked"),
+    ErrorCode.EMAIL_MISMATCH: (
+        status.HTTP_403_FORBIDDEN,
+        "Signed-in email does not match the invitation",
+    ),
+    ErrorCode.MAX_OWNERS: (status.HTTP_409_CONFLICT, "Baby already has two owners"),
+    ErrorCode.ALREADY_USED: (status.HTTP_409_CONFLICT, "Invitation already accepted"),
 }
 
 
 def _raise_invitation_accept_error(result: dict[str, Any]) -> None:
-    code = result["error"]
-    detail: dict[str, Any] = {"error": code}
-    if code == "email_mismatch":
+    code = ErrorCode(result["error"])
+    status_code, message = _ACCEPT_ERRORS[code]
+    detail = error_detail(code, message)
+    if code == ErrorCode.EMAIL_MISMATCH:
         detail["invitee_email"] = result.get("invitee_email")
         detail["signed_in_email"] = result.get("signed_in_email")
-    raise HTTPException(
-        status_code=_ACCEPT_ERROR_STATUS.get(code, status.HTTP_400_BAD_REQUEST),
-        detail=detail,
-    )
+    raise HTTPException(status_code=status_code, detail=detail)
 
 
 @router.get("/preview", response_model=InvitationPreviewResponse)
@@ -48,9 +51,8 @@ def invitation_preview(
 ) -> InvitationPreviewResponse:
     preview = preview_invitation(token)
     if preview is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={"error": "not_found"},
+        raise api_error(
+            status.HTTP_404_NOT_FOUND, ErrorCode.NOT_FOUND, "Invitation not found"
         )
     preview_status = preview.get("status")
     if preview_status in ("expired", "revoked"):

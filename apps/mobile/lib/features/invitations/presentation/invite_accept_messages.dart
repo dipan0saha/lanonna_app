@@ -1,5 +1,6 @@
 import 'package:lanonna/l10n/app_localizations.dart';
 
+import '../../../core/api/api_error_code.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/api/localized_failure.dart';
 import '../data/models/invitation_preview.dart';
@@ -18,15 +19,20 @@ class InviteAcceptException implements LocalizedFailure {
   String toString() => 'invite_accept_failed code=$code';
 }
 
+/// Invite-landing copy for an accept/preview code: invite-specific wording for
+/// `not_found`, otherwise the shared [ApiErrorCode] copy for invite codes.
 String inviteAcceptUserMessage(AppLocalizations l10n, String errorCode) {
-  return switch (errorCode) {
-    'expired' => l10n.inviteErrorExpired,
-    'revoked' => l10n.inviteErrorRevoked,
-    'already_used' => l10n.inviteErrorAlreadyUsed,
-    'not_found' => l10n.inviteErrorNotFound,
-    'max_owners' => l10n.inviteErrorMaxOwners,
-    'already_member' => l10n.inviteErrorAlreadyMember,
-    'email_mismatch' => l10n.inviteErrorEmailMismatch,
+  return switch (ApiErrorCode.fromApi(errorCode)) {
+    ApiErrorCode.notFound => l10n.inviteErrorNotFound,
+    final ApiErrorCode code
+        when const {
+          ApiErrorCode.expired,
+          ApiErrorCode.revoked,
+          ApiErrorCode.alreadyUsed,
+          ApiErrorCode.maxOwners,
+          ApiErrorCode.emailMismatch,
+        }.contains(code) =>
+      code.userMessage(l10n),
     _ => l10n.inviteErrorGeneric,
   };
 }

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
+import 'package:lanonna/core/api/api_error_code.dart';
 import 'package:lanonna/core/api/api_error_message.dart';
 import 'package:lanonna/core/api/api_exception.dart';
 import 'package:lanonna/core/api/display_photo_upload.dart';
@@ -49,23 +50,68 @@ void main() {
         ApiException('fun_closed',
             statusCode: 409, detail: {'error': 'fun_closed'}),
       ),
-      l10n.errorGeneric,
+      l10n.errorFunClosed,
     );
-  });
-
-  test('server copy is shown; diagnostic messages are not', () {
     expect(
       apiErrorMessage(
         l10n,
-        ApiException('http_400', statusCode: 400, serverMessage: 'Name taken'),
+        ApiException('membership_ended', statusCode: 403, detail: {
+          'error': 'membership_ended',
+          'message': 'You no longer have access to this baby profile.',
+        }),
       ),
-      'Name taken',
+      l10n.membershipEndedMessage,
+    );
+  });
+
+  test('server English is never shown; unknown codes fall back by status', () {
+    expect(
+      apiErrorMessage(
+        l10n,
+        ApiException('some_new_code', statusCode: 404, detail: {
+          'error': 'some_new_code',
+          'message': 'Server English',
+        }),
+      ),
+      l10n.errorNotFound,
+    );
+    expect(
+      apiErrorMessage(l10n, ApiException('http_400', statusCode: 400)),
+      l10n.errorInvalidRequest,
     );
     expect(
       apiErrorMessage(l10n, ApiException('http_500', statusCode: 500)),
       l10n.errorGeneric,
     );
     expect(apiErrorMessage(l10n, StateError('boom')), l10n.errorGeneric);
+  });
+
+  test('params fill parameterized copy', () {
+    expect(
+      apiErrorMessage(
+        l10n,
+        ApiException('text_too_long', statusCode: 400, detail: {
+          'error': 'text_too_long',
+          'params': {'max_length': 80},
+        }),
+      ),
+      l10n.errorTextTooLong(80),
+    );
+    expect(
+      apiErrorMessage(
+        l10n,
+        ApiException('text_too_long',
+            statusCode: 400, detail: {'error': 'text_too_long'}),
+      ),
+      l10n.errorInvalidRequest,
+    );
+  });
+
+  test('every code has its own non-empty copy', () {
+    for (final code in ApiErrorCode.values) {
+      expect(code.userMessage(l10n), isNotEmpty, reason: code.apiValue);
+      expect(ApiErrorCode.fromApi(code.apiValue), code);
+    }
   });
 
   test('localized failures supply their own copy', () {

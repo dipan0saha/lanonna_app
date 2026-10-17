@@ -4,6 +4,7 @@ import uuid
 from datetime import date, timedelta
 from typing import Any
 
+from lanonna_api.domain.errors import ErrorCode, InvalidInputError
 from lanonna_api.domain.membership import require_owner_baby
 from lanonna_api.domain.name_suggestions import (
     normalize_gender_for_first_moment_seed,
@@ -130,11 +131,11 @@ def complete_owner_onboarding_for_user(
     if row is None:
         raise LookupError("User not found")
     if not row.get("display_name"):
-        raise ValueError("Complete your profile before finishing onboarding.")
+        raise InvalidInputError(ErrorCode.PROFILE_INCOMPLETE, "Complete your profile before finishing onboarding.")
     if not user_has_self_created_baby(firebase_uid):
-        raise ValueError("Create a baby profile before finishing onboarding.")
+        raise InvalidInputError(ErrorCode.BABY_PROFILE_REQUIRED, "Create a baby profile before finishing onboarding.")
     if not email_verified:
-        raise ValueError("Verify your email before finishing onboarding.")
+        raise InvalidInputError(ErrorCode.EMAIL_NOT_VERIFIED, "Verify your email before finishing onboarding.")
     complete_owner_onboarding(firebase_uid)
     return onboarding_status_for_user(
         firebase_uid,

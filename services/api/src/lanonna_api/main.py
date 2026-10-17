@@ -2,8 +2,11 @@ import logging
 import uuid
 from typing import Any, Literal, Self
 
-from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi import Depends, FastAPI, Request, status
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.cors import CORSMiddleware
 from lanonna_api.middleware.rate_limit import RateLimitMiddleware
 from lanonna_api.middleware.request_context import RequestContextMiddleware
@@ -30,7 +33,12 @@ from lanonna_api.routers import (
     registry,
     search,
 )
-from lanonna_api.http_errors import internal_error_detail
+from lanonna_api.domain.errors import ErrorCode, NotFoundError, error_detail
+from lanonna_api.http_errors import (
+    internal_error_detail,
+    map_domain_errors,
+    normalize_error_detail,
+)
 from lanonna_api.repositories.babies import get_baby_for_owner
 from lanonna_api.storage import mint_baby_avatar_upload_url, mint_user_avatar_upload_url
 
@@ -50,14 +58,35 @@ if _cors_origins:
     )
 
 
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(
+    request: Request, exc: StarletteHTTPException
+) -> JSONResponse:
+    """Every HTTP error, including framework 404/405, gets a coded ``detail``."""
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": normalize_error_detail(exc.status_code, exc.detail)},
+        headers=getattr(exc, "headers", None),
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def request_validation_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
+    """Body/query validation failures: ``invalid_request`` plus the field errors."""
+    errors = jsonable_encoder(exc.errors())
+    message = "; ".join(str(e.get("msg", "")) for e in errors if e.get("msg"))
+    detail = error_detail(ErrorCode.INVALID_REQUEST, message or "Invalid request")
+    detail["fields"] = errors
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": detail},
+    )
+
+
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    if isinstance(exc, HTTPException):
-        return JSONResponse(
-            status_code=exc.status_code,
-            content={"detail": exc.detail},
-            headers=exc.headers,
-        )
     request_id = getattr(request.state, "request_id", None)
     logger.exception(
         "unhandled_request request_id=%s path=%s",
@@ -72,6 +101,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
         content={"detail": internal_error_detail()},
         headers=headers,
     )
+
 
 _app_check_deps = [Depends(require_app_check)]
 
@@ -138,10 +168,7 @@ def sign_display_upload(
             baby_id = body.baby_profile_id
             assert baby_id is not None
             if get_baby_for_owner(user.uid, baby_id) is None:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Baby not found",
-                )
+                raise NotFoundError(ErrorCode.NOT_FOUND, "Baby not found")
             signed = mint_baby_avatar_upload_url(
                 baby_id,
                 content_type=body.content_type,
@@ -154,12 +181,8 @@ def sign_display_upload(
                 byte_length=body.byte_length,
             )
         return DisplayUploadSignResponse(**signed)
-    except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except (LookupError, ValueError) as exc:
+        raise map_domain_errors(exc) from exc
     except Exception as exc:
         logger.exception("sign_display_upload_failed uid=%s", user.uid)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Signed URL generation failed",
-        ) from exc
-
+        raise map_domain_errors(RuntimeError("Signed URL generation failed")) from exc

@@ -4,6 +4,7 @@ import re
 from datetime import date
 from typing import Any
 
+from lanonna_api.domain.errors import ErrorCode, InvalidInputError
 from lanonna_api.domain.date_validation import validate_actual_birth_date
 
 _ALLOWED_GENDERS = frozenset({"male", "female", "unknown"})
@@ -32,7 +33,7 @@ def validate_announcement_birth_time(birth_time: str | None) -> None:
     if not trimmed:
         return
     if not _BIRTH_TIME_RE.match(trimmed):
-        raise ValueError("Birth time must use 24-hour HH:MM format.")
+        raise InvalidInputError(ErrorCode.INVALID_BIRTH_TIME, "Birth time must use 24-hour HH:MM format.")
 
 
 def _validate_optional_text(
@@ -47,7 +48,11 @@ def _validate_optional_text(
     if not trimmed:
         return
     if len(trimmed) > max_len:
-        raise ValueError(f"{field_label} must be {max_len} characters or fewer.")
+        raise InvalidInputError(
+            ErrorCode.TEXT_TOO_LONG,
+            f"{field_label} must be {max_len} characters or fewer.",
+            params={"max_length": max_len},
+        )
 
 
 def validate_announcement_text_fields(

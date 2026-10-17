@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lanonna/features/invitations/domain/relationship_preset.dart';
+import 'package:lanonna/core/domain/relationship_preset.dart';
 
 import '../../../../core/input/app_text_input_kind.dart';
 import '../../../../core/widgets/app_icon_button.dart';

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta, timezone
+from lanonna_api.domain.errors import ErrorCode, InvalidInputError
 
 # Allow calendar dates up to one day ahead of UTC for owners in timezones east of UTC.
 BIRTH_DATE_UTC_SLACK_DAYS = 1
@@ -15,13 +16,13 @@ def utc_today() -> date:
 def validate_actual_birth_date(actual_birth_date: date) -> None:
     latest_allowed = utc_today() + timedelta(days=BIRTH_DATE_UTC_SLACK_DAYS)
     if actual_birth_date > latest_allowed:
-        raise ValueError("Date of birth cannot be in the future.")
+        raise InvalidInputError(ErrorCode.BIRTH_DATE_IN_FUTURE, "Date of birth cannot be in the future.")
 
 
 def validate_user_birth_date(birth_date: date) -> None:
     validate_actual_birth_date(birth_date)
     if birth_date < USER_BIRTH_DATE_MIN:
-        raise ValueError("Enter a valid date of birth.")
+        raise InvalidInputError(ErrorCode.INVALID_BIRTH_DATE, "Enter a valid date of birth.")
 
 
 def _as_utc_instant(value: datetime) -> datetime:
@@ -39,4 +40,4 @@ def validate_event_time_range(starts_at: datetime, ends_at: datetime | None) -> 
     if ends_at is None:
         return
     if _as_utc_instant(ends_at) < _as_utc_instant(starts_at):
-        raise ValueError("End time must be at or after the start time.")
+        raise InvalidInputError(ErrorCode.EVENT_END_BEFORE_START, "End time must be at or after the start time.")

@@ -2174,6 +2174,124 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorGeneric => 'Something went wrong. Please try again.';
 
   @override
+  String get errorServiceUnavailable =>
+      'The service is busy right now. Please try again in a moment.';
+
+  @override
+  String get errorInvalidRequest =>
+      'Some details aren\'t valid. Check them and try again.';
+
+  @override
+  String get errorNotFound => 'This item is no longer available.';
+
+  @override
+  String get errorForbidden => 'You don\'t have permission to do that.';
+
+  @override
+  String get errorConflict =>
+      'This changed while you were working. Refresh and try again.';
+
+  @override
+  String get errorUnauthenticated =>
+      'Your session has expired. Please sign in again.';
+
+  @override
+  String get errorAppCheckFailed =>
+      'This app couldn\'t be verified. Update the app and try again.';
+
+  @override
+  String get errorRateLimited =>
+      'Too many attempts. Wait a moment and try again.';
+
+  @override
+  String get errorNotMember => 'You\'re not a member of this baby profile.';
+
+  @override
+  String get errorTargetNotMember =>
+      'That person is no longer a member of this baby profile.';
+
+  @override
+  String get errorLastOwner =>
+      'You can\'t remove the last owner of this baby profile.';
+
+  @override
+  String get errorUseLeaveProfile => 'To remove yourself, use Leave profile.';
+
+  @override
+  String get errorEmailNotVerified =>
+      'Verify your email before finishing setup.';
+
+  @override
+  String get errorBabyProfileRequired =>
+      'Create a baby profile before finishing setup.';
+
+  @override
+  String get errorProfileIncomplete =>
+      'Complete your profile before finishing setup.';
+
+  @override
+  String get errorInvalidBirthDate => 'Enter a valid date of birth.';
+
+  @override
+  String errorTextTooLong(int maxLength) {
+    return 'Keep this to $maxLength characters or fewer.';
+  }
+
+  @override
+  String get errorInvalidBirthTime =>
+      'Enter the birth time as HH:MM (24-hour).';
+
+  @override
+  String get errorCommentRequired => 'Write a comment first.';
+
+  @override
+  String get errorUnsupportedMediaType => 'This file type isn\'t supported.';
+
+  @override
+  String get errorFileTooLarge => 'This file is too large.';
+
+  @override
+  String get errorFunClosed => 'Fun is closed — baby has arrived!';
+
+  @override
+  String get errorPredictionsClosed =>
+      'Predictions are closed — baby has arrived!';
+
+  @override
+  String get errorDuplicateNameSuggestion =>
+      'That name is already on the list.';
+
+  @override
+  String get errorNameAlreadySuggested =>
+      'You\'ve already suggested a name for this gender.';
+
+  @override
+  String get errorAlreadyOnRegistry => 'This is already on the registry.';
+
+  @override
+  String get errorRegistryItemPurchased =>
+      'This gift has already been purchased.';
+
+  @override
+  String get errorShippingAddressIncomplete =>
+      'Add the street address, city, postal code and country.';
+
+  @override
+  String get errorAlreadyOnCalendar => 'This is already on the calendar.';
+
+  @override
+  String get errorEventEndBeforeStart =>
+      'The end time must be at or after the start time.';
+
+  @override
+  String get errorEmailQueueFailed =>
+      'The invite was saved, but its email couldn\'t be sent. Use Resend on Manage followers.';
+
+  @override
+  String get errorExportQueueFailed =>
+      'The export couldn\'t be started. Please try again in a few minutes.';
+
+  @override
   String errorPhotoTooLarge(String megabytes) {
     return 'Photo exceeds the maximum size ($megabytes MB).';
   }
@@ -2202,10 +2320,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get inviteErrorMaxOwners =>
       'This baby already has the maximum number of owners.';
-
-  @override
-  String get inviteErrorAlreadyMember =>
-      'You are already part of this baby\'s circle.';
 
   @override
   String get inviteErrorEmailMismatch =>

@@ -36,6 +36,8 @@ def test_announce_arrival_enqueues_notify_when_expecting():
         "expected_birth_date": date(2026, 9, 1),
         "actual_birth_date": birth,
         "lifecycle_status": "born",
+        "role": "owner",
+        "relationship_label": "Mother",
     }
     with (
         patch("lanonna_api.domain.home._utc_today", return_value=birth),
@@ -50,7 +52,9 @@ def test_announce_arrival_enqueues_notify_when_expecting():
         result = announce_arrival("owner_uid", baby_id, birth)
 
     assert result["lifecycle_status"] == "born"
+    # The stored membership fields pass through untouched (no hand-filled None).
     assert result["role"] == "owner"
+    assert result["relationship_label"] == "Mother"
     activity.assert_called_once()
     notify.assert_called_once()
 

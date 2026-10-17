@@ -4,9 +4,11 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, Response, status
 from pydantic import BaseModel, Field
 
+from lanonna_api.domain.errors import ErrorCode
+from lanonna_api.http_errors import api_error
 from lanonna_api.admin_auth import require_admin_api_key
 from lanonna_api.repositories.system_announcements import (
     admin_create,
@@ -52,7 +54,7 @@ def list_announcements() -> list[dict[str, Any]]:
 @router.post("", status_code=status.HTTP_201_CREATED)
 def create_announcement(body: SystemAnnouncementCreate) -> dict[str, Any]:
     if body.target_audience not in ("all", "owners", "followers"):
-        raise HTTPException(status_code=400, detail="Invalid target_audience")
+        raise api_error(400, ErrorCode.INVALID_REQUEST, "Invalid target_audience")
     return admin_create(
         title=body.title,
         body=body.body,
@@ -72,12 +74,12 @@ def patch_announcement(
 ) -> dict[str, Any]:
     row = admin_update(announcement_id, body.model_dump(exclude_unset=True))
     if row is None:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise api_error(404, ErrorCode.NOT_FOUND, "Not found")
     return row
 
 
 @router.delete("/{announcement_id}", status_code=status.HTTP_204_NO_CONTENT, response_class=Response)
 def delete_announcement(announcement_id: uuid.UUID) -> Response:
     if not admin_soft_delete(announcement_id):
-        raise HTTPException(status_code=404, detail="Not found")
+        raise api_error(404, ErrorCode.NOT_FOUND, "Not found")
     return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -4,12 +4,13 @@ import uuid
 from datetime import date
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel, Field
 
+from lanonna_api.domain.errors import ErrorCode
 from lanonna_api.auth import AppUser, current_app_user
 from lanonna_api.domain import announcement as announcement_domain
-from lanonna_api.http_errors import map_domain_errors
+from lanonna_api.http_errors import api_error, map_domain_errors
 
 router = APIRouter(
     prefix="/v1/babies/{baby_profile_id}/announcement",
@@ -42,7 +43,7 @@ def get_announcement(
     except Exception as exc:
         raise map_domain_errors(exc) from exc
     if data is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+        raise api_error(status.HTTP_404_NOT_FOUND, ErrorCode.NOT_FOUND, "Not found")
     return data
 
 

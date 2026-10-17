@@ -11,54 +11,81 @@ from lanonna_api.domain.invitations import (
 )
 
 
-def test_batch_invite_skips_existing_member():
+def _batch(rows, *, targets, prepared=(), created=None, publish=None):
     baby_id = uuid.uuid4()
     with (
         patch(
             "lanonna_api.domain.invitations.require_owner_baby",
             return_value={"id": baby_id},
         ),
-        patch("lanonna_api.domain.invitations.email_is_member", return_value=True),
+        patch(
+            "lanonna_api.domain.invitations.load_invite_targets",
+            return_value=targets,
+        ) as load,
+        patch(
+            "lanonna_api.domain.invitations.write_batch_invitations",
+            return_value=(set(prepared), created or {}),
+        ) as write,
+        patch(
+            "lanonna_api.domain.invitations.publish_send_invite_email",
+            **({"side_effect": publish} if publish else {}),
+        ) as pub,
     ):
         results = batch_invite(
             "owner-1",
             baby_id,
-            [BatchInviteRow("a@test.com", "follower", None)],
+            [BatchInviteRow(email, "follower", None) for email in rows],
         )
-    assert results[0]["status"] == "skipped_member"
+    return results, load, write, pub
+
+
+def test_batch_invite_reads_and_writes_once_for_all_rows():
+    sent, unsent, new_id = uuid.uuid4(), uuid.uuid4(), uuid.uuid4()
+    results, load, write, pub = _batch(
+        ["Member@Test.com", "sent@test.com", "unsent@test.com", "new@test.com", "NEW@test.com"],
+        targets={
+            "member@test.com": {"is_member": True, "pending_id": None, "pending_email_sent": False},
+            "sent@test.com": {"is_member": False, "pending_id": sent, "pending_email_sent": True},
+            "unsent@test.com": {"is_member": False, "pending_id": unsent, "pending_email_sent": False},
+        },
+        prepared={unsent},
+        created={"new@test.com": new_id},
+    )
+    load.assert_called_once()
+    assert load.call_args.args[1] == [
+        "member@test.com", "sent@test.com", "unsent@test.com", "new@test.com", "new@test.com",
+    ]
+    write.assert_called_once()
+    assert write.call_args.kwargs["resend_ids"] == [unsent]
+    assert write.call_args.kwargs["new_invites"] == [("new@test.com", "follower", None)]
+    assert [(r["email"], r["status"], r["invitation_id"]) for r in results] == [
+        ("member@test.com", "skipped_member", None),
+        ("sent@test.com", "skipped_duplicate", sent),
+        ("unsent@test.com", "resent", unsent),
+        ("new@test.com", "created", new_id),
+        ("new@test.com", "skipped_duplicate", None),
+    ]
+    assert [c.args[0] for c in pub.call_args_list] == [unsent, new_id]
+
+
+def test_batch_invite_lost_insert_race_reports_duplicate():
+    results, _, _, pub = _batch(["race@test.com"], targets={}, created={})
+    assert results[0]["status"] == "skipped_duplicate"
+    pub.assert_not_called()
 
 
 def test_batch_invite_email_queue_failed_returns_row_not_raises():
-    baby_id = uuid.uuid4()
     inv_id = uuid.uuid4()
-    with (
-        patch(
-            "lanonna_api.domain.invitations.require_owner_baby",
-            return_value={"id": baby_id},
-        ),
-        patch("lanonna_api.domain.invitations.email_is_member", return_value=False),
-        patch(
-            "lanonna_api.domain.invitations.fetch_pending_invitation_by_email",
-            return_value=None,
-        ),
-        patch(
-            "lanonna_api.domain.invitations.create_invitation",
-            return_value={"id": inv_id, "invite_token": "tok"},
-        ),
-        patch(
-            "lanonna_api.domain.invitations.publish_send_invite_email",
-            side_effect=RuntimeError("pubsub down"),
-        ),
-    ):
-        results = batch_invite(
-            "owner-1",
-            baby_id,
-            [BatchInviteRow("a@test.com", "follower", None)],
-        )
-    assert len(results) == 1
-    assert results[0]["status"] == "email_queue_failed"
-    assert results[0]["invitation_id"] == inv_id
-    assert results[0]["message"]
+    results, _, _, _ = _batch(
+        ["a@test.com"],
+        targets={},
+        created={"a@test.com": inv_id},
+        publish=RuntimeError("pubsub down"),
+    )
+    assert results == [
+        {"email": "a@test.com", "status": "email_queue_failed", "invitation_id": inv_id}
+    ]
+
 
 def test_revoke_invitation_not_found_raises_lookup():
     baby_id = uuid.uuid4()

@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import uuid
 from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import date
 from typing import Any
 
@@ -99,92 +100,109 @@ def _resolve_recipient_uids(
     return out
 
 
-def _insert_notification(
+@dataclass(frozen=True)
+class _Recipient:
+    """One inbox recipient with everything delivery needs, loaded in one query."""
+
+    firebase_uid: str
+    channel_enabled: bool
+    realtime_push: bool
+    fcm_tokens: tuple[str, ...]
+
+
+def _load_recipients(
+    conn: Any,
+    firebase_uids: list[str],
+    notification_channel: str | None,
+) -> list[_Recipient]:
+    """Channel opt-in, push preferences and device tokens for every recipient.
+
+    One statement for the whole recipient list, so fan-out and digest runs do
+    not issue per-user preference or token lookups. Tombstoned or unknown users
+    are not returned. Order follows ``firebase_uids``.
+    """
+    if not firebase_uids:
+        return []
+    column = _CHANNEL_COLUMNS.get(notification_channel or "")
+    channel_expr = f"u.{column}" if column else "true"
+    rows = conn.execute(
+        f"""
+        SELECT
+            u.firebase_uid,
+            COALESCE({channel_expr}, true) AS channel_enabled,
+            COALESCE(u.push_notifications_enabled, true)
+                AND COALESCE(u.notification_digest, 'realtime') = 'realtime'
+                AS realtime_push,
+            tokens.fcm_tokens
+        FROM app_users u
+        CROSS JOIN LATERAL (
+            SELECT COALESCE(
+                array_agg(t.fcm_token ORDER BY t.fcm_token)
+                    FILTER (WHERE t.fcm_token IS NOT NULL AND t.fcm_token <> ''),
+                ARRAY[]::text[]
+            ) AS fcm_tokens
+            FROM device_tokens t
+            WHERE t.firebase_uid = u.firebase_uid
+        ) tokens
+        WHERE u.firebase_uid = ANY(%s)
+          AND u.deleted_at IS NULL
+        """,
+        (list(firebase_uids),),
+    ).fetchall()
+    by_uid = {
+        row["firebase_uid"]: _Recipient(
+            firebase_uid=row["firebase_uid"],
+            channel_enabled=bool(row["channel_enabled"]),
+            realtime_push=bool(row["realtime_push"]),
+            fcm_tokens=tuple(row["fcm_tokens"] or ()),
+        )
+        for row in rows
+    }
+    return [by_uid[uid] for uid in dict.fromkeys(firebase_uids) if uid in by_uid]
+
+
+def _insert_notifications(
     conn: Any,
     *,
-    firebase_uid: str,
+    firebase_uids: list[str],
     title: str,
     body: str,
     deep_link: str | None,
     baby_profile_id: uuid.UUID | None,
     notification_type: str = GENERIC,
     actor_firebase_uid: str | None = None,
-) -> uuid.UUID:
-    notification_id = uuid.uuid4()
+) -> dict[str, uuid.UUID]:
+    """Write one inbox row per recipient in a single statement; uid -> row id."""
+    if not firebase_uids:
+        return {}
+    ids = {uid: uuid.uuid4() for uid in firebase_uids}
     conn.execute(
         """
         INSERT INTO notifications (
             id, firebase_uid, baby_profile_id, title, body, deep_link,
             notification_type, actor_firebase_uid, actor_display_name
         )
-        SELECT %s, %s, %s, %s, %s, %s, %s, a.firebase_uid,
+        SELECT r.id, r.firebase_uid, %s, %s, %s, %s, %s, a.firebase_uid,
             NULLIF(TRIM(a.display_name), '')
-        FROM (SELECT 1) AS one
+        FROM unnest(%s::uuid[], %s::text[]) AS r(id, firebase_uid)
         LEFT JOIN app_users a ON a.firebase_uid = %s
         """,
         (
-            notification_id,
-            firebase_uid,
             baby_profile_id,
             title,
             body,
             deep_link,
             notification_type,
+            list(ids.values()),
+            list(ids.keys()),
             actor_firebase_uid,
         ),
     )
-    return notification_id
+    return ids
 
 
-def _user_channel_enabled(
-    conn: Any, firebase_uid: str, notification_channel: str | None
-) -> bool:
-    if not notification_channel:
-        return True
-    column = _CHANNEL_COLUMNS.get(notification_channel)
-    if column is None:
-        return True
-    row = conn.execute(
-        f"""
-        SELECT {column} AS enabled
-        FROM app_users
-        WHERE firebase_uid = %s AND deleted_at IS NULL
-        """,
-        (firebase_uid,),
-    ).fetchone()
-    if row is None:
-        return False
-    return bool(row.get("enabled", True))
-
-
-def _user_push_prefs(conn: Any, firebase_uid: str) -> tuple[bool, str]:
-    row = conn.execute(
-        """
-        SELECT push_notifications_enabled, notification_digest
-        FROM app_users
-        WHERE firebase_uid = %s AND deleted_at IS NULL
-        """,
-        (firebase_uid,),
-    ).fetchone()
-    if row is None:
-        return False, "realtime"
-    push_on = bool(row.get("push_notifications_enabled", True))
-    digest = row.get("notification_digest") or "realtime"
-    return push_on, digest
-
-
-def _list_fcm_tokens(conn: Any, firebase_uid: str) -> list[str]:
-    rows = conn.execute(
-        """
-        SELECT fcm_token FROM device_tokens WHERE firebase_uid = %s
-        """,
-        (firebase_uid,),
-    ).fetchall()
-    return [r["fcm_token"] for r in rows if r.get("fcm_token")]
-
-
-def _delete_fcm_token(conn: Any, token: str) -> None:
-    conn.execute("DELETE FROM device_tokens WHERE fcm_token = %s", (token,))
+def _delete_fcm_tokens(conn: Any, tokens: list[str]) -> None:
+    conn.execute("DELETE FROM device_tokens WHERE fcm_token = ANY(%s)", (tokens,))
 
 
 def _chunk_tokens(tokens: list[str], size: int = _FCM_MULTICAST_LIMIT) -> list[list[str]]:
@@ -198,6 +216,7 @@ def _prune_fcm_token_responses(
     *,
     log_uid: str | None = None,
 ) -> None:
+    stale: list[str] = []
     for idx, send_response in enumerate(response.responses):
         if send_response.success:
             continue
@@ -209,7 +228,9 @@ def _prune_fcm_token_responses(
                 exc,
             )
         if idx < len(tokens) and _should_delete_fcm_token(exc):
-            _delete_fcm_token(conn, tokens[idx])
+            stale.append(tokens[idx])
+    if stale:
+        _delete_fcm_tokens(conn, stale)
 
 
 def _send_multicast_and_prune_tokens(
@@ -235,32 +256,15 @@ def _send_multicast_and_prune_tokens(
         _prune_fcm_token_responses(conn, chunk, response, log_uid=log_uid)
 
 
-def _send_fcm(
+def _send_push(
     conn: Any,
     *,
     firebase_uid: str,
+    tokens: list[str],
     title: str,
     body: str,
-    deep_link: str | None,
-    notification_id: uuid.UUID,
-    baby_profile_id: uuid.UUID | None = None,
+    data: dict[str, str],
 ) -> None:
-    push_on, digest = _user_push_prefs(conn, firebase_uid)
-    if not push_on or digest != "realtime":
-        return
-
-    tokens = _list_fcm_tokens(conn, firebase_uid)
-    if not tokens:
-        return
-
-    _ensure_fcm()
-    data: dict[str, str] = {
-        "deep_link": deep_link or "/home",
-        "notification_id": str(notification_id),
-    }
-    if baby_profile_id is not None:
-        data["baby_profile_id"] = str(baby_profile_id)
-
     def build_message(chunk: list[str]) -> messaging.MulticastMessage:
         return messaging.MulticastMessage(
             notification=messaging.Notification(title=title, body=body),
@@ -271,6 +275,48 @@ def _send_fcm(
     _send_multicast_and_prune_tokens(
         conn, tokens, build_message, log_uid=firebase_uid
     )
+
+
+def _deliver_to_inbox_and_push(
+    conn: Any,
+    recipients: list[_Recipient],
+    *,
+    title: str,
+    body: str,
+    deep_link: str | None,
+    baby_profile_id: uuid.UUID | None,
+    notification_type: str,
+    actor_firebase_uid: str | None,
+) -> None:
+    """Shared tail of notify-user and fan-out: inbox rows, then realtime push."""
+    opted_in = [r for r in recipients if r.channel_enabled]
+    notification_ids = _insert_notifications(
+        conn,
+        firebase_uids=[r.firebase_uid for r in opted_in],
+        title=title,
+        body=body,
+        deep_link=deep_link,
+        baby_profile_id=baby_profile_id,
+        notification_type=notification_type,
+        actor_firebase_uid=actor_firebase_uid,
+    )
+    for recipient in opted_in:
+        if not recipient.realtime_push or not recipient.fcm_tokens:
+            continue
+        data: dict[str, str] = {
+            "deep_link": deep_link or "/home",
+            "notification_id": str(notification_ids[recipient.firebase_uid]),
+        }
+        if baby_profile_id is not None:
+            data["baby_profile_id"] = str(baby_profile_id)
+        _send_push(
+            conn,
+            firebase_uid=recipient.firebase_uid,
+            tokens=list(recipient.fcm_tokens),
+            title=title,
+            body=body,
+            data=data,
+        )
 
 
 def process_notify_fan_out(
@@ -301,28 +347,16 @@ def process_notify_fan_out(
             exclude_firebase_uid=exclude,
             firebase_uids=explicit_uids,
         )
-        for uid in uids:
-            if not _user_channel_enabled(conn, uid, channel):
-                continue
-            nid = _insert_notification(
-                conn,
-                firebase_uid=uid,
-                title=title,
-                body=body,
-                deep_link=deep_link,
-                baby_profile_id=baby_id,
-                notification_type=notification_type,
-                actor_firebase_uid=actor_firebase_uid,
-            )
-            _send_fcm(
-                conn,
-                firebase_uid=uid,
-                title=title,
-                body=body,
-                deep_link=deep_link,
-                notification_id=nid,
-                baby_profile_id=baby_id,
-            )
+        _deliver_to_inbox_and_push(
+            conn,
+            _load_recipients(conn, uids, channel),
+            title=title,
+            body=body,
+            deep_link=deep_link,
+            baby_profile_id=baby_id,
+            notification_type=notification_type,
+            actor_firebase_uid=actor_firebase_uid,
+        )
 
 
 def process_notify_user(
@@ -345,26 +379,15 @@ def process_notify_user(
         if delivery_key and not try_claim_delivery(conn, delivery_key):
             logger.info("notify_user_skip_duplicate key=%s", delivery_key)
             return
-        if not _user_channel_enabled(conn, uid, channel):
-            return
-        nid = _insert_notification(
+        _deliver_to_inbox_and_push(
             conn,
-            firebase_uid=uid,
+            _load_recipients(conn, [uid], channel),
             title=title,
             body=body,
             deep_link=deep_link,
             baby_profile_id=baby_id,
             notification_type=notification_type,
             actor_firebase_uid=actor_firebase_uid,
-        )
-        _send_fcm(
-            conn,
-            firebase_uid=uid,
-            title=title,
-            body=body,
-            deep_link=deep_link,
-            notification_id=nid,
-            baby_profile_id=baby_id,
         )
 
 
@@ -383,11 +406,12 @@ def process_weekly_notification_digest(
         ):
             logger.info("weekly_digest_skip_http_cron_duplicate")
             return
-        # Unread counts are aggregated in the same statement as the candidate
-        # users, so the digest run does not issue one COUNT query per user.
+        # Unread counts and device tokens are aggregated in the same statement
+        # as the candidate users, so the run issues no per-user COUNT or token
+        # query. Users without a device token are not candidates.
         rows = conn.execute(
             """
-            SELECT u.firebase_uid, unread.n AS unread_count
+            SELECT u.firebase_uid, unread.n AS unread_count, tokens.fcm_tokens
             FROM app_users u
             JOIN LATERAL (
                 SELECT COUNT(*)::int AS n
@@ -396,6 +420,13 @@ def process_weekly_notification_digest(
                   AND n.created_at >= now() - interval '7 days'
                   AND n.read_at IS NULL
             ) unread ON unread.n > 0
+            JOIN LATERAL (
+                SELECT array_agg(t.fcm_token ORDER BY t.fcm_token) AS fcm_tokens
+                FROM device_tokens t
+                WHERE t.firebase_uid = u.firebase_uid
+                  AND t.fcm_token IS NOT NULL
+                  AND t.fcm_token <> ''
+            ) tokens ON tokens.fcm_tokens IS NOT NULL
             WHERE u.deleted_at IS NULL
               AND u.push_notifications_enabled = true
               AND u.notification_digest = 'weekly'
@@ -406,37 +437,29 @@ def process_weekly_notification_digest(
             """
         ).fetchall()
 
+        sent_uids: list[str] = []
         for row in rows:
             uid = row["firebase_uid"]
             count = int(row["unread_count"])
-
-            title = "Your weekly update"
-            body = (
-                f"You have {count} unread update{'s' if count != 1 else ''} from La Nonna"
+            _send_push(
+                conn,
+                firebase_uid=uid,
+                tokens=list(row["fcm_tokens"]),
+                title="Your weekly update",
+                body=(
+                    f"You have {count} unread update{'s' if count != 1 else ''} "
+                    "from La Nonna"
+                ),
+                data={"deep_link": "/notifications/inbox", "notification_id": ""},
             )
-            deep_link = "/notifications/inbox"
-            tokens = _list_fcm_tokens(conn, uid)
-            if not tokens:
-                continue
+            sent_uids.append(uid)
 
-            data = {"deep_link": deep_link, "notification_id": ""}
-
-            def build_digest_message(chunk: list[str]) -> messaging.MulticastMessage:
-                return messaging.MulticastMessage(
-                    notification=messaging.Notification(title=title, body=body),
-                    data=data,
-                    tokens=chunk,
-                )
-
-            _send_multicast_and_prune_tokens(
-                conn, tokens, build_digest_message, log_uid=uid
-            )
-
+        if sent_uids:
             conn.execute(
                 """
                 UPDATE app_users
                 SET last_weekly_digest_at = now(), updated_at = now()
-                WHERE firebase_uid = %s
+                WHERE firebase_uid = ANY(%s)
                 """,
-                (uid,),
+                (sent_uids,),
             )

@@ -4,6 +4,7 @@ import uuid
 from datetime import date
 from typing import Any
 
+from lanonna_api.domain.errors import ErrorCode, ForbiddenError, InvalidInputError
 from lanonna_api.domain.gallery import require_membership
 from lanonna_api.domain.fun_closed import (
     PredictionsClosedError,
@@ -90,9 +91,9 @@ def suggest_name(
     gender = normalize_gender_for_fun(gender)
     suggested_name = normalize_suggested_name(suggested_name)
     if not suggested_name:
-        raise ValueError("Name is required.")
+        raise InvalidInputError(ErrorCode.NAME_REQUIRED, "Name is required.")
     if find_name_suggestion_case_insensitive(baby_profile_id, suggested_name, gender):
-        raise ValueError("That name is already on the list for this gender.")
+        raise InvalidInputError(ErrorCode.DUPLICATE_NAME_SUGGESTION, "That name is already on the list for this gender.")
     if membership and membership["role"] != "owner":
         with get_connection() as conn:
             locked = lock_membership_for_user_for_update(
@@ -103,7 +104,7 @@ def suggest_name(
             if count_suggestions_by_author_gender(
                 baby_profile_id, firebase_uid, gender, conn
             ) >= 1:
-                raise PermissionError("You already suggested a name for this gender.")
+                raise ForbiddenError(ErrorCode.NAME_ALREADY_SUGGESTED, "You already suggested a name for this gender.")
             row = insert_name_suggestion(
                 baby_profile_id,
                 firebase_uid,

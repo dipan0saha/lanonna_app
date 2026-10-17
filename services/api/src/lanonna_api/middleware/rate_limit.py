@@ -8,6 +8,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
+from lanonna_api.domain.errors import ErrorCode, error_detail
+
 # Per-IP sliding window for sensitive routes (invite batch + photo init).
 # In-process only: each Cloud Run instance has its own bucket (effective limit scales
 # with instance count). See docs/engineering/development.md § API rate limiting.
@@ -61,6 +63,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             if not _allow(bucket_key):
                 return JSONResponse(
                     status_code=429,
-                    content={"detail": "Too many requests. Try again shortly."},
+                    content={
+                        "detail": error_detail(
+                            ErrorCode.RATE_LIMITED,
+                            "Too many requests. Try again shortly.",
+                        )
+                    },
                 )
         return await call_next(request)

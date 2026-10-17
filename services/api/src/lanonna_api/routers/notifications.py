@@ -3,8 +3,10 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query, status
 
+from lanonna_api.domain.errors import ErrorCode
+from lanonna_api.http_errors import api_error
 from lanonna_api.auth import AppUser, current_app_user
 from lanonna_api.repositories.device_tokens import delete_device_token, upsert_device_token
 from lanonna_api.repositories.notifications import (
@@ -81,7 +83,7 @@ def dismiss_system_announcement(
     user: AppUser = Depends(current_app_user),
 ) -> dict[str, str]:
     if not dismiss_announcement(announcement_id, user.uid):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+        raise api_error(status.HTTP_404_NOT_FOUND, ErrorCode.NOT_FOUND, "Not found")
     return {"status": "ok"}
 
 
@@ -100,5 +102,5 @@ def mark_read(
 ) -> dict[str, str]:
     ok = mark_notification_read(notification_id, user.uid)
     if not ok:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+        raise api_error(status.HTTP_404_NOT_FOUND, ErrorCode.NOT_FOUND, "Not found")
     return {"status": "ok"}

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/api/api_error_message.dart';
 import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/widgets/app_modal_sheet.dart';
 import '../../data/calendar_repository.dart';
@@ -68,7 +69,7 @@ class _CalendarPastEventsBodyState extends State<_CalendarPastEventsBody> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _loadError = e.toString();
+        _loadError = apiErrorMessage(AppLocalizations.of(context)!, e);
       });
     }
   }

@@ -8,6 +8,7 @@ import google.auth
 from google.auth.transport import requests as google_requests
 from google.cloud import storage
 
+from lanonna_api.domain.errors import ErrorCode, InvalidInputError
 from lanonna_api.config import settings
 
 
@@ -19,9 +20,9 @@ def mint_user_avatar_upload_url(
 ) -> dict[str, str | int]:
     """V4 signed PUT for a user profile avatar in the display bucket."""
     if content_type not in settings.display_allowed_content_types:
-        raise ValueError(f"Unsupported content type: {content_type}")
+        raise InvalidInputError(ErrorCode.UNSUPPORTED_MEDIA_TYPE, f"Unsupported content type: {content_type}")
     if byte_length <= 0 or byte_length > max_bytes:
-        raise ValueError("Display asset exceeds maximum size.")
+        raise InvalidInputError(ErrorCode.FILE_TOO_LARGE, "Display asset exceeds maximum size.")
 
     ext = "webp" if content_type == "image/webp" else "jpg"
     object_name = f"avatars/users/{firebase_uid}/{uuid.uuid4().hex}.{ext}"
@@ -36,9 +37,9 @@ def mint_baby_avatar_upload_url(
 ) -> dict[str, str | int]:
     """V4 signed PUT for a baby profile avatar in the display bucket."""
     if content_type not in settings.display_allowed_content_types:
-        raise ValueError(f"Unsupported content type: {content_type}")
+        raise InvalidInputError(ErrorCode.UNSUPPORTED_MEDIA_TYPE, f"Unsupported content type: {content_type}")
     if byte_length <= 0 or byte_length > max_bytes:
-        raise ValueError("Display asset exceeds maximum size.")
+        raise InvalidInputError(ErrorCode.FILE_TOO_LARGE, "Display asset exceeds maximum size.")
 
     ext = "webp" if content_type == "image/webp" else "jpg"
     object_name = f"avatars/babies/{baby_profile_id}/{uuid.uuid4().hex}.{ext}"
@@ -51,7 +52,7 @@ def mint_display_upload_for_object(
     max_bytes: int = 2_097_152,
 ) -> dict[str, str | int]:
     if content_type not in settings.display_allowed_content_types:
-        raise ValueError(f"Unsupported content type: {content_type}")
+        raise InvalidInputError(ErrorCode.UNSUPPORTED_MEDIA_TYPE, f"Unsupported content type: {content_type}")
     if not object_name.startswith("display/"):
         raise ValueError("Upload path must be under display/")
     return _sign_put(object_name, content_type, max_bytes)

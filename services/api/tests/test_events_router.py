@@ -39,7 +39,7 @@ def test_create_event_returns_400_when_end_is_before_start():
             },
         )
     assert response.status_code == 400
-    assert "End time must be at or after" in response.json()["detail"]
+    assert response.json()["detail"]["error"] == "event_end_before_start"
     create_mock.assert_not_called()
 
 
@@ -58,5 +58,5 @@ def test_patch_event_returns_400_when_end_is_before_start():
             json={"ends_at": "2026-06-01T11:00:00Z"},
         )
     assert response.status_code == 400
-    assert "End time must be at or after" in response.json()["detail"]
+    assert response.json()["detail"]["error"] == "event_end_before_start"
     update_mock.assert_not_called()

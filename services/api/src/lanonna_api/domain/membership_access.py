@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
+from lanonna_api.domain.errors import ErrorCode
 from lanonna_api.domain.member_errors import MemberLifecycleError
 from lanonna_api.repositories.babies import get_baby_membership
 from lanonna_api.repositories.memberships import has_removed_membership
@@ -18,7 +19,7 @@ def require_active_membership(
         return membership
     if has_removed_membership(baby_profile_id, firebase_uid):
         raise MemberLifecycleError(
-            "membership_ended",
+            ErrorCode.MEMBERSHIP_ENDED,
             "You no longer have access to this baby profile.",
         )
     raise PermissionError("Baby membership required.")

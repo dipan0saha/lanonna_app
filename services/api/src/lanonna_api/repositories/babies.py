@@ -3,6 +3,8 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
+import psycopg
+
 from lanonna_api.db import get_connection
 from lanonna_api.repositories._paging import limit_offset_clause
 
@@ -19,6 +21,51 @@ ACTIVE_OWNER_COUNT_COLUMN = """
     ) AS active_owner_count
 """
 
+# The one column list behind every baby summary row: the baby (`b`) seen
+# through the caller's membership (`m`). Reads, the create read-back and the
+# PATCH ``RETURNING`` all use it, so every response carries the caller's
+# stored role and relationship_label rather than a hand-filled stand-in.
+BABY_SUMMARY_COLUMNS = f"""
+    b.id,
+    b.name,
+    b.gender,
+    b.expected_birth_date,
+    b.actual_birth_date,
+    b.lifecycle_status,
+    b.avatar_url,
+    m.role,
+    m.relationship_label,
+    {ACTIVE_OWNER_COUNT_COLUMN}
+"""
+
+_ACTIVE_MEMBERSHIP_JOIN = """
+    FROM baby_profiles b
+    JOIN baby_memberships m ON m.baby_profile_id = b.id
+    WHERE b.id = %s
+      AND m.firebase_uid = %s
+      AND m.removed_at IS NULL
+      AND b.deleted_at IS NULL
+"""
+
+
+def _fetch_baby_summary_row(
+    conn: psycopg.Connection[Any],
+    firebase_uid: str,
+    baby_profile_id: uuid.UUID,
+    *,
+    owner_only: bool,
+) -> dict[str, Any] | None:
+    role_clause = "AND m.role = 'owner'" if owner_only else ""
+    row = conn.execute(
+        f"""
+        SELECT {BABY_SUMMARY_COLUMNS}
+        {_ACTIVE_MEMBERSHIP_JOIN}
+        {role_clause}
+        """,
+        (baby_profile_id, firebase_uid),
+    ).fetchone()
+    return dict(row) if row else None
+
 
 def list_babies_for_user(
     firebase_uid: str,
@@ -30,17 +77,7 @@ def list_babies_for_user(
     with get_connection() as conn:
         rows = conn.execute(
             f"""
-            SELECT
-                b.id,
-                b.name,
-                b.gender,
-                b.expected_birth_date,
-                b.actual_birth_date,
-                b.lifecycle_status,
-                b.avatar_url,
-                m.role,
-                m.relationship_label,
-                {ACTIVE_OWNER_COUNT_COLUMN}
+            SELECT {BABY_SUMMARY_COLUMNS}
             FROM baby_memberships m
             JOIN baby_profiles b ON b.id = m.baby_profile_id
             WHERE m.firebase_uid = %s
@@ -65,7 +102,7 @@ def create_baby_with_owner_membership(
 ) -> dict[str, Any]:
     baby_id = uuid.uuid4()
     with get_connection() as conn:
-        baby = conn.execute(
+        conn.execute(
             """
             INSERT INTO baby_profiles (
                 id, name, gender, expected_birth_date,
@@ -73,8 +110,6 @@ def create_baby_with_owner_membership(
                 created_by_firebase_uid
             )
             VALUES (%s, %s, %s, %s, %s, %s, %s)
-            RETURNING id, name, gender, expected_birth_date,
-                      actual_birth_date, lifecycle_status, created_at
             """,
             (
                 baby_id,
@@ -85,7 +120,7 @@ def create_baby_with_owner_membership(
                 lifecycle_status,
                 firebase_uid,
             ),
-        ).fetchone()
+        )
         conn.execute(
             """
             INSERT INTO baby_memberships (
@@ -95,13 +130,10 @@ def create_baby_with_owner_membership(
             """,
             (baby_id, firebase_uid, relationship_label),
         )
-    if baby is None:
+        row = _fetch_baby_summary_row(conn, firebase_uid, baby_id, owner_only=True)
+    if row is None:
         raise RuntimeError("create_baby returned no row")
-    result = dict(baby)
-    result["role"] = "owner"
-    result["relationship_label"] = relationship_label
-    result["active_owner_count"] = 1  # the creator is the only member yet
-    return result
+    return row
 
 
 def update_baby_for_owner(
@@ -132,18 +164,11 @@ def update_baby_for_owner(
               AND m.role = 'owner'
               AND m.removed_at IS NULL
               AND b.deleted_at IS NULL
-            RETURNING b.id, b.name, b.gender, b.expected_birth_date,
-                      b.actual_birth_date, b.lifecycle_status, b.avatar_url,
-                      {ACTIVE_OWNER_COUNT_COLUMN}
+            RETURNING {BABY_SUMMARY_COLUMNS}
             """,
             values,
         ).fetchone()
-    if row is None:
-        return None
-    result = dict(row)
-    result["role"] = "owner"
-    result["relationship_label"] = None
-    return result
+    return dict(row) if row else None
 
 
 def get_baby_for_owner(
@@ -151,24 +176,9 @@ def get_baby_for_owner(
     baby_profile_id: uuid.UUID,
 ) -> dict[str, Any] | None:
     with get_connection() as conn:
-        row = conn.execute(
-            f"""
-            SELECT
-                b.id, b.name, b.gender, b.expected_birth_date,
-                b.actual_birth_date, b.lifecycle_status, b.avatar_url,
-                m.role, m.relationship_label,
-                {ACTIVE_OWNER_COUNT_COLUMN}
-            FROM baby_profiles b
-            JOIN baby_memberships m ON m.baby_profile_id = b.id
-            WHERE b.id = %s
-              AND m.firebase_uid = %s
-              AND m.role = 'owner'
-              AND m.removed_at IS NULL
-              AND b.deleted_at IS NULL
-            """,
-            (baby_profile_id, firebase_uid),
-        ).fetchone()
-    return dict(row) if row else None
+        return _fetch_baby_summary_row(
+            conn, firebase_uid, baby_profile_id, owner_only=True
+        )
 
 
 def get_baby_membership(
@@ -176,20 +186,6 @@ def get_baby_membership(
     baby_profile_id: uuid.UUID,
 ) -> dict[str, Any] | None:
     with get_connection() as conn:
-        row = conn.execute(
-            f"""
-            SELECT
-                b.id, b.name, b.gender, b.expected_birth_date,
-                b.actual_birth_date, b.lifecycle_status, b.avatar_url,
-                m.role, m.relationship_label,
-                {ACTIVE_OWNER_COUNT_COLUMN}
-            FROM baby_profiles b
-            JOIN baby_memberships m ON m.baby_profile_id = b.id
-            WHERE b.id = %s
-              AND m.firebase_uid = %s
-              AND m.removed_at IS NULL
-              AND b.deleted_at IS NULL
-            """,
-            (baby_profile_id, firebase_uid),
-        ).fetchone()
-    return dict(row) if row else None
+        return _fetch_baby_summary_row(
+            conn, firebase_uid, baby_profile_id, owner_only=False
+        )
