@@ -139,10 +139,10 @@ class HomeRepository {
     final body = <String, dynamic>{
       if (name != null) 'name': name.value,
       if (gender != null) 'gender': gender.apiValue,
-      if (expectedBirthDate != null) 'expected_birth_date': expectedBirthDate,
-      if (actualBirthDate != null) 'actual_birth_date': actualBirthDate,
+      'expected_birth_date': ?expectedBirthDate,
+      'actual_birth_date': ?actualBirthDate,
       if (lifecycle != null) 'lifecycle_status': lifecycle.apiValue,
-      if (avatarUrl != null) 'avatar_url': avatarUrl,
+      'avatar_url': ?avatarUrl,
       if (profileNameSuggestions.isNotEmpty)
         'profile_name_suggestions':
             profileNameSuggestions.map((r) => r.toJson()).toList(),
