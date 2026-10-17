@@ -60,7 +60,7 @@ def test_create_patch_and_reads_share_relationship_and_role():
 def test_membership_read_returns_the_followers_own_relationship():
     owner, follower = _user("owner"), _user("follower")
     baby_id = create_baby_with_owner_membership(
-        owner, "Parker", None, None, None, "expecting", "Father"
+        owner, "Parker", "unknown", None, None, "expecting", "Father"
     )["id"]
     from lanonna_api.db import get_connection
 
