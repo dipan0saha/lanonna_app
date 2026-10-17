@@ -86,3 +86,24 @@ def test_announce_arrival_returns_after_pubsub_failure():
         result = announce_arrival("owner_uid", baby_id, birth)
 
     assert result["lifecycle_status"] == "born"
+
+
+@pytest.mark.parametrize(("name", "expected"), [("River", {"baby_name": "River"}), (None, {})])
+def test_arrival_params_carry_the_name_only_when_the_baby_has_one(name, expected):
+    baby_id = uuid.uuid4()
+    birth = date(2026, 10, 1)
+    row = {"id": baby_id, "name": name, "gender": "unknown", "lifecycle_status": "born"}
+    with (
+        patch("lanonna_api.domain.home._utc_today", return_value=birth),
+        patch(
+            "lanonna_api.domain.home.get_baby_for_owner",
+            return_value={"name": name, "lifecycle_status": "expecting"},
+        ),
+        patch("lanonna_api.domain.home.update_baby_for_owner", return_value=row),
+        patch("lanonna_api.domain.home.insert_activity_event") as activity,
+        patch("lanonna_api.domain.home.safe_enqueue_fan_out") as notify,
+    ):
+        announce_arrival("owner_uid", baby_id, birth)
+
+    assert activity.call_args.args[3] == expected
+    assert notify.call_args.args[0].params == expected

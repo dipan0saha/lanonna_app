@@ -38,15 +38,17 @@ class PhotoSummary {
 }
 
 class PhotoTaggedBaby {
-  PhotoTaggedBaby({required this.id, required this.name});
+  PhotoTaggedBaby({required this.id, this.name});
 
   final String id;
-  final String name;
+
+  /// `null` for an unnamed baby (display via `babyNameLabel`).
+  final String? name;
 
   factory PhotoTaggedBaby.fromJson(Map<String, dynamic> json) {
     return PhotoTaggedBaby(
       id: json['id'] as String,
-      name: json['name'] as String,
+      name: json['name'] as String?,
     );
   }
 }

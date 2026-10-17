@@ -48,7 +48,7 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
 
   var _saving = false;
   var _loading = true;
-  String? _gender; // male | female
+  BabyGender? _gender;
   DateTime? _birthDate;
   TimeOfDay? _birthTime;
   XFile? _photo;
@@ -280,17 +280,17 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
                 Expanded(
                   child: AppToggleChip(
                     label: BabyGender.male.label(l10n),
-                    selected: _gender == 'male',
-                    onTap: () => setState(() => _gender = 'male'),
+                    selected: _gender == BabyGender.male,
+                    onTap: () => setState(() => _gender = BabyGender.male),
                   ),
                 ),
                 SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: AppToggleChip(
                     label: BabyGender.female.label(l10n),
-                    selected: _gender == 'female',
+                    selected: _gender == BabyGender.female,
                     selectedAccent: AppChipAccent.peach,
-                    onTap: () => setState(() => _gender = 'female'),
+                    onTap: () => setState(() => _gender = BabyGender.female),
                   ),
                 ),
               ],

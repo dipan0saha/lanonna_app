@@ -1,5 +1,7 @@
 import '../../../core/api/api_client.dart';
+import 'package:lanonna/core/domain/baby_gender.dart';
 import 'package:lanonna/core/domain/baby_lifecycle.dart';
+import 'package:lanonna/core/domain/name_suggestion_draft.dart';
 import '../../../core/api/offset_page.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/domain/baby_summary.dart';
@@ -100,9 +102,7 @@ class HomeRepository {
         ? babies.where((b) => b.id == selectedId).firstOrNull
         : null;
     final resolved = match ?? babies.first;
-    if (selectedId != resolved.id || store.selectedBabyName != resolved.name) {
-      await store.rememberResolvedBaby(resolved.id, resolved.name);
-    }
+    await store.rememberResolvedBaby(resolved.id, resolved.name);
     return resolved;
   }
 
@@ -124,29 +124,29 @@ class HomeRepository {
     return selectedOwner ?? owners.first;
   }
 
+  /// `PATCH /v1/babies/{id}`: only the arguments given are sent. [name] is
+  /// written whenever it is given, so `BabyNameWrite(null)` clears the name.
   Future<BabySummary> updateBaby(
     String babyId, {
-    String? name,
-    String? gender,
+    BabyNameWrite? name,
+    BabyGender? gender,
     String? expectedBirthDate,
     String? actualBirthDate,
     BabyLifecycle? lifecycle,
     String? avatarUrl,
-    List<Map<String, String>>? profileNameSuggestions,
+    List<NameSuggestionDraft> profileNameSuggestions = const [],
   }) async {
     final body = <String, dynamic>{
-      'name': name,
-      'gender': gender,
-      'expected_birth_date': expectedBirthDate,
-      'actual_birth_date': actualBirthDate,
-      'lifecycle_status': lifecycle?.apiValue,
-      'avatar_url': avatarUrl,
+      if (name != null) 'name': name.value,
+      if (gender != null) 'gender': gender.apiValue,
+      if (expectedBirthDate != null) 'expected_birth_date': expectedBirthDate,
+      if (actualBirthDate != null) 'actual_birth_date': actualBirthDate,
+      if (lifecycle != null) 'lifecycle_status': lifecycle.apiValue,
+      if (avatarUrl != null) 'avatar_url': avatarUrl,
+      if (profileNameSuggestions.isNotEmpty)
+        'profile_name_suggestions':
+            profileNameSuggestions.map((r) => r.toJson()).toList(),
     };
-    if (profileNameSuggestions != null && profileNameSuggestions.isNotEmpty) {
-      body['profile_name_suggestions'] = profileNameSuggestions
-          .map((r) => {'name': r['name'], 'gender': r['gender'] ?? 'unknown'})
-          .toList();
-    }
     final json = await _api.patchJson('/v1/babies/$babyId', body: body);
     return BabySummary.fromJson(json);
   }
@@ -202,4 +202,12 @@ class ActivityPage {
 
   final List<HomeActivityItem> items;
   final bool hasMore;
+}
+
+/// The baby name to write in a profile update. `null` [value] clears the
+/// name (the baby has none yet); omit the argument to leave it unchanged.
+class BabyNameWrite {
+  const BabyNameWrite(this.value);
+
+  final String? value;
 }

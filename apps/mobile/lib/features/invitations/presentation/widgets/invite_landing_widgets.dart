@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/baby_display_label.dart';
 
 import '../../../../core/time/app_date_time.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -43,7 +44,7 @@ class InviteBabyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final babyName = preview.babyName ?? AppLocalizations.of(context)!.babyNameDefault;
+    final babyName = babyNameLabel(AppLocalizations.of(context)!, preview.babyName);
     final subtitle = inviteBabyDateSubtitle(
       AppLocalizations.of(context)!,
       preview,

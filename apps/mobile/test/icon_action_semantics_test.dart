@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:lanonna/core/domain/baby_gender.dart';
 import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -235,7 +236,7 @@ void main() {
                   NameSuggestion(
                     id: 'name-1',
                     suggestedName: 'Ada',
-                    gender: 'female',
+                    gender: BabyGender.female,
                     likeCount: 1,
                     viewerHasLiked: false,
                     isMine: true,

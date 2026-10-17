@@ -1,6 +1,7 @@
 import '../../../../core/input/app_text_input_kind.dart';
 import 'package:lanonna/core/domain/baby_gender.dart';
 import 'package:lanonna/core/domain/baby_lifecycle.dart';
+import 'package:lanonna/core/domain/name_suggestion_draft.dart';
 
 enum OnboardingBabyNameFieldsMode {
   expectingBoth,
@@ -69,7 +70,7 @@ bool onboardingShowsUnsureGenderPill(BabyLifecycle status) =>
     status == BabyLifecycle.expecting;
 
 /// Fun name suggestions from expecting create-baby optional name fields (#400).
-List<Map<String, String>> expectingProfileNameSuggestionsForFun({
+List<NameSuggestionDraft> expectingProfileNameSuggestionsForFun({
   required BabyLifecycle status,
   required BabyGender gender,
   required String boyName,
@@ -78,9 +79,9 @@ List<Map<String, String>> expectingProfileNameSuggestionsForFun({
   if (status != BabyLifecycle.expecting) return const [];
 
   final seen = <String>{};
-  final out = <Map<String, String>>[];
+  final out = <NameSuggestionDraft>[];
 
-  void add(String raw, String genderApi) {
+  void add(String raw, BabyGender nameGender) {
     final normalized = AppTextInputPolicy.normalizeForSubmit(
       AppTextInputKind.personName,
       raw,
@@ -89,30 +90,29 @@ List<Map<String, String>> expectingProfileNameSuggestionsForFun({
     final key = normalized.toLowerCase();
     if (seen.contains(key)) return;
     seen.add(key);
-    out.add({'name': normalized, 'gender': genderApi});
+    out.add(NameSuggestionDraft(name: normalized, gender: nameGender));
   }
 
   switch (onboardingBabyNameFieldsMode(status: status, gender: gender)) {
     case OnboardingBabyNameFieldsMode.expectingBoth:
-      add(boyName, 'male');
-      add(girlName, 'female');
+      add(boyName, BabyGender.male);
+      add(girlName, BabyGender.female);
     case OnboardingBabyNameFieldsMode.bornSingleBoy:
-      add(boyName, 'male');
+      add(boyName, BabyGender.male);
     case OnboardingBabyNameFieldsMode.bornSingleGirl:
-      add(girlName, 'female');
+      add(girlName, BabyGender.female);
   }
   return out;
 }
 
-/// Name to store for a new baby profile; [fallbackName] (localized by the
-/// caller) when the owner has not entered one yet.
-String resolveOnboardingBabyName({
-  required String fallbackName,
+/// Name to store for the baby profile from the create-baby name fields, or
+/// `null` when the owner has not entered one. The fallback ("Baby") is a
+/// display concern (`babyNameLabel`) and is never stored.
+String? resolveOnboardingBabyName({
   required BabyLifecycle status,
   required BabyGender gender,
   String? boyName,
   String? girlName,
-  String? bornName,
 }) {
   final boy = AppTextInputPolicy.normalizeForSubmit(
     AppTextInputKind.personName,
@@ -122,23 +122,11 @@ String resolveOnboardingBabyName({
     AppTextInputKind.personName,
     girlName ?? '',
   );
-  final single = AppTextInputPolicy.normalizeForSubmit(
-    AppTextInputKind.personName,
-    bornName ?? '',
-  );
 
-  if (status == BabyLifecycle.born) {
-    if (single.isNotEmpty) return single;
-    if (gender == BabyGender.female && girl.isNotEmpty) return girl;
-    if (boy.isNotEmpty) return boy;
-    if (girl.isNotEmpty) return girl;
-    return fallbackName;
-  }
-
-  if (boy.isNotEmpty && girl.isEmpty) return boy;
-  if (girl.isNotEmpty && boy.isEmpty) return girl;
-  if (boy.isNotEmpty) return boy;
-  if (girl.isNotEmpty) return girl;
-  return fallbackName;
+  final preferGirl = status == BabyLifecycle.born && gender == BabyGender.female;
+  final first = preferGirl ? girl : boy;
+  final second = preferGirl ? boy : girl;
+  if (first.isNotEmpty) return first;
+  if (second.isNotEmpty) return second;
+  return null;
 }
-

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/baby_gender.dart';
 import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/api/api_client.dart';
@@ -15,14 +16,14 @@ class _RecordingFunRepository extends FunRepository {
     : super(ApiClient(idTokenProvider: () async => null));
 
   final PredictionsPayload payload;
-  final List<String> genderVotes = [];
+  final List<BabyGender> genderVotes = [];
   final List<DateTime> birthdateVotes = [];
 
   @override
   Future<PredictionsPayload> fetchPredictions(String babyId) async => payload;
 
   @override
-  Future<void> setGenderVote(String babyId, String gender) async {
+  Future<void> setGenderVote(String babyId, BabyGender gender) async {
     genderVotes.add(gender);
   }
 
@@ -77,10 +78,10 @@ void main() {
   final closedWithVotes = PredictionsPayload(
     maleVotes: 2,
     femaleVotes: 1,
-    viewerGenderVote: 'male',
+    viewerGenderVote: BabyGender.male,
     viewerBirthdateVote: '2026-08-01',
     birthdateHistogram: [BirthdateVoteCount(date: '2026-08-01', count: 1)],
-    genderVoters: [GenderVoterRow(gender: 'male', displayName: 'Avery')],
+    genderVoters: [GenderVoterRow(gender: BabyGender.male, displayName: 'Avery')],
     predictionsClosed: true,
   );
 

@@ -1,4 +1,5 @@
 import '../../../core/api/api_client.dart';
+import 'package:lanonna/core/domain/baby_gender.dart';
 import '../domain/birthdate_prediction.dart';
 import 'models/fun_models.dart';
 
@@ -12,10 +13,10 @@ class FunRepository {
     return NamesPayload.fromJson(json);
   }
 
-  Future<void> suggestName(String babyId, String name, String gender) async {
+  Future<void> suggestName(String babyId, String name, BabyGender gender) async {
     await _api.postJson('/v1/babies/$babyId/fun/names', body: {
       'suggested_name': name,
-      'gender': gender,
+      'gender': gender.apiValue,
     });
   }
 
@@ -34,9 +35,9 @@ class FunRepository {
     return PredictionsPayload.fromJson(json);
   }
 
-  Future<void> setGenderVote(String babyId, String gender) async {
+  Future<void> setGenderVote(String babyId, BabyGender gender) async {
     await _api.putJson('/v1/babies/$babyId/fun/predictions/gender', body: {
-      'gender': gender,
+      'gender': gender.apiValue,
     });
   }
 

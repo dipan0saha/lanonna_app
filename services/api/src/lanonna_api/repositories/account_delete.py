@@ -38,7 +38,7 @@ WHERE m.firebase_uid = %s
       AND om.role = 'owner'
       AND om.removed_at IS NULL
   ) = 1
-ORDER BY b.name
+ORDER BY b.name NULLS LAST, b.created_at, b.id
 """
 
 
@@ -46,11 +46,12 @@ def list_sole_owned_baby_ids(firebase_uid: str) -> list[uuid.UUID]:
     return [uuid.UUID(row["id"]) for row in list_sole_owned_baby_names(firebase_uid)]
 
 
-def list_sole_owned_baby_names(firebase_uid: str) -> list[dict[str, str]]:
+def list_sole_owned_baby_names(firebase_uid: str) -> list[dict[str, str | None]]:
+    """``name`` is ``None`` for an unnamed baby; the app shows its fallback."""
     with get_connection() as conn:
         rows = conn.execute(_SOLE_OWNED_BABIES_SQL, (firebase_uid,)).fetchall()
     return [
-        {"id": str(row["id"]), "name": (row["name"] or "").strip()}
+        {"id": str(row["id"]), "name": row["name"]}
         for row in rows
     ]
 

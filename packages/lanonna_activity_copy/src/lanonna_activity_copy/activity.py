@@ -53,6 +53,16 @@ def caption_params(caption: str | None) -> dict[str, str]:
     return {p.CAPTION: text} if text else {}
 
 
+def baby_name_params(name: str | None) -> dict[str, str]:
+    """Baby events carry the name only when the owner entered one.
+
+    An unnamed baby stores ``NULL`` (never a placeholder such as "Baby"); the
+    app and ``push_copy`` apply their own fallback when the key is absent.
+    """
+    text = (name or "").strip()
+    return {p.BABY_NAME: text} if text else {}
+
+
 def _quoted_or(value: Any, fallback: str) -> str:
     text = str(value or "").strip()
     return f'"{text}"' if text else fallback

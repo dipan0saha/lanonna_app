@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/baby_display_label.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/domain/baby_summary.dart';
@@ -44,7 +45,7 @@ class OwnerHomeComposer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final babyName = baby.name;
+    final babyName = babyNameLabel(l10n, baby.name);
     final s = summary;
 
     if (_isExpecting) {

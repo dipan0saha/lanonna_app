@@ -1,4 +1,5 @@
 import '../../../../core/domain/activity_event_type.dart';
+import 'package:lanonna/core/domain/baby_gender.dart';
 import '../../../../core/domain/baby_lifecycle.dart';
 import '../../../../core/domain/feed_params.dart';
 import '../../../invitations/domain/invitation_status.dart';
@@ -59,8 +60,8 @@ class GenderTotals {
   factory GenderTotals.fromJson(Map<String, dynamic>? json) {
     if (json == null) return const GenderTotals(male: 0, female: 0);
     return GenderTotals(
-      male: readInt(json['male']),
-      female: readInt(json['female']),
+      male: readInt(json[BabyGender.male.apiValue]),
+      female: readInt(json[BabyGender.female.apiValue]),
     );
   }
 }
@@ -200,7 +201,7 @@ class HomeTeasers {
 
 class BirthWelcomeSummary {
   const BirthWelcomeSummary({
-    required this.babyName,
+    this.babyName,
     required this.daysSinceBirth,
     this.welcomeVisibleUntil,
     this.photoDisplayUrl,
@@ -210,7 +211,8 @@ class BirthWelcomeSummary {
     this.everyoneNotified,
   });
 
-  final String babyName;
+  /// `null` for an unnamed baby (display via `babyNameLabel`).
+  final String? babyName;
   final int daysSinceBirth;
   final String? welcomeVisibleUntil;
   final String? photoDisplayUrl;
@@ -221,10 +223,10 @@ class BirthWelcomeSummary {
 
   factory BirthWelcomeSummary.fromJson(Map<String, dynamic>? json) {
     if (json == null)
-      return const BirthWelcomeSummary(babyName: '', daysSinceBirth: 0);
+      return const BirthWelcomeSummary(daysSinceBirth: 0);
     final ann = json['announcement'] as Map<String, dynamic>?;
     return BirthWelcomeSummary(
-      babyName: json['baby_name'] as String? ?? '',
+      babyName: json['baby_name'] as String?,
       daysSinceBirth: readInt(json['days_since_birth']),
       welcomeVisibleUntil: json['welcome_visible_until'] as String?,
       photoDisplayUrl: ann?['photo_display_url'] as String?,

@@ -1,4 +1,5 @@
 import '../../../../core/json/json_readers.dart';
+import 'package:lanonna/core/domain/baby_gender.dart';
 
 class NameSuggestion {
   NameSuggestion({
@@ -14,7 +15,7 @@ class NameSuggestion {
 
   final String id;
   final String suggestedName;
-  final String gender;
+  final BabyGender gender;
   final int likeCount;
   final bool viewerHasLiked;
   final bool isMine;
@@ -26,7 +27,7 @@ class NameSuggestion {
     return NameSuggestion(
       id: json['id'] as String,
       suggestedName: json['suggested_name'] as String,
-      gender: json['gender'] as String? ?? 'unknown',
+      gender: BabyGender.fromApi(json['gender'] as String?),
       likeCount: readInt(json['like_count']),
       viewerHasLiked: json['viewer_has_liked'] as bool? ?? false,
       isMine: isMine,
@@ -58,8 +59,8 @@ class NamesPayload {
           .whereType<Map<String, dynamic>>()
           .map(NameSuggestion.fromJson)
           .toList(),
-      viewerLikedMaleId: liked['male'] as String?,
-      viewerLikedFemaleId: liked['female'] as String?,
+      viewerLikedMaleId: liked[BabyGender.male.apiValue] as String?,
+      viewerLikedFemaleId: liked[BabyGender.female.apiValue] as String?,
       namesClosed: json['names_closed'] as bool? ?? false,
     );
   }
@@ -78,7 +79,8 @@ class PredictionsPayload {
 
   final int maleVotes;
   final int femaleVotes;
-  final String? viewerGenderVote;
+  /// `null` until the viewer votes; otherwise male or female.
+  final BabyGender? viewerGenderVote;
   final String? viewerBirthdateVote;
   final List<BirthdateVoteCount> birthdateHistogram;
   final List<GenderVoterRow> genderVoters;
@@ -91,9 +93,9 @@ class PredictionsPayload {
     final hist = json['birthdate_histogram'] as List<dynamic>? ?? [];
     final voters = json['gender_voters'] as List<dynamic>? ?? [];
     return PredictionsPayload(
-      maleVotes: readInt(totals['male']),
-      femaleVotes: readInt(totals['female']),
-      viewerGenderVote: json['viewer_gender_vote'] as String?,
+      maleVotes: readInt(totals[BabyGender.male.apiValue]),
+      femaleVotes: readInt(totals[BabyGender.female.apiValue]),
+      viewerGenderVote: BabyGender.tryFromApi(json['viewer_gender_vote'] as String?),
       viewerBirthdateVote: json['viewer_birthdate_vote'] as String?,
       birthdateHistogram: hist
           .whereType<Map<String, dynamic>>()
@@ -125,12 +127,12 @@ class BirthdateVoteCount {
 class GenderVoterRow {
   GenderVoterRow({required this.gender, required this.displayName});
 
-  final String gender;
+  final BabyGender gender;
   final String displayName;
 
   factory GenderVoterRow.fromJson(Map<String, dynamic> json) {
     return GenderVoterRow(
-      gender: json['gender'] as String? ?? '',
+      gender: BabyGender.fromApi(json['gender'] as String?),
       displayName: json['display_name'] as String? ?? '',
     );
   }

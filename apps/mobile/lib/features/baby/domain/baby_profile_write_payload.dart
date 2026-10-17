@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/time/app_date_time.dart';
 import 'package:lanonna/core/domain/baby_gender.dart';
 import 'package:lanonna/core/domain/baby_lifecycle.dart';
+import 'package:lanonna/core/domain/name_suggestion_draft.dart';
 import '../../onboarding/presentation/utils/onboarding_baby_helpers.dart';
 
 class CreateBabyFormInput {
@@ -35,20 +36,17 @@ class BabyProfileWritePayload {
     this.profileNameSuggestions = const [],
   });
 
-  final String name;
-  final String? gender;
+  /// `null` when the owner has not entered a name (stored as `NULL`).
+  final String? name;
+  final BabyGender gender;
   final BabyLifecycle lifecycle;
   final String? expectedBirthDate;
   final String? actualBirthDate;
-  final List<Map<String, String>> profileNameSuggestions;
+  final List<NameSuggestionDraft> profileNameSuggestions;
 }
 
-BabyProfileWritePayload buildBabyProfileWritePayload(
-  CreateBabyFormInput input, {
-  required String fallbackName,
-}) {
+BabyProfileWritePayload buildBabyProfileWritePayload(CreateBabyFormInput input) {
   final name = resolveOnboardingBabyName(
-    fallbackName: fallbackName,
     status: input.status,
     gender: input.gender,
     boyName: input.boyName,
@@ -71,7 +69,7 @@ BabyProfileWritePayload buildBabyProfileWritePayload(
 
   return BabyProfileWritePayload(
     name: name,
-    gender: input.gender.apiValue,
+    gender: input.gender,
     lifecycle: input.status,
     expectedBirthDate: expected,
     actualBirthDate: actual,

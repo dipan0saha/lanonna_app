@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/core/domain/baby_display_label.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../../../../core/media/cached_signed_image.dart';
@@ -100,7 +101,7 @@ class AnnouncementKeepsakeCard extends StatelessWidget {
             ),
           SizedBox(height: AppSpacing.lg),
           Text(
-            d.firstName ?? AppLocalizations.of(context)!.babyNameDefault,
+            babyNameLabel(AppLocalizations.of(context)!, d.firstName),
             style: context.keepsakeScriptNameStyle,
             textAlign: TextAlign.center,
           ),

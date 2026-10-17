@@ -367,7 +367,7 @@ class _GalleryScreenState extends State<GalleryScreen>
                 child: _isAllMode
                     ? GalleryEmptyState(
                         isOwner: _isOwner,
-                        babyName: _baby?.name ?? '',
+                        babyName: _baby?.name,
                         onAddPhoto: _isOwner ? _onAddPhoto : null,
                       )
                     : _buildFilteredEmpty(),

@@ -82,8 +82,8 @@ def patch_baby(
     user: AppUser = Depends(current_app_user),
 ) -> BabySummary:
     fields: dict[str, Any] = {}
-    if body.name is not None:
-        fields["name"] = body.name.strip()
+    if "name" in body.model_fields_set:
+        fields["name"] = body.name
     if body.gender is not None:
         fields["gender"] = body.gender
     if body.expected_birth_date is not None:

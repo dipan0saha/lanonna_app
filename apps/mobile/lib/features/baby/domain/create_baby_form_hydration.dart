@@ -24,7 +24,7 @@ class CreateBabyFormFromSummary {
     final lifecycle = baby.isBorn
         ? BabyLifecycle.born
         : BabyLifecycle.expecting;
-    var gender = BabyGender.fromApi(baby.gender);
+    var gender = baby.gender;
     if (lifecycle == BabyLifecycle.born && gender == BabyGender.unknown) {
       gender = BabyGender.male;
     }
@@ -42,21 +42,11 @@ class CreateBabyFormFromSummary {
       }
     }
 
-    var boyName = '';
-    var girlName = '';
-    final name = baby.name.trim();
-    if (name.isNotEmpty && name != 'Baby') {
-      switch (baby.gender) {
-        case 'female':
-          girlName = name;
-          break;
-        case 'male':
-          boyName = name;
-          break;
-        default:
-          boyName = name;
-      }
-    }
+    // The stored name goes back into the field the form shows for this
+    // gender; an unnamed baby (`null`) leaves both fields empty.
+    final name = baby.name?.trim() ?? '';
+    final girlName = gender == BabyGender.female ? name : '';
+    final boyName = gender == BabyGender.female ? '' : name;
 
     return CreateBabyFormFromSummary(
       lifecycle: lifecycle,

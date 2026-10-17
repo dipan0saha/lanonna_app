@@ -8,7 +8,7 @@ from lanonna_activity_copy import (
     GALLERY_ACTIVITY_EVENT_TYPES,
     ActivityEventType,
     NotificationKind,
-    params,
+    baby_name_params,
 )
 from lanonna_api.domain.activity_feed import serialize_activity_item
 from lanonna_api.repositories.activity_events import (
@@ -183,7 +183,7 @@ def announce_arrival(
     }
     if extra_fields:
         for key, value in extra_fields.items():
-            if value is not None and key not in ("lifecycle_status", "actual_birth_date"):
+            if key not in ("lifecycle_status", "actual_birth_date"):
                 fields[key] = value
 
     row = update_baby_for_owner(firebase_uid, baby_profile_id, fields)
@@ -191,7 +191,7 @@ def announce_arrival(
         raise PermissionError("Owner access required for this baby profile.")
 
     if record_arrival_event:
-        arrival_params = {params.BABY_NAME: row.get("name") or ""}
+        arrival_params = baby_name_params(row.get("name"))
         insert_activity_event(
             baby_profile_id,
             firebase_uid,

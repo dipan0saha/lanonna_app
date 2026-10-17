@@ -7,13 +7,19 @@ class SelectedBabyStore extends ChangeNotifier {
   final SharedPreferences _prefs;
   static const _key = 'selected_baby_id';
   static const _nameKey = 'selected_baby_name';
+  static const _resolvedKey = 'selected_baby_resolved';
   var _selectionGeneration = 0;
 
   String? get selectedBabyId => _prefs.getString(_key);
 
   /// Last baby name resolved from the server, so the shell title survives
-  /// an offline cold start when the baby list cannot be fetched.
+  /// an offline cold start when the baby list cannot be fetched. `null` when
+  /// unknown or when the baby has no name (display via `babyNameLabel`).
   String? get selectedBabyName => _prefs.getString(_nameKey);
+
+  /// Whether [selectedBabyName] was resolved for the selected baby (it may
+  /// still be `null` for an unnamed baby).
+  bool get hasResolvedSelectedBaby => _prefs.getBool(_resolvedKey) ?? false;
 
   /// Increments whenever the stored id changes. In-flight baby resolution
   /// must not write an older selection back over a newer one.
@@ -24,18 +30,20 @@ class SelectedBabyStore extends ChangeNotifier {
     await _prefs.setString(_key, id);
     if (changed) {
       await _prefs.remove(_nameKey);
+      await _prefs.remove(_resolvedKey);
       _selectionGeneration += 1;
     }
     notifyListeners();
   }
 
   /// Persists the id and display name of a baby the server just returned.
-  Future<void> rememberResolvedBaby(String id, String name) async {
+  Future<void> rememberResolvedBaby(String id, String? name) async {
     final idChanged = selectedBabyId != id;
     final nameChanged = selectedBabyName != name;
-    if (!idChanged && !nameChanged) return;
+    if (!idChanged && !nameChanged && hasResolvedSelectedBaby) return;
     await _prefs.setString(_key, id);
-    if (name.isEmpty) {
+    await _prefs.setBool(_resolvedKey, true);
+    if (name == null || name.isEmpty) {
       await _prefs.remove(_nameKey);
     } else {
       await _prefs.setString(_nameKey, name);
@@ -48,6 +56,7 @@ class SelectedBabyStore extends ChangeNotifier {
     if (selectedBabyId != null) _selectionGeneration += 1;
     await _prefs.remove(_key);
     await _prefs.remove(_nameKey);
+    await _prefs.remove(_resolvedKey);
     notifyListeners();
   }
 }

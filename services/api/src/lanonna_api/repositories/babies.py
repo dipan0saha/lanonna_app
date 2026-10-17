@@ -93,8 +93,8 @@ def list_babies_for_user(
 
 def create_baby_with_owner_membership(
     firebase_uid: str,
-    name: str,
-    gender: str | None,
+    name: str | None,
+    gender: str,
     expected_birth_date,
     actual_birth_date,
     lifecycle_status: str,

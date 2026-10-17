@@ -1,3 +1,4 @@
+import 'baby_gender.dart';
 import 'baby_lifecycle.dart';
 
 class BabySummary {
@@ -6,7 +7,7 @@ class BabySummary {
     required this.name,
     required this.lifecycle,
     required this.role,
-    this.gender,
+    this.gender = BabyGender.unknown,
     this.expectedBirthDate,
     this.actualBirthDate,
     this.avatarUrl,
@@ -17,8 +18,11 @@ class BabySummary {
   });
 
   final String id;
-  final String name;
-  final String? gender;
+
+  /// The name the owner entered; `null` while the baby has no name. Display
+  /// through `babyNameLabel` / `babyDisplayName`, never directly.
+  final String? name;
+  final BabyGender gender;
   final String? expectedBirthDate;
   final String? actualBirthDate;
   final BabyLifecycle lifecycle;
@@ -34,8 +38,8 @@ class BabySummary {
   factory BabySummary.fromJson(Map<String, dynamic> json) {
     return BabySummary(
       id: json['id']?.toString() ?? '',
-      name: json['name'] as String? ?? '',
-      gender: json['gender'] as String?,
+      name: json['name'] as String?,
+      gender: BabyGender.fromApi(json['gender'] as String?),
       expectedBirthDate: json['expected_birth_date']?.toString(),
       actualBirthDate: json['actual_birth_date']?.toString(),
       lifecycle: BabyLifecycle.fromApi(json['lifecycle_status'] as String?),

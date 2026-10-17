@@ -7,7 +7,7 @@ from typing import Any
 
 from lanonna_api.domain.errors import ErrorCode, ServiceUnavailableError
 from lanonna_api.domain.membership import require_owner_baby
-from lanonna_activity_copy import NotificationKind, params
+from lanonna_activity_copy import NotificationKind, baby_name_params
 from lanonna_api.domain.notifications import NotifyUserSpec, safe_enqueue_notify_user
 from lanonna_api.pubsub import publish_send_invite_email
 from lanonna_api.schemas.invitations import InviteRowStatus
@@ -240,7 +240,7 @@ def accept_invitation(
                 NotifyUserSpec(
                     firebase_uid=inviter,
                     kind=NotificationKind.INVITE_ACCEPTED,
-                    params={params.BABY_NAME: result.get("baby_name") or ""},
+                    params=baby_name_params(result.get("baby_name")),
                     deep_link=f"/baby/{baby_id}/followers",
                     actor_firebase_uid=firebase_uid,
                     baby_profile_id=baby_id,
