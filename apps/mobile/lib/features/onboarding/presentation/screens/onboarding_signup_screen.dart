@@ -158,7 +158,7 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
               label: l10n.authPasswordResetEmailLabel,
               hint: l10n.messageEmailCom,
               keyboardType: TextInputType.emailAddress,
-              validator: validateEmail,
+              validator: (v) => validateEmail(AppLocalizations.of(context)!, v),
               autovalidateMode: _autovalidateMode,
               onChanged: (_) => _persistEmail(),
             ),
@@ -166,7 +166,7 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
             OnboardingPasswordField(
               fieldKey: const Key('onboarding_signup_password'),
               controller: _passwordController,
-              validator: validatePassword,
+              validator: (v) => validatePassword(AppLocalizations.of(context)!, v),
               autovalidateMode: _autovalidateMode,
             ),
             const SizedBox(height: 8),

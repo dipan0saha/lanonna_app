@@ -126,7 +126,7 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
     if (_busy) return;
     final l10n = AppLocalizations.of(context)!;
     var email = _emailController.text.trim();
-    if (validateEmail(email) != null) {
+    if (validateEmail(AppLocalizations.of(context)!, email) != null) {
       final chosen = await showForgotPasswordEmailDialog(
         context,
         initialEmail: email,
@@ -227,7 +227,7 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
                   label: l10n.authPasswordResetEmailLabel,
                   hint: l10n.messageEmailCom,
                   keyboardType: TextInputType.emailAddress,
-                  validator: validateEmail,
+                  validator: (v) => validateEmail(AppLocalizations.of(context)!, v),
                   autovalidateMode: _autovalidateMode,
                   onChanged: (_) => _persistEmail(),
                 ),
@@ -238,7 +238,7 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
                   controller: _passwordController,
                   label: l10n.fieldPassword,
                   hint: l10n.hintEnterPassword,
-                  validator: validatePassword,
+                  validator: (v) => validatePassword(AppLocalizations.of(context)!, v),
                   autovalidateMode: _autovalidateMode,
                 ),
                 Align(

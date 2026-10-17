@@ -2395,4 +2395,60 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get inviteErrorLoadFailed =>
       'Could not load this invitation. Try again.';
+
+  @override
+  String get validationEmailRequired => 'Email is required';
+
+  @override
+  String get validationEmailInvalid => 'Enter a valid email';
+
+  @override
+  String get validationPasswordTooShort =>
+      'Password must be at least 6 characters';
+
+  @override
+  String get validationPasswordNeedsSymbol => 'Include a number or symbol';
+
+  @override
+  String get validationDisplayNameRequired => 'Display name is required';
+
+  @override
+  String get validationDisplayNameTooLong => 'Display name is too long';
+
+  @override
+  String get validationFirstNameRequired => 'First name is required';
+
+  @override
+  String get validationLastNameRequired => 'Last name is required';
+
+  @override
+  String get validationPhoneInvalid => 'Enter a valid phone number';
+
+  @override
+  String get validationTermsRequired => 'Please accept the terms to continue';
+
+  @override
+  String get validationRelationshipRequired =>
+      'Select your relationship to baby';
+
+  @override
+  String get validationNameRequired => 'Name is required';
+
+  @override
+  String get validationItemNameRequired => 'Item name is required';
+
+  @override
+  String get validationStreetRequired => 'Street address is required';
+
+  @override
+  String get validationCityRequired => 'City is required';
+
+  @override
+  String get validationPostalCodeRequired => 'Zip / Postal code is required';
+
+  @override
+  String get validationCountryRequired => 'Select a country';
+
+  @override
+  String get validationUrlInvalid => 'Enter a valid link, e.g. https://…';
 }

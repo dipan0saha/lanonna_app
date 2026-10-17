@@ -4209,6 +4209,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not load this invitation. Try again.'**
   String get inviteErrorLoadFailed;
+
+  /// No description provided for @validationEmailRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Email is required'**
+  String get validationEmailRequired;
+
+  /// No description provided for @validationEmailInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email'**
+  String get validationEmailInvalid;
+
+  /// No description provided for @validationPasswordTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must be at least 6 characters'**
+  String get validationPasswordTooShort;
+
+  /// No description provided for @validationPasswordNeedsSymbol.
+  ///
+  /// In en, this message translates to:
+  /// **'Include a number or symbol'**
+  String get validationPasswordNeedsSymbol;
+
+  /// No description provided for @validationDisplayNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Display name is required'**
+  String get validationDisplayNameRequired;
+
+  /// No description provided for @validationDisplayNameTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Display name is too long'**
+  String get validationDisplayNameTooLong;
+
+  /// No description provided for @validationFirstNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'First name is required'**
+  String get validationFirstNameRequired;
+
+  /// No description provided for @validationLastNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Last name is required'**
+  String get validationLastNameRequired;
+
+  /// No description provided for @validationPhoneInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid phone number'**
+  String get validationPhoneInvalid;
+
+  /// No description provided for @validationTermsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please accept the terms to continue'**
+  String get validationTermsRequired;
+
+  /// No description provided for @validationRelationshipRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Select your relationship to baby'**
+  String get validationRelationshipRequired;
+
+  /// No description provided for @validationNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Name is required'**
+  String get validationNameRequired;
+
+  /// No description provided for @validationItemNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Item name is required'**
+  String get validationItemNameRequired;
+
+  /// No description provided for @validationStreetRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Street address is required'**
+  String get validationStreetRequired;
+
+  /// No description provided for @validationCityRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'City is required'**
+  String get validationCityRequired;
+
+  /// No description provided for @validationPostalCodeRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Zip / Postal code is required'**
+  String get validationPostalCodeRequired;
+
+  /// No description provided for @validationCountryRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a country'**
+  String get validationCountryRequired;
+
+  /// No description provided for @validationUrlInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid link, e.g. https://…'**
+  String get validationUrlInvalid;
 }
 
 class _AppLocalizationsDelegate

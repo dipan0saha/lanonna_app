@@ -264,7 +264,7 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
               kind: AppTextInputKind.personName,
               controller: _first,
               maxLength: 50,
-              validator: validateOnboardingFirstName,
+              validator: (v) => validateOnboardingFirstName(AppLocalizations.of(context)!, v),
               autovalidateMode: _autovalidateMode,
             ),
             AppLabeledTextField(

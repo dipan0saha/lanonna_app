@@ -183,7 +183,7 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
               hint: l10n.labelEGCribMattress,
               kind: AppTextInputKind.prose,
               controller: _name,
-              validator: validateRegistryItemName,
+              validator: (v) => validateRegistryItemName(AppLocalizations.of(context)!, v),
               autovalidateMode: _autovalidateMode,
             ),
             AppLabeledTextField(
@@ -200,7 +200,7 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
               kind: AppTextInputKind.none,
               controller: _link,
               keyboardType: TextInputType.url,
-              validator: validateOptionalHttpUrl,
+              validator: (v) => validateOptionalHttpUrl(AppLocalizations.of(context)!, v),
               autovalidateMode: _autovalidateMode,
             ),
             Padding(

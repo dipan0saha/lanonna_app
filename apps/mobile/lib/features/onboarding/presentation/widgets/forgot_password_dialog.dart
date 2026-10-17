@@ -57,7 +57,7 @@ class _ForgotPasswordEmailDialogState extends State<_ForgotPasswordEmailDialog> 
               key: const Key('forgot_password_email'),
               controller: _controller,
               keyboardType: TextInputType.emailAddress,
-              validator: validateEmail,
+              validator: (v) => validateEmail(AppLocalizations.of(context)!, v),
               decoration: InputDecoration(
                 labelText: l10n.authPasswordResetEmailLabel,
               ),

@@ -1,113 +1,108 @@
-String? validateEmail(String? value) {
+import 'package:lanonna/l10n/app_localizations.dart';
+
+String? validateEmail(AppLocalizations l10n, String? value) {
   final email = value?.trim() ?? '';
-  if (email.isEmpty) return 'Email is required';
+  if (email.isEmpty) return l10n.validationEmailRequired;
   final pattern = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
-  if (!pattern.hasMatch(email)) return 'Enter a valid email';
+  if (!pattern.hasMatch(email)) return l10n.validationEmailInvalid;
   return null;
 }
 
-String? validatePassword(String? value) {
+String? validatePassword(AppLocalizations l10n, String? value) {
   final password = value ?? '';
-  if (password.length < 6) return 'Password must be at least 6 characters';
+  if (password.length < 6) return l10n.validationPasswordTooShort;
   if (!RegExp(r'[\d\W]').hasMatch(password)) {
-    return 'Include a number or symbol';
+    return l10n.validationPasswordNeedsSymbol;
   }
   return null;
 }
 
-String? validateDisplayName(String? value) {
+String? validateDisplayName(AppLocalizations l10n, String? value) {
   final name = value?.trim() ?? '';
-  if (name.isEmpty) return 'Display name is required';
-  if (name.length > 100) return 'Display name is too long';
+  if (name.isEmpty) return l10n.validationDisplayNameRequired;
+  if (name.length > 100) return l10n.validationDisplayNameTooLong;
   return null;
 }
 
-String? validateOnboardingFirstName(String? value) =>
-    validateRequiredTrimmed(value, fieldLabel: 'First name');
+String? validateOnboardingFirstName(AppLocalizations l10n, String? value) =>
+    _required(value, l10n.validationFirstNameRequired);
 
-String? validateOnboardingLastName(String? value) =>
-    validateRequiredTrimmed(value, fieldLabel: 'Last name');
+String? validateOnboardingLastName(AppLocalizations l10n, String? value) =>
+    _required(value, l10n.validationLastNameRequired);
 
 /// Full profile display name from first + last (length cap via [validateDisplayName]).
 String? validateOnboardingProfileDisplayName(
+  AppLocalizations l10n,
   String firstName,
   String lastName,
 ) {
   final combined = '${firstName.trim()} ${lastName.trim()}'.trim();
-  return validateDisplayName(combined);
+  return validateDisplayName(l10n, combined);
 }
-
-const invalidOptionalPhone = 'Enter a valid phone number';
 
 final _optionalPhoneAllowed = RegExp(r'^[0-9+\-() ]+$');
 
 /// Empty is allowed. Otherwise digits, spaces, and `+ - ( )`, with 7–20 digits.
 /// A `+` may appear only once, at the start (same rule as the profile API).
-String? validateOptionalPhone(String? value) {
+String? validateOptionalPhone(AppLocalizations l10n, String? value) {
   final raw = value?.trim() ?? '';
   if (raw.isEmpty) return null;
-  if (!_optionalPhoneAllowed.hasMatch(raw)) return invalidOptionalPhone;
-  if (raw.contains('+') && !raw.startsWith('+')) return invalidOptionalPhone;
-  if ('+'.allMatches(raw).length > 1) return invalidOptionalPhone;
   final digits = raw.replaceAll(RegExp(r'\D'), '');
-  if (digits.length < 7 || digits.length > 20) return invalidOptionalPhone;
+  final valid = _optionalPhoneAllowed.hasMatch(raw) &&
+      (!raw.contains('+') || raw.startsWith('+')) &&
+      '+'.allMatches(raw).length <= 1 &&
+      digits.length >= 7 &&
+      digits.length <= 20;
+  return valid ? null : l10n.validationPhoneInvalid;
+}
+
+String? validateTermsAccepted(AppLocalizations l10n, bool? value) {
+  if (value != true) return l10n.validationTermsRequired;
   return null;
 }
 
-String? validateTermsAccepted(bool? value) {
-  if (value != true) return 'Please accept the terms to continue';
-  return null;
-}
+String? validateOnboardingRelationshipToBaby(
+  AppLocalizations l10n,
+  String? value,
+) =>
+    _required(value, l10n.validationRelationshipRequired);
 
-String? validateOnboardingRelationshipToBaby(String? value) {
-  if (value == null || value.trim().isEmpty) {
-    return 'Select your relationship to baby';
-  }
-  return null;
-}
+String? validateFunNameSuggestion(AppLocalizations l10n, String? value) =>
+    _required(value, l10n.validationNameRequired);
 
-String? validateFunNameSuggestion(String? value) =>
-    validateRequiredTrimmed(value, fieldLabel: 'Name');
+String? validateRegistryItemName(AppLocalizations l10n, String? value) =>
+    _required(value, l10n.validationItemNameRequired);
 
-String? validateRequiredTrimmed(String? value, {required String fieldLabel}) {
-  if (value == null || value.trim().isEmpty) {
-    return '$fieldLabel is required';
-  }
-  return null;
-}
+String? validateRegistryShippingLine1(AppLocalizations l10n, String? value) =>
+    _required(value, l10n.validationStreetRequired);
 
-String? validateRegistryItemName(String? value) =>
-    validateRequiredTrimmed(value, fieldLabel: 'Item name');
+String? validateRegistryShippingCity(AppLocalizations l10n, String? value) =>
+    _required(value, l10n.validationCityRequired);
 
-String? validateRegistryShippingLine1(String? value) =>
-    validateRequiredTrimmed(value, fieldLabel: 'Street address');
+String? validateRegistryShippingPostalCode(
+  AppLocalizations l10n,
+  String? value,
+) =>
+    _required(value, l10n.validationPostalCodeRequired);
 
-String? validateRegistryShippingCity(String? value) =>
-    validateRequiredTrimmed(value, fieldLabel: 'City');
+String? validateCountryCode(AppLocalizations l10n, String? code) =>
+    _required(code, l10n.validationCountryRequired);
 
-String? validateRegistryShippingPostalCode(String? value) =>
-    validateRequiredTrimmed(value, fieldLabel: 'Zip / Postal code');
-
-String? validateCountryCode(String? code) {
-  if (code == null || code.trim().isEmpty) {
-    return 'Select a country';
-  }
-  return null;
-}
-
-const invalidOptionalHttpUrl = 'Enter a valid link, e.g. https://…';
+String? _required(String? value, String message) =>
+    value == null || value.trim().isEmpty ? message : null;
 
 const _maxOptionalHttpUrlLength = 2048;
 
-String? validateOptionalHttpUrl(String? value) {
-  return _optionalHttpUrlValidationError(value);
-}
+String? validateOptionalHttpUrl(AppLocalizations l10n, String? value) =>
+    _isValidOptionalHttpUrl(value) ? null : l10n.validationUrlInvalid;
 
-/// Normalizes empty to null; bare domains get `https://`. Throws [FormatException].
+/// Normalizes empty to null; bare domains get `https://`.
+///
+/// Callers validate first with [validateOptionalHttpUrl]; an invalid value
+/// here is a programming error and throws [FormatException].
 String? normalizeOptionalHttpUrl(String? value) {
-  final error = _optionalHttpUrlValidationError(value);
-  if (error != null) {
-    throw FormatException(error);
+  if (!_isValidOptionalHttpUrl(value)) {
+    throw const FormatException('invalid_optional_http_url');
   }
   final raw = value?.trim() ?? '';
   if (raw.isEmpty) return null;
@@ -117,22 +112,17 @@ String? normalizeOptionalHttpUrl(String? value) {
   return raw;
 }
 
-String? _optionalHttpUrlValidationError(String? value) {
+bool _isValidOptionalHttpUrl(String? value) {
   final raw = value?.trim() ?? '';
-  if (raw.isEmpty) return null;
-  if (raw.length > _maxOptionalHttpUrlLength) return invalidOptionalHttpUrl;
-  if (raw.contains(' ')) return invalidOptionalHttpUrl;
+  if (raw.isEmpty) return true;
+  if (raw.length > _maxOptionalHttpUrlLength) return false;
+  if (raw.contains(' ')) return false;
 
   final withScheme = raw.contains('://') ? raw : 'https://$raw';
   final uri = Uri.tryParse(withScheme);
-  if (uri == null || !uri.hasScheme) return invalidOptionalHttpUrl;
-  if (uri.scheme != 'http' && uri.scheme != 'https') {
-    return invalidOptionalHttpUrl;
-  }
+  if (uri == null || !uri.hasScheme) return false;
+  if (uri.scheme != 'http' && uri.scheme != 'https') return false;
   final host = uri.host;
-  if (host.isEmpty) return invalidOptionalHttpUrl;
-  if (host != 'localhost' && !host.contains('.')) {
-    return invalidOptionalHttpUrl;
-  }
-  return null;
+  if (host.isEmpty) return false;
+  return host == 'localhost' || host.contains('.');
 }

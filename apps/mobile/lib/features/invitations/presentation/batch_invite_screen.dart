@@ -175,7 +175,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
   Future<void> _checkMembershipForRow(int index) async {
     final babyId = await _resolveBabyId();
     final email = _rows[index].emailController.text.trim();
-    if (babyId == null || email.isEmpty || validateEmail(email) != null) {
+    if (babyId == null || email.isEmpty || validateEmail(AppLocalizations.of(context)!, email) != null) {
       setState(() => _rows[index].membershipHint = null);
       return;
     }
@@ -205,7 +205,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
     for (final row in _rows) {
       final email = row.emailController.text.trim();
       if (email.isEmpty) continue;
-      if (validateEmail(email) != null) continue;
+      if (validateEmail(AppLocalizations.of(context)!, email) != null) continue;
       if (row.membershipHint == 'Already on the family') continue;
       if (row.membershipHint == 'Invitation already pending') continue;
       invites.add({
@@ -224,7 +224,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
       final email = row.emailController.text.trim();
       if (email.isEmpty) continue;
       sawEmail = true;
-      if (validateEmail(email) != null) {
+      if (validateEmail(AppLocalizations.of(context)!, email) != null) {
         sawInvalid = true;
         continue;
       }

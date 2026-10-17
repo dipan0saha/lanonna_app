@@ -269,9 +269,9 @@ class _OnboardingCompleteProfileScreenState
   }
 
   String? _validateLastName(String? value) {
-    final required = validateOnboardingLastName(value);
+    final required = validateOnboardingLastName(AppLocalizations.of(context)!, value);
     if (required != null) return required;
-    return validateOnboardingProfileDisplayName(
+    return validateOnboardingProfileDisplayName(AppLocalizations.of(context)!, 
       _firstNameController.text,
       value ?? '',
     );
@@ -388,7 +388,7 @@ class _OnboardingCompleteProfileScreenState
                     hint: l10n.fieldFirstName,
                     kind: AppTextInputKind.personName,
                     autovalidateMode: _autovalidateMode,
-                    validator: validateOnboardingFirstName,
+                    validator: (v) => validateOnboardingFirstName(AppLocalizations.of(context)!, v),
                     onChanged: (_) {
                       _clearApiError();
                       _persistDraft();
@@ -415,7 +415,7 @@ class _OnboardingCompleteProfileScreenState
                     hint: '(555) 555-5555',
                     keyboardType: TextInputType.phone,
                     autovalidateMode: _autovalidateMode,
-                    validator: validateOptionalPhone,
+                    validator: (v) => validateOptionalPhone(AppLocalizations.of(context)!, v),
                     onChanged: (_) {
                       _clearApiError();
                       _persistDraft();
@@ -426,7 +426,7 @@ class _OnboardingCompleteProfileScreenState
                     OnboardingRelationshipFormField(
                       value: _relationshipLabel,
                       autovalidateMode: _autovalidateMode,
-                      validator: validateOnboardingRelationshipToBaby,
+                      validator: (v) => validateOnboardingRelationshipToBaby(AppLocalizations.of(context)!, v),
                       onSelected: (label) {
                         setState(() => _relationshipLabel = label);
                         _clearApiError();
@@ -484,7 +484,7 @@ class _OnboardingCompleteProfileScreenState
                     value: _acceptedTerms,
                     enabled: !_busy,
                     autovalidateMode: _autovalidateMode,
-                    validator: validateTermsAccepted,
+                    validator: (v) => validateTermsAccepted(AppLocalizations.of(context)!, v),
                     onChanged: (accepted) {
                       setState(() => _acceptedTerms = accepted);
                       _clearApiError();

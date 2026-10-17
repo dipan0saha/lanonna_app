@@ -307,7 +307,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
       AppSnackBar.showAlert(context, l10n.calendarEnterAnEventTitleTo);
       return;
     }
-    final videoError = validateOptionalHttpUrl(_video.text);
+    final videoError = validateOptionalHttpUrl(AppLocalizations.of(context)!, _video.text);
     if (videoError != null) {
       AppSnackBar.showAlert(context, videoError);
       return;

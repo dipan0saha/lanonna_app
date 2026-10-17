@@ -235,7 +235,7 @@ class _NamesTabState extends State<NamesTab> {
                 kind: AppTextInputKind.personName,
                 controller: _input,
                 decoration: InputDecoration(hintText: l10n.labelSuggestName2),
-                validator: validateFunNameSuggestion,
+                validator: (v) => validateFunNameSuggestion(AppLocalizations.of(context)!, v),
                 autovalidateMode: autovalidate,
               ),
               SizedBox(height: 10),

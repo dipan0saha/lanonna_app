@@ -226,7 +226,7 @@ class _RegistryShippingAddressScreenState
               controller: _line1,
               textInputAction: TextInputAction.next,
               enabled: !_saving,
-              validator: validateRegistryShippingLine1,
+              validator: (v) => validateRegistryShippingLine1(AppLocalizations.of(context)!, v),
               autovalidateMode: _autovalidateMode,
             ),
             AppLabeledTextFormField(
@@ -245,7 +245,7 @@ class _RegistryShippingAddressScreenState
               controller: _city,
               textInputAction: TextInputAction.next,
               enabled: !_saving,
-              validator: validateRegistryShippingCity,
+              validator: (v) => validateRegistryShippingCity(AppLocalizations.of(context)!, v),
               autovalidateMode: _autovalidateMode,
             ),
             AppLabeledTextFormField(
@@ -264,7 +264,7 @@ class _RegistryShippingAddressScreenState
               controller: _postal,
               textInputAction: TextInputAction.next,
               enabled: !_saving,
-              validator: validateRegistryShippingPostalCode,
+              validator: (v) => validateRegistryShippingPostalCode(AppLocalizations.of(context)!, v),
               autovalidateMode: _autovalidateMode,
             ),
             Padding(
@@ -279,7 +279,7 @@ class _RegistryShippingAddressScreenState
                 countries: _countries,
                 value: _countryCode,
                 enabled: !_saving,
-                validator: validateCountryCode,
+                validator: (v) => validateCountryCode(AppLocalizations.of(context)!, v),
                 autovalidateMode: _autovalidateMode,
                 onChanged: (code) => setState(() => _countryCode = code),
               ),

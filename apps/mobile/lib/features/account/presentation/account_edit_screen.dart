@@ -100,9 +100,9 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
   }
 
   String? _validateLastName(String? value) {
-    final required = validateOnboardingLastName(value);
+    final required = validateOnboardingLastName(AppLocalizations.of(context)!, value);
     if (required != null) return required;
-    return validateOnboardingProfileDisplayName(_firstName.text, value ?? '');
+    return validateOnboardingProfileDisplayName(AppLocalizations.of(context)!, _firstName.text, value ?? '');
   }
 
   Future<void> _pickPhoto() async {
@@ -216,7 +216,7 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
                 kind: AppTextInputKind.personName,
                 controller: _firstName,
                 autovalidateMode: _autovalidateMode,
-                validator: validateOnboardingFirstName,
+                validator: (v) => validateOnboardingFirstName(AppLocalizations.of(context)!, v),
               ),
               AppLabeledTextFormField(
                 label: l10n.fieldLastName,
@@ -236,7 +236,7 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
                 controller: _phone,
                 keyboardType: TextInputType.phone,
                 autovalidateMode: _autovalidateMode,
-                validator: validateOptionalPhone,
+                validator: (v) => validateOptionalPhone(AppLocalizations.of(context)!, v),
               ),
               const SizedBox(height: 8),
               ListTile(
