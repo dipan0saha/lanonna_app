@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from lanonna_api.db import get_connection
+from lanonna_api.repositories._paging import limit_offset_clause
 from lanonna_api.repositories.memberships import (
     count_active_owners,
     lock_baby_profile_for_update,
@@ -39,18 +40,25 @@ def email_is_member(baby_profile_id: uuid.UUID, email: str) -> bool:
     return row is not None
 
 
-def list_invitations_for_baby(baby_profile_id: uuid.UUID) -> list[dict[str, Any]]:
+def list_invitations_for_baby(
+    baby_profile_id: uuid.UUID,
+    *,
+    limit: int | None = None,
+    offset: int = 0,
+) -> list[dict[str, Any]]:
+    paging, paging_params = limit_offset_clause(limit, offset)
     with get_connection() as conn:
         rows = conn.execute(
-            """
+            f"""
             SELECT id, invitee_email, role, relationship_label, status,
                    expires_at, created_at, email_sent_at,
                    email_delivery_status, email_last_error, email_send_attempts
             FROM invitations
             WHERE baby_profile_id = %s
-            ORDER BY created_at DESC
+            ORDER BY created_at DESC, id DESC
+            {paging}
             """,
-            (baby_profile_id,),
+            (baby_profile_id, *paging_params),
         ).fetchall()
     return [dict(r) for r in rows]
 

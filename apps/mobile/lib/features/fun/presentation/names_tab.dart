@@ -28,6 +28,7 @@ class NamesTab extends StatefulWidget {
 }
 
 class _NamesTabState extends State<NamesTab> {
+  AppLocalizations get l10n => AppLocalizations.of(context)!;
   final _suggestFormKey = GlobalKey<FormState>();
   NamesPayload? _payload;
   final _input = TextEditingController();
@@ -124,7 +125,9 @@ class _NamesTabState extends State<NamesTab> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(AppLocalizations.of(ctx)!.funRemoveNameTitle),
-        content: Text(AppLocalizations.of(ctx)!.funRemoveNameBody(s.suggestedName)),
+        content: Text(
+          AppLocalizations.of(ctx)!.funRemoveNameBody(s.suggestedName),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -170,7 +173,7 @@ class _NamesTabState extends State<NamesTab> {
             AppEmptyState(
               expand: false,
               icon: Icons.star_outline,
-              title: 'No name suggestions yet',
+              title: l10n.emptyNameSuggestionsYet,
               message: _readOnly
                   ? 'No name ideas were saved before baby arrived.'
                   : 'Suggest a name below — everyone gets a say.',
@@ -230,7 +233,7 @@ class _NamesTabState extends State<NamesTab> {
               AppTextFormField(
                 kind: AppTextInputKind.personName,
                 controller: _input,
-                decoration: const InputDecoration(hintText: 'Suggest a name…'),
+                decoration: InputDecoration(hintText: l10n.labelSuggestName2),
                 validator: validateFunNameSuggestion,
                 autovalidateMode: autovalidate,
               ),
@@ -240,8 +243,18 @@ class _NamesTabState extends State<NamesTab> {
                   Expanded(
                     child: SegmentedButton<String>(
                       segments: [
-                        ButtonSegment(value: 'male', label: Text(AppLocalizations.of(context)!.funGenderBoy)),
-                        ButtonSegment(value: 'female', label: Text(AppLocalizations.of(context)!.funGenderGirl)),
+                        ButtonSegment(
+                          value: 'male',
+                          label: Text(
+                            AppLocalizations.of(context)!.funGenderBoy,
+                          ),
+                        ),
+                        ButtonSegment(
+                          value: 'female',
+                          label: Text(
+                            AppLocalizations.of(context)!.funGenderGirl,
+                          ),
+                        ),
                       ],
                       selected: {_gender},
                       onSelectionChanged: (s) =>
@@ -249,14 +262,17 @@ class _NamesTabState extends State<NamesTab> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  FilledButton(onPressed: _submit, child: Text(AppLocalizations.of(context)!.actionAdd)),
+                  FilledButton(
+                    onPressed: _submit,
+                    child: Text(AppLocalizations.of(context)!.actionAdd),
+                  ),
                 ],
               ),
               if (!_isOwner)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
-                    'You can suggest 1 name per gender.',
+                    l10n.messageSuggestName,
                     style: context.textStyles.bodySmall?.copyWith(
                       color: AppColors.muted,
                     ),
@@ -380,7 +396,9 @@ class _NameSuggestionCard extends StatelessWidget {
                 if (!readOnly && suggestion.canDelete)
                   AppIconButton(
                     semanticsId: 'name_remove_${suggestion.id}',
-                    label: 'Remove ${suggestion.suggestedName}',
+                    label: AppLocalizations.of(
+                      context,
+                    )!.funRemoveNameSemantics(suggestion.suggestedName),
                     onPressed: onDelete,
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.zero,

@@ -14,6 +14,7 @@ import '../../../../core/theme/la_nonna_theme.dart';
 import '../../domain/baby_gender.dart';
 import 'onboarding_fields.dart';
 import 'onboarding_typography.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Soft circular icon backdrop for onboarding carousel and verify screens.
 class OnboardingIconBlob extends StatelessWidget {
@@ -33,10 +34,7 @@ class OnboardingIconBlob extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: backgroundColor, shape: BoxShape.circle),
       alignment: Alignment.center,
       child: child,
     );
@@ -140,7 +138,11 @@ class PrototypePhotoUpload extends StatelessWidget {
         ),
       );
     }
-    return const Icon(Icons.photo_camera_outlined, size: 26, color: AppColors.muted);
+    return const Icon(
+      Icons.photo_camera_outlined,
+      size: 26,
+      color: AppColors.muted,
+    );
   }
 }
 
@@ -193,10 +195,7 @@ class PrototypeMomentCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      title,
-                      style: text.bodyLarge?.copyWith(fontSize: 14),
-                    ),
+                    Text(title, style: text.bodyLarge?.copyWith(fontSize: 14)),
                     Text(
                       subtitle,
                       style: text.bodyMedium?.copyWith(
@@ -256,22 +255,23 @@ class PrototypeInlineNameAdd extends StatelessWidget {
     super.key,
     required this.controller,
     required this.onAdd,
-    this.hint = 'Add a name...',
+    this.hint,
   });
 
   final TextEditingController controller;
   final VoidCallback onAdd;
-  final String hint;
+  final String? hint;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         Expanded(
           child: AppTextField(
             kind: AppTextInputKind.personName,
             controller: controller,
-            decoration: InputDecoration(hintText: hint),
+            decoration: InputDecoration(hintText: hint ?? l10n.actionAddName),
             onSubmitted: (_) => onAdd(),
           ),
         ),
@@ -285,7 +285,7 @@ class PrototypeInlineNameAdd extends StatelessWidget {
             child: InkWell(
               onTap: onAdd,
               borderRadius: BorderRadius.circular(12),
-              child: const Center(
+              child: Center(
                 child: Text(
                   '+',
                   style: TextStyle(
@@ -304,17 +304,14 @@ class PrototypeInlineNameAdd extends StatelessWidget {
 }
 
 class PrototypeAddAnotherButton extends StatelessWidget {
-  const PrototypeAddAnotherButton({
-    super.key,
-    required this.onTap,
-    this.label = 'Add another',
-  });
+  const PrototypeAddAnotherButton({super.key, required this.onTap, this.label});
 
   final VoidCallback onTap;
-  final String label;
+  final String? label;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -323,10 +320,14 @@ class PrototypeAddAnotherButton extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 18),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.inputBorderStrong, width: 1.5, style: BorderStyle.solid),
+          border: Border.all(
+            color: AppColors.inputBorderStrong,
+            width: 1.5,
+            style: BorderStyle.solid,
+          ),
         ),
         child: Text(
-          '+ $label',
+          '+ ${label ?? l10n.actionAddAnother}',
           textAlign: TextAlign.center,
           style: context.textStyles.bodyMedium?.copyWith(
             fontWeight: FontWeight.w600,
@@ -384,9 +385,7 @@ class PrototypeDateField extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Expanded(
-                  child: Text(display, style: fieldText),
-                ),
+                Expanded(child: Text(display, style: fieldText)),
                 Icon(
                   Icons.calendar_today_outlined,
                   size: 16,
@@ -441,9 +440,7 @@ class PrototypeTimeField extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Expanded(
-                  child: Text(display, style: fieldText),
-                ),
+                Expanded(child: Text(display, style: fieldText)),
                 Icon(
                   Icons.schedule_outlined,
                   size: 18,

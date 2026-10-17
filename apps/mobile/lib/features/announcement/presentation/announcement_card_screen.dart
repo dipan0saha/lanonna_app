@@ -17,6 +17,7 @@ import 'widgets/announcement_keepsake_card.dart';
 import '../../home/data/home_repository.dart';
 import '../data/announcement_repository.dart';
 import '../domain/announcement_navigation.dart';
+import '../../../l10n/app_localizations.dart';
 
 class AnnouncementCardScreen extends StatefulWidget {
   const AnnouncementCardScreen({super.key, required this.babyId});
@@ -28,6 +29,7 @@ class AnnouncementCardScreen extends StatefulWidget {
 }
 
 class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
+  AppLocalizations get l10n => AppLocalizations.of(context)!;
   AnnouncementDetail? _detail;
   final _comment = TextEditingController();
   var _loading = true;
@@ -103,24 +105,25 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     final d = _detail;
     if (d == null) {
-      return const Scaffold(
+      return Scaffold(
         body: AppEmptyState(
           icon: Icons.celebration_outlined,
-          title: 'No announcement yet',
+          title: l10n.emptyAnnouncementYet,
         ),
       );
     }
     return PrototypeSubpageScaffold(
-      title: 'Announcement',
+      title: l10n.announcementTitle,
       actions: [
         AppIconButton(
           semanticsId: 'announcement_share',
-          label: 'Share announcement',
+          label: l10n.actionShareAnnouncement,
           icon: const Icon(Icons.share_outlined, size: 20),
           onPressed: () =>
               AnnouncementShare.shareBabyAnnouncement(context, widget.babyId),
@@ -128,7 +131,7 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
         if (_isOwner)
           AppIconButton(
             semanticsId: 'announcement_edit',
-            label: 'Edit announcement',
+            label: l10n.actionEditAnnouncement,
             icon: const Icon(Icons.edit_outlined, size: 20),
             onPressed: () async {
               final saved = await context.push<bool>(
@@ -161,7 +164,7 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'COMMENTS',
+                  l10n.announcementCommentsHeading,
                   style: context.textStyles.labelSmall?.copyWith(
                     color: context.brand.shellIconMuted,
                     fontWeight: FontWeight.w700,
@@ -196,8 +199,8 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
                       child: AppTextField(
                         kind: AppTextInputKind.prose,
                         controller: _comment,
-                        decoration: const InputDecoration(
-                          hintText: 'Add a comment…',
+                        decoration: InputDecoration(
+                          hintText: l10n.commentComposerHint,
                           isDense: true,
                           border: OutlineInputBorder(),
                         ),
@@ -206,7 +209,7 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
                     ),
                     AppIconButton(
                       semanticsId: 'announcement_comment_send',
-                      label: 'Send comment',
+                      label: l10n.commentSend,
                       onPressed: _sendComment,
                       color: context.colors.primary,
                       icon: const Icon(Icons.send),

@@ -11,6 +11,7 @@ import 'package:lanonna/features/onboarding/domain/onboarding_path.dart';
 import 'package:lanonna/features/onboarding/presentation/app_session.dart';
 import 'package:lanonna/features/onboarding/presentation/onboarding_coordinator.dart';
 import 'package:lanonna/features/onboarding/presentation/screens/onboarding_create_baby_screen.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -65,7 +66,12 @@ Widget _wrap(
         ),
       ),
     ],
-    child: MaterialApp(theme: AppTheme.light, home: child),
+    child: MaterialApp(
+      theme: AppTheme.light,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: child,
+    ),
   );
 }
 

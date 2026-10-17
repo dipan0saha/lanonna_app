@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:lanonna/core/widgets/activity/activity_summary_text.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/core/widgets/activity/activity_feed_card.dart';
@@ -11,7 +12,9 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+theme: AppTheme.light,
         home: Scaffold(
           body: ActivityFeedCard(
             items: [
@@ -59,7 +62,9 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+theme: AppTheme.light,
         home: const Scaffold(
           body: ActivityFeedCard(items: [], showEmptyState: true),
         ),

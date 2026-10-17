@@ -10,7 +10,7 @@ import '../../../../l10n/app_localizations.dart';
 Future<File?> showPhotoSourceSheet(BuildContext context) async {
   return showAppModalSheet<File?>(
     context: context,
-    title: 'Add a Photo',
+    title: AppLocalizations.of(context)!.actionAddPhoto2,
     subtitle: displayPhotoSourceHint(),
     bodyBuilder: (context) {
       return Column(

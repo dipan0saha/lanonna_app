@@ -7,7 +7,7 @@ import 'home_section_trailing.dart';
 
 /// Home scroll block: section header + body + optional tail spacing.
 class HomeScrollSection extends StatelessWidget {
-  const HomeScrollSection({
+  HomeScrollSection({
     super.key,
     required this.title,
     this.trailing,

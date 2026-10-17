@@ -28,6 +28,7 @@ class OnboardingSignupScreen extends StatefulWidget {
 }
 
 class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
+  AppLocalizations get l10n => AppLocalizations.of(context)!;
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -88,17 +89,19 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
     });
     try {
       await context.read<AuthRepository>().signUpWithEmail(
-            _emailController.text,
-            _passwordController.text,
-          );
+        _emailController.text,
+        _passwordController.text,
+      );
       if (!mounted) return;
-      await navigateAfterOnboardingAuth(context, isSignUp: true, usedOAuth: false);
+      await navigateAfterOnboardingAuth(
+        context,
+        isSignUp: true,
+        usedOAuth: false,
+      );
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       final l10n = AppLocalizations.of(context)!;
-      setState(
-        () => _error = authErrorMessage(e, l10n, flow: AuthFlow.signUp),
-      );
+      setState(() => _error = authErrorMessage(e, l10n, flow: AuthFlow.signUp));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -112,13 +115,15 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
     try {
       await context.read<AuthRepository>().signInWithGoogle();
       if (!mounted) return;
-      await navigateAfterOnboardingAuth(context, isSignUp: true, usedOAuth: true);
+      await navigateAfterOnboardingAuth(
+        context,
+        isSignUp: true,
+        usedOAuth: true,
+      );
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       final l10n = AppLocalizations.of(context)!;
-      setState(
-        () => _error = authErrorMessage(e, l10n, flow: AuthFlow.signUp),
-      );
+      setState(() => _error = authErrorMessage(e, l10n, flow: AuthFlow.signUp));
     } catch (e) {
       if (!mounted) return;
       setState(() => _error = apiErrorMessage(e));
@@ -142,13 +147,16 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
             const SizedBox(height: 6),
             const OnboardingLogoMark(),
             const SizedBox(height: 26),
-            OnboardingGoogleButton(onPressed: _busy ? null : _google, isLoading: _busy),
-            const OnboardingDivider(),
+            OnboardingGoogleButton(
+              onPressed: _busy ? null : _google,
+              isLoading: _busy,
+            ),
+            OnboardingDivider(),
             OnboardingTextField(
               fieldKey: const Key('onboarding_signup_email'),
               controller: _emailController,
-              label: 'Email',
-              hint: 'you@email.com',
+              label: l10n.authPasswordResetEmailLabel,
+              hint: l10n.messageEmailCom,
               keyboardType: TextInputType.emailAddress,
               validator: validateEmail,
               autovalidateMode: _autovalidateMode,
@@ -168,17 +176,20 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
             const SizedBox(height: 20),
             OnboardingPrimaryButton(
               buttonKey: const Key('onboarding_signup_submit'),
-              label: 'Create Account',
+              label: l10n.authCreateAccount,
               isLoading: _busy,
               onPressed: _busy ? null : _submit,
             ),
             OnboardingBottomLink(
-              prefix: 'Already have an account? ',
-              actionLabel: 'Log in',
+              message: l10n.onboardingSignupAuthPrompt,
+              actionText: l10n.authLogIn,
               onTap: _busy ? () {} : () => context.go(OnboardingRoutes.login),
             ),
             if (_error != null)
-              Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+              Text(
+                _error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
             const SizedBox(height: 26),
           ],
         ),

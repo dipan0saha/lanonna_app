@@ -12,6 +12,7 @@ import '../../../../core/input/app_text_input_kind.dart';
 import '../../../gallery/presentation/upload/run_gallery_photo_upload.dart';
 import '../../../gallery/domain/gallery_refresh.dart';
 import '../../../../core/constants/first_moment_presets.dart';
+import '../../../../core/l10n/first_moment_preset_labels.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_chip.dart';
 import '../../data/create_baby_draft.dart';
@@ -29,6 +30,7 @@ import '../widgets/onboarding_buttons.dart';
 import '../widgets/onboarding_prototype_widgets.dart';
 import '../widgets/onboarding_scaffold.dart';
 import '../widgets/onboarding_typography.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class OnboardingFirstMomentScreen extends StatefulWidget {
   const OnboardingFirstMomentScreen({super.key});
@@ -259,6 +261,7 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isExpecting = _lifecycle == BabyLifecycle.expecting;
     final events = isExpecting
         ? FirstMomentPresets.expectingEvents
@@ -295,7 +298,7 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
             PrototypeMomentCard(
               iconBackground: AppColors.sageTint,
               icon: Icon(Icons.star_outline, size: 17, color: AppColors.primaryDark),
-              title: 'Suggest a name',
+              title: l10n.labelSuggestName,
               subtitle: 'Seeds the vote in Family Fun',
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -316,10 +319,17 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
             PrototypeMomentCard(
               iconBackground: AppColors.peachTint,
               icon: Icon(Icons.calendar_today_outlined, size: 17, color: AppColors.secondaryDark),
-              title: 'Add a calendar event',
+              title: l10n.actionAddCalendarEvent,
               subtitle: eventSubtitle,
               child: _chipRow(
-                events.map((e) => (id: e.id, label: e.label)).toList(),
+                events
+                    .map(
+                      (e) => (
+                        id: e.id,
+                        label: l10n.firstMomentEventLabel(e.id),
+                      ),
+                    )
+                    .toList(),
                 _selectedEvents,
                 _toggleEvent,
               ),
@@ -327,10 +337,17 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
             PrototypeMomentCard(
               iconBackground: AppColors.sageTint,
               icon: Icon(Icons.photo_camera_outlined, size: 17, color: AppColors.primaryDark),
-              title: 'Add a registry item',
+              title: l10n.actionAddRegistryItem,
               subtitle: registrySubtitle,
               child: _chipRow(
-                registry.map((r) => (id: r.id, label: r.label)).toList(),
+                registry
+                    .map(
+                      (r) => (
+                        id: r.id,
+                        label: l10n.firstMomentRegistryLabel(r.id),
+                      ),
+                    )
+                    .toList(),
                 _selectedRegistry,
                 _toggleRegistry,
               ),
@@ -339,7 +356,7 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
             PrototypeMomentCard(
               iconBackground: AppColors.peachTint,
               icon: Icon(Icons.photo_camera_outlined, size: 17, color: AppColors.secondaryDark),
-              title: 'Upload your first photo',
+              title: l10n.actionUploadFirstPhoto,
               subtitle: 'From your camera or library',
               child: Center(
                 child: Column(
@@ -360,10 +377,17 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
             PrototypeMomentCard(
               iconBackground: AppColors.sageTint,
               icon: Icon(Icons.photo_camera_outlined, size: 17, color: AppColors.primaryDark),
-              title: 'Add a registry item',
+              title: l10n.actionAddRegistryItem,
               subtitle: registrySubtitle,
               child: _chipRow(
-                registry.map((r) => (id: r.id, label: r.label)).toList(),
+                registry
+                    .map(
+                      (r) => (
+                        id: r.id,
+                        label: l10n.firstMomentRegistryLabel(r.id),
+                      ),
+                    )
+                    .toList(),
                 _selectedRegistry,
                 _toggleRegistry,
               ),
@@ -371,10 +395,17 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
             PrototypeMomentCard(
               iconBackground: AppColors.peachTint,
               icon: Icon(Icons.calendar_today_outlined, size: 17, color: AppColors.secondaryDark),
-              title: 'Add a calendar event',
+              title: l10n.actionAddCalendarEvent,
               subtitle: eventSubtitle,
               child: _chipRow(
-                events.map((e) => (id: e.id, label: e.label)).toList(),
+                events
+                    .map(
+                      (e) => (
+                        id: e.id,
+                        label: l10n.firstMomentEventLabel(e.id),
+                      ),
+                    )
+                    .toList(),
                 _selectedEvents,
                 _toggleEvent,
               ),
@@ -383,7 +414,7 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
           const SizedBox(height: 20),
           OnboardingPrimaryButton(
             semanticsId: 'onboarding_first_moment_continue',
-            label: 'Continue',
+            label: l10n.deleteAccountReauthPasswordAction,
             isLoading: _busy,
             onPressed: _busy ? null : () => _advance(seed: true),
           ),

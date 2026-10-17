@@ -6,6 +6,7 @@ import '../../../../core/widgets/app_modal_sheet.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../domain/announce_arrival_input.dart';
 import '../../../onboarding/presentation/widgets/onboarding_buttons.dart';
+import '../../../../l10n/app_localizations.dart';
 
 typedef AnnounceArrivalCallback = Future<void> Function(DateTime birthDate);
 
@@ -15,7 +16,7 @@ Future<void> showAnnounceArrivalSheet(
 }) async {
   await showAppModalSheet<void>(
     context: context,
-    title: 'Announce arrival',
+    title: AppLocalizations.of(context)!.actionAnnounceArrival2,
     subtitle:
         'Confirm the date of birth. Your home will update to celebrate your baby.',
     bodyBuilder: (ctx) {
@@ -47,7 +48,7 @@ Future<void> showAnnounceArrivalSheet(
               ),
               SizedBox(height: AppSpacing.lg),
               OnboardingPrimaryButton(
-                label: 'Confirm',
+                label: AppLocalizations.of(context)!.actionConfirm,
                 onPressed: () async {
                   if (!birthDateValidForAnnounce(selected)) {
                     AppSnackBar.showAlert(

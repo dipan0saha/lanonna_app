@@ -18,7 +18,7 @@ Future<String?> showPhotoUploadCaptionSheet(
 }) {
   return showAppModalSheet<String?>(
     context: context,
-    title: 'Add to gallery',
+    title: AppLocalizations.of(context)!.actionAddGallery,
     showClose: false,
     bodyBuilder: (context) => _PhotoUploadCaptionSheet(imageFile: imageFile),
   );
@@ -35,6 +35,7 @@ class _PhotoUploadCaptionSheet extends StatefulWidget {
 }
 
 class _PhotoUploadCaptionSheetState extends State<_PhotoUploadCaptionSheet> {
+  AppLocalizations get l10n => AppLocalizations.of(context)!;
   final _controller = TextEditingController();
 
   @override
@@ -77,8 +78,8 @@ class _PhotoUploadCaptionSheetState extends State<_PhotoUploadCaptionSheet> {
               controller: _controller,
               maxLines: 3,
               maxLength: 2000,
-              decoration: const InputDecoration(
-                hintText: 'Add a caption…',
+              decoration: InputDecoration(
+                hintText: AppLocalizations.of(context)!.actionAddCaption,
                 counterText: '',
               ),
               onSubmitted: (_) => _post(),
@@ -88,11 +89,17 @@ class _PhotoUploadCaptionSheetState extends State<_PhotoUploadCaptionSheet> {
           AppResponsiveButtonPair(
             start: AppSemantics.button(
               'gallery_upload_skip',
-              OutlinedButton(onPressed: _skip, child: Text(AppLocalizations.of(context)!.actionSkip)),
+              OutlinedButton(
+                onPressed: _skip,
+                child: Text(AppLocalizations.of(context)!.actionSkip),
+              ),
             ),
             end: AppSemantics.button(
               'gallery_upload_post',
-              FilledButton(onPressed: _post, child: Text(AppLocalizations.of(context)!.actionPost)),
+              FilledButton(
+                onPressed: _post,
+                child: Text(AppLocalizations.of(context)!.actionPost),
+              ),
             ),
           ),
         ],

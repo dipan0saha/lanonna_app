@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:lanonna/core/theme/app_colors.dart';
 import 'package:lanonna/core/theme/app_text_theme.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
@@ -12,7 +13,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+theme: AppTheme.light,
         home: Builder(
           builder: (context) {
             labelMediumColor = context.textStyles.labelMedium?.color;

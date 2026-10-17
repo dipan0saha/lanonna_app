@@ -41,6 +41,13 @@ class HomeRepository {
     await store.setSelectedBabyId(babyId);
   }
 
+  Future<List<BabySummary>> _fetchAllBabies() {
+    return fetchAllOffsetPages(
+      (limit, offset) => _api.getJson('/v1/babies?limit=$limit&offset=$offset'),
+      BabySummary.fromJson,
+    );
+  }
+
   static bool _shouldServeStaleBabyCache(Object error) {
     if (error is ApiException) {
       final code = error.statusCode;
@@ -58,11 +65,7 @@ class HomeRepository {
     }
     final epoch = _listEpoch;
     try {
-      final list = await _api.getJsonList('/v1/babies');
-      final babies = list
-          .whereType<Map<String, dynamic>>()
-          .map(BabySummary.fromJson)
-          .toList();
+      final babies = await _fetchAllBabies();
       if (epoch == _listEpoch) {
         _cachedBabies = babies;
         _cachedForUserId = uid;
@@ -185,7 +188,11 @@ class HomeRepository {
     final json = await _api.getJson(
       '/v1/babies/$babyId/activity-events?limit=$limit&offset=$offset&scope=$scope',
     );
-    final page = parseOffsetPage(json, HomeActivityItem.fromJson, defaultLimit: limit);
+    final page = parseOffsetPage(
+      json,
+      HomeActivityItem.fromJson,
+      defaultLimit: limit,
+    );
     return ActivityPage(items: page.items, hasMore: page.hasMore);
   }
 }

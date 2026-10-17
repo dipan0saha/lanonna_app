@@ -3,9 +3,10 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Query, Response, status
 
 from lanonna_api.auth import AppUser, current_app_user
+from lanonna_api.pagination import offset_page_from_extra_row
 from lanonna_api.domain.member_errors import MemberLifecycleError
 from lanonna_api.domain.member_lifecycle import (
     leave_baby_profile,
@@ -35,12 +36,18 @@ def _member_json(m: dict[str, Any]) -> dict[str, Any]:
 def list_members(
     baby_profile_id: uuid.UUID,
     user: AppUser = Depends(current_app_user),
-) -> list[dict[str, Any]]:
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+) -> dict[str, Any]:
     try:
-        members = list_members_for_owner(user.uid, baby_profile_id)
+        members = list_members_for_owner(
+            user.uid, baby_profile_id, limit=limit + 1, offset=offset
+        )
     except Exception as exc:
         raise map_domain_errors(exc) from exc
-    return [_member_json(m) for m in members]
+    return offset_page_from_extra_row(
+        [_member_json(m) for m in members], offset=offset, limit=limit
+    )
 
 
 @router.delete(

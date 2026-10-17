@@ -5,6 +5,7 @@ import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../data/models/calendar_models.dart';
 import 'calendar_event_list_tile.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Scrollable Today + Upcoming sections for view-all and similar screens.
 class CalendarTodayUpcomingList extends StatelessWidget {
@@ -21,6 +22,7 @@ class CalendarTodayUpcomingList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (today.isEmpty && upcoming.isEmpty) {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -44,7 +46,7 @@ class CalendarTodayUpcomingList extends StatelessWidget {
             8,
           ),
           child: Text(
-            'Today',
+            l10n.labelToday,
             style: styles.labelLarge?.copyWith(color: AppColors.muted),
           ),
         ),
@@ -64,7 +66,7 @@ class CalendarTodayUpcomingList extends StatelessWidget {
             8,
           ),
           child: Text(
-            'Upcoming',
+            l10n.labelUpcoming,
             style: styles.labelLarge?.copyWith(color: AppColors.muted),
           ),
         ),
@@ -81,7 +83,7 @@ class CalendarTodayUpcomingList extends StatelessWidget {
             24,
           ),
           child: Text(
-            'No further upcoming events',
+            l10n.emptyFurtherUpcomingEvents,
             style: styles.bodyMedium?.copyWith(color: AppColors.muted),
           ),
         ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:lanonna/core/theme/app_colors.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/core/widgets/app_chip.dart';
@@ -11,7 +12,9 @@ void main() {
     var selected = false;
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+theme: AppTheme.light,
         home: Scaffold(
           body: AppToggleChip(
             label: 'Gender Reveal',
@@ -28,7 +31,9 @@ void main() {
     await tester.tap(find.text('+ Gender Reveal'));
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+theme: AppTheme.light,
         home: Scaffold(
           body: AppToggleChip(
             label: 'Gender Reveal',
@@ -47,7 +52,9 @@ void main() {
   testWidgets('AppRemovableChip uses peach vs sage accent', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+theme: AppTheme.light,
         home: Scaffold(
           body: Column(
             children: [
@@ -79,7 +86,9 @@ void main() {
     var removed = false;
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+theme: AppTheme.light,
         home: Scaffold(
           body: AppRemovableChip(
             label: 'Ava',

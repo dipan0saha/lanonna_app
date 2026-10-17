@@ -94,9 +94,9 @@ class _NotificationPreferencesScreenState
     final prefs = _prefs;
     final babyLabel = babyDisplayName(_babyName, l10n);
     return PrototypeSubpageScaffold(
-      title: 'Notification preferences',
+      title: l10n.notificationPrefsTitle,
       body: _loading || prefs == null
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator())
           : ListView(
               padding: AppMetrics.subpageScrollPadding,
               children: [
@@ -108,29 +108,41 @@ class _NotificationPreferencesScreenState
                 ),
                 SizedBox(height: AppSpacing.sm),
                 Text(
-                  'You can change this any time.',
+                  l10n.messageChangeTime,
                   style: context.textStyles.bodySmall?.copyWith(
                     color: AppColors.muted,
                   ),
                 ),
                 SizedBox(height: AppSpacing.lg),
                 AppSectionTitle(
-                  title: 'How often would you like updates for $babyLabel?',
+                  title: AppLocalizations.of(
+                    context,
+                  )!.notificationPrefsFrequencyTitle(babyLabel),
                   style: context.textStyles.titleSmall,
                 ),
                 _digestTile('realtime', 'Real-time', prefs),
                 _digestTile('daily', 'Daily digest', prefs),
                 _digestTile('weekly', 'Weekly digest', prefs),
                 SwitchListTile(
-                  title: Text(AppLocalizations.of(context)!.notificationPrefsPushTitle),
-                  subtitle: Text(AppLocalizations.of(context)!.notificationPrefsPushSubtitle),
+                  title: Text(
+                    AppLocalizations.of(context)!.notificationPrefsPushTitle,
+                  ),
+                  subtitle: Text(
+                    AppLocalizations.of(context)!.notificationPrefsPushSubtitle,
+                  ),
                   value: prefs.pushEnabled,
                   onChanged: (v) =>
                       setState(() => _prefs = prefs.copyWith(pushEnabled: v)),
                 ),
                 SwitchListTile(
-                  title: Text(AppLocalizations.of(context)!.notificationPrefsDigestTitle),
-                  subtitle: Text(AppLocalizations.of(context)!.notificationPrefsDigestSubtitle),
+                  title: Text(
+                    AppLocalizations.of(context)!.notificationPrefsDigestTitle,
+                  ),
+                  subtitle: Text(
+                    AppLocalizations.of(
+                      context,
+                    )!.notificationPrefsDigestSubtitle,
+                  ),
                   value: prefs.emailDigestEnabled,
                   onChanged: (v) => setState(
                     () => _prefs = prefs.copyWith(emailDigestEnabled: v),
@@ -138,7 +150,7 @@ class _NotificationPreferencesScreenState
                 ),
                 const SizedBox(height: AppMetrics.sectionBlockSpacing),
                 AppSectionTitle(
-                  title: 'Notification channels',
+                  title: l10n.notificationPrefsChannelsTitle,
                   style: context.textStyles.titleSmall,
                 ),
                 SwitchListTile(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:lanonna/core/input/app_text_input_kind.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/core/validation/form_validators.dart';
@@ -13,7 +14,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+theme: AppTheme.light,
         home: Scaffold(
           body: AppLabeledTextFormField(
             label: 'City',
@@ -41,7 +44,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+theme: AppTheme.light,
         home: StatefulBuilder(
           builder: (context, setState) {
             final autovalidate = validateOnInteraction

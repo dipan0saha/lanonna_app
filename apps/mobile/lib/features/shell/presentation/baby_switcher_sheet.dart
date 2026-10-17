@@ -38,6 +38,7 @@ class _BabySwitcherSheetBody extends StatefulWidget {
 }
 
 class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
+  AppLocalizations get l10n => AppLocalizations.of(context)!;
   List<BabySummary> _babies = [];
   String? _highlightedId;
   var _loading = true;
@@ -152,7 +153,7 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
     final selectedId = _highlightedId;
 
     return AppModalSheet(
-      title: 'Switch profile',
+      title: l10n.babySwitcherSwitchProfile,
       subtitle: _switcherSubtitle(_babies),
       child: SingleChildScrollView(
         child: Column(

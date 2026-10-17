@@ -4,6 +4,7 @@ import uuid
 from typing import Any
 
 from lanonna_api.db import get_connection
+from lanonna_api.repositories._paging import limit_offset_clause
 from lanonna_api.repositories.catalog_suggestions import (
     catalog_suggestion_claimed_on_table,
 )
@@ -67,10 +68,16 @@ def update_shipping_address_fields(
         )
 
 
-def list_registry_items(baby_profile_id: uuid.UUID) -> list[dict[str, Any]]:
+def list_registry_items(
+    baby_profile_id: uuid.UUID,
+    *,
+    limit: int | None = None,
+    offset: int = 0,
+) -> list[dict[str, Any]]:
+    paging, paging_params = limit_offset_clause(limit, offset)
     with get_connection() as conn:
         rows = conn.execute(
-            """
+            f"""
             SELECT
                 i.id, i.name, i.description, i.product_url, i.priority,
                 i.catalog_suggestion_id,
@@ -83,9 +90,10 @@ def list_registry_items(baby_profile_id: uuid.UUID) -> list[dict[str, Any]]:
             LEFT JOIN registry_purchases p ON p.registry_item_id = i.id
             LEFT JOIN app_users u ON u.firebase_uid = p.purchased_by_firebase_uid
             WHERE i.baby_profile_id = %s
-            ORDER BY i.priority DESC, i.created_at DESC
+            ORDER BY i.priority DESC, i.created_at DESC, i.id DESC
+            {paging}
             """,
-            (baby_profile_id,),
+            (baby_profile_id, *paging_params),
         ).fetchall()
     return [dict(r) for r in rows]
 

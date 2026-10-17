@@ -4,12 +4,19 @@ import uuid
 from typing import Any
 
 from lanonna_api.db import get_connection
+from lanonna_api.repositories._paging import limit_offset_clause
 
 
-def list_babies_for_user(firebase_uid: str) -> list[dict[str, Any]]:
+def list_babies_for_user(
+    firebase_uid: str,
+    *,
+    limit: int | None = None,
+    offset: int = 0,
+) -> list[dict[str, Any]]:
+    paging, paging_params = limit_offset_clause(limit, offset)
     with get_connection() as conn:
         rows = conn.execute(
-            """
+            f"""
             SELECT
                 b.id,
                 b.name,
@@ -25,9 +32,10 @@ def list_babies_for_user(firebase_uid: str) -> list[dict[str, Any]]:
             WHERE m.firebase_uid = %s
               AND m.removed_at IS NULL
               AND b.deleted_at IS NULL
-            ORDER BY b.created_at ASC
+            ORDER BY b.created_at ASC, b.id ASC
+            {paging}
             """,
-            (firebase_uid,),
+            (firebase_uid, *paging_params),
         ).fetchall()
     return [dict(row) for row in rows]
 

@@ -1,4 +1,5 @@
 import '../../../core/api/api_client.dart';
+import '../../../core/api/offset_page.dart';
 import 'models/registry_models.dart';
 
 class RegistryRepository {
@@ -6,12 +7,13 @@ class RegistryRepository {
 
   final ApiClient _api;
 
-  Future<List<RegistryItem>> listItems(String babyId) async {
-    final list = await _api.getJsonList('/v1/babies/$babyId/registry/items');
-    return list
-        .whereType<Map<String, dynamic>>()
-        .map(RegistryItem.fromJson)
-        .toList();
+  Future<List<RegistryItem>> listItems(String babyId) {
+    return fetchAllOffsetPages(
+      (limit, offset) => _api.getJson(
+        '/v1/babies/$babyId/registry/items?limit=$limit&offset=$offset',
+      ),
+      RegistryItem.fromJson,
+    );
   }
 
   Future<RegistryItem> createItem(
@@ -22,14 +24,17 @@ class RegistryRepository {
     required int priority,
     String? catalogSuggestionId,
   }) async {
-    final json = await _api.postJson('/v1/babies/$babyId/registry/items', body: {
-      'name': name,
-      if (description != null) 'description': description,
-      if (productUrl != null) 'product_url': productUrl,
-      'priority': priority,
-      if (catalogSuggestionId != null)
-        'catalog_suggestion_id': catalogSuggestionId,
-    });
+    final json = await _api.postJson(
+      '/v1/babies/$babyId/registry/items',
+      body: {
+        'name': name,
+        if (description != null) 'description': description,
+        if (productUrl != null) 'product_url': productUrl,
+        'priority': priority,
+        if (catalogSuggestionId != null)
+          'catalog_suggestion_id': catalogSuggestionId,
+      },
+    );
     return RegistryItem.fromJson(json);
   }
 
@@ -66,8 +71,9 @@ class RegistryRepository {
   }
 
   Future<RegistryShippingAddress> getShippingAddress(String babyId) async {
-    final json =
-        await _api.getJson('/v1/babies/$babyId/registry/shipping-address');
+    final json = await _api.getJson(
+      '/v1/babies/$babyId/registry/shipping-address',
+    );
     return RegistryShippingAddress.fromJson(json);
   }
 

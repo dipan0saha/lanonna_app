@@ -12,6 +12,7 @@ import 'widgets/home_insight_card.dart';
 import 'widgets/home_prd_sections.dart';
 import 'widgets/home_scroll_section.dart';
 import 'widgets/owner_expecting_hero_card.dart';
+import '../../../l10n/app_localizations.dart';
 
 class FollowerHomeComposer extends StatelessWidget {
   const FollowerHomeComposer({
@@ -49,6 +50,7 @@ class FollowerHomeComposer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final babyName = baby.name;
     final s = summary;
 
@@ -65,7 +67,7 @@ class FollowerHomeComposer extends StatelessWidget {
                 "You'll be notified the moment $babyName arrives.",
           ),
           HomeScrollSection(
-            title: 'Quick Actions',
+            title: l10n.labelQuickActions,
             body: HomeFollowerQuickActions(
               onVoteInFun: hideVoteInFun ? null : onVoteInFun,
               onViewGallery: onViewGallery,
@@ -77,11 +79,11 @@ class FollowerHomeComposer extends StatelessWidget {
               onViewAll: () => context.go(AppRoutes.gamification),
             )
           else
-            const HomeScrollSection(
-              title: 'Family Insight',
+            HomeScrollSection(
+              title: l10n.messageInsight,
               body: HomeInsightCard(
                 message:
-                    'No family votes yet. Check back once everyone starts playing along in Fun.',
+                    l10n.emptyVotesYetCheckBack,
               ),
             ),
           if (s != null)
@@ -106,7 +108,7 @@ class FollowerHomeComposer extends StatelessWidget {
             showShareToInstagram: false,
           ),
         HomeScrollSection(
-          title: 'Quick Actions',
+          title: l10n.labelQuickActions,
           body: HomeFollowerQuickActions(
             onVoteInFun: hideVoteInFun ? null : onVoteInFun,
             onViewGallery: onViewGallery,

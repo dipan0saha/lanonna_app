@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:lanonna/core/theme/app_metrics.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/features/home/presentation/widgets/home_section_header.dart';
@@ -10,7 +11,9 @@ void main() {
     Future<void> pumpHeader(HomeSectionTrailing? trailing) async {
       await tester.pumpWidget(
         MaterialApp(
-          theme: AppTheme.light,
+                  localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+theme: AppTheme.light,
           home: Scaffold(
             body: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,

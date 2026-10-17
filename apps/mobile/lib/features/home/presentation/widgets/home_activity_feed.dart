@@ -7,6 +7,7 @@ import '../../data/models/home_summary.dart';
 import '../../domain/app_routes.dart';
 import 'home_scroll_section.dart';
 import 'home_section_trailing.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class HomeActivityFeed extends StatelessWidget {
   const HomeActivityFeed({
@@ -28,6 +29,7 @@ class HomeActivityFeed extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (items.isEmpty && !showEmptyPlaceholder) {
       return const SizedBox.shrink();
     }
@@ -51,10 +53,10 @@ class HomeActivityFeed extends StatelessWidget {
     }
 
     return HomeScrollSection(
-      title: 'Recent Activity',
+      title: l10n.labelRecentActivity,
       trailing: showViewAll && !isEmpty
           ? HomeSectionLink(
-              label: 'View all',
+              label: l10n.actionView,
               onPressed: () => context.push(AppRoutes.homeActivity(babyId)),
             )
           : null,

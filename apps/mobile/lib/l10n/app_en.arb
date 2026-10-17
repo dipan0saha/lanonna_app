@@ -335,10 +335,35 @@
   "actionDismiss": "Dismiss",
   "onboardingHaveAccount": "I already have an account",
   "onboardingContinueWithGoogle": "Continue with Google",
-  "onboardingAgreePrefix": "I agree to the ",
+  "onboardingAgreeToTerms": "I agree to the {terms} and {privacy}",
+  "@onboardingAgreeToTerms": {
+    "placeholders": {
+      "terms": {
+        "type": "String"
+      },
+      "privacy": {
+        "type": "String"
+      }
+    }
+  },
   "onboardingTermsOfService": "Terms of Service",
-  "onboardingAgreeAnd": " and ",
   "onboardingPrivacyPolicy": "Privacy Policy",
+  "onboardingSignupAuthPrompt": "Already have an account? {action}",
+  "@onboardingSignupAuthPrompt": {
+    "placeholders": {
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "onboardingLoginAuthPrompt": "Don't have an account? {action}",
+  "@onboardingLoginAuthPrompt": {
+    "placeholders": {
+      "action": {
+        "type": "String"
+      }
+    }
+  },
   "registryPriorityLabel": "Priority",
   "registryPriorityLow": "Nice to have",
   "registryPriorityHigh": "Really need this",
@@ -365,5 +390,346 @@
   "babySwitcherEmpty": "No baby profiles yet.",
   "babySwitcherEditBaby": "Edit baby",
   "babySwitcherMyAccount": "My Account",
-  "babySwitcherAddBaby": "Add New Baby"
+  "babySwitcherAddBaby": "Add New Baby",
+  "actionAdd2": "+ Add",
+  "actionInviteMorePeople": "+ Invite more people",
+  "label123MainSt": "123 Main St",
+  "stage36Months": "3–6 months",
+  "stage612Months": "6–12 months",
+  "labelAccount": "Account",
+  "actionAddBaby": "Add Baby",
+  "actionAddEvent": "Add Event",
+  "registryAddItemTitle": "Add Item",
+  "actionAddPhoto": "Add Photo",
+  "actionAddPhoto2": "Add a Photo",
+  "actionAddCalendarEvent": "Add a calendar event",
+  "actionAddCaption": "Add a caption…",
+  "actionAddName": "Add a name...",
+  "actionAddRegistryItem": "Add a registry item",
+  "actionAddShortDescription": "Add a short description…",
+  "actionAddAddressKnows": "Add an address so family knows where to send gifts.",
+  "actionAddAnother": "Add another",
+  "actionAddBaby2": "Add baby",
+  "registryAddItem": "Add item",
+  "actionAddPhoto3": "Add photo",
+  "actionAddGallery": "Add to gallery",
+  "actionAddFirstBabyProfile": "Add your first baby profile to get started.",
+  "messageSuggestionsStage": "All suggestions in this stage are on your calendar.",
+  "messageSuggestionsStage2": "All suggestions in this stage are on your registry.",
+  "hintSharePhoto": "Also share this photo in the gallery",
+  "actionAnnounceArrival": "Announce Arrival",
+  "actionAnnounceArrival2": "Announce arrival",
+  "announcementTitle": "Announcement",
+  "fieldApt4b": "Apt 4B",
+  "fieldAptSuiteEtcOptional": "Apt, suite, etc. (optional)",
+  "labelBoyGirl": "BOY OR GIRL?",
+  "labelBabyProfiles": "Baby Profiles",
+  "labelBabyShower": "Baby Shower",
+  "labelBabyName": "Baby name",
+  "actionBack": "Back",
+  "presetBaptism": "Baptism",
+  "labelBirthdateGuesses": "Birthdate guesses",
+  "presetBottles": "Bottles",
+  "labelBoyGirl2": "Boy or Girl?",
+  "labelBoySNameOptional": "Boy's name (optional)",
+  "announcementCommentsHeading": "COMMENTS",
+  "fieldCity": "City",
+  "actionClose": "Close",
+  "actionConfirm": "Confirm",
+  "fieldCountryOptional": "Country (optional)",
+  "fieldCoverPhoto": "Cover photo",
+  "authCreateAccount": "Create Account",
+  "actionCreateBabyProfileUse": "Create a baby profile to use Gallery.",
+  "actionCreatePassword": "Create a password",
+  "calendarCreateEvent": "Create event",
+  "presetCribMattress": "Crib & Mattress",
+  "fieldDate": "Date",
+  "eventDeleteAction": "Delete event",
+  "registryDeleteItemAction": "Delete item",
+  "actionDeletePhoto": "Delete photo",
+  "fieldDescriptionOptional": "Description (optional)",
+  "eventDetailsHeading": "Details",
+  "presetDiapers": "Diapers",
+  "actionDownloadJsonCopy": "Download a JSON copy of this baby's profile, members, photos and comments, calendar and RSVPs, registry and purchases, name ideas, predictions, the birth announcement, and recent activity.",
+  "presetDueDate": "Due Date",
+  "actionEditBaby": "Edit Baby",
+  "actionEditProfile": "Edit Profile",
+  "actionEditAnnouncement": "Edit announcement",
+  "actionEditCaption": "Edit caption",
+  "eventEditAction": "Edit event",
+  "registryEditItem": "Edit item",
+  "labelEmailPhone": "Email or phone",
+  "hintEnterPassword": "Enter your password",
+  "eventTitle": "Event",
+  "fieldEventTitle": "Event Title",
+  "searchSectionEvents": "Events",
+  "stageExpecting": "Expecting",
+  "messageFun": "Family Fun",
+  "messageInsight": "Family Insight",
+  "messageItem": "Family will see this item as taken so no one buys it again.",
+  "presetFirstCheckup": "First Checkup",
+  "presetFirstHolidays": "First Holidays",
+  "fieldFirstName": "First name",
+  "messageFollowersLonger": "Followers will no longer see where to send gifts.",
+  "navFun": "Fun",
+  "labelGenderReveal": "Gender Reveal",
+  "labelGettingStarted": "Getting Started",
+  "labelGirlSNameOptional": "Girl's name (optional)",
+  "actionGoHome": "Go to Home",
+  "brandGoogle": "Google",
+  "navHome": "Home",
+  "labelIl": "IL",
+  "labelPhoto": "IN THIS PHOTO",
+  "actionInvite": "Invite",
+  "actionInviteFriends": "Invite Family & Friends",
+  "actionInviteStatus": "Invite Status",
+  "actionInviteMorePeople2": "Invite more people",
+  "fieldItemName": "Item Name",
+  "fieldLastName": "Last name",
+  "announcementLengthLabel": "Length",
+  "fieldLinkOptional": "Link (optional)",
+  "fieldLocationOptional": "Location (optional)",
+  "authLogIn": "Log in",
+  "labelMyAccount": "My account",
+  "labelName": "Name",
+  "searchSectionNames": "Names",
+  "registrySectionNeeded": "Needed",
+  "labelNewFollowers": "New Followers",
+  "stageNewborn03mo": "Newborn (0–3mo)",
+  "actionNextUp": "Next Up",
+  "actionNextMonth": "Next month",
+  "actionNextPhoto": "Next photo",
+  "emptyAnnouncementYet": "No announcement yet",
+  "emptyEventsDay": "No events this day.",
+  "emptyEventsYet": "No events yet",
+  "emptyVotesYetCheckBack": "No family votes yet. Check back once everyone starts playing along in Fun.",
+  "emptyFavoritesYet": "No favorites yet",
+  "emptyFurtherUpcomingEvents": "No further upcoming events",
+  "emptyNameSuggestionsYet": "No name suggestions yet",
+  "emptyPhotosLast30": "No photos in the last 30 days. Upload a new moment or browse the full gallery.",
+  "emptyPhotosYet": "No photos yet",
+  "emptyRecentPhotos": "No recent photos",
+  "registryEmptyTitle": "No registry items yet",
+  "calendarNoUpcomingEvents": "No upcoming events",
+  "emptyVotesYetInvite": "No votes yet. Invite family so they can guess names, gender, and the big day.",
+  "hintSureStart": "Not sure where to start? See AI-suggested events by stage and age.",
+  "hintSureStart2": "Not sure where to start? See AI-suggested items by stage and age.",
+  "hintWasMeant": "Not who this was meant for?",
+  "notificationPrefsChannelsTitle": "Notification channels",
+  "notificationPrefsTitle": "Notification preferences",
+  "labelNotificationsProfileHelp": "Notifications, profile, and help",
+  "hintDefaultFollowers": "Off by default. Followers only see gallery photos you choose to share.",
+  "presetOnesies": "Onesies",
+  "actionOpenPhoto": "Open photo",
+  "labelPrivateOrganizedConnected": "PRIVATE. ORGANIZED. CONNECTED.",
+  "fieldPassword": "Password",
+  "hintPasteZoomFacetimeLink": "Paste a Zoom / FaceTime link",
+  "hintPasteLinkItem": "Paste a link to the item",
+  "labelPendingInvites": "Pending invites",
+  "fieldPhoneNumberOptional": "Phone number (optional)",
+  "searchSectionPhotos": "Photos",
+  "labelPopularDates": "Popular Dates",
+  "labelPreferences": "Preferences",
+  "actionPreviousMonth": "Previous month",
+  "actionPreviousPhoto": "Previous photo",
+  "registrySectionPurchased": "Purchased",
+  "labelQuickActions": "Quick Actions",
+  "eventRsvpsTitle": "RSVPs",
+  "labelRecentActivity": "Recent Activity",
+  "labelRecentPhotos": "Recent Photos",
+  "onboardingRemoveInvite": "Remove invite",
+  "actionResendInvitation": "Resend invitation",
+  "actionRevokeInvitation": "Revoke invitation",
+  "navSearch": "Search",
+  "fieldSearchPhotosEventsRegistry": "Search photos, events, registry…",
+  "fieldSelectCountry": "Select a country",
+  "fieldSelectDate": "Select a date",
+  "fieldSelectTime": "Select a time",
+  "actionSendInvites": "Send Invites",
+  "actionShareKeepsakeCardPhoto": "Share a keepsake card with photo and birth details for family.",
+  "actionShareAnnouncement": "Share announcement",
+  "actionShareAnnouncementInstagram": "Share announcement to Instagram",
+  "actionShareNews": "Share the news with family. They will see a keepsake card with photo and details.",
+  "messageSharedAcrossEveryBabyProfile": "Shared across every baby profile you own. Free tier includes 15 GB.",
+  "shippingAddressTitle": "Shipping address",
+  "authSignIn": "Sign in",
+  "authSignUp": "Sign up",
+  "actionSkipNow": "Skip for now",
+  "labelSpringfield": "Springfield",
+  "messageSquishPhotosLove": "Squish photos you love and they will show up here.",
+  "hintStandardSizeGreenguardGoldCertified": "Standard size, GREENGUARD Gold certified…",
+  "fieldStateProvinceOptional": "State / Province (optional)",
+  "labelStorage": "Storage",
+  "fieldStreetAddress": "Street address",
+  "labelSuggestName": "Suggest a name",
+  "labelSuggestName2": "Suggest a name…",
+  "presetSwaddles": "Swaddles",
+  "actionSwitchBabyProfile": "Switch baby profile",
+  "babySwitcherSwitchProfile": "Switch profile",
+  "labelTopGuessDate": "TOP GUESS DATE",
+  "labelTopName": "TOP NAME",
+  "messageRemoves": "This removes it for everyone who can see it - this can't be undone.",
+  "messageStartTime": "This start time is in the past. The event still appears on the month grid and under Today on Calendar, but not in Upcoming.",
+  "fieldTimeOptional": "Time (optional)",
+  "labelToday": "Today",
+  "hintTypeSearch": "Type to search",
+  "registryUndoPurchase": "Undo purchase",
+  "labelUpcoming": "Upcoming",
+  "labelUpcomingEvents": "Upcoming Events",
+  "versionGateUpdateRequired": "Update required",
+  "actionUploadFirstPhoto": "Upload your first photo",
+  "messageVerificationCompleteTapContinueProceed": "Verification complete. Tap Continue to proceed.",
+  "eventVideoCallLabel": "Video Call",
+  "fieldVideoCallLinkOptional": "Video call link (optional)",
+  "actionViewGallery": "View Gallery",
+  "actionViewRsvps": "View RSVPs ›",
+  "actionView": "View all",
+  "actionViewAnnouncement": "View announcement",
+  "actionVoteFun": "Vote in Fun",
+  "announcementWeightLabel": "Weight",
+  "hintShouldSendRegistryGifts": "Where should family send registry gifts?",
+  "labelVoted": "Who voted",
+  "messageChangeTime": "You can change this any time.",
+  "messageSuggestName": "You can suggest 1 name per gender.",
+  "messageReOfficiallyOwner": "You're officially an Owner!",
+  "messageReOfflineCheckConnection": "You're offline. Check your connection.",
+  "messageVeReachedEnd": "You've reached the end of the gallery.",
+  "fieldZipPostalCode": "Zip / Postal code",
+  "fieldZipPostalCodeOptional": "Zip / Postal code (optional)",
+  "labelEG94103": "e.g. 94103",
+  "labelEGCribMattress": "e.g. Crib & Mattress",
+  "labelEGGenderRevealParty": "e.g. Gender Reveal Party",
+  "labelEGGrandmaSueSBackyard": "e.g. Grandma Sue's backyard",
+  "labelEGLiam": "e.g. Liam",
+  "labelEGOlivia": "e.g. Olivia",
+  "labelSignEmail": "or sign in with email",
+  "labelSignUpEmail": "or sign up with email",
+  "messageEmailCom": "you@email.com",
+  "messagePerson": "👑 This person will also be a Baby Profile Owner",
+  "commentDeleteMenuLabel": "Delete comment",
+  "versionGateUnsupported": "This version ({installedVersion}) is no longer supported. Install {minimumVersion} or newer to continue.",
+  "@versionGateUnsupported": {
+    "placeholders": {
+      "installedVersion": {
+        "type": "String"
+      },
+      "minimumVersion": {
+        "type": "String"
+      }
+    }
+  },
+  "chipRemoveSemantics": "Remove {label}",
+  "@chipRemoveSemantics": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "registryPriorityShort": "P{priority}",
+  "@registryPriorityShort": {
+    "placeholders": {
+      "priority": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationPrefsFrequencyTitle": "How often would you like updates for {babyLabel}?",
+  "@notificationPrefsFrequencyTitle": {
+    "placeholders": {
+      "babyLabel": {
+        "type": "String"
+      }
+    }
+  },
+  "accountStorageUsed": "{used} of {quota} used",
+  "@accountStorageUsed": {
+    "placeholders": {
+      "used": {
+        "type": "String"
+      },
+      "quota": {
+        "type": "String"
+      }
+    }
+  },
+  "funRemoveNameSemantics": "Remove {name}",
+  "@funRemoveNameSemantics": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "predictionYourGenderVote": "Your vote: {vote}",
+  "@predictionYourGenderVote": {
+    "placeholders": {
+      "vote": {
+        "type": "String"
+      }
+    }
+  },
+  "photoUploadedBy": "Uploaded {meta} by {name}",
+  "@photoUploadedBy": {
+    "placeholders": {
+      "meta": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "photoTaggedBabies": "In this photo: {names}",
+  "@photoTaggedBabies": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "homeBirthWelcomeTitle": "{name} is here!",
+  "@homeBirthWelcomeTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "homeWaitingFor": "Waiting for {name}",
+  "@homeWaitingFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteCoOwnerAccessBody": "You now have full access to edit {babyName}''s profile, add events, manage the registry, and invite others, just like {inviterName}.",
+  "@inviteCoOwnerAccessBody": {
+    "placeholders": {
+      "babyName": {
+        "type": "String"
+      },
+      "inviterName": {
+        "type": "String"
+      }
+    }
+  },
+  "emailVerifyDevAddressHint": "This looks like a dev-only address - it may not receive mail. Mark the account verified in Firebase Console, or use a real email.",
+  "registryPurchasedBy": "Purchased by {name}",
+  "@registryPurchasedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "statusLabel": "Status: {status}",
+  "@statusLabel": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  }
 }

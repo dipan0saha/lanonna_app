@@ -5,6 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../../../core/widgets/tinted_icon_square.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class OwnerQuickActionsRow extends StatelessWidget {
   const OwnerQuickActionsRow({
@@ -20,13 +21,14 @@ class OwnerQuickActionsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: AppMetrics.horizontalPadding),
       child: Row(
         children: [
           Expanded(
             child: _Action(
-              label: 'Add Photo',
+              label: l10n.actionAddPhoto,
               icon: Icons.photo_camera_outlined,
               onTap: onAddPhoto,
             ),
@@ -34,7 +36,7 @@ class OwnerQuickActionsRow extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: _Action(
-              label: 'Add Event',
+              label: l10n.actionAddEvent,
               icon: Icons.calendar_today_outlined,
               onTap: onAddEvent,
             ),
@@ -42,7 +44,7 @@ class OwnerQuickActionsRow extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: _Action(
-              label: 'Registry',
+              label: l10n.notificationChannelRegistry,
               icon: Icons.card_giftcard_outlined,
               onTap: onRegistry,
             ),

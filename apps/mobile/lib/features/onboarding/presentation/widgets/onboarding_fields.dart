@@ -5,6 +5,7 @@ import '../../../../core/widgets/app_icon_button.dart';
 import '../../../../core/widgets/app_semantics.dart';
 import '../../../../core/widgets/app_text_form_field.dart';
 import '../../../../core/theme/app_brand_theme.dart';
+import '../../../../core/l10n/tappable_placeholder_rich_text.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
@@ -283,6 +284,7 @@ class OnboardingTermsAgreementCheckbox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final muted = context.textStyles.bodySmall?.copyWith(
       color: AppColors.muted,
     );
@@ -303,18 +305,18 @@ class OnboardingTermsAgreementCheckbox extends StatelessWidget {
         Expanded(
           child: Padding(
             padding: const EdgeInsets.only(top: 10),
-            child: Wrap(
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Text(AppLocalizations.of(context)!.onboardingAgreePrefix, style: muted),
-                GestureDetector(
+            child: TappablePlaceholderRichText(
+              message: (t) => l10n.onboardingAgreeToTerms(t[0], t[1]),
+              style: muted,
+              linkStyle: link,
+              links: [
+                PlaceholderLink(
+                  label: l10n.onboardingTermsOfService,
                   onTap: onTermsTap,
-                  child: Text(AppLocalizations.of(context)!.onboardingTermsOfService, style: link),
                 ),
-                Text(AppLocalizations.of(context)!.onboardingAgreeAnd, style: muted),
-                GestureDetector(
+                PlaceholderLink(
+                  label: l10n.onboardingPrivacyPolicy,
                   onTap: onPrivacyTap,
-                  child: Text(AppLocalizations.of(context)!.onboardingPrivacyPolicy, style: link),
                 ),
               ],
             ),
@@ -329,8 +331,8 @@ class OnboardingPasswordField extends StatefulWidget {
   const OnboardingPasswordField({
     super.key,
     required this.controller,
-    this.label = 'Password',
-    this.hint = 'Create a password',
+    this.label,
+    this.hint,
     this.validator,
     this.onFieldSubmitted,
     this.fieldKey,
@@ -339,8 +341,8 @@ class OnboardingPasswordField extends StatefulWidget {
   });
 
   final TextEditingController controller;
-  final String label;
-  final String hint;
+  final String? label;
+  final String? hint;
   final FormFieldValidator<String>? validator;
   final ValueChanged<String>? onFieldSubmitted;
   final Key? fieldKey;
@@ -357,10 +359,13 @@ class _OnboardingPasswordFieldState extends State<OnboardingPasswordField> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final label = widget.label ?? l10n.fieldPassword;
+    final hint = widget.hint ?? l10n.actionCreatePassword;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        OnboardingFieldLabel(widget.label),
+        OnboardingFieldLabel(label),
         const SizedBox(height: 8),
         _maybeSemanticsField(
           semanticsId: widget.semanticsId,
@@ -373,7 +378,7 @@ class _OnboardingPasswordFieldState extends State<OnboardingPasswordField> {
             textInputAction: TextInputAction.done,
             autovalidateMode: widget.autovalidateMode,
             decoration: InputDecoration(
-              hintText: widget.hint,
+              hintText: hint,
               suffixIcon: AppIconButton(
                 semanticsId: widget.semanticsId == null
                     ? 'password_visibility'
@@ -396,12 +401,13 @@ class _OnboardingPasswordFieldState extends State<OnboardingPasswordField> {
 }
 
 class OnboardingDivider extends StatelessWidget {
-  const OnboardingDivider({super.key, this.label = 'or sign up with email'});
+  OnboardingDivider({super.key, this.label});
 
-  final String label;
+  final String? label;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 18),
@@ -411,7 +417,7 @@ class OnboardingDivider extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Text(
-              label,
+              label ?? l10n.labelSignUpEmail,
               style: theme.textTheme.labelSmall?.copyWith(
                 color: AppColors.muted,
                 fontWeight: FontWeight.w500,
@@ -444,41 +450,38 @@ class OnboardingHelperText extends StatelessWidget {
 class OnboardingBottomLink extends StatelessWidget {
   const OnboardingBottomLink({
     super.key,
-    required this.prefix,
-    required this.actionLabel,
+    required this.message,
+    required this.actionText,
     required this.onTap,
     this.actionKey,
   });
 
-  final String prefix;
-  final String actionLabel;
+  /// gen-l10n method for the sentence; its `{action}` placeholder becomes the link.
+  final String Function(String action) message;
+  final String actionText;
   final VoidCallback onTap;
   final Key? actionKey;
 
   @override
   Widget build(BuildContext context) {
+    final muted = Theme.of(
+      context,
+    ).textTheme.bodyMedium?.copyWith(color: AppColors.muted);
+    final link = muted?.copyWith(
+      color: AppColors.primaryDark,
+      fontWeight: FontWeight.w700,
+    );
     return Padding(
       padding: const EdgeInsets.only(top: 18, bottom: 8),
       child: GestureDetector(
         key: actionKey,
         onTap: onTap,
-        child: RichText(
+        child: TappablePlaceholderRichText(
+          message: (t) => message(t[0]),
+          style: muted,
+          linkStyle: link,
           textAlign: TextAlign.center,
-          text: TextSpan(
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: AppColors.muted),
-            children: [
-              TextSpan(text: prefix),
-              TextSpan(
-                text: actionLabel,
-                style: const TextStyle(
-                  color: AppColors.primaryDark,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
+          links: [PlaceholderLink(label: actionText, onTap: onTap)],
         ),
       ),
     );

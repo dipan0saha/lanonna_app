@@ -5,6 +5,7 @@ import '../theme/app_metrics.dart';
 import '../theme/la_nonna_theme.dart';
 import 'app_cancel_text_button.dart';
 import 'app_sheet_handle.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Presents any sheet body with the app's shared bottom-sheet chrome
 /// (surface colour, top radius). Prefer [showAppModalSheet] unless the body
@@ -68,6 +69,7 @@ class AppModalSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     // SafeArea covers the system inset; viewInsets lifts content above the keyboard.
     final keyboard = MediaQuery.viewInsetsOf(context).bottom;
     final styles = context.textStyles;
@@ -98,7 +100,7 @@ class AppModalSheet extends StatelessWidget {
             if (showClose) ...[
               SizedBox(height: AppSpacing.sm),
               AppCancelTextButton(
-                label: 'Close',
+                label: l10n.actionClose,
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ],

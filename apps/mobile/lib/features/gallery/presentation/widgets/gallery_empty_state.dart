@@ -23,7 +23,7 @@ class GalleryEmptyState extends StatelessWidget {
     return AppEmptyState(
       expand: false,
       icon: Icons.photo_outlined,
-      title: 'No photos yet',
+      title: l10n.emptyPhotosYet,
       message: isOwner
           ? 'Add your first photo to start sharing $name\'s journey with family.'
           : 'Once a photo is shared, it will show up here for everyone to enjoy.',

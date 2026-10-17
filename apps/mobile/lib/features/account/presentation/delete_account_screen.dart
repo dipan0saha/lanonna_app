@@ -146,7 +146,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                   obscureText: obscure,
                   autofocus: true,
                   decoration: InputDecoration(
-                    labelText: 'Password',
+                    labelText: l10n.fieldPassword,
                     suffixIcon: AppIconButton(
                       semanticsId: 'delete_account_password_visibility',
                       label: obscure ? 'Show password' : 'Hide password',

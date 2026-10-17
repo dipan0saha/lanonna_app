@@ -41,7 +41,7 @@ def test_list_members_sets_can_remove_for_follower_not_self():
             return_value=members,
         ),
     ):
-        result = list_members_for_owner("owner-1", baby_id)
+        result = list_members_for_owner("owner-1", baby_id, limit=51, offset=0)
     assert result[0]["can_remove"] is False
     assert result[1]["can_remove"] is True
 

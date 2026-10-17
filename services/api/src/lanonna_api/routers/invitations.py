@@ -15,6 +15,7 @@ from lanonna_api.domain.invitations import (
     revoke_invitation_for_owner,
 )
 from lanonna_api.http_errors import map_domain_errors
+from lanonna_api.pagination import offset_page_from_extra_row
 from lanonna_api.input_limits import MAX_MEMBERSHIP_CHECK_EMAIL_LEN
 from lanonna_api.schemas.invitations import (
     BatchInviteRequest,
@@ -49,12 +50,18 @@ def _invitation_json(r: dict[str, Any]) -> dict[str, Any]:
 def list_invitations(
     baby_profile_id: uuid.UUID,
     user: AppUser = Depends(current_app_user),
-) -> list[dict[str, Any]]:
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+) -> dict[str, Any]:
     try:
-        rows = list_invitations_for_owner(user.uid, baby_profile_id)
+        rows = list_invitations_for_owner(
+            user.uid, baby_profile_id, limit=limit + 1, offset=offset
+        )
     except Exception as exc:
         raise map_domain_errors(exc) from exc
-    return [_invitation_json(r) for r in rows]
+    return offset_page_from_extra_row(
+        [_invitation_json(r) for r in rows], offset=offset, limit=limit
+    )
 
 
 @router.post(

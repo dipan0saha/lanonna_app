@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:lanonna/features/announcement/data/announcement_repository.dart';
 import 'package:lanonna/features/announcement/presentation/widgets/announcement_keepsake_card.dart';
 
@@ -16,7 +17,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        locale: const Locale('en', 'US'),
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+locale: const Locale('en', 'US'),
         home: Scaffold(
           body: AnnouncementKeepsakeCard(detail: detail),
         ),

@@ -104,17 +104,19 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
     });
     try {
       await context.read<AuthRepository>().signInWithEmail(
-            _emailController.text,
-            _passwordController.text,
-          );
+        _emailController.text,
+        _passwordController.text,
+      );
       if (!mounted) return;
-      await navigateAfterOnboardingAuth(context, isSignUp: false, usedOAuth: false);
+      await navigateAfterOnboardingAuth(
+        context,
+        isSignUp: false,
+        usedOAuth: false,
+      );
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       final l10n = AppLocalizations.of(context)!;
-      setState(
-        () => _error = authErrorMessage(e, l10n, flow: AuthFlow.signIn),
-      );
+      setState(() => _error = authErrorMessage(e, l10n, flow: AuthFlow.signIn));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -125,7 +127,10 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
     final l10n = AppLocalizations.of(context)!;
     var email = _emailController.text.trim();
     if (validateEmail(email) != null) {
-      final chosen = await showForgotPasswordEmailDialog(context, initialEmail: email);
+      final chosen = await showForgotPasswordEmailDialog(
+        context,
+        initialEmail: email,
+      );
       if (chosen == null || chosen.isEmpty || !mounted) return;
       email = chosen;
     }
@@ -154,19 +159,23 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
     try {
       await context.read<AuthRepository>().signInWithGoogle();
       if (!mounted) return;
-      await navigateAfterOnboardingAuth(context, isSignUp: false, usedOAuth: true);
+      await navigateAfterOnboardingAuth(
+        context,
+        isSignUp: false,
+        usedOAuth: true,
+      );
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       final l10n = AppLocalizations.of(context)!;
-      setState(
-        () => _error = authErrorMessage(e, l10n, flow: AuthFlow.signIn),
-      );
+      setState(() => _error = authErrorMessage(e, l10n, flow: AuthFlow.signIn));
     } catch (e) {
       final msg = apiErrorMessage(e);
       if (msg.contains('ApiException: 10') || msg.contains('DEVELOPER_ERROR')) {
-        setState(() => _error =
-            'Google Sign-In is not configured for this Android build yet. '
-            'Use email/password, or enable Google in Firebase for lanonna-dev.');
+        setState(
+          () => _error =
+              'Google Sign-In is not configured for this Android build yet. '
+              'Use email/password, or enable Google in Firebase for lanonna-dev.',
+        );
       } else {
         setState(() => _error = msg);
       }
@@ -198,9 +207,12 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
             onPressed: _busy ? null : _signInGoogle,
             isLoading: _busy,
           ),
-          const OnboardingDivider(label: 'or sign in with email'),
+          OnboardingDivider(label: l10n.labelSignEmail),
           if (_error != null) ...[
-            Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            Text(
+              _error!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
             const SizedBox(height: 12),
           ],
           Form(
@@ -213,8 +225,8 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
                   fieldKey: const Key('onboarding_login_email'),
                   semanticsId: 'auth_login_email',
                   controller: _emailController,
-                  label: 'Email',
-                  hint: 'you@email.com',
+                  label: l10n.authPasswordResetEmailLabel,
+                  hint: l10n.messageEmailCom,
                   keyboardType: TextInputType.emailAddress,
                   validator: validateEmail,
                   autovalidateMode: _autovalidateMode,
@@ -225,8 +237,8 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
                   fieldKey: const Key('onboarding_login_password'),
                   semanticsId: 'auth_login_password',
                   controller: _passwordController,
-                  label: 'Password',
-                  hint: 'Enter your password',
+                  label: l10n.fieldPassword,
+                  hint: l10n.hintEnterPassword,
                   validator: validatePassword,
                   autovalidateMode: _autovalidateMode,
                 ),
@@ -242,7 +254,7 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
                 OnboardingPrimaryButton(
                   buttonKey: const Key('sign_in_button'),
                   semanticsId: 'auth_sign_in',
-                  label: 'Sign in',
+                  label: l10n.authSignIn,
                   isLoading: _busy,
                   onPressed: _busy ? null : _signInEmail,
                 ),
@@ -250,8 +262,8 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
             ),
           ),
           OnboardingBottomLink(
-            prefix: "Don't have an account? ",
-            actionLabel: 'Sign up',
+            message: l10n.onboardingLoginAuthPrompt,
+            actionText: l10n.authSignUp,
             onTap: _busy ? () {} : () => context.go(OnboardingRoutes.signup),
           ),
           const SizedBox(height: 26),

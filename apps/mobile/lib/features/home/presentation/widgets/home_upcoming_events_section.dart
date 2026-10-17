@@ -10,6 +10,7 @@ import '../../../calendar/domain/calendar_routes.dart';
 import '../../data/models/home_summary.dart';
 import 'home_scroll_section.dart';
 import 'home_section_trailing.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class HomeUpcomingEventsSection extends StatelessWidget {
   const HomeUpcomingEventsSection({super.key, required this.events});
@@ -18,14 +19,15 @@ class HomeUpcomingEventsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (events.isEmpty) return const SizedBox.shrink();
     final text = context.textStyles;
     final locale = Localizations.localeOf(context).toString();
 
     return HomeScrollSection(
-      title: 'Upcoming Events',
+      title: l10n.labelUpcomingEvents,
       trailing: HomeSectionLink(
-        label: 'View all',
+        label: l10n.actionView,
         onPressed: () => context.push(CalendarRoutes.upcoming),
       ),
       body: Column(

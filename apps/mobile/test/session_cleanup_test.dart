@@ -53,12 +53,20 @@ class _StubApi extends ApiClient {
   _StubApi() : super(idTokenProvider: () async => 'token');
 
   @override
-  Future<List<dynamic>> getJsonList(
-    String path, {
-    Map<String, String>? queryParameters,
-  }) async {
-    return [
-      {'id': 'baby-1', 'name': 'One', 'role': 'owner', 'lifecycle_status': 'expecting'},
-    ];
+  Future<Map<String, dynamic>> getJson(String path) async {
+    if (path.startsWith('/v1/babies')) {
+      return {
+        'items': [
+          {
+            'id': 'baby-1',
+            'name': 'One',
+            'role': 'owner',
+            'lifecycle_status': 'expecting',
+          },
+        ],
+        'has_more': false,
+      };
+    }
+    return super.getJson(path);
   }
 }

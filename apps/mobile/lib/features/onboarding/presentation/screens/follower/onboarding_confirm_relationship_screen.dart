@@ -9,12 +9,14 @@ import '../../onboarding_coordinator.dart';
 import '../../widgets/onboarding_buttons.dart';
 import '../../widgets/onboarding_scaffold.dart';
 import '../../widgets/onboarding_typography.dart';
+import '../../../../../l10n/app_localizations.dart';
 
 class OnboardingConfirmRelationshipScreen extends StatelessWidget {
   const OnboardingConfirmRelationshipScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final coordinator = context.watch<OnboardingCoordinator>();
     final preview = coordinator.cachedInvitePreview;
     final babyName = preview?.babyName ?? 'Baby';
@@ -48,7 +50,7 @@ class OnboardingConfirmRelationshipScreen extends StatelessWidget {
           ),
           const SizedBox(height: 28),
           OnboardingPrimaryButton(
-            label: 'Continue',
+            label: l10n.deleteAccountReauthPasswordAction,
             onPressed: () async {
               await coordinator.setStep(OnboardingStep.followerCarousel);
               if (context.mounted) context.go(OnboardingRoutes.followerCarousel);

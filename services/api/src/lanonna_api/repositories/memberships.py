@@ -4,6 +4,7 @@ import uuid
 from typing import Any
 
 from lanonna_api.db import get_connection
+from lanonna_api.repositories._paging import limit_offset_clause
 from lanonna_api.repositories.active_participants import (
     purge_participation,
     purge_participation_on_baby,
@@ -11,10 +12,16 @@ from lanonna_api.repositories.active_participants import (
 )
 
 
-def list_baby_members(baby_profile_id: uuid.UUID) -> list[dict[str, Any]]:
+def list_baby_members(
+    baby_profile_id: uuid.UUID,
+    *,
+    limit: int | None = None,
+    offset: int = 0,
+) -> list[dict[str, Any]]:
+    paging, paging_params = limit_offset_clause(limit, offset)
     with get_connection() as conn:
         rows = conn.execute(
-            """
+            f"""
             SELECT
                 m.firebase_uid,
                 m.role,
@@ -26,9 +33,10 @@ def list_baby_members(baby_profile_id: uuid.UUID) -> list[dict[str, Any]]:
             JOIN app_users u ON u.firebase_uid = m.firebase_uid
             WHERE m.baby_profile_id = %s
               AND m.removed_at IS NULL
-            ORDER BY m.role DESC, m.created_at ASC
+            ORDER BY m.role DESC, m.created_at ASC, m.firebase_uid ASC
+            {paging}
             """,
-            (baby_profile_id,),
+            (baby_profile_id, *paging_params),
         ).fetchall()
     return [dict(r) for r in rows]
 

@@ -111,8 +111,14 @@ class _LaNonnaAppState extends State<LaNonnaApp> {
         await coordinator.setStep(OnboardingStep.completeProfile);
         if (!mounted) return;
         _router.go(OnboardingRoutes.completeProfile);
+        final l10n = AppLocalizations.of(context)!;
         if (result.message != null) {
           AppSnackBar.showInfoWithMessenger(messenger, result.message!);
+        } else if (result.promptTapContinue) {
+          AppSnackBar.showInfoWithMessenger(
+            messenger,
+            l10n.messageVerificationCompleteTapContinueProceed,
+          );
         }
       case EmailVerifyLinkOutcome.noSignedInUser:
         _router.go(OnboardingRoutes.login);

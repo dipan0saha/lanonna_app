@@ -50,7 +50,7 @@ class GalleryPhotoGrid extends StatelessWidget {
                     color: Colors.black38,
                     alignment: Alignment.center,
                     child: Text(
-                      'Processing…',
+                      l10n.photoProcessing,
                       style: context.textStyles.labelSmall?.copyWith(
                         color: AppColors.surface,
                         letterSpacing: 0,

@@ -5,6 +5,7 @@ import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../models/invite_relationship_option.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class OnboardingInviteRow extends StatelessWidget {
   const OnboardingInviteRow({
@@ -34,6 +35,7 @@ class OnboardingInviteRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
@@ -67,7 +69,7 @@ class OnboardingInviteRow extends StatelessWidget {
               alignment: Alignment.centerRight,
               child: AppIconButton(
                 semanticsId: 'invite_row_remove',
-                label: 'Remove invite',
+                label: l10n.onboardingRemoveInvite,
                 onPressed: onRemove,
                 color: AppColors.muted,
                 padding: EdgeInsets.zero,
@@ -79,8 +81,8 @@ class OnboardingInviteRow extends StatelessWidget {
             kind: AppTextInputKind.personName,
             controller: nameController,
             onChanged: (_) => onFieldChanged?.call(),
-            decoration: const InputDecoration(
-              hintText: 'Name',
+            decoration: InputDecoration(
+              hintText: l10n.labelName,
               isDense: true,
               contentPadding: EdgeInsets.symmetric(
                 horizontal: 12,
@@ -95,8 +97,8 @@ class OnboardingInviteRow extends StatelessWidget {
             keyboardType: TextInputType.emailAddress,
             onChanged: (_) => onFieldChanged?.call(),
             onEditingComplete: onEmailEditingComplete,
-            decoration: const InputDecoration(
-              hintText: 'Email or phone',
+            decoration: InputDecoration(
+              hintText: l10n.labelEmailPhone,
               isDense: true,
               contentPadding: EdgeInsets.symmetric(
                 horizontal: 12,
@@ -118,7 +120,7 @@ class OnboardingInviteRow extends StatelessWidget {
           DropdownButtonFormField<InviteRelationshipOption>(
             value: relationship,
             isExpanded: true,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               contentPadding: EdgeInsets.symmetric(
                 horizontal: 12,
                 vertical: 10,
@@ -142,7 +144,7 @@ class OnboardingInviteRow extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
-                '👑 This person will also be a Baby Profile Owner',
+                l10n.messagePerson,
                 style: context.textStyles.bodyMedium?.copyWith(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w700,

@@ -147,7 +147,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
     return AppSemantics.container(
       'followers_screen',
       PrototypeSubpageScaffold(
-        title: 'Manage followers',
+        title: l10n.actionManageFollowers,
         body: _loading
             ? const Center(child: CircularProgressIndicator())
             : _loadError != null
@@ -228,7 +228,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
                     ),
                   if (_invites.isNotEmpty) ...[
                     const SizedBox(height: AppMetrics.sectionBlockSpacing),
-                    const AppSectionTitle(title: 'Pending invites'),
+                    AppSectionTitle(title: l10n.labelPendingInvites),
                     for (final inv in _invites)
                       Padding(
                         padding: const EdgeInsets.only(
@@ -291,7 +291,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
                                           ),
                                           child: Text(AppLocalizations.of(context)!.actionResend),
                                         ),
-                                        label: 'Resend invitation',
+                                        label: l10n.actionResendInvitation,
                                       ),
                                     AppSemantics.button(
                                       'revoke_invite_${inv.id}',
@@ -318,7 +318,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
                                         ),
                                         child: Text(AppLocalizations.of(context)!.actionRevoke),
                                       ),
-                                      label: 'Revoke invitation',
+                                      label: l10n.actionRevokeInvitation,
                                     ),
                                   ],
                                 ),
@@ -332,10 +332,10 @@ class _FollowersScreenState extends State<FollowersScreen> {
                   AppSemantics.button(
                     'followers_invite_more',
                     DashedOutlineButton(
-                      label: '+ Invite more people',
+                      label: l10n.actionInviteMorePeople,
                       onPressed: () => context.push(AppRoutes.inviteFamily),
                     ),
-                    label: 'Invite more people',
+                    label: l10n.actionInviteMorePeople2,
                   ),
                 ],
               ),

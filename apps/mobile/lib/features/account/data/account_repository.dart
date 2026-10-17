@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exception.dart';
+import '../../../core/api/offset_page.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../../../core/json/json_readers.dart';
 
@@ -333,19 +334,24 @@ class AccountRepository {
   }
 
   Future<List<MemberRow>> listMembers(String babyId) async {
-    final list = await _api.getJsonList('/v1/babies/$babyId/members');
-    return list
-        .whereType<Map<String, dynamic>>()
-        .map(MemberRow.fromJson)
-        .toList();
+    return _fetchOffsetList('/v1/babies/$babyId/members', MemberRow.fromJson);
   }
 
   Future<List<InvitationRow>> listInvitations(String babyId) async {
-    final list = await _api.getJsonList('/v1/babies/$babyId/invitations');
-    return list
-        .whereType<Map<String, dynamic>>()
-        .map(InvitationRow.fromJson)
-        .toList();
+    return _fetchOffsetList(
+      '/v1/babies/$babyId/invitations',
+      InvitationRow.fromJson,
+    );
+  }
+
+  Future<List<T>> _fetchOffsetList<T>(
+    String path,
+    T Function(Map<String, dynamic>) mapItem,
+  ) {
+    return fetchAllOffsetPages(
+      (limit, offset) => _api.getJson('$path?limit=$limit&offset=$offset'),
+      mapItem,
+    );
   }
 
   Future<void> revokeInvitation(String babyId, String invitationId) async {

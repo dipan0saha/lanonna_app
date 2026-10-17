@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_metrics.dart';
@@ -23,7 +24,7 @@ class RegistryPriorityChip extends StatelessWidget {
         border: Border.all(color: AppColors.secondaryDark, width: 1.5),
       ),
       child: Text(
-        'P$priority',
+        AppLocalizations.of(context)!.registryPriorityShort(priority),
         style: context.textStyles.labelSmall?.copyWith(
           color: AppColors.secondaryDark,
           letterSpacing: 0.5,

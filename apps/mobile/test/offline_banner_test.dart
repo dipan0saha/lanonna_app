@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:lanonna/core/network/connectivity_service.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/core/widgets/app_offline_wrapper.dart';
@@ -11,7 +12,9 @@ void main() {
       ChangeNotifierProvider<ConnectivityService>.value(
         value: ConnectivityService.forTesting(isOnline: false),
         child: MaterialApp(
-          theme: AppTheme.light,
+                  localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+theme: AppTheme.light,
           home: const AppOfflineWrapper(
             child: Center(child: Text('Body')),
           ),
@@ -28,7 +31,9 @@ void main() {
       ChangeNotifierProvider<ConnectivityService>.value(
         value: ConnectivityService.forTesting(isOnline: true),
         child: MaterialApp(
-          theme: AppTheme.light,
+                  localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+theme: AppTheme.light,
           home: const AppOfflineWrapper(
             child: Center(child: Text('Body')),
           ),

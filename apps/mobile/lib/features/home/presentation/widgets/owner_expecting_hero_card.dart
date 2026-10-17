@@ -4,6 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../../onboarding/presentation/widgets/onboarding_buttons.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class OwnerExpectingHeroCard extends StatelessWidget {
   const OwnerExpectingHeroCard({
@@ -25,6 +26,7 @@ class OwnerExpectingHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final text = context.textStyles;
 
     return Container(
@@ -50,14 +52,11 @@ class OwnerExpectingHeroCard extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            'Waiting for $babyName',
+            AppLocalizations.of(context)!.homeWaitingFor(babyName),
             style: text.bodyLarge,
           ),
           const SizedBox(height: 12),
-          Text(
-            daysToDueDate?.toString() ?? '-',
-            style: text.displayLarge,
-          ),
+          Text(daysToDueDate?.toString() ?? '-', style: text.displayLarge),
           const SizedBox(height: 4),
           Text(
             dueDateLabel != null
@@ -76,7 +75,7 @@ class OwnerExpectingHeroCard extends StatelessWidget {
           if (showAnnounceCta) ...[
             const SizedBox(height: 18),
             OnboardingPrimaryButton(
-              label: 'Announce Arrival',
+              label: l10n.actionAnnounceArrival,
               onPressed: onAnnounceTap,
             ),
           ],

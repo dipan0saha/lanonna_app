@@ -37,8 +37,10 @@ def test_list_members_includes_can_remove():
     ):
         resp = client.get(f"/v1/babies/{baby_id}/members")
     assert resp.status_code == 200
-    assert resp.json()[0]["can_remove"] is True
-    assert resp.json()[0]["firebase_uid"] == "f1"
+    body = resp.json()
+    assert body["has_more"] is False
+    assert body["items"][0]["can_remove"] is True
+    assert body["items"][0]["firebase_uid"] == "f1"
 
 
 def test_delete_member_returns_204():

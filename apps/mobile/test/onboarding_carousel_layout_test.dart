@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/features/onboarding/presentation/widgets/onboarding_carousel.dart';
 import 'package:lanonna/features/onboarding/presentation/widgets/onboarding_carousel_caption.dart';
@@ -9,7 +10,9 @@ void main() {
   testWidgets('expanded art region centers icon above caption band', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+theme: AppTheme.light,
         home: Scaffold(
           body: SizedBox(
             height: 640,

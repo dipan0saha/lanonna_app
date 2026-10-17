@@ -27,6 +27,7 @@ class CalendarSelectedDaySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final styles = context.textStyles;
     final locale = Localizations.localeOf(context).toString();
     final dateLabel = formatApiCalendarDateFromParts(selectedDay, locale);
@@ -68,7 +69,7 @@ class CalendarSelectedDaySection extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'No events this day.',
+                  l10n.emptyEventsDay,
                   style: styles.bodyMedium?.copyWith(color: AppColors.muted),
                 ),
                 if (isOwner) ...[

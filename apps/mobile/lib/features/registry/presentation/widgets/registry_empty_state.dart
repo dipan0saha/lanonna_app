@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/widgets/app_empty_state.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class RegistryEmptyState extends StatelessWidget {
   const RegistryEmptyState({
@@ -14,10 +15,11 @@ class RegistryEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return AppEmptyState(
       expand: false,
       icon: Icons.card_giftcard_outlined,
-      title: 'No registry items yet',
+      title: l10n.registryEmptyTitle,
       message: isOwner
           ? 'Add the things your baby will need so family knows what to bring.'
           : "Nothing's been added to the registry yet — check back soon.",

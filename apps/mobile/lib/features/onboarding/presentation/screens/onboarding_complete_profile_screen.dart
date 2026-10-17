@@ -34,6 +34,7 @@ import '../widgets/onboarding_scaffold.dart';
 import '../utils/invite_flow_navigation.dart';
 import '../utils/onboarding_back_navigation.dart';
 import '../widgets/onboarding_typography.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class OnboardingCompleteProfileScreen extends StatefulWidget {
   const OnboardingCompleteProfileScreen({super.key});
@@ -340,6 +341,7 @@ class _OnboardingCompleteProfileScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final text = context.textStyles;
     final ownerPath = _isOwnerPath;
 
@@ -382,8 +384,8 @@ class _OnboardingCompleteProfileScreenState
                   OnboardingTextField(
                     fieldKey: const Key('onboarding_first_name'),
                     controller: _firstNameController,
-                    label: 'First name',
-                    hint: 'First name',
+                    label: l10n.fieldFirstName,
+                    hint: l10n.fieldFirstName,
                     kind: AppTextInputKind.personName,
                     autovalidateMode: _autovalidateMode,
                     validator: validateOnboardingFirstName,
@@ -396,8 +398,8 @@ class _OnboardingCompleteProfileScreenState
                   OnboardingTextField(
                     fieldKey: const Key('onboarding_last_name'),
                     controller: _lastNameController,
-                    label: 'Last name',
-                    hint: 'Last name',
+                    label: l10n.fieldLastName,
+                    hint: l10n.fieldLastName,
                     kind: AppTextInputKind.personName,
                     autovalidateMode: _autovalidateMode,
                     validator: _validateLastName,
@@ -409,7 +411,7 @@ class _OnboardingCompleteProfileScreenState
                   const SizedBox(height: 12),
                   OnboardingTextField(
                     controller: _phoneController,
-                    label: 'Phone number (optional)',
+                    label: l10n.fieldPhoneNumberOptional,
                     hint: '(555) 555-5555',
                     keyboardType: TextInputType.phone,
                     autovalidateMode: _autovalidateMode,
@@ -439,8 +441,8 @@ class _OnboardingCompleteProfileScreenState
                     onTap: _busy ? null : _pickBirthDate,
                     borderRadius: BorderRadius.circular(12),
                     child: InputDecorator(
-                      decoration: const InputDecoration(
-                        hintText: 'Select a date',
+                      decoration: InputDecoration(
+                        hintText: l10n.fieldSelectDate,
                         suffixIcon: Icon(
                           Icons.calendar_today_outlined,
                           size: 18,
@@ -470,8 +472,8 @@ class _OnboardingCompleteProfileScreenState
                   const SizedBox(height: 12),
                   OnboardingTextField(
                     controller: _postalController,
-                    label: 'Zip / Postal code (optional)',
-                    hint: 'e.g. 94103',
+                    label: l10n.fieldZipPostalCodeOptional,
+                    hint: l10n.labelEG94103,
                     onChanged: (_) {
                       _clearApiError();
                       _persistDraft();
@@ -497,7 +499,7 @@ class _OnboardingCompleteProfileScreenState
             const SizedBox(height: 12),
             OnboardingPrimaryButton(
               semanticsId: 'onboarding_complete_profile_continue',
-              label: 'Continue',
+              label: l10n.deleteAccountReauthPasswordAction,
               isLoading: _busy,
               onPressed: _busy ? null : _continue,
             ),

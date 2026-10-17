@@ -7,6 +7,7 @@ import '../../../../core/theme/la_nonna_theme.dart';
 import '../../data/models/home_summary.dart';
 import 'home_scroll_section.dart';
 import 'home_section_trailing.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class OwnerGettingStartedCard extends StatelessWidget {
   const OwnerGettingStartedCard({
@@ -20,11 +21,12 @@ class OwnerGettingStartedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (summary.completedCount >= summary.total) {
       return const SizedBox.shrink();
     }
     return HomeScrollSection.bordered(
-      title: 'Getting Started',
+      title: l10n.labelGettingStarted,
       trailing: HomeSectionMeta(
         text: '${summary.completedCount} / ${summary.total}',
       ),

@@ -21,9 +21,10 @@ class HomeNewFollowersSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (followers.isEmpty) return const SizedBox.shrink();
     return HomeScrollSection.bordered(
-      title: 'New Followers',
+      title: l10n.labelNewFollowers,
       padding: EdgeInsets.zero,
       child: Column(
         children: [
@@ -56,9 +57,10 @@ class HomeInviteStatusSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (invites.isEmpty) return const SizedBox.shrink();
     return HomeScrollSection.bordered(
-      title: 'Invite Status',
+      title: l10n.actionInviteStatus,
       padding: EdgeInsets.zero,
       child: Column(
         children: [
@@ -68,7 +70,7 @@ class HomeInviteStatusSection extends StatelessWidget {
               subtitle: Text(inv.status),
               trailing: AppIconButton(
                 semanticsId: 'home_revoke_invite_${inv.id}',
-                label: 'Revoke invitation',
+                label: l10n.actionRevokeInvitation,
                 icon: const Icon(Icons.close),
                 onPressed: () async {
                   await context.read<AccountRepository>().revokeInvitation(

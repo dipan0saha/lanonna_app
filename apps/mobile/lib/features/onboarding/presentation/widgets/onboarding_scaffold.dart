@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Shared scaffold for onboarding screens — PRD padding and pinned bottom CTA.
 class OnboardingScaffold extends StatelessWidget {
@@ -28,6 +29,7 @@ class OnboardingScaffold extends StatelessWidget {
   final Widget? bottom;
   final bool pinBottomCta;
   final bool resizeToAvoidBottomInset;
+
   /// When false, [body] fills the area below the top row (e.g. carousels in [Expanded]).
   final bool scrollBody;
 
@@ -100,6 +102,7 @@ class _TopRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SizedBox(
       height: 34,
       child: Row(
@@ -107,7 +110,7 @@ class _TopRow extends StatelessWidget {
           if (showBack)
             Semantics(
               button: true,
-              label: 'Back',
+              label: l10n.actionBack,
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: onBack,
@@ -122,10 +125,10 @@ class _TopRow extends StatelessWidget {
                   child: Text(
                     '←',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontSize: 16,
-                          height: 1,
-                          color: AppColors.textPrimary,
-                        ),
+                      fontSize: 16,
+                      height: 1,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
               ),
@@ -137,10 +140,10 @@ class _TopRow extends StatelessWidget {
               child: Text(
                 skipLabel,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.muted,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
-                    ),
+                  color: AppColors.muted,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                ),
               ),
             ),
         ],

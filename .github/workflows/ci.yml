@@ -65,6 +65,6 @@ jobs:
           cd apps/mobile
           flutter pub get
           bash scripts/check-no-material-chips.sh
-          bash scripts/check-no-hardcoded-user-strings.sh
+          dart run tool/check_hardcoded_user_strings.dart .
           flutter analyze --no-fatal-infos
           flutter test --exclude-tags golden

@@ -31,6 +31,7 @@ class RegistryNeededRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final claimButton = onClaim == null
         ? null
         : AppGiftPillButton(
@@ -62,8 +63,9 @@ class RegistryNeededRow extends StatelessWidget {
                     if (item.description != null &&
                         item.description!.isNotEmpty)
                       Padding(
-                        padding:
-                            const EdgeInsets.only(top: AppSpacing.hairline),
+                        padding: const EdgeInsets.only(
+                          top: AppSpacing.hairline,
+                        ),
                         child: Text(
                           item.description!,
                           style: context.textStyles.bodySmall?.copyWith(
@@ -88,7 +90,7 @@ class RegistryNeededRow extends StatelessWidget {
               if (isOwner) ...[
                 AppIconButton(
                   semanticsId: 'registry_item_edit_${item.id}',
-                  label: 'Edit item',
+                  label: l10n.registryEditItem,
                   onPressed: onEdit,
                   icon: const Icon(
                     Icons.edit_outlined,
@@ -97,7 +99,7 @@ class RegistryNeededRow extends StatelessWidget {
                 ),
                 AppIconButton(
                   semanticsId: 'registry_item_delete_${item.id}',
-                  label: 'Delete item',
+                  label: l10n.registryDeleteItemAction,
                   icon: const Icon(
                     Icons.delete_outline,
                     size: AppMetrics.inlineIconSize,
@@ -110,10 +112,7 @@ class RegistryNeededRow extends StatelessWidget {
           ),
           if (isOwner && claimButton != null) ...[
             SizedBox(height: AppSpacing.sm),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: claimButton,
-            ),
+            Align(alignment: Alignment.centerLeft, child: claimButton),
           ],
         ],
       ),
@@ -153,7 +152,9 @@ class RegistryPurchasedRow extends StatelessWidget {
                 ),
                 if (purchase != null)
                   Text(
-                    'Purchased by ${purchase.purchaserDisplayName}',
+                    AppLocalizations.of(
+                      context,
+                    )!.registryPurchasedBy(purchase.purchaserDisplayName),
                     style: context.textStyles.bodySmall,
                   ),
               ],
@@ -162,8 +163,11 @@ class RegistryPurchasedRow extends StatelessWidget {
           if (canUndo && onUndo != null)
             AppSemantics.button(
               'registry_undo_purchase',
-              TextButton(onPressed: onUndo, child: Text(AppLocalizations.of(context)!.actionUndo)),
-              label: 'Undo purchase',
+              TextButton(
+                onPressed: onUndo,
+                child: Text(AppLocalizations.of(context)!.actionUndo),
+              ),
+              label: AppLocalizations.of(context)!.registryUndoPurchase,
             ),
         ],
       ),

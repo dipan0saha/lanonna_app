@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lanonna/core/widgets/prototype_subpage_scaffold.dart';
 import 'package:lanonna/features/announcement/domain/announcement_navigation.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 void main() {
   testWidgets('save announcement leaves home under the card', (tester) async {
@@ -33,7 +34,13 @@ void main() {
       ],
     );
 
-    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpWidget(
+      MaterialApp.router(
+        routerConfig: router,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+      ),
+    );
     await tester.pumpAndSettle();
 
     router.push('/baby/baby-1/announcement/create');
@@ -67,7 +74,13 @@ void main() {
       ],
     );
 
-    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpWidget(
+      MaterialApp.router(
+        routerConfig: router,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('card-marker'), findsOneWidget);
 

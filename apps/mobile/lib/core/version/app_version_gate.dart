@@ -69,6 +69,7 @@ class AppVersionBlockScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -79,20 +80,23 @@ class AppVersionBlockScreen extends StatelessWidget {
             children: [
               const Spacer(),
               Text(
-                'Update required',
+                l10n.versionGateUpdateRequired,
                 style: Theme.of(context).textTheme.headlineMedium,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
               Text(
-                'This version ($installedVersion) is no longer supported. '
-                'Install $minimumVersion or newer to continue.',
+                AppLocalizations.of(
+                  context,
+                )!.versionGateUnsupported(installedVersion, minimumVersion),
                 textAlign: TextAlign.center,
               ),
               const Spacer(),
               FilledButton(
                 onPressed: () => _openStore(context),
-                child: Text(AppLocalizations.of(context)!.versionGateUpdateInStore),
+                child: Text(
+                  AppLocalizations.of(context)!.versionGateUpdateInStore,
+                ),
               ),
             ],
           ),

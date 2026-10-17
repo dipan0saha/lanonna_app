@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_metrics.dart';
 import '../theme/la_nonna_theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class OfflineBanner extends StatelessWidget {
   const OfflineBanner({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Material(
       color: AppColors.peachTint,
       child: SafeArea(
@@ -21,7 +23,7 @@ class OfflineBanner extends StatelessWidget {
           8,
         ),
         child: Text(
-          "You're offline. Check your connection.",
+          l10n.messageReOfflineCheckConnection,
           style: context.textStyles.bodySmall?.copyWith(
             fontWeight: FontWeight.w600,
             color: context.brand.ownerBadgeText,

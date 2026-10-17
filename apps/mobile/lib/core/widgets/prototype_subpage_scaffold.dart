@@ -6,10 +6,11 @@ import '../theme/app_colors.dart';
 import 'app_icon_button.dart';
 import '../theme/app_metrics.dart';
 import '../theme/la_nonna_theme.dart';
+import '../../l10n/app_localizations.dart';
 
 /// In-body back row + title (prototype subpages). Home top bar is for tab roots only.
 class PrototypeSubpageScaffold extends StatelessWidget {
-  const PrototypeSubpageScaffold({
+  PrototypeSubpageScaffold({
     super.key,
     required this.title,
     required this.body,
@@ -40,6 +41,7 @@ class PrototypeSubpageScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return PopScope(
       canPop: _routeCanPop(context),
       onPopInvokedWithResult: (didPop, _) {
@@ -63,7 +65,7 @@ class PrototypeSubpageScaffold extends StatelessWidget {
                   children: [
                     AppIconButton(
                       semanticsId: 'subpage_back',
-                      label: 'Back',
+                      label: l10n.actionBack,
                       onPressed: () => _handleBack(context),
                       icon: const Icon(Icons.arrow_back_ios_new, size: 20),
                     ),

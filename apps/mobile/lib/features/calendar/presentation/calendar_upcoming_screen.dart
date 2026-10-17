@@ -101,6 +101,7 @@ class _CalendarUpcomingScreenState extends State<CalendarUpcomingScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(title: Text(AppLocalizations.of(context)!.calendarUpcomingTitle)),
       body: RefreshIndicator(
@@ -128,7 +129,7 @@ class _CalendarUpcomingScreenState extends State<CalendarUpcomingScreen>
                 : CalendarTodayUpcomingList(
                     today: _today,
                     upcoming: _upcoming,
-                    emptyMessage: 'No upcoming events',
+                    emptyMessage: l10n.calendarNoUpcomingEvents,
                   ),
       ),
     );
