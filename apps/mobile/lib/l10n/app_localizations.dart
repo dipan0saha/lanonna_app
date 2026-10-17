@@ -1372,18 +1372,6 @@ abstract class AppLocalizations {
   /// **'Undo'**
   String get actionUndo;
 
-  /// No description provided for @searchSelectBaby.
-  ///
-  /// In en, this message translates to:
-  /// **'Select a baby profile to search'**
-  String get searchSelectBaby;
-
-  /// No description provided for @searchNoResults.
-  ///
-  /// In en, this message translates to:
-  /// **'No results for \"{query}\"'**
-  String searchNoResults(String query);
-
   /// No description provided for @actionOk.
   ///
   /// In en, this message translates to:
@@ -1527,6 +1515,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add baby'**
   String get actionAddBaby2;
+
+  /// No description provided for @shellInviteRequiresOwnerBabyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a baby profile first'**
+  String get shellInviteRequiresOwnerBabyTitle;
+
+  /// No description provided for @shellInviteRequiresOwnerBabyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Invites are sent from a baby profile you own. Create one, then invite family and friends.'**
+  String get shellInviteRequiresOwnerBabyMessage;
 
   /// No description provided for @registryAddItem.
   ///
@@ -2308,18 +2308,6 @@ abstract class AppLocalizations {
   /// **'Revoke invitation'**
   String get actionRevokeInvitation;
 
-  /// No description provided for @navSearch.
-  ///
-  /// In en, this message translates to:
-  /// **'Search'**
-  String get navSearch;
-
-  /// No description provided for @fieldSearchPhotosEventsRegistry.
-  ///
-  /// In en, this message translates to:
-  /// **'Search photos, events, registry…'**
-  String get fieldSearchPhotosEventsRegistry;
-
   /// No description provided for @fieldSelectCountry.
   ///
   /// In en, this message translates to:
@@ -2499,12 +2487,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Today'**
   String get labelToday;
-
-  /// No description provided for @hintTypeSearch.
-  ///
-  /// In en, this message translates to:
-  /// **'Type to search'**
-  String get hintTypeSearch;
 
   /// No description provided for @registryUndoPurchase.
   ///

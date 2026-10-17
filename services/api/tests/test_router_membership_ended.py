@@ -25,19 +25,6 @@ def _auth_as(uid: str = "member-1"):
         app.dependency_overrides.pop(current_user, None)
 
 
-def test_search_membership_ended_returns_403():
-    baby_id = uuid.uuid4()
-    with (
-        _auth_as(),        patch(
-            "lanonna_api.routers.search.search_baby_content",
-            side_effect=_ENDED,
-        ),
-    ):
-        response = client.get(f"/v1/babies/{baby_id}/search?q=foo")
-    assert response.status_code == 403
-    assert response.json()["detail"]["error"] == "membership_ended"
-
-
 def test_list_invitations_membership_ended_returns_403():
     baby_id = uuid.uuid4()
     with (

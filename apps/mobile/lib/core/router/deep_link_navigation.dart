@@ -31,7 +31,6 @@ String? normalizeAppDeepLinkPath(String? deepLink) {
     '/settings',
     '/baby/',
     '/notifications/',
-    '/search',
     '/invite-family',
     '/invite-accept',
   ];

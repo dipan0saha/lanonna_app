@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>La Nonna — add baby + invite icon pairs</title>
+  <!-- Shipped shell pair: Material Icons.add + group_add_outlined (reference only). -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --pad: 26px;
+      --text: #2d2d2d;
+      --muted: #8a8a8a;
+      --bg: #f5f5f5;
+      --card: #fff;
+      --slot: 40px;
+      --icon: 22px;
+      --accent: #5a8f5a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px;
+    }
+    h1 { font-size: 1.25rem; margin: 0 0 8px; }
+    p.sub { color: var(--muted); font-size: 0.9rem; margin: 0 0 20px; max-width: 52rem; line-height: 1.45; }
+    .legend {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+    .legend span { display: flex; align-items: center; gap: 6px; }
+    .dot-baby { width: 10px; height: 10px; border-radius: 50%; background: #7eb8da; }
+    .dot-invite { width: 10px; height: 10px; border-radius: 50%; background: #e8a55c; }
+
+    .hero {
+      max-width: 390px;
+      background: var(--card);
+      border-radius: 24px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.08);
+      overflow: hidden;
+      margin-bottom: 28px;
+    }
+    .mock-bar {
+      display: flex;
+      align-items: center;
+      padding: 8px var(--pad) 14px;
+      border-bottom: 1px solid #eee;
+    }
+    .leading-pair {
+      display: flex;
+      flex-shrink: 0;
+      margin-right: 4px;
+    }
+    .icon-btn {
+      width: var(--slot);
+      height: var(--slot);
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      position: relative;
+    }
+    .icon-btn .material-icons,
+    .icon-btn .material-icons-outlined {
+      font-size: var(--icon);
+      color: var(--text);
+    }
+    .icon-btn .hint {
+      position: absolute;
+      bottom: 2px;
+      left: 0;
+      font-size: 8px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .hint-baby { color: #5a8aaa; }
+    .hint-invite { color: #c4843a; }
+    .title { flex: 1; text-align: center; font-weight: 600; font-size: 17px; min-width: 0; }
+    .trailing {
+      flex-shrink: 0;
+      width: 72px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 2px;
+      color: #aaa;
+      font-size: 18px;
+    }
+    .section {
+      padding: 16px var(--pad) 0;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .combos {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      max-width: 1100px;
+    }
+    .combo {
+      background: var(--card);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,.06);
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color .15s, transform .1s;
+    }
+    .combo:hover { border-color: #c5e0c5; }
+    .combo.selected { border-color: var(--accent); transform: translateY(-1px); }
+    .combo-head {
+      padding: 12px 14px 8px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .combo-head h2 { margin: 0; font-size: 0.9rem; font-weight: 600; }
+    .combo-head p { margin: 6px 0 0; font-size: 0.72rem; color: var(--muted); line-height: 1.4; }
+    .combo-mini .mock-bar { padding: 6px 14px 10px; }
+    .combo-mini .section { padding: 10px 14px 0; font-size: 10px; }
+    .combo-mini .leading-pair .icon-btn { width: 36px; height: 40px; }
+    .combo-mini .title { font-size: 14px; }
+    .combo-codes {
+      padding: 10px 14px 14px;
+      font-size: 0.68rem;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+    .combo-codes strong { color: var(--text); font-weight: 600; }
+    .note { margin-top: 28px; font-size: 0.85rem; color: var(--muted); max-width: 52rem; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <h1>Add baby + invite followers — icon pairs</h1>
+  <p class="sub">
+    Each option shows <strong>two</strong> shell leading actions (left → right): add baby, then invite.
+    Click a card to preview it in the large mock. Icons at 22px in ~40px tap slots; screen padding 26px.
+  </p>
+  <div class="legend">
+    <span><i class="dot-baby"></i> Baby = add / create baby</span>
+    <span><i class="dot-invite"></i> Invite = followers &amp; family batch invite</span>
+  </div>
+
+  <div class="hero" id="hero">
+    <div class="mock-bar" id="hero-bar"></div>
+    <div class="section">RECENT ACTIVITY</div>
+    <div style="height: 40px"></div>
+  </div>
+
+  <div class="combos" id="combos"></div>
+
+  <p class="note">
+    <strong>Flutter:</strong> outlined Material icons → <code>Icons.&lt;name&gt;_outlined</code> or
+    <code>Icons.&lt;name&gt;_outline</code> (e.g. <code>people_outline</code>, <code>child_care_outlined</code>).
+    Reference only — not shipped in the app.
+  </p>
+
+  <script>
+    function iconEl(def, hintClass, hintText) {
+      const cls = def.outlined ? "material-icons-outlined" : "material-icons";
+      return `<div class="icon-btn" title="${def.flutter}">
+        <span class="${cls}">${def.glyph}</span>
+        <span class="hint ${hintClass}">${hintText}</span>
+      </div>`;
+    }
+
+    function renderBar(target, baby, invite, mini) {
+      target.innerHTML = `
+        <div class="leading-pair">
+          ${iconEl(baby, "hint-baby", "Baby")}
+          ${iconEl(invite, "hint-invite", "Invite")}
+        </div>
+        <div class="title">Olivia ▾</div>
+        <div class="trailing">⌕ 🔔 ○</div>
+      `;
+    }
+
+    const pairs = [
+      {
+        name: "1 · Default split",
+        blurb: "Matches today’s baby “+”; clear invite with person_add.",
+        baby: { glyph: "add", outlined: false, flutter: "Icons.add" },
+        invite: { glyph: "person_add", outlined: true, flutter: "Icons.person_add_outlined" },
+        tag: "balanced",
+      },
+      {
+        name: "2 · Both outlined",
+        blurb: "Softer shell; pairs with notifications_outlined.",
+        baby: { glyph: "add", outlined: true, flutter: "Icons.add (use Outlined font — or keep filled add)" },
+        invite: { glyph: "person_add", outlined: true, flutter: "Icons.person_add_outlined" },
+      },
+      {
+        name: "3 · Baby + batch invite",
+        blurb: "“+” for baby; group_add for multi-row invite screen.",
+        baby: { glyph: "add", outlined: false, flutter: "Icons.add" },
+        invite: { glyph: "group_add", outlined: true, flutter: "Icons.group_add_outlined" },
+        tag: "batch",
+      },
+      {
+        name: "4 · Child care + person",
+        blurb: "Baby reads as infant; invite is single-person.",
+        baby: { glyph: "child_care", outlined: true, flutter: "Icons.child_care_outlined" },
+        invite: { glyph: "person_add", outlined: true, flutter: "Icons.person_add_outlined" },
+      },
+      {
+        name: "5 · Child care + group",
+        blurb: "Distinct baby vs family invite.",
+        baby: { glyph: "child_care", outlined: true, flutter: "Icons.child_care_outlined" },
+        invite: { glyph: "group_add", outlined: true, flutter: "Icons.group_add_outlined" },
+        tag: "recommended",
+      },
+      {
+        name: "6 · Child friendly + people",
+        blurb: "Onboarding-adjacent people_outline for community.",
+        baby: { glyph: "child_friendly", outlined: true, flutter: "Icons.child_friendly_outlined" },
+        invite: { glyph: "people", outlined: true, flutter: "Icons.people_outline" },
+      },
+      {
+        name: "7 · Crib + group",
+        blurb: "Literal baby crib; group for followers.",
+        baby: { glyph: "crib", outlined: true, flutter: "Icons.crib_outlined" },
+        invite: { glyph: "group_add", outlined: true, flutter: "Icons.group_add_outlined" },
+      },
+      {
+        name: "8 · Add + people",
+        blurb: "Minimal baby; broader “family” invite.",
+        baby: { glyph: "add", outlined: false, flutter: "Icons.add" },
+        invite: { glyph: "people", outlined: true, flutter: "Icons.people_outline" },
+      },
+      {
+        name: "9 · Stroller + person_add",
+        blurb: "Alternative baby metaphor.",
+        baby: { glyph: "stroller", outlined: true, flutter: "Icons.stroller_outlined" },
+        invite: { glyph: "person_add", outlined: true, flutter: "Icons.person_add_outlined" },
+      },
+      {
+        name: "10 · Filled pair",
+        blurb: "Heavier weight; closer to current + weight.",
+        baby: { glyph: "add", outlined: false, flutter: "Icons.add" },
+        invite: { glyph: "person_add", outlined: false, flutter: "Icons.person_add" },
+      },
+      {
+        name: "11 · Baby switcher parity",
+        blurb: "Same + as baby switcher; mail stresses email invite.",
+        baby: { glyph: "add", outlined: false, flutter: "Icons.add" },
+        invite: { glyph: "mail", outlined: true, flutter: "Icons.mail_outline" },
+      },
+      {
+        name: "12 · Diversity family",
+        blurb: "Family icon for invite; child_care for baby.",
+        baby: { glyph: "child_care", outlined: true, flutter: "Icons.child_care_outlined" },
+        invite: { glyph: "diversity_3", outlined: true, flutter: "Icons.diversity_3_outlined" },
+      },
+    ];
+
+    const heroBar = document.getElementById("hero-bar");
+    const combosEl = document.getElementById("combos");
+
+    function selectPair(pair, cardEl) {
+      renderBar(heroBar, pair.baby, pair.invite, false);
+      document.querySelectorAll(".combo").forEach(c => c.classList.remove("selected"));
+      if (cardEl) cardEl.classList.add("selected");
+    }
+
+    pairs.forEach((pair, i) => {
+      const card = document.createElement("article");
+      card.className = "combo" + (i === 0 ? " selected" : "");
+      const miniBar = document.createElement("div");
+      miniBar.className = "combo-mini";
+      miniBar.innerHTML = `
+        <div class="mock-bar mini-bar"></div>
+        <div class="section">RECENT ACTIVITY</div>
+      `;
+      renderBar(miniBar.querySelector(".mini-bar"), pair.baby, pair.invite, true);
+
+      card.innerHTML = `
+        <div class="combo-head">
+          <h2>${pair.name}${pair.tag ? " · " + pair.tag : ""}</h2>
+          <p>${pair.blurb}</p>
+        </div>
+      `;
+      card.appendChild(miniBar);
+      card.innerHTML += `
+        <div class="combo-codes">
+          <strong>Baby:</strong> <code>${pair.baby.flutter}</code><br>
+          <strong>Invite:</strong> <code>${pair.invite.flutter}</code>
+        </div>
+      `;
+      // Re-append mini (innerHTML wiped children) — rebuild properly
+      card.innerHTML = `
+        <div class="combo-head">
+          <h2>${pair.name}${pair.tag ? " · " + pair.tag : ""}</h2>
+          <p>${pair.blurb}</p>
+        </div>
+      `;
+      const mini = document.createElement("div");
+      mini.className = "combo-mini";
+      mini.innerHTML = `<div class="mock-bar mini-bar"></div><div class="section">RECENT ACTIVITY</div>`;
+      renderBar(mini.querySelector(".mini-bar"), pair.baby, pair.invite, true);
+      card.appendChild(mini);
+      const codes = document.createElement("div");
+      codes.className = "combo-codes";
+      codes.innerHTML = `<strong>Baby:</strong> <code>${pair.baby.flutter}</code><br><strong>Invite:</strong> <code>${pair.invite.flutter}</code>`;
+      card.appendChild(codes);
+
+      card.addEventListener("click", () => selectPair(pair, card));
+      combosEl.appendChild(card);
+    });
+
+    selectPair(pairs[0], combosEl.querySelector(".combo"));
+  </script>
+</body>
+</html>

@@ -781,14 +781,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionUndo => 'Undo';
 
   @override
-  String get searchSelectBaby => 'Select a baby profile to search';
-
-  @override
-  String searchNoResults(String query) {
-    return 'No results for \"$query\"';
-  }
-
-  @override
   String get actionOk => 'OK';
 
   @override
@@ -860,6 +852,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get actionAddBaby2 => 'Add baby';
+
+  @override
+  String get shellInviteRequiresOwnerBabyTitle => 'Add a baby profile first';
+
+  @override
+  String get shellInviteRequiresOwnerBabyMessage =>
+      'Invites are sent from a baby profile you own. Create one, then invite family and friends.';
 
   @override
   String get registryAddItem => 'Add item';
@@ -1266,13 +1265,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionRevokeInvitation => 'Revoke invitation';
 
   @override
-  String get navSearch => 'Search';
-
-  @override
-  String get fieldSearchPhotosEventsRegistry =>
-      'Search photos, events, registry…';
-
-  @override
   String get fieldSelectCountry => 'Select a country';
 
   @override
@@ -1369,9 +1361,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get labelToday => 'Today';
-
-  @override
-  String get hintTypeSearch => 'Type to search';
 
   @override
   String get registryUndoPurchase => 'Undo purchase';

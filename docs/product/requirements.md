@@ -153,7 +153,7 @@ Semantic success, warning, info, and error use dedicated tokens on the brand ext
 ### 5.2 Shell navigation
 
 - **Bottom navigation** with five destinations, in order: **Home**, **Gallery**, **Calendar**, **Registry**, **Fun** (gamification).
-- **Tab roots** (the five bottom-nav screens) use `ShellTabLayout` and include the **home top bar** (baby switcher/title, search, notifications bell).
+- **Tab roots** (the five bottom-nav screens) use `ShellTabLayout` and include the **home top bar** (add baby, invite family, baby switcher/title, notifications bell, account avatar).
 - **All other signed-in content screens** — tab drill-downs (e.g. gallery photo, calendar event detail, registry edit), account/settings stack routes, and invite subpages — use a **single** subpage header (**back** + centered **title**) only; **no** stacked home top bar (same principle as FR-INV-008; see FR-SHELL-001).
 - **Profile** and **Settings** are **stack screens** (`/profile`, `/settings`, `/account/edit`; deep links may use `/profile/edit`, normalized to `/account/edit`), reached from the shell app bar or account menu — they are **not** bottom-nav tabs.
 - **Offline**: When the device is offline, show a **banner**; retain last-loaded content; suppress per-section error UI that would spam the home scroll.
@@ -488,7 +488,7 @@ Engineering status aligns with [development.md](../engineering/development.md) a
 | Fun tab label | Bottom nav and UI copy use **“Fun”** (route `/gamification`) |
 | Activity recap | **Full stream** of `activity_events` on home (FR-HOME-007) |
 | Complete profile (S04, #391) | Legal: in-app **WebView** + bundled sample HTML (`/legal/terms`, `/legal/privacy`). Country: ISO 3166-1 alpha-2 stored; UI shows full country name list. Phone: any string with max-length validation only. Follower/co-owner: same demographics + terms; **no** relationship pills. Owner: Mother/Father required client-side → `baby_memberships.relationship_label` on create baby. **`profile_complete`:** non-empty `display_name` **and** `terms_accepted_at` (relationship not in API gate). |
-| Calendar event visibility (#398) | `starts_at` stored UTC; UI shows **device-local** date/time on calendar list, event detail, home upcoming, and search (`app_date_time.dart` — #4). After create, Calendar tab reloads (FAB `push` result + `CalendarRepository` listeners). Past start: month grid only, not Upcoming. | Mobile calendar module |
+| Calendar event visibility (#398) | `starts_at` stored UTC; UI shows **device-local** date/time on calendar list, event detail, and home upcoming (`app_date_time.dart` — #4). After create, Calendar tab reloads (FAB `push` result + `CalendarRepository` listeners). Past start: month grid only, not Upcoming. | Mobile calendar module |
 | Create baby profile photo (#394) | Onboarding create-baby optional photo is a **profile** avatar only by default; checkbox **Also share this photo in the gallery** (default off) runs gallery upload (`/v1/photos/init`). First-moment born photo upload remains gallery-only. | Mobile `OnboardingCreateBabyScreen` |
 | Expecting baby names → Fun (#400) | Boy/girl optional names on create-baby (expecting only) become Fun vote options; deduped by name; born lifecycle ignores `profile_name_suggestions`. | `POST /v1/babies` `profile_name_suggestions`; mobile `expectingProfileNameSuggestionsForFun` |
 | Registry Needed row layout (#399) | Owner Needed items: full-width title/description; **Mark as purchased** + edit/delete on second row (avoids crushed text column). | `RegistryNeededRow` |
@@ -556,7 +556,6 @@ Aligned with `apps/mobile/lib/core/router/app_router.dart` and `features/onboard
 | accountExport | `/account/export` | Baby data export |
 | accountDelete | `/account/delete` | Account delete |
 | notificationsInbox | `/notifications/inbox` | Notification inbox |
-| search | `/search` | Global search |
 | homeActivity | `/home/activity` | Paginated activity recap |
 | inviteFamily | `/invite-family` | Batch invite from home/account (FR-INV-008) |
 | calendar | `/calendar` | Calendar |

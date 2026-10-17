@@ -383,15 +383,6 @@
   "shippingSave": "Save address",
   "shippingRemove": "Remove address",
   "actionUndo": "Undo",
-  "searchSelectBaby": "Select a baby profile to search",
-  "searchNoResults": "No results for \"{query}\"",
-  "@searchNoResults": {
-    "placeholders": {
-      "query": {
-        "type": "String"
-      }
-    }
-  },
   "actionOk": "OK",
   "babySwitcherEmpty": "No baby profiles yet.",
   "babySwitcherEditBaby": "Edit baby",
@@ -416,6 +407,8 @@
   "actionAddAddressKnows": "Add an address so family knows where to send gifts.",
   "actionAddAnother": "Add another",
   "actionAddBaby2": "Add baby",
+  "shellInviteRequiresOwnerBabyTitle": "Add a baby profile first",
+  "shellInviteRequiresOwnerBabyMessage": "Invites are sent from a baby profile you own. Create one, then invite family and friends.",
   "registryAddItem": "Add item",
   "actionAddPhoto3": "Add photo",
   "actionAddGallery": "Add to gallery",
@@ -546,8 +539,6 @@
   "onboardingRemoveInvite": "Remove invite",
   "actionResendInvitation": "Resend invitation",
   "actionRevokeInvitation": "Revoke invitation",
-  "navSearch": "Search",
-  "fieldSearchPhotosEventsRegistry": "Search photos, events, registry…",
   "fieldSelectCountry": "Select a country",
   "fieldSelectDate": "Select a date",
   "fieldSelectTime": "Select a time",
@@ -578,7 +569,6 @@
   "messageStartTime": "This start time is in the past. The event still appears on the month grid and under Today on Calendar, but not in Upcoming.",
   "fieldTimeOptional": "Time (optional)",
   "labelToday": "Today",
-  "hintTypeSearch": "Type to search",
   "registryUndoPurchase": "Undo purchase",
   "labelUpcoming": "Upcoming",
   "labelUpcomingEvents": "Upcoming Events",

@@ -21,7 +21,6 @@ import 'features/calendar/data/calendar_repository.dart';
 import 'features/fun/data/fun_repository.dart';
 import 'features/gallery/data/gallery_repository.dart';
 import 'features/registry/data/registry_repository.dart';
-import 'features/search/data/search_repository.dart';
 import 'features/home/data/home_refresh_signal.dart';
 import 'features/home/data/home_repository.dart';
 import 'features/home/data/selected_baby_store.dart';
@@ -76,7 +75,6 @@ Future<Widget> bootstrapLaNonnaApp() async {
   final notificationsRepository = NotificationsRepository(apiClient);
   final announcementRepository = AnnouncementRepository(apiClient);
   final invitationsRepository = InvitationsRepository(apiClient);
-  final searchRepository = SearchRepository(apiClient);
   coordinator = OnboardingCoordinator(
     storage: onboardingStorage,
     repository: onboardingRepository,
@@ -144,7 +142,6 @@ Future<Widget> bootstrapLaNonnaApp() async {
       ),
       Provider<AnnouncementRepository>.value(value: announcementRepository),
       Provider<InvitationsRepository>.value(value: invitationsRepository),
-      Provider<SearchRepository>.value(value: searchRepository),
       ChangeNotifierProvider<SelectedBabyStore>.value(value: selectedBabyStore),
       Provider<HomeRefreshSignal>.value(value: homeRefreshSignal),
       ChangeNotifierProvider<ConnectivityService>.value(

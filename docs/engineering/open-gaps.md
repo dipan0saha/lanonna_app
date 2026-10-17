@@ -6,6 +6,8 @@ Open engineering gaps for La Nonna. Seeded from the Oct 2026 full-stack review a
 
 Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [operations.md](operations.md), [intentional-dev-decisions.md](intentional-dev-decisions.md).
 
+**Note (2026-10-17):** Global baby-scoped search (`/search`, `GET …/search`) was removed from mobile and API; historical ✅ entries below that mention search remain for audit.
+
 ---
 
 ## Health snapshot (2026-10-17)

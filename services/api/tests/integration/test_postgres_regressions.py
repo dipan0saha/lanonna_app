@@ -10,7 +10,6 @@ import pytest
 from lanonna_api.db import get_connection
 from lanonna_api.domain.calendar import set_rsvp
 from lanonna_api.domain.onboarding import onboarding_status_for_user
-from lanonna_api.domain.search import search_baby_content
 from lanonna_api.domain.user_errors import UserDeletedError
 from lanonna_api.repositories.events import create_event
 from lanonna_api.repositories.invitations import load_invite_targets
@@ -31,86 +30,6 @@ def _snap(firebase_uid: str) -> dict:
         ).fetchone()
     assert row is not None
     return dict(row)
-
-
-def test_search_runs_against_real_columns_including_suggested_name():
-    owner = "search-owner"
-    resolve_app_user(owner, "owner@example.com")
-    baby_id = uuid.uuid4()
-    with get_connection() as conn:
-        conn.execute(
-            """
-            INSERT INTO baby_profiles (id, name, lifecycle_status, created_by_firebase_uid)
-            VALUES (%s, 'Parker', 'expecting', %s)
-            """,
-            (baby_id, owner),
-        )
-        conn.execute(
-            """
-            INSERT INTO baby_memberships (baby_profile_id, firebase_uid, role, joined_via)
-            VALUES (%s, %s, 'owner', 'created')
-            """,
-            (baby_id, owner),
-        )
-        conn.execute(
-            """
-            INSERT INTO photos (
-                baby_profile_id, uploader_firebase_uid, status, caption
-            )
-            VALUES (%s, %s, 'ready', 'QA gallery — shower day')
-            """,
-            (baby_id, owner),
-        )
-        conn.execute(
-            """
-            INSERT INTO events (baby_profile_id, created_by_firebase_uid, title, starts_at)
-            VALUES (%s, %s, 'Gender reveal', %s)
-            """,
-            (baby_id, owner, datetime(2026, 6, 1, tzinfo=timezone.utc)),
-        )
-        conn.execute(
-            """
-            INSERT INTO registry_items (baby_profile_id, created_by_firebase_uid, name)
-            VALUES (%s, %s, 'QA Purchased Stroller')
-            """,
-            (baby_id, owner),
-        )
-        conn.execute(
-            """
-            INSERT INTO name_suggestions (
-                baby_profile_id, suggested_by_firebase_uid, suggested_name, gender
-            )
-            VALUES (%s, %s, 'James', 'male')
-            """,
-            (baby_id, owner),
-        )
-
-    qa = search_baby_content(owner, baby_id, "QA")
-    assert [p["caption"] for p in qa["photos"]] == ["QA gallery — shower day"]
-    assert [r["name"] for r in qa["registry_items"]] == ["QA Purchased Stroller"]
-    assert qa["events"] == []
-    assert qa["name_suggestions"] == []
-
-    gender = search_baby_content(owner, baby_id, "Gender")
-    assert [e["title"] for e in gender["events"]] == ["Gender reveal"]
-
-    james = search_baby_content(owner, baby_id, "james")
-    assert [n["name"] for n in james["name_suggestions"]] == ["James"]
-
-    empty = search_baby_content(owner, baby_id, "no-such-thing")
-    assert empty["photos"] == []
-    assert empty["events"] == []
-    assert empty["registry_items"] == []
-    assert empty["name_suggestions"] == []
-
-    # A literal percent must not match every row, and a quote must not 500.
-    percent = search_baby_content(owner, baby_id, "%")
-    assert percent["photos"] == []
-    assert percent["events"] == []
-    assert percent["registry_items"] == []
-    assert percent["name_suggestions"] == []
-    quoted = search_baby_content(owner, baby_id, "o'brien")
-    assert quoted["photos"] == []
 
 
 def test_resolve_app_user_does_not_null_email_or_write_when_unchanged():

@@ -10,11 +10,48 @@ import '../../account/data/notifications_repository.dart';
 import '../../home/data/home_refresh_signal.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
+import '../../home/domain/app_routes.dart';
 import '../../home/presentation/widgets/home_top_bar.dart';
 import 'baby_switcher_sheet.dart';
 
 Widget shellHomeTopBar(BuildContext context) {
   return const _ShellTopBarLoader();
+}
+
+/// Shell invite action: owner baby required before batch invite.
+Future<void> onShellInviteFamilyTap(BuildContext context) async {
+  final store = context.read<SelectedBabyStore>();
+  final baby = await context.read<HomeRepository>().resolveOwnerBaby(store);
+  if (!context.mounted) return;
+  if (baby == null) {
+    await showShellInviteRequiresOwnerBabyDialog(context);
+    return;
+  }
+  await context.push(AppRoutes.inviteFamily);
+}
+
+Future<void> showShellInviteRequiresOwnerBabyDialog(BuildContext context) {
+  final l10n = AppLocalizations.of(context)!;
+  return showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l10n.shellInviteRequiresOwnerBabyTitle),
+      content: Text(l10n.shellInviteRequiresOwnerBabyMessage),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: Text(l10n.authPasswordResetCancel),
+        ),
+        FilledButton(
+          onPressed: () {
+            Navigator.pop(ctx);
+            ctx.push('/baby/create');
+          },
+          child: Text(l10n.actionAddBaby),
+        ),
+      ],
+    ),
+  );
 }
 
 class _ShellTopBarLoader extends StatefulWidget {
@@ -164,11 +201,11 @@ class _ShellTopBarLoaderState extends State<_ShellTopBarLoader> {
       centerTitle: _title,
       showUnreadDot: _unreadCount > 0,
       onAddBabyTap: () => context.push('/baby/create'),
+      onInviteFamilyTap: () => onShellInviteFamilyTap(context),
       onBabySwitcherTap: () async {
         await showBabySwitcherSheet(context);
         await _refresh();
       },
-      onSearchTap: () => context.push('/search'),
       onNotificationsTap: () async {
         await context.push('/notifications/inbox');
         await _refreshUnreadOnly();

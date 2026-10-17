@@ -27,7 +27,6 @@ chmod +x "${ROOT}/maestro/scripts/"*.sh
 FLOWS=(
   maestro/flows/smoke/auth_sign_in.yaml
   maestro/flows/smoke/shell_navigation.yaml
-  maestro/flows/smoke/open_search.yaml
   maestro/flows/smoke/open_notifications.yaml
   maestro/flows/features/home_sections.yaml
   maestro/flows/features/baby_switcher.yaml

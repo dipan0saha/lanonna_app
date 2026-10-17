@@ -31,7 +31,6 @@ from lanonna_api.routers import (
     photos,
     profile,
     registry,
-    search,
 )
 from lanonna_api.domain.errors import ErrorCode, NotFoundError, error_detail
 from lanonna_api.http_errors import (
@@ -119,7 +118,6 @@ app.include_router(events.router, dependencies=_app_check_deps)
 app.include_router(registry.router, dependencies=_app_check_deps)
 app.include_router(fun.router, dependencies=_app_check_deps)
 app.include_router(announcements.router, dependencies=_app_check_deps)
-app.include_router(search.router, dependencies=_app_check_deps)
 app.include_router(data_export.router, dependencies=_app_check_deps)
 app.include_router(admin_system_announcements.router)
 

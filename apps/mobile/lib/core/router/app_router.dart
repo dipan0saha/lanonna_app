@@ -52,7 +52,6 @@ import '../../features/registry/presentation/registry_ai_suggestions_screen.dart
 import '../../features/registry/presentation/registry_item_form_screen.dart';
 import '../../features/registry/presentation/registry_shipping_address_screen.dart';
 import '../../features/registry/presentation/registry_screen.dart';
-import '../../features/search/presentation/global_search_screen.dart';
 import '../../features/shell/main_shell_screen.dart';
 import '../auth/auth_repository.dart';
 import 'router_refresh.dart';
@@ -196,11 +195,6 @@ GoRouter createAppRouter(
         path: '/notifications/inbox',
         parentNavigatorKey: appRootNavigatorKey,
         builder: (context, state) => const NotificationsInboxScreen(),
-      ),
-      GoRoute(
-        path: '/search',
-        parentNavigatorKey: appRootNavigatorKey,
-        builder: (context, state) => const GlobalSearchScreen(),
       ),
       GoRoute(
         path: '/baby/create',

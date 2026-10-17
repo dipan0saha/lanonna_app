@@ -15,8 +15,8 @@ class HomeTopBar extends StatelessWidget {
     this.centerTitle,
     this.showUnreadDot = false,
     this.onAddBabyTap,
+    this.onInviteFamilyTap,
     this.onBabySwitcherTap,
-    this.onSearchTap,
     this.onNotificationsTap,
     this.onAccountTap,
     this.accountDisplayName,
@@ -27,8 +27,8 @@ class HomeTopBar extends StatelessWidget {
   final String? centerTitle;
   final bool showUnreadDot;
   final VoidCallback? onAddBabyTap;
+  final VoidCallback? onInviteFamilyTap;
   final VoidCallback? onBabySwitcherTap;
-  final VoidCallback? onSearchTap;
   final VoidCallback? onNotificationsTap;
   final VoidCallback? onAccountTap;
   final String? accountDisplayName;
@@ -46,12 +46,22 @@ class HomeTopBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          AppIconButton(
+          _ShellLeadingIconButton(
             semanticsId: 'shell_add_baby',
             label: l10n.actionAddBaby2,
             onPressed: onAddBabyTap,
             icon: Icon(
               Icons.add,
+              size: AppMetrics.shellAddIconSize,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          _ShellLeadingIconButton(
+            semanticsId: 'shell_invite_family',
+            label: l10n.actionInviteFriends,
+            onPressed: onInviteFamilyTap,
+            icon: Icon(
+              Icons.group_add_outlined,
               size: AppMetrics.shellAddIconSize,
               color: AppColors.textPrimary,
             ),
@@ -89,17 +99,6 @@ class HomeTopBar extends StatelessWidget {
               label: l10n.actionSwitchBabyProfile,
             ),
           ),
-          if (onSearchTap != null)
-            AppIconButton(
-              semanticsId: 'shell_search',
-              label: l10n.navSearch,
-              onPressed: onSearchTap,
-              icon: Icon(
-                Icons.search,
-                size: AppMetrics.shellIconSize,
-                color: context.brand.shellIconMuted,
-              ),
-            ),
           Stack(
             clipBehavior: Clip.none,
             children: [
@@ -135,6 +134,39 @@ class HomeTopBar extends StatelessWidget {
             label: l10n.labelMyAccount,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ShellLeadingIconButton extends StatelessWidget {
+  const _ShellLeadingIconButton({
+    required this.semanticsId,
+    required this.label,
+    required this.onPressed,
+    required this.icon,
+  });
+
+  final String semanticsId;
+  final String label;
+  final VoidCallback? onPressed;
+  final Widget icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: AppMetrics.shellLeadingSlotWidth,
+      height: AppMetrics.shellLeadingSlotWidth,
+      child: AppIconButton(
+        semanticsId: semanticsId,
+        label: label,
+        onPressed: onPressed,
+        padding: AppMetrics.shellLeadingIconButtonPadding,
+        constraints: const BoxConstraints(
+          minWidth: AppMetrics.shellLeadingSlotWidth,
+          minHeight: AppMetrics.shellLeadingSlotWidth,
+        ),
+        icon: icon,
       ),
     );
   }

@@ -27,7 +27,6 @@ export MAESTRO_PREPARE_CLEAR=0
 
 maestro test \
   maestro/flows/smoke/shell_navigation.yaml \
-  maestro/flows/smoke/open_search.yaml \
   maestro/flows/smoke/open_notifications.yaml \
   -e "SMOKE_TEST_EMAIL=${SMOKE_TEST_EMAIL}" \
   -e "SMOKE_TEST_PASSWORD=${SMOKE_TEST_PASSWORD}"

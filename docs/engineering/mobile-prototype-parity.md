@@ -14,7 +14,7 @@ The Flutter app (`apps/mobile`) shares a single theme and widget library under `
 - **Shell / account** — `BabyProfileAvatar`, `MembershipRolePill`, `AppUnreadDot` (orange accent).
 - **Registry** — `RegistryPriorityChip` (orange P1–P5), `AppGiftPillButton` for purchase CTAs, compact `RegistryNeededRow`.
 - **Announcement** — `AnnouncementKeepsakeCard` (white card, Dancing Script first name, four stat icons, hand-icon squish pill). Used on the announcement screen and share image rendering.
-- **Shell** — `HomeTopBar` via `shellHomeTopBar`: add baby (`+`), baby name with chevron (switcher), search, bell with unread dot (listens to `NotificationsRepository`, a `ChangeNotifier`), account avatar (loaded once via `AccountRepository.ensureAccountLoaded`).
+- **Shell** — `HomeTopBar` via `shellHomeTopBar`: add baby (`+`), invite family (`group_add_outlined`), baby name with chevron (switcher), bell with unread dot (listens to `NotificationsRepository`, a `ChangeNotifier`), account avatar (loaded once via `AccountRepository.ensureAccountLoaded`).
 - **Theme scale** — `AppSpacing` (2–24px: `hairline`, `xxs`…`xxl`, incl. `smMd` 10) and extended `AppMetrics` for shell, keepsake, gallery badges, AI banners, calendar grid, predictions bars, and list rows. Prefer `context.calendarMonthTitleStyle`, `shellBabySwitcherTitleStyle`, and `accountProfileNameStyle` over literal font sizes.
 - **AI banners** — `CalendarAiSuggestionBanner` (peach→sage gradient, white icon chip) on Calendar and Registry tabs.
 - **Calendar** — Grouped upcoming events in `CalendarGroupedEventsCard`; caps **Upcoming** header with **Past** sheet (`past=true` on events API). Two-letter weekday headers and dark month title on the grid.
