@@ -2968,23 +2968,11 @@ abstract class AppLocalizations {
   /// **'📸 Share to Instagram'**
   String get homeShareToInstagram;
 
-  /// No description provided for @homeBorn.
-  ///
-  /// In en, this message translates to:
-  /// **'Born {formatted}'**
-  String homeBorn(String formatted);
-
   /// No description provided for @homeEveryoneYouveInvitedHasBeen.
   ///
   /// In en, this message translates to:
   /// **'Everyone you\'ve invited has been notified.'**
   String get homeEveryoneYouveInvitedHasBeen;
-
-  /// No description provided for @homeInvitesNotifiedWithLine.
-  ///
-  /// In en, this message translates to:
-  /// **'{line}. Everyone you\'ve invited has been notified.'**
-  String homeInvitesNotifiedWithLine(String line);
 
   /// No description provided for @homeDaysToDueDate.
   ///
@@ -3001,14 +2989,8 @@ abstract class AppLocalizations {
   /// No description provided for @homeCouldNotUpdateBaby.
   ///
   /// In en, this message translates to:
-  /// **'Could not update baby: {value1}'**
-  String homeCouldNotUpdateBaby(String value1);
-
-  /// No description provided for @calendarFamilyMember.
-  ///
-  /// In en, this message translates to:
-  /// **'Family member'**
-  String get calendarFamilyMember;
+  /// **'Could not update baby: {reason}'**
+  String homeCouldNotUpdateBaby(String reason);
 
   /// No description provided for @calendarOnlyOwnersCanCreateOr.
   ///
@@ -3100,11 +3082,11 @@ abstract class AppLocalizations {
   /// **'Comments'**
   String get calendarComments;
 
-  /// No description provided for @calendarCouldNotLoadSuggestions.
+  /// No description provided for @suggestionsLoadFailed.
   ///
   /// In en, this message translates to:
-  /// **'Could not load suggestions: {value1}'**
-  String calendarCouldNotLoadSuggestions(String value1);
+  /// **'Could not load suggestions: {reason}'**
+  String suggestionsLoadFailed(String reason);
 
   /// No description provided for @calendarEventAddedToCalendar.
   ///
@@ -3129,12 +3111,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Choose which baby profile to view.'**
   String get shellChooseWhichBabyProfileTo;
-
-  /// No description provided for @galleryBaby.
-  ///
-  /// In en, this message translates to:
-  /// **'Baby'**
-  String get galleryBaby;
 
   /// No description provided for @galleryFavorites.
   ///
@@ -3163,8 +3139,8 @@ abstract class AppLocalizations {
   /// No description provided for @galleryUploadFailed.
   ///
   /// In en, this message translates to:
-  /// **'Upload failed: {value1}'**
-  String galleryUploadFailed(String value1);
+  /// **'Upload failed: {reason}'**
+  String galleryUploadFailed(String reason);
 
   /// No description provided for @galleryPhotoProcessingIsTakingLonger.
   ///
@@ -3201,12 +3177,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'+ Add Photo'**
   String get galleryAddPhoto;
-
-  /// No description provided for @funAnonymous.
-  ///
-  /// In en, this message translates to:
-  /// **'Anonymous'**
-  String get funAnonymous;
 
   /// No description provided for @funPredictions.
   ///
@@ -3292,12 +3262,6 @@ abstract class AppLocalizations {
   /// **'Add Registry Item'**
   String get registryAddRegistryItem;
 
-  /// No description provided for @registryCouldNotLoadSuggestions.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not load suggestions: {value1}'**
-  String registryCouldNotLoadSuggestions(String value1);
-
   /// No description provided for @registryIllBuyThis.
   ///
   /// In en, this message translates to:
@@ -3337,8 +3301,8 @@ abstract class AppLocalizations {
   /// No description provided for @babyProfilePhotoFailed.
   ///
   /// In en, this message translates to:
-  /// **'{createdLabel}; profile photo failed: {value1}'**
-  String babyProfilePhotoFailed(String createdLabel, String value1);
+  /// **'{createdLabel}; profile photo failed: {reason}'**
+  String babyProfilePhotoFailed(String createdLabel, String reason);
 
   /// No description provided for @babyProfilePhotoSavedGalleryUpload.
   ///
@@ -3417,12 +3381,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tap Create Baby to try again.'**
   String get babyTapCreateBabyToTry;
-
-  /// No description provided for @accountMember.
-  ///
-  /// In en, this message translates to:
-  /// **'Member'**
-  String get accountMember;
 
   /// No description provided for @accountShowPassword.
   ///
@@ -3543,12 +3501,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Baby announcement'**
   String get announcementBabyAnnouncement;
-
-  /// No description provided for @onboardingGrandma.
-  ///
-  /// In en, this message translates to:
-  /// **'Grandma'**
-  String get onboardingGrandma;
 
   /// No description provided for @onboardingWeCouldntLoadYourBaby.
   ///
@@ -3778,95 +3730,11 @@ abstract class AppLocalizations {
   /// **'From your camera or library'**
   String get onboardingFromYourCameraOrLibrary;
 
-  /// No description provided for @onboardingYourBabysStoryInOne.
-  ///
-  /// In en, this message translates to:
-  /// **'Your baby\'s story, in one private place'**
-  String get onboardingYourBabysStoryInOne;
-
-  /// No description provided for @onboardingPhotosUpdatesAndEverythingIn.
-  ///
-  /// In en, this message translates to:
-  /// **'Photos, updates, and everything in between, visible only to the people you invite.'**
-  String get onboardingPhotosUpdatesAndEverythingIn;
-
-  /// No description provided for @onboardingEveryoneGetsToFeelClose.
-  ///
-  /// In en, this message translates to:
-  /// **'Everyone gets to feel close'**
-  String get onboardingEveryoneGetsToFeelClose;
-
-  /// No description provided for @onboardingGrandparentsAuntsUnclesAndFriends.
-  ///
-  /// In en, this message translates to:
-  /// **'Grandparents, aunts, uncles, and friends can follow along, no matter how far away they live.'**
-  String get onboardingGrandparentsAuntsUnclesAndFriends;
-
-  /// No description provided for @onboardingCelebrateEveryMilestoneTogether.
-  ///
-  /// In en, this message translates to:
-  /// **'Celebrate every milestone together'**
-  String get onboardingCelebrateEveryMilestoneTogether;
-
-  /// No description provided for @onboardingCalendarEventsASharedRegistry.
-  ///
-  /// In en, this message translates to:
-  /// **'Calendar events, a shared registry, and fun ways to mark the big days.'**
-  String get onboardingCalendarEventsASharedRegistry;
-
-  /// No description provided for @onboardingNeverLoseAMoment.
-  ///
-  /// In en, this message translates to:
-  /// **'Never lose a moment'**
-  String get onboardingNeverLoseAMoment;
-
-  /// No description provided for @onboardingEveryPhotoAndCommentSaved.
-  ///
-  /// In en, this message translates to:
-  /// **'Every photo and comment, saved in one safe place, for good.'**
-  String get onboardingEveryPhotoAndCommentSaved;
-
   /// No description provided for @onboardingYourRelationshipToBaby.
   ///
   /// In en, this message translates to:
   /// **'Your relationship to baby'**
   String get onboardingYourRelationshipToBaby;
-
-  /// No description provided for @onboardingMother.
-  ///
-  /// In en, this message translates to:
-  /// **'Mother'**
-  String get onboardingMother;
-
-  /// No description provided for @onboardingFather.
-  ///
-  /// In en, this message translates to:
-  /// **'Father'**
-  String get onboardingFather;
-
-  /// No description provided for @invitationsAlreadyHere.
-  ///
-  /// In en, this message translates to:
-  /// **'Already here'**
-  String get invitationsAlreadyHere;
-
-  /// No description provided for @invitationsBorn.
-  ///
-  /// In en, this message translates to:
-  /// **'Born {formatted}'**
-  String invitationsBorn(String formatted);
-
-  /// No description provided for @invitationsOnTheWay.
-  ///
-  /// In en, this message translates to:
-  /// **'On the way'**
-  String get invitationsOnTheWay;
-
-  /// No description provided for @invitationsArriving.
-  ///
-  /// In en, this message translates to:
-  /// **'Arriving {formatted}'**
-  String invitationsArriving(String formatted);
 
   /// No description provided for @invitationsAlreadyOnTheFamily.
   ///
@@ -3904,66 +3772,6 @@ abstract class AppLocalizations {
   /// **'We\'ll send each person a private link. It expires in 14 days.'**
   String get invitationsWellSendEachPersonA;
 
-  /// No description provided for @invitationsThisInvitationHasExpiredAsk.
-  ///
-  /// In en, this message translates to:
-  /// **'This invitation has expired. Ask the family to send a new invite.'**
-  String get invitationsThisInvitationHasExpiredAsk;
-
-  /// No description provided for @invitationsThisInvitationWasRevokedAsk.
-  ///
-  /// In en, this message translates to:
-  /// **'This invitation was revoked. Ask the family to send a new invite.'**
-  String get invitationsThisInvitationWasRevokedAsk;
-
-  /// No description provided for @invitationsThisInvitationWasAlreadyUsed.
-  ///
-  /// In en, this message translates to:
-  /// **'This invitation was already used. Sign in with the account that accepted it.'**
-  String get invitationsThisInvitationWasAlreadyUsed;
-
-  /// No description provided for @invitationsThisInvitationLinkIsInvalid.
-  ///
-  /// In en, this message translates to:
-  /// **'This invitation link is invalid or was revoked.'**
-  String get invitationsThisInvitationLinkIsInvalid;
-
-  /// No description provided for @invitationsThisBabyAlreadyHasThe.
-  ///
-  /// In en, this message translates to:
-  /// **'This baby already has the maximum number of owners.'**
-  String get invitationsThisBabyAlreadyHasThe;
-
-  /// No description provided for @invitationsYouAreAlreadyPartOf.
-  ///
-  /// In en, this message translates to:
-  /// **'You are already part of this baby\'s circle.'**
-  String get invitationsYouAreAlreadyPartOf;
-
-  /// No description provided for @invitationsSignInWithTheEmail.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign in with the email address that received the invitation.'**
-  String get invitationsSignInWithTheEmail;
-
-  /// No description provided for @invitationsCouldNotAcceptThisInvitation.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not accept this invitation. Please try again.'**
-  String get invitationsCouldNotAcceptThisInvitation;
-
-  /// No description provided for @invitationsConnectToTheInternetTo.
-  ///
-  /// In en, this message translates to:
-  /// **'Connect to the internet to open this invitation.'**
-  String get invitationsConnectToTheInternetTo;
-
-  /// No description provided for @invitationsCouldNotLoadThisInvitation.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not load this invitation. Try again.'**
-  String get invitationsCouldNotLoadThisInvitation;
-
   /// No description provided for @invitationsAFamilyMember.
   ///
   /// In en, this message translates to:
@@ -3975,18 +3783,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You\'re already a member'**
   String get invitationsYoureAlreadyAMember;
-
-  /// No description provided for @invitationsInvitedYouToCoOwn.
-  ///
-  /// In en, this message translates to:
-  /// **'{inviter} invited you to co-own'**
-  String invitationsInvitedYouToCoOwn(String inviter);
-
-  /// No description provided for @invitationsInvitedYouToFollow.
-  ///
-  /// In en, this message translates to:
-  /// **'{inviter} invited you to follow'**
-  String invitationsInvitedYouToFollow(String inviter);
 
   /// No description provided for @invitationsAsACoOwnerYoull.
   ///
@@ -4006,29 +3802,23 @@ abstract class AppLocalizations {
   /// **'Invitation unavailable'**
   String get invitationsInvitationUnavailable;
 
-  /// No description provided for @homeBorn2.
-  ///
-  /// In en, this message translates to:
-  /// **'Born {formatted}'**
-  String homeBorn2(String formatted);
-
-  /// No description provided for @homeEveryoneYouveInvitedHasBeen2.
+  /// No description provided for @homeInvitesNotifiedWithLine.
   ///
   /// In en, this message translates to:
   /// **'{line}. Everyone you\'ve invited has been notified.'**
-  String homeEveryoneYouveInvitedHasBeen2(String line);
+  String homeInvitesNotifiedWithLine(String line);
 
-  /// No description provided for @invitationsInvitedYouToCoOwn2.
+  /// No description provided for @invitationsInvitedYouToCoOwn.
   ///
   /// In en, this message translates to:
   /// **'{inviter} invited you to co-own'**
-  String invitationsInvitedYouToCoOwn2(String inviter);
+  String invitationsInvitedYouToCoOwn(String inviter);
 
-  /// No description provided for @invitationsInvitedYouToFollow2.
+  /// No description provided for @invitationsInvitedYouToFollow.
   ///
   /// In en, this message translates to:
   /// **'{inviter} invited you to follow'**
-  String invitationsInvitedYouToFollow2(String inviter);
+  String invitationsInvitedYouToFollow(String inviter);
 
   /// No description provided for @eventRsvpGoingCount.
   ///

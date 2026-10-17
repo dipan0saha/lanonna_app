@@ -23,8 +23,8 @@ class InviteLandingHeader extends StatelessWidget {
     final line = preview.isAccepted
         ? AppLocalizations.of(context)!.invitationsYoureAlreadyAMember
         : isCoOwner
-        ? AppLocalizations.of(context)!.invitationsInvitedYouToCoOwn2(inviter)
-        : AppLocalizations.of(context)!.invitationsInvitedYouToFollow2(inviter);
+        ? AppLocalizations.of(context)!.invitationsInvitedYouToCoOwn(inviter)
+        : AppLocalizations.of(context)!.invitationsInvitedYouToFollow(inviter);
     return Padding(
       padding: const EdgeInsets.only(top: 22),
       child: Text(
@@ -43,7 +43,7 @@ class InviteBabyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final babyName = preview.babyName ?? AppLocalizations.of(context)!.galleryBaby;
+    final babyName = preview.babyName ?? AppLocalizations.of(context)!.babyNameDefault;
     final subtitle = inviteBabyDateSubtitle(
       AppLocalizations.of(context)!,
       preview,

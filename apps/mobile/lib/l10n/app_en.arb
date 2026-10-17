@@ -772,23 +772,7 @@
   },
   "homeViewAnnouncement": "🎀 View Announcement",
   "homeShareToInstagram": "📸 Share to Instagram",
-  "homeBorn": "Born {formatted}",
-  "@homeBorn": {
-    "placeholders": {
-      "formatted": {
-        "type": "String"
-      }
-    }
-  },
   "homeEveryoneYouveInvitedHasBeen": "Everyone you've invited has been notified.",
-  "homeInvitesNotifiedWithLine": "{line}. Everyone you've invited has been notified.",
-  "@homeInvitesNotifiedWithLine": {
-    "placeholders": {
-      "line": {
-        "type": "String"
-      }
-    }
-  },
   "homeDaysToDueDate": "Days to due date · {dueDateLabel}",
   "@homeDaysToDueDate": {
     "placeholders": {
@@ -798,15 +782,14 @@
     }
   },
   "homeDaysToDueDateHeading": "DAYS TO DUE DATE",
-  "homeCouldNotUpdateBaby": "Could not update baby: {value1}",
+  "homeCouldNotUpdateBaby": "Could not update baby: {reason}",
   "@homeCouldNotUpdateBaby": {
     "placeholders": {
-      "value1": {
+      "reason": {
         "type": "String"
       }
     }
   },
-  "calendarFamilyMember": "Family member",
   "calendarOnlyOwnersCanCreateOr": "Only owners can create or edit calendar events.",
   "calendarBabyProfileIsStillLoading": "Baby profile is still loading. Try again.",
   "calendarEnterAnEventTitleTo": "Enter an event title to continue.",
@@ -822,10 +805,10 @@
   "calendarLocation": "Location",
   "calendarYourRsvp": "Your RSVP",
   "calendarComments": "Comments",
-  "calendarCouldNotLoadSuggestions": "Could not load suggestions: {value1}",
-  "@calendarCouldNotLoadSuggestions": {
+  "suggestionsLoadFailed": "Could not load suggestions: {reason}",
+  "@suggestionsLoadFailed": {
     "placeholders": {
-      "value1": {
+      "reason": {
         "type": "String"
       }
     }
@@ -834,15 +817,14 @@
   "calendarPhotoOptional": "Photo (optional)",
   "shellYoureTheOwnerOfOne": "You're the Owner of one and a Follower of another.",
   "shellChooseWhichBabyProfileTo": "Choose which baby profile to view.",
-  "galleryBaby": "Baby",
   "galleryFavorites": "Favorites",
   "galleryAllPhotos": "All photos",
   "galleryRecentActivity": "Recent activity",
   "galleryPhotoUploaded": "Photo uploaded",
-  "galleryUploadFailed": "Upload failed: {value1}",
+  "galleryUploadFailed": "Upload failed: {reason}",
   "@galleryUploadFailed": {
     "placeholders": {
-      "value1": {
+      "reason": {
         "type": "String"
       }
     }
@@ -860,7 +842,6 @@
   },
   "galleryOnceAPhotoIsShared": "Once a photo is shared, it will show up here for everyone to enjoy.",
   "galleryAddPhoto": "+ Add Photo",
-  "funAnonymous": "Anonymous",
   "funPredictions": "Predictions",
   "funNoVotesYet": "No votes yet",
   "funNoGuessesYet": "No guesses yet",
@@ -896,27 +877,19 @@
   },
   "registryEditRegistryItem": "Edit Registry Item",
   "registryAddRegistryItem": "Add Registry Item",
-  "registryCouldNotLoadSuggestions": "Could not load suggestions: {value1}",
-  "@registryCouldNotLoadSuggestions": {
-    "placeholders": {
-      "value1": {
-        "type": "String"
-      }
-    }
-  },
   "registryIllBuyThis": "I'll buy this",
   "registryAddTheThingsYourBaby": "Add the things your baby will need so family knows what to bring.",
   "registryNothingsBeenAddedToThe": "Nothing's been added to the registry yet — check back soon.",
   "registryAddItemCta": "+ Add Item",
   "babyBabyCreated": "Baby created",
   "babyBabyUpdated": "Baby updated",
-  "babyProfilePhotoFailed": "{createdLabel}; profile photo failed: {value1}",
+  "babyProfilePhotoFailed": "{createdLabel}; profile photo failed: {reason}",
   "@babyProfilePhotoFailed": {
     "placeholders": {
       "createdLabel": {
         "type": "String"
       },
-      "value1": {
+      "reason": {
         "type": "String"
       }
     }
@@ -941,7 +914,6 @@
   "babyGender": "Gender",
   "babyTapContinueToTryAgain": "Tap Continue to try again.",
   "babyTapCreateBabyToTry": "Tap Create Baby to try again.",
-  "accountMember": "Member",
   "accountShowPassword": "Show password",
   "accountHidePassword": "Hide password",
   "accountNoBabyProfileYouOwn": "No baby profile you own yet.",
@@ -976,7 +948,6 @@
     }
   },
   "announcementBabyAnnouncement": "Baby announcement",
-  "onboardingGrandma": "Grandma",
   "onboardingWeCouldntLoadYourBaby": "We couldn't load your baby profile. Check your connection and try again.",
   "onboardingAtLeast6CharactersWith": "At least 6 characters, with a number or symbol.",
   "onboardingWePulledInYourDetails": "We pulled in your details. Add a photo so family knows who's who.",
@@ -1036,53 +1007,26 @@
   "onboardingTotallyOptionalButItHelps": "Totally optional, but it helps family feel like there's already something here.",
   "onboardingSeedsTheVoteInFamily": "Seeds the vote in Family Fun",
   "onboardingFromYourCameraOrLibrary": "From your camera or library",
-  "onboardingYourBabysStoryInOne": "Your baby's story, in one private place",
-  "onboardingPhotosUpdatesAndEverythingIn": "Photos, updates, and everything in between, visible only to the people you invite.",
-  "onboardingEveryoneGetsToFeelClose": "Everyone gets to feel close",
-  "onboardingGrandparentsAuntsUnclesAndFriends": "Grandparents, aunts, uncles, and friends can follow along, no matter how far away they live.",
-  "onboardingCelebrateEveryMilestoneTogether": "Celebrate every milestone together",
-  "onboardingCalendarEventsASharedRegistry": "Calendar events, a shared registry, and fun ways to mark the big days.",
-  "onboardingNeverLoseAMoment": "Never lose a moment",
-  "onboardingEveryPhotoAndCommentSaved": "Every photo and comment, saved in one safe place, for good.",
   "onboardingYourRelationshipToBaby": "Your relationship to baby",
-  "onboardingMother": "Mother",
-  "onboardingFather": "Father",
-  "invitationsAlreadyHere": "Already here",
-  "invitationsBorn": "Born {formatted}",
-  "@invitationsBorn": {
-    "placeholders": {
-      "formatted": {
-        "type": "String"
-      }
-    }
-  },
-  "invitationsOnTheWay": "On the way",
-  "invitationsArriving": "Arriving {formatted}",
-  "@invitationsArriving": {
-    "placeholders": {
-      "formatted": {
-        "type": "String"
-      }
-    }
-  },
   "invitationsAlreadyOnTheFamily": "Already on the family",
   "invitationsInvitationAlreadyPending": "Invitation already pending",
   "invitationsAddAnotherPerson": "Add another person",
   "invitationsInviteFamilyFriends": "Invite family & friends",
   "invitationsAddThePeopleYouWant": "Add the people you want to share this with. You can always invite more later.",
   "invitationsWellSendEachPersonA": "We'll send each person a private link. It expires in 14 days.",
-  "invitationsThisInvitationHasExpiredAsk": "This invitation has expired. Ask the family to send a new invite.",
-  "invitationsThisInvitationWasRevokedAsk": "This invitation was revoked. Ask the family to send a new invite.",
-  "invitationsThisInvitationWasAlreadyUsed": "This invitation was already used. Sign in with the account that accepted it.",
-  "invitationsThisInvitationLinkIsInvalid": "This invitation link is invalid or was revoked.",
-  "invitationsThisBabyAlreadyHasThe": "This baby already has the maximum number of owners.",
-  "invitationsYouAreAlreadyPartOf": "You are already part of this baby's circle.",
-  "invitationsSignInWithTheEmail": "Sign in with the email address that received the invitation.",
-  "invitationsCouldNotAcceptThisInvitation": "Could not accept this invitation. Please try again.",
-  "invitationsConnectToTheInternetTo": "Connect to the internet to open this invitation.",
-  "invitationsCouldNotLoadThisInvitation": "Could not load this invitation. Try again.",
   "invitationsAFamilyMember": "A family member",
   "invitationsYoureAlreadyAMember": "You're already a member",
+  "invitationsAsACoOwnerYoull": "As a co-owner, you'll have full access to edit, invite, and manage, just like the person who invited you.",
+  "invitationsAPrivateSpaceJustFor": "A private space just for family & friends. Nothing here is public.",
+  "invitationsInvitationUnavailable": "Invitation unavailable",
+  "homeInvitesNotifiedWithLine": "{line}. Everyone you've invited has been notified.",
+  "@homeInvitesNotifiedWithLine": {
+    "placeholders": {
+      "line": {
+        "type": "String"
+      }
+    }
+  },
   "invitationsInvitedYouToCoOwn": "{inviter} invited you to co-own",
   "@invitationsInvitedYouToCoOwn": {
     "placeholders": {
@@ -1093,41 +1037,6 @@
   },
   "invitationsInvitedYouToFollow": "{inviter} invited you to follow",
   "@invitationsInvitedYouToFollow": {
-    "placeholders": {
-      "inviter": {
-        "type": "String"
-      }
-    }
-  },
-  "invitationsAsACoOwnerYoull": "As a co-owner, you'll have full access to edit, invite, and manage, just like the person who invited you.",
-  "invitationsAPrivateSpaceJustFor": "A private space just for family & friends. Nothing here is public.",
-  "invitationsInvitationUnavailable": "Invitation unavailable",
-  "homeBorn2": "Born {formatted}",
-  "@homeBorn2": {
-    "placeholders": {
-      "formatted": {
-        "type": "String"
-      }
-    }
-  },
-  "homeEveryoneYouveInvitedHasBeen2": "{line}. Everyone you've invited has been notified.",
-  "@homeEveryoneYouveInvitedHasBeen2": {
-    "placeholders": {
-      "line": {
-        "type": "String"
-      }
-    }
-  },
-  "invitationsInvitedYouToCoOwn2": "{inviter} invited you to co-own",
-  "@invitationsInvitedYouToCoOwn2": {
-    "placeholders": {
-      "inviter": {
-        "type": "String"
-      }
-    }
-  },
-  "invitationsInvitedYouToFollow2": "{inviter} invited you to follow",
-  "@invitationsInvitedYouToFollow2": {
     "placeholders": {
       "inviter": {
         "type": "String"

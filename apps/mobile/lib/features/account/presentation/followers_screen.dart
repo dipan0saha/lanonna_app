@@ -141,7 +141,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
         .where((m) => m.role == 'follower')
         .toList(growable: false);
     final count = followers.length;
-    final babyName = _baby?.name ?? AppLocalizations.of(context)!.galleryBaby;
+    final babyName = _baby?.name ?? AppLocalizations.of(context)!.babyNameDefault;
 
     return AppSemantics.container(
       'followers_screen',

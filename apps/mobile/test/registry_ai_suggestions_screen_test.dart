@@ -63,6 +63,6 @@ class _FailingRegistryRepository extends RegistryRepository {
 
   @override
   Future<List<RegistryItem>> listItems(String babyId) async {
-    throw ApiException('network down');
+    throw ApiException('http_503', statusCode: 503, serverMessage: 'network down');
   }
 }

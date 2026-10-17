@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/features/invitations/domain/relationship_preset.dart';
 
 import '../../../../core/input/app_text_input_kind.dart';
 import '../../../../core/widgets/app_icon_button.dart';
@@ -222,25 +223,29 @@ class _OnboardingRelationshipFormFieldState
       validator: widget.validator,
       autovalidateMode: widget.autovalidateMode,
       builder: (field) {
-        final relationshipIndex = widget.value == 'Father'
-            ? 1
-            : (widget.value == 'Mother' ? 0 : null);
+        final l10n = AppLocalizations.of(context)!;
+        final selected = _ownerRelationshipOptions.indexWhere(
+          (p) => p.membershipLabel == widget.value,
+        );
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            OnboardingFieldLabel(AppLocalizations.of(context)!.onboardingYourRelationshipToBaby),
+            OnboardingFieldLabel(l10n.onboardingYourRelationshipToBaby),
             const SizedBox(height: 8),
             OnboardingPillSelect(
               layout: OnboardingPillLayout.equalWidthRow,
-              options: [AppLocalizations.of(context)!.onboardingMother, AppLocalizations.of(context)!.onboardingFather],
-              selectedIndex: relationshipIndex,
+              options: [
+                for (final p in _ownerRelationshipOptions) p.label(l10n),
+              ],
+              selectedIndex: selected < 0 ? null : selected,
               selectedStyleForIndex: (_) => const OnboardingPillSelectedStyle(
                 background: AppColors.sageTint,
                 border: AppColors.primaryDark,
                 foreground: AppColors.primaryDark,
               ),
               onSelected: (index) {
-                final label = index == 0 ? AppLocalizations.of(context)!.onboardingMother : AppLocalizations.of(context)!.onboardingFather;
+                // Store the canonical relationship_label, not the localized pill text.
+                final label = _ownerRelationshipOptions[index].membershipLabel;
                 final hadError = field.hasError;
                 field.didChange(label);
                 widget.onSelected(label);
@@ -832,3 +837,9 @@ Widget _maybeSemanticsField({String? semanticsId, required Widget child}) {
   if (semanticsId == null) return child;
   return AppSemantics.textField(semanticsId, child);
 }
+
+/// Owner's own relationship on create-profile (stored as relationship_label).
+const _ownerRelationshipOptions = [
+  RelationshipPreset.mother,
+  RelationshipPreset.father,
+];

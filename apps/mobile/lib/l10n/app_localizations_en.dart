@@ -1647,18 +1647,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeShareToInstagram => '📸 Share to Instagram';
 
   @override
-  String homeBorn(String formatted) {
-    return 'Born $formatted';
-  }
-
-  @override
   String get homeEveryoneYouveInvitedHasBeen =>
       'Everyone you\'ve invited has been notified.';
-
-  @override
-  String homeInvitesNotifiedWithLine(String line) {
-    return '$line. Everyone you\'ve invited has been notified.';
-  }
 
   @override
   String homeDaysToDueDate(String dueDateLabel) {
@@ -1669,12 +1659,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeDaysToDueDateHeading => 'DAYS TO DUE DATE';
 
   @override
-  String homeCouldNotUpdateBaby(String value1) {
-    return 'Could not update baby: $value1';
+  String homeCouldNotUpdateBaby(String reason) {
+    return 'Could not update baby: $reason';
   }
-
-  @override
-  String get calendarFamilyMember => 'Family member';
 
   @override
   String get calendarOnlyOwnersCanCreateOr =>
@@ -1727,8 +1714,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get calendarComments => 'Comments';
 
   @override
-  String calendarCouldNotLoadSuggestions(String value1) {
-    return 'Could not load suggestions: $value1';
+  String suggestionsLoadFailed(String reason) {
+    return 'Could not load suggestions: $reason';
   }
 
   @override
@@ -1746,9 +1733,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Choose which baby profile to view.';
 
   @override
-  String get galleryBaby => 'Baby';
-
-  @override
   String get galleryFavorites => 'Favorites';
 
   @override
@@ -1761,8 +1745,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get galleryPhotoUploaded => 'Photo uploaded';
 
   @override
-  String galleryUploadFailed(String value1) {
-    return 'Upload failed: $value1';
+  String galleryUploadFailed(String reason) {
+    return 'Upload failed: $reason';
   }
 
   @override
@@ -1786,9 +1770,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get galleryAddPhoto => '+ Add Photo';
-
-  @override
-  String get funAnonymous => 'Anonymous';
 
   @override
   String get funPredictions => 'Predictions';
@@ -1842,11 +1823,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get registryAddRegistryItem => 'Add Registry Item';
 
   @override
-  String registryCouldNotLoadSuggestions(String value1) {
-    return 'Could not load suggestions: $value1';
-  }
-
-  @override
   String get registryIllBuyThis => 'I\'ll buy this';
 
   @override
@@ -1867,8 +1843,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get babyBabyUpdated => 'Baby updated';
 
   @override
-  String babyProfilePhotoFailed(String createdLabel, String value1) {
-    return '$createdLabel; profile photo failed: $value1';
+  String babyProfilePhotoFailed(String createdLabel, String reason) {
+    return '$createdLabel; profile photo failed: $reason';
   }
 
   @override
@@ -1914,9 +1890,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get babyTapCreateBabyToTry => 'Tap Create Baby to try again.';
-
-  @override
-  String get accountMember => 'Member';
 
   @override
   String get accountShowPassword => 'Show password';
@@ -1983,9 +1956,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get announcementBabyAnnouncement => 'Baby announcement';
-
-  @override
-  String get onboardingGrandma => 'Grandma';
 
   @override
   String get onboardingWeCouldntLoadYourBaby =>
@@ -2124,59 +2094,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingFromYourCameraOrLibrary => 'From your camera or library';
 
   @override
-  String get onboardingYourBabysStoryInOne =>
-      'Your baby\'s story, in one private place';
-
-  @override
-  String get onboardingPhotosUpdatesAndEverythingIn =>
-      'Photos, updates, and everything in between, visible only to the people you invite.';
-
-  @override
-  String get onboardingEveryoneGetsToFeelClose => 'Everyone gets to feel close';
-
-  @override
-  String get onboardingGrandparentsAuntsUnclesAndFriends =>
-      'Grandparents, aunts, uncles, and friends can follow along, no matter how far away they live.';
-
-  @override
-  String get onboardingCelebrateEveryMilestoneTogether =>
-      'Celebrate every milestone together';
-
-  @override
-  String get onboardingCalendarEventsASharedRegistry =>
-      'Calendar events, a shared registry, and fun ways to mark the big days.';
-
-  @override
-  String get onboardingNeverLoseAMoment => 'Never lose a moment';
-
-  @override
-  String get onboardingEveryPhotoAndCommentSaved =>
-      'Every photo and comment, saved in one safe place, for good.';
-
-  @override
   String get onboardingYourRelationshipToBaby => 'Your relationship to baby';
-
-  @override
-  String get onboardingMother => 'Mother';
-
-  @override
-  String get onboardingFather => 'Father';
-
-  @override
-  String get invitationsAlreadyHere => 'Already here';
-
-  @override
-  String invitationsBorn(String formatted) {
-    return 'Born $formatted';
-  }
-
-  @override
-  String get invitationsOnTheWay => 'On the way';
-
-  @override
-  String invitationsArriving(String formatted) {
-    return 'Arriving $formatted';
-  }
 
   @override
   String get invitationsAlreadyOnTheFamily => 'Already on the family';
@@ -2200,60 +2118,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'We\'ll send each person a private link. It expires in 14 days.';
 
   @override
-  String get invitationsThisInvitationHasExpiredAsk =>
-      'This invitation has expired. Ask the family to send a new invite.';
-
-  @override
-  String get invitationsThisInvitationWasRevokedAsk =>
-      'This invitation was revoked. Ask the family to send a new invite.';
-
-  @override
-  String get invitationsThisInvitationWasAlreadyUsed =>
-      'This invitation was already used. Sign in with the account that accepted it.';
-
-  @override
-  String get invitationsThisInvitationLinkIsInvalid =>
-      'This invitation link is invalid or was revoked.';
-
-  @override
-  String get invitationsThisBabyAlreadyHasThe =>
-      'This baby already has the maximum number of owners.';
-
-  @override
-  String get invitationsYouAreAlreadyPartOf =>
-      'You are already part of this baby\'s circle.';
-
-  @override
-  String get invitationsSignInWithTheEmail =>
-      'Sign in with the email address that received the invitation.';
-
-  @override
-  String get invitationsCouldNotAcceptThisInvitation =>
-      'Could not accept this invitation. Please try again.';
-
-  @override
-  String get invitationsConnectToTheInternetTo =>
-      'Connect to the internet to open this invitation.';
-
-  @override
-  String get invitationsCouldNotLoadThisInvitation =>
-      'Could not load this invitation. Try again.';
-
-  @override
   String get invitationsAFamilyMember => 'A family member';
 
   @override
   String get invitationsYoureAlreadyAMember => 'You\'re already a member';
-
-  @override
-  String invitationsInvitedYouToCoOwn(String inviter) {
-    return '$inviter invited you to co-own';
-  }
-
-  @override
-  String invitationsInvitedYouToFollow(String inviter) {
-    return '$inviter invited you to follow';
-  }
 
   @override
   String get invitationsAsACoOwnerYoull =>
@@ -2267,22 +2135,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invitationsInvitationUnavailable => 'Invitation unavailable';
 
   @override
-  String homeBorn2(String formatted) {
-    return 'Born $formatted';
-  }
-
-  @override
-  String homeEveryoneYouveInvitedHasBeen2(String line) {
+  String homeInvitesNotifiedWithLine(String line) {
     return '$line. Everyone you\'ve invited has been notified.';
   }
 
   @override
-  String invitationsInvitedYouToCoOwn2(String inviter) {
+  String invitationsInvitedYouToCoOwn(String inviter) {
     return '$inviter invited you to co-own';
   }
 
   @override
-  String invitationsInvitedYouToFollow2(String inviter) {
+  String invitationsInvitedYouToFollow(String inviter) {
     return '$inviter invited you to follow';
   }
 

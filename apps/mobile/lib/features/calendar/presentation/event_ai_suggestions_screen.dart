@@ -82,7 +82,7 @@ class _EventAiSuggestionsScreenState extends State<EventAiSuggestionsScreen> {
         setState(() => _loading = false);
         AppSnackBar.showAlert(
           context,
-          AppLocalizations.of(context)!.calendarCouldNotLoadSuggestions(apiErrorMessage(AppLocalizations.of(context)!, e)),
+          AppLocalizations.of(context)!.suggestionsLoadFailed(apiErrorMessage(AppLocalizations.of(context)!, e)),
         );
       }
     }

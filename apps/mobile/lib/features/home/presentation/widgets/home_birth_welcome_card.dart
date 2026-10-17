@@ -110,7 +110,7 @@ class HomeBirthWelcomeCard extends StatelessWidget {
     if (rawDate != null && rawDate.isNotEmpty) {
       final formatted = formatApiCalendarDate(rawDate, locale);
       if (formatted.isNotEmpty) {
-        parts.add(AppLocalizations.of(context)!.homeBorn2(formatted));
+        parts.add(AppLocalizations.of(context)!.lifecycleBornOn(formatted));
       }
     }
     final weight = welcome.weightText?.trim();
@@ -124,7 +124,7 @@ class HomeBirthWelcomeCard extends StatelessWidget {
     if (welcome.everyoneNotified == true) {
       line = line.isEmpty
           ? AppLocalizations.of(context)!.homeEveryoneYouveInvitedHasBeen
-          : AppLocalizations.of(context)!.homeEveryoneYouveInvitedHasBeen2(line);
+          : AppLocalizations.of(context)!.homeInvitesNotifiedWithLine(line);
     }
     return line.isEmpty ? null : line;
   }
