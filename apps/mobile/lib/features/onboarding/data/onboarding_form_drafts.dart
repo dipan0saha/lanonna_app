@@ -1,4 +1,4 @@
-import 'package:lanonna/features/invitations/domain/relationship_preset.dart';
+import 'package:lanonna/core/domain/relationship_preset.dart';
 
 class CompleteProfileDraft {
   const CompleteProfileDraft({

@@ -53,7 +53,11 @@ void main() {
     await tester.pump();
 
     expect(find.textContaining('Could not load suggestions'), findsOneWidget);
-    expect(find.textContaining('network down'), findsOneWidget);
+    expect(find.textContaining('network down'), findsNothing);
+    expect(
+      find.textContaining('The service is busy right now'),
+      findsOneWidget,
+    );
   });
 }
 
@@ -63,6 +67,10 @@ class _FailingRegistryRepository extends RegistryRepository {
 
   @override
   Future<List<RegistryItem>> listItems(String babyId) async {
-    throw ApiException('http_503', statusCode: 503, serverMessage: 'network down');
+    throw ApiException(
+      'service_unavailable',
+      statusCode: 503,
+      detail: const {'error': 'service_unavailable', 'message': 'network down'},
+    );
   }
 }

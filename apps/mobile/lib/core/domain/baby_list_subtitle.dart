@@ -1,6 +1,7 @@
 import '../time/app_date_time.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'baby_summary.dart';
+import 'relationship_preset.dart';
 
 String babyLifecycleSubtitle(
   AppLocalizations l10n,
@@ -19,9 +20,7 @@ String babyListSubtitle(
   String? localeName,
 ]) {
   final lifecycle = babyLifecycleSubtitle(l10n, baby, localeName);
-  final label = baby.relationshipLabel?.trim();
-  if (label != null && label.isNotEmpty) {
-    return '$label · $lifecycle';
-  }
+  final label = relationshipDisplayLabel(l10n, baby.relationshipLabel);
+  if (label != null) return '$label · $lifecycle';
   return lifecycle;
 }

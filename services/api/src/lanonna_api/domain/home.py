@@ -199,9 +199,6 @@ def announce_arrival(
             {"actual_birth_date": actual_birth_date.isoformat()},
         )
 
-    result = dict(row)
-    result["role"] = "owner"
-    result["relationship_label"] = None
     if record_arrival_event:
         safe_enqueue_fan_out(
             FanOutSpec(
@@ -215,7 +212,7 @@ def announce_arrival(
                 actor_firebase_uid=firebase_uid,
             )
         )
-    return result
+    return row
 
 
 def build_home_summary(

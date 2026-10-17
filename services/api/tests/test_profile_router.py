@@ -72,14 +72,14 @@ def test_patch_profile_rejects_future_birth_date():
     with _auth_as():
         response = client.patch("/v1/profile", json={"birth_date": "2030-01-01"})
     assert response.status_code == 400
-    assert "future" in response.json()["detail"].lower()
+    assert response.json()["detail"]["error"] == "birth_date_in_future"
 
 
 def test_patch_profile_rejects_implausibly_old_birth_date():
     with _auth_as():
         response = client.patch("/v1/profile", json={"birth_date": "1800-01-01"})
     assert response.status_code == 400
-    assert "valid date of birth" in response.json()["detail"].lower()
+    assert response.json()["detail"]["error"] == "invalid_birth_date"
 
 
 @patch("lanonna_api.routers.profile.patch_profile_fields")

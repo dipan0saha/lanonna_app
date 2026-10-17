@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/api/run_mutation.dart';
 import '../../../core/domain/baby_summary.dart';
+import '../../../core/domain/relationship_preset.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/time/app_date_time.dart';
@@ -76,19 +77,15 @@ class _FollowersScreenState extends State<FollowersScreen> {
   }
 
   String _inviteTitle(InvitationRow inv) {
-    final label = inv.relationshipLabel?.trim();
-    if (label != null && label.isNotEmpty) return label;
-    return AppLocalizations.of(context)!.accountPendingInvite;
+    final l10n = AppLocalizations.of(context)!;
+    return relationshipDisplayLabel(l10n, inv.relationshipLabel) ??
+        l10n.accountPendingInvite;
   }
 
   String _inviteSubtitle(InvitationRow inv) {
     final l10n = AppLocalizations.of(context)!;
-    return switch (inv.emailDeliveryStatus) {
-      InviteEmailDeliveryStatus.failed =>
-        inv.emailLastError ?? InviteEmailDeliveryStatus.failed.label(l10n),
-      final InviteEmailDeliveryStatus status => status.label(l10n),
-      null => inv.email,
-    };
+    // The worker's email_last_error is diagnostic text; users see the status.
+    return inv.emailDeliveryStatus?.label(l10n) ?? inv.email;
   }
 
   String? _acceptedLabel(MemberRow member) {

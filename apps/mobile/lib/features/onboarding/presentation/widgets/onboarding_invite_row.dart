@@ -4,7 +4,7 @@ import '../../../../core/widgets/app_icon_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
-import '../../../invitations/domain/relationship_preset.dart';
+import '../../../../core/domain/relationship_preset.dart';
 import '../../../../l10n/app_localizations.dart';
 
 class OnboardingInviteRow extends StatelessWidget {

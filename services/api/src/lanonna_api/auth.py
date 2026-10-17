@@ -7,6 +7,8 @@ from firebase_admin import auth as firebase_auth
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from lanonna_api.domain.errors import ErrorCode
+from lanonna_api.http_errors import api_error
 from lanonna_api.config import settings
 from lanonna_api.domain.user_errors import UserDeletedError
 from lanonna_api.repositories.users import resolve_app_user
@@ -40,28 +42,17 @@ def verify_firebase_token(id_token: str) -> dict[str, Any]:
     try:
         claims = firebase_auth.verify_id_token(id_token)
     except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired Firebase ID token",
-        ) from None
+        raise api_error(status.HTTP_401_UNAUTHORIZED, ErrorCode.UNAUTHENTICATED, "Invalid or expired Firebase ID token") from None
     allowed = settings.firebase_audience_allowlist()
     token_aud = _token_audience(claims)
     if token_aud is None or token_aud not in allowed:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired Firebase ID token",
-        )
+        raise api_error(status.HTTP_401_UNAUTHORIZED, ErrorCode.UNAUTHENTICATED, "Invalid or expired Firebase ID token")
     return claims
 
 
 def _user_deleted_http() -> HTTPException:
-    return HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail={
-            "error": "user_deleted",
-            "message": "This account was deleted.",
-        },
-    )
+    error = UserDeletedError()
+    return HTTPException(status_code=error.status_code, detail=error.detail())
 
 
 @dataclass(frozen=True)
@@ -85,10 +76,7 @@ async def current_user(
     route depends on ``current_app_user``.
     """
     if credentials is None or credentials.scheme.lower() != "bearer":
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authorization bearer token required",
-        )
+        raise api_error(status.HTTP_401_UNAUTHORIZED, ErrorCode.UNAUTHENTICATED, "Authorization bearer token required")
     return verify_firebase_token(credentials.credentials)
 
 

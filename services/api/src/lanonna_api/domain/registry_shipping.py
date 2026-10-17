@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from lanonna_api.domain.errors import ErrorCode, InvalidInputError
+
 
 def _country_name(country_code: str | None) -> str | None:
     if not country_code:
@@ -83,6 +85,7 @@ def validate_shipping_patch(fields: dict[str, str | None]) -> None:
     required = ("line1", "city", "postal_code", "country_code")
     missing = [k for k in required if not fields.get(k)]
     if missing:
-        raise ValueError(
-            "Shipping address requires line1, city, postal_code, and country_code."
+        raise InvalidInputError(
+            ErrorCode.SHIPPING_ADDRESS_INCOMPLETE,
+            "Shipping address requires line1, city, postal_code, and country_code.",
         )

@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
+from lanonna_api.domain.errors import ErrorCode, InvalidInputError
 from lanonna_api.db import get_connection
 from lanonna_api.domain.user_errors import UserDeletedError
 
@@ -91,7 +92,7 @@ def patch_profile_fields(
     if "display_name" in changes:
         raw = changes["display_name"]
         if raw is None or not str(raw).strip():
-            raise ValueError("Display name cannot be empty.")
+            raise InvalidInputError(ErrorCode.DISPLAY_NAME_REQUIRED, "Display name cannot be empty.")
         set_parts.append("display_name = %s")
         params.append(str(raw).strip())
 

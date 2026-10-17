@@ -53,7 +53,7 @@ def test_invitation_preview_not_found_returns_structured_detail():
     ):
         response = client.get("/v1/invitations/preview?token=abcdefghijkl")
     assert response.status_code == 404
-    assert response.json()["detail"] == {"error": "not_found"}
+    assert response.json()["detail"]["error"] == "not_found"
 
 
 def test_invitation_accept_not_found_returns_404():

@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
+from lanonna_api.domain.errors import ErrorCode, InvalidInputError
 from lanonna_api.domain import assert_owner_membership, create_pending_photo
 from lanonna_api.pagination import offset_page_from_extra_row
 from lanonna_api.domain.media_urls import signed_display_url, signed_thumb_url
@@ -72,9 +73,9 @@ def init_photo_upload(
     caption: str | None = None,
 ) -> dict[str, Any]:
     if byte_length > max_bytes:
-        raise ValueError("Display asset exceeds maximum size.")
+        raise InvalidInputError(ErrorCode.FILE_TOO_LARGE, "Display asset exceeds maximum size.")
     if content_type not in settings.display_allowed_content_types:
-        raise ValueError(f"Unsupported content type: {content_type}")
+        raise InvalidInputError(ErrorCode.UNSUPPORTED_MEDIA_TYPE, f"Unsupported content type: {content_type}")
     assert_owner_membership(user.uid, baby_profile_id)
     photo = create_pending_photo(
         baby_profile_id,
@@ -232,7 +233,7 @@ def add_comment(
     if row is None or row["status"] != "ready":
         raise LookupError("Photo not found.")
     if not body.strip():
-        raise ValueError("Comment body required.")
+        raise InvalidInputError(ErrorCode.COMMENT_REQUIRED, "Comment body required.")
     c = insert_photo_comment(photo_id, firebase_uid, body)
     actor = actor_display_name(firebase_uid)
     insert_activity_event(
@@ -295,7 +296,7 @@ def edit_comment(
     if row is None or row["status"] != "ready":
         raise LookupError("Photo not found.")
     if not body.strip():
-        raise ValueError("Comment body required.")
+        raise InvalidInputError(ErrorCode.COMMENT_REQUIRED, "Comment body required.")
     comment = get_photo_comment(photo_id, comment_id)
     if comment is None:
         raise LookupError("Comment not found.")

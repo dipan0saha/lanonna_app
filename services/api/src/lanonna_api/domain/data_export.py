@@ -4,6 +4,7 @@ import logging
 import uuid
 from typing import Any
 
+from lanonna_api.domain.errors import ErrorCode, ServiceUnavailableError
 from lanonna_api.config import settings
 
 logger = logging.getLogger(__name__)
@@ -60,7 +61,7 @@ def request_baby_data_export(
             baby_profile_id,
         )
         mark_export_job_failed(row["id"], EXPORT_QUEUE_FAILED_MESSAGE)
-        raise RuntimeError(EXPORT_QUEUE_FAILED_MESSAGE) from exc
+        raise ServiceUnavailableError(ErrorCode.EXPORT_QUEUE_FAILED, EXPORT_QUEUE_FAILED_MESSAGE) from exc
     return _job_response(row)
 
 

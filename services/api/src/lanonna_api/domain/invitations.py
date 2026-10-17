@@ -5,20 +5,21 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
+from lanonna_api.domain.errors import ErrorCode, ServiceUnavailableError
 from lanonna_api.domain.membership import require_owner_baby
 from lanonna_api.domain.notification_metadata import NotificationType
 from lanonna_api.domain.users_display import actor_display_name
 from lanonna_api.domain.notifications import safe_enqueue_notify_user
 from lanonna_api.pubsub import publish_send_invite_email
+from lanonna_api.schemas.invitations import InviteRowStatus
 from lanonna_api.repositories.invitations import (
     accept_invitation_by_token,
-    create_invitation,
-    email_is_member,
     fetch_invitation_preview_row,
-    fetch_pending_invitation_by_email,
     list_invitations_for_baby,
+    load_invite_targets,
     prepare_invitation_for_resend,
     revoke_invitation,
+    write_batch_invitations,
 )
 logger = logging.getLogger("lanonna.api.invitations")
 
@@ -56,9 +57,10 @@ def membership_check_for_owner(
 ) -> dict[str, bool]:
     require_owner_baby(firebase_uid, baby_profile_id)
     normalized = email.strip().lower()
+    target = load_invite_targets(baby_profile_id, [normalized]).get(normalized)
     return {
-        "is_member": email_is_member(baby_profile_id, normalized),
-        "has_pending_invite": email_has_pending_invite(baby_profile_id, normalized),
+        "is_member": bool(target and target["is_member"]),
+        "has_pending_invite": bool(target and target["pending_id"] is not None),
     }
 
 
@@ -86,17 +88,23 @@ def resend_invitation_for_owner(
     invitation_id: uuid.UUID,
 ) -> None:
     require_owner_baby(firebase_uid, baby_profile_id)
-    prepared = prepare_invitation_for_resend(baby_profile_id, invitation_id)
-    if prepared is None:
+    prepared_id = prepare_invitation_for_resend(baby_profile_id, invitation_id)
+    if prepared_id is None:
         raise LookupError("Invitation not found")
     try:
-        _enqueue_invite_email(prepared["id"])
+        _enqueue_invite_email(prepared_id)
     except Exception:
         logger.exception(
             "invite_email_enqueue_failed invitation_id=%s resend=true",
-            prepared["id"],
+            prepared_id,
         )
-        raise RuntimeError(EMAIL_QUEUE_FAILED_MESSAGE) from None
+        raise ServiceUnavailableError(ErrorCode.EMAIL_QUEUE_FAILED, EMAIL_QUEUE_FAILED_MESSAGE) from None
+
+
+def _row_result(
+    email: str, status: InviteRowStatus, invitation_id: uuid.UUID | None = None
+) -> dict[str, Any]:
+    return {"email": email, "status": status, "invitation_id": invitation_id}
 
 
 def batch_invite(
@@ -104,102 +112,74 @@ def batch_invite(
     baby_profile_id: uuid.UUID,
     invites: list[BatchInviteRow],
 ) -> list[dict[str, Any]]:
+    """Invite several emails at once with one result per submitted row.
+
+    Set-based: one read loads membership and pending-invite state for every
+    email, one transaction re-arms undelivered invites and inserts the new
+    ones, then each invite email is queued. A repeated email in the same
+    request reports ``skipped_duplicate``.
+    """
     require_owner_baby(firebase_uid, baby_profile_id)
+    emails = [row.email.strip().lower() for row in invites]
+    targets = load_invite_targets(baby_profile_id, emails)
+
+    planned: list[tuple[str, InviteRowStatus | None, uuid.UUID | None]] = []
+    resend_ids: list[uuid.UUID] = []
+    new_invites: list[tuple[str, str, str | None]] = []
+    seen: set[str] = set()
+    for row, email in zip(invites, emails):
+        target = targets.get(email, {})
+        if email in seen:
+            planned.append((email, InviteRowStatus.SKIPPED_DUPLICATE, target.get("pending_id")))
+            continue
+        seen.add(email)
+        pending_id = target.get("pending_id")
+        if target.get("is_member"):
+            planned.append((email, InviteRowStatus.SKIPPED_MEMBER, None))
+        elif pending_id is not None and target.get("pending_email_sent"):
+            planned.append((email, InviteRowStatus.SKIPPED_DUPLICATE, pending_id))
+        elif pending_id is not None:
+            resend_ids.append(pending_id)
+            planned.append((email, None, pending_id))
+        else:
+            new_invites.append((email, row.role, row.relationship_label))
+            planned.append((email, None, None))
+
+    prepared, created = write_batch_invitations(
+        baby_profile_id,
+        firebase_uid,
+        resend_ids=resend_ids,
+        new_invites=new_invites,
+    )
+
     results: list[dict[str, Any]] = []
-    for row in invites:
-        email = row.email.strip().lower()
-        if email_is_member(baby_profile_id, email):
-            results.append(
-                {
-                    "email": email,
-                    "status": "skipped_member",
-                    "message": "Already a member",
-                    "invitation_id": None,
-                }
-            )
+    for email, status, pending_id in planned:
+        if status is not None:
+            results.append(_row_result(email, status, pending_id))
             continue
-        pending = fetch_pending_invitation_by_email(baby_profile_id, email)
-        if pending is not None:
-            if pending.get("email_sent_at") is not None:
-                results.append(
-                    {
-                        "email": email,
-                        "status": "skipped_duplicate",
-                        "message": "Invitation already pending",
-                        "invitation_id": pending["id"],
-                    }
-                )
-                continue
-            prepared = prepare_invitation_for_resend(
-                baby_profile_id,
-                pending["id"],
-            )
-            if prepared is None:
-                results.append(
-                    {
-                        "email": email,
-                        "status": "skipped_duplicate",
-                        "message": "Invitation already pending",
-                        "invitation_id": pending["id"],
-                    }
-                )
-                continue
-            try:
-                _enqueue_invite_email(prepared["id"])
-            except Exception:
-                logger.exception(
-                    "invite_email_enqueue_failed invitation_id=%s resend=true",
-                    prepared["id"],
-                )
-                results.append(
-                    {
-                        "email": email,
-                        "status": "email_queue_failed",
-                        "message": EMAIL_QUEUE_FAILED_MESSAGE,
-                        "invitation_id": prepared["id"],
-                    }
-                )
-                continue
-            results.append(
-                {
-                    "email": email,
-                    "status": "resent",
-                    "message": None,
-                    "invitation_id": prepared["id"],
-                }
-            )
+        if pending_id is not None:
+            sent_status = InviteRowStatus.RESENT
+            invitation_id: uuid.UUID | None = pending_id if pending_id in prepared else None
+        else:
+            sent_status = InviteRowStatus.CREATED
+            invitation_id = created.get(email)
+        if invitation_id is None:
+            # Delivered or invited by someone else between the read and the write.
+            results.append(_row_result(email, InviteRowStatus.SKIPPED_DUPLICATE, pending_id))
             continue
-        created = create_invitation(
-            baby_profile_id,
-            firebase_uid,
-            email,
-            row.role,
-            row.relationship_label,
-        )
         try:
-            _enqueue_invite_email(created["id"])
+            _enqueue_invite_email(invitation_id)
         except Exception:
             logger.exception(
-                "invite_email_enqueue_failed invitation_id=%s",
-                created["id"],
+                "invite_email_enqueue_failed invitation_id=%s resend=%s",
+                invitation_id,
+                sent_status is InviteRowStatus.RESENT,
             )
             results.append(
-                {
-                    "email": email,
-                    "status": "email_queue_failed",
-                    "message": EMAIL_QUEUE_FAILED_MESSAGE,
-                    "invitation_id": created["id"],
-                }
+                _row_result(email, InviteRowStatus.EMAIL_QUEUE_FAILED, invitation_id)
             )
             continue
-        results.append(
-            {
-                "email": email,
-                "status": "created",
-                "message": None,
-                "invitation_id": created["id"],
-            }
-        )
+        results.append(_row_result(email, sent_status, invitation_id))
     return results
 
 

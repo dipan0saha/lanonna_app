@@ -8,7 +8,7 @@ import 'package:lanonna/core/domain/rsvp_status.dart';
 import 'package:lanonna/features/account/domain/data_export_status.dart';
 import 'package:lanonna/features/account/domain/notification_digest.dart';
 import 'package:lanonna/features/invitations/domain/invitation_status.dart';
-import 'package:lanonna/features/invitations/domain/relationship_preset.dart';
+import 'package:lanonna/core/domain/relationship_preset.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 
 /// Every server-owned enum parses its API value and shows localized copy,
@@ -89,6 +89,48 @@ void main() {
     expect(
       RelationshipPreset.onboardingOptions,
       isNot(contains(RelationshipPreset.mother)),
+    );
+  });
+
+  test('stored relationship labels display in the viewer locale', () {
+    expect(RelationshipPreset.fromMembershipLabel('Mother'), RelationshipPreset.mother);
+    expect(RelationshipPreset.fromMembershipLabel(' grandma '), RelationshipPreset.grandma);
+    expect(RelationshipPreset.fromMembershipLabel('Family Friend'),
+        RelationshipPreset.familyFriend);
+    expect(RelationshipPreset.fromMembershipLabel('Neighbour'), isNull);
+    for (final p in RelationshipPreset.appOptions) {
+      expect(relationshipDisplayLabel(l10n, p.membershipLabel), p.label(l10n));
+    }
+    // Wife/Husband store Mother/Father and read back as those.
+    expect(
+      relationshipDisplayLabel(l10n, RelationshipPreset.wife.membershipLabel),
+      l10n.relationshipMother,
+    );
+    expect(relationshipDisplayLabel(l10n, ' Neighbour '), 'Neighbour');
+    expect(relationshipDisplayLabel(l10n, '  '), isNull);
+    expect(relationshipDisplayLabel(l10n, null), isNull);
+  });
+
+  test('invite row status and membership hints are typed values', () {
+    for (final s in InviteRowStatus.values) {
+      expect(InviteRowStatus.fromApi(s.apiValue), s);
+    }
+    expect(InviteRowStatus.fromApi('skipped_invalid'), isNull);
+    expect(
+      InviteMembershipHint.fromCheck(isMember: true, hasPendingInvite: true),
+      InviteMembershipHint.alreadyMember,
+    );
+    expect(
+      InviteMembershipHint.fromCheck(isMember: false, hasPendingInvite: true),
+      InviteMembershipHint.invitePending,
+    );
+    expect(
+      InviteMembershipHint.fromCheck(isMember: false, hasPendingInvite: false),
+      isNull,
+    );
+    expect(
+      InviteMembershipHint.alreadyMember.label(l10n),
+      l10n.invitationsAlreadyOnTheFamily,
     );
   });
 

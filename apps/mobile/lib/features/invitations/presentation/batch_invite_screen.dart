@@ -13,12 +13,13 @@ import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../onboarding/data/onboarding_form_drafts.dart';
 import '../../invitations/data/invitations_repository.dart';
+import '../domain/invitation_status.dart';
 import '../../onboarding/data/onboarding_repository.dart';
 import '../../onboarding/domain/onboarding_routes.dart';
 import '../../onboarding/domain/onboarding_step.dart';
 import '../../onboarding/domain/owner_onboarding_baby_resolver.dart';
 import '../../onboarding/presentation/app_session.dart';
-import '../domain/relationship_preset.dart';
+import '../../../core/domain/relationship_preset.dart';
 import '../../onboarding/presentation/onboarding_coordinator.dart';
 import '../../onboarding/presentation/utils/onboarding_back_navigation.dart';
 import '../../onboarding/presentation/utils/owner_onboarding_baby_missing.dart';
@@ -43,7 +44,7 @@ class _InviteRowState {
   final TextEditingController nameController;
   final TextEditingController emailController;
   RelationshipPreset relationship;
-  String? membershipHint;
+  InviteMembershipHint? membershipHint;
 
   void dispose() {
     nameController.dispose();
@@ -187,13 +188,10 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
           );
       if (!mounted) return;
       setState(() {
-        if (result.isMember) {
-          _rows[index].membershipHint = l10n.invitationsAlreadyOnTheFamily;
-        } else if (result.hasPendingInvite) {
-          _rows[index].membershipHint = l10n.invitationsInvitationAlreadyPending;
-        } else {
-          _rows[index].membershipHint = null;
-        }
+        _rows[index].membershipHint = InviteMembershipHint.fromCheck(
+          isMember: result.isMember,
+          hasPendingInvite: result.hasPendingInvite,
+        );
       });
     } catch (_) {
       if (mounted) setState(() => _rows[index].membershipHint = null);
@@ -206,8 +204,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
       final email = row.emailController.text.trim();
       if (email.isEmpty) continue;
       if (validateEmail(AppLocalizations.of(context)!, email) != null) continue;
-      if (row.membershipHint == 'Already on the family') continue;
-      if (row.membershipHint == 'Invitation already pending') continue;
+      if (row.membershipHint != null) continue;
       invites.add({
         'email': email,
         'role': row.showOwnerBadge ? 'owner' : 'follower',
@@ -228,8 +225,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
         sawInvalid = true;
         continue;
       }
-      if (row.membershipHint == 'Already on the family') continue;
-      if (row.membershipHint == 'Invitation already pending') continue;
+      if (row.membershipHint != null) continue;
       return null;
     }
     if (!sawEmail) {
@@ -330,7 +326,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
             relationship: _rows[i].relationship,
             relationshipOptions: _relationshipOptions,
             showOwnerBadge: _rows[i].showOwnerBadge,
-            membershipHint: _rows[i].membershipHint,
+            membershipHint: _rows[i].membershipHint?.label(l10n),
             onRelationshipChanged: (v) {
               setState(() => _rows[i].relationship = v);
               _persistDraft();

@@ -1,22 +1,23 @@
+import '../domain/invitation_status.dart';
+
 class BatchInviteRowResult {
   const BatchInviteRowResult({
     required this.email,
     required this.status,
     this.invitationId,
-    this.message,
   });
 
   final String email;
-  final String status;
+
+  /// Null when the server sent a status this build does not know.
+  final InviteRowStatus? status;
   final String? invitationId;
-  final String? message;
 
   factory BatchInviteRowResult.fromJson(Map<String, dynamic> json) {
     return BatchInviteRowResult(
       email: json['email'] as String? ?? '',
-      status: json['status'] as String? ?? '',
+      status: InviteRowStatus.fromApi(json['status'] as String?),
       invitationId: json['invitation_id']?.toString(),
-      message: json['message'] as String?,
     );
   }
 }
@@ -37,6 +38,7 @@ class BatchInviteResponse {
     );
   }
 
-  int get emailQueueFailedCount =>
-      results.where((r) => r.status == 'email_queue_failed').length;
+  int get emailQueueFailedCount => results
+      .where((r) => r.status == InviteRowStatus.emailQueueFailed)
+      .length;
 }

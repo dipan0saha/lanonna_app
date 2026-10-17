@@ -1,11 +1,12 @@
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 
+from lanonna_api.domain.errors import ErrorCode
 from lanonna_api.auth import AppUser, current_app_user, current_user
 from lanonna_api.domain.date_validation import validate_user_birth_date
 from lanonna_api.domain.avatar_urls import normalize_avatar_for_storage, signed_avatar_url
-from lanonna_api.http_errors import map_domain_errors
+from lanonna_api.http_errors import api_error, map_domain_errors
 from lanonna_api.domain.account import build_account_extensions
 from lanonna_api.domain.account_delete import delete_account, delete_account_eligibility
 from lanonna_api.repositories.babies import list_babies_for_user
@@ -65,25 +66,16 @@ def patch_profile(
         try:
             validate_user_birth_date(changes["birth_date"])
         except ValueError as exc:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(exc),
-            ) from exc
+            raise map_domain_errors(exc) from exc
     if "avatar_url" in changes and changes["avatar_url"] is not None:
         try:
             changes["avatar_url"] = normalize_avatar_for_storage(changes["avatar_url"])
         except ValueError as exc:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(exc),
-            ) from exc
+            raise map_domain_errors(exc) from exc
     try:
         row = patch_profile_fields(user.uid, changes)
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(exc),
-        ) from exc
+        raise map_domain_errors(exc) from exc
     except RuntimeError as exc:
         raise map_domain_errors(exc) from exc
     return _to_profile_response(row)
@@ -128,10 +120,7 @@ def patch_notification_preferences(
         "daily",
         "weekly",
     ):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid notification_digest",
-        )
+        raise api_error(status.HTTP_400_BAD_REQUEST, ErrorCode.INVALID_REQUEST, "Invalid notification_digest")
     row = update_notification_preferences(
         user.uid,
         notification_digest=body.notification_digest,
@@ -162,10 +151,7 @@ def post_delete_account(
     user: dict[str, Any] = Depends(current_user),
 ) -> dict[str, str]:
     if not body.confirm:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="confirm must be true",
-        )
+        raise api_error(status.HTTP_400_BAD_REQUEST, ErrorCode.INVALID_REQUEST, "confirm must be true")
     try:
         delete_account(user.uid)
     except PermissionError as exc:

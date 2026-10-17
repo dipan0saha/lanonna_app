@@ -3856,6 +3856,198 @@ abstract class AppLocalizations {
   /// **'Something went wrong. Please try again.'**
   String get errorGeneric;
 
+  /// No description provided for @errorServiceUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The service is busy right now. Please try again in a moment.'**
+  String get errorServiceUnavailable;
+
+  /// No description provided for @errorInvalidRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Some details aren\'t valid. Check them and try again.'**
+  String get errorInvalidRequest;
+
+  /// No description provided for @errorNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'This item is no longer available.'**
+  String get errorNotFound;
+
+  /// No description provided for @errorForbidden.
+  ///
+  /// In en, this message translates to:
+  /// **'You don\'t have permission to do that.'**
+  String get errorForbidden;
+
+  /// No description provided for @errorConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'This changed while you were working. Refresh and try again.'**
+  String get errorConflict;
+
+  /// No description provided for @errorUnauthenticated.
+  ///
+  /// In en, this message translates to:
+  /// **'Your session has expired. Please sign in again.'**
+  String get errorUnauthenticated;
+
+  /// No description provided for @errorAppCheckFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'This app couldn\'t be verified. Update the app and try again.'**
+  String get errorAppCheckFailed;
+
+  /// No description provided for @errorRateLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many attempts. Wait a moment and try again.'**
+  String get errorRateLimited;
+
+  /// No description provided for @errorNotMember.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re not a member of this baby profile.'**
+  String get errorNotMember;
+
+  /// No description provided for @errorTargetNotMember.
+  ///
+  /// In en, this message translates to:
+  /// **'That person is no longer a member of this baby profile.'**
+  String get errorTargetNotMember;
+
+  /// No description provided for @errorLastOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'You can\'t remove the last owner of this baby profile.'**
+  String get errorLastOwner;
+
+  /// No description provided for @errorUseLeaveProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'To remove yourself, use Leave profile.'**
+  String get errorUseLeaveProfile;
+
+  /// No description provided for @errorEmailNotVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify your email before finishing setup.'**
+  String get errorEmailNotVerified;
+
+  /// No description provided for @errorBabyProfileRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a baby profile before finishing setup.'**
+  String get errorBabyProfileRequired;
+
+  /// No description provided for @errorProfileIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete your profile before finishing setup.'**
+  String get errorProfileIncomplete;
+
+  /// No description provided for @errorInvalidBirthDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid date of birth.'**
+  String get errorInvalidBirthDate;
+
+  /// No description provided for @errorTextTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep this to {maxLength} characters or fewer.'**
+  String errorTextTooLong(int maxLength);
+
+  /// No description provided for @errorInvalidBirthTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the birth time as HH:MM (24-hour).'**
+  String get errorInvalidBirthTime;
+
+  /// No description provided for @errorCommentRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Write a comment first.'**
+  String get errorCommentRequired;
+
+  /// No description provided for @errorUnsupportedMediaType.
+  ///
+  /// In en, this message translates to:
+  /// **'This file type isn\'t supported.'**
+  String get errorUnsupportedMediaType;
+
+  /// No description provided for @errorFileTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'This file is too large.'**
+  String get errorFileTooLarge;
+
+  /// No description provided for @errorFunClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Fun is closed — baby has arrived!'**
+  String get errorFunClosed;
+
+  /// No description provided for @errorPredictionsClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Predictions are closed — baby has arrived!'**
+  String get errorPredictionsClosed;
+
+  /// No description provided for @errorDuplicateNameSuggestion.
+  ///
+  /// In en, this message translates to:
+  /// **'That name is already on the list.'**
+  String get errorDuplicateNameSuggestion;
+
+  /// No description provided for @errorNameAlreadySuggested.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve already suggested a name for this gender.'**
+  String get errorNameAlreadySuggested;
+
+  /// No description provided for @errorAlreadyOnRegistry.
+  ///
+  /// In en, this message translates to:
+  /// **'This is already on the registry.'**
+  String get errorAlreadyOnRegistry;
+
+  /// No description provided for @errorRegistryItemPurchased.
+  ///
+  /// In en, this message translates to:
+  /// **'This gift has already been purchased.'**
+  String get errorRegistryItemPurchased;
+
+  /// No description provided for @errorShippingAddressIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Add the street address, city, postal code and country.'**
+  String get errorShippingAddressIncomplete;
+
+  /// No description provided for @errorAlreadyOnCalendar.
+  ///
+  /// In en, this message translates to:
+  /// **'This is already on the calendar.'**
+  String get errorAlreadyOnCalendar;
+
+  /// No description provided for @errorEventEndBeforeStart.
+  ///
+  /// In en, this message translates to:
+  /// **'The end time must be at or after the start time.'**
+  String get errorEventEndBeforeStart;
+
+  /// No description provided for @errorEmailQueueFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The invite was saved, but its email couldn\'t be sent. Use Resend on Manage followers.'**
+  String get errorEmailQueueFailed;
+
+  /// No description provided for @errorExportQueueFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The export couldn\'t be started. Please try again in a few minutes.'**
+  String get errorExportQueueFailed;
+
   /// No description provided for @errorPhotoTooLarge.
   ///
   /// In en, this message translates to:
@@ -3897,12 +4089,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This baby already has the maximum number of owners.'**
   String get inviteErrorMaxOwners;
-
-  /// No description provided for @inviteErrorAlreadyMember.
-  ///
-  /// In en, this message translates to:
-  /// **'You are already part of this baby\'s circle.'**
-  String get inviteErrorAlreadyMember;
 
   /// No description provided for @inviteErrorEmailMismatch.
   ///

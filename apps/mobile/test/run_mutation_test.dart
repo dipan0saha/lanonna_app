@@ -22,10 +22,12 @@ theme: AppTheme.light,
                     context,
                     () async {
                       throw ApiException(
-                        'http_403',
+                        'name_already_suggested',
                         statusCode: 403,
-                        serverMessage:
-                            'You already suggested a name for this gender.',
+                        detail: const {
+                          'error': 'name_already_suggested',
+                          'message': 'server English (diagnostic only)',
+                        },
                       );
                     },
                   );
@@ -48,7 +50,7 @@ theme: AppTheme.light,
     final snackBar = tester.widget<SnackBar>(snack);
     expect(
       (snackBar.content as Text).data,
-      'You already suggested a name for this gender.',
+      "You've already suggested a name for this gender.",
     );
   });
 }

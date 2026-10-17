@@ -1063,6 +1063,45 @@
   "errorOffline": "You're offline. Check your connection and try again.",
   "errorNetwork": "Couldn't reach the server. Check your connection and try again.",
   "errorGeneric": "Something went wrong. Please try again.",
+  "errorServiceUnavailable": "The service is busy right now. Please try again in a moment.",
+  "errorInvalidRequest": "Some details aren't valid. Check them and try again.",
+  "errorNotFound": "This item is no longer available.",
+  "errorForbidden": "You don't have permission to do that.",
+  "errorConflict": "This changed while you were working. Refresh and try again.",
+  "errorUnauthenticated": "Your session has expired. Please sign in again.",
+  "errorAppCheckFailed": "This app couldn't be verified. Update the app and try again.",
+  "errorRateLimited": "Too many attempts. Wait a moment and try again.",
+  "errorNotMember": "You're not a member of this baby profile.",
+  "errorTargetNotMember": "That person is no longer a member of this baby profile.",
+  "errorLastOwner": "You can't remove the last owner of this baby profile.",
+  "errorUseLeaveProfile": "To remove yourself, use Leave profile.",
+  "errorEmailNotVerified": "Verify your email before finishing setup.",
+  "errorBabyProfileRequired": "Create a baby profile before finishing setup.",
+  "errorProfileIncomplete": "Complete your profile before finishing setup.",
+  "errorInvalidBirthDate": "Enter a valid date of birth.",
+  "errorTextTooLong": "Keep this to {maxLength} characters or fewer.",
+  "@errorTextTooLong": {
+    "placeholders": {
+      "maxLength": {
+        "type": "int"
+      }
+    }
+  },
+  "errorInvalidBirthTime": "Enter the birth time as HH:MM (24-hour).",
+  "errorCommentRequired": "Write a comment first.",
+  "errorUnsupportedMediaType": "This file type isn't supported.",
+  "errorFileTooLarge": "This file is too large.",
+  "errorFunClosed": "Fun is closed — baby has arrived!",
+  "errorPredictionsClosed": "Predictions are closed — baby has arrived!",
+  "errorDuplicateNameSuggestion": "That name is already on the list.",
+  "errorNameAlreadySuggested": "You've already suggested a name for this gender.",
+  "errorAlreadyOnRegistry": "This is already on the registry.",
+  "errorRegistryItemPurchased": "This gift has already been purchased.",
+  "errorShippingAddressIncomplete": "Add the street address, city, postal code and country.",
+  "errorAlreadyOnCalendar": "This is already on the calendar.",
+  "errorEventEndBeforeStart": "The end time must be at or after the start time.",
+  "errorEmailQueueFailed": "The invite was saved, but its email couldn't be sent. Use Resend on Manage followers.",
+  "errorExportQueueFailed": "The export couldn't be started. Please try again in a few minutes.",
   "errorPhotoTooLarge": "Photo exceeds the maximum size ({megabytes} MB).",
   "@errorPhotoTooLarge": {
     "placeholders": {
@@ -1084,7 +1123,6 @@
   "inviteErrorAlreadyUsed": "This invitation was already used. Sign in with the account that accepted it.",
   "inviteErrorNotFound": "This invitation link is invalid or was revoked.",
   "inviteErrorMaxOwners": "This baby already has the maximum number of owners.",
-  "inviteErrorAlreadyMember": "You are already part of this baby's circle.",
   "inviteErrorEmailMismatch": "Sign in with the email address that received the invitation.",
   "inviteErrorGeneric": "Could not accept this invitation. Please try again.",
   "inviteErrorOffline": "Connect to the internet to open this invitation.",

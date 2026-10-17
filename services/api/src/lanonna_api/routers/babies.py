@@ -3,11 +3,12 @@ from __future__ import annotations
 import uuid
 from typing import Any, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query, status
 
+from lanonna_api.domain.errors import ErrorCode
 from lanonna_api.auth import AppUser, current_app_user
 from lanonna_api.domain.avatar_urls import normalize_avatar_for_storage
-from lanonna_api.http_errors import map_domain_errors
+from lanonna_api.http_errors import api_error, map_domain_errors
 from lanonna_api.domain.home import announce_arrival, build_home_summary, list_activity_events
 from lanonna_api.repositories.babies import (
     create_baby_with_owner_membership,
@@ -51,10 +52,7 @@ def create_baby(
     user: AppUser = Depends(current_app_user),
 ) -> BabySummary:
     if body.profile_name_suggestions and body.lifecycle_status != "expecting":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="profile_name_suggestions are only allowed for expecting babies.",
-        )
+        raise api_error(status.HTTP_400_BAD_REQUEST, ErrorCode.INVALID_REQUEST, "profile_name_suggestions are only allowed for expecting babies.")
     try:
         row = create_baby_with_owner_membership(
             user.uid,
@@ -98,17 +96,11 @@ def patch_baby(
         try:
             fields["avatar_url"] = normalize_avatar_for_storage(body.avatar_url)
         except ValueError as exc:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(exc),
-            ) from exc
+            raise map_domain_errors(exc) from exc
 
     suggestions = body.profile_name_suggestions
     if suggestions and body.lifecycle_status == "born":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="profile_name_suggestions are only allowed for expecting babies.",
-        )
+        raise api_error(status.HTTP_400_BAD_REQUEST, ErrorCode.INVALID_REQUEST, "profile_name_suggestions are only allowed for expecting babies.")
 
     announcing = body.lifecycle_status == "born" and body.actual_birth_date is not None
     try:
@@ -126,15 +118,12 @@ def patch_baby(
         raise map_domain_errors(exc) from exc
 
     if row is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Baby not found")
+        raise api_error(status.HTTP_404_NOT_FOUND, ErrorCode.NOT_FOUND, "Baby not found")
 
     if suggestions:
         lifecycle = row.get("lifecycle_status") or "expecting"
         if lifecycle != "expecting":
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="profile_name_suggestions are only allowed for expecting babies.",
-            )
+            raise api_error(status.HTTP_400_BAD_REQUEST, ErrorCode.INVALID_REQUEST, "profile_name_suggestions are only allowed for expecting babies.")
         seed_expecting_profile_name_suggestions(
             user.uid,
             baby_profile_id,

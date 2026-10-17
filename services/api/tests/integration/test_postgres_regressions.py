@@ -13,7 +13,7 @@ from lanonna_api.domain.onboarding import onboarding_status_for_user
 from lanonna_api.domain.search import search_baby_content
 from lanonna_api.domain.user_errors import UserDeletedError
 from lanonna_api.repositories.events import create_event
-from lanonna_api.repositories.invitations import email_is_member
+from lanonna_api.repositories.invitations import load_invite_targets
 from lanonna_api.repositories.users import resolve_app_user
 
 pytestmark = pytest.mark.integration
@@ -200,7 +200,9 @@ def test_rsvp_does_not_clear_email_and_membership_check_still_matches():
     after = _snap(follower)
     assert after["email"] == "follower@example.com"
     assert after["updated_at"] == before["updated_at"]
-    assert email_is_member(baby_id, "follower@example.com") is True
+    assert load_invite_targets(baby_id, ["follower@example.com"])[
+        "follower@example.com"
+    ]["is_member"] is True
 
 
 def test_tombstoned_user_is_not_rewritten():

@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
+from lanonna_api.domain.errors import ErrorCode, InvalidInputError
 from lanonna_api.domain import assert_owner_membership
 from lanonna_api.domain.catalog_suggestion_ids import normalize_catalog_suggestion_id
 from lanonna_api.domain.url_validation import normalize_optional_http_url
@@ -192,7 +193,7 @@ def create_calendar_event(
     assert_owner_membership(firebase_uid, baby_profile_id)
     catalog_id = normalize_catalog_suggestion_id(catalog_suggestion_id)
     if catalog_id and catalog_suggestion_claimed(baby_profile_id, catalog_id):
-        raise ValueError("This suggestion is already on the calendar.")
+        raise InvalidInputError(ErrorCode.ALREADY_ON_CALENDAR, "This suggestion is already on the calendar.")
     video_call_url = normalize_optional_http_url(video_call_url)
     _require_baby_cover_photo(baby_profile_id, cover_photo_id)
     validate_event_time_range(starts_at, ends_at)
@@ -306,7 +307,7 @@ def add_event_comment(
     if event is None:
         raise LookupError("Event not found.")
     if not body.strip():
-        raise ValueError("Comment body required.")
+        raise InvalidInputError(ErrorCode.COMMENT_REQUIRED, "Comment body required.")
     c = insert_event_comment(event_id, firebase_uid, body)
     creator = event.get("created_by_firebase_uid")
     if creator and creator != firebase_uid:
@@ -361,7 +362,7 @@ def edit_event_comment(
     if event is None:
         raise LookupError("Event not found.")
     if not body.strip():
-        raise ValueError("Comment body required.")
+        raise InvalidInputError(ErrorCode.COMMENT_REQUIRED, "Comment body required.")
     comment = get_event_comment(event_id, comment_id)
     if comment is None:
         raise LookupError("Comment not found.")

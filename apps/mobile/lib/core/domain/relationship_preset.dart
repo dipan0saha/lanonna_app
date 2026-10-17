@@ -50,6 +50,21 @@ enum RelationshipPreset {
     ..._followers,
   ];
 
+  /// Presets that own a stored spelling. Wife/Husband are picker aliases that
+  /// store `Mother`/`Father`, so a stored value reads back as Mother/Father.
+  static const List<RelationshipPreset> _storedValues = appOptions;
+
+  /// The preset whose [membershipLabel] is [stored] (case-insensitive), or
+  /// null for free text that is not one of the presets.
+  static RelationshipPreset? fromMembershipLabel(String? stored) {
+    final normalized = stored?.trim().toLowerCase();
+    if (normalized == null || normalized.isEmpty) return null;
+    for (final p in _storedValues) {
+      if (p.membershipLabel.toLowerCase() == normalized) return p;
+    }
+    return null;
+  }
+
   /// Restores a persisted draft value ([name]); [initial] when unknown.
   static RelationshipPreset fromDraft(String? raw) {
     for (final p in values) {
@@ -71,4 +86,16 @@ enum RelationshipPreset {
         RelationshipPreset.godfather => l10n.relationshipGodfather,
         RelationshipPreset.familyFriend => l10n.relationshipFamilyFriend,
       };
+}
+
+/// What the app shows for a stored `relationship_label` (members, invites,
+/// babies list, invite preview): the localized preset label when the value is
+/// a preset, otherwise the stored text as typed; null when there is none.
+///
+/// Every screen goes through this so the API keeps one canonical value and
+/// the viewer's locale decides the wording.
+String? relationshipDisplayLabel(AppLocalizations l10n, String? stored) {
+  final trimmed = stored?.trim();
+  if (trimmed == null || trimmed.isEmpty) return null;
+  return RelationshipPreset.fromMembershipLabel(trimmed)?.label(l10n) ?? trimmed;
 }

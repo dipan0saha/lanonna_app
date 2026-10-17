@@ -54,17 +54,15 @@ def test_notify_user_skips_duplicate_delivery(mock_conn_ctx):
     assert conn.execute.call_count == 1
 
 
-@patch("lanonna_worker.notifications._send_fcm")
-@patch("lanonna_worker.notifications._insert_notification")
-@patch("lanonna_worker.notifications._user_channel_enabled", return_value=True)
+@patch("lanonna_worker.notifications._deliver_to_inbox_and_push")
+@patch("lanonna_worker.notifications._load_recipients", return_value=["recipient"])
 @patch("lanonna_worker.notifications._resolve_recipient_uids", return_value=["u1"])
 @patch("lanonna_worker.notifications.get_connection")
 def test_notify_fan_out_claims_delivery_key(
     mock_conn_ctx,
     _resolve,
-    _channel,
-    mock_insert,
-    _fcm,
+    mock_load,
+    mock_deliver,
 ):
     conn = MagicMock()
     mock_conn_ctx.return_value.__enter__.return_value = conn
@@ -81,6 +79,8 @@ def test_notify_fan_out_claims_delivery_key(
         pubsub_message_id="msg-fan-out",
     )
 
-    mock_insert.assert_called_once()
+    mock_load.assert_called_once_with(conn, ["u1"], None)
+    mock_deliver.assert_called_once()
+    assert mock_deliver.call_args.args[1] == ["recipient"]
     first_sql = conn.execute.call_args_list[0][0][0]
     assert "worker_delivery_log" in first_sql

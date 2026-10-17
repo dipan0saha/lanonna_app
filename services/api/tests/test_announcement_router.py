@@ -42,7 +42,7 @@ def test_patch_announcement_rejects_invalid_birth_time(
             json={"birth_time": "not-a-time"},
         )
     assert response.status_code == 400
-    assert "HH:MM" in response.json()["detail"]
+    assert response.json()["detail"]["error"] == "invalid_birth_time"
 
 
 @patch("lanonna_api.domain.announcement.assert_owner_membership")

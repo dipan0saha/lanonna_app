@@ -2,8 +2,6 @@ from datetime import datetime, timezone
 from unittest.mock import patch
 
 from lanonna_api.domain.onboarding import onboarding_status_for_user
-from lanonna_api.repositories.babies import create_baby_with_owner_membership
-from support.fake_db import RecordingConnection
 
 
 def test_onboarding_profile_complete_requires_terms():
@@ -59,41 +57,6 @@ def test_onboarding_profile_complete_requires_terms():
         data = onboarding_status_for_user("uid", email_verified=True)
     assert data["profile_complete"] is True
     assert data["can_access_main_app"] is False
-
-
-def test_create_baby_persists_relationship_label():
-    executed: list[tuple] = []
-
-    class FakeCursor:
-        def fetchone(self):
-            return {
-                "id": "00000000-0000-0000-0000-000000000001",
-                "name": "Baby",
-                "gender": "male",
-                "expected_birth_date": None,
-                "actual_birth_date": None,
-                "lifecycle_status": "expecting",
-                "created_at": datetime.now(timezone.utc),
-            }
-
-    with patch(
-        "lanonna_api.repositories.babies.get_connection",
-        return_value=RecordingConnection(FakeCursor, executed),
-    ):
-        result = create_baby_with_owner_membership(
-            "owner-uid",
-            "Baby",
-            "male",
-            None,
-            None,
-            "expecting",
-            "Mother",
-        )
-
-    assert result["relationship_label"] == "Mother"
-    membership_sql = executed[1][0]
-    assert "relationship_label" in membership_sql
-    assert executed[1][1][2] == "Mother"
 
 
 def test_can_access_main_app_false_for_owner_mid_onboarding():

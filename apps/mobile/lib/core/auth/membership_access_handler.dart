@@ -1,9 +1,9 @@
 import 'package:lanonna/l10n/app_localizations.dart';
 
-import '../../features/account/domain/member_lifecycle_messages.dart';
 import '../../features/home/data/home_refresh_signal.dart';
 import '../../features/home/data/home_repository.dart';
 import '../../features/home/data/selected_baby_store.dart';
+import '../api/api_error_message.dart';
 import '../api/api_exception.dart';
 import '../router/app_router.dart';
 import '../widgets/app_snackbar.dart';
@@ -27,7 +27,7 @@ Future<void> handleMembershipEnded({
     if (context != null && context.mounted && exception != null) {
       final l10n = AppLocalizations.of(context);
       if (l10n != null) {
-        final message = memberLifecycleErrorMessage(l10n, exception);
+        final message = apiErrorMessage(l10n, exception);
         AppSnackBar.showAlert(context, message);
       }
     }

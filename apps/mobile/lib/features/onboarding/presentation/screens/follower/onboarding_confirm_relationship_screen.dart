@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../../core/domain/relationship_preset.dart';
 import '../../../../invitations/presentation/widgets/invite_landing_widgets.dart';
 import '../../../domain/onboarding_routes.dart';
 import '../../../domain/onboarding_step.dart';
@@ -21,7 +22,8 @@ class OnboardingConfirmRelationshipScreen extends StatelessWidget {
     final preview = coordinator.cachedInvitePreview;
     final babyName = preview?.babyName ?? AppLocalizations.of(context)!.babyNameDefault;
     final inviter = preview?.inviterDisplayName ?? AppLocalizations.of(context)!.onboardingTheOwner;
-    final relationship = preview?.relationshipLabel ?? AppLocalizations.of(context)!.announcementFamily;
+    final relationship = relationshipDisplayLabel(l10n, preview?.relationshipLabel) ??
+        l10n.announcementFamily;
 
     return OnboardingScaffold(
       pinBottomCta: false,

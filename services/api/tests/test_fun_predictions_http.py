@@ -5,7 +5,6 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 from lanonna_api.auth import current_user
-from lanonna_api.domain.fun_closed import PredictionsClosedError
 from lanonna_api.main import app
 
 client = TestClient(app)
@@ -39,7 +38,7 @@ def test_put_gender_vote_when_born_returns_409():
         )
     assert response.status_code == 409
     detail = response.json()["detail"]
-    assert detail["error"] == PredictionsClosedError.code
+    assert detail["error"] == "predictions_closed"
     assert detail["message"] == "Predictions closed — baby has arrived"
     upsert.assert_not_called()
 
