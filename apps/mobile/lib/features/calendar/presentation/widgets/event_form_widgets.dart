@@ -49,7 +49,9 @@ class PrototypeEventCoverUpload extends StatelessWidget {
               onSignedUrlError: onSignedUrlError,
             ),
           ),
-          label: selection.hasPhoto ? l10n.photoChangeAction : label,
+          label: selection.hasPhoto
+              ? l10n.photoChangeAction
+              : l10n.photoAddAction,
         ),
         const SizedBox(height: AppMetrics.formFieldSpacing),
       ],
