@@ -1,7 +1,7 @@
 import 'package:go_router/go_router.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../../features/onboarding/domain/onboarding_routes.dart';
-import '../api/api_exception.dart';
 import '../router/app_router.dart';
 import '../widgets/app_snackbar.dart';
 import 'auth_repository.dart';
@@ -13,7 +13,6 @@ var _handlingUserDeleted = false;
 Future<void> handleUserDeletedSession({
   required AuthRepository authRepository,
   required SessionCleanup sessionCleanup,
-  ApiException? exception,
 }) async {
   if (_handlingUserDeleted) return;
   _handlingUserDeleted = true;
@@ -22,8 +21,10 @@ Future<void> handleUserDeletedSession({
     await authRepository.signOut();
     final context = appRootNavigatorKey.currentContext;
     if (context != null && context.mounted) {
-      final message = exception?.message ?? 'This account was deleted.';
-      AppSnackBar.showAlert(context, message);
+      AppSnackBar.showAlert(
+        context,
+        AppLocalizations.of(context)!.errorAccountDeleted,
+      );
       context.go(OnboardingRoutes.login);
     }
   } finally {

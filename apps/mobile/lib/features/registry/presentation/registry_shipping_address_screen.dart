@@ -102,7 +102,7 @@ class _RegistryShippingAddressScreenState
       });
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showAlert(context, AppLocalizations.of(context)!.registryCouldNotLoadShippingAddress(apiErrorMessage(e)));
+        AppSnackBar.showAlert(context, AppLocalizations.of(context)!.registryCouldNotLoadShippingAddress(apiErrorMessage(AppLocalizations.of(context)!, e)));
         context.pop();
       }
     }

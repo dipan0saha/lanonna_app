@@ -85,7 +85,7 @@ class _HomeScreenState extends State<HomeScreen>
           _summaryError = null;
         });
       case HomeSummaryFailed failed:
-        setState(() => _summaryError = apiErrorMessage(failed.error));
+        setState(() => _summaryError = apiErrorMessage(AppLocalizations.of(context)!, failed.error));
     }
   }
 
@@ -124,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen>
           case HomeSummaryLoaded loaded:
             summary = loaded.summary;
           case HomeSummaryFailed failed:
-            summaryError = apiErrorMessage(failed.error);
+            summaryError = apiErrorMessage(AppLocalizations.of(context)!, failed.error);
         }
       }
       if (!mounted) return;
@@ -216,7 +216,7 @@ class _HomeScreenState extends State<HomeScreen>
           if (mounted) {
             AppSnackBar.showAlert(
               context,
-              AppLocalizations.of(context)!.homeCouldNotUpdateBaby(apiErrorMessage(e)),
+              AppLocalizations.of(context)!.homeCouldNotUpdateBaby(apiErrorMessage(AppLocalizations.of(context)!, e)),
             );
           }
         } finally {

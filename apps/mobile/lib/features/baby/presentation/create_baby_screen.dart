@@ -329,7 +329,7 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
         context.go('/home');
       }
     } catch (e) {
-      setState(() => _error = apiErrorMessage(e));
+      setState(() => _error = apiErrorMessage(AppLocalizations.of(context)!, e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

@@ -93,7 +93,7 @@ class _AccountScreenState extends State<AccountScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _loadError = apiErrorMessage(e);
+        _loadError = apiErrorMessage(AppLocalizations.of(context)!, e);
         _loading = false;
       });
       return;

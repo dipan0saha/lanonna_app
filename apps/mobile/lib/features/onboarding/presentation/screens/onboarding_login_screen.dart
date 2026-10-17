@@ -169,7 +169,7 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
       final l10n = AppLocalizations.of(context)!;
       setState(() => _error = authErrorMessage(e, l10n, flow: AuthFlow.signIn));
     } catch (e) {
-      final msg = apiErrorMessage(e);
+      final msg = apiErrorMessage(AppLocalizations.of(context)!, e);
       if (msg.contains('ApiException: 10') || msg.contains('DEVELOPER_ERROR')) {
         setState(
           () => _error =

@@ -102,7 +102,7 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
       }
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showAlert(context, apiErrorMessage(e));
+        AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -210,7 +210,7 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
       if (mounted) showAnnouncementCardAfterSave(context, widget.babyId);
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showAlert(context, apiErrorMessage(e));
+        AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
       }
     } finally {
       if (mounted) setState(() => _saving = false);

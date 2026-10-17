@@ -70,7 +70,7 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _loadError = apiErrorMessage(e);
+        _loadError = apiErrorMessage(AppLocalizations.of(context)!, e);
       });
     }
   }

@@ -1,7 +1,6 @@
 import '../../../core/api/api_client.dart';
 import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import '../../../core/api/offset_page.dart';
-import '../../../core/api/api_error_message.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/domain/baby_summary.dart';
 import 'home_summary_result.dart';
@@ -169,7 +168,7 @@ class HomeRepository {
       if (cached != null && _shouldServeStaleBabyCache(e)) {
         return HomeSummaryLoaded(cached);
       }
-      return HomeSummaryFailed(ApiException(apiErrorMessage(e)));
+      return HomeSummaryFailed(e);
     }
   }
 

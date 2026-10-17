@@ -68,7 +68,7 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _loading = false);
-      AppSnackBar.showAlert(context, apiErrorMessage(e));
+      AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
     }
   }
 
@@ -78,7 +78,7 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
       await _load();
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showAlert(context, apiErrorMessage(e));
+        AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
       }
     }
   }
@@ -98,7 +98,7 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
       await _load();
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showAlert(context, apiErrorMessage(e));
+        AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
       }
     }
   }

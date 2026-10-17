@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../api/api_error_message.dart';
 import '../widgets/app_snackbar.dart';
@@ -13,7 +14,7 @@ void reportTabLoadFailure(
   required bool hasPayload,
   required void Function(String message) onBlockingError,
 }) {
-  final message = apiErrorMessage(error);
+  final message = apiErrorMessage(AppLocalizations.of(context)!, error);
   if (hasPayload) {
     AppSnackBar.showAlert(context, message);
     return;

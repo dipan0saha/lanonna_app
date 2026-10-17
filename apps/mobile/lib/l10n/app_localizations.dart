@@ -4113,6 +4113,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} maybe'**
   String eventRsvpMaybeCount(int count);
+
+  /// No description provided for @errorAccountDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'This account was deleted.'**
+  String get errorAccountDeleted;
+
+  /// No description provided for @errorOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline. Check your connection and try again.'**
+  String get errorOffline;
+
+  /// No description provided for @errorNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach the server. Check your connection and try again.'**
+  String get errorNetwork;
+
+  /// No description provided for @errorGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get errorGeneric;
+
+  /// No description provided for @errorPhotoTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo exceeds the maximum size ({megabytes} MB).'**
+  String errorPhotoTooLarge(String megabytes);
+
+  /// No description provided for @photoSourceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'JPEG or PNG, up to {megabytes}MB'**
+  String photoSourceHint(String megabytes);
+
+  /// No description provided for @inviteErrorExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'This invitation has expired. Ask the family to send a new invite.'**
+  String get inviteErrorExpired;
+
+  /// No description provided for @inviteErrorRevoked.
+  ///
+  /// In en, this message translates to:
+  /// **'This invitation was revoked. Ask the family to send a new invite.'**
+  String get inviteErrorRevoked;
+
+  /// No description provided for @inviteErrorAlreadyUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'This invitation was already used. Sign in with the account that accepted it.'**
+  String get inviteErrorAlreadyUsed;
+
+  /// No description provided for @inviteErrorNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'This invitation link is invalid or was revoked.'**
+  String get inviteErrorNotFound;
+
+  /// No description provided for @inviteErrorMaxOwners.
+  ///
+  /// In en, this message translates to:
+  /// **'This baby already has the maximum number of owners.'**
+  String get inviteErrorMaxOwners;
+
+  /// No description provided for @inviteErrorAlreadyMember.
+  ///
+  /// In en, this message translates to:
+  /// **'You are already part of this baby\'s circle.'**
+  String get inviteErrorAlreadyMember;
+
+  /// No description provided for @inviteErrorEmailMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with the email address that received the invitation.'**
+  String get inviteErrorEmailMismatch;
+
+  /// No description provided for @inviteErrorGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not accept this invitation. Please try again.'**
+  String get inviteErrorGeneric;
+
+  /// No description provided for @inviteErrorOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to the internet to open this invitation.'**
+  String get inviteErrorOffline;
+
+  /// No description provided for @inviteErrorLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load this invitation. Try again.'**
+  String get inviteErrorLoadFailed;
 }
 
 class _AppLocalizationsDelegate

@@ -68,7 +68,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _loadError = apiErrorMessage(e);
+        _loadError = apiErrorMessage(AppLocalizations.of(context)!, e);
         _loading = false;
       });
     }
@@ -307,7 +307,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
                                             if (!context.mounted) return;
                                             AppSnackBar.showAlert(
                                               context,
-                                              apiErrorMessage(e),
+                                              apiErrorMessage(AppLocalizations.of(context)!, e),
                                             );
                                           }
                                         },

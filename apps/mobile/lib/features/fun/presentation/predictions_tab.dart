@@ -86,7 +86,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
       if (!mounted || babyId != widget.baby.id) return;
       setState(() {
         _loading = false;
-        _error = apiErrorMessage(e);
+        _error = apiErrorMessage(AppLocalizations.of(context)!, e);
       });
     }
   }
@@ -100,7 +100,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
       await context.read<FunRepository>().setGenderVote(widget.baby.id, gender);
       await _load();
     } catch (e) {
-      if (mounted) AppSnackBar.showAlert(context, apiErrorMessage(e));
+      if (mounted) AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
     }
   }
 
@@ -147,7 +147,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
       if (!mounted) return;
       await _load();
     } catch (e) {
-      if (mounted) AppSnackBar.showAlert(context, apiErrorMessage(e));
+      if (mounted) AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
     }
   }
 

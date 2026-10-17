@@ -153,7 +153,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
       });
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showAlert(context, apiErrorMessage(e));
+        AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
       }
     }
   }
@@ -354,7 +354,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
       }
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showAlert(context, apiErrorMessage(e));
+        AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
       }
     } finally {
       if (mounted) setState(() => _saving = false);

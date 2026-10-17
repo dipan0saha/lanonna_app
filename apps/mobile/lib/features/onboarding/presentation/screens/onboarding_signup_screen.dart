@@ -126,7 +126,7 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
       setState(() => _error = authErrorMessage(e, l10n, flow: AuthFlow.signUp));
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = apiErrorMessage(e));
+      setState(() => _error = apiErrorMessage(AppLocalizations.of(context)!, e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

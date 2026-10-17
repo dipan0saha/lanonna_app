@@ -60,7 +60,7 @@ Future<void> _applyAvatarAndGallery({
     avatarSaved = true;
   } catch (e) {
     onNonFatalError?.call(
-      AppLocalizations.of(context)!.babyProfilePhotoFailed(createdLabel, apiErrorMessage(e)),
+      AppLocalizations.of(context)!.babyProfilePhotoFailed(createdLabel, apiErrorMessage(AppLocalizations.of(context)!, e)),
     );
   }
   if (input.sharePhotoToGallery) {
@@ -79,7 +79,7 @@ Future<void> _applyAvatarAndGallery({
       final prefix = avatarSaved
           ? AppLocalizations.of(context)!.babyProfilePhotoSavedGalleryUpload
           : AppLocalizations.of(context)!.babyGalleryUploadFailed(createdLabel);
-      onNonFatalError?.call('$prefix: ${apiErrorMessage(e)}');
+      onNonFatalError?.call('$prefix: ${apiErrorMessage(AppLocalizations.of(context)!, e)}');
     }
   }
 }

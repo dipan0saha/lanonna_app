@@ -53,7 +53,7 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _job = null);
-        AppSnackBar.showAlert(context, apiErrorMessage(e));
+        AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -73,7 +73,7 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
       if (mounted) setState(() => _job = job);
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showAlert(context, apiErrorMessage(e));
+        AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
       }
     } finally {
       if (mounted) setState(() => _requesting = false);

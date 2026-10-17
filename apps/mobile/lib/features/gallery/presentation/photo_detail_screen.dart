@@ -150,7 +150,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
         returnToGallery(context);
         return;
       }
-      AppSnackBar.showAlert(context, apiErrorMessage(e));
+      AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
     }
   }
 
@@ -247,7 +247,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
 
   void _showApiError(Object e) {
     if (!mounted) return;
-    AppSnackBar.showAlert(context, apiErrorMessage(e));
+    AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
   }
 
   Future<void> _saveCaption() async {

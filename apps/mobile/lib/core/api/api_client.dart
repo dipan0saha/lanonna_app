@@ -122,7 +122,10 @@ class ApiClient {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return;
     }
-    throw ApiException('Delete failed (${response.statusCode})');
+    throw ApiException(
+      'http_${response.statusCode}',
+      statusCode: response.statusCode,
+    );
   }
 
   Future<http.Response> _publicRequest(
@@ -143,7 +146,7 @@ class ApiClient {
           headers: headers,
           body: jsonEncode(body ?? {}),
         ),
-        _ => throw ApiException('Unsupported method $method'),
+        _ => throw UnsupportedError('HTTP method $method'),
       }.timeout(requestTimeout);
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return response;
@@ -175,7 +178,7 @@ class ApiClient {
     try {
       final token = await _idTokenProvider().timeout(_timeout);
       if (token == null || token.isEmpty) {
-        throw ApiException('Not signed in');
+        throw ApiException('not_signed_in');
       }
       var uri = Uri.parse('${AppConfig.apiBaseUrl}$path');
       if (queryParameters != null && queryParameters.isNotEmpty) {
@@ -210,7 +213,7 @@ class ApiClient {
           headers: headers,
           body: body != null ? jsonEncode(body) : null,
         ),
-        _ => throw ApiException('Unsupported method $method'),
+        _ => throw UnsupportedError('HTTP method $method'),
       }.timeout(_timeout);
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return response;
@@ -254,8 +257,9 @@ class ApiClient {
   }
 
   ApiException _apiExceptionFromResponse(http.Response response) {
-    var message = 'Request failed (${response.statusCode})';
+    var message = 'http_${response.statusCode}';
     Map<String, dynamic>? detail;
+    String? serverMessage;
     try {
       final decoded = jsonDecode(response.body);
       if (decoded is Map && decoded['detail'] != null) {
@@ -263,15 +267,12 @@ class ApiClient {
         if (raw is Map) {
           detail = Map<String, dynamic>.from(raw);
           final code = detail['error'];
-          if (code is String && code.isNotEmpty) {
-            message = code;
-          } else {
-            final formatted = formatApiErrorDetail(raw);
-            if (formatted.isNotEmpty) message = formatted;
-          }
+          if (code is String && code.isNotEmpty) message = code;
+          final text = detail['message'];
+          if (text is String && text.trim().isNotEmpty) serverMessage = text;
         } else {
           final formatted = formatApiErrorDetail(raw);
-          if (formatted.isNotEmpty) message = formatted;
+          if (formatted.isNotEmpty) serverMessage = formatted;
         }
       }
     } catch (e, st) {
@@ -281,6 +282,7 @@ class ApiClient {
       message,
       statusCode: response.statusCode,
       detail: detail,
+      serverMessage: serverMessage,
     );
   }
 
@@ -288,6 +290,6 @@ class ApiClient {
     if (response.body.isEmpty) return {};
     final decoded = jsonDecode(response.body);
     if (decoded is Map<String, dynamic>) return decoded;
-    throw ApiException('Expected JSON object');
+    throw ApiException('unexpected_response_shape');
   }
 }

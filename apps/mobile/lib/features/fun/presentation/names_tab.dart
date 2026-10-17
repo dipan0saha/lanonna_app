@@ -85,7 +85,7 @@ class _NamesTabState extends State<NamesTab> {
       if (!mounted || babyId != widget.baby.id) return;
       setState(() {
         _loading = false;
-        _error = apiErrorMessage(e);
+        _error = apiErrorMessage(AppLocalizations.of(context)!, e);
       });
     }
   }

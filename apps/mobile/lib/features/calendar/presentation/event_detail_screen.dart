@@ -132,7 +132,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _initialLoadInFlight = false);
-      AppSnackBar.showAlert(context, apiErrorMessage(e));
+      AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
       returnToCalendar(context);
     }
   }
@@ -167,7 +167,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
   void _showApiError(Object e) {
     if (!mounted) return;
-    AppSnackBar.showAlert(context, apiErrorMessage(e));
+    AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
   }
 
   bool get _isOwner => _baby?.role == 'owner';

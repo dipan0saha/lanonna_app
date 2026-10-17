@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -54,7 +55,11 @@ Future<InvitePreviewLoadResult> ensureInvitePreviewLoaded(BuildContext context) 
     }
     final offline = !context.read<ConnectivityService>().isOnline;
     return InvitePreviewLoadResult._(
-      fetchErrorMessage: invitePreviewFetchUserMessage(e, offline: offline),
+      fetchErrorMessage: invitePreviewFetchUserMessage(
+          AppLocalizations.of(context)!,
+          e,
+          offline: offline,
+        ),
       canRetryFetch: invitePreviewFetchCanRetry(e, offline: offline),
     );
   }

@@ -2331,4 +2331,68 @@ class AppLocalizationsEn extends AppLocalizations {
   String eventRsvpMaybeCount(int count) {
     return '$count maybe';
   }
+
+  @override
+  String get errorAccountDeleted => 'This account was deleted.';
+
+  @override
+  String get errorOffline =>
+      'You\'re offline. Check your connection and try again.';
+
+  @override
+  String get errorNetwork =>
+      'Couldn\'t reach the server. Check your connection and try again.';
+
+  @override
+  String get errorGeneric => 'Something went wrong. Please try again.';
+
+  @override
+  String errorPhotoTooLarge(String megabytes) {
+    return 'Photo exceeds the maximum size ($megabytes MB).';
+  }
+
+  @override
+  String photoSourceHint(String megabytes) {
+    return 'JPEG or PNG, up to ${megabytes}MB';
+  }
+
+  @override
+  String get inviteErrorExpired =>
+      'This invitation has expired. Ask the family to send a new invite.';
+
+  @override
+  String get inviteErrorRevoked =>
+      'This invitation was revoked. Ask the family to send a new invite.';
+
+  @override
+  String get inviteErrorAlreadyUsed =>
+      'This invitation was already used. Sign in with the account that accepted it.';
+
+  @override
+  String get inviteErrorNotFound =>
+      'This invitation link is invalid or was revoked.';
+
+  @override
+  String get inviteErrorMaxOwners =>
+      'This baby already has the maximum number of owners.';
+
+  @override
+  String get inviteErrorAlreadyMember =>
+      'You are already part of this baby\'s circle.';
+
+  @override
+  String get inviteErrorEmailMismatch =>
+      'Sign in with the email address that received the invitation.';
+
+  @override
+  String get inviteErrorGeneric =>
+      'Could not accept this invitation. Please try again.';
+
+  @override
+  String get inviteErrorOffline =>
+      'Connect to the internet to open this invitation.';
+
+  @override
+  String get inviteErrorLoadFailed =>
+      'Could not load this invitation. Try again.';
 }

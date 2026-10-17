@@ -1161,5 +1161,35 @@
         "type": "int"
       }
     }
-  }
+  },
+  "errorAccountDeleted": "This account was deleted.",
+  "errorOffline": "You're offline. Check your connection and try again.",
+  "errorNetwork": "Couldn't reach the server. Check your connection and try again.",
+  "errorGeneric": "Something went wrong. Please try again.",
+  "errorPhotoTooLarge": "Photo exceeds the maximum size ({megabytes} MB).",
+  "@errorPhotoTooLarge": {
+    "placeholders": {
+      "megabytes": {
+        "type": "String"
+      }
+    }
+  },
+  "photoSourceHint": "JPEG or PNG, up to {megabytes}MB",
+  "@photoSourceHint": {
+    "placeholders": {
+      "megabytes": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteErrorExpired": "This invitation has expired. Ask the family to send a new invite.",
+  "inviteErrorRevoked": "This invitation was revoked. Ask the family to send a new invite.",
+  "inviteErrorAlreadyUsed": "This invitation was already used. Sign in with the account that accepted it.",
+  "inviteErrorNotFound": "This invitation link is invalid or was revoked.",
+  "inviteErrorMaxOwners": "This baby already has the maximum number of owners.",
+  "inviteErrorAlreadyMember": "You are already part of this baby's circle.",
+  "inviteErrorEmailMismatch": "Sign in with the email address that received the invitation.",
+  "inviteErrorGeneric": "Could not accept this invitation. Please try again.",
+  "inviteErrorOffline": "Connect to the internet to open this invitation.",
+  "inviteErrorLoadFailed": "Could not load this invitation. Try again."
 }

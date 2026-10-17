@@ -53,7 +53,7 @@ Future<void> navigateAfterCompleteProfile(BuildContext context) async {
       return;
     }
     if (result.error != null) {
-      throw Exception(inviteAcceptUserMessage(result.error!));
+      throw InviteAcceptException(result.error!);
     }
 
     final babyId = joinedBabyIdFromAccept(
@@ -123,7 +123,7 @@ Future<void> acceptSignedInInviteAndContinue(
     return;
   }
   if (result.error != null) {
-    throw Exception(inviteAcceptUserMessage(result.error!));
+    throw InviteAcceptException(result.error!);
   }
 
   final babyId = joinedBabyIdFromAccept(

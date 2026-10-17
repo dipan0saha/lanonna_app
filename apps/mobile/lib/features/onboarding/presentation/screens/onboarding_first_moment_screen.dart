@@ -207,7 +207,7 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
       await context.read<OnboardingCoordinator>().setStep(OnboardingStep.batchInvite);
       if (mounted) context.go(OnboardingRoutes.ownerInvite);
     } catch (e) {
-      setState(() => _error = apiErrorMessage(e));
+      setState(() => _error = apiErrorMessage(AppLocalizations.of(context)!, e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

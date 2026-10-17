@@ -48,7 +48,7 @@ class _HomeActivityScreenState extends State<HomeActivityScreen> {
       });
     } catch (e) {
       setState(() {
-        _error = apiErrorMessage(e);
+        _error = apiErrorMessage(AppLocalizations.of(context)!, e);
         _loading = false;
       });
     }

@@ -102,7 +102,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
       setState(() => _results = results);
     } catch (e) {
       if (!mounted || requestId != _requestId) return;
-      final message = apiErrorMessage(e);
+      final message = apiErrorMessage(AppLocalizations.of(context)!, e);
       setState(() {
         _error = message;
         _results = null;

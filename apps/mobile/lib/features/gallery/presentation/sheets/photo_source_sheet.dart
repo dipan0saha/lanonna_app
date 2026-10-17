@@ -11,7 +11,7 @@ Future<File?> showPhotoSourceSheet(BuildContext context) async {
   return showAppModalSheet<File?>(
     context: context,
     title: AppLocalizations.of(context)!.actionAddPhoto2,
-    subtitle: displayPhotoSourceHint(),
+    subtitle: displayPhotoSourceHint(AppLocalizations.of(context)!),
     bodyBuilder: (context) {
       return Column(
         mainAxisSize: MainAxisSize.min,

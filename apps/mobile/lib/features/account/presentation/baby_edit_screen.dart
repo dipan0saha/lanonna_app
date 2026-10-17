@@ -131,7 +131,7 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
       if (mounted) context.pop();
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showAlert(context, apiErrorMessage(e));
+        AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
