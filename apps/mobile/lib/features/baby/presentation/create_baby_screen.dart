@@ -70,10 +70,10 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
       );
 
   String get _dateLabel => _babyStatus == BabyLifecycle.expecting
-      ? 'Expected Due Date'
-      : 'Date of birth';
+      ? l10n.babyExpectedDueDate
+      : l10n.announcementDateOfBirth;
 
-  String get _primaryButtonLabel => _isOnboarding ? 'Continue' : 'Create Baby';
+  String get _primaryButtonLabel => _isOnboarding ? l10n.deleteAccountReauthPasswordAction : l10n.babyCreateBaby;
 
   @override
   void dispose() {
@@ -247,7 +247,7 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
     if (_babyStatus == BabyLifecycle.born &&
         _selectedDate != null &&
         onboardingBirthDateIsInFuture(_selectedDate!)) {
-      AppSnackBar.showAlert(context, 'Date of birth cannot be in the future.');
+      AppSnackBar.showAlert(context, l10n.homeDateOfBirthCannotBe);
       return;
     }
     if (_babyStatus == BabyLifecycle.expecting &&
@@ -255,7 +255,7 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
         onboardingDueDateIsBeforeToday(_selectedDate!)) {
       AppSnackBar.showAlert(
         context,
-        'Expected due date cannot be in the past.',
+        l10n.babyExpectedDueDateCannotBe,
       );
       return;
     }
@@ -384,7 +384,7 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const OnboardingFieldLabel('Profile photo (optional)'),
+        OnboardingFieldLabel(l10n.babyProfilePhotoOptional),
         const SizedBox(height: 8),
         Center(
           child: Column(
@@ -443,18 +443,18 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
           const SizedBox(height: 10),
           OnboardingHeadline(
             _isReviseOnboarding
-                ? "Update your baby's profile"
-                : "Create your baby's profile",
+                ? l10n.babyUpdateYourBabysProfile
+                : l10n.babyCreateYourBabysProfile,
           ),
           const SizedBox(height: 8),
-          const OnboardingSupportText(
-            'You can always add or change these details later.',
+          OnboardingSupportText(
+            l10n.babyYouCanAlwaysAddOr,
           ),
           const SizedBox(height: 20),
         ],
         OnboardingSegmentedControl(
-          leftLabel: 'Expecting',
-          rightLabel: 'Already Born',
+          leftLabel: l10n.stageExpecting,
+          rightLabel: l10n.babyAlreadyBorn,
           isLeftSelected: _babyStatus == BabyLifecycle.expecting,
           onLeftTap: () => _setBabyStatus(BabyLifecycle.expecting),
           onRightTap: () => _setBabyStatus(BabyLifecycle.born),
@@ -467,7 +467,7 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
           onTap: _busy ? () {} : _pickDate,
         ),
         const SizedBox(height: 18),
-        const OnboardingFieldLabel('Gender'),
+        OnboardingFieldLabel(l10n.babyGender),
         const SizedBox(height: 8),
         OnboardingPillSelect(
           layout: OnboardingPillLayout.wrap,
@@ -511,9 +511,9 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
             textAlign: TextAlign.center,
           ),
           if (_isOnboarding)
-            const OnboardingHelperText('Tap Continue to try again.')
+            OnboardingHelperText(l10n.babyTapContinueToTryAgain)
           else
-            const OnboardingHelperText('Tap Create Baby to try again.'),
+            OnboardingHelperText(l10n.babyTapCreateBabyToTry),
         ],
       ],
     );

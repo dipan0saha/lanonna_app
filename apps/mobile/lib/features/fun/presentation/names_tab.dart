@@ -176,8 +176,8 @@ class _NamesTabState extends State<NamesTab> {
               icon: Icons.star_outline,
               title: l10n.emptyNameSuggestionsYet,
               message: _readOnly
-                  ? 'No name ideas were saved before baby arrived.'
-                  : 'Suggest a name below — everyone gets a say.',
+                  ? l10n.funNoNameIdeasWereSaved
+                  : l10n.funSuggestANameBelowEveryone,
             ),
             if (!_readOnly) _inputCard(),
           ],
@@ -209,9 +209,9 @@ class _NamesTabState extends State<NamesTab> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(child: _column('Boys', boys)),
+              Expanded(child: _column(l10n.funBoys, boys)),
               const SizedBox(width: 12),
-              Expanded(child: _column('Girls', girls)),
+              Expanded(child: _column(l10n.funGirls, girls)),
             ],
           ),
         ],
@@ -366,8 +366,8 @@ class _NameSuggestionCard extends StatelessWidget {
                   AppIconButton(
                     semanticsId: 'name_like_${suggestion.id}',
                     label: suggestion.viewerHasLiked
-                        ? 'Unlike ${suggestion.suggestedName}'
-                        : 'Love ${suggestion.suggestedName}',
+                        ? l10n.funUnlike(suggestion.suggestedName)
+                        : l10n.funLove(suggestion.suggestedName),
                     onPressed: onLike,
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.zero,

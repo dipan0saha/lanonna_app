@@ -353,7 +353,7 @@ class _CalendarScreenState extends State<CalendarScreen>
                     ),
                     child: Row(
                       children: [
-                        const AppSectionCapsLabel('Upcoming'),
+                        AppSectionCapsLabel(AppLocalizations.of(context)!.labelUpcoming),
                         const Spacer(),
                         TextButton(
                           onPressed: _baby == null
@@ -384,9 +384,9 @@ class _CalendarScreenState extends State<CalendarScreen>
                           icon: Icons.event_outlined,
                           title: l10n.emptyEventsYet,
                           message: _isOwner
-                              ? 'Add ultrasounds, showers, or the gender reveal so family knows when to celebrate.'
-                              : 'Nothing on the calendar yet — check back soon.',
-                          actionLabel: _isOwner ? '+ Add Event' : null,
+                              ? AppLocalizations.of(context)!.calendarAddUltrasoundsShowersOrThe
+                              : AppLocalizations.of(context)!.calendarNothingOnTheCalendarYet,
+                          actionLabel: _isOwner ? AppLocalizations.of(context)!.calendarAddEventCta : null,
                           onAction: _isOwner ? _openCreateEvent : null,
                         ),
                       ),
@@ -416,19 +416,19 @@ class _CalendarScreenState extends State<CalendarScreen>
   }
 
   String _monthName(int m) {
-    const names = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
+    final names = [
+      AppLocalizations.of(context)!.calendarJanuary,
+      AppLocalizations.of(context)!.calendarFebruary,
+      AppLocalizations.of(context)!.calendarMarch,
+      AppLocalizations.of(context)!.calendarApril,
+      AppLocalizations.of(context)!.calendarMay,
+      AppLocalizations.of(context)!.calendarJune,
+      AppLocalizations.of(context)!.calendarJuly,
+      AppLocalizations.of(context)!.calendarAugust,
+      AppLocalizations.of(context)!.calendarSeptember,
+      AppLocalizations.of(context)!.calendarOctober,
+      AppLocalizations.of(context)!.calendarNovember,
+      AppLocalizations.of(context)!.calendarDecember,
     ];
     return names[m - 1];
   }

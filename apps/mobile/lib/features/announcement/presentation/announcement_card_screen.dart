@@ -177,7 +177,7 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          c['author_display_name'] as String? ?? 'Family',
+                          c['author_display_name'] as String? ?? l10n.announcementFamily,
                           style: context.textStyles.labelMedium,
                         ),
                         Text(c['body'] as String? ?? ''),

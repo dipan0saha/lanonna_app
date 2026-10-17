@@ -23,7 +23,7 @@ class SettingsScreen extends StatelessWidget {
       context,
       uri,
       failureMessage:
-          'Could not open email to ${AppConfig.supportEmail}. Copy link?',
+          AppLocalizations.of(context)!.settingsCouldNotOpenEmailTo(AppConfig.supportEmail),
     );
   }
 

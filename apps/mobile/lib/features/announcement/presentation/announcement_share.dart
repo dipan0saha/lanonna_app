@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -19,7 +20,7 @@ class AnnouncementShare {
     final detail = await repo.fetch(babyId);
     if (!context.mounted) return;
     if (detail == null) {
-      await Share.share('Our baby announcement is here!');
+      await Share.share(AppLocalizations.of(context)!.announcementOurBabyAnnouncementIsHere);
       return;
     }
     final name = [
@@ -27,8 +28,8 @@ class AnnouncementShare {
       detail.lastName,
     ].where((s) => s != null && s.isNotEmpty).join(' ');
     final text = name.isEmpty
-        ? 'Our baby announcement is here!'
-        : 'Meet $name!';
+        ? AppLocalizations.of(context)!.announcementOurBabyAnnouncementIsHere
+        : AppLocalizations.of(context)!.announcementMeet(name);
 
     final boundaryKey = GlobalKey();
     final overlay = OverlayEntry(
@@ -60,7 +61,7 @@ class AnnouncementShare {
           await Share.shareXFiles(
             [XFile(file.path, mimeType: 'image/png')],
             text: text,
-            subject: 'Baby announcement',
+            subject: AppLocalizations.of(context)!.announcementBabyAnnouncement,
           );
           overlay.remove();
           return;

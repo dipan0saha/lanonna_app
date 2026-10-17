@@ -2925,6 +2925,1158 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Email failed to send'**
   String get inviteEmailFailed;
+
+  /// No description provided for @commonMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Me'**
+  String get commonMe;
+
+  /// No description provided for @settingsCouldNotOpenEmailTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open email to {supportEmail}. Copy link?'**
+  String settingsCouldNotOpenEmailTo(String supportEmail);
+
+  /// No description provided for @homeConfirmTheDateOfBirth.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm the date of birth. Your home will update to celebrate your baby.'**
+  String get homeConfirmTheDateOfBirth;
+
+  /// No description provided for @homeDateOfBirthCannotBe.
+  ///
+  /// In en, this message translates to:
+  /// **'Date of birth cannot be in the future.'**
+  String get homeDateOfBirthCannotBe;
+
+  /// No description provided for @homeYoullBeNotifiedTheMoment.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ll be notified the moment {babyName} arrives.'**
+  String homeYoullBeNotifiedTheMoment(String babyName);
+
+  /// No description provided for @homeViewAnnouncement.
+  ///
+  /// In en, this message translates to:
+  /// **'🎀 View Announcement'**
+  String get homeViewAnnouncement;
+
+  /// No description provided for @homeShareToInstagram.
+  ///
+  /// In en, this message translates to:
+  /// **'📸 Share to Instagram'**
+  String get homeShareToInstagram;
+
+  /// No description provided for @homeBorn.
+  ///
+  /// In en, this message translates to:
+  /// **'Born {formatted}'**
+  String homeBorn(String formatted);
+
+  /// No description provided for @homeEveryoneYouveInvitedHasBeen.
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone you\'ve invited has been notified.'**
+  String get homeEveryoneYouveInvitedHasBeen;
+
+  /// No description provided for @homeInvitesNotifiedWithLine.
+  ///
+  /// In en, this message translates to:
+  /// **'{line}. Everyone you\'ve invited has been notified.'**
+  String homeInvitesNotifiedWithLine(String line);
+
+  /// No description provided for @homeDaysToDueDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Days to due date · {dueDateLabel}'**
+  String homeDaysToDueDate(String dueDateLabel);
+
+  /// No description provided for @homeDaysToDueDateHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'DAYS TO DUE DATE'**
+  String get homeDaysToDueDateHeading;
+
+  /// No description provided for @homeCouldNotUpdateBaby.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update baby: {value1}'**
+  String homeCouldNotUpdateBaby(String value1);
+
+  /// No description provided for @calendarFamilyMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Family member'**
+  String get calendarFamilyMember;
+
+  /// No description provided for @calendarOnlyOwnersCanCreateOr.
+  ///
+  /// In en, this message translates to:
+  /// **'Only owners can create or edit calendar events.'**
+  String get calendarOnlyOwnersCanCreateOr;
+
+  /// No description provided for @calendarBabyProfileIsStillLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Baby profile is still loading. Try again.'**
+  String get calendarBabyProfileIsStillLoading;
+
+  /// No description provided for @calendarEnterAnEventTitleTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an event title to continue.'**
+  String get calendarEnterAnEventTitleTo;
+
+  /// No description provided for @calendarSaveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get calendarSaveChanges;
+
+  /// No description provided for @calendarSaveEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Event'**
+  String get calendarSaveEvent;
+
+  /// No description provided for @calendarEditEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Event'**
+  String get calendarEditEvent;
+
+  /// No description provided for @calendarNewEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'New Event'**
+  String get calendarNewEvent;
+
+  /// No description provided for @calendarAddUltrasoundsShowersOrThe.
+  ///
+  /// In en, this message translates to:
+  /// **'Add ultrasounds, showers, or the gender reveal so family knows when to celebrate.'**
+  String get calendarAddUltrasoundsShowersOrThe;
+
+  /// No description provided for @calendarNothingOnTheCalendarYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing on the calendar yet — check back soon.'**
+  String get calendarNothingOnTheCalendarYet;
+
+  /// No description provided for @calendarAddEventCta.
+  ///
+  /// In en, this message translates to:
+  /// **'+ Add Event'**
+  String get calendarAddEventCta;
+
+  /// No description provided for @calendarJanuary.
+  ///
+  /// In en, this message translates to:
+  /// **'January'**
+  String get calendarJanuary;
+
+  /// No description provided for @calendarFebruary.
+  ///
+  /// In en, this message translates to:
+  /// **'February'**
+  String get calendarFebruary;
+
+  /// No description provided for @calendarMarch.
+  ///
+  /// In en, this message translates to:
+  /// **'March'**
+  String get calendarMarch;
+
+  /// No description provided for @calendarApril.
+  ///
+  /// In en, this message translates to:
+  /// **'April'**
+  String get calendarApril;
+
+  /// No description provided for @calendarMay.
+  ///
+  /// In en, this message translates to:
+  /// **'May'**
+  String get calendarMay;
+
+  /// No description provided for @calendarJune.
+  ///
+  /// In en, this message translates to:
+  /// **'June'**
+  String get calendarJune;
+
+  /// No description provided for @calendarJuly.
+  ///
+  /// In en, this message translates to:
+  /// **'July'**
+  String get calendarJuly;
+
+  /// No description provided for @calendarAugust.
+  ///
+  /// In en, this message translates to:
+  /// **'August'**
+  String get calendarAugust;
+
+  /// No description provided for @calendarSeptember.
+  ///
+  /// In en, this message translates to:
+  /// **'September'**
+  String get calendarSeptember;
+
+  /// No description provided for @calendarOctober.
+  ///
+  /// In en, this message translates to:
+  /// **'October'**
+  String get calendarOctober;
+
+  /// No description provided for @calendarNovember.
+  ///
+  /// In en, this message translates to:
+  /// **'November'**
+  String get calendarNovember;
+
+  /// No description provided for @calendarDecember.
+  ///
+  /// In en, this message translates to:
+  /// **'December'**
+  String get calendarDecember;
+
+  /// No description provided for @calendarCouldNotLoadEventsPull.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load events. Pull to refresh or try again.'**
+  String get calendarCouldNotLoadEventsPull;
+
+  /// No description provided for @calendarWhen.
+  ///
+  /// In en, this message translates to:
+  /// **'When'**
+  String get calendarWhen;
+
+  /// No description provided for @calendarLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get calendarLocation;
+
+  /// No description provided for @calendarYourRsvp.
+  ///
+  /// In en, this message translates to:
+  /// **'Your RSVP'**
+  String get calendarYourRsvp;
+
+  /// No description provided for @calendarComments.
+  ///
+  /// In en, this message translates to:
+  /// **'Comments'**
+  String get calendarComments;
+
+  /// No description provided for @calendarCouldNotLoadSuggestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load suggestions: {value1}'**
+  String calendarCouldNotLoadSuggestions(String value1);
+
+  /// No description provided for @calendarEventAddedToCalendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Event added to calendar'**
+  String get calendarEventAddedToCalendar;
+
+  /// No description provided for @calendarPhotoOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo (optional)'**
+  String get calendarPhotoOptional;
+
+  /// No description provided for @shellYoureTheOwnerOfOne.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re the Owner of one and a Follower of another.'**
+  String get shellYoureTheOwnerOfOne;
+
+  /// No description provided for @shellChooseWhichBabyProfileTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose which baby profile to view.'**
+  String get shellChooseWhichBabyProfileTo;
+
+  /// No description provided for @galleryBaby.
+  ///
+  /// In en, this message translates to:
+  /// **'Baby'**
+  String get galleryBaby;
+
+  /// No description provided for @galleryFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites'**
+  String get galleryFavorites;
+
+  /// No description provided for @galleryAllPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'All photos'**
+  String get galleryAllPhotos;
+
+  /// No description provided for @galleryRecentActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent activity'**
+  String get galleryRecentActivity;
+
+  /// No description provided for @galleryPhotoUploaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo uploaded'**
+  String get galleryPhotoUploaded;
+
+  /// No description provided for @galleryUploadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload failed: {value1}'**
+  String galleryUploadFailed(String value1);
+
+  /// No description provided for @galleryPhotoProcessingIsTakingLonger.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo processing is taking longer than usual. Pull to refresh the gallery.'**
+  String get galleryPhotoProcessingIsTakingLonger;
+
+  /// No description provided for @galleryThisPhotoIsNoLonger.
+  ///
+  /// In en, this message translates to:
+  /// **'This photo is no longer available.'**
+  String get galleryThisPhotoIsNoLonger;
+
+  /// No description provided for @galleryNoCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'No caption'**
+  String get galleryNoCaption;
+
+  /// No description provided for @galleryAddYourFirstPhotoTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your first photo to start sharing {name}\'s journey with family.'**
+  String galleryAddYourFirstPhotoTo(String name);
+
+  /// No description provided for @galleryOnceAPhotoIsShared.
+  ///
+  /// In en, this message translates to:
+  /// **'Once a photo is shared, it will show up here for everyone to enjoy.'**
+  String get galleryOnceAPhotoIsShared;
+
+  /// No description provided for @galleryAddPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'+ Add Photo'**
+  String get galleryAddPhoto;
+
+  /// No description provided for @funAnonymous.
+  ///
+  /// In en, this message translates to:
+  /// **'Anonymous'**
+  String get funAnonymous;
+
+  /// No description provided for @funPredictions.
+  ///
+  /// In en, this message translates to:
+  /// **'Predictions'**
+  String get funPredictions;
+
+  /// No description provided for @funNoVotesYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No votes yet'**
+  String get funNoVotesYet;
+
+  /// No description provided for @funNoGuessesYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No guesses yet'**
+  String get funNoGuessesYet;
+
+  /// No description provided for @funNoGuessesYetBeThe.
+  ///
+  /// In en, this message translates to:
+  /// **'No guesses yet - be the first!'**
+  String get funNoGuessesYetBeThe;
+
+  /// No description provided for @funNoNameIdeasWereSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'No name ideas were saved before baby arrived.'**
+  String get funNoNameIdeasWereSaved;
+
+  /// No description provided for @funSuggestANameBelowEveryone.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest a name below — everyone gets a say.'**
+  String get funSuggestANameBelowEveryone;
+
+  /// No description provided for @funBoys.
+  ///
+  /// In en, this message translates to:
+  /// **'Boys'**
+  String get funBoys;
+
+  /// No description provided for @funGirls.
+  ///
+  /// In en, this message translates to:
+  /// **'Girls'**
+  String get funGirls;
+
+  /// No description provided for @funUnlike.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlike {suggestedName}'**
+  String funUnlike(String suggestedName);
+
+  /// No description provided for @funLove.
+  ///
+  /// In en, this message translates to:
+  /// **'Love {suggestedName}'**
+  String funLove(String suggestedName);
+
+  /// No description provided for @registryOnlyOwnersCanEditThe.
+  ///
+  /// In en, this message translates to:
+  /// **'Only owners can edit the shipping address.'**
+  String get registryOnlyOwnersCanEditThe;
+
+  /// No description provided for @registryCouldNotLoadShippingAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load shipping address: {e}'**
+  String registryCouldNotLoadShippingAddress(String e);
+
+  /// No description provided for @registryEditRegistryItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Registry Item'**
+  String get registryEditRegistryItem;
+
+  /// No description provided for @registryAddRegistryItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Registry Item'**
+  String get registryAddRegistryItem;
+
+  /// No description provided for @registryCouldNotLoadSuggestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load suggestions: {value1}'**
+  String registryCouldNotLoadSuggestions(String value1);
+
+  /// No description provided for @registryIllBuyThis.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'ll buy this'**
+  String get registryIllBuyThis;
+
+  /// No description provided for @registryAddTheThingsYourBaby.
+  ///
+  /// In en, this message translates to:
+  /// **'Add the things your baby will need so family knows what to bring.'**
+  String get registryAddTheThingsYourBaby;
+
+  /// No description provided for @registryNothingsBeenAddedToThe.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing\'s been added to the registry yet — check back soon.'**
+  String get registryNothingsBeenAddedToThe;
+
+  /// No description provided for @registryAddItemCta.
+  ///
+  /// In en, this message translates to:
+  /// **'+ Add Item'**
+  String get registryAddItemCta;
+
+  /// No description provided for @babyBabyCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Baby created'**
+  String get babyBabyCreated;
+
+  /// No description provided for @babyBabyUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Baby updated'**
+  String get babyBabyUpdated;
+
+  /// No description provided for @babyProfilePhotoFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'{createdLabel}; profile photo failed: {value1}'**
+  String babyProfilePhotoFailed(String createdLabel, String value1);
+
+  /// No description provided for @babyProfilePhotoSavedGalleryUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile photo saved; gallery upload failed'**
+  String get babyProfilePhotoSavedGalleryUpload;
+
+  /// No description provided for @babyGalleryUploadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'{createdLabel}; gallery upload failed'**
+  String babyGalleryUploadFailed(String createdLabel);
+
+  /// No description provided for @babyExpectedDueDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected Due Date'**
+  String get babyExpectedDueDate;
+
+  /// No description provided for @babyCreateBaby.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Baby'**
+  String get babyCreateBaby;
+
+  /// No description provided for @babyExpectedDueDateCannotBe.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected due date cannot be in the past.'**
+  String get babyExpectedDueDateCannotBe;
+
+  /// No description provided for @babyProfilePhotoOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile photo (optional)'**
+  String get babyProfilePhotoOptional;
+
+  /// No description provided for @babyUpdateYourBabysProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Update your baby\'s profile'**
+  String get babyUpdateYourBabysProfile;
+
+  /// No description provided for @babyCreateYourBabysProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your baby\'s profile'**
+  String get babyCreateYourBabysProfile;
+
+  /// No description provided for @babyYouCanAlwaysAddOr.
+  ///
+  /// In en, this message translates to:
+  /// **'You can always add or change these details later.'**
+  String get babyYouCanAlwaysAddOr;
+
+  /// No description provided for @babyAlreadyBorn.
+  ///
+  /// In en, this message translates to:
+  /// **'Already Born'**
+  String get babyAlreadyBorn;
+
+  /// No description provided for @babyGender.
+  ///
+  /// In en, this message translates to:
+  /// **'Gender'**
+  String get babyGender;
+
+  /// No description provided for @babyTapContinueToTryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap Continue to try again.'**
+  String get babyTapContinueToTryAgain;
+
+  /// No description provided for @babyTapCreateBabyToTry.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap Create Baby to try again.'**
+  String get babyTapCreateBabyToTry;
+
+  /// No description provided for @accountMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Member'**
+  String get accountMember;
+
+  /// No description provided for @accountShowPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Show password'**
+  String get accountShowPassword;
+
+  /// No description provided for @accountHidePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide password'**
+  String get accountHidePassword;
+
+  /// No description provided for @accountNoBabyProfileYouOwn.
+  ///
+  /// In en, this message translates to:
+  /// **'No baby profile you own yet.'**
+  String get accountNoBabyProfileYouOwn;
+
+  /// No description provided for @accountExpectedDueDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected due date'**
+  String get accountExpectedDueDate;
+
+  /// No description provided for @accountTapToChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to choose'**
+  String get accountTapToChoose;
+
+  /// No description provided for @accountCouldntOpenTheDownloadCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the download. Copy link?'**
+  String get accountCouldntOpenTheDownloadCopy;
+
+  /// No description provided for @accountRequesting.
+  ///
+  /// In en, this message translates to:
+  /// **'Requesting…'**
+  String get accountRequesting;
+
+  /// No description provided for @accountRequestNewExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Request new export'**
+  String get accountRequestNewExport;
+
+  /// No description provided for @accountPhotosSquished.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos Squished'**
+  String get accountPhotosSquished;
+
+  /// No description provided for @accountEventsAttended.
+  ///
+  /// In en, this message translates to:
+  /// **'Events Attended'**
+  String get accountEventsAttended;
+
+  /// No description provided for @accountItemsBought.
+  ///
+  /// In en, this message translates to:
+  /// **'Items Bought'**
+  String get accountItemsBought;
+
+  /// No description provided for @accountPendingInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending invite'**
+  String get accountPendingInvite;
+
+  /// No description provided for @accountAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepted · {formatted}'**
+  String accountAccepted(String formatted);
+
+  /// No description provided for @accountInviteEmailQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite email queued'**
+  String get accountInviteEmailQueued;
+
+  /// No description provided for @announcementFamily.
+  ///
+  /// In en, this message translates to:
+  /// **'Family'**
+  String get announcementFamily;
+
+  /// No description provided for @announcementOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get announcementOptional;
+
+  /// No description provided for @announcementSaveAnnouncement.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Announcement'**
+  String get announcementSaveAnnouncement;
+
+  /// No description provided for @announcementOurBabyAnnouncementIsHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Our baby announcement is here!'**
+  String get announcementOurBabyAnnouncementIsHere;
+
+  /// No description provided for @announcementMeet.
+  ///
+  /// In en, this message translates to:
+  /// **'Meet {name}!'**
+  String announcementMeet(String name);
+
+  /// No description provided for @announcementBabyAnnouncement.
+  ///
+  /// In en, this message translates to:
+  /// **'Baby announcement'**
+  String get announcementBabyAnnouncement;
+
+  /// No description provided for @onboardingGrandma.
+  ///
+  /// In en, this message translates to:
+  /// **'Grandma'**
+  String get onboardingGrandma;
+
+  /// No description provided for @onboardingWeCouldntLoadYourBaby.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load your baby profile. Check your connection and try again.'**
+  String get onboardingWeCouldntLoadYourBaby;
+
+  /// No description provided for @onboardingAtLeast6CharactersWith.
+  ///
+  /// In en, this message translates to:
+  /// **'At least 6 characters, with a number or symbol.'**
+  String get onboardingAtLeast6CharactersWith;
+
+  /// No description provided for @onboardingWePulledInYourDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'We pulled in your details. Add a photo so family knows who\'s who.'**
+  String get onboardingWePulledInYourDetails;
+
+  /// No description provided for @onboardingCompleteYourProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete your profile'**
+  String get onboardingCompleteYourProfile;
+
+  /// No description provided for @onboardingGetStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Get started'**
+  String get onboardingGetStarted;
+
+  /// No description provided for @onboardingNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get onboardingNext;
+
+  /// No description provided for @onboardingCouldNotSendVerificationEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not send verification email. Please try again.'**
+  String get onboardingCouldNotSendVerificationEmail;
+
+  /// No description provided for @onboardingYourEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'your email'**
+  String get onboardingYourEmail;
+
+  /// No description provided for @onboardingTheOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'The owner'**
+  String get onboardingTheOwner;
+
+  /// No description provided for @onboardingWelcomeToSCircle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to {babyName}\'s circle'**
+  String onboardingWelcomeToSCircle(String babyName);
+
+  /// No description provided for @onboardingAddedYouAs.
+  ///
+  /// In en, this message translates to:
+  /// **'{inviter} added you as'**
+  String onboardingAddedYouAs(String inviter);
+
+  /// No description provided for @onboardingThisIsHowYoullAppear.
+  ///
+  /// In en, this message translates to:
+  /// **'This is how you\'ll appear to the rest of the family. {inviter} can update it anytime from their side.'**
+  String onboardingThisIsHowYoullAppear(String inviter);
+
+  /// No description provided for @onboardingOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get onboardingOpen;
+
+  /// No description provided for @onboardingAcceptInvitation.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept Invitation'**
+  String get onboardingAcceptInvitation;
+
+  /// No description provided for @onboardingReliveEveryMilestoneInThe.
+  ///
+  /// In en, this message translates to:
+  /// **'Relive every milestone in the Gallery'**
+  String get onboardingReliveEveryMilestoneInThe;
+
+  /// No description provided for @onboardingBabyIsAlreadyHereSee.
+  ///
+  /// In en, this message translates to:
+  /// **'Baby is already here. See the first photos and everything since.'**
+  String get onboardingBabyIsAlreadyHereSee;
+
+  /// No description provided for @onboardingVoteGuessInFamilyFun.
+  ///
+  /// In en, this message translates to:
+  /// **'Vote & guess in Family Fun'**
+  String get onboardingVoteGuessInFamilyFun;
+
+  /// No description provided for @onboardingSuggestNamesVoteOnFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest names, vote on favorites, and guess the birthdate. Results reveal once baby arrives.'**
+  String get onboardingSuggestNamesVoteOnFavorites;
+
+  /// No description provided for @onboardingWelcomeYoureIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome, you\'re in!'**
+  String get onboardingWelcomeYoureIn;
+
+  /// No description provided for @onboardingAPrivateSpaceJustFor.
+  ///
+  /// In en, this message translates to:
+  /// **'A private space just for the family and friends closest to your circle.'**
+  String get onboardingAPrivateSpaceJustFor;
+
+  /// No description provided for @onboardingSquishPhotosLeaveComments.
+  ///
+  /// In en, this message translates to:
+  /// **'Squish photos & leave comments'**
+  String get onboardingSquishPhotosLeaveComments;
+
+  /// No description provided for @onboardingTapTheHeartToSquish.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the heart to \"squish\" any photo the family shares.'**
+  String get onboardingTapTheHeartToSquish;
+
+  /// No description provided for @onboardingNeverMissWhatsNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Never miss what\'s next'**
+  String get onboardingNeverMissWhatsNext;
+
+  /// No description provided for @onboardingSeeUpcomingEventsLikeGender.
+  ///
+  /// In en, this message translates to:
+  /// **'See upcoming events, like gender reveals and baby showers, and RSVP right from the app.'**
+  String get onboardingSeeUpcomingEventsLikeGender;
+
+  /// No description provided for @onboardingGetUpdatesYourWay.
+  ///
+  /// In en, this message translates to:
+  /// **'Get updates your way'**
+  String get onboardingGetUpdatesYourWay;
+
+  /// No description provided for @onboardingChooseHowOftenYouHear.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how often you hear from us: real-time, daily, or a weekly digest. You can change this anytime.'**
+  String get onboardingChooseHowOftenYouHear;
+
+  /// No description provided for @onboardingFollowerGetStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Started'**
+  String get onboardingFollowerGetStarted;
+
+  /// No description provided for @onboardingAcceptJoinAsOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept & Join as Owner'**
+  String get onboardingAcceptJoinAsOwner;
+
+  /// No description provided for @onboardingYourCoParent.
+  ///
+  /// In en, this message translates to:
+  /// **'your co-parent'**
+  String get onboardingYourCoParent;
+
+  /// No description provided for @onboardingSignInToAcceptYour.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to accept your invitation and continue.'**
+  String get onboardingSignInToAcceptYour;
+
+  /// No description provided for @onboardingSignInToContinueSetting.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to continue setting up your family space.'**
+  String get onboardingSignInToContinueSetting;
+
+  /// No description provided for @onboardingGoogleSignInIsNot.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Sign-In is not configured for this Android build yet. Use email/password, or enable Google in Firebase for lanonna-dev.'**
+  String get onboardingGoogleSignInIsNot;
+
+  /// No description provided for @onboardingWelcomeBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome back'**
+  String get onboardingWelcomeBack;
+
+  /// No description provided for @onboardingAiSuggestedByStageAnd.
+  ///
+  /// In en, this message translates to:
+  /// **'AI-suggested by stage and age'**
+  String get onboardingAiSuggestedByStageAnd;
+
+  /// No description provided for @onboardingAddYourFirstMoment.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your first moment'**
+  String get onboardingAddYourFirstMoment;
+
+  /// No description provided for @onboardingTotallyOptionalButItHelps.
+  ///
+  /// In en, this message translates to:
+  /// **'Totally optional, but it helps family feel like there\'s already something here.'**
+  String get onboardingTotallyOptionalButItHelps;
+
+  /// No description provided for @onboardingSeedsTheVoteInFamily.
+  ///
+  /// In en, this message translates to:
+  /// **'Seeds the vote in Family Fun'**
+  String get onboardingSeedsTheVoteInFamily;
+
+  /// No description provided for @onboardingFromYourCameraOrLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'From your camera or library'**
+  String get onboardingFromYourCameraOrLibrary;
+
+  /// No description provided for @onboardingYourBabysStoryInOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Your baby\'s story, in one private place'**
+  String get onboardingYourBabysStoryInOne;
+
+  /// No description provided for @onboardingPhotosUpdatesAndEverythingIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos, updates, and everything in between, visible only to the people you invite.'**
+  String get onboardingPhotosUpdatesAndEverythingIn;
+
+  /// No description provided for @onboardingEveryoneGetsToFeelClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone gets to feel close'**
+  String get onboardingEveryoneGetsToFeelClose;
+
+  /// No description provided for @onboardingGrandparentsAuntsUnclesAndFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'Grandparents, aunts, uncles, and friends can follow along, no matter how far away they live.'**
+  String get onboardingGrandparentsAuntsUnclesAndFriends;
+
+  /// No description provided for @onboardingCelebrateEveryMilestoneTogether.
+  ///
+  /// In en, this message translates to:
+  /// **'Celebrate every milestone together'**
+  String get onboardingCelebrateEveryMilestoneTogether;
+
+  /// No description provided for @onboardingCalendarEventsASharedRegistry.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar events, a shared registry, and fun ways to mark the big days.'**
+  String get onboardingCalendarEventsASharedRegistry;
+
+  /// No description provided for @onboardingNeverLoseAMoment.
+  ///
+  /// In en, this message translates to:
+  /// **'Never lose a moment'**
+  String get onboardingNeverLoseAMoment;
+
+  /// No description provided for @onboardingEveryPhotoAndCommentSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Every photo and comment, saved in one safe place, for good.'**
+  String get onboardingEveryPhotoAndCommentSaved;
+
+  /// No description provided for @onboardingYourRelationshipToBaby.
+  ///
+  /// In en, this message translates to:
+  /// **'Your relationship to baby'**
+  String get onboardingYourRelationshipToBaby;
+
+  /// No description provided for @onboardingMother.
+  ///
+  /// In en, this message translates to:
+  /// **'Mother'**
+  String get onboardingMother;
+
+  /// No description provided for @onboardingFather.
+  ///
+  /// In en, this message translates to:
+  /// **'Father'**
+  String get onboardingFather;
+
+  /// No description provided for @invitationsAlreadyHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Already here'**
+  String get invitationsAlreadyHere;
+
+  /// No description provided for @invitationsBorn.
+  ///
+  /// In en, this message translates to:
+  /// **'Born {formatted}'**
+  String invitationsBorn(String formatted);
+
+  /// No description provided for @invitationsOnTheWay.
+  ///
+  /// In en, this message translates to:
+  /// **'On the way'**
+  String get invitationsOnTheWay;
+
+  /// No description provided for @invitationsArriving.
+  ///
+  /// In en, this message translates to:
+  /// **'Arriving {formatted}'**
+  String invitationsArriving(String formatted);
+
+  /// No description provided for @invitationsAlreadyOnTheFamily.
+  ///
+  /// In en, this message translates to:
+  /// **'Already on the family'**
+  String get invitationsAlreadyOnTheFamily;
+
+  /// No description provided for @invitationsInvitationAlreadyPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation already pending'**
+  String get invitationsInvitationAlreadyPending;
+
+  /// No description provided for @invitationsAddAnotherPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'Add another person'**
+  String get invitationsAddAnotherPerson;
+
+  /// No description provided for @invitationsInviteFamilyFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite family & friends'**
+  String get invitationsInviteFamilyFriends;
+
+  /// No description provided for @invitationsAddThePeopleYouWant.
+  ///
+  /// In en, this message translates to:
+  /// **'Add the people you want to share this with. You can always invite more later.'**
+  String get invitationsAddThePeopleYouWant;
+
+  /// No description provided for @invitationsWellSendEachPersonA.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll send each person a private link. It expires in 14 days.'**
+  String get invitationsWellSendEachPersonA;
+
+  /// No description provided for @invitationsThisInvitationHasExpiredAsk.
+  ///
+  /// In en, this message translates to:
+  /// **'This invitation has expired. Ask the family to send a new invite.'**
+  String get invitationsThisInvitationHasExpiredAsk;
+
+  /// No description provided for @invitationsThisInvitationWasRevokedAsk.
+  ///
+  /// In en, this message translates to:
+  /// **'This invitation was revoked. Ask the family to send a new invite.'**
+  String get invitationsThisInvitationWasRevokedAsk;
+
+  /// No description provided for @invitationsThisInvitationWasAlreadyUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'This invitation was already used. Sign in with the account that accepted it.'**
+  String get invitationsThisInvitationWasAlreadyUsed;
+
+  /// No description provided for @invitationsThisInvitationLinkIsInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'This invitation link is invalid or was revoked.'**
+  String get invitationsThisInvitationLinkIsInvalid;
+
+  /// No description provided for @invitationsThisBabyAlreadyHasThe.
+  ///
+  /// In en, this message translates to:
+  /// **'This baby already has the maximum number of owners.'**
+  String get invitationsThisBabyAlreadyHasThe;
+
+  /// No description provided for @invitationsYouAreAlreadyPartOf.
+  ///
+  /// In en, this message translates to:
+  /// **'You are already part of this baby\'s circle.'**
+  String get invitationsYouAreAlreadyPartOf;
+
+  /// No description provided for @invitationsSignInWithTheEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with the email address that received the invitation.'**
+  String get invitationsSignInWithTheEmail;
+
+  /// No description provided for @invitationsCouldNotAcceptThisInvitation.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not accept this invitation. Please try again.'**
+  String get invitationsCouldNotAcceptThisInvitation;
+
+  /// No description provided for @invitationsConnectToTheInternetTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to the internet to open this invitation.'**
+  String get invitationsConnectToTheInternetTo;
+
+  /// No description provided for @invitationsCouldNotLoadThisInvitation.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load this invitation. Try again.'**
+  String get invitationsCouldNotLoadThisInvitation;
+
+  /// No description provided for @invitationsAFamilyMember.
+  ///
+  /// In en, this message translates to:
+  /// **'A family member'**
+  String get invitationsAFamilyMember;
+
+  /// No description provided for @invitationsYoureAlreadyAMember.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re already a member'**
+  String get invitationsYoureAlreadyAMember;
+
+  /// No description provided for @invitationsInvitedYouToCoOwn.
+  ///
+  /// In en, this message translates to:
+  /// **'{inviter} invited you to co-own'**
+  String invitationsInvitedYouToCoOwn(String inviter);
+
+  /// No description provided for @invitationsInvitedYouToFollow.
+  ///
+  /// In en, this message translates to:
+  /// **'{inviter} invited you to follow'**
+  String invitationsInvitedYouToFollow(String inviter);
+
+  /// No description provided for @invitationsAsACoOwnerYoull.
+  ///
+  /// In en, this message translates to:
+  /// **'As a co-owner, you\'ll have full access to edit, invite, and manage, just like the person who invited you.'**
+  String get invitationsAsACoOwnerYoull;
+
+  /// No description provided for @invitationsAPrivateSpaceJustFor.
+  ///
+  /// In en, this message translates to:
+  /// **'A private space just for family & friends. Nothing here is public.'**
+  String get invitationsAPrivateSpaceJustFor;
+
+  /// No description provided for @invitationsInvitationUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation unavailable'**
+  String get invitationsInvitationUnavailable;
 }
 
 class _AppLocalizationsDelegate

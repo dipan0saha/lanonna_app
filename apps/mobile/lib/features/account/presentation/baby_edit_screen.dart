@@ -174,7 +174,7 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
             kind: AppTextInputKind.personName,
             controller: _name,
           ),
-          const OnboardingFieldLabel('Gender'),
+          OnboardingFieldLabel(AppLocalizations.of(context)!.babyGender),
           const SizedBox(height: 8),
           OnboardingPillSelect(
             options: [for (final g in BabyGender.values) g.label(l10n)],
@@ -194,14 +194,14 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
             },
           ),
           ListTile(
-            title: Text(_isBorn ? 'Date of birth' : 'Expected due date'),
+            title: Text(_isBorn ? AppLocalizations.of(context)!.announcementDateOfBirth : AppLocalizations.of(context)!.accountExpectedDueDate),
             subtitle: Text(
               _date != null
                   ? formatApiCalendarDateFromParts(
                       _date!,
                       localeNameForFormatting(context),
                     )
-                  : 'Tap to choose',
+                  : AppLocalizations.of(context)!.accountTapToChoose,
             ),
             trailing: const Icon(Icons.calendar_today_outlined, size: 20),
             onTap: _pickDate,
@@ -221,7 +221,7 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
           const SizedBox(height: 20),
           FilledButton(
             onPressed: _saving ? null : _save,
-            child: Text(_saving ? 'Saving…' : 'Save Changes'),
+            child: Text(_saving ? AppLocalizations.of(context)!.notificationPrefsSaving : AppLocalizations.of(context)!.calendarSaveChanges),
           ),
           SizedBox(height: AppSpacing.sm),
           OutlinedButton(

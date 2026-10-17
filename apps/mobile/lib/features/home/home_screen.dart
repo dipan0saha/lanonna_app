@@ -216,7 +216,7 @@ class _HomeScreenState extends State<HomeScreen>
           if (mounted) {
             AppSnackBar.showAlert(
               context,
-              'Could not update baby: ${apiErrorMessage(e)}',
+              AppLocalizations.of(context)!.homeCouldNotUpdateBaby(apiErrorMessage(e)),
             );
           }
         } finally {

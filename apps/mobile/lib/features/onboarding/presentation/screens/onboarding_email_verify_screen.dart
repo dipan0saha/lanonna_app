@@ -75,7 +75,7 @@ class _OnboardingEmailVerifyScreenState
       setState(() => _message = userFacingAuthError(e));
     } catch (_) {
       setState(
-        () => _message = 'Could not send verification email. Please try again.',
+        () => _message = AppLocalizations.of(context)!.onboardingCouldNotSendVerificationEmail,
       );
     }
   }
@@ -83,7 +83,7 @@ class _OnboardingEmailVerifyScreenState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final email = FirebaseAuth.instance.currentUser?.email ?? 'your email';
+    final email = FirebaseAuth.instance.currentUser?.email ?? AppLocalizations.of(context)!.onboardingYourEmail;
     final isLikelyUndeliverable =
         email.endsWith('@test.com') || email.contains('.smoke@');
     return OnboardingScaffold(

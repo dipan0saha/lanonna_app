@@ -94,7 +94,7 @@ class _CalendarUpcomingScreenState extends State<CalendarUpcomingScreen>
     } catch (e) {
       setState(() {
         _loading = false;
-        _error = 'Could not load events. Pull to refresh or try again.';
+        _error = AppLocalizations.of(context)!.calendarCouldNotLoadEventsPull;
       });
     }
   }

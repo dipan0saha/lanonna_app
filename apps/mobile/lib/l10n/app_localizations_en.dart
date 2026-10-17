@@ -1618,4 +1618,687 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get inviteEmailFailed => 'Email failed to send';
+
+  @override
+  String get commonMe => 'Me';
+
+  @override
+  String settingsCouldNotOpenEmailTo(String supportEmail) {
+    return 'Could not open email to $supportEmail. Copy link?';
+  }
+
+  @override
+  String get homeConfirmTheDateOfBirth =>
+      'Confirm the date of birth. Your home will update to celebrate your baby.';
+
+  @override
+  String get homeDateOfBirthCannotBe =>
+      'Date of birth cannot be in the future.';
+
+  @override
+  String homeYoullBeNotifiedTheMoment(String babyName) {
+    return 'You\'ll be notified the moment $babyName arrives.';
+  }
+
+  @override
+  String get homeViewAnnouncement => '🎀 View Announcement';
+
+  @override
+  String get homeShareToInstagram => '📸 Share to Instagram';
+
+  @override
+  String homeBorn(String formatted) {
+    return 'Born $formatted';
+  }
+
+  @override
+  String get homeEveryoneYouveInvitedHasBeen =>
+      'Everyone you\'ve invited has been notified.';
+
+  @override
+  String homeInvitesNotifiedWithLine(String line) {
+    return '$line. Everyone you\'ve invited has been notified.';
+  }
+
+  @override
+  String homeDaysToDueDate(String dueDateLabel) {
+    return 'Days to due date · $dueDateLabel';
+  }
+
+  @override
+  String get homeDaysToDueDateHeading => 'DAYS TO DUE DATE';
+
+  @override
+  String homeCouldNotUpdateBaby(String value1) {
+    return 'Could not update baby: $value1';
+  }
+
+  @override
+  String get calendarFamilyMember => 'Family member';
+
+  @override
+  String get calendarOnlyOwnersCanCreateOr =>
+      'Only owners can create or edit calendar events.';
+
+  @override
+  String get calendarBabyProfileIsStillLoading =>
+      'Baby profile is still loading. Try again.';
+
+  @override
+  String get calendarEnterAnEventTitleTo => 'Enter an event title to continue.';
+
+  @override
+  String get calendarSaveChanges => 'Save Changes';
+
+  @override
+  String get calendarSaveEvent => 'Save Event';
+
+  @override
+  String get calendarEditEvent => 'Edit Event';
+
+  @override
+  String get calendarNewEvent => 'New Event';
+
+  @override
+  String get calendarAddUltrasoundsShowersOrThe =>
+      'Add ultrasounds, showers, or the gender reveal so family knows when to celebrate.';
+
+  @override
+  String get calendarNothingOnTheCalendarYet =>
+      'Nothing on the calendar yet — check back soon.';
+
+  @override
+  String get calendarAddEventCta => '+ Add Event';
+
+  @override
+  String get calendarJanuary => 'January';
+
+  @override
+  String get calendarFebruary => 'February';
+
+  @override
+  String get calendarMarch => 'March';
+
+  @override
+  String get calendarApril => 'April';
+
+  @override
+  String get calendarMay => 'May';
+
+  @override
+  String get calendarJune => 'June';
+
+  @override
+  String get calendarJuly => 'July';
+
+  @override
+  String get calendarAugust => 'August';
+
+  @override
+  String get calendarSeptember => 'September';
+
+  @override
+  String get calendarOctober => 'October';
+
+  @override
+  String get calendarNovember => 'November';
+
+  @override
+  String get calendarDecember => 'December';
+
+  @override
+  String get calendarCouldNotLoadEventsPull =>
+      'Could not load events. Pull to refresh or try again.';
+
+  @override
+  String get calendarWhen => 'When';
+
+  @override
+  String get calendarLocation => 'Location';
+
+  @override
+  String get calendarYourRsvp => 'Your RSVP';
+
+  @override
+  String get calendarComments => 'Comments';
+
+  @override
+  String calendarCouldNotLoadSuggestions(String value1) {
+    return 'Could not load suggestions: $value1';
+  }
+
+  @override
+  String get calendarEventAddedToCalendar => 'Event added to calendar';
+
+  @override
+  String get calendarPhotoOptional => 'Photo (optional)';
+
+  @override
+  String get shellYoureTheOwnerOfOne =>
+      'You\'re the Owner of one and a Follower of another.';
+
+  @override
+  String get shellChooseWhichBabyProfileTo =>
+      'Choose which baby profile to view.';
+
+  @override
+  String get galleryBaby => 'Baby';
+
+  @override
+  String get galleryFavorites => 'Favorites';
+
+  @override
+  String get galleryAllPhotos => 'All photos';
+
+  @override
+  String get galleryRecentActivity => 'Recent activity';
+
+  @override
+  String get galleryPhotoUploaded => 'Photo uploaded';
+
+  @override
+  String galleryUploadFailed(String value1) {
+    return 'Upload failed: $value1';
+  }
+
+  @override
+  String get galleryPhotoProcessingIsTakingLonger =>
+      'Photo processing is taking longer than usual. Pull to refresh the gallery.';
+
+  @override
+  String get galleryThisPhotoIsNoLonger => 'This photo is no longer available.';
+
+  @override
+  String get galleryNoCaption => 'No caption';
+
+  @override
+  String galleryAddYourFirstPhotoTo(String name) {
+    return 'Add your first photo to start sharing $name\'s journey with family.';
+  }
+
+  @override
+  String get galleryOnceAPhotoIsShared =>
+      'Once a photo is shared, it will show up here for everyone to enjoy.';
+
+  @override
+  String get galleryAddPhoto => '+ Add Photo';
+
+  @override
+  String get funAnonymous => 'Anonymous';
+
+  @override
+  String get funPredictions => 'Predictions';
+
+  @override
+  String get funNoVotesYet => 'No votes yet';
+
+  @override
+  String get funNoGuessesYet => 'No guesses yet';
+
+  @override
+  String get funNoGuessesYetBeThe => 'No guesses yet - be the first!';
+
+  @override
+  String get funNoNameIdeasWereSaved =>
+      'No name ideas were saved before baby arrived.';
+
+  @override
+  String get funSuggestANameBelowEveryone =>
+      'Suggest a name below — everyone gets a say.';
+
+  @override
+  String get funBoys => 'Boys';
+
+  @override
+  String get funGirls => 'Girls';
+
+  @override
+  String funUnlike(String suggestedName) {
+    return 'Unlike $suggestedName';
+  }
+
+  @override
+  String funLove(String suggestedName) {
+    return 'Love $suggestedName';
+  }
+
+  @override
+  String get registryOnlyOwnersCanEditThe =>
+      'Only owners can edit the shipping address.';
+
+  @override
+  String registryCouldNotLoadShippingAddress(String e) {
+    return 'Could not load shipping address: $e';
+  }
+
+  @override
+  String get registryEditRegistryItem => 'Edit Registry Item';
+
+  @override
+  String get registryAddRegistryItem => 'Add Registry Item';
+
+  @override
+  String registryCouldNotLoadSuggestions(String value1) {
+    return 'Could not load suggestions: $value1';
+  }
+
+  @override
+  String get registryIllBuyThis => 'I\'ll buy this';
+
+  @override
+  String get registryAddTheThingsYourBaby =>
+      'Add the things your baby will need so family knows what to bring.';
+
+  @override
+  String get registryNothingsBeenAddedToThe =>
+      'Nothing\'s been added to the registry yet — check back soon.';
+
+  @override
+  String get registryAddItemCta => '+ Add Item';
+
+  @override
+  String get babyBabyCreated => 'Baby created';
+
+  @override
+  String get babyBabyUpdated => 'Baby updated';
+
+  @override
+  String babyProfilePhotoFailed(String createdLabel, String value1) {
+    return '$createdLabel; profile photo failed: $value1';
+  }
+
+  @override
+  String get babyProfilePhotoSavedGalleryUpload =>
+      'Profile photo saved; gallery upload failed';
+
+  @override
+  String babyGalleryUploadFailed(String createdLabel) {
+    return '$createdLabel; gallery upload failed';
+  }
+
+  @override
+  String get babyExpectedDueDate => 'Expected Due Date';
+
+  @override
+  String get babyCreateBaby => 'Create Baby';
+
+  @override
+  String get babyExpectedDueDateCannotBe =>
+      'Expected due date cannot be in the past.';
+
+  @override
+  String get babyProfilePhotoOptional => 'Profile photo (optional)';
+
+  @override
+  String get babyUpdateYourBabysProfile => 'Update your baby\'s profile';
+
+  @override
+  String get babyCreateYourBabysProfile => 'Create your baby\'s profile';
+
+  @override
+  String get babyYouCanAlwaysAddOr =>
+      'You can always add or change these details later.';
+
+  @override
+  String get babyAlreadyBorn => 'Already Born';
+
+  @override
+  String get babyGender => 'Gender';
+
+  @override
+  String get babyTapContinueToTryAgain => 'Tap Continue to try again.';
+
+  @override
+  String get babyTapCreateBabyToTry => 'Tap Create Baby to try again.';
+
+  @override
+  String get accountMember => 'Member';
+
+  @override
+  String get accountShowPassword => 'Show password';
+
+  @override
+  String get accountHidePassword => 'Hide password';
+
+  @override
+  String get accountNoBabyProfileYouOwn => 'No baby profile you own yet.';
+
+  @override
+  String get accountExpectedDueDate => 'Expected due date';
+
+  @override
+  String get accountTapToChoose => 'Tap to choose';
+
+  @override
+  String get accountCouldntOpenTheDownloadCopy =>
+      'Couldn\'t open the download. Copy link?';
+
+  @override
+  String get accountRequesting => 'Requesting…';
+
+  @override
+  String get accountRequestNewExport => 'Request new export';
+
+  @override
+  String get accountPhotosSquished => 'Photos Squished';
+
+  @override
+  String get accountEventsAttended => 'Events Attended';
+
+  @override
+  String get accountItemsBought => 'Items Bought';
+
+  @override
+  String get accountPendingInvite => 'Pending invite';
+
+  @override
+  String accountAccepted(String formatted) {
+    return 'Accepted · $formatted';
+  }
+
+  @override
+  String get accountInviteEmailQueued => 'Invite email queued';
+
+  @override
+  String get announcementFamily => 'Family';
+
+  @override
+  String get announcementOptional => 'Optional';
+
+  @override
+  String get announcementSaveAnnouncement => 'Save Announcement';
+
+  @override
+  String get announcementOurBabyAnnouncementIsHere =>
+      'Our baby announcement is here!';
+
+  @override
+  String announcementMeet(String name) {
+    return 'Meet $name!';
+  }
+
+  @override
+  String get announcementBabyAnnouncement => 'Baby announcement';
+
+  @override
+  String get onboardingGrandma => 'Grandma';
+
+  @override
+  String get onboardingWeCouldntLoadYourBaby =>
+      'We couldn\'t load your baby profile. Check your connection and try again.';
+
+  @override
+  String get onboardingAtLeast6CharactersWith =>
+      'At least 6 characters, with a number or symbol.';
+
+  @override
+  String get onboardingWePulledInYourDetails =>
+      'We pulled in your details. Add a photo so family knows who\'s who.';
+
+  @override
+  String get onboardingCompleteYourProfile => 'Complete your profile';
+
+  @override
+  String get onboardingGetStarted => 'Get started';
+
+  @override
+  String get onboardingNext => 'Next';
+
+  @override
+  String get onboardingCouldNotSendVerificationEmail =>
+      'Could not send verification email. Please try again.';
+
+  @override
+  String get onboardingYourEmail => 'your email';
+
+  @override
+  String get onboardingTheOwner => 'The owner';
+
+  @override
+  String onboardingWelcomeToSCircle(String babyName) {
+    return 'Welcome to $babyName\'s circle';
+  }
+
+  @override
+  String onboardingAddedYouAs(String inviter) {
+    return '$inviter added you as';
+  }
+
+  @override
+  String onboardingThisIsHowYoullAppear(String inviter) {
+    return 'This is how you\'ll appear to the rest of the family. $inviter can update it anytime from their side.';
+  }
+
+  @override
+  String get onboardingOpen => 'Open';
+
+  @override
+  String get onboardingAcceptInvitation => 'Accept Invitation';
+
+  @override
+  String get onboardingReliveEveryMilestoneInThe =>
+      'Relive every milestone in the Gallery';
+
+  @override
+  String get onboardingBabyIsAlreadyHereSee =>
+      'Baby is already here. See the first photos and everything since.';
+
+  @override
+  String get onboardingVoteGuessInFamilyFun => 'Vote & guess in Family Fun';
+
+  @override
+  String get onboardingSuggestNamesVoteOnFavorites =>
+      'Suggest names, vote on favorites, and guess the birthdate. Results reveal once baby arrives.';
+
+  @override
+  String get onboardingWelcomeYoureIn => 'Welcome, you\'re in!';
+
+  @override
+  String get onboardingAPrivateSpaceJustFor =>
+      'A private space just for the family and friends closest to your circle.';
+
+  @override
+  String get onboardingSquishPhotosLeaveComments =>
+      'Squish photos & leave comments';
+
+  @override
+  String get onboardingTapTheHeartToSquish =>
+      'Tap the heart to \"squish\" any photo the family shares.';
+
+  @override
+  String get onboardingNeverMissWhatsNext => 'Never miss what\'s next';
+
+  @override
+  String get onboardingSeeUpcomingEventsLikeGender =>
+      'See upcoming events, like gender reveals and baby showers, and RSVP right from the app.';
+
+  @override
+  String get onboardingGetUpdatesYourWay => 'Get updates your way';
+
+  @override
+  String get onboardingChooseHowOftenYouHear =>
+      'Choose how often you hear from us: real-time, daily, or a weekly digest. You can change this anytime.';
+
+  @override
+  String get onboardingFollowerGetStarted => 'Get Started';
+
+  @override
+  String get onboardingAcceptJoinAsOwner => 'Accept & Join as Owner';
+
+  @override
+  String get onboardingYourCoParent => 'your co-parent';
+
+  @override
+  String get onboardingSignInToAcceptYour =>
+      'Sign in to accept your invitation and continue.';
+
+  @override
+  String get onboardingSignInToContinueSetting =>
+      'Sign in to continue setting up your family space.';
+
+  @override
+  String get onboardingGoogleSignInIsNot =>
+      'Google Sign-In is not configured for this Android build yet. Use email/password, or enable Google in Firebase for lanonna-dev.';
+
+  @override
+  String get onboardingWelcomeBack => 'Welcome back';
+
+  @override
+  String get onboardingAiSuggestedByStageAnd => 'AI-suggested by stage and age';
+
+  @override
+  String get onboardingAddYourFirstMoment => 'Add your first moment';
+
+  @override
+  String get onboardingTotallyOptionalButItHelps =>
+      'Totally optional, but it helps family feel like there\'s already something here.';
+
+  @override
+  String get onboardingSeedsTheVoteInFamily => 'Seeds the vote in Family Fun';
+
+  @override
+  String get onboardingFromYourCameraOrLibrary => 'From your camera or library';
+
+  @override
+  String get onboardingYourBabysStoryInOne =>
+      'Your baby\'s story, in one private place';
+
+  @override
+  String get onboardingPhotosUpdatesAndEverythingIn =>
+      'Photos, updates, and everything in between, visible only to the people you invite.';
+
+  @override
+  String get onboardingEveryoneGetsToFeelClose => 'Everyone gets to feel close';
+
+  @override
+  String get onboardingGrandparentsAuntsUnclesAndFriends =>
+      'Grandparents, aunts, uncles, and friends can follow along, no matter how far away they live.';
+
+  @override
+  String get onboardingCelebrateEveryMilestoneTogether =>
+      'Celebrate every milestone together';
+
+  @override
+  String get onboardingCalendarEventsASharedRegistry =>
+      'Calendar events, a shared registry, and fun ways to mark the big days.';
+
+  @override
+  String get onboardingNeverLoseAMoment => 'Never lose a moment';
+
+  @override
+  String get onboardingEveryPhotoAndCommentSaved =>
+      'Every photo and comment, saved in one safe place, for good.';
+
+  @override
+  String get onboardingYourRelationshipToBaby => 'Your relationship to baby';
+
+  @override
+  String get onboardingMother => 'Mother';
+
+  @override
+  String get onboardingFather => 'Father';
+
+  @override
+  String get invitationsAlreadyHere => 'Already here';
+
+  @override
+  String invitationsBorn(String formatted) {
+    return 'Born $formatted';
+  }
+
+  @override
+  String get invitationsOnTheWay => 'On the way';
+
+  @override
+  String invitationsArriving(String formatted) {
+    return 'Arriving $formatted';
+  }
+
+  @override
+  String get invitationsAlreadyOnTheFamily => 'Already on the family';
+
+  @override
+  String get invitationsInvitationAlreadyPending =>
+      'Invitation already pending';
+
+  @override
+  String get invitationsAddAnotherPerson => 'Add another person';
+
+  @override
+  String get invitationsInviteFamilyFriends => 'Invite family & friends';
+
+  @override
+  String get invitationsAddThePeopleYouWant =>
+      'Add the people you want to share this with. You can always invite more later.';
+
+  @override
+  String get invitationsWellSendEachPersonA =>
+      'We\'ll send each person a private link. It expires in 14 days.';
+
+  @override
+  String get invitationsThisInvitationHasExpiredAsk =>
+      'This invitation has expired. Ask the family to send a new invite.';
+
+  @override
+  String get invitationsThisInvitationWasRevokedAsk =>
+      'This invitation was revoked. Ask the family to send a new invite.';
+
+  @override
+  String get invitationsThisInvitationWasAlreadyUsed =>
+      'This invitation was already used. Sign in with the account that accepted it.';
+
+  @override
+  String get invitationsThisInvitationLinkIsInvalid =>
+      'This invitation link is invalid or was revoked.';
+
+  @override
+  String get invitationsThisBabyAlreadyHasThe =>
+      'This baby already has the maximum number of owners.';
+
+  @override
+  String get invitationsYouAreAlreadyPartOf =>
+      'You are already part of this baby\'s circle.';
+
+  @override
+  String get invitationsSignInWithTheEmail =>
+      'Sign in with the email address that received the invitation.';
+
+  @override
+  String get invitationsCouldNotAcceptThisInvitation =>
+      'Could not accept this invitation. Please try again.';
+
+  @override
+  String get invitationsConnectToTheInternetTo =>
+      'Connect to the internet to open this invitation.';
+
+  @override
+  String get invitationsCouldNotLoadThisInvitation =>
+      'Could not load this invitation. Try again.';
+
+  @override
+  String get invitationsAFamilyMember => 'A family member';
+
+  @override
+  String get invitationsYoureAlreadyAMember => 'You\'re already a member';
+
+  @override
+  String invitationsInvitedYouToCoOwn(String inviter) {
+    return '$inviter invited you to co-own';
+  }
+
+  @override
+  String invitationsInvitedYouToFollow(String inviter) {
+    return '$inviter invited you to follow';
+  }
+
+  @override
+  String get invitationsAsACoOwnerYoull =>
+      'As a co-owner, you\'ll have full access to edit, invite, and manage, just like the person who invited you.';
+
+  @override
+  String get invitationsAPrivateSpaceJustFor =>
+      'A private space just for family & friends. Nothing here is public.';
+
+  @override
+  String get invitationsInvitationUnavailable => 'Invitation unavailable';
 }

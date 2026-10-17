@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -49,7 +50,7 @@ Future<void> _applyAvatarAndGallery({
 
   final imageFile = File(input.selectedImage!.path);
   var avatarSaved = false;
-  final createdLabel = isCreate ? 'Baby created' : 'Baby updated';
+  final createdLabel = isCreate ? AppLocalizations.of(context)!.babyBabyCreated : AppLocalizations.of(context)!.babyBabyUpdated;
   try {
     final avatarUrl = await DisplayPhotoUpload(api).uploadBabyAvatar(
       babyProfileId: babyProfileId,
@@ -59,7 +60,7 @@ Future<void> _applyAvatarAndGallery({
     avatarSaved = true;
   } catch (e) {
     onNonFatalError?.call(
-      '$createdLabel; profile photo failed: ${apiErrorMessage(e)}',
+      AppLocalizations.of(context)!.babyProfilePhotoFailed(createdLabel, apiErrorMessage(e)),
     );
   }
   if (input.sharePhotoToGallery) {
@@ -76,8 +77,8 @@ Future<void> _applyAvatarAndGallery({
       }
     } catch (e) {
       final prefix = avatarSaved
-          ? 'Profile photo saved; gallery upload failed'
-          : '$createdLabel; gallery upload failed';
+          ? AppLocalizations.of(context)!.babyProfilePhotoSavedGalleryUpload
+          : AppLocalizations.of(context)!.babyGalleryUploadFailed(createdLabel);
       onNonFatalError?.call('$prefix: ${apiErrorMessage(e)}');
     }
   }

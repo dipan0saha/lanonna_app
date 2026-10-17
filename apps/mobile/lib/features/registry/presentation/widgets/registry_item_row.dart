@@ -38,7 +38,7 @@ class RegistryNeededRow extends StatelessWidget {
             semanticsId: isOwner
                 ? 'registry_mark_purchased'
                 : 'registry_claim_item',
-            label: isOwner ? 'Mark as purchased' : "I'll buy this",
+            label: isOwner ? AppLocalizations.of(context)!.registryMarkPurchased : AppLocalizations.of(context)!.registryIllBuyThis,
             onPressed: onClaim,
           );
 

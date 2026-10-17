@@ -77,7 +77,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
   String _inviteTitle(InvitationRow inv) {
     final label = inv.relationshipLabel?.trim();
     if (label != null && label.isNotEmpty) return label;
-    return 'Pending invite';
+    return AppLocalizations.of(context)!.accountPendingInvite;
   }
 
   String _inviteSubtitle(InvitationRow inv) {
@@ -97,8 +97,8 @@ class _FollowersScreenState extends State<FollowersScreen> {
       raw,
       localeNameForFormatting(context),
     );
-    if (formatted.isEmpty) return 'Accepted';
-    return 'Accepted · $formatted';
+    if (formatted.isEmpty) return AppLocalizations.of(context)!.invitationStatusAccepted;
+    return AppLocalizations.of(context)!.accountAccepted(formatted);
   }
 
   Future<void> _confirmRemove(MemberRow member) async {
@@ -140,7 +140,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
         .where((m) => m.role == 'follower')
         .toList(growable: false);
     final count = followers.length;
-    final babyName = _baby?.name ?? 'Baby';
+    final babyName = _baby?.name ?? AppLocalizations.of(context)!.galleryBaby;
 
     return AppSemantics.container(
       'followers_screen',
@@ -279,7 +279,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
                                             if (!sent || !mounted) return;
                                             AppSnackBar.showInfo(
                                               context,
-                                              'Invite email queued',
+                                              AppLocalizations.of(context)!.accountInviteEmailQueued,
                                             );
                                             await _load();
                                           },

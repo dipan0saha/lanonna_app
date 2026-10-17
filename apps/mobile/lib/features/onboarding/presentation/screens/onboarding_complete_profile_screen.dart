@@ -219,7 +219,7 @@ class _OnboardingCompleteProfileScreenState
               _networkPhotoUrl = googlePhoto;
             }
             _subtext =
-                "We pulled in your details. Add a photo so family knows who's who.";
+                AppLocalizations.of(context)!.onboardingWePulledInYourDetails;
           });
         }
       } on FirebaseException {
@@ -354,7 +354,7 @@ class _OnboardingCompleteProfileScreenState
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 10),
-            const OnboardingHeadline('Complete your profile'),
+            OnboardingHeadline(AppLocalizations.of(context)!.onboardingCompleteYourProfile),
             const SizedBox(height: 8),
             OnboardingSupportText(_subtext),
             const SizedBox(height: 20),
@@ -435,7 +435,7 @@ class _OnboardingCompleteProfileScreenState
                     ),
                   ],
                   const SizedBox(height: 16),
-                  OnboardingFieldLabel('Date of birth (optional)'),
+                  OnboardingFieldLabel(AppLocalizations.of(context)!.accountDateOfBirthOptional),
                   const SizedBox(height: 8),
                   InkWell(
                     onTap: _busy ? null : _pickBirthDate,
@@ -449,7 +449,7 @@ class _OnboardingCompleteProfileScreenState
                         ),
                       ),
                       child: Text(
-                        _birthDateDisplay(context) ?? 'Select a date',
+                        _birthDateDisplay(context) ?? AppLocalizations.of(context)!.fieldSelectDate,
                         style: text.bodyMedium?.copyWith(
                           color: _birthDate == null ? AppColors.muted : null,
                         ),
@@ -457,7 +457,7 @@ class _OnboardingCompleteProfileScreenState
                     ),
                   ),
                   const SizedBox(height: 16),
-                  OnboardingFieldLabel('Country (optional)'),
+                  OnboardingFieldLabel(AppLocalizations.of(context)!.fieldCountryOptional),
                   const SizedBox(height: 8),
                   AppCountryDropdownField(
                     countries: _countries,

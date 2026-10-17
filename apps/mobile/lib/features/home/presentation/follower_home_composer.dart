@@ -64,7 +64,7 @@ class FollowerHomeComposer extends StatelessWidget {
             showAnnounceCta: false,
             dueDateLabel: _formattedDueDate(context),
             followerFootnote:
-                "You'll be notified the moment $babyName arrives.",
+                AppLocalizations.of(context)!.homeYoullBeNotifiedTheMoment(babyName),
           ),
           HomeScrollSection(
             title: l10n.labelQuickActions,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -124,7 +125,7 @@ class _OnboardingCoOwnerInviteScreenState
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 22),
             child: OnboardingPrimaryButton(
-              label: preview.isAccepted ? 'Open' : 'Accept & Join as Owner',
+              label: preview.isAccepted ? AppLocalizations.of(context)!.onboardingOpen : AppLocalizations.of(context)!.onboardingAcceptJoinAsOwner,
               onPressed: () => preview.isAccepted
                   ? openAcceptedInvitePreview(context)
                   : _accept(preview),

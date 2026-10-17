@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../features/gallery/domain/gallery_routes.dart';
@@ -123,7 +124,7 @@ class _ActivityRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         child: content,
       ),
-      label: summary.isEmpty ? 'Activity' : summary,
+      label: summary.isEmpty ? AppLocalizations.of(context)!.activityTitle : summary,
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_bordered_surface.dart';
@@ -17,10 +18,10 @@ class AccountEngagementStatRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
       child: Row(
         children: [
-          _cell(context, stats.photosSquished.toString(), 'Photos Squished', label),
-          _cell(context, stats.eventsAttended.toString(), 'Events Attended', label),
-          _cell(context, stats.itemsBought.toString(), 'Items Bought', label),
-          _cell(context, stats.comments.toString(), 'Comments', label),
+          _cell(context, stats.photosSquished.toString(), AppLocalizations.of(context)!.accountPhotosSquished, label),
+          _cell(context, stats.eventsAttended.toString(), AppLocalizations.of(context)!.accountEventsAttended, label),
+          _cell(context, stats.itemsBought.toString(), AppLocalizations.of(context)!.accountItemsBought, label),
+          _cell(context, stats.comments.toString(), AppLocalizations.of(context)!.calendarComments, label),
         ],
       ),
     );

@@ -174,7 +174,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                                           },
                                         )
                                       : const Icon(Icons.photo_outlined),
-                                  title: Text(p.caption ?? 'Photo'),
+                                  title: Text(p.caption ?? AppLocalizations.of(context)!.eventPhotoLabel),
                                   onTap: () => context.push(
                                     GalleryRoutes.photoDetail(p.id),
                                   ),

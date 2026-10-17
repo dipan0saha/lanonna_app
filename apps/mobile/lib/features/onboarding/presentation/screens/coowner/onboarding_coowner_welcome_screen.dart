@@ -17,8 +17,8 @@ class OnboardingCoOwnerWelcomeScreen extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final coordinator = context.watch<OnboardingCoordinator>();
     final preview = coordinator.cachedInvitePreview;
-    final babyName = preview?.babyName ?? 'Baby';
-    final inviter = preview?.inviterDisplayName ?? 'your co-parent';
+    final babyName = preview?.babyName ?? AppLocalizations.of(context)!.galleryBaby;
+    final inviter = preview?.inviterDisplayName ?? AppLocalizations.of(context)!.onboardingYourCoParent;
 
     return OnboardingScaffold(
       pinBottomCta: false,

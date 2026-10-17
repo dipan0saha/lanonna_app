@@ -143,7 +143,7 @@ class _AccountScreenState extends State<AccountScreen> {
     );
     if (!mounted) return;
     if (owner == null) {
-      AppSnackBar.showAlert(context, 'No baby profile you own yet.');
+      AppSnackBar.showAlert(context, AppLocalizations.of(context)!.accountNoBabyProfileYouOwn);
       return;
     }
     context.push('/baby/${owner.id}/followers');
@@ -153,7 +153,7 @@ class _AccountScreenState extends State<AccountScreen> {
   Widget build(BuildContext context) {
     final user = context.read<AuthRepository>().currentUser;
     final payload = _payload;
-    final displayName = payload?.displayName ?? user?.email ?? 'Account';
+    final displayName = payload?.displayName ?? user?.email ?? AppLocalizations.of(context)!.labelAccount;
     final email = payload?.email ?? user?.email;
     final showOwnerPrefs = payload?.hasOwnerBaby ?? false;
     final l10n = AppLocalizations.of(context)!;

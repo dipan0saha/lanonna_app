@@ -188,9 +188,9 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
       if (!mounted) return;
       setState(() {
         if (result.isMember) {
-          _rows[index].membershipHint = 'Already on the family';
+          _rows[index].membershipHint = l10n.invitationsAlreadyOnTheFamily;
         } else if (result.hasPendingInvite) {
-          _rows[index].membershipHint = 'Invitation already pending';
+          _rows[index].membershipHint = l10n.invitationsInvitationAlreadyPending;
         } else {
           _rows[index].membershipHint = null;
         }
@@ -341,7 +341,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
           ),
         PrototypeAddAnotherButton(
           onTap: _busy ? () {} : _addRow,
-          label: _isOnboarding ? 'Add another' : 'Add another person',
+          label: _isOnboarding ? l10n.actionAddAnother : l10n.invitationsAddAnotherPerson,
         ),
         OnboardingPrimaryButton(
           semanticsId: _isOnboarding ? null : 'batch_invite_send',
@@ -389,13 +389,13 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 10),
-        const OnboardingHeadline(
-          'Invite family & friends',
+        OnboardingHeadline(
+          l10n.invitationsInviteFamilyFriends,
           key: Key('onboarding_invite_title'),
         ),
         const SizedBox(height: 8),
-        const OnboardingSupportText(
-          'Add the people you want to share this with. You can always invite more later.',
+        OnboardingSupportText(
+          l10n.invitationsAddThePeopleYouWant,
         ),
         const SizedBox(height: 18),
         _inviteRows(),
@@ -414,8 +414,8 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const OnboardingSupportText(
-            "We'll send each person a private link. It expires in 14 days.",
+          OnboardingSupportText(
+            l10n.invitationsWellSendEachPersonA,
           ),
           const SizedBox(height: 12),
           _coOwnerHintBanner(),

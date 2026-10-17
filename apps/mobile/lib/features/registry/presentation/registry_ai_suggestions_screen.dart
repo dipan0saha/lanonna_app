@@ -82,7 +82,7 @@ class _RegistryAiSuggestionsScreenState extends State<RegistryAiSuggestionsScree
         setState(() => _loading = false);
         AppSnackBar.showAlert(
           context,
-          'Could not load suggestions: ${apiErrorMessage(e)}',
+          AppLocalizations.of(context)!.registryCouldNotLoadSuggestions(apiErrorMessage(e)),
         );
       }
     }

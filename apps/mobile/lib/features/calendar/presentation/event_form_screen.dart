@@ -121,7 +121,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
     if (baby != null && baby.role != 'owner') {
       AppSnackBar.showAlert(
         context,
-        'Only owners can create or edit calendar events.',
+        l10n.calendarOnlyOwnersCanCreateOr,
       );
       returnToCalendar(context);
       return;
@@ -299,12 +299,12 @@ class _EventFormScreenState extends State<EventFormScreen> {
     if (baby == null) {
       AppSnackBar.showAlert(
         context,
-        'Baby profile is still loading. Try again.',
+        l10n.calendarBabyProfileIsStillLoading,
       );
       return;
     }
     if (title.isEmpty) {
-      AppSnackBar.showAlert(context, 'Enter an event title to continue.');
+      AppSnackBar.showAlert(context, l10n.calendarEnterAnEventTitleTo);
       return;
     }
     final videoError = validateOptionalHttpUrl(_video.text);
@@ -367,10 +367,10 @@ class _EventFormScreenState extends State<EventFormScreen> {
     final startsAtLocal = _startsAtLocal();
     final pastStart = !widget.isEdit && isEventStartInPast(startsAtLocal);
     final canSave = _baby != null && !_saving;
-    final saveLabel = widget.isEdit ? 'Save Changes' : 'Save Event';
+    final saveLabel = widget.isEdit ? l10n.calendarSaveChanges : l10n.calendarSaveEvent;
 
     return PrototypeSubpageScaffold(
-      title: widget.isEdit ? 'Edit Event' : 'New Event',
+      title: widget.isEdit ? l10n.calendarEditEvent : l10n.calendarNewEvent,
       body: ListView(
         padding: AppMetrics.subpageFormScrollPadding,
         children: [
@@ -439,7 +439,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
             'calendar_event_save',
             FilledButton(
               onPressed: canSave ? _save : null,
-              child: Text(_saving ? 'Saving…' : saveLabel),
+              child: Text(_saving ? l10n.notificationPrefsSaving : saveLabel),
             ),
             label: saveLabel,
           ),

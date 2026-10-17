@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../../../../core/media/cached_signed_image.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -28,7 +29,7 @@ class PrototypeEventCoverUpload extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const OnboardingFieldLabel('Photo (optional)'),
+        OnboardingFieldLabel(AppLocalizations.of(context)!.calendarPhotoOptional),
         const SizedBox(height: AppMetrics.fieldLabelGap),
         GestureDetector(
           onTap: onTap,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/api/api_error_message.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -83,7 +84,7 @@ class _RegistryShippingAddressScreenState
         if (mounted) {
           AppSnackBar.showAlert(
             context,
-            'Only owners can edit the shipping address.',
+            AppLocalizations.of(context)!.registryOnlyOwnersCanEditThe,
           );
           context.pop();
         }
@@ -101,7 +102,7 @@ class _RegistryShippingAddressScreenState
       });
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showAlert(context, 'Could not load shipping address: $e');
+        AppSnackBar.showAlert(context, AppLocalizations.of(context)!.registryCouldNotLoadShippingAddress(apiErrorMessage(e)));
         context.pop();
       }
     }

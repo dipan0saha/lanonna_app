@@ -100,7 +100,7 @@ class AnnouncementKeepsakeCard extends StatelessWidget {
             ),
           SizedBox(height: AppSpacing.lg),
           Text(
-            d.firstName ?? 'Baby',
+            d.firstName ?? AppLocalizations.of(context)!.galleryBaby,
             style: context.keepsakeScriptNameStyle,
             textAlign: TextAlign.center,
           ),

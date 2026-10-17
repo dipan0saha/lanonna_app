@@ -88,7 +88,7 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
     await openExternalLink(
       context,
       uri,
-      failureMessage: "Couldn't open the download. Copy link?",
+      failureMessage: AppLocalizations.of(context)!.accountCouldntOpenTheDownloadCopy,
     );
   }
 
@@ -128,7 +128,7 @@ class _BabyDataExportScreenState extends State<BabyDataExportScreen> {
                   FilledButton(
                     onPressed: _requesting ? null : _requestExport,
                     child: Text(
-                      _requesting ? 'Requesting…' : 'Request new export',
+                      _requesting ? AppLocalizations.of(context)!.accountRequesting : AppLocalizations.of(context)!.accountRequestNewExport,
                     ),
                   ),
                   const SizedBox(height: 8),

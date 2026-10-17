@@ -25,9 +25,9 @@ class GalleryEmptyState extends StatelessWidget {
       icon: Icons.photo_outlined,
       title: l10n.emptyPhotosYet,
       message: isOwner
-          ? 'Add your first photo to start sharing $name\'s journey with family.'
-          : 'Once a photo is shared, it will show up here for everyone to enjoy.',
-      actionLabel: isOwner ? '+ Add Photo' : null,
+          ? AppLocalizations.of(context)!.galleryAddYourFirstPhotoTo(name)
+          : AppLocalizations.of(context)!.galleryOnceAPhotoIsShared,
+      actionLabel: isOwner ? AppLocalizations.of(context)!.galleryAddPhoto : null,
       onAction: onAddPhoto,
     );
   }

@@ -149,7 +149,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                     labelText: l10n.fieldPassword,
                     suffixIcon: AppIconButton(
                       semanticsId: 'delete_account_password_visibility',
-                      label: obscure ? 'Show password' : 'Hide password',
+                      label: obscure ? AppLocalizations.of(context)!.accountShowPassword : AppLocalizations.of(context)!.accountHidePassword,
                       onPressed: () => setLocal(() => obscure = !obscure),
                       icon: Icon(
                         obscure

@@ -269,8 +269,8 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
     final registry = isExpecting
         ? FirstMomentPresets.expectingRegistry
         : FirstMomentPresets.bornRegistry;
-    const eventSubtitle = 'AI-suggested by stage and age';
-    const registrySubtitle = 'AI-suggested by stage and age';
+    final eventSubtitle = AppLocalizations.of(context)!.onboardingAiSuggestedByStageAnd;
+    final registrySubtitle = AppLocalizations.of(context)!.onboardingAiSuggestedByStageAnd;
 
     return OnboardingScaffold(
       pinBottomCta: false,
@@ -285,13 +285,13 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: 10),
-          const OnboardingHeadline(
-            'Add your first moment',
+          OnboardingHeadline(
+            AppLocalizations.of(context)!.onboardingAddYourFirstMoment,
             key: Key('onboarding_first_moment_title'),
           ),
           const SizedBox(height: 8),
-          const OnboardingSupportText(
-            'Totally optional, but it helps family feel like there\'s already something here.',
+          OnboardingSupportText(
+            AppLocalizations.of(context)!.onboardingTotallyOptionalButItHelps,
           ),
           const SizedBox(height: 20),
           if (isExpecting) ...[
@@ -299,7 +299,7 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
               iconBackground: AppColors.sageTint,
               icon: Icon(Icons.star_outline, size: 17, color: AppColors.primaryDark),
               title: l10n.labelSuggestName,
-              subtitle: 'Seeds the vote in Family Fun',
+              subtitle: AppLocalizations.of(context)!.onboardingSeedsTheVoteInFamily,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -357,7 +357,7 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
               iconBackground: AppColors.peachTint,
               icon: Icon(Icons.photo_camera_outlined, size: 17, color: AppColors.secondaryDark),
               title: l10n.actionUploadFirstPhoto,
-              subtitle: 'From your camera or library',
+              subtitle: AppLocalizations.of(context)!.onboardingFromYourCameraOrLibrary,
               child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../domain/onboarding_routes.dart';
@@ -13,7 +14,7 @@ void handleOwnerOnboardingBabyMissing(
   if (session.status?.needsOwnerOnboarding == true ||
       session.status?.hasOwnerBaby == true) {
     setError(
-      "We couldn't load your baby profile. Check your connection and try again.",
+      AppLocalizations.of(context)!.onboardingWeCouldntLoadYourBaby,
     );
     return;
   }

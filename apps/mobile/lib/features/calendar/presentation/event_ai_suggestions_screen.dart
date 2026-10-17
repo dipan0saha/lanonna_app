@@ -82,7 +82,7 @@ class _EventAiSuggestionsScreenState extends State<EventAiSuggestionsScreen> {
         setState(() => _loading = false);
         AppSnackBar.showAlert(
           context,
-          'Could not load suggestions: ${apiErrorMessage(e)}',
+          AppLocalizations.of(context)!.calendarCouldNotLoadSuggestions(apiErrorMessage(e)),
         );
       }
     }
@@ -100,7 +100,7 @@ class _EventAiSuggestionsScreenState extends State<EventAiSuggestionsScreen> {
     if (added == true) {
       await _load();
       if (!mounted) return;
-      AppSnackBar.showInfo(context, 'Event added to calendar');
+      AppSnackBar.showInfo(context, AppLocalizations.of(context)!.calendarEventAddedToCalendar);
     }
   }
 

@@ -242,7 +242,7 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(AppLocalizations.of(context)!.accountDateOfBirthOptional),
-                subtitle: Text(_birthDateDisplay(context) ?? 'Select a date'),
+                subtitle: Text(_birthDateDisplay(context) ?? AppLocalizations.of(context)!.fieldSelectDate),
                 trailing: const Icon(Icons.calendar_today_outlined),
                 onTap: _saving ? null : _pickBirthDate,
               ),
@@ -263,7 +263,7 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
               const SizedBox(height: 20),
               FilledButton(
                 onPressed: _saving ? null : _save,
-                child: Text(_saving ? 'Saving…' : 'Save'),
+                child: Text(_saving ? AppLocalizations.of(context)!.notificationPrefsSaving : AppLocalizations.of(context)!.notificationPrefsSave),
               ),
             ],
           ),

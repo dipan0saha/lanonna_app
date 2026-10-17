@@ -175,7 +175,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
       context: context,
       title: l10n.labelVoted,
       subtitle: voters.isEmpty
-          ? 'No votes yet'
+          ? AppLocalizations.of(context)!.funNoVotesYet
           : l10n.predictionVoteCount(voters.length),
       bodyBuilder: (context) => ListView(
         shrinkWrap: true,
@@ -326,7 +326,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
               child: Text(
-                closed ? 'No guesses yet' : 'No guesses yet - be the first!',
+                closed ? AppLocalizations.of(context)!.funNoGuessesYet : AppLocalizations.of(context)!.funNoGuessesYetBeThe,
               ),
             )
           else
@@ -429,19 +429,19 @@ class _PredictionsTabState extends State<PredictionsTab> {
   }
 
   String _monthName(int m) {
-    const names = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
+    final names = [
+      AppLocalizations.of(context)!.calendarJanuary,
+      AppLocalizations.of(context)!.calendarFebruary,
+      AppLocalizations.of(context)!.calendarMarch,
+      AppLocalizations.of(context)!.calendarApril,
+      AppLocalizations.of(context)!.calendarMay,
+      AppLocalizations.of(context)!.calendarJune,
+      AppLocalizations.of(context)!.calendarJuly,
+      AppLocalizations.of(context)!.calendarAugust,
+      AppLocalizations.of(context)!.calendarSeptember,
+      AppLocalizations.of(context)!.calendarOctober,
+      AppLocalizations.of(context)!.calendarNovember,
+      AppLocalizations.of(context)!.calendarDecember,
     ];
     return names[m - 1];
   }

@@ -170,8 +170,8 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
               autovalidateMode: _autovalidateMode,
             ),
             const SizedBox(height: 8),
-            const OnboardingHelperText(
-              'At least 6 characters, with a number or symbol.',
+            OnboardingHelperText(
+              l10n.onboardingAtLeast6CharactersWith,
             ),
             const SizedBox(height: 20),
             OnboardingPrimaryButton(

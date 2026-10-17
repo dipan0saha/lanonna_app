@@ -228,11 +228,11 @@ class _OnboardingRelationshipFormFieldState
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const OnboardingFieldLabel('Your relationship to baby'),
+            OnboardingFieldLabel(AppLocalizations.of(context)!.onboardingYourRelationshipToBaby),
             const SizedBox(height: 8),
             OnboardingPillSelect(
               layout: OnboardingPillLayout.equalWidthRow,
-              options: const ['Mother', 'Father'],
+              options: [AppLocalizations.of(context)!.onboardingMother, AppLocalizations.of(context)!.onboardingFather],
               selectedIndex: relationshipIndex,
               selectedStyleForIndex: (_) => const OnboardingPillSelectedStyle(
                 background: AppColors.sageTint,
@@ -240,7 +240,7 @@ class _OnboardingRelationshipFormFieldState
                 foreground: AppColors.primaryDark,
               ),
               onSelected: (index) {
-                final label = index == 0 ? 'Mother' : 'Father';
+                final label = index == 0 ? AppLocalizations.of(context)!.onboardingMother : AppLocalizations.of(context)!.onboardingFather;
                 final hadError = field.hasError;
                 field.didChange(label);
                 widget.onSelected(label);
@@ -383,7 +383,7 @@ class _OnboardingPasswordFieldState extends State<OnboardingPasswordField> {
                 semanticsId: widget.semanticsId == null
                     ? 'password_visibility'
                     : '${widget.semanticsId}_visibility',
-                label: _obscure ? 'Show password' : 'Hide password',
+                label: _obscure ? AppLocalizations.of(context)!.accountShowPassword : AppLocalizations.of(context)!.accountHidePassword,
                 icon: Icon(
                   _obscure
                       ? Icons.visibility_outlined

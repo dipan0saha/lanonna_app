@@ -93,7 +93,7 @@ class _OwnerCarouselScreenState extends State<OwnerCarouselScreen> {
               buttonKey: _isLastSlide
                   ? const Key('owner_carousel_get_started')
                   : const Key('owner_carousel_next'),
-              label: _isLastSlide ? 'Get started' : 'Next',
+              label: _isLastSlide ? AppLocalizations.of(context)!.onboardingGetStarted : AppLocalizations.of(context)!.onboardingNext,
               onPressed: _onPrimaryPressed,
             ),
             const SizedBox(height: 12),

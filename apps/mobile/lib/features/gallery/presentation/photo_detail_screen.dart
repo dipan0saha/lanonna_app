@@ -146,7 +146,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       if (!mounted) return;
       setState(() => _initialLoadInFlight = false);
       if (e is ApiException && e.statusCode == 404) {
-        AppSnackBar.showAlert(context, 'This photo is no longer available.');
+        AppSnackBar.showAlert(context, AppLocalizations.of(context)!.galleryThisPhotoIsNoLonger);
         returnToGallery(context);
         return;
       }
@@ -554,7 +554,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                             children: [
                               Expanded(
                                 child: Text(
-                                  detail.caption ?? 'No caption',
+                                  detail.caption ?? AppLocalizations.of(context)!.galleryNoCaption,
                                   style: styles.titleSmall,
                                 ),
                               ),
