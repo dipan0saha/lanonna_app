@@ -7,10 +7,4 @@ enum PhotoPurpose {
 
   final String apiValue;
 
-  static PhotoPurpose fromApi(String? raw) {
-    for (final value in PhotoPurpose.values) {
-      if (value.apiValue == raw) return value;
-    }
-    return PhotoPurpose.gallery;
-  }
 }

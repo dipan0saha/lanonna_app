@@ -319,24 +319,28 @@ def delete_photo_objects_best_effort(
     display_path: str | None,
     thumb_path: str | None,
 ) -> None:
-    """Remove display/thumb blobs after the SQL row is gone (best-effort)."""
-    try:
-        from google.cloud import storage
-    except ImportError:
-        logger.warning("google-cloud-storage unavailable; skipping object delete")
-        return
-
-    client = storage.Client(project=settings.gcp_project_id)
-    pairs: list[ObjectRef] = []
+    """Remove display/thumb objects after the SQL row is gone. Failures are
+    logged, never raised: the row is already deleted and the request succeeded."""
+    objects: list[ObjectRef] = []
     if display_path:
-        pairs.append((settings.display_bucket, display_path))
+        objects.append((settings.display_bucket, display_path))
     if thumb_path:
-        pairs.append((settings.thumbnails_bucket, thumb_path))
-    for bucket, object_name in pairs:
+        objects.append((settings.thumbnails_bucket, thumb_path))
+    if not objects:
+        return
+    try:
+        from google.api_core.exceptions import NotFound
+        from google.cloud import storage
+
+        client = storage.Client(project=settings.gcp_project_id)
+    except Exception:
+        logger.warning("photo_object_delete_client_unavailable", exc_info=True)
+        return
+    for bucket, object_name in objects:
         try:
-            blob = client.bucket(bucket).blob(object_name)
-            if blob.exists():
-                blob.delete()
+            client.bucket(bucket).blob(object_name).delete()
+        except NotFound:
+            continue  # already gone
         except Exception:
             logger.warning(
                 "photo_object_delete_failed bucket=%s name=%s",

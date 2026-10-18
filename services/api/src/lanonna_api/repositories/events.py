@@ -185,21 +185,6 @@ def update_event(
     return dict(row) if row else None
 
 
-def clear_event_covers_for_photo(
-    baby_profile_id: uuid.UUID,
-    photo_id: uuid.UUID,
-) -> None:
-    with get_connection() as conn:
-        conn.execute(
-            """
-            UPDATE events
-            SET cover_photo_id = NULL, updated_at = now()
-            WHERE baby_profile_id = %s AND cover_photo_id = %s
-            """,
-            (baby_profile_id, photo_id),
-        )
-
-
 def delete_event(baby_profile_id: uuid.UUID, event_id: uuid.UUID) -> bool:
     with get_connection() as conn:
         cur = conn.execute(

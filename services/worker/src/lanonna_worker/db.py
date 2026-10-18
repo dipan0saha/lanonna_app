@@ -12,12 +12,20 @@ from __future__ import annotations
 import threading
 import uuid
 from contextlib import contextmanager
+from enum import StrEnum
 from typing import Any, Iterator
 
 import psycopg
 from psycopg.rows import dict_row
 from psycopg.types.json import Json
 from psycopg_pool import ConnectionPool
+
+
+class PhotoPurpose(StrEnum):
+    """``photos.purpose`` (API ``PhotoPurpose``): covers are not gallery shares."""
+
+    GALLERY = "gallery"
+    EVENT_COVER = "event_cover"
 
 from lanonna_activity_copy import ActivityEventType, activity_summary, caption_params
 from lanonna_worker.config import settings
@@ -120,7 +128,7 @@ def mark_photo_ready(
             """,
             (thumb_path, object_generation, byte_length, display_path),
         ).fetchone()
-        if row is not None and row.get("purpose") != "event_cover":
+        if row is not None and row.get("purpose") != PhotoPurpose.EVENT_COVER:
             # Structured feed row (lanonna_activity_copy.activity): the app renders
             # it from ARB; the actor's name is resolved at read time, never from
             # an email (#7). ``summary`` is English diagnostic copy only.

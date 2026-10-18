@@ -27,10 +27,10 @@ PR #330 / L-37 (2026-10-17) fixed cover **UX** (#65: preview, upload-on-save, ca
 ## Fix (architecture)
 
 - Add `photos.purpose` (`gallery` | `event_cover`), default `gallery` — no backfill; existing rows remain `gallery`.
-- API init accepts `purpose`; gallery surfaces filter `purpose = 'gallery'`; event detail still resolves cover via `get_photo_for_baby`.
+- API init accepts a typed `purpose` (unknown values are rejected; no endpoint changes it later). Every gallery surface filters `purpose = 'gallery'`: list, home teasers, the home "first photo" checklist, and the photo item endpoints (detail, squish, comments, caption, tags, delete), so `/gallery/photo/{cover id}` is "not found". Event detail still resolves its cover with an unfiltered lookup. The storage meter keeps counting covers.
 - Worker skips `photo_shared` activity/notify when `purpose = event_cover`; thumbnails unchanged.
 - Mobile uploads covers through `DisplayPhotoUpload` with `PhotoPurpose.eventCover`; no `notifyGalleryDataChanged` for new cover uploads.
-- **Lifecycle:** deleting a gallery photo clears `events.cover_photo_id` first; replacing/removing/deleting event covers purges unreferenced `event_cover` rows (and GCS objects best-effort, same as gallery delete).
+- **Lifecycle:** migration 040 makes `events.cover_photo_id` `ON DELETE SET NULL`, so deleting a gallery photo used as a cover clears that cover. Replacing or removing a cover, or deleting its event, purges the old photo in one `DELETE` only when it is `event_cover` and no event or announcement still uses it; gallery photos are never purged. Both paths go through `photo_lifecycle` and remove the display and thumb objects best-effort after the row is gone.
 
 ## Related gaps addressed
 

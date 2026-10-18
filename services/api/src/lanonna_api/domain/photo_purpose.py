@@ -4,14 +4,7 @@ from enum import StrEnum
 
 
 class PhotoPurpose(StrEnum):
+    """``photos.purpose``: gallery share vs event-only cover (#315)."""
+
     GALLERY = "gallery"
     EVENT_COVER = "event_cover"
-
-    @classmethod
-    def from_api(cls, raw: str | None) -> PhotoPurpose:
-        if raw is None:
-            return cls.GALLERY
-        try:
-            return cls(raw)
-        except ValueError:
-            return cls.GALLERY

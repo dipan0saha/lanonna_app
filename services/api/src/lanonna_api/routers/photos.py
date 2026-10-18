@@ -20,7 +20,7 @@ class PhotoInitRequest(BaseModel):
     content_type: str = Field(default="image/jpeg")
     byte_length: int = Field(gt=0, le=2_097_152)
     caption: str | None = Field(default=None, max_length=2000)
-    purpose: str = Field(default=PhotoPurpose.GALLERY.value)
+    purpose: PhotoPurpose = PhotoPurpose.GALLERY
 
 
 class CaptionPatch(BaseModel):
@@ -57,7 +57,7 @@ def photos_init(
             body.content_type,
             body.byte_length,
             caption=caption,
-            purpose=PhotoPurpose.from_api(body.purpose),
+            purpose=body.purpose,
         )
         return {
             "photo_id": result["photo_id"],

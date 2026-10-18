@@ -45,7 +45,7 @@ Apply in **lexicographic order** (filename prefix):
 | `037_notification_actor_backfill.sql` | Backfills `actor_firebase_uid` / `actor_display_name` on legacy inbox rows from structured source rows only (time-bounded, one unambiguous candidate, never the recipient); ambiguous rows stay `NULL` |
 | `038_structured_notification_activity_params.sql` | `notifications.notification_kind` + `params`, `activity_events.params`: rows record what happened and its display values; the app renders the copy from ARB (title/body/summary stay as English diagnostics). Backfills legacy rows from the fixed API titles and referenced source rows only; follower registry claims become `registry_claimed`; rows that cannot be derived keep their stored text |
 | `039_baby_name_nullable_gender_not_null.sql` | `baby_profiles.name` nullable (unnamed baby = `NULL`) with `CHECK (name IS NULL OR btrim(name) <> '')`; clears names stored as exactly `'Baby'` (the app's persisted default — the only locale was English and the value was sent verbatim) or blank, and strips the matching snapshotted `baby_name` params from those babies' activity / inbox rows; `gender` `NOT NULL DEFAULT 'unknown'` after backfilling `NULL` (L-36) |
-| `040_photo_purpose.sql` | `photos.purpose` (`gallery` \| `event_cover`); partial index for gallery lists (#315) |
+| `040_photo_purpose.sql` | `photos.purpose` (`gallery` \| `event_cover`); default `gallery`, no backfill; partial index for gallery lists; `events.cover_photo_id` FK becomes `ON DELETE SET NULL` so deleting a photo clears the cover (#315) |
 
 ## Apply (dev)
 

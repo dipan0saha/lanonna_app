@@ -4,7 +4,7 @@ import uuid
 from typing import Any
 
 from lanonna_api.domain.errors import ErrorCode, InvalidInputError
-from lanonna_api.domain.photo_lifecycle import hard_delete_gallery_photo
+from lanonna_api.domain.photo_lifecycle import delete_gallery_photo
 from lanonna_api.domain.photo_purpose import PhotoPurpose
 from lanonna_api.domain import assert_owner_membership, create_pending_photo
 from lanonna_api.pagination import offset_page_from_extra_row
@@ -56,6 +56,13 @@ def _tagged_babies_json(
 ) -> list[dict[str, str]]:
     tagged = list_tagged_babies_for_photo(photo_id, viewer_firebase_uid)
     return [{"id": str(t["id"]), "name": t["name"]} for t in tagged]
+
+
+def _get_gallery_photo(
+    baby_profile_id: uuid.UUID, photo_id: uuid.UUID
+) -> dict[str, Any] | None:
+    """Gallery item endpoints never resolve an event-cover photo (#315)."""
+    return get_photo_for_baby(baby_profile_id, photo_id, purpose=PhotoPurpose.GALLERY)
 
 
 def require_membership(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, Any]:
@@ -196,12 +203,7 @@ def remove_photo(
     photo_id: uuid.UUID,
 ) -> None:
     assert_owner_membership(firebase_uid, baby_profile_id)
-    row = get_photo_for_baby(baby_profile_id, photo_id)
-    if row is None:
-        raise LookupError("Photo not found.")
-    if PhotoPurpose.from_api(row.get("purpose")) != PhotoPurpose.GALLERY:
-        raise LookupError("Photo not found.")
-    if not hard_delete_gallery_photo(baby_profile_id, photo_id):
+    if not delete_gallery_photo(baby_profile_id, photo_id):
         raise LookupError("Photo not found.")
 
 
@@ -211,7 +213,7 @@ def squish_photo(
     photo_id: uuid.UUID,
 ) -> dict[str, Any]:
     require_membership(firebase_uid, baby_profile_id)
-    row = get_photo_for_baby(baby_profile_id, photo_id)
+    row = _get_gallery_photo(baby_profile_id, photo_id)
     if row is None or row["status"] != "ready":
         raise LookupError("Photo not found.")
     active = toggle_squish(photo_id, firebase_uid)
@@ -245,7 +247,7 @@ def add_comment(
     body: str,
 ) -> dict[str, Any]:
     require_membership(firebase_uid, baby_profile_id)
-    row = get_photo_for_baby(baby_profile_id, photo_id)
+    row = _get_gallery_photo(baby_profile_id, photo_id)
     if row is None or row["status"] != "ready":
         raise LookupError("Photo not found.")
     if not body.strip():
@@ -284,7 +286,7 @@ def delete_comment(
     comment_id: uuid.UUID,
 ) -> None:
     membership = require_membership(firebase_uid, baby_profile_id)
-    row = get_photo_for_baby(baby_profile_id, photo_id)
+    row = _get_gallery_photo(baby_profile_id, photo_id)
     if row is None:
         raise LookupError("Photo not found.")
     comment = get_photo_comment(photo_id, comment_id)
@@ -306,7 +308,7 @@ def edit_comment(
     body: str,
 ) -> dict[str, Any]:
     require_membership(firebase_uid, baby_profile_id)
-    row = get_photo_for_baby(baby_profile_id, photo_id)
+    row = _get_gallery_photo(baby_profile_id, photo_id)
     if row is None or row["status"] != "ready":
         raise LookupError("Photo not found.")
     if not body.strip():
@@ -338,7 +340,7 @@ def set_photo_baby_tags(
     tagged_baby_profile_ids: list[uuid.UUID],
 ) -> dict[str, Any]:
     assert_owner_membership(firebase_uid, baby_profile_id)
-    row = get_photo_for_baby(baby_profile_id, photo_id)
+    row = _get_gallery_photo(baby_profile_id, photo_id)
     if row is None:
         raise LookupError("Photo not found.")
     user_baby_ids = {
