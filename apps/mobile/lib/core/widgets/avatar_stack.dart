@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../presentation/display_initials.dart';
 import '../theme/app_colors.dart';
 import '../theme/la_nonna_theme.dart';
+import 'avatar_initials.dart';
 
 /// Overlapping initials avatars (RSVP summary, attendees).
 class AvatarStack extends StatelessWidget {
@@ -36,8 +36,8 @@ class AvatarStack extends StatelessWidget {
               child: CircleAvatar(
                 radius: radius,
                 backgroundColor: AppColors.sageTint,
-                child: Text(
-                  displayInitials(visible[i]),
+                child: AvatarInitials(
+                  name: visible[i],
                   style: context.textStyles.labelSmall?.copyWith(
                     fontSize: radius * 0.72,
                     fontWeight: FontWeight.w700,

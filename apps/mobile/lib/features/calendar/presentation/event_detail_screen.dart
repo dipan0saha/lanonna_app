@@ -29,7 +29,7 @@ import '../../../core/domain/baby_summary.dart';
 import '../data/calendar_repository.dart';
 import '../data/event_comment_thread.dart';
 import '../data/models/calendar_models.dart';
-import '../domain/calendar_navigation.dart';
+import '../../../core/router/subpage_navigation.dart';
 import '../domain/calendar_routes.dart';
 
 String _rsvpInlineSummary(AppLocalizations l10n, RsvpSummary summary) {
@@ -116,7 +116,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       final store = context.read<SelectedBabyStore>();
       final baby = await homeRepo.resolveSelectedBaby(store);
       if (baby == null) {
-        if (mounted) returnToCalendar(context);
+        if (mounted) popOrGo(context, CalendarRoutes.calendar);
         return;
       }
       if (!mounted) return;
@@ -134,7 +134,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       if (!mounted) return;
       setState(() => _initialLoadInFlight = false);
       AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
-      returnToCalendar(context);
+      popOrGo(context, CalendarRoutes.calendar);
     }
   }
 
@@ -283,7 +283,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       baby.id,
       widget.eventId,
     );
-    if (mounted) returnToCalendar(context);
+    if (mounted) popOrGo(context, CalendarRoutes.calendar);
   }
 
   @override
@@ -298,7 +298,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     final detail = _detail;
     if (detail == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) returnToCalendar(context);
+        if (mounted) popOrGo(context, CalendarRoutes.calendar);
       });
       return Scaffold(body: Center(child: Text(AppLocalizations.of(context)!.eventNotFound)));
     }

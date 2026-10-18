@@ -28,7 +28,8 @@ import '../../../core/domain/baby_summary.dart';
 import '../../onboarding/presentation/widgets/onboarding_prototype_widgets.dart';
 import '../data/calendar_repository.dart';
 import 'calendar_display.dart';
-import '../domain/calendar_navigation.dart';
+import '../../../core/router/subpage_navigation.dart';
+import '../domain/calendar_routes.dart';
 import 'widgets/event_form_widgets.dart';
 import '../../../l10n/app_localizations.dart';
 
@@ -119,7 +120,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
         context,
         l10n.calendarOnlyOwnersCanCreateOr,
       );
-      returnToCalendar(context);
+      popOrGo(context, CalendarRoutes.calendar);
       return;
     }
     setState(() => _baby = baby);

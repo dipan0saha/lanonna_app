@@ -76,315 +76,324 @@ GoRouter createAppRouter(
         location: state.uri.toString(),
       );
     },
-    routes: [
-      GoRoute(
-        path: OnboardingRoutes.roleSelection,
-        redirect: (_, __) => OnboardingRoutes.ownerCarousel,
-      ),
-      GoRoute(path: '/login', redirect: (_, __) => OnboardingRoutes.login),
-      GoRoute(
-        path: OnboardingRoutes.ownerCarousel,
-        builder: (context, state) => const OwnerCarouselScreen(),
-      ),
-      GoRoute(
-        path: OnboardingRoutes.signup,
-        builder: (context, state) => const OnboardingSignupScreen(),
-      ),
-      GoRoute(
-        path: OnboardingRoutes.login,
-        builder: (context, state) => const OnboardingLoginScreen(),
-      ),
-      GoRoute(
-        path: OnboardingRoutes.emailVerify,
-        builder: (context, state) => const OnboardingEmailVerifyScreen(),
-      ),
-      GoRoute(
-        path: OnboardingRoutes.completeProfile,
-        builder: (context, state) => const OnboardingCompleteProfileScreen(),
-      ),
-      GoRoute(
-        path: OnboardingRoutes.sessionOffline,
-        builder: (context, state) => const SessionOfflineScreen(),
-      ),
-      GoRoute(
-        path: '/legal/terms',
-        builder: (context, state) =>
-            const LegalDocumentScreen(kind: LegalDocumentKind.terms),
-      ),
-      GoRoute(
-        path: '/legal/privacy',
-        builder: (context, state) =>
-            const LegalDocumentScreen(kind: LegalDocumentKind.privacy),
-      ),
-      GoRoute(
-        path: OnboardingRoutes.ownerCreateBaby,
-        builder: (context, state) => const OnboardingCreateBabyScreen(),
-      ),
-      GoRoute(
-        path: OnboardingRoutes.ownerFirstMoment,
-        builder: (context, state) => const OnboardingFirstMomentScreen(),
-      ),
-      GoRoute(
-        path: OnboardingRoutes.ownerInvite,
-        builder: (context, state) =>
-            const BatchInviteScreen(mode: BatchInviteMode.onboarding),
-      ),
-      GoRoute(
-        path: OnboardingRoutes.inviteAccept,
-        builder: (context, state) {
-          final token = state.uri.queryParameters['token'] ?? '';
-          return InviteAcceptBootstrapScreen(token: token);
-        },
-      ),
-      GoRoute(
-        path: OnboardingRoutes.followerInvite,
-        builder: (context, state) => const OnboardingFollowerInviteScreen(),
-      ),
-      GoRoute(
-        path: OnboardingRoutes.coOwnerInvite,
-        builder: (context, state) => const OnboardingCoOwnerInviteScreen(),
-      ),
-      GoRoute(
-        path: OnboardingRoutes.confirmRelationship,
-        builder: (context, state) =>
-            const OnboardingConfirmRelationshipScreen(),
-      ),
-      GoRoute(
-        path: OnboardingRoutes.followerCarousel,
-        builder: (context, state) => const FollowerCarouselScreen(),
-      ),
-      GoRoute(
-        path: OnboardingRoutes.coOwnerWelcome,
-        builder: (context, state) => const OnboardingCoOwnerWelcomeScreen(),
-      ),
-      GoRoute(
-        path: OnboardingRoutes.wrongEmail,
-        builder: (context, state) => const OnboardingWrongEmailScreen(),
-      ),
-      GoRoute(
-        path: '/profile',
-        parentNavigatorKey: appRootNavigatorKey,
-        builder: (context, state) => const AccountScreen(),
-      ),
-      GoRoute(
-        path: '/account/edit',
-        parentNavigatorKey: appRootNavigatorKey,
-        builder: (context, state) => const AccountEditScreen(),
-      ),
-      GoRoute(
-        path: '/settings',
-        parentNavigatorKey: appRootNavigatorKey,
-        builder: (context, state) => const SettingsScreen(),
-      ),
-      GoRoute(
-        path: '/account/notification-preferences',
-        parentNavigatorKey: appRootNavigatorKey,
-        builder: (context, state) => const NotificationPreferencesScreen(),
-      ),
-      GoRoute(
-        path: '/account/export',
-        parentNavigatorKey: appRootNavigatorKey,
-        builder: (context, state) => const BabyDataExportScreen(),
-      ),
-      GoRoute(
-        path: '/account/delete',
-        parentNavigatorKey: appRootNavigatorKey,
-        builder: (context, state) => const DeleteAccountScreen(),
-      ),
-      GoRoute(
-        path: '/notifications/inbox',
-        parentNavigatorKey: appRootNavigatorKey,
-        builder: (context, state) => const NotificationsInboxScreen(),
-      ),
-      GoRoute(
-        path: '/baby/create',
-        parentNavigatorKey: appRootNavigatorKey,
-        builder: (context, state) =>
-            const CreateBabyScreen(mode: CreateBabyMode.inApp),
-      ),
-      GoRoute(
-        path: '/baby/:babyId/edit',
-        parentNavigatorKey: appRootNavigatorKey,
-        builder: (context, state) =>
-            BabyEditScreen(babyId: state.pathParameters['babyId']!),
-      ),
-      GoRoute(
-        path: '/baby/:babyId/followers',
-        parentNavigatorKey: appRootNavigatorKey,
-        builder: (context, state) =>
-            FollowersScreen(babyId: state.pathParameters['babyId']!),
-      ),
-      GoRoute(
-        path: '/baby/:babyId/announcement',
-        parentNavigatorKey: appRootNavigatorKey,
-        builder: (context, state) =>
-            AnnouncementCardScreen(babyId: state.pathParameters['babyId']!),
-      ),
-      GoRoute(
-        path: '/baby/:babyId/announcement/create',
-        parentNavigatorKey: appRootNavigatorKey,
-        builder: (context, state) =>
-            AnnouncementCreateScreen(babyId: state.pathParameters['babyId']!),
-      ),
-      GoRoute(
-        path: AppRoutes.inviteFamily,
-        parentNavigatorKey: appRootNavigatorKey,
-        builder: (context, state) =>
-            const BatchInviteScreen(mode: BatchInviteMode.fromHome),
-      ),
-      GoRoute(
-        path: '/home/activity',
-        parentNavigatorKey: appRootNavigatorKey,
-        builder: (context, state) {
-          final babyId = state.uri.queryParameters['babyId'] ?? '';
-          return HomeActivityScreen(babyId: babyId);
-        },
-      ),
-      StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) =>
-            MainShellScreen(navigationShell: navigationShell),
-        branches: [
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: '/home',
-                builder: (context, state) => const HomeScreen(),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: GalleryRoutes.gallery,
-                builder: (context, state) => const GalleryScreen(),
-                routes: [
-                  GoRoute(
-                    path: 'recent',
-                    builder: (context, state) =>
-                        const GalleryScreen(mode: GalleryViewMode.recent),
-                  ),
-                  GoRoute(
-                    path: 'favorites',
-                    builder: (context, state) =>
-                        const GalleryScreen(mode: GalleryViewMode.favorites),
-                  ),
-                  GoRoute(
-                    path: 'photo/:photoId',
-                    builder: (context, state) => PhotoDetailScreen(
-                      photoId: state.pathParameters['photoId']!,
-                      gallerySort:
-                          state.uri.queryParameters['sort'] ?? 'default',
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: CalendarRoutes.calendar,
-                builder: (context, state) => const CalendarScreen(),
-                routes: [
-                  GoRoute(
-                    path: 'event/create',
-                    builder: (context, state) {
-                      final prefill = state.extra;
-                      if (prefill is EventFormPrefill) {
-                        return EventFormScreen(
-                          initialTitle: prefill.title,
-                          initialDescription: prefill.description,
-                          initialCatalogSuggestionId:
-                              prefill.catalogSuggestionId,
-                          initialDate: prefill.initialDate,
-                        );
-                      }
-                      return const EventFormScreen();
-                    },
-                  ),
-                  GoRoute(
-                    path: 'event/:eventId',
-                    builder: (context, state) => EventDetailScreen(
-                      eventId: state.pathParameters['eventId']!,
-                    ),
-                    routes: [
-                      GoRoute(
-                        path: 'edit',
-                        builder: (context, state) => EventFormScreen(
-                          eventId: state.pathParameters['eventId'],
-                        ),
-                      ),
-                    ],
-                  ),
-                  GoRoute(
-                    path: 'ai-suggestions',
-                    builder: (context, state) =>
-                        const EventAiSuggestionsScreen(),
-                  ),
-                  GoRoute(
-                    path: 'upcoming',
-                    builder: (context, state) => const CalendarUpcomingScreen(),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: RegistryRoutes.registry,
-                builder: (context, state) => const RegistryScreen(),
-                routes: [
-                  GoRoute(
-                    path: 'item/create',
-                    builder: (context, state) {
-                      final prefill = state.extra;
-                      if (prefill is RegistryItemFormPrefill) {
-                        return RegistryItemFormScreen(
-                          initialName: prefill.name,
-                          initialDescription: prefill.description,
-                          initialCatalogSuggestionId:
-                              prefill.catalogSuggestionId,
-                        );
-                      }
-                      return const RegistryItemFormScreen();
-                    },
-                  ),
-                  GoRoute(
-                    path: 'item/:itemId',
-                    redirect: (context, state) =>
-                        '/registry/item/${state.pathParameters['itemId']}/edit',
-                  ),
-                  GoRoute(
-                    path: 'item/:itemId/edit',
-                    builder: (context, state) => RegistryItemFormScreen(
-                      itemId: state.pathParameters['itemId'],
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'ai-suggestions',
-                    builder: (context, state) =>
-                        const RegistryAiSuggestionsScreen(),
-                  ),
-                  GoRoute(
-                    path: 'shipping-address',
-                    builder: (context, state) =>
-                        const RegistryShippingAddressScreen(),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: AppRoutes.gamification,
-                builder: (context, state) => const FunScreen(),
-              ),
-            ],
-          ),
-        ],
-      ),
-    ],
+    routes: buildAppRoutes(),
   );
+}
+
+/// The app's route tree ([createAppRouter]); exposed so tests can check where
+/// each location renders (tab branch or root navigator).
+List<RouteBase> buildAppRoutes() {
+  return [
+    GoRoute(
+      path: OnboardingRoutes.roleSelection,
+      redirect: (_, __) => OnboardingRoutes.ownerCarousel,
+    ),
+    GoRoute(path: '/login', redirect: (_, __) => OnboardingRoutes.login),
+    GoRoute(
+      path: OnboardingRoutes.ownerCarousel,
+      builder: (context, state) => const OwnerCarouselScreen(),
+    ),
+    GoRoute(
+      path: OnboardingRoutes.signup,
+      builder: (context, state) => const OnboardingSignupScreen(),
+    ),
+    GoRoute(
+      path: OnboardingRoutes.login,
+      builder: (context, state) => const OnboardingLoginScreen(),
+    ),
+    GoRoute(
+      path: OnboardingRoutes.emailVerify,
+      builder: (context, state) => const OnboardingEmailVerifyScreen(),
+    ),
+    GoRoute(
+      path: OnboardingRoutes.completeProfile,
+      builder: (context, state) => const OnboardingCompleteProfileScreen(),
+    ),
+    GoRoute(
+      path: OnboardingRoutes.sessionOffline,
+      builder: (context, state) => const SessionOfflineScreen(),
+    ),
+    GoRoute(
+      path: '/legal/terms',
+      builder: (context, state) =>
+          const LegalDocumentScreen(kind: LegalDocumentKind.terms),
+    ),
+    GoRoute(
+      path: '/legal/privacy',
+      builder: (context, state) =>
+          const LegalDocumentScreen(kind: LegalDocumentKind.privacy),
+    ),
+    GoRoute(
+      path: OnboardingRoutes.ownerCreateBaby,
+      builder: (context, state) => const OnboardingCreateBabyScreen(),
+    ),
+    GoRoute(
+      path: OnboardingRoutes.ownerFirstMoment,
+      builder: (context, state) => const OnboardingFirstMomentScreen(),
+    ),
+    GoRoute(
+      path: OnboardingRoutes.ownerInvite,
+      builder: (context, state) =>
+          const BatchInviteScreen(mode: BatchInviteMode.onboarding),
+    ),
+    GoRoute(
+      path: OnboardingRoutes.inviteAccept,
+      builder: (context, state) {
+        final token = state.uri.queryParameters['token'] ?? '';
+        return InviteAcceptBootstrapScreen(token: token);
+      },
+    ),
+    GoRoute(
+      path: OnboardingRoutes.followerInvite,
+      builder: (context, state) => const OnboardingFollowerInviteScreen(),
+    ),
+    GoRoute(
+      path: OnboardingRoutes.coOwnerInvite,
+      builder: (context, state) => const OnboardingCoOwnerInviteScreen(),
+    ),
+    GoRoute(
+      path: OnboardingRoutes.confirmRelationship,
+      builder: (context, state) => const OnboardingConfirmRelationshipScreen(),
+    ),
+    GoRoute(
+      path: OnboardingRoutes.followerCarousel,
+      builder: (context, state) => const FollowerCarouselScreen(),
+    ),
+    GoRoute(
+      path: OnboardingRoutes.coOwnerWelcome,
+      builder: (context, state) => const OnboardingCoOwnerWelcomeScreen(),
+    ),
+    GoRoute(
+      path: OnboardingRoutes.wrongEmail,
+      builder: (context, state) => const OnboardingWrongEmailScreen(),
+    ),
+    GoRoute(
+      path: '/profile',
+      parentNavigatorKey: appRootNavigatorKey,
+      builder: (context, state) => const AccountScreen(),
+    ),
+    GoRoute(
+      path: '/account/edit',
+      parentNavigatorKey: appRootNavigatorKey,
+      builder: (context, state) => const AccountEditScreen(),
+    ),
+    GoRoute(
+      path: '/settings',
+      parentNavigatorKey: appRootNavigatorKey,
+      builder: (context, state) => const SettingsScreen(),
+    ),
+    GoRoute(
+      path: '/account/notification-preferences',
+      parentNavigatorKey: appRootNavigatorKey,
+      builder: (context, state) => const NotificationPreferencesScreen(),
+    ),
+    GoRoute(
+      path: '/account/export',
+      parentNavigatorKey: appRootNavigatorKey,
+      builder: (context, state) => const BabyDataExportScreen(),
+    ),
+    GoRoute(
+      path: '/account/delete',
+      parentNavigatorKey: appRootNavigatorKey,
+      builder: (context, state) => const DeleteAccountScreen(),
+    ),
+    GoRoute(
+      path: '/notifications/inbox',
+      parentNavigatorKey: appRootNavigatorKey,
+      builder: (context, state) => const NotificationsInboxScreen(),
+    ),
+    GoRoute(
+      path: '/baby/create',
+      parentNavigatorKey: appRootNavigatorKey,
+      builder: (context, state) =>
+          const CreateBabyScreen(mode: CreateBabyMode.inApp),
+    ),
+    GoRoute(
+      path: '/baby/:babyId/edit',
+      parentNavigatorKey: appRootNavigatorKey,
+      builder: (context, state) =>
+          BabyEditScreen(babyId: state.pathParameters['babyId']!),
+    ),
+    GoRoute(
+      path: '/baby/:babyId/followers',
+      parentNavigatorKey: appRootNavigatorKey,
+      builder: (context, state) =>
+          FollowersScreen(babyId: state.pathParameters['babyId']!),
+    ),
+    GoRoute(
+      path: '/baby/:babyId/announcement',
+      parentNavigatorKey: appRootNavigatorKey,
+      builder: (context, state) =>
+          AnnouncementCardScreen(babyId: state.pathParameters['babyId']!),
+    ),
+    GoRoute(
+      path: '/baby/:babyId/announcement/create',
+      parentNavigatorKey: appRootNavigatorKey,
+      builder: (context, state) =>
+          AnnouncementCreateScreen(babyId: state.pathParameters['babyId']!),
+    ),
+    GoRoute(
+      path: AppRoutes.inviteFamily,
+      parentNavigatorKey: appRootNavigatorKey,
+      builder: (context, state) =>
+          const BatchInviteScreen(mode: BatchInviteMode.fromHome),
+    ),
+    GoRoute(
+      path: '/home/activity',
+      parentNavigatorKey: appRootNavigatorKey,
+      builder: (context, state) {
+        final babyId = state.uri.queryParameters['babyId'] ?? '';
+        return HomeActivityScreen(babyId: babyId);
+      },
+    ),
+    StatefulShellRoute.indexedStack(
+      builder: (context, state, navigationShell) =>
+          MainShellScreen(navigationShell: navigationShell),
+      branches: [
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/home',
+              builder: (context, state) => const HomeScreen(),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: GalleryRoutes.gallery,
+              builder: (context, state) => const GalleryScreen(),
+              routes: [
+                GoRoute(
+                  path: 'recent',
+                  builder: (context, state) =>
+                      const GalleryScreen(mode: GalleryViewMode.recent),
+                ),
+                GoRoute(
+                  path: 'favorites',
+                  builder: (context, state) =>
+                      const GalleryScreen(mode: GalleryViewMode.favorites),
+                ),
+                // Drill-down details live on the root navigator (like every
+                // other subpage) so they can be pushed from anywhere: a tab,
+                // Home, the Inbox, the activity feed or a push tap. Back then
+                // returns to whichever screen opened them.
+                GoRoute(
+                  path: 'photo/:photoId',
+                  parentNavigatorKey: appRootNavigatorKey,
+                  builder: (context, state) => PhotoDetailScreen(
+                    photoId: state.pathParameters['photoId']!,
+                    gallerySort: state.uri.queryParameters['sort'] ?? 'default',
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: CalendarRoutes.calendar,
+              builder: (context, state) => const CalendarScreen(),
+              routes: [
+                GoRoute(
+                  path: 'event/create',
+                  builder: (context, state) {
+                    final prefill = state.extra;
+                    if (prefill is EventFormPrefill) {
+                      return EventFormScreen(
+                        initialTitle: prefill.title,
+                        initialDescription: prefill.description,
+                        initialCatalogSuggestionId: prefill.catalogSuggestionId,
+                        initialDate: prefill.initialDate,
+                      );
+                    }
+                    return const EventFormScreen();
+                  },
+                ),
+                // Root navigator: see `photo/:photoId`.
+                GoRoute(
+                  path: 'event/:eventId',
+                  parentNavigatorKey: appRootNavigatorKey,
+                  builder: (context, state) => EventDetailScreen(
+                    eventId: state.pathParameters['eventId']!,
+                  ),
+                  routes: [
+                    GoRoute(
+                      path: 'edit',
+                      parentNavigatorKey: appRootNavigatorKey,
+                      builder: (context, state) => EventFormScreen(
+                        eventId: state.pathParameters['eventId'],
+                      ),
+                    ),
+                  ],
+                ),
+                GoRoute(
+                  path: 'ai-suggestions',
+                  builder: (context, state) => const EventAiSuggestionsScreen(),
+                ),
+                GoRoute(
+                  path: 'upcoming',
+                  builder: (context, state) => const CalendarUpcomingScreen(),
+                ),
+              ],
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: RegistryRoutes.registry,
+              builder: (context, state) => const RegistryScreen(),
+              routes: [
+                GoRoute(
+                  path: 'item/create',
+                  builder: (context, state) {
+                    final prefill = state.extra;
+                    if (prefill is RegistryItemFormPrefill) {
+                      return RegistryItemFormScreen(
+                        initialName: prefill.name,
+                        initialDescription: prefill.description,
+                        initialCatalogSuggestionId: prefill.catalogSuggestionId,
+                      );
+                    }
+                    return const RegistryItemFormScreen();
+                  },
+                ),
+                GoRoute(
+                  path: 'item/:itemId',
+                  redirect: (context, state) =>
+                      '/registry/item/${state.pathParameters['itemId']}/edit',
+                ),
+                GoRoute(
+                  path: 'item/:itemId/edit',
+                  builder: (context, state) => RegistryItemFormScreen(
+                    itemId: state.pathParameters['itemId'],
+                  ),
+                ),
+                GoRoute(
+                  path: 'ai-suggestions',
+                  builder: (context, state) =>
+                      const RegistryAiSuggestionsScreen(),
+                ),
+                GoRoute(
+                  path: 'shipping-address',
+                  builder: (context, state) =>
+                      const RegistryShippingAddressScreen(),
+                ),
+              ],
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: AppRoutes.gamification,
+              builder: (context, state) => const FunScreen(),
+            ),
+          ],
+        ),
+      ],
+    ),
+  ];
 }

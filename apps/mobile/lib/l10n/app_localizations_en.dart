@@ -1609,9 +1609,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inviteEmailFailed => 'Email failed to send';
 
   @override
-  String get commonMe => 'Me';
-
-  @override
   String settingsCouldNotOpenEmailTo(String supportEmail) {
     return 'Could not open email to $supportEmail. Copy link?';
   }

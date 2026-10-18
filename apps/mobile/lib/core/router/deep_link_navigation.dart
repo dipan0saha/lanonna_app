@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 
 import '../../features/home/data/home_refresh_signal.dart';
 import '../../features/home/data/selected_baby_store.dart';
-import '../../features/shell/shell_branch_index.dart';
 
 /// Normalizes API `deep_link` paths to registered [GoRoute] locations.
 String? normalizeAppDeepLinkPath(String? deepLink) {
@@ -39,27 +38,29 @@ String? normalizeAppDeepLinkPath(String? deepLink) {
   return path;
 }
 
-/// Paths under the main tab shell must use [GoRouter.go], not root [GoRouter.push].
-bool isShellDeepLinkPath(String path) {
+/// The main-tab branch that shows [path], or `null` when [path] is not a tab
+/// page.
+///
+/// Read from the route tree itself: a page is a tab page when it renders inside
+/// a [StatefulShellBranch] (tab roots and their in-tab children). Drill-down
+/// details (photo, event), account pages, the Inbox and the activity feed live
+/// on the root navigator and return `null`.
+int? tabBranchForLocation(RouteConfiguration configuration, String path) {
   final uri = Uri.tryParse(path);
-  if (uri == null) return false;
-  final p = uri.path;
-  if (p == '/home' || p.startsWith('/home/')) return true;
-  if (p.startsWith('/gallery')) return true;
-  if (p.startsWith('/calendar')) return true;
-  if (p.startsWith('/registry')) return true;
-  if (p.startsWith('/gamification')) return true;
-  return false;
-}
-
-/// Tab branch for a shell deep link (must match [app_router] branch order).
-int? shellBranchIndexForDeepLinkPath(String path) {
-  final p = Uri.parse(path).path;
-  if (p == '/home' || p.startsWith('/home/')) return ShellBranchIndex.home;
-  if (p.startsWith('/gallery')) return ShellBranchIndex.gallery;
-  if (p.startsWith('/calendar')) return ShellBranchIndex.calendar;
-  if (p.startsWith('/registry')) return ShellBranchIndex.registry;
-  if (p.startsWith('/gamification')) return ShellBranchIndex.fun;
+  if (uri == null) return null;
+  final matchList = configuration.findMatch(uri);
+  if (matchList.isError || matchList.isEmpty) return null;
+  // A page placed on another navigator (the root) is not shown in a tab.
+  if (matchList.last.route.parentNavigatorKey != null) return null;
+  for (final match in matchList.matches) {
+    final route = match.route;
+    if (match is! ShellRouteMatch || route is! StatefulShellRoute) continue;
+    final branchRoot = match.matches.first.route;
+    final index = route.branches.indexWhere(
+      (b) => b.routes.contains(branchRoot),
+    );
+    return index < 0 ? null : index;
+  }
   return null;
 }
 
@@ -88,14 +89,18 @@ Future<void> navigateAppDeepLink(
   await ensureDeepLinkBabyContext(context, babyProfileId);
   if (!context.mounted) return;
 
-  if (isShellDeepLinkPath(path)) {
-    final shell = StatefulNavigationShell.maybeOf(context);
-    final branch = shellBranchIndexForDeepLinkPath(path);
-    if (shell != null && branch != null && shell.currentIndex != branch) {
-      shell.goBranch(branch, initialLocation: false);
-    }
-    context.go(path);
-  } else {
+  // Tab pages switch tab; everything else opens over the current screen, so
+  // Back returns to it (e.g. Inbox -> photo -> Back -> Inbox).
+  final branch = tabBranchForLocation(GoRouter.of(context).configuration, path);
+  if (branch == null) {
     context.push(path);
+    return;
   }
+  // Select the branch first so its navigator is built before the location
+  // changes (a cold branch would otherwise show an empty body).
+  final shell = StatefulNavigationShell.maybeOf(context);
+  if (shell != null && shell.currentIndex != branch) {
+    shell.goBranch(branch, initialLocation: false);
+  }
+  context.go(path);
 }

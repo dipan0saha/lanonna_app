@@ -76,7 +76,9 @@ class _ShellTopBar extends StatelessWidget {
         accountRepo.profileUpdates,
       ]),
       builder: (context, _) {
-        final account = accountRepo.cachedAccount;
+        // Last known identity, so the avatar keeps the right initials (and
+        // cached photo) when the profile cannot load, e.g. offline.
+        final identity = accountRepo.identity;
         return HomeTopBar(
           centerTitle: title,
           showUnreadDot: notificationsRepo.unread.count > 0,
@@ -92,8 +94,9 @@ class _ShellTopBar extends StatelessWidget {
             }
           },
           onAccountTap: () => context.push('/profile'),
-          accountDisplayName: account?.displayName,
-          accountAvatarUrl: account?.avatarUrl,
+          accountDisplayName: identity?.displayName,
+          accountFallbackText: identity?.email,
+          accountAvatarUrl: identity?.avatarUrl,
         );
       },
     );

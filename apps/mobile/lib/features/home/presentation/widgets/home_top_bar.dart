@@ -20,6 +20,7 @@ class HomeTopBar extends StatelessWidget {
     this.onNotificationsTap,
     this.onAccountTap,
     this.accountDisplayName,
+    this.accountFallbackText,
     this.accountAvatarUrl,
   });
 
@@ -32,6 +33,9 @@ class HomeTopBar extends StatelessWidget {
   final VoidCallback? onNotificationsTap;
   final VoidCallback? onAccountTap;
   final String? accountDisplayName;
+
+  /// Initials source when [accountDisplayName] is unknown (sign-in email).
+  final String? accountFallbackText;
   final String? accountAvatarUrl;
 
   @override
@@ -127,6 +131,7 @@ class HomeTopBar extends StatelessWidget {
               onTap: onAccountTap,
               child: AccountTintedAvatar(
                 displayName: accountDisplayName,
+                fallbackText: accountFallbackText,
                 imageUrl: accountAvatarUrl,
                 radius: AppMetrics.shellAccountAvatarSize / 2,
               ),

@@ -2908,12 +2908,6 @@ abstract class AppLocalizations {
   /// **'Email failed to send'**
   String get inviteEmailFailed;
 
-  /// No description provided for @commonMe.
-  ///
-  /// In en, this message translates to:
-  /// **'Me'**
-  String get commonMe;
-
   /// No description provided for @settingsCouldNotOpenEmailTo.
   ///
   /// In en, this message translates to:
