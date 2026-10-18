@@ -60,7 +60,7 @@ cd infra/db
 DB_PASSWORD="$PGPASSWORD" python apply_migrations.py
 ```
 
-`apply_migrations.py` runs every `*.sql` in lexicographic order and **skips** files whose version stem is already in `schema_migrations` (DDL in files remains idempotent for manual re-run). Confirm with `./scripts/verify-dev-migrations.sh` from the repo root (39 files as of `039`).
+`apply_migrations.py` runs every `*.sql` in lexicographic order and **skips** files whose version stem is already in `schema_migrations` (DDL in files remains idempotent for manual re-run). Confirm with `./scripts/verify-dev-migrations.sh` from the repo root (40 files as of `040`).
 
 **Manual:** `psql -h 127.0.0.1 -U lanonna_app -d lanonna -f infra/db/migrations/00N_….sql` for each file in order.
 

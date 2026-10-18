@@ -79,6 +79,9 @@ class _EventFormScreenState extends State<EventFormScreen> {
   TimeOfDay _time = TimeOfDay.now();
   BabySummary? _baby;
   PhotoSelection _cover = const PhotoSelection.none();
+
+  /// The cover saved on the event being edited (null when creating).
+  String? _storedCoverId;
   var _saving = false;
 
   @override
@@ -127,20 +130,28 @@ class _EventFormScreenState extends State<EventFormScreen> {
   }
 
   /// The cover's signed read URL expired: fetch a fresh one for the same
-  /// photo without touching anything else the user has edited.
+  /// photo without touching anything else the user has edited. The event's
+  /// stored cover may be an event-only photo (#315) that the gallery API does
+  /// not serve, so it is re-read from the event; a gallery thumb picked in this
+  /// form is re-read from the gallery.
   Future<void> _refreshCoverPreview() async {
     final baby = _baby;
     final photoId = _cover.remoteRef;
+    final eventId = widget.eventId;
     if (baby == null || photoId == null || _cover.localFile != null) return;
+    final calendar = context.read<CalendarRepository>();
+    final gallery = context.read<GalleryRepository>();
     try {
-      final detail = await context.read<GalleryRepository>().fetchPhoto(
-        baby.id,
-        photoId,
-      );
+      final String? previewUrl;
+      if (eventId != null && photoId == _storedCoverId) {
+        previewUrl = (await calendar.fetchEvent(baby.id, eventId))
+            .coverPhotoDisplayUrl;
+      } else {
+        final detail = await gallery.fetchPhoto(baby.id, photoId);
+        previewUrl = detail.thumbUrl ?? detail.displayUrl;
+      }
       if (!mounted || _cover.remoteRef != photoId) return;
-      setState(() {
-        _cover = _cover.withPreviewUrl(detail.thumbUrl ?? detail.displayUrl);
-      });
+      setState(() => _cover = _cover.withPreviewUrl(previewUrl));
     } catch (e) {
       if (mounted) {
         AppSnackBar.showAlert(context, apiErrorMessage(l10n, e));
@@ -169,6 +180,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
       hour: eventWallTime(detail.startsAt).hour,
       minute: eventWallTime(detail.startsAt).minute,
     );
+    _storedCoverId = detail.coverPhotoId;
     _cover = PhotoSelection.fromStored(
       detail.coverPhotoId,
       previewUrl: detail.coverPhotoDisplayUrl,
