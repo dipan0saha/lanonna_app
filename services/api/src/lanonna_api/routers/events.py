@@ -56,6 +56,7 @@ def list_events_route(
     past: bool = Query(default=False),
     offset: int = Query(default=0, ge=0),
     limit: int | None = Query(default=None, ge=1, le=100),
+    utc_offset_minutes: int | None = Query(default=None, ge=-840, le=840),
     user: AppUser = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
@@ -67,6 +68,7 @@ def list_events_route(
             past=past,
             offset=offset,
             limit=limit,
+            utc_offset_minutes=utc_offset_minutes,
         )
     except Exception as exc:
         raise map_domain_errors(exc) from exc

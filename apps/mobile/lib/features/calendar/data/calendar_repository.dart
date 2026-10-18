@@ -37,9 +37,15 @@ class CalendarRepository extends ChangeNotifier {
   /// Sign-out / account deletion: drop every cached event list.
   void clearCachedEvents() => _listsByBaby.clear();
 
-  static String _cacheKey({String? month, bool upcoming = false}) {
+  static String _cacheKey({
+    String? month,
+    bool upcoming = false,
+    int? utcOffsetMinutes,
+  }) {
     if (upcoming) return 'upcoming';
-    return 'month:$month';
+    if (month == null) return 'all';
+    final offset = utcOffsetMinutes ?? deviceUtcOffsetMinutes();
+    return 'month:$month@$offset';
   }
 
   static bool _shouldServeStaleListCache(Object error) {
@@ -95,7 +101,9 @@ class CalendarRepository extends ChangeNotifier {
     }
     try {
       final query = <String>[];
-      if (month != null) query.add('month=$month');
+      if (month != null) {
+        query.addAll(calendarLocalMonthQueryParams(month));
+      }
       if (upcoming) query.add('upcoming=true');
       final suffix = query.isEmpty ? '' : '?${query.join('&')}';
       final json = await _api.getJson('/v1/babies/$babyId/events$suffix');

@@ -25,6 +25,10 @@ bool eventOnLocalMonthDay(DateTime startsAt, DateTime visibleMonth) {
 
 int eventLocalDayOfMonth(DateTime startsAt) => eventLocalStart(startsAt).day;
 
+/// Device offset from UTC in minutes (east positive), for calendar month queries.
+int deviceUtcOffsetMinutes([DateTime? anchor]) =>
+    (anchor ?? DateTime.now()).timeZoneOffset.inMinutes;
+
 bool eventOnLocalCalendarDay(DateTime startsAt, DateTime day) {
   final local = eventLocalStart(startsAt);
   return local.year == day.year &&

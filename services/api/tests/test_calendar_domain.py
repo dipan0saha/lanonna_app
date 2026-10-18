@@ -26,6 +26,20 @@ def test_parse_month_december():
     assert end == datetime(2026, 1, 1, tzinfo=timezone.utc)
 
 
+def test_parse_month_honors_positive_utc_offset():
+    # November 2026 in UTC+11: local midnight is still October in UTC.
+    start, end = _parse_month("2026-11", utc_offset_minutes=660)
+    assert start == datetime(2026, 10, 31, 13, 0, tzinfo=timezone.utc)
+    assert end == datetime(2026, 11, 30, 13, 0, tzinfo=timezone.utc)
+
+
+def test_parse_month_honors_negative_utc_offset():
+    # October 2026 in UTC-4 (EDT).
+    start, end = _parse_month("2026-10", utc_offset_minutes=-240)
+    assert start == datetime(2026, 10, 1, 4, 0, tzinfo=timezone.utc)
+    assert end == datetime(2026, 11, 1, 4, 0, tzinfo=timezone.utc)
+
+
 def test_create_event_rejects_invalid_video_call_url():
     baby_id = uuid.uuid4()
     starts = datetime(2026, 6, 1, 12, 0, tzinfo=timezone.utc)

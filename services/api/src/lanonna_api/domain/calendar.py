@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from lanonna_api.domain.errors import ErrorCode, InvalidInputError
@@ -64,13 +64,32 @@ def _require_baby_cover_photo(
         raise ValueError("Cover photo must belong to this baby profile.")
 
 
-def _parse_month(month: str) -> tuple[datetime, datetime]:
-    year, mon = month.split("-")
-    start = datetime(int(year), int(mon), 1, tzinfo=timezone.utc)
-    if int(mon) == 12:
-        end = datetime(int(year) + 1, 1, 1, tzinfo=timezone.utc)
+def _parse_month(
+    month: str,
+    utc_offset_minutes: int | None = None,
+) -> tuple[datetime, datetime]:
+    """Inclusive start, exclusive end in UTC for calendar-month filtering.
+
+    When [utc_offset_minutes] is set (device offset east of UTC, same sign as
+    ``DateTime.timeZoneOffset``), ``month`` is interpreted as that local month.
+    """
+    year_s, mon_s = month.split("-")
+    year, mon = int(year_s), int(mon_s)
+    if utc_offset_minutes is None:
+        start = datetime(year, mon, 1, tzinfo=timezone.utc)
+        if mon == 12:
+            end = datetime(year + 1, 1, 1, tzinfo=timezone.utc)
+        else:
+            end = datetime(year, mon + 1, 1, tzinfo=timezone.utc)
+        return start, end
+
+    fixed = timezone(timedelta(minutes=utc_offset_minutes))
+    start = datetime(year, mon, 1, tzinfo=fixed).astimezone(timezone.utc)
+    if mon == 12:
+        end_local = datetime(year + 1, 1, 1, tzinfo=fixed)
     else:
-        end = datetime(int(year), int(mon) + 1, 1, tzinfo=timezone.utc)
+        end_local = datetime(year, mon + 1, 1, tzinfo=fixed)
+    end = end_local.astimezone(timezone.utc)
     return start, end
 
 
@@ -96,13 +115,14 @@ def list_calendar_events(
     past: bool = False,
     offset: int = 0,
     limit: int | None = None,
+    utc_offset_minutes: int | None = None,
 ) -> dict[str, Any]:
     require_membership(firebase_uid, baby_profile_id)
     if upcoming and past:
         raise ValueError("Cannot request both upcoming and past events.")
     month_start = month_end = None
     if month:
-        month_start, month_end = _parse_month(month)
+        month_start, month_end = _parse_month(month, utc_offset_minutes)
     if past:
         page_size = limit or PAST_EVENTS_PAGE_SIZE
         if offset < 0:
