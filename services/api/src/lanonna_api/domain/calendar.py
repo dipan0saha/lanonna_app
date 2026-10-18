@@ -27,6 +27,7 @@ from lanonna_api.pagination import offset_page_from_extra_row
 from lanonna_api.repositories.activity_events import insert_activity_event
 from lanonna_api.db import read_scope
 from lanonna_api.domain.media_urls import signed_display_url
+from lanonna_api.domain.photo_lifecycle import purge_event_cover_photo_if_unreferenced
 from lanonna_api.domain.users_display import (
     author_display_name_from_row,
     rsvp_display_name_from_row,
@@ -285,18 +286,23 @@ def update_calendar_event(
         fields["video_call_url"] = normalize_optional_http_url(
             fields["video_call_url"]
         )
+    existing = get_event(baby_profile_id, event_id)
+    if existing is None:
+        raise LookupError("Event not found.")
+    previous_cover_id = existing.get("cover_photo_id")
     if "cover_photo_id" in fields:
         _require_baby_cover_photo(baby_profile_id, fields.get("cover_photo_id"))
     if "starts_at" in fields or "ends_at" in fields:
-        existing = get_event(baby_profile_id, event_id)
-        if existing is None:
-            raise LookupError("Event not found.")
         starts_at = fields["starts_at"] if "starts_at" in fields else existing["starts_at"]
         ends_at = fields["ends_at"] if "ends_at" in fields else existing.get("ends_at")
         validate_event_time_range(starts_at, ends_at)
     row = update_event(baby_profile_id, event_id, fields)
     if row is None:
         raise LookupError("Event not found.")
+    if "cover_photo_id" in fields:
+        new_cover_id = fields.get("cover_photo_id")
+        if previous_cover_id != new_cover_id:
+            purge_event_cover_photo_if_unreferenced(previous_cover_id)
     return _event_row_to_json(row)
 
 
@@ -306,8 +312,13 @@ def remove_calendar_event(
     event_id: uuid.UUID,
 ) -> None:
     assert_owner_membership(firebase_uid, baby_profile_id)
+    existing = get_event(baby_profile_id, event_id)
+    if existing is None:
+        raise LookupError("Event not found.")
+    cover_photo_id = existing.get("cover_photo_id")
     if not delete_event(baby_profile_id, event_id):
         raise LookupError("Event not found.")
+    purge_event_cover_photo_if_unreferenced(cover_photo_id)
 
 
 def set_rsvp(

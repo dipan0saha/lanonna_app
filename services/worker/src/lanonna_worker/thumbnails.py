@@ -12,6 +12,7 @@ from PIL import Image
 from lanonna_worker.config import settings
 from lanonna_worker.db import (
     DatabaseNotConfiguredError,
+    PhotoPurpose,
     get_ready_photo_by_display_path,
     mark_photo_ready,
 )
@@ -129,6 +130,8 @@ def _maybe_notify_photo_ready(
     *,
     object_generation: int | None,
 ) -> None:
+    if ready_row.get("purpose") == PhotoPurpose.EVENT_COVER:
+        return  # event-only cover: no "shared a photo" fan-out (#315)
     photo_uuid = ready_row["id"]
     if isinstance(photo_uuid, str):
         photo_uuid = uuid.UUID(photo_uuid)

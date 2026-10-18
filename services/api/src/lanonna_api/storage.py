@@ -18,6 +18,7 @@ Upload (PUT) URLs are unique per object and never cached.
 
 from __future__ import annotations
 
+import logging
 import threading
 import time
 import uuid
@@ -36,6 +37,8 @@ UPLOAD_URL_TTL = timedelta(seconds=900)
 READ_URL_REUSE = timedelta(seconds=300)
 READ_URL_CACHE_MAX_ENTRIES = 4096
 SIGN_CONCURRENCY = 8
+
+logger = logging.getLogger(__name__)
 
 _CLOUD_PLATFORM_SCOPE = "https://www.googleapis.com/auth/cloud-platform"
 _TOKEN_URI = "https://oauth2.googleapis.com/token"
@@ -309,3 +312,39 @@ def _sign_put(
             "x-goog-content-length-range": length_range,
         },
     }
+
+
+def delete_photo_objects_best_effort(
+    *,
+    display_path: str | None,
+    thumb_path: str | None,
+) -> None:
+    """Remove display/thumb objects after the SQL row is gone. Failures are
+    logged, never raised: the row is already deleted and the request succeeded."""
+    objects: list[ObjectRef] = []
+    if display_path:
+        objects.append((settings.display_bucket, display_path))
+    if thumb_path:
+        objects.append((settings.thumbnails_bucket, thumb_path))
+    if not objects:
+        return
+    try:
+        from google.api_core.exceptions import NotFound
+        from google.cloud import storage
+
+        client = storage.Client(project=settings.gcp_project_id)
+    except Exception:
+        logger.warning("photo_object_delete_client_unavailable", exc_info=True)
+        return
+    for bucket, object_name in objects:
+        try:
+            client.bucket(bucket).blob(object_name).delete()
+        except NotFound:
+            continue  # already gone
+        except Exception:
+            logger.warning(
+                "photo_object_delete_failed bucket=%s name=%s",
+                bucket,
+                object_name,
+                exc_info=True,
+            )

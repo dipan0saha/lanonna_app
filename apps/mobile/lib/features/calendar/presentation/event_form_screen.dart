@@ -14,13 +14,13 @@ import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_labeled_text_field.dart';
 import '../../../core/widgets/app_semantics.dart';
+import '../../../core/media/event_cover_uploader.dart';
 import '../../../core/media/photo_selection.dart';
 import '../../../core/media/pick_display_photo.dart';
 import '../../../core/widgets/photo_selection_preview.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../gallery/data/gallery_repository.dart';
 import '../../gallery/data/models/photo_models.dart';
-import '../../gallery/domain/gallery_refresh.dart';
 import '../../home/data/home_refresh_signal.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
@@ -224,13 +224,12 @@ class _EventFormScreenState extends State<EventFormScreen> {
   Future<String?> _coverPhotoIdForSave(String babyId) async {
     final file = _cover.localFile;
     if (!_cover.needsUpload || file == null) return _cover.remoteRef;
-    final photoId = await context.read<GalleryRepository>().uploadPhoto(
+    final photoId = await context.read<EventCoverUploader>().upload(
       babyId,
       file,
     );
     if (mounted) {
       setState(() => _cover = _cover.uploaded(photoId));
-      notifyGalleryDataChanged(context);
     }
     return photoId;
   }

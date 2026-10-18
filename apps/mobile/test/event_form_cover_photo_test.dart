@@ -13,6 +13,7 @@ import 'package:lanonna/features/calendar/data/calendar_repository.dart';
 import 'package:lanonna/features/calendar/data/models/calendar_models.dart';
 import 'package:lanonna/features/calendar/presentation/event_form_screen.dart';
 import 'package:lanonna/features/calendar/presentation/widgets/event_form_widgets.dart';
+import 'package:lanonna/core/media/event_cover_uploader.dart';
 import 'package:lanonna/features/gallery/data/gallery_repository.dart';
 import 'package:lanonna/features/home/data/home_refresh_signal.dart';
 import 'package:lanonna/features/home/data/home_repository.dart';
@@ -23,6 +24,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support/fake_calendar_repository.dart';
+import 'support/fake_event_cover_uploader.dart';
 import 'support/fake_gallery_repository.dart';
 import 'support/fake_home_repository.dart';
 import 'support/fake_image_picker.dart';
@@ -49,11 +51,13 @@ class _Harness {
   _Harness({
     required this.calendar,
     required this.gallery,
+    required this.coverUploader,
     required this.picker,
   });
 
   final FakeCalendarRepository calendar;
   final FakeGalleryRepository gallery;
+  final FakeEventCoverUploader coverUploader;
   final FakeImagePickerPlatform picker;
   var popped = false;
 }
@@ -72,6 +76,7 @@ Future<_Harness> _pumpForm(WidgetTester tester, {String? eventId}) async {
   final harness = _Harness(
     calendar: FakeCalendarRepository(detailByFetch: _existingEvent),
     gallery: FakeGalleryRepository(),
+    coverUploader: FakeEventCoverUploader(),
     picker: FakeImagePickerPlatform.install(),
   );
   final router = GoRouter(
@@ -98,6 +103,7 @@ Future<_Harness> _pumpForm(WidgetTester tester, {String? eventId}) async {
           value: harness.calendar,
         ),
         ChangeNotifierProvider<GalleryRepository>.value(value: harness.gallery),
+        Provider<EventCoverUploader>.value(value: harness.coverUploader),
       ],
       child: MaterialApp.router(
         theme: AppTheme.light,
@@ -153,16 +159,16 @@ void main() {
     );
     expect(find.byIcon(Icons.photo_camera_outlined), findsNothing);
     expect(
-      h.gallery.uploadedFiles,
+      h.coverUploader.uploadedFiles,
       isEmpty,
       reason: 'nothing uploads before save',
     );
 
     final upload = Completer<String>();
-    h.gallery.uploadResults.add(upload);
+    h.coverUploader.uploadResults.add(upload);
     await _tapSave(tester, _l10n.calendarSaveEvent);
 
-    expect(h.gallery.uploadedFiles.single.path, '/tmp/picked_cover.jpg');
+    expect(h.coverUploader.uploadedFiles.single.path, '/tmp/picked_cover.jpg');
     expect(_coverBusySpinner(), findsOneWidget);
     expect(find.text(_l10n.notificationPrefsSaving), findsOneWidget);
     expect(h.calendar.createdCoverIds, isEmpty);
@@ -196,7 +202,7 @@ void main() {
     await _tapSave(tester, _l10n.calendarSaveChanges);
     await tester.pumpAndSettle();
 
-    expect(h.gallery.uploadedFiles, hasLength(1));
+    expect(h.coverUploader.uploadedFiles, hasLength(1));
     expect(h.calendar.updatedCoverIds, ['uploaded-1']);
     expect(h.popped, isTrue);
   });
@@ -214,7 +220,7 @@ void main() {
     await _tapSave(tester, _l10n.calendarSaveChanges);
     await tester.pumpAndSettle();
 
-    expect(h.gallery.uploadedFiles, isEmpty);
+    expect(h.coverUploader.uploadedFiles, isEmpty);
     expect(h.calendar.updatedCoverIds, [null]);
   });
 
@@ -243,7 +249,7 @@ void main() {
       await _chooseCoverOption(tester, _l10n.eventCoverUploadNew);
 
       final failing = Completer<String>();
-      h.gallery.uploadResults.add(failing);
+      h.coverUploader.uploadResults.add(failing);
       await _tapSave(tester, _l10n.calendarSaveEvent);
       failing.completeError(const SocketException('offline'));
       await tester.pump();
@@ -259,7 +265,7 @@ void main() {
       await _tapSave(tester, _l10n.calendarSaveEvent);
       await tester.pumpAndSettle();
 
-      expect(h.gallery.uploadedFiles, hasLength(2));
+      expect(h.coverUploader.uploadedFiles, hasLength(2));
       expect(h.calendar.createdCoverIds, ['uploaded-2']);
     },
   );
@@ -286,7 +292,7 @@ void main() {
     await _tapSave(tester, _l10n.calendarSaveEvent);
     await tester.pumpAndSettle();
 
-    expect(h.gallery.uploadedFiles, hasLength(1));
+    expect(h.coverUploader.uploadedFiles, hasLength(1));
     expect(h.calendar.createdCoverIds, ['uploaded-1', 'uploaded-1']);
     expect(h.popped, isTrue);
   });

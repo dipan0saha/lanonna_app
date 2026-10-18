@@ -24,6 +24,7 @@ def test_mark_photo_ready_inserts_photo_shared_activity():
                 "baby_profile_id": baby_id,
                 "uploader_firebase_uid": "uploader-1",
                 "caption": "Hello",
+                "purpose": "gallery",
             }
         elif "FROM app_users" in sql_text:
             assert "email" not in sql_text
@@ -81,3 +82,49 @@ def test_mark_photo_ready_idempotent_generation():
 
     assert row is None
     assert conn.execute.call_count == 1
+
+
+def test_mark_photo_ready_skips_activity_for_event_cover():
+    photo_id = uuid.uuid4()
+    baby_id = uuid.uuid4()
+    display_path = f"display/{photo_id}.webp"
+    inserts: list[tuple] = []
+
+    conn = MagicMock()
+
+    def execute(sql, params=None):
+        sql_text = " ".join(sql.split())
+        result = MagicMock()
+        if "FROM photos" in sql_text and "display_object_generation" in sql_text:
+            result.fetchone.return_value = None
+        elif "UPDATE photos" in sql_text:
+            result.fetchone.return_value = {
+                "id": photo_id,
+                "baby_profile_id": baby_id,
+                "uploader_firebase_uid": "uploader-1",
+                "caption": None,
+                "purpose": "event_cover",
+            }
+        elif "INSERT INTO activity_events" in sql_text:
+            inserts.append((sql_text, params))
+            result.fetchone.return_value = None
+        else:
+            result.fetchone.return_value = None
+        return result
+
+    conn.execute.side_effect = execute
+
+    @contextmanager
+    def fake_connection():
+        yield conn
+
+    with patch("lanonna_worker.db.get_connection", fake_connection):
+        row = mark_photo_ready(
+            display_path=display_path,
+            thumb_path=f"thumbnails/{photo_id}.jpg",
+            object_generation=42,
+            byte_length=1000,
+        )
+
+    assert row is not None
+    assert inserts == []

@@ -4,6 +4,7 @@ import uuid
 from typing import Any
 
 from lanonna_api.db import get_connection
+from lanonna_api.domain.photo_purpose import PhotoPurpose
 from lanonna_api.repositories.active_participants import active_participant_join
 
 
@@ -44,7 +45,8 @@ def home_summary_counts(baby_profile_id: uuid.UUID) -> dict[str, Any]:
                           AND m.role = 'follower'
                           AND m.removed_at IS NULL) AS has_follower,
                 EXISTS (SELECT 1 FROM photos p
-                        WHERE p.baby_profile_id = %(baby)s) AS has_photo,
+                        WHERE p.baby_profile_id = %(baby)s
+                          AND p.purpose = %(gallery)s) AS has_photo,
                 EXISTS (SELECT 1 FROM events e
                         WHERE e.baby_profile_id = %(baby)s) AS has_event
             FROM (
@@ -57,7 +59,7 @@ def home_summary_counts(baby_profile_id: uuid.UUID) -> dict[str, Any]:
                 WHERE v.baby_profile_id = %(baby)s AND v.vote_type = 'gender'
             ) g
             """,
-            {"baby": baby_profile_id},
+            {"baby": baby_profile_id, "gallery": PhotoPurpose.GALLERY.value},
         ).fetchone()
     return dict(row)
 

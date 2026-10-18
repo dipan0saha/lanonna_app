@@ -65,3 +65,17 @@ def test_init_photo_upload_passes_caption_to_create_pending_photo():
         )
         create.assert_called_once()
         assert create.call_args[0][4] == "First day"
+        assert create.call_args.kwargs.get("purpose").value == "gallery"
+
+
+def test_photo_init_request_rejects_unknown_purpose():
+    from lanonna_api.domain.photo_purpose import PhotoPurpose
+
+    base = {"baby_profile_id": str(uuid.uuid4()), "byte_length": 10}
+    assert PhotoInitRequest(**base).purpose is PhotoPurpose.GALLERY
+    assert (
+        PhotoInitRequest(**base, purpose="event_cover").purpose
+        is PhotoPurpose.EVENT_COVER
+    )
+    with pytest.raises(ValidationError):
+        PhotoInitRequest(**base, purpose="bogus")

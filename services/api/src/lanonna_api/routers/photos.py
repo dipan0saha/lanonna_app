@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 from lanonna_api.auth import AppUser, current_app_user
 from lanonna_api.domain import gallery as gallery_domain
+from lanonna_api.domain.photo_purpose import PhotoPurpose
 from lanonna_api.http_errors import map_domain_errors
 from lanonna_api.input_limits import MAX_CAPTION_LEN, MAX_PHOTO_TAGGED_BABIES
 
@@ -19,6 +20,7 @@ class PhotoInitRequest(BaseModel):
     content_type: str = Field(default="image/jpeg")
     byte_length: int = Field(gt=0, le=2_097_152)
     caption: str | None = Field(default=None, max_length=2000)
+    purpose: PhotoPurpose = PhotoPurpose.GALLERY
 
 
 class CaptionPatch(BaseModel):
@@ -55,6 +57,7 @@ def photos_init(
             body.content_type,
             body.byte_length,
             caption=caption,
+            purpose=body.purpose,
         )
         return {
             "photo_id": result["photo_id"],
