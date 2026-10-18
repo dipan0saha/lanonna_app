@@ -5,9 +5,8 @@ import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../home/presentation/baby_context_reload.dart';
 import '../data/calendar_repository.dart';
-import '../data/models/calendar_models.dart';
 import '../domain/calendar_event_lists.dart';
-import 'widgets/calendar_today_upcoming_list.dart';
+import 'widgets/calendar_today_upcoming_sections.dart';
 import '../../../l10n/app_localizations.dart';
 
 class CalendarUpcomingScreen extends StatefulWidget {
@@ -19,15 +18,18 @@ class CalendarUpcomingScreen extends StatefulWidget {
 
 class _CalendarUpcomingScreenState extends State<CalendarUpcomingScreen>
     with BabyContextReload, TabLoadGenerationCache {
-  List<CalendarEvent> _today = [];
-  List<CalendarEvent> _upcoming = [];
+  CalendarEventBuckets _buckets =
+      const CalendarEventBuckets(today: [], upcoming: []);
   var _loading = true;
   String? _error;
+  late final CalendarRepository _calendarRepo;
 
   @override
   void initState() {
     super.initState();
-    context.read<CalendarRepository>().addListener(_onEventsChanged);
+    // Kept for dispose, where the element tree can no longer be looked up.
+    _calendarRepo = context.read<CalendarRepository>()
+      ..addListener(_onEventsChanged);
     _load();
   }
 
@@ -40,7 +42,7 @@ class _CalendarUpcomingScreenState extends State<CalendarUpcomingScreen>
   @override
   void dispose() {
     disposeBabyContextListeners();
-    context.read<CalendarRepository>().removeListener(_onEventsChanged);
+    _calendarRepo.removeListener(_onEventsChanged);
     super.dispose();
   }
 
@@ -65,8 +67,7 @@ class _CalendarUpcomingScreenState extends State<CalendarUpcomingScreen>
       final baby = await homeRepo.resolveSelectedBaby(store);
       if (baby == null) {
         setState(() {
-          _today = [];
-          _upcoming = [];
+          _buckets = const CalendarEventBuckets(today: [], upcoming: []);
           _loading = false;
         });
         cachedLoadedBabyId = null;
@@ -80,14 +81,13 @@ class _CalendarUpcomingScreenState extends State<CalendarUpcomingScreen>
       final monthForToday =
           await calRepo.listEvents(baby.id, month: currentKey);
       final upcomingApi = await calRepo.listEvents(baby.id, upcoming: true);
-      final partition = partitionCalendarListEvents(
+      final buckets = partitionCalendarListEvents(
         monthEventsForToday: monthForToday,
         upcomingFromApi: upcomingApi,
         now: now,
       );
       setState(() {
-        _today = partition.today;
-        _upcoming = partition.upcoming;
+        _buckets = buckets;
         _loading = false;
       });
       rememberTabLoadGeneration(store, baby);
@@ -126,11 +126,20 @@ class _CalendarUpcomingScreenState extends State<CalendarUpcomingScreen>
                       ),
                     ],
                   )
-                : CalendarTodayUpcomingList(
-                    today: _today,
-                    upcoming: _upcoming,
-                    emptyMessage: l10n.calendarNoUpcomingEvents,
-                  ),
+                : _buckets.isEmpty
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          const SizedBox(height: 120),
+                          Center(child: Text(l10n.calendarNoUpcomingEvents)),
+                        ],
+                      )
+                    : ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          CalendarTodayUpcomingSections(buckets: _buckets),
+                        ],
+                      ),
       ),
     );
   }

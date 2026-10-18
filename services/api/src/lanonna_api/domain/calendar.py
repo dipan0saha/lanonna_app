@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from lanonna_api.domain.errors import ErrorCode, InvalidInputError
@@ -65,12 +65,52 @@ def _require_baby_cover_photo(
 
 
 def _parse_month(month: str) -> tuple[datetime, datetime]:
-    year, mon = month.split("-")
-    start = datetime(int(year), int(mon), 1, tzinfo=timezone.utc)
-    if int(mon) == 12:
-        end = datetime(int(year) + 1, 1, 1, tzinfo=timezone.utc)
+    """UTC calendar month (legacy ``month=YYYY-MM`` query; app builds before #68)."""
+    year_s, mon_s = month.split("-")
+    year, mon = int(year_s), int(mon_s)
+    start = datetime(year, mon, 1, tzinfo=timezone.utc)
+    if mon == 12:
+        end = datetime(year + 1, 1, 1, tzinfo=timezone.utc)
     else:
-        end = datetime(int(year), int(mon) + 1, 1, tzinfo=timezone.utc)
+        end = datetime(year, mon + 1, 1, tzinfo=timezone.utc)
+    return start, end
+
+
+# A local calendar month is at most 31 days plus a DST hour; leave a little slack.
+MAX_EVENT_LIST_WINDOW = timedelta(days=32)
+
+
+def _as_utc(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
+
+
+def resolve_event_list_window(
+    month: str | None,
+    starts_from: datetime | None,
+    starts_before: datetime | None,
+) -> tuple[datetime | None, datetime | None]:
+    """``[start, end)`` filter for the event list.
+
+    The app sends ``starts_from`` / ``starts_before``: the instants of its local
+    month start and next month start, so DST changes inside the month are
+    handled by the device's own time zone rules (#68). ``month`` alone is the
+    legacy UTC month.
+    """
+    if starts_from is None and starts_before is None:
+        return _parse_month(month) if month else (None, None)
+    if month or starts_from is None or starts_before is None:
+        raise InvalidInputError(
+            ErrorCode.INVALID_REQUEST,
+            "Send both starts_from and starts_before, without month.",
+        )
+    start, end = _as_utc(starts_from), _as_utc(starts_before)
+    if end <= start or end - start > MAX_EVENT_LIST_WINDOW:
+        raise InvalidInputError(
+            ErrorCode.INVALID_REQUEST,
+            "starts_before must be after starts_from and at most 32 days later.",
+        )
     return start, end
 
 
@@ -96,13 +136,13 @@ def list_calendar_events(
     past: bool = False,
     offset: int = 0,
     limit: int | None = None,
+    starts_from: datetime | None = None,
+    starts_before: datetime | None = None,
 ) -> dict[str, Any]:
     require_membership(firebase_uid, baby_profile_id)
     if upcoming and past:
         raise ValueError("Cannot request both upcoming and past events.")
-    month_start = month_end = None
-    if month:
-        month_start, month_end = _parse_month(month)
+    month_start, month_end = resolve_event_list_window(month, starts_from, starts_before)
     if past:
         page_size = limit or PAST_EVENTS_PAGE_SIZE
         if offset < 0:

@@ -15,6 +15,7 @@ class FakeCalendarRepository extends CalendarRepository {
   int listCalls = 0;
   int fetchCalls = 0;
   List<CalendarEvent> upcomingEvents = const [];
+  List<CalendarEvent> monthEvents = const [];
 
   /// `cover_photo_id` of each [createEvent] / [updateEvent] call, in order.
   final createdCoverIds = <String?>[];
@@ -76,6 +77,8 @@ class FakeCalendarRepository extends CalendarRepository {
     bool forceRefresh = false,
   }) async {
     listCalls++;
+    if (upcoming) return upcomingEvents;
+    if (month != null) return monthEvents;
     return upcomingEvents;
   }
 
