@@ -201,7 +201,7 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
                                     context,
                                     baby,
                                   );
-                              if (deleted && mounted) {
+                              if (deleted && context.mounted) {
                                 Navigator.of(context).pop();
                               }
                               return;
@@ -226,7 +226,7 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
                                   child: Text(AppLocalizations.of(context)!.actionManageFollowers),
                                 ),
                               ],
-                              if (baby.role == 'owner' && !baby.canLeave)
+                              if (baby.canDeleteProfile)
                                 PopupMenuItem(
                                   value: 'delete',
                                   child: Text(

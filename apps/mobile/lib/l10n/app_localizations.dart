@@ -634,16 +634,10 @@ abstract class AppLocalizations {
   /// **'Leave'**
   String get memberLeaveAction;
 
-  /// No description provided for @memberSoleOwnerLeaveTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Can\'t leave yet'**
-  String get memberSoleOwnerLeaveTitle;
-
   /// No description provided for @memberSoleOwnerLeaveBody.
   ///
   /// In en, this message translates to:
-  /// **'You are the only owner. Add a co-owner and leave, delete the baby profile from Edit baby, or delete your account.'**
+  /// **'You are the only owner. Add a co-owner and leave, delete the baby profile, or delete your account.'**
   String get memberSoleOwnerLeaveBody;
 
   /// No description provided for @membershipEndedMessage.

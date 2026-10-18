@@ -368,11 +368,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get memberLeaveAction => 'Leave';
 
   @override
-  String get memberSoleOwnerLeaveTitle => 'Can\'t leave yet';
-
-  @override
   String get memberSoleOwnerLeaveBody =>
-      'You are the only owner. Add a co-owner and leave, delete the baby profile from Edit baby, or delete your account.';
+      'You are the only owner. Add a co-owner and leave, delete the baby profile, or delete your account.';
 
   @override
   String get membershipEndedMessage =>
@@ -388,12 +385,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteBabyProfileAction => 'Delete baby profile';
 
   @override
+  String get deleteBabyProfileConfirmTitle => 'Delete this baby profile?';
+
+  @override
   String deleteBabyProfileConfirmBody(String babyName) {
     return 'This permanently deletes $babyName for everyone who follows this profile. Photos, calendar events, registry items, and other data will no longer be available in the app.';
   }
-
-  @override
-  String get deleteBabyProfileConfirmTitle => 'Delete this baby profile?';
 
   @override
   String get deleteBabyProfileConfirmAction => 'Delete profile';

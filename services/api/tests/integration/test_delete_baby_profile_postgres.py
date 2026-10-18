@@ -97,3 +97,104 @@ def test_co_owned_delete_refused():
         delete_baby_profile(owner_a, baby_id)
 
     assert len(list_babies_for_user(owner_a)) == 1
+
+
+def test_co_owners_deleting_and_leaving_at_once_never_orphan_the_baby():
+    """Delete and leave both take the baby row lock, so the owner count stays true."""
+    import threading
+
+    from lanonna_api.domain.baby_delete import CannotDeleteSharedBabyError
+    from lanonna_api.domain.member_lifecycle import leave_baby_profile
+
+    for _ in range(5):
+        owner_a = _user("ra")
+        owner_b = _user("rb")
+        baby_id = _baby([(owner_a, "owner"), (owner_b, "owner")])
+        barrier = threading.Barrier(2)
+        errors: list[Exception] = []
+
+        def run(fn, uid):
+            barrier.wait()
+            try:
+                fn(uid, baby_id)
+            except (CannotDeleteSharedBabyError, MemberLifecycleError) as exc:
+                errors.append(exc)
+
+        threads = [
+            threading.Thread(target=run, args=(delete_baby_profile, owner_a)),
+            threading.Thread(target=run, args=(leave_baby_profile, owner_b)),
+        ]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        with get_connection() as conn:
+            baby = conn.execute(
+                "SELECT deleted_at FROM baby_profiles WHERE id = %s", (baby_id,)
+            ).fetchone()
+            owners = conn.execute(
+                """
+                SELECT COUNT(*)::int AS n FROM baby_memberships
+                WHERE baby_profile_id = %s AND role = 'owner' AND removed_at IS NULL
+                """,
+                (baby_id,),
+            ).fetchone()["n"]
+        # Either the delete was refused (B left, A keeps it) or B left first and A deleted.
+        assert (baby["deleted_at"] is None and owners == 1) or (
+            baby["deleted_at"] is not None and owners == 0
+        )
+
+
+def test_co_owners_leaving_at_once_keep_one_owner():
+    import threading
+
+    from lanonna_api.domain.member_lifecycle import leave_baby_profile
+
+    for _ in range(5):
+        owner_a = _user("la")
+        owner_b = _user("lb")
+        baby_id = _baby([(owner_a, "owner"), (owner_b, "owner")])
+        barrier = threading.Barrier(2)
+        refused: list[Exception] = []
+
+        def run(uid):
+            barrier.wait()
+            try:
+                leave_baby_profile(uid, baby_id)
+            except MemberLifecycleError as exc:
+                refused.append(exc)
+
+        threads = [threading.Thread(target=run, args=(u,)) for u in (owner_a, owner_b)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        assert len(refused) == 1
+        assert refused[0].code.value == "sole_owner_cannot_leave"
+
+
+def test_account_delete_still_soft_deletes_sole_owned_babies():
+    from lanonna_api.repositories.account_delete import (
+        list_sole_owned_baby_ids,
+        soft_delete_account_rows,
+    )
+
+    owner = _user("acct")
+    follower = _user("acctf")
+    baby_id = _baby([(owner, "owner"), (follower, "follower")])
+    _pending_invite(baby_id, owner)
+
+    soft_delete_account_rows(owner, list_sole_owned_baby_ids(owner))
+
+    assert list_babies_for_user(follower) == []
+    with get_connection() as conn:
+        row = conn.execute(
+            "SELECT deleted_at FROM baby_profiles WHERE id = %s", (baby_id,)
+        ).fetchone()
+        assert row["deleted_at"] is not None
+        status = conn.execute(
+            "SELECT status FROM invitations WHERE baby_profile_id = %s", (baby_id,)
+        ).fetchone()["status"]
+        assert status == "revoked"

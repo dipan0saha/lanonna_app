@@ -1,9 +1,21 @@
 from __future__ import annotations
 
 import uuid
+from enum import StrEnum
 
 from lanonna_api.db import get_connection
-from lanonna_api.repositories.memberships import soft_remove_memberships_on_babies
+from lanonna_api.repositories.memberships import (
+    count_active_owners,
+    lock_baby_profile_for_update,
+    lock_membership_for_user_for_update,
+    soft_remove_memberships_on_babies,
+)
+
+
+class SoleOwnerDeleteOutcome(StrEnum):
+    DELETED = "deleted"
+    NOT_OWNER = "not_owner"
+    SHARED = "shared"
 
 
 def soft_delete_baby_profiles(
@@ -42,3 +54,27 @@ def soft_delete_baby_profiles(
     else:
         with get_connection() as connection:
             _run(connection)
+
+
+def soft_delete_baby_profile_if_sole_owner(
+    baby_profile_id: uuid.UUID,
+    firebase_uid: str,
+) -> SoleOwnerDeleteOutcome:
+    """Check sole ownership and delete in one transaction.
+
+    The baby row lock (``lock_baby_profile_for_update``) is the same lock
+    co-owner invite and accept take, so an owner joining or leaving cannot
+    change the owner count between the check and the delete.
+    """
+    with get_connection() as conn:
+        if lock_baby_profile_for_update(baby_profile_id, conn) is None:
+            return SoleOwnerDeleteOutcome.NOT_OWNER
+        membership = lock_membership_for_user_for_update(
+            baby_profile_id, firebase_uid, conn
+        )
+        if membership is None or membership["role"] != "owner":
+            return SoleOwnerDeleteOutcome.NOT_OWNER
+        if count_active_owners(baby_profile_id, conn) > 1:
+            return SoleOwnerDeleteOutcome.SHARED
+        soft_delete_baby_profiles([baby_profile_id], conn=conn)
+        return SoleOwnerDeleteOutcome.DELETED

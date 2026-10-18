@@ -230,7 +230,7 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
             onPressed: () => context.pop(),
             child: Text(AppLocalizations.of(context)!.actionCancel),
           ),
-          if (_isOwner && _baby != null && !_baby!.canLeave) ...[
+          if (_baby?.canDeleteProfile ?? false) ...[
             const SizedBox(height: AppSpacing.xxl),
             OutlinedButton(
               style: AppButtonStyles.outlinedDestructive,

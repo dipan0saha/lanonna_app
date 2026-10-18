@@ -30,6 +30,8 @@ Users tried **Leave profile** in the baby switcher expecting the baby to be remo
 2. **Shared soft-delete helper** extracted from account delete (revoke invites, soft-remove memberships, `deleted_at`, participation purge via existing membership helpers).
 3. **Mobile:** Delete on Edit baby + switcher (sole owners get Delete instead of Leave); two-step confirm; cache invalidate + `resolveSelectedBaby` + `HomeRefreshSignal` like leave.
 4. **No** mapping sole-owner leave to silent baby deletion.
+5. **Atomic owner check:** delete (`soft_delete_baby_profile_if_sole_owner`) and leave (`soft_remove_own_membership`) each take the baby row lock (`lock_baby_profile_for_update`, the same lock co-owner invite/accept use), then count owners and write in one transaction. Two co-owners deleting/leaving at once can no longer both pass the count (before this, two simultaneous co-owner leaves could leave a baby with no owner).
+6. **Shared rule on mobile:** `BabySummary.canDeleteProfile` (owner and server `can_leave == false`) decides Delete vs Leave on both entry points.
 
 ## Test plan
 
@@ -37,5 +39,6 @@ Users tried **Leave profile** in the baby switcher expecting the baby to be remo
 - **API router:** `DELETE` returns 204 / mapped errors.
 - **Postgres integration:** baby gone from `GET /v1/babies`; follower gets `membership_ended` on baby route; pending invites revoked.
 - **Account delete:** still soft-deletes sole-owned babies via shared helper (existing tests updated if needed).
-- **Mobile:** `AccountRepository.deleteBabyProfile` invalidates list; widget tests for confirm copy and switcher menu (delete vs leave).
+- **Postgres concurrency:** simultaneous co-owner delete + leave never orphans the baby; simultaneous co-owner leaves keep exactly one owner.
+- **Mobile:** `AccountRepository.deleteBabyProfile` invalidates list; widget test for the two-step confirm; `canDeleteProfile` unit test (delete vs leave).
 - **Parity:** `ErrorCode` / `ApiErrorCode` + `test_error_code_parity.py`.

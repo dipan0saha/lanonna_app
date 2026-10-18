@@ -37,7 +37,22 @@ class _Home extends HomeRepository {
 }
 
 void main() {
-  testWidgets('delete flow shows two confirmations then deletes', (tester) async {
+  test('canDeleteProfile is only for a sole owner', () {
+    BabySummary b(String role, bool canLeave) => BabySummary(
+      id: 'b',
+      name: 'B',
+      role: role,
+      lifecycle: BabyLifecycle.expecting,
+      canLeave: canLeave,
+    );
+    expect(b('owner', false).canDeleteProfile, isTrue);
+    expect(b('owner', true).canDeleteProfile, isFalse);
+    expect(b('follower', true).canDeleteProfile, isFalse);
+  });
+
+  testWidgets('delete flow shows two confirmations then deletes', (
+    tester,
+  ) async {
     SharedPreferences.setMockInitialValues({});
     final store = SelectedBabyStore(await SharedPreferences.getInstance());
     final accounts = _Accounts();
@@ -74,7 +89,7 @@ void main() {
         providers: [
           Provider<AccountRepository>.value(value: accounts),
           Provider<HomeRepository>.value(value: home),
-          Provider<SelectedBabyStore>.value(value: store),
+          ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
           Provider<HomeRefreshSignal>.value(value: refresh),
         ],
         child: MaterialApp.router(
