@@ -27,7 +27,10 @@ class _Api extends ApiClient {
   };
 
   @override
-  Future<Map<String, dynamic>> getJson(String path) async {
+  Future<Map<String, dynamic>> getJson(
+    String path, {
+    bool notifyMembershipEnded = true,
+  }) async {
     requests.add('GET $path');
     if (path.startsWith('/v1/babies?')) {
       return {

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- AppColors.background (lib/core/theme/app_colors.dart): the scaffold
+         colour, so the launch screen hands over to the first frame without a flash. -->
+    <color name="launch_background">#F6F6F7</color>
+</resources>

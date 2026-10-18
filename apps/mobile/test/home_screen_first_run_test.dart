@@ -175,6 +175,7 @@ class _FakeHomeRepository extends HomeRepository {
   Future<HomeSummaryResult> fetchHomeSummary(
     String babyId, {
     Duration? maxAge,
+    bool speculative = false,
   }) async {
     if (babyId == 'baby-2') {
       return HomeSummaryLoaded(

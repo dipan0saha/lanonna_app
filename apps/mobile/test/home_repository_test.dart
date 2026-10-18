@@ -132,7 +132,10 @@ class _MixedBabiesApi extends ApiClient {
   _MixedBabiesApi() : super(idTokenProvider: () async => 'token');
 
   @override
-  Future<Map<String, dynamic>> getJson(String path) async {
+  Future<Map<String, dynamic>> getJson(
+    String path, {
+    bool notifyMembershipEnded = true,
+  }) async {
     return _babiesEnvelope([
       {
         'id': 'baby-o',
@@ -156,7 +159,10 @@ class _FlakyBabiesApi extends ApiClient {
   var failRequests = false;
 
   @override
-  Future<Map<String, dynamic>> getJson(String path) async {
+  Future<Map<String, dynamic>> getJson(
+    String path, {
+    bool notifyMembershipEnded = true,
+  }) async {
     if (failRequests) {
       throw const SocketException('failed host lookup');
     }
@@ -188,7 +194,10 @@ class _GatedBabiesApi extends ApiClient {
   }
 
   @override
-  Future<Map<String, dynamic>> getJson(String path) async {
+  Future<Map<String, dynamic>> getJson(
+    String path, {
+    bool notifyMembershipEnded = true,
+  }) async {
     if (!started.isCompleted) started.complete();
     await _gate.future;
     return _babiesEnvelope([
@@ -212,7 +221,10 @@ class _BabiesApi extends ApiClient {
   _BabiesApi() : super(idTokenProvider: () async => 'token');
 
   @override
-  Future<Map<String, dynamic>> getJson(String path) async {
+  Future<Map<String, dynamic>> getJson(
+    String path, {
+    bool notifyMembershipEnded = true,
+  }) async {
     expect(path, startsWith('/v1/babies'));
     return _babiesEnvelope([
       {
@@ -235,7 +247,10 @@ class _SuccessApi extends ApiClient {
   _SuccessApi() : super(idTokenProvider: () async => 'token');
 
   @override
-  Future<Map<String, dynamic>> getJson(String path) async {
+  Future<Map<String, dynamic>> getJson(
+    String path, {
+    bool notifyMembershipEnded = true,
+  }) async {
     expect(path, endsWith('/home-summary'));
     return {
       'lifecycle_status': 'expecting',
@@ -254,7 +269,10 @@ class _FailingApi extends ApiClient {
   _FailingApi() : super(idTokenProvider: () async => 'token');
 
   @override
-  Future<Map<String, dynamic>> getJson(String path) async {
+  Future<Map<String, dynamic>> getJson(
+    String path, {
+    bool notifyMembershipEnded = true,
+  }) async {
     throw ApiException('Server error', statusCode: 500);
   }
 }
@@ -265,7 +283,10 @@ class _FlakySummaryApi extends ApiClient {
   var failRequests = false;
 
   @override
-  Future<Map<String, dynamic>> getJson(String path) async {
+  Future<Map<String, dynamic>> getJson(
+    String path, {
+    bool notifyMembershipEnded = true,
+  }) async {
     if (failRequests) {
       throw const SocketException('offline');
     }

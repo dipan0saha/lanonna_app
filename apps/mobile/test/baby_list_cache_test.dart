@@ -16,7 +16,10 @@ class _BabiesApi extends ApiClient {
   List<String> ids = ['baby-a', 'baby-b'];
 
   @override
-  Future<Map<String, dynamic>> getJson(String path) async {
+  Future<Map<String, dynamic>> getJson(
+    String path, {
+    bool notifyMembershipEnded = true,
+  }) async {
     expect(path, startsWith('/v1/babies?'));
     calls++;
     final snapshot = List.of(ids);

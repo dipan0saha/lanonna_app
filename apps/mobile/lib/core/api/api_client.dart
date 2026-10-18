@@ -63,8 +63,20 @@ class ApiClient {
     _onMembershipEnded = handler;
   }
 
-  Future<Map<String, dynamic>> getJson(String path) async {
-    final response = await _authorizedRequest('GET', path);
+  /// [notifyMembershipEnded]: `false` for a read started before the app
+  /// knows it needs it (Home's cold-start prefetch). A `membership_ended`
+  /// answer is then only thrown; the caller discards it or repeats the
+  /// request normally, so the membership-ended handler runs at most for a
+  /// request the app really made.
+  Future<Map<String, dynamic>> getJson(
+    String path, {
+    bool notifyMembershipEnded = true,
+  }) async {
+    final response = await _authorizedRequest(
+      'GET',
+      path,
+      notifyMembershipEnded: notifyMembershipEnded,
+    );
     return _decodeObject(response);
   }
 
@@ -147,9 +159,13 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? body,
     Map<String, String>? queryParameters,
+    bool notifyMembershipEnded = true,
   }) async {
     _throwIfOffline();
     try {
+      // The ID token and the App Check token are independent; read both at
+      // once. The App Check source bounds its own wait and never throws.
+      final appCheckFuture = _appCheckTokenProvider?.call()?..ignore();
       final token = await _idTokenProvider().timeout(_timeout);
       if (token == null || token.isEmpty) {
         throw ApiException('not_signed_in');
@@ -162,7 +178,6 @@ class ApiClient {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       };
-      final appCheckFuture = _appCheckTokenProvider?.call();
       final appCheck = appCheckFuture == null
           ? null
           : await appCheckFuture.timeout(_timeout);
@@ -192,7 +207,10 @@ class ApiClient {
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return response;
       }
-      return await _failAuthorizedResponse(response);
+      return await _failAuthorizedResponse(
+        response,
+        notifyMembershipEnded: notifyMembershipEnded,
+      );
     } on ApiException {
       rethrow;
     } on SocketException {
@@ -206,14 +224,18 @@ class ApiClient {
     }
   }
 
-  Future<http.Response> _failAuthorizedResponse(http.Response response) async {
+  Future<http.Response> _failAuthorizedResponse(
+    http.Response response, {
+    required bool notifyMembershipEnded,
+  }) async {
     final exception = _apiExceptionFromResponse(response);
     if (exception.statusCode == 401 &&
         exception.code == ApiErrorCode.userDeleted &&
         _onSessionInvalidated != null) {
       await _onSessionInvalidated(exception);
     }
-    if (exception.statusCode == 403 &&
+    if (notifyMembershipEnded &&
+        exception.statusCode == 403 &&
         exception.code == ApiErrorCode.membershipEnded &&
         _onMembershipEnded != null) {
       await _onMembershipEnded!(exception);

@@ -42,6 +42,7 @@ class _ConnectivityHomeRepository extends HomeRepository {
   Future<HomeSummaryResult> fetchHomeSummary(
     String babyId, {
     Duration? maxAge,
+    bool speculative = false,
   }) async {
     return HomeSummaryLoaded(
       HomeSummary(
