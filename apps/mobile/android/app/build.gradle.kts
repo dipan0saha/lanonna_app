@@ -71,6 +71,11 @@ android {
         versionName = flutter.versionName
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         manifestPlaceholders["applicationName"] = "com.lanonna.lanonna.LanonnaApplication"
+        // Every build type gets the field (empty = no pinned App Check debug
+        // secret); only debug overrides it. Defining it here rather than per
+        // build type also covers Flutter's `profile` type, which the Flutter
+        // Gradle plugin creates from `debug` before this file configures it.
+        buildConfigField("String", "APP_CHECK_DEBUG_TOKEN", "\"\"")
     }
 
     buildTypes {
@@ -82,7 +87,6 @@ android {
             )
         }
         release {
-            buildConfigField("String", "APP_CHECK_DEBUG_TOKEN", "\"\"")
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")

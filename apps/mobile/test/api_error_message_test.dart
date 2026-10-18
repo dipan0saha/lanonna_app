@@ -6,7 +6,6 @@ import 'package:http/http.dart' as http;
 import 'package:lanonna/core/api/api_error_code.dart';
 import 'package:lanonna/core/api/api_error_message.dart';
 import 'package:lanonna/core/api/api_exception.dart';
-import 'package:lanonna/core/api/display_photo_upload.dart';
 import 'package:lanonna/core/media/display_encode.dart';
 import 'package:lanonna/features/invitations/presentation/invite_accept_messages.dart';
 import 'package:lanonna/l10n/app_localizations.dart';

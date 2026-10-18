@@ -1,12 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart' show XFile;
-import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../media/display_encode.dart';
 import 'api_client.dart';
 import 'api_exception.dart';
-import 'localized_failure.dart';
 
 class DisplayPhotoUpload {
   DisplayPhotoUpload(this._api);
@@ -14,38 +12,24 @@ class DisplayPhotoUpload {
   final ApiClient _api;
 
   /// Uploads a user profile avatar; returns the GCS object path to persist as `avatar_url`.
-  Future<String> uploadProfileAvatar({
-    required XFile imageFile,
-    String? contentType,
-  }) async {
-    return _uploadAvatar(
-      imageFile: imageFile,
-      contentType: contentType,
-    );
-  }
+  Future<String> uploadProfileAvatar({required XFile imageFile}) =>
+      _uploadAvatar(imageFile: imageFile);
 
   /// Uploads a baby profile avatar; returns the GCS object path to persist as `avatar_url`.
   Future<String> uploadBabyAvatar({
     required String babyProfileId,
     required XFile imageFile,
-    String? contentType,
-  }) async {
-    return _uploadAvatar(
-      imageFile: imageFile,
-      contentType: contentType,
-      babyProfileId: babyProfileId,
-    );
-  }
+  }) =>
+      _uploadAvatar(imageFile: imageFile, babyProfileId: babyProfileId);
 
   Future<String> _uploadAvatar({
     required XFile imageFile,
-    String? contentType,
     String? babyProfileId,
   }) async {
-    final encoded = await _encode(imageFile);
-    final resolvedType = contentType ?? encoded.contentType;
+    final encoded = await _encode(imageFile, DisplayEncodeProfile.avatar);
+    final contentType = encoded.contentType;
     final initBody = <String, dynamic>{
-      'content_type': resolvedType,
+      'content_type': contentType,
       'byte_length': encoded.bytes.length,
       'scope': babyProfileId != null ? 'baby' : 'user',
       if (babyProfileId != null) 'baby_profile_id': babyProfileId,
@@ -57,7 +41,7 @@ class DisplayPhotoUpload {
       Uri.parse(uploadUrl),
       headers: signedPutHeadersForInit(
         init,
-        resolvedType,
+        contentType,
         encoded.bytes.length,
       ),
       body: encoded.bytes,
@@ -74,16 +58,15 @@ class DisplayPhotoUpload {
   Future<String> uploadGalleryPhoto({
     required String babyProfileId,
     required XFile imageFile,
-    String? contentType,
     String? caption,
   }) async {
-    final encoded = await _encode(imageFile);
-    final resolvedType = contentType ?? encoded.contentType;
+    final encoded = await _encode(imageFile, DisplayEncodeProfile.display);
+    final contentType = encoded.contentType;
     final body = encoded.bytes;
     final trimmedCaption = caption?.trim();
     final initBody = <String, dynamic>{
       'baby_profile_id': babyProfileId,
-      'content_type': resolvedType,
+      'content_type': contentType,
       'byte_length': body.length,
     };
     if (trimmedCaption != null && trimmedCaption.isNotEmpty) {
@@ -94,7 +77,7 @@ class DisplayPhotoUpload {
     final uploadUrl = init['upload_url'] as String;
     final response = await http.put(
       Uri.parse(uploadUrl),
-      headers: signedPutHeadersForInit(init, resolvedType, body.length),
+      headers: signedPutHeadersForInit(init, contentType, body.length),
       body: body,
     );
     if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -106,10 +89,12 @@ class DisplayPhotoUpload {
     return photoId;
   }
 
-  /// Decode/resize/encode is CPU-heavy; run it off the UI isolate so upload
-  /// spinners keep animating.
-  static Future<EncodedDisplayAsset> _encode(XFile imageFile) async =>
-      compute(encodeDisplayAsset, await imageFile.readAsBytes());
+  /// Shared display encode (off the UI isolate) for every upload.
+  static Future<EncodedDisplayAsset> _encode(
+    XFile imageFile,
+    DisplayEncodeProfile profile,
+  ) async =>
+      encodeDisplayAssetInBackground(await imageFile.readAsBytes(), profile);
 
   /// GCS V4 signed PUTs require every header that was included at sign time.
   @visibleForTesting
@@ -138,18 +123,4 @@ class DisplayPhotoUpload {
     }
     return headers;
   }
-}
-
-/// The encoded photo is still above the upload cap.
-class PhotoTooLargeException implements LocalizedFailure {
-  const PhotoTooLargeException(this.maxBytes);
-
-  final int maxBytes;
-
-  @override
-  String userMessage(AppLocalizations l10n) =>
-      l10n.errorPhotoTooLarge(megabytesLabel(maxBytes));
-
-  @override
-  String toString() => 'photo_too_large max_bytes=$maxBytes';
 }
