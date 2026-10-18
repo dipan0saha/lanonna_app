@@ -69,28 +69,38 @@ mixin BabyContextReload<T extends StatefulWidget> on State<T> {
   }
 }
 
-/// Home tab also reloads on [HomeRefreshSignal.homeTab] (nav re-tap, cross-tab teasers).
+/// Home tab also reloads on [HomeRefreshSignal.homeTab] (nav re-tap, cross-tab
+/// teasers) and revalidates on [HomeRefreshSignal.homeTabShown] (tab switch).
 mixin HomeTabReload<T extends StatefulWidget> on State<T> {
   HomeRefreshSignal? _homeTabRefresh;
 
   void onHomeTabRefresh();
 
+  void onHomeTabShown();
+
   void registerHomeTabRefreshListener() {
     final refresh = context.read<HomeRefreshSignal>();
     if (_homeTabRefresh != refresh) {
       _homeTabRefresh?.homeTab.removeListener(_handleHomeTabRefresh);
+      _homeTabRefresh?.homeTabShown.removeListener(_handleHomeTabShown);
       _homeTabRefresh = refresh;
       _homeTabRefresh!.homeTab.addListener(_handleHomeTabRefresh);
+      _homeTabRefresh!.homeTabShown.addListener(_handleHomeTabShown);
     }
   }
 
   void disposeHomeTabRefreshListener() {
     _homeTabRefresh?.homeTab.removeListener(_handleHomeTabRefresh);
+    _homeTabRefresh?.homeTabShown.removeListener(_handleHomeTabShown);
     _homeTabRefresh = null;
   }
 
   void _handleHomeTabRefresh() {
     if (mounted) onHomeTabRefresh();
+  }
+
+  void _handleHomeTabShown() {
+    if (mounted) onHomeTabShown();
   }
 }
 

@@ -14,6 +14,7 @@ import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_labeled_text_field.dart';
 import '../../../core/widgets/app_semantics.dart';
+import '../../../core/media/cached_signed_image.dart';
 import '../../../core/media/photo_selection.dart';
 import '../../../core/media/pick_display_photo.dart';
 import '../../../core/widgets/photo_selection_preview.dart';
@@ -456,7 +457,7 @@ class _CoverPhotoSheetBody extends StatelessWidget {
                           height: AppMetrics.photoSheetThumbSize,
                           borderRadius: AppMetrics.photoSheetThumbRadius,
                           framed: false,
-                          cacheKey: 'thumb-${p.id}',
+                          cacheKey: photoThumbCacheKey(p.id),
                           placeholderIcon: Icons.image_outlined,
                         ),
                       ),

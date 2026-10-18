@@ -39,7 +39,10 @@ class _ConnectivityHomeRepository extends HomeRepository {
   }
 
   @override
-  Future<HomeSummaryResult> fetchHomeSummary(String babyId) async {
+  Future<HomeSummaryResult> fetchHomeSummary(
+    String babyId, {
+    Duration? maxAge,
+  }) async {
     return HomeSummaryLoaded(
       HomeSummary(
         lifecycle: BabyLifecycle.expecting,

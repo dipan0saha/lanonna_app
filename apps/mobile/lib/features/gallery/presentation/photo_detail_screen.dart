@@ -54,10 +54,6 @@ class PhotoDetailScreen extends StatefulWidget {
 class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
   BabySummary? _baby;
   PhotoDetail? _detail;
-  List<String> _photoIds = [];
-  var _photoIdPageOffset = 0;
-  var _photoIdListHasMore = true;
-  var _photoIdListLoading = false;
   var _initialLoadInFlight = true;
   final _scrollController = ScrollController();
   var _editingCaption = false;
@@ -69,9 +65,13 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
   final _captionController = TextEditingController();
   late final CommentComposerController _comments;
 
+  /// Read once: the id window is consulted while building.
+  late final GalleryRepository _galleryRepo;
+
   @override
   void initState() {
     super.initState();
+    _galleryRepo = context.read<GalleryRepository>();
     _comments = CommentComposerController(
       port: PhotoCommentThread(
         repository: context.read<GalleryRepository>(),
@@ -98,12 +98,22 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       _signedUrlRetried = false;
       _comments.textController.clear();
       _comments.unfocus();
+      // Next/previous: a prefetched neighbour shows at once; the id window
+      // stays in GalleryRepository, so nothing is re-paged.
+      final baby = _baby;
+      final cached = baby == null
+          ? null
+          : context.read<GalleryRepository>().cachedPhoto(
+              baby.id,
+              widget.photoId,
+            );
       setState(() {
-        _detail = null;
-        _photoIds = [];
-        _photoIdPageOffset = 0;
-        _photoIdListHasMore = true;
-        _initialLoadInFlight = true;
+        _detail = cached;
+        if (cached != null) {
+          _captionController.text = cached.caption ?? '';
+          _taggedBabyIds = cached.taggedBabies.map((t) => t.id).toSet();
+        }
+        _initialLoadInFlight = cached == null;
       });
       _loadInitial();
     }
@@ -119,33 +129,37 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
   }
 
   Future<void> _loadInitial() async {
-    setState(() => _initialLoadInFlight = true);
+    final photoId = widget.photoId;
+    if (_detail == null) setState(() => _initialLoadInFlight = true);
     try {
       final homeRepo = context.read<HomeRepository>();
       final store = context.read<SelectedBabyStore>();
+      final galleryRepo = context.read<GalleryRepository>();
       final baby = await homeRepo.resolveSelectedBaby(store);
+      if (!mounted || photoId != widget.photoId) return;
       if (baby == null) {
         setState(() => _initialLoadInFlight = false);
         return;
       }
-      if (!mounted) return;
-      final galleryRepo = context.read<GalleryRepository>();
-      final detail = await galleryRepo.fetchPhoto(baby.id, widget.photoId);
-      _captionController.text = detail.caption ?? '';
+      final detail =
+          galleryRepo.cachedPhoto(baby.id, photoId) ??
+          await galleryRepo.fetchPhoto(baby.id, photoId);
+      // Owners tag babies from their memberships (the shared baby list).
       final memberBabies = baby.role == 'owner'
           ? await homeRepo.listBabies()
           : <BabySummary>[];
-      if (!mounted) return;
+      if (!mounted || photoId != widget.photoId) return;
       setState(() {
         _baby = baby;
         _detail = detail;
+        if (!_editingCaption) _captionController.text = detail.caption ?? '';
         _memberBabies = memberBabies;
         _taggedBabyIds = detail.taggedBabies.map((t) => t.id).toSet();
         _initialLoadInFlight = false;
       });
-      unawaited(_ensurePhotoIdsForSwipe());
+      unawaited(_ensurePhotoIdsForSwipe().then((_) => _prefetchNeighbours()));
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || photoId != widget.photoId) return;
       setState(() => _initialLoadInFlight = false);
       if (e is ApiException && e.statusCode == 404) {
         AppSnackBar.showAlert(context, AppLocalizations.of(context)!.galleryThisPhotoIsNoLonger);
@@ -156,40 +170,46 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     }
   }
 
-  Future<void> _appendPhotoIdPage() async {
+  /// Photo ids in gallery order, shared with the gallery grid through
+  /// [GalleryRepository] (loaded once, extended only at the end).
+  PhotoIdWindow? get _window {
     final baby = _baby;
-    if (baby == null || !_photoIdListHasMore || _photoIdListLoading) return;
-    _photoIdListLoading = true;
-    try {
-      final page = await context.read<GalleryRepository>().listPhotosPage(
-        baby.id,
-        sort: widget.gallerySort,
-        offset: _photoIdPageOffset,
-      );
-      if (!mounted) return;
-      setState(() {
-        _photoIds = [..._photoIds, ...page.items.map((p) => p.id)];
-        _photoIdPageOffset += page.items.length;
-        _photoIdListHasMore = page.hasMore;
-      });
-    } finally {
-      _photoIdListLoading = false;
-    }
+    if (baby == null) return null;
+    return _galleryRepo.photoWindow(baby.id, widget.gallerySort);
   }
 
+  List<String> get _photoIds => _window?.ids ?? const [];
+
+  bool get _photoIdListHasMore => _window?.hasMore ?? true;
+
+  Future<void> _extendPhotoIds() async {
+    final baby = _baby;
+    if (baby == null) return;
+    await context.read<GalleryRepository>().extendPhotoWindow(
+      baby.id,
+      widget.gallerySort,
+    );
+    if (mounted) setState(() {});
+  }
+
+  /// Makes sure the current photo and the one after it are in the window
+  /// (a photo opened from Home or a notification may not be loaded yet).
   Future<void> _ensurePhotoIdsForSwipe() async {
-    while (mounted &&
-        _photoIdListHasMore &&
-        !_photoIds.contains(widget.photoId)) {
-      await _appendPhotoIdPage();
-    }
-    var idx = _photoIds.indexOf(widget.photoId);
-    while (mounted &&
-        _photoIdListHasMore &&
-        idx >= 0 &&
-        idx >= _photoIds.length - 1) {
-      await _appendPhotoIdPage();
-      idx = _photoIds.indexOf(widget.photoId);
+    try {
+      while (mounted &&
+          _photoIdListHasMore &&
+          !_photoIds.contains(widget.photoId)) {
+        final before = _photoIds.length;
+        await _extendPhotoIds();
+        if (_photoIds.length == before) break;
+      }
+      final idx = _photoIds.indexOf(widget.photoId);
+      if (mounted && _photoIdListHasMore && idx >= 0 && idx >= _photoIds.length - 1) {
+        await _extendPhotoIds();
+      }
+    } catch (e) {
+      // Next/previous stay hidden until a later open finds the window.
+      debugPrint('photo_detail_window_failed: $e');
     }
   }
 
@@ -198,7 +218,36 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     if (idx < 0) return;
     final target = idx + delta;
     while (mounted && target >= _photoIds.length && _photoIdListHasMore) {
-      await _appendPhotoIdPage();
+      final before = _photoIds.length;
+      await _extendPhotoIds();
+      if (_photoIds.length == before) break;
+    }
+  }
+
+  /// Loads the next and previous photos' details and display images in the
+  /// background, so next/previous shows them without a wait.
+  void _prefetchNeighbours() {
+    final baby = _baby;
+    if (baby == null || !mounted) return;
+    final ids = _photoIds;
+    final idx = ids.indexOf(widget.photoId);
+    if (idx < 0) return;
+    final galleryRepo = context.read<GalleryRepository>();
+    for (final n in [idx + 1, idx - 1]) {
+      if (n < 0 || n >= ids.length) continue;
+      unawaited(
+        galleryRepo.prefetchPhoto(baby.id, ids[n]).then<void>(
+          (detail) {
+            if (!mounted) return;
+            precacheSignedImage(
+              context,
+              imageUrl: detail.displayUrl,
+              cacheKey: photoDisplayCacheKey(detail.id),
+            );
+          },
+          onError: (Object e) => debugPrint('photo_prefetch_failed: $e'),
+        ),
+      );
     }
   }
 
@@ -480,9 +529,15 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                         if (detail.displayUrl != null)
                           CachedSignedImage(
                             imageUrl: detail.displayUrl,
-                            cacheKey: 'display-${widget.photoId}',
+                            cacheKey: photoDisplayCacheKey(widget.photoId),
                             fit: BoxFit.cover,
                             onSignedUrlError: _onDisplayUrlError,
+                            // The grid's thumbnail is usually cached already:
+                            // show it until the full image is ready.
+                            placeholderImageUrl: detail.thumbUrl,
+                            placeholderCacheKey: photoThumbCacheKey(
+                              widget.photoId,
+                            ),
                           )
                         else
                           ColoredBox(

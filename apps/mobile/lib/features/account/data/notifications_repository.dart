@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:lanonna/features/account/domain/notification_digest.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/offset_page.dart';
+import '../../../core/data/single_flight.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/json/json_readers.dart';
 import '../../../core/domain/feed_params.dart';
@@ -116,12 +119,64 @@ class InboxNotification {
   }
 }
 
+/// The inbox unread count shown by every shell top bar (one shared value).
+class UnreadInboxCount extends ChangeNotifier {
+  var _count = 0;
+
+  int get count => _count;
+
+  void _set(int value) {
+    if (value == _count) return;
+    _count = value;
+    notifyListeners();
+  }
+}
+
 class NotificationsRepository extends ChangeNotifier {
-  NotificationsRepository(this._api);
+  NotificationsRepository(this._api, {DateTime Function()? clock})
+    : _clock = clock ?? DateTime.now;
 
   final ApiClient _api;
+  final DateTime Function() _clock;
 
-  void notifyInboxMayHaveChanged() => notifyListeners();
+  /// Shared unread badge; refreshed through [refreshUnreadCount].
+  final unread = UnreadInboxCount();
+  final _unreadRequest = SingleFlight<int>();
+  DateTime? _unreadFetchedAt;
+  var _unreadEpoch = 0;
+
+  /// The inbox changed (push received, row read): listeners reload and the
+  /// unread badge is refetched.
+  void notifyInboxMayHaveChanged() {
+    notifyListeners();
+    unawaited(refreshUnreadCount().catchError((Object e) {
+      debugPrint('unread_count_refresh_failed: $e');
+    }));
+  }
+
+  /// Refetches the unread count into [unread]. Concurrent callers share one
+  /// request; with [maxAge], a count fetched within that window is kept.
+  Future<void> refreshUnreadCount({Duration? maxAge}) async {
+    final fetchedAt = _unreadFetchedAt;
+    if (maxAge != null &&
+        fetchedAt != null &&
+        _clock().difference(fetchedAt) < maxAge) {
+      return;
+    }
+    final epoch = _unreadEpoch;
+    final count = await _unreadRequest.run(unreadCount);
+    if (epoch != _unreadEpoch) return;
+    _unreadFetchedAt = _clock();
+    unread._set(count);
+  }
+
+  /// Sign-out / account deletion.
+  void clearUnreadCount() {
+    _unreadEpoch += 1;
+    _unreadRequest.cancel();
+    _unreadFetchedAt = null;
+    unread._set(0);
+  }
 
   Future<NotificationPreferences> fetchPreferences() async {
     final json = await _api.getJson('/v1/me/notification-preferences');

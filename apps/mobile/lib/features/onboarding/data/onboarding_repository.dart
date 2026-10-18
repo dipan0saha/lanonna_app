@@ -1,4 +1,5 @@
 import '../../../core/api/api_client.dart';
+import '../../../core/data/baby_list_cache.dart';
 import 'package:lanonna/core/domain/baby_gender.dart';
 import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:lanonna/core/domain/baby_summary.dart';
@@ -7,9 +8,11 @@ import '../../invitations/data/batch_invite_result.dart';
 import 'models/onboarding_status.dart';
 
 class OnboardingRepository {
-  OnboardingRepository(this._api);
+  OnboardingRepository(this._api, {BabyListCache? babyList})
+    : _babyList = babyList;
 
   final ApiClient _api;
+  final BabyListCache? _babyList;
 
   Future<OnboardingStatus> fetchStatus() async {
     final json = await _api.getJson('/v1/onboarding/status');
@@ -61,6 +64,7 @@ class OnboardingRepository {
         'profile_name_suggestions':
             profileNameSuggestions.map((r) => r.toJson()).toList(),
     });
+    _babyList?.invalidate();
     return BabySummary.fromJson(json);
   }
 

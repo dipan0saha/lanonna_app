@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../features/account/data/notifications_repository.dart';
+import '../data/single_flight.dart';
 import '../router/deep_link_navigation.dart';
 
 class PushNotificationService {
@@ -16,6 +17,7 @@ class PushNotificationService {
   StreamSubscription<User?>? _authSub;
   StreamSubscription<String>? _tokenRefreshSub;
   String? _lastRegisteredToken;
+  final _registrations = KeyedSingleFlight<String, void>();
 
   Future<void> start({
     required Stream<User?> authStateChanges,
@@ -102,7 +104,12 @@ class PushNotificationService {
     }
   }
 
-  Future<void> _registerToken(String token) async {
+  /// Start-up registers from both the auth listener's first event and
+  /// [start]; one request per token serves both.
+  Future<void> _registerToken(String token) =>
+      _registrations.run(token, () => _registerTokenOnce(token));
+
+  Future<void> _registerTokenOnce(String token) async {
     if (_lastRegisteredToken == token &&
         FirebaseAuth.instance.currentUser != null) {
       return;

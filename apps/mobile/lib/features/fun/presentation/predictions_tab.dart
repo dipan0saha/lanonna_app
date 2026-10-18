@@ -5,6 +5,8 @@ import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
+import '../../../core/api/run_mutation.dart';
+import '../../../core/presentation/tab_load_failure.dart';
 import '../../../core/widgets/async_tab_body.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/widgets/app_snackbar.dart';
@@ -61,11 +63,16 @@ class _PredictionsTabState extends State<PredictionsTab> {
     }
   }
 
+  /// The spinner shows only while nothing is on screen; reloads after a vote
+  /// or pull-to-refresh keep the tab and its scroll position, and a failed
+  /// reload is a snackbar.
   Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    if (_payload == null) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
     final babyId = widget.baby.id;
     try {
       final payload = await context.read<FunRepository>().fetchPredictions(
@@ -85,10 +92,16 @@ class _PredictionsTabState extends State<PredictionsTab> {
       });
     } catch (e) {
       if (!mounted || babyId != widget.baby.id) return;
-      setState(() {
-        _loading = false;
-        _error = apiErrorMessage(AppLocalizations.of(context)!, e);
-      });
+      reportTabLoadFailure(
+        context,
+        e,
+        hasPayload: _payload != null,
+        onBlockingError: (message) => setState(() {
+          _loading = false;
+          _error = message;
+        }),
+      );
+      if (_payload != null) setState(() => _loading = false);
     }
   }
 
@@ -96,13 +109,22 @@ class _PredictionsTabState extends State<PredictionsTab> {
       widget.baby.predictionsClosed || (_payload?.predictionsClosed ?? false);
 
   Future<void> _voteGender(BabyGender gender) async {
-    if (_predictionsClosed) return;
-    try {
-      await context.read<FunRepository>().setGenderVote(widget.baby.id, gender);
-      await _load();
-    } catch (e) {
-      if (mounted) AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
-    }
+    final before = _payload;
+    if (_predictionsClosed || before == null) return;
+    final optimistic = before.withGenderVote(gender);
+    final ok = await runOptimisticMutation(
+      context,
+      apply: () => setState(() => _payload = optimistic),
+      revert: () {
+        if (mounted && identical(_payload, optimistic)) {
+          setState(() => _payload = before);
+        }
+      },
+      action: () =>
+          context.read<FunRepository>().setGenderVote(widget.baby.id, gender),
+    );
+    if (!ok || !mounted) return;
+    await _load();
   }
 
   Future<void> _submitBirthdateGuess() async {

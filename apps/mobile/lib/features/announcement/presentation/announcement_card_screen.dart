@@ -19,6 +19,7 @@ import '../../home/data/home_repository.dart';
 import '../data/announcement_repository.dart';
 import '../domain/announcement_navigation.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../core/data/parallel_requests.dart';
 
 class AnnouncementCardScreen extends StatefulWidget {
   const AnnouncementCardScreen({super.key, required this.babyId});
@@ -48,14 +49,14 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
     super.dispose();
   }
 
+  /// The full-screen spinner shows only until the card first loads; later
+  /// reloads (squish, comment, edit) keep it on screen.
   Future<void> _load() async {
-    setState(() => _loading = true);
+    if (_detail == null) setState(() => _loading = true);
     try {
-      final homeRepo = context.read<HomeRepository>();
-      final routeBaby = await homeRepo.babyById(widget.babyId);
-      if (!mounted) return;
-      final detail = await context.read<AnnouncementRepository>().fetch(
-        widget.babyId,
+      final (routeBaby, detail) = await waitBoth(
+        context.read<HomeRepository>().babyById(widget.babyId),
+        context.read<AnnouncementRepository>().fetch(widget.babyId),
       );
       if (!mounted) return;
       setState(() {

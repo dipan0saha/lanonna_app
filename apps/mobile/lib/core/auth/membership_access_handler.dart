@@ -20,6 +20,8 @@ Future<void> handleMembershipEnded({
   if (_handlingMembershipEnded) return;
   _handlingMembershipEnded = true;
   try {
+    // The cached list still holds the baby this user no longer belongs to.
+    homeRepository.invalidateBabies();
     await homeRepository.resolveSelectedBaby(store);
     signal.notifyBabyContextChanged();
 

@@ -21,3 +21,19 @@ Future<bool> runMutation(
     return false;
   }
 }
+
+/// Shows a small change at once (a like, a vote) instead of waiting for the
+/// server: runs [apply], then [action]. When [action] fails, [revert] restores
+/// the previous state and the localized error is shown. The server stays the
+/// source of truth: callers revalidate quietly after a success.
+Future<bool> runOptimisticMutation(
+  BuildContext context, {
+  required VoidCallback apply,
+  required VoidCallback revert,
+  required Future<void> Function() action,
+}) async {
+  apply();
+  final ok = await runMutation(context, action);
+  if (!ok) revert();
+  return ok;
+}

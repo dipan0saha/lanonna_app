@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/widgets/app_semantics.dart';
 import '../home/data/home_refresh_signal.dart';
+import 'presentation/shell_chrome_sync.dart';
 import 'shell_branch_index.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -14,7 +15,12 @@ class MainShellScreen extends StatelessWidget {
 
   void _onTap(BuildContext context, int index) {
     if (index == ShellBranchIndex.home) {
-      context.read<HomeRefreshSignal>().notifyHomeShouldRefresh();
+      final signal = context.read<HomeRefreshSignal>();
+      if (index == navigationShell.currentIndex) {
+        signal.notifyHomeShouldRefresh();
+      } else {
+        signal.notifyHomeTabShown();
+      }
     }
     navigationShell.goBranch(index, initialLocation: index == navigationShell.currentIndex);
   }
@@ -23,7 +29,7 @@ class MainShellScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      body: navigationShell,
+      body: ShellChromeSync(child: navigationShell),
       bottomNavigationBar: NavigationBar(
         key: const Key('app_bottom_nav_bar'),
         selectedIndex: navigationShell.currentIndex,

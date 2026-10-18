@@ -12,6 +12,7 @@ import 'core/auth/auth_repository.dart';
 import 'core/auth/membership_access_handler.dart';
 import 'core/auth/session_cleanup.dart';
 import 'core/auth/user_deleted_session_handler.dart';
+import 'core/data/baby_list_cache.dart';
 import 'core/network/connectivity_service.dart';
 import 'core/router/router_refresh.dart';
 import 'features/account/data/account_repository.dart';
@@ -62,19 +63,28 @@ Future<Widget> bootstrapLaNonnaApp() async {
       sessionCleanup: sessionCleanup,
     ),
   );
-  final onboardingRepository = OnboardingRepository(apiClient);
-  final homeRepository = HomeRepository(
+  // One baby list for the whole app; repositories that change memberships
+  // invalidate it.
+  final babyList = BabyListCache(
     apiClient,
     currentUserId: () => authRepository.currentUser?.uid,
   );
+  final onboardingRepository = OnboardingRepository(
+    apiClient,
+    babyList: babyList,
+  );
+  final homeRepository = HomeRepository(apiClient, babyList: babyList);
   final galleryRepository = GalleryRepository(apiClient);
   final calendarRepository = CalendarRepository(apiClient);
   final registryRepository = RegistryRepository(apiClient);
   final funRepository = FunRepository(apiClient);
-  final accountRepository = AccountRepository(apiClient);
+  final accountRepository = AccountRepository(apiClient, babyList: babyList);
   final notificationsRepository = NotificationsRepository(apiClient);
   final announcementRepository = AnnouncementRepository(apiClient);
-  final invitationsRepository = InvitationsRepository(apiClient);
+  final invitationsRepository = InvitationsRepository(
+    apiClient,
+    babyList: babyList,
+  );
   coordinator = OnboardingCoordinator(
     storage: onboardingStorage,
     repository: onboardingRepository,
@@ -94,6 +104,10 @@ Future<Widget> bootstrapLaNonnaApp() async {
     homeRepository: homeRepository,
     selectedBabyStore: selectedBabyStore,
     inviteFlowState: inviteFlowState,
+    accountRepository: accountRepository,
+    notificationsRepository: notificationsRepository,
+    galleryRepository: galleryRepository,
+    calendarRepository: calendarRepository,
   );
   final homeRefreshSignal = HomeRefreshSignal();
   apiClient.registerMembershipEndedHandler(

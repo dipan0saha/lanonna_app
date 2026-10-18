@@ -4,7 +4,7 @@ import 'package:lanonna/core/domain/baby_gender.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/api/api_error_message.dart';
+import '../../../core/presentation/tab_load_failure.dart';
 import '../../../core/widgets/app_empty_state.dart';
 import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/async_tab_body.dart';
@@ -68,11 +68,17 @@ class _NamesTabState extends State<NamesTab> {
     super.dispose();
   }
 
+  /// The spinner shows only while nothing is on screen; reloads after a
+  /// change (like, suggest, remove, pull-to-refresh) keep the list and its
+  /// scroll position, and a failed reload is a snackbar.
   Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    final hadPayload = _payload != null;
+    if (!hadPayload) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
     final babyId = widget.baby.id;
     try {
       final payload = await context.read<FunRepository>().fetchNames(babyId);
@@ -84,10 +90,16 @@ class _NamesTabState extends State<NamesTab> {
       });
     } catch (e) {
       if (!mounted || babyId != widget.baby.id) return;
-      setState(() {
-        _loading = false;
-        _error = apiErrorMessage(AppLocalizations.of(context)!, e);
-      });
+      reportTabLoadFailure(
+        context,
+        e,
+        hasPayload: _payload != null,
+        onBlockingError: (message) => setState(() {
+          _loading = false;
+          _error = message;
+        }),
+      );
+      if (_payload != null) setState(() => _loading = false);
     }
   }
 
@@ -113,11 +125,22 @@ class _NamesTabState extends State<NamesTab> {
   }
 
   Future<void> _like(NameSuggestion s) async {
-    final ok = await runMutation(
+    final before = _payload;
+    if (before == null) return;
+    final optimistic = before.withLikeToggled(s.id);
+    final ok = await runOptimisticMutation(
       context,
-      () => context.read<FunRepository>().toggleLike(widget.baby.id, s.id),
+      apply: () => setState(() => _payload = optimistic),
+      revert: () {
+        if (mounted && identical(_payload, optimistic)) {
+          setState(() => _payload = before);
+        }
+      },
+      action: () async {
+        await context.read<FunRepository>().toggleLike(widget.baby.id, s.id);
+      },
     );
-    if (!ok) return;
+    if (!ok || !mounted) return;
     await _load();
   }
 

@@ -28,6 +28,7 @@ import '../domain/registry_routes.dart';
 import 'widgets/registry_empty_state.dart';
 import 'widgets/registry_item_row.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../core/data/parallel_requests.dart';
 
 class RegistryScreen extends StatefulWidget {
   const RegistryScreen({super.key});
@@ -87,8 +88,10 @@ class _RegistryScreenState extends State<RegistryScreen>
         });
         return;
       }
-      final items = await regRepo.listItems(baby.id);
-      final shipping = await regRepo.getShippingAddress(baby.id);
+      final (items, shipping) = await waitBoth(
+        regRepo.listItems(baby.id),
+        regRepo.getShippingAddress(baby.id),
+      );
       if (!mounted) return;
       setState(() {
         _baby = baby;

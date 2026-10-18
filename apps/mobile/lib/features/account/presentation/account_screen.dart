@@ -82,7 +82,11 @@ class _AccountScreenState extends State<AccountScreen> {
       _loading = true;
       _loadError = null;
     });
-    final notificationsRepo = context.read<NotificationsRepository>();
+    // The digest row's preferences load alongside the account, not after it.
+    final prefsFuture = context
+        .read<NotificationsRepository>()
+        .fetchPreferences()
+        .then<NotificationPreferences?>((p) => p, onError: (Object _) => null);
     try {
       final payload = await context.read<AccountRepository>().fetchAccount();
       if (!mounted) return;
@@ -98,24 +102,21 @@ class _AccountScreenState extends State<AccountScreen> {
       });
       return;
     }
-    await _loadDigestSummary(notificationsRepo);
+    await _showDigestSummary(prefsFuture);
   }
 
-  /// Best-effort: the digest row is secondary, so a preferences failure hides
-  /// the row instead of failing the whole Account screen.
-  Future<void> _loadDigestSummary(NotificationsRepository repo) async {
-    try {
-      final prefs = await repo.fetchPreferences();
-      if (!mounted) return;
-      setState(() {
-        _digestSummary = prefs.digest.summaryLabel(
-          AppLocalizations.of(context)!,
-        );
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _digestSummary = null);
-    }
+  /// Best-effort: the digest row is secondary, so a preferences failure
+  /// (`null`) hides the row instead of failing the whole Account screen.
+  Future<void> _showDigestSummary(
+    Future<NotificationPreferences?> prefsFuture,
+  ) async {
+    final prefs = await prefsFuture;
+    if (!mounted) return;
+    setState(() {
+      _digestSummary = prefs?.digest.summaryLabel(
+        AppLocalizations.of(context)!,
+      );
+    });
   }
 
   Future<void> _signOut() async {

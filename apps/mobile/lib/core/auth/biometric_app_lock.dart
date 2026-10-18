@@ -116,7 +116,7 @@ class _BiometricAppLockState extends State<BiometricAppLock>
       return;
     }
     try {
-      await repo.fetchAccount();
+      await repo.ensureAccountLoaded();
     } catch (_) {
       // Lock stays off when profile flag is unknown.
     } finally {

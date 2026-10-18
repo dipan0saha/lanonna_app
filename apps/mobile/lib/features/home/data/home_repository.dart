@@ -5,29 +5,49 @@ import 'package:lanonna/core/domain/name_suggestion_draft.dart';
 import '../../../core/api/offset_page.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/domain/baby_summary.dart';
+import '../../../core/data/baby_list_cache.dart';
 import 'home_summary_result.dart';
 import 'models/home_summary.dart';
 import 'selected_baby_store.dart';
 
 class HomeRepository {
-  HomeRepository(this._api, {String? Function()? currentUserId})
-    : _currentUserId = currentUserId;
+  HomeRepository(
+    ApiClient api, {
+    String? Function()? currentUserId,
+    BabyListCache? babyList,
+    DateTime Function()? clock,
+  }) : _api = api,
+       _babies =
+           babyList ??
+           BabyListCache(api, currentUserId: currentUserId, clock: clock),
+       _clock = clock ?? DateTime.now;
 
   final ApiClient _api;
-  final String? Function()? _currentUserId;
-  List<BabySummary>? _cachedBabies;
-  String? _cachedForUserId;
-  var _listEpoch = 0;
+  final BabyListCache _babies;
+  final DateTime Function() _clock;
+
+  /// How long a home summary counts as current when the Home tab is shown
+  /// again. Mutations elsewhere still refresh it at once
+  /// ([HomeRefreshSignal.notifyHomeShouldRefresh]).
+  static const summaryFreshFor = Duration(minutes: 1);
 
   /// Last good summary per baby: offline fallback that survives baby switches.
   final Map<String, HomeSummary> _summaryByBaby = {};
+  final Map<String, DateTime> _summaryFetchedAt = {};
 
+  /// Sign-out / account deletion: forget every user-scoped list.
   void clearCachedBabies() {
-    _cachedBabies = null;
-    _cachedForUserId = null;
-    _listEpoch += 1;
+    _babies.invalidate();
     _summaryByBaby.clear();
+    _summaryFetchedAt.clear();
   }
+
+  /// A membership or baby changed outside the repositories that already
+  /// invalidate (e.g. the API reported `membership_ended`).
+  void invalidateBabies() => _babies.invalidate();
+
+  /// Pull-to-refresh: the next read refetches the baby list.
+  void refreshBabiesOnNextRead() => _babies.markStale();
 
   HomeSummary? cachedHomeSummary(String babyId) => _summaryByBaby[babyId];
 
@@ -39,18 +59,11 @@ class HomeRepository {
     SelectedBabyStore store,
     String babyId,
   ) async {
-    clearCachedBabies();
+    _babies.invalidate();
     await store.setSelectedBabyId(babyId);
   }
 
-  Future<List<BabySummary>> _fetchAllBabies() {
-    return fetchAllOffsetPages(
-      (limit, offset) => _api.getJson('/v1/babies?limit=$limit&offset=$offset'),
-      BabySummary.fromJson,
-    );
-  }
-
-  static bool _shouldServeStaleBabyCache(Object error) {
+  static bool _shouldServeStaleSummary(Object error) {
     if (error is ApiException) {
       final code = error.statusCode;
       if (code != null && code >= 400 && code < 500) {
@@ -60,37 +73,28 @@ class HomeRepository {
     return true;
   }
 
-  Future<List<BabySummary>> listBabies() async {
-    final uid = _currentUserId?.call();
-    if (uid != _cachedForUserId) {
-      _cachedBabies = null;
-    }
-    final epoch = _listEpoch;
-    try {
-      final babies = await _fetchAllBabies();
-      if (epoch == _listEpoch) {
-        _cachedBabies = babies;
-        _cachedForUserId = uid;
-      }
+  /// Every baby the user belongs to, from the shared [BabyListCache].
+  Future<List<BabySummary>> listBabies() => _babies.read();
+
+  /// [listBabies], but a list served from memory that does not contain
+  /// [babyId] is refetched once (a baby joined on another device, a deep link
+  /// or push for a newer membership), so a newer selection is never replaced
+  /// by a stale list.
+  Future<List<BabySummary>> _listBabiesContaining(String? babyId) async {
+    final fromMemory = _babies.isFresh;
+    final babies = await listBabies();
+    if (babyId == null || !fromMemory || babies.any((b) => b.id == babyId)) {
       return babies;
-    } catch (e) {
-      final cached = _cachedBabies;
-      if (cached != null &&
-          cached.isNotEmpty &&
-          uid != null &&
-          uid == _cachedForUserId &&
-          _shouldServeStaleBabyCache(e)) {
-        return cached;
-      }
-      rethrow;
     }
+    _babies.markStale();
+    return listBabies();
   }
 
   /// Selected baby from [store], or first baby when none selected / id stale.
   /// Persists the resolved id when the stored selection was missing or invalid.
   Future<BabySummary?> resolveSelectedBaby(SelectedBabyStore store) async {
     final generation = store.selectionGeneration;
-    final babies = await listBabies();
+    final babies = await _listBabiesContaining(store.selectedBabyId);
     if (store.selectionGeneration != generation) {
       final current = store.selectedBabyId;
       if (current == null) return null;
@@ -108,7 +112,7 @@ class HomeRepository {
 
   /// Baby membership for a specific profile id (route/deep-link scoped loads).
   Future<BabySummary?> babyById(String babyId) async {
-    final babies = await listBabies();
+    final babies = await _listBabiesContaining(babyId);
     return babies.where((b) => b.id == babyId).firstOrNull;
   }
 
@@ -148,24 +152,34 @@ class HomeRepository {
             profileNameSuggestions.map((r) => r.toJson()).toList(),
     };
     final json = await _api.patchJson('/v1/babies/$babyId', body: body);
+    _babies.invalidate();
     return BabySummary.fromJson(json);
   }
 
-  Future<HomeSummaryResult> fetchHomeSummary(String babyId) async {
+  /// `GET home-summary`. With [maxAge], a summary fetched within that window
+  /// is returned without a request (Home tab shown again); without it the
+  /// summary is always refetched (mutations, pull-to-refresh, baby switch).
+  Future<HomeSummaryResult> fetchHomeSummary(
+    String babyId, {
+    Duration? maxAge,
+  }) async {
+    final cachedAt = _summaryFetchedAt[babyId];
+    final cachedSummary = _summaryByBaby[babyId];
+    if (maxAge != null &&
+        cachedSummary != null &&
+        cachedAt != null &&
+        _clock().difference(cachedAt) < maxAge) {
+      return HomeSummaryLoaded(cachedSummary);
+    }
     try {
       final json = await _api.getJson('/v1/babies/$babyId/home-summary');
       final summary = HomeSummary.fromJson(json);
       _summaryByBaby[babyId] = summary;
+      _summaryFetchedAt[babyId] = _clock();
       return HomeSummaryLoaded(summary);
-    } on ApiException catch (e) {
-      final cached = _summaryByBaby[babyId];
-      if (cached != null && _shouldServeStaleBabyCache(e)) {
-        return HomeSummaryLoaded(cached);
-      }
-      return HomeSummaryFailed(e);
     } catch (e) {
       final cached = _summaryByBaby[babyId];
-      if (cached != null && _shouldServeStaleBabyCache(e)) {
+      if (cached != null && _shouldServeStaleSummary(e)) {
         return HomeSummaryLoaded(cached);
       }
       return HomeSummaryFailed(e);
