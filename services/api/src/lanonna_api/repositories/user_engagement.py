@@ -6,61 +6,39 @@ from lanonna_api.db import get_connection
 
 
 def count_engagement_for_user(firebase_uid: str) -> dict[str, int]:
+    """Every My Account engagement count in one round trip."""
     with get_connection() as conn:
-        photo_squishes = conn.execute(
-            "SELECT COUNT(*)::int AS n FROM photo_squishes WHERE firebase_uid = %s",
-            (firebase_uid,),
-        ).fetchone()
-        announcement_squishes = conn.execute(
-            "SELECT COUNT(*)::int AS n FROM announcement_squishes WHERE firebase_uid = %s",
-            (firebase_uid,),
-        ).fetchone()
-        events_attended = conn.execute(
+        row = conn.execute(
             """
-            SELECT COUNT(*)::int AS n FROM event_rsvps
-            WHERE firebase_uid = %s AND status = 'going'
+            SELECT
+                (SELECT COUNT(*)::int FROM photo_squishes
+                 WHERE firebase_uid = %(uid)s) AS photo_squishes,
+                (SELECT COUNT(*)::int FROM announcement_squishes
+                 WHERE firebase_uid = %(uid)s) AS announcement_squishes,
+                (SELECT COUNT(*)::int FROM event_rsvps
+                 WHERE firebase_uid = %(uid)s AND status = 'going') AS events_attended,
+                (SELECT COUNT(*)::int FROM registry_purchases
+                 WHERE purchased_by_firebase_uid = %(uid)s) AS items_bought,
+                (SELECT COUNT(*)::int FROM photo_comments
+                 WHERE author_firebase_uid = %(uid)s AND deleted_at IS NULL) AS photo_comments,
+                (SELECT COUNT(*)::int FROM event_comments
+                 WHERE author_firebase_uid = %(uid)s AND deleted_at IS NULL) AS event_comments,
+                (SELECT COUNT(*)::int FROM announcement_comments
+                 WHERE author_firebase_uid = %(uid)s AND deleted_at IS NULL) AS announcement_comments
             """,
-            (firebase_uid,),
-        ).fetchone()
-        items_bought = conn.execute(
-            """
-            SELECT COUNT(*)::int AS n FROM registry_purchases
-            WHERE purchased_by_firebase_uid = %s
-            """,
-            (firebase_uid,),
-        ).fetchone()
-        photo_comments = conn.execute(
-            """
-            SELECT COUNT(*)::int AS n FROM photo_comments
-            WHERE author_firebase_uid = %s AND deleted_at IS NULL
-            """,
-            (firebase_uid,),
-        ).fetchone()
-        event_comments = conn.execute(
-            """
-            SELECT COUNT(*)::int AS n FROM event_comments
-            WHERE author_firebase_uid = %s AND deleted_at IS NULL
-            """,
-            (firebase_uid,),
-        ).fetchone()
-        announcement_comments = conn.execute(
-            """
-            SELECT COUNT(*)::int AS n FROM announcement_comments
-            WHERE author_firebase_uid = %s AND deleted_at IS NULL
-            """,
-            (firebase_uid,),
+            {"uid": firebase_uid},
         ).fetchone()
 
-    photos_squished = int(photo_squishes["n"] or 0) + int(announcement_squishes["n"] or 0)
+    photos_squished = int(row["photo_squishes"] or 0) + int(row["announcement_squishes"] or 0)
     comments = (
-        int(photo_comments["n"] or 0)
-        + int(event_comments["n"] or 0)
-        + int(announcement_comments["n"] or 0)
+        int(row["photo_comments"] or 0)
+        + int(row["event_comments"] or 0)
+        + int(row["announcement_comments"] or 0)
     )
     return {
         "photos_squished": photos_squished,
-        "events_attended": int(events_attended["n"] or 0),
-        "items_bought": int(items_bought["n"] or 0),
+        "events_attended": int(row["events_attended"] or 0),
+        "items_bought": int(row["items_bought"] or 0),
         "comments": comments,
     }
 

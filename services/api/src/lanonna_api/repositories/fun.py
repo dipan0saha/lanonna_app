@@ -5,24 +5,17 @@ from datetime import date
 from typing import Any
 
 from lanonna_api.db import get_connection
+from lanonna_api.repositories._paging import limit_offset_clause
 from lanonna_api.repositories.active_participants import active_participant_join
 
 
-def count_gender_votes(baby_profile_id: uuid.UUID) -> int:
-    with get_connection() as conn:
-        row = conn.execute(
-            f"""
-            SELECT COUNT(*)::int AS count
-            FROM votes v
-            {active_participant_join("v.firebase_uid", "v.baby_profile_id")}
-            WHERE v.baby_profile_id = %s AND v.vote_type = 'gender'
-            """,
-            (baby_profile_id,),
-        ).fetchone()
-    return int(row["count"]) if row else 0
-
-
-def list_name_suggestions(baby_profile_id: uuid.UUID) -> list[dict[str, Any]]:
+def list_name_suggestions(
+    baby_profile_id: uuid.UUID,
+    *,
+    limit: int | None = None,
+) -> list[dict[str, Any]]:
+    """Name ideas, most active likes first; ``limit`` reads only the top rows."""
+    paging, paging_params = limit_offset_clause(limit, 0)
     with get_connection() as conn:
         rows = conn.execute(
             f"""
@@ -37,8 +30,9 @@ def list_name_suggestions(baby_profile_id: uuid.UUID) -> list[dict[str, Any]]:
             JOIN app_users u ON u.firebase_uid = n.suggested_by_firebase_uid
             WHERE n.baby_profile_id = %s
             ORDER BY like_count DESC, n.created_at DESC
+            {paging}
             """,
-            (baby_profile_id,),
+            (baby_profile_id, *paging_params),
         ).fetchall()
     return [dict(r) for r in rows]
 
@@ -148,10 +142,11 @@ def get_name_suggestion(
     return dict(row) if row else None
 
 
-def caller_liked_suggestion_ids(
+def list_caller_likes(
     baby_profile_id: uuid.UUID,
     firebase_uid: str,
-) -> dict[str, uuid.UUID | None]:
+) -> list[dict[str, Any]]:
+    """The caller's name likes on this baby: ``gender`` and ``name_suggestion_id``."""
     with get_connection() as conn:
         rows = conn.execute(
             """
@@ -162,29 +157,7 @@ def caller_liked_suggestion_ids(
             """,
             (baby_profile_id, firebase_uid),
         ).fetchall()
-    out: dict[str, uuid.UUID | None] = {"male": None, "female": None}
-    for row in rows:
-        g = row["gender"]
-        if g in out:
-            out[g] = row["name_suggestion_id"]
-    return out
-
-
-def liked_suggestion_id_set(
-    baby_profile_id: uuid.UUID,
-    firebase_uid: str,
-) -> set[uuid.UUID]:
-    with get_connection() as conn:
-        rows = conn.execute(
-            """
-            SELECT l.name_suggestion_id
-            FROM name_suggestion_likes l
-            JOIN name_suggestions n ON n.id = l.name_suggestion_id
-            WHERE n.baby_profile_id = %s AND l.firebase_uid = %s
-            """,
-            (baby_profile_id, firebase_uid),
-        ).fetchall()
-    return {row["name_suggestion_id"] for row in rows}
+    return [dict(r) for r in rows]
 
 
 def remove_likes_for_user_gender(

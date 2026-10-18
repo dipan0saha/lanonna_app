@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, status
 
 from lanonna_api.domain.errors import ErrorCode
 from lanonna_api.auth import AppUser, current_app_user, current_user
+from lanonna_api.db import read_scope
 from lanonna_api.domain.date_validation import validate_user_birth_date
 from lanonna_api.domain.avatar_urls import normalize_avatar_for_storage, signed_avatar_url
 from lanonna_api.http_errors import api_error, map_domain_errors
@@ -15,7 +16,7 @@ from lanonna_api.repositories.users import (
     update_notification_preferences,
 )
 from pydantic import BaseModel
-from lanonna_api.domain.baby_summaries import baby_summary_from_row
+from lanonna_api.domain.baby_summaries import baby_summaries_from_rows
 from lanonna_api.schemas.profile import ProfileResponse, ProfileUpdateRequest
 
 router = APIRouter(prefix="/v1", tags=["profile"])
@@ -44,12 +45,14 @@ def _to_profile_response(row: dict[str, Any]) -> ProfileResponse:
 @router.get("/me/account")
 def get_account(user: AppUser = Depends(current_app_user)) -> dict[str, Any]:
     row = dict(user.row)
-    babies = list_babies_for_user(user.uid)
-    extensions = build_account_extensions(user.uid)
+    with read_scope():
+        babies = list_babies_for_user(user.uid)
+        extensions = build_account_extensions(user.uid, babies)
     return {
         "profile": _to_profile_response(row).model_dump(),
         "babies": [
-            baby_summary_from_row(b).model_dump(mode="json") for b in babies
+            summary.model_dump(mode="json")
+            for summary in baby_summaries_from_rows(babies)
         ],
         "engagement": extensions["engagement"],
         "storage_usage": extensions["storage_usage"],

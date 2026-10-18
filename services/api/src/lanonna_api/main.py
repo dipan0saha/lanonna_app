@@ -1,5 +1,7 @@
 import logging
 import uuid
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from typing import Any, Literal, Self
 
 from fastapi import Depends, FastAPI, Request, status
@@ -8,6 +10,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 from lanonna_api.middleware.rate_limit import RateLimitMiddleware
 from lanonna_api.middleware.request_context import RequestContextMiddleware
 from pydantic import BaseModel, Field, model_validator
@@ -15,6 +18,7 @@ from pydantic import BaseModel, Field, model_validator
 from lanonna_api.app_check import require_app_check
 from lanonna_api.auth import AppUser, current_app_user
 from lanonna_api.config import settings
+from lanonna_api import db
 from lanonna_api.routers import (
     admin_system_announcements,
     announcements,
@@ -39,11 +43,36 @@ from lanonna_api.http_errors import (
     normalize_error_detail,
 )
 from lanonna_api.repositories.babies import get_baby_for_owner
-from lanonna_api.storage import mint_baby_avatar_upload_url, mint_user_avatar_upload_url
+from lanonna_api.storage import (
+    mint_baby_avatar_upload_url,
+    mint_user_avatar_upload_url,
+    warm_up_url_signer,
+)
 
 logger = logging.getLogger("lanonna.api")
 
-app = FastAPI(title="La Nonna API", version="0.1.0")
+# JSON bodies at least this large are gzip-compressed when the client accepts it.
+GZIP_MINIMUM_SIZE = 1024
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    """Open the DB pool and warm the URL signer before the first request."""
+    if settings.db_password:
+        db.open_pool()
+    try:
+        warm_up_url_signer()
+    except Exception:
+        # No credentials (local dev) or a transient metadata error: the signer
+        # retries on first use, so startup must not fail here.
+        logger.warning("url_signer_warm_up_failed", exc_info=True)
+    try:
+        yield
+    finally:
+        db.close_pool()
+
+
+app = FastAPI(title="La Nonna API", version="0.1.0", lifespan=lifespan)
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(RequestContextMiddleware)
 _cors_origins = settings.cors_allow_origins_list()
@@ -55,6 +84,8 @@ if _cors_origins:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+# Outermost, so every response (including errors) can be compressed.
+app.add_middleware(GZipMiddleware, minimum_size=GZIP_MINIMUM_SIZE)
 
 
 @app.exception_handler(StarletteHTTPException)

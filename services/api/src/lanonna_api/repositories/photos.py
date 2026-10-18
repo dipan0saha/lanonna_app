@@ -113,31 +113,34 @@ def delete_photo(baby_profile_id: uuid.UUID, photo_id: uuid.UUID) -> bool:
     return cur.rowcount > 0
 
 
-def squish_count(photo_id: uuid.UUID) -> int:
+def get_photo_detail_row(
+    baby_profile_id: uuid.UUID,
+    photo_id: uuid.UUID,
+    viewer_firebase_uid: str,
+) -> dict[str, Any] | None:
+    """The photo, its uploader name, active-participant squish count and the
+    viewer's own squish, in one statement (photo detail)."""
     with get_connection() as conn:
         row = conn.execute(
             f"""
-            SELECT COUNT(*)::int AS c
-            FROM photo_squishes s
-            JOIN photos p ON p.id = s.photo_id
-            {active_participant_join("s.firebase_uid", "p.baby_profile_id")}
-            WHERE s.photo_id = %s
+            SELECT
+                p.id, p.baby_profile_id, p.uploader_firebase_uid,
+                p.status, p.display_path, p.thumb_path, p.caption,
+                p.content_type, p.created_at,
+                u.display_name AS uploader_display_name,
+                (SELECT COUNT(*)::int FROM photo_squishes s
+                 {active_participant_join("s.firebase_uid", "p.baby_profile_id")}
+                 WHERE s.photo_id = p.id) AS squish_count,
+                EXISTS (SELECT 1 FROM photo_squishes vs
+                        WHERE vs.photo_id = p.id
+                          AND vs.firebase_uid = %s) AS viewer_has_squished
+            FROM photos p
+            JOIN app_users u ON u.firebase_uid = p.uploader_firebase_uid
+            WHERE p.id = %s AND p.baby_profile_id = %s
             """,
-            (photo_id,),
+            (viewer_firebase_uid, photo_id, baby_profile_id),
         ).fetchone()
-    return row["c"] if row else 0
-
-
-def caller_squished(photo_id: uuid.UUID, firebase_uid: str) -> bool:
-    with get_connection() as conn:
-        row = conn.execute(
-            """
-            SELECT 1 FROM photo_squishes
-            WHERE photo_id = %s AND firebase_uid = %s
-            """,
-            (photo_id, firebase_uid),
-        ).fetchone()
-    return row is not None
+    return dict(row) if row else None
 
 
 def toggle_squish(photo_id: uuid.UUID, firebase_uid: str) -> bool:

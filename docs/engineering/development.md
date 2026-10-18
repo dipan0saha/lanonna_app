@@ -59,7 +59,14 @@ Repositories are registered in `bootstrap.dart`; routes in `core/router/app_rout
 
 **Member display names (#7):** Family-visible labels come from `app_users.display_name` only. Use [`domain/users_display.py`](../../services/api/src/lanonna_api/domain/users_display.py) (`author_display_name_from_row`, `uploader_display_name_from_row`, `purchaser_display_name_from_row`, `rsvp_display_name_from_row`) — never derive labels from email. SQL should alias `NULLIF(TRIM(u.display_name), '')` as the matching `*_display_name` (RSVP rows use unaliased `display_name` read by `rsvp_display_name_from_row`). The API never invents a name: an empty name comes back as `null` (members, activity actor/target, inbox actor, comment authors, new followers, invite preview inviter) and the app shows `personNameFallback` (“Family member”) via `personDisplayName`. The worker does the same for push copy (neutral “Someone”) and never falls back to an email local part.
 
-| `storage.py` | V4 signed PUT (upload) and GET (thumb/display read) |
+**Server request cost (shared layers):**
+
+| Module | Rule |
+|--------|------|
+| [`db.py`](../../services/api/src/lanonna_api/db.py) | One `psycopg_pool` pool per instance, opened and closed by the FastAPI lifespan. Every repository uses `get_connection()` (commit on success, rollback on error). Size: `DB_POOL_MAX_SIZE` 5 for the API and 2 for the worker, so at most 10 API instances and 5 worker instances use 60 of Cloud SQL's 100 connections. Raise max instances or pool size only together. |
+| `read_scope()` in `db.py` | A read-only aggregate (home summary, photo detail, gallery, names, predictions, event detail, `/me/account`) wraps its repository calls in `with read_scope():` so they share one pooled connection in one read-only transaction. Sign URLs after the scope ends, so a connection is never held during IAM calls. A write inside the scope fails. |
+| [`storage.py`](../../services/api/src/lanonna_api/storage.py) | V4 signed PUT (upload) and GET (thumb/display read) through one process-wide `GcsUrlSigner`: one credentials object, one storage client, one keep-alive session to IAM `signBlob`. Read URLs last 900 s and are reused per object for at most 300 s (every URL a client gets has at least 10 minutes left); a page's cache misses are signed in parallel. Upload URLs are never cached. Sign many objects with `mint_signed_read_urls` or the batch helpers in `domain/media_urls.py` / `avatar_urls.py`, never one at a time in a loop. |
+| `main.py` | `GZipMiddleware` compresses responses of 1 KB or more when the client sends `Accept-Encoding: gzip` (Dart `HttpClient` does by default). |
 
 ## Prerequisites
 
@@ -107,7 +114,7 @@ Run **all three suites** before shipping. Pull requests and pushes to `main` als
 
 **Offset pagination envelope** — collection list endpoints return `{ "items": [...], "offset", "limit", "has_more" }` from `lanonna_api.pagination` with `limit`/`offset` query params. Babies, members, invitations, registry items, photos and notifications default to `limit=50` (max `100`); activity events default to `20` (max `50`); past events (`past=true`) default to `PAST_EVENTS_PAGE_SIZE` (30, max `100`). Calendar month/upcoming views return the same envelope in one page, bounded by `LIST_EVENTS_MAX_ROWS` (500); `has_more` signals the cap. No app-facing list endpoint returns a bare JSON array (the internal admin announcements list is not used by the app). Mobile parses via `lib/core/api/offset_page.dart` (`parseOffsetPage`, `maxOffsetPageLimit`); collections the UI needs whole (babies, members, invitations, registry) use `fetchAllOffsetPages`. Scrolling lists refresh after a mutation with `refreshPaginatedWindow` (`core/domain/paginated_list_refresh.dart`), which merges new head rows or re-fetches the loaded window without dropping rows the user already scrolled to. Repositories page in SQL (`repositories/_paging.py`) with a stable `ORDER BY` tiebreak, and routers fetch `limit + 1` rows for `has_more`.
 
-**Signed read URLs** expire after **900s** ([`storage.py`](../../services/api/src/lanonna_api/storage.py)). `CachedSignedImage` accepts optional `onSignedUrlError` (one callback per widget mount) so parents can refresh API data (home teasers, photo detail).
+**Signed read URLs** expire after **900s** ([`storage.py`](../../services/api/src/lanonna_api/storage.py)); the API may serve the same URL for one object for up to 5 minutes, so a URL always has at least 10 minutes left when it arrives. `CachedSignedImage` accepts optional `onSignedUrlError` (one callback per widget mount) so parents can refresh API data (home teasers, photo detail).
 
 ### Maestro E2E (Android)
 
@@ -275,7 +282,7 @@ Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps:
 | POST | `/v1/babies/{baby_profile_id}/invitations/batch` | Firebase Bearer JWT (owner); queues `send_invite_email` on Pub/Sub |
 | GET | `/v1/invitations/preview?token=` | Public (invite deep link) |
 | POST | `/v1/invitations/accept` | Firebase Bearer JWT + App Check; invitee email must match. Errors: **404** `not_found`, **410** `expired`, **410** `revoked`, **403** `email_mismatch` (`detail.params.invitee_email` / `signed_in_email`), **409** `max_owners` / `already_used` — JSON `detail.error` (mobile maps to `InvitationAcceptResult.fromErrorDetail`) |
-| POST | `/v1/uploads/display/signed-url` | JWT + App Check; avatar upload init: `content_type`, `byte_length` (≤ 2 MB), `scope` (`user` \| `baby`), optional `baby_profile_id` when `scope=baby`. Returns signed PUT + `object_path` under `avatars/`; persist path as `avatar_url`. Reads mint signed GET URLs on account/baby responses (900s TTL). Legacy `smoke/` paths still supported. |
+| POST | `/v1/uploads/display/signed-url` | JWT + App Check; avatar upload init: `content_type`, `byte_length` (≤ 2 MB), `scope` (`user` \| `baby`), optional `baby_profile_id` when `scope=baby`. Returns signed PUT + `object_path` under `avatars/`; persist path as `avatar_url`. Reads mint signed GET URLs on account/baby responses (900s TTL, reused for up to 5 minutes, signed in one batch per response). Legacy `smoke/` paths still supported. |
 | POST | `/v1/photos/init` | Firebase Bearer JWT (owner; gallery upload init); optional `caption` (max 2000) |
 | GET | `/v1/babies/{id}/photos` | JWT (member); offset page; `limit`/`offset`; `sort=default\|recent\|favorites`; followers see `ready` only |
 | GET, PATCH, DELETE | `/v1/babies/{id}/photos/{photo_id}` | JWT (member read; owner mutate); signed thumb/display URLs; GET includes `tagged_babies` |
@@ -390,7 +397,8 @@ Baseline on **profile/release** build (`flavors/dev.json`): cold start → home 
 | Cold start | [`AppVersionGate`](../../apps/mobile/lib/core/version/app_version_gate.dart) checks `/v1/app/version` in the background (5s timeout); onboarding carousel shows without waiting. Signed-in [`AppSession.refreshFromApi`](../../apps/mobile/lib/features/onboarding/presentation/app_session.dart) runs after first frame ([`LaNonnaApp`](../../apps/mobile/lib/app.dart)); router uses cached onboarding status until fresh. [`BiometricAppLock`](../../apps/mobile/lib/core/auth/biometric_app_lock.dart) waits for GoRouter before applying lock routes. Debug App Check: [`activateFirebaseAppCheck`](../../apps/mobile/lib/core/app_check/app_check_bootstrap.dart) retries `getToken` with backoff; logging is non-blocking. |
 | Tab refresh | Split `HomeRefreshSignal` (`homeTab` vs `babyContext`); SWR shell tab loads (`TabLoadGenerationCache`); gallery `GalleryRepository` notify runs `refreshLoadedPhotoList` (`features/gallery/domain/gallery_loaded_pages.dart`, a thin wrapper over the generic `refreshPaginatedWindow`) — fetches the head page once and merges new rows instead of capping at the previous loaded count; photo detail opens on `fetchPhoto`, then pages swipe ids in the grid's sort (`GalleryRoutes.photoDetail(id, sort:)` passes `?sort=`). Home keeps the last good summary per baby across baby switches (offline fallback); it is cleared on sign-out |
 | Upload | `display_encode.dart`: one lossy WebP encode (q80, method 2) off the UI isolate, 2048 px display / 512 px avatar, re-encode only when over the 2 MB cap (`storage.py`). A 2048 px photo encodes in ~0.3 s instead of ~9 s (`flutter test --tags benchmark test/display_encode_benchmark_test.dart` prints before/after) |
-| Feed/detail | Worker thumbs; signed read URLs (900s TTL); `CachedSignedImage` + optional `onSignedUrlError` |
+| Feed/detail | Worker thumbs; signed read URLs (900s TTL) from one shared signer with a per-object 5-minute reuse cache and parallel signing; `CachedSignedImage` + optional `onSignedUrlError` |
+| Server cost | Pooled DB connections opened at startup; aggregates (`home-summary`, photo detail, gallery, names) run bounded queries on one connection via `read_scope()` (home: 17 queries on 17 connections → 9 on 1); gzip for responses ≥ 1 KB; `resolve_app_user` reads first and writes only when something changed |
 | Pagination | One SQL-paged `{items, offset, limit, has_more}` envelope on every list route (incl. past events); capped `home-summary` teasers; per-row aggregates folded into list queries (`active_owner_count`, digest unread counts, bulk photo tags) |
 | Notify | `safe_enqueue_fan_out` after DB commit |
 | Rate limits | Photo init + invite batch (`rate_limit.py`) — per-instance; see [open-gaps.md](open-gaps.md) M-09 |
@@ -398,7 +406,7 @@ Baseline on **profile/release** build (`flavors/dev.json`): cold start → home 
 ### Backlog (pick one per cycle)
 
 1. **P0:** Stable `cacheKey` on remaining `CachedSignedImage` call sites; trim `home-summary` if profiling shows bloat. Done: tab SWR (`TabLoadGenerationCache`), calendar month cache + AI dedupe via month/upcoming, home-summary per-baby cache, event cover `event-cover-{photoId}`.
-2. **P1:** ListView.builder for long lists; batch signed URL work in `build_home_summary` if needed.
+2. **P1:** ListView.builder for long lists.
 3. **P2:** Offline banner + coalesced fetches (`ConnectivityService`, `BabyContextReload`).
 4. **P3:** CDN at scale; optional archive tier for originals.
 

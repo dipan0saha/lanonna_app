@@ -21,12 +21,10 @@ from lanonna_api.domain.users_display import (
 )
 from lanonna_activity_copy import ActivityEventType, params
 from lanonna_api.repositories.activity_events import insert_activity_event
-from lanonna_api.repositories.babies import get_baby_membership
-from lanonna_api.db import get_connection
+from lanonna_api.db import get_connection, read_scope
 from lanonna_api.repositories.fun import (
     add_like,
     birthdate_vote_histogram,
-    caller_liked_suggestion_ids,
     count_suggestions_by_author_gender,
     delete_name_suggestion,
     find_name_suggestion_case_insensitive,
@@ -34,7 +32,7 @@ from lanonna_api.repositories.fun import (
     get_caller_votes,
     get_name_suggestion,
     insert_name_suggestion,
-    liked_suggestion_id_set,
+    list_caller_likes,
     list_gender_voters,
     list_name_suggestions,
     remove_like,
@@ -48,12 +46,17 @@ from lanonna_api.domain.content_permissions import member_content_can_delete
 
 
 def list_names(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, Any]:
-    require_membership(firebase_uid, baby_profile_id)
-    membership = get_baby_membership(firebase_uid, baby_profile_id)
-    liked = caller_liked_suggestion_ids(baby_profile_id, firebase_uid)
-    liked_ids = liked_suggestion_id_set(baby_profile_id, firebase_uid)
+    with read_scope():
+        membership = require_membership(firebase_uid, baby_profile_id)
+        likes = list_caller_likes(baby_profile_id, firebase_uid)
+        rows = list_name_suggestions(baby_profile_id)
+    liked: dict[str, uuid.UUID | None] = {"male": None, "female": None}
+    for like in likes:
+        if like["gender"] in liked:
+            liked[like["gender"]] = like["name_suggestion_id"]
+    liked_ids = {like["name_suggestion_id"] for like in likes}
     suggestions = []
-    for row in list_name_suggestions(baby_profile_id):
+    for row in rows:
         sid = row["id"]
         author_uid = row["suggested_by_firebase_uid"]
         suggestions.append(
@@ -70,7 +73,7 @@ def list_names(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, Any]:
                 "viewer_has_liked": sid in liked_ids,
             }
         )
-    closed = fun_writes_closed(membership) if membership else False
+    closed = fun_writes_closed(membership)
     return {
         "suggestions": suggestions,
         "viewer_liked_by_gender": {
@@ -170,11 +173,14 @@ def toggle_like(
 
 
 def get_predictions(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, Any]:
-    membership = require_membership(firebase_uid, baby_profile_id)
-    totals = gender_vote_totals(baby_profile_id)
-    caller = get_caller_votes(baby_profile_id, firebase_uid)
+    with read_scope():
+        membership = require_membership(firebase_uid, baby_profile_id)
+        totals = gender_vote_totals(baby_profile_id)
+        caller = get_caller_votes(baby_profile_id, firebase_uid)
+        gender_voters = list_gender_voters(baby_profile_id)
+        hist = birthdate_vote_histogram(baby_profile_id)
     voters = []
-    for v in list_gender_voters(baby_profile_id):
+    for v in gender_voters:
         name = "Anonymous"
         if not v.get("is_anonymous"):
             name = member_display_name_from_row(v, "display_name")
@@ -184,7 +190,6 @@ def get_predictions(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, 
                 "display_name": name,
             }
         )
-    hist = birthdate_vote_histogram(baby_profile_id)
     return {
         "gender_totals": totals,
         "viewer_gender_vote": caller.get("gender"),

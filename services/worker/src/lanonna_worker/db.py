@@ -1,5 +1,15 @@
+"""Postgres access for the worker: one connection pool per process.
+
+``get_connection()`` keeps its contract (commit on success, rollback on an
+exception, ``DatabaseNotConfiguredError`` without credentials) but borrows a
+pooled connection instead of opening a new one per call. The pool is opened
+in the FastAPI lifespan and closed on shutdown; tests and scripts open it
+lazily on first use.
+"""
+
 from __future__ import annotations
 
+import threading
 import uuid
 from contextlib import contextmanager
 from typing import Any, Iterator
@@ -7,45 +17,74 @@ from typing import Any, Iterator
 import psycopg
 from psycopg.rows import dict_row
 from psycopg.types.json import Json
+from psycopg_pool import ConnectionPool
 
 from lanonna_activity_copy import ActivityEventType, activity_summary, caption_params
 from lanonna_worker.config import settings
+
+_pool: ConnectionPool | None = None
+_pool_lock = threading.Lock()
 
 
 class DatabaseNotConfiguredError(RuntimeError):
     """Raised when the worker runs without database credentials (e.g. local thumbnail-only runs)."""
 
 
-@contextmanager
-def get_connection() -> Iterator[psycopg.Connection[Any]]:
+def _require_configured() -> None:
     if not settings.db_password:
         raise DatabaseNotConfiguredError("Database is not configured (missing DB_PASSWORD).")
+
+
+def _connect_kwargs() -> dict[str, Any]:
     if settings.cloud_sql_connection_name:
-        host = f"/cloudsql/{settings.cloud_sql_connection_name}"
-        conn = psycopg.connect(
-            host=host,
-            user=settings.db_user,
-            dbname=settings.db_name,
-            password=settings.db_password,
-            row_factory=dict_row,
-        )
-    else:
-        conn = psycopg.connect(
-            host=settings.db_host,
-            port=settings.db_port,
-            user=settings.db_user,
-            dbname=settings.db_name,
-            password=settings.db_password,
-            row_factory=dict_row,
-        )
-    try:
+        return {
+            "host": f"/cloudsql/{settings.cloud_sql_connection_name}",
+            "user": settings.db_user,
+            "dbname": settings.db_name,
+            "password": settings.db_password,
+        }
+    return {
+        "host": settings.db_host,
+        "port": settings.db_port,
+        "user": settings.db_user,
+        "dbname": settings.db_name,
+        "password": settings.db_password,
+    }
+
+
+def open_pool() -> ConnectionPool:
+    """Create and open the process pool (idempotent, does not wait for connections)."""
+    global _pool
+    _require_configured()
+    with _pool_lock:
+        if _pool is None:
+            _pool = ConnectionPool(
+                kwargs={**_connect_kwargs(), "row_factory": dict_row},
+                min_size=settings.db_pool_min_size,
+                max_size=settings.db_pool_max_size,
+                timeout=settings.db_pool_timeout_seconds,
+                max_idle=settings.db_pool_max_idle_seconds,
+                check=ConnectionPool.check_connection,
+                name="lanonna-worker",
+                open=True,
+            )
+        return _pool
+
+
+def close_pool() -> None:
+    global _pool
+    with _pool_lock:
+        pool, _pool = _pool, None
+    if pool is not None:
+        pool.close()
+
+
+@contextmanager
+def get_connection() -> Iterator[psycopg.Connection[Any]]:
+    _require_configured()
+    # Commits when the block succeeds, rolls back on an exception.
+    with (_pool or open_pool()).connection() as conn:
         yield conn
-        conn.commit()
-    except Exception:
-        conn.rollback()
-        raise
-    finally:
-        conn.close()
 
 
 def mark_photo_ready(

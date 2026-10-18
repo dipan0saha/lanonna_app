@@ -25,14 +25,8 @@ def test_list_names_can_delete_for_owner_on_all_rows():
         "lanonna_api.domain.fun.require_membership",
         return_value={"role": "owner"},
     ), patch(
-        "lanonna_api.domain.fun.get_baby_membership",
-        return_value={"role": "owner"},
-    ), patch(
-        "lanonna_api.domain.fun.caller_liked_suggestion_ids",
-        return_value={"male": None, "female": None},
-    ), patch(
-        "lanonna_api.domain.fun.liked_suggestion_id_set",
-        return_value=set(),
+        "lanonna_api.domain.fun.list_caller_likes",
+        return_value=[],
     ), patch(
         "lanonna_api.domain.fun.list_name_suggestions",
         return_value=[
@@ -52,14 +46,8 @@ def test_list_names_can_delete_for_follower_only_own_row():
         "lanonna_api.domain.fun.require_membership",
         return_value={"role": "follower"},
     ), patch(
-        "lanonna_api.domain.fun.get_baby_membership",
-        return_value={"role": "follower"},
-    ), patch(
-        "lanonna_api.domain.fun.caller_liked_suggestion_ids",
-        return_value={"male": None, "female": None},
-    ), patch(
-        "lanonna_api.domain.fun.liked_suggestion_id_set",
-        return_value=set(),
+        "lanonna_api.domain.fun.list_caller_likes",
+        return_value=[],
     ), patch(
         "lanonna_api.domain.fun.list_name_suggestions",
         return_value=[

@@ -108,16 +108,3 @@ def list_recent_for_baby(
             (baby_profile_id, *type_params, limit, offset),
         ).fetchall()
     return [dict(row) for row in rows]
-
-
-def count_name_suggestions(baby_profile_id: uuid.UUID) -> int:
-    with get_connection() as conn:
-        row = conn.execute(
-            """
-            SELECT COUNT(*)::int AS count
-            FROM name_suggestions
-            WHERE baby_profile_id = %s
-            """,
-            (baby_profile_id,),
-        ).fetchone()
-    return int(row["count"]) if row else 0

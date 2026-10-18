@@ -42,8 +42,10 @@ def test_get_photo_detail_owner_sees_can_delete_on_follower_comment():
         "lanonna_api.domain.gallery.require_membership",
         return_value={"role": "owner"},
     ), patch(
-        "lanonna_api.domain.gallery.get_photo_for_baby",
+        "lanonna_api.domain.gallery.get_photo_detail_row",
         return_value={
+            "squish_count": 0,
+            "viewer_has_squished": False,
             "id": photo_id,
             "status": "ready",
             "created_at": now,
@@ -64,13 +66,12 @@ def test_get_photo_detail_owner_sees_can_delete_on_follower_comment():
                 "author_email": "f@test.com",
             }
         ],
-    ), patch("lanonna_api.domain.gallery.caller_squished", return_value=False), patch(
-        "lanonna_api.domain.gallery.squish_count", return_value=0
     ), patch(
         "lanonna_api.domain.gallery.list_tagged_babies_for_photo", return_value=[]
     ), patch(
-        "lanonna_api.domain.gallery.signed_display_url", return_value=None
-    ), patch("lanonna_api.domain.gallery.signed_thumb_url", return_value=None):
+        "lanonna_api.domain.gallery.sign_media",
+        return_value=[None, None],
+    ):
         detail = get_photo_detail("owner-uid", baby_id, photo_id)
     assert detail["comments"][0]["can_delete"] is True
     assert detail["comments"][0]["can_edit"] is False

@@ -16,9 +16,9 @@ from lanonna_api.repositories.events import (
     list_rsvps_for_event,
     rsvp_summary,
 )
+from lanonna_api.repositories.home_counts import home_summary_counts
 from lanonna_api.repositories.fun import (
     birthdate_vote_histogram,
-    count_gender_votes,
     gender_vote_totals,
     list_gender_voters,
     list_name_suggestions,
@@ -28,7 +28,11 @@ from lanonna_api.repositories.memberships import (
     soft_remove_membership,
     soft_remove_memberships_on_babies,
 )
-from lanonna_api.repositories.photos import list_photo_comments, list_photos_for_baby, squish_count
+from lanonna_api.repositories.photos import (
+    get_photo_detail_row,
+    list_photo_comments,
+    list_photos_for_baby,
+)
 from lanonna_api.repositories.users import resolve_app_user
 
 pytestmark = pytest.mark.integration
@@ -297,7 +301,9 @@ def _assert_former_excluded(ids: dict, active: str) -> None:
     assert [row["firebase_uid"] for row in attendees] == [active]
     assert attendees[0]["display_name"] == "Aunt May"
 
-    assert count_gender_votes(ids["baby_id"]) == 1
+    counts = home_summary_counts(ids["baby_id"])
+    assert (counts["vote_count"], counts["male_votes"], counts["female_votes"]) == (1, 0, 1)
+    assert counts["top_birthdate_guess"] == date(2026, 9, 1)
     assert gender_vote_totals(ids["baby_id"]) == {"male": 0, "female": 1}
     voters = list_gender_voters(ids["baby_id"])
     assert [row["firebase_uid"] for row in voters] == [active]
@@ -308,8 +314,14 @@ def _assert_former_excluded(ids: dict, active: str) -> None:
     assert names["James"]["like_count"] == 1
     assert names["Robin"]["author_display_name"] == "Uncle Dan"
 
-    assert squish_count(ids["photo_id"]) == 1
-    assert squish_count(ids["only_former_photo_id"]) == 0
+    assert (
+        get_photo_detail_row(ids["baby_id"], ids["photo_id"], "nobody")["squish_count"]
+        == 1
+    )
+    assert (
+        get_photo_detail_row(ids["baby_id"], ids["only_former_photo_id"], "nobody")["squish_count"]
+        == 0
+    )
     photos = {
         row["id"]: row
         for row in list_photos_for_baby(ids["baby_id"], ready_only=True)

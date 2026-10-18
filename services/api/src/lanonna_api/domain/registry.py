@@ -17,7 +17,6 @@ from lanonna_api.domain.notifications import (
     safe_enqueue_fan_out,
 )
 from lanonna_api.repositories.activity_events import insert_activity_event
-from lanonna_api.repositories.babies import get_baby_membership
 from lanonna_api.domain.registry_shipping import (
     shipping_is_empty,
     shipping_response_from_row,
@@ -166,10 +165,7 @@ def claim_purchase(
     baby_profile_id: uuid.UUID,
     item_id: uuid.UUID,
 ) -> dict[str, Any]:
-    require_membership(firebase_uid, baby_profile_id)
-    membership = get_baby_membership(firebase_uid, baby_profile_id)
-    if membership is None:
-        raise PermissionError("Membership required.")
+    membership = require_membership(firebase_uid, baby_profile_id)
     is_owner = membership["role"] == "owner"
     item = get_registry_item(baby_profile_id, item_id)
     if item is None:
@@ -211,10 +207,7 @@ def undo_purchase(
     baby_profile_id: uuid.UUID,
     item_id: uuid.UUID,
 ) -> None:
-    require_membership(firebase_uid, baby_profile_id)
-    membership = get_baby_membership(firebase_uid, baby_profile_id)
-    if membership is None:
-        raise PermissionError("Membership required.")
+    membership = require_membership(firebase_uid, baby_profile_id)
     purchase = get_purchase(item_id)
     if purchase is None:
         raise LookupError("No purchase on this item.")

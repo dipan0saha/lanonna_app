@@ -45,7 +45,7 @@ def postgres_database() -> str:
 @pytest.fixture(autouse=True)
 def _point_worker_at_postgres(postgres_database: str):
     from lanonna_worker.config import settings
-    from lanonna_worker.db import get_connection
+    from lanonna_worker.db import close_pool, get_connection
 
     previous = (
         settings.db_host,
@@ -61,9 +61,12 @@ def _point_worker_at_postgres(postgres_database: str):
     settings.db_name = postgres_database
     settings.db_password = _PASSWORD
     settings.cloud_sql_connection_name = ""
+    # The pool is bound to the settings it was opened with.
+    close_pool()
     with get_connection() as conn:
         conn.execute("TRUNCATE TABLE app_users RESTART IDENTITY CASCADE")
     yield
+    close_pool()
     (
         settings.db_host,
         settings.db_port,

@@ -16,6 +16,12 @@ class Settings(BaseSettings):
     db_user: str = "lanonna_app"
     db_name: str = "lanonna"
     db_password: str = ""
+    # Per-instance pool. Cloud SQL allows 100 connections: worker 5 instances x 2
+    # plus api 10 x 5 = 60, leaving room for migrations and admin sessions.
+    db_pool_min_size: int = 1  # DB_POOL_MIN_SIZE
+    db_pool_max_size: int = 2  # DB_POOL_MAX_SIZE
+    db_pool_timeout_seconds: float = 30.0  # DB_POOL_TIMEOUT_SECONDS
+    db_pool_max_idle_seconds: float = 300.0  # DB_POOL_MAX_IDLE_SECONDS
 
     mailjet_api_key: str = ""  # MAILJET_API_KEY
     mailjet_api_secret: str = ""  # MAILJET_API_SECRET

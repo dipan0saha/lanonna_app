@@ -15,14 +15,18 @@ from lanonna_api.repositories.events import (
     list_rsvps_for_event,
     rsvp_summary,
 )
+from lanonna_api.repositories.home_counts import home_summary_counts
 from lanonna_api.repositories.fun import (
     birthdate_vote_histogram,
-    count_gender_votes,
     gender_vote_totals,
     list_gender_voters,
     list_name_suggestions,
 )
-from lanonna_api.repositories.photos import list_photo_comments, list_photos_for_baby, squish_count
+from lanonna_api.repositories.photos import (
+    get_photo_detail_row,
+    list_photo_comments,
+    list_photos_for_baby,
+)
 from lanonna_api.repositories.users import resolve_app_user
 
 pytestmark = pytest.mark.integration
@@ -236,7 +240,9 @@ def test_reads_skip_tombstoned_participation_and_keep_authored_comments():
     assert [row["firebase_uid"] for row in attendees] == [active]
     assert attendees[0]["display_name"] == "Aunt May"
 
-    assert count_gender_votes(baby_id) == 1
+    counts = home_summary_counts(baby_id)
+    assert (counts["vote_count"], counts["male_votes"], counts["female_votes"]) == (1, 0, 1)
+    assert counts["top_birthdate_guess"] == date(2026, 9, 1)
     assert gender_vote_totals(baby_id) == {"male": 0, "female": 1}
     voters = list_gender_voters(baby_id)
     assert [row["firebase_uid"] for row in voters] == [active]
@@ -248,8 +254,14 @@ def test_reads_skip_tombstoned_participation_and_keep_authored_comments():
     assert names[0]["like_count"] == 1
     assert names[0]["author_display_name"] == "Owner"
 
-    assert squish_count(photo_id) == 1
-    assert squish_count(only_gone_photo_id) == 0
+    assert (
+        get_photo_detail_row(baby_id, photo_id, "nobody")["squish_count"]
+        == 1
+    )
+    assert (
+        get_photo_detail_row(baby_id, only_gone_photo_id, "nobody")["squish_count"]
+        == 0
+    )
     photos = {row["id"]: row for row in list_photos_for_baby(baby_id, ready_only=True)}
     assert photos[photo_id]["squish_count"] == 1
     assert photos[photo_id]["comment_count"] == 1

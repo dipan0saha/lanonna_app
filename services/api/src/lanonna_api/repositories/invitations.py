@@ -37,10 +37,14 @@ def lookup_token_hash(token: str) -> str:
 def list_invitations_for_baby(
     baby_profile_id: uuid.UUID,
     *,
+    status: str | None = None,
     limit: int | None = None,
     offset: int = 0,
 ) -> list[dict[str, Any]]:
+    """Newest first; ``status`` filters in SQL so paging stays in SQL."""
     paging, paging_params = limit_offset_clause(limit, offset)
+    status_clause = "AND status = %s" if status is not None else ""
+    status_params: tuple[Any, ...] = (status,) if status is not None else ()
     with get_connection() as conn:
         rows = conn.execute(
             f"""
@@ -49,10 +53,11 @@ def list_invitations_for_baby(
                    email_delivery_status, email_last_error, email_send_attempts
             FROM invitations
             WHERE baby_profile_id = %s
+              {status_clause}
             ORDER BY created_at DESC, id DESC
             {paging}
             """,
-            (baby_profile_id, *paging_params),
+            (baby_profile_id, *status_params, *paging_params),
         ).fetchall()
     return [dict(r) for r in rows]
 

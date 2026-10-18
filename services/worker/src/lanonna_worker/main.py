@@ -1,4 +1,6 @@
 import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import FastAPI, Request, Response
@@ -20,12 +22,26 @@ from lanonna_worker.pubsub_payload import (
     validate_notify_fan_out_payload,
     validate_notify_user_payload,
 )
+from lanonna_worker import db
 from lanonna_worker.thumbnails import process_gcs_finalize
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("lanonna.worker")
 
-app = FastAPI(title="La Nonna Worker", version="0.1.0")
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    """Open the DB pool before the first push and close it on shutdown."""
+    if settings.db_password:
+        db.open_pool()
+    try:
+        yield
+    finally:
+        db.close_pool()
+
+
+app = FastAPI(title="La Nonna Worker", version="0.1.0", lifespan=lifespan)
 
 
 def _safe_payload_summary(payload: dict[str, Any]) -> dict[str, Any]:

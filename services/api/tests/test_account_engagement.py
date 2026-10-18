@@ -6,10 +6,6 @@ from lanonna_api.domain.account import build_account_extensions
 def test_build_account_extensions_includes_engagement_no_storage_for_follower_only():
     with (
         patch(
-            "lanonna_api.domain.account.list_babies_for_user",
-            return_value=[{"role": "follower"}],
-        ),
-        patch(
             "lanonna_api.domain.account.count_engagement_for_user",
             return_value={
                 "photos_squished": 2,
@@ -20,7 +16,7 @@ def test_build_account_extensions_includes_engagement_no_storage_for_follower_on
         ),
         patch("lanonna_api.domain.account.storage_usage_for_owner_babies") as storage_mock,
     ):
-        data = build_account_extensions("uid")
+        data = build_account_extensions("uid", [{"role": "follower"}])
 
     assert data["engagement"]["photos_squished"] == 2
     assert data["storage_usage"] is None
@@ -29,10 +25,6 @@ def test_build_account_extensions_includes_engagement_no_storage_for_follower_on
 
 def test_build_account_extensions_storage_when_owner():
     with (
-        patch(
-            "lanonna_api.domain.account.list_babies_for_user",
-            return_value=[{"role": "owner"}],
-        ),
         patch(
             "lanonna_api.domain.account.count_engagement_for_user",
             return_value={
@@ -47,6 +39,6 @@ def test_build_account_extensions_storage_when_owner():
             return_value={"used_bytes": 1000, "quota_bytes": 16106127360},
         ),
     ):
-        data = build_account_extensions("uid")
+        data = build_account_extensions("uid", [{"role": "owner"}])
 
     assert data["storage_usage"]["used_bytes"] == 1000
