@@ -73,6 +73,10 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title="La Nonna API", version="0.1.0", lifespan=lifespan)
+# Innermost (added first): it sees each route's complete response, so
+# minimum_size applies. Outside the BaseHTTPMiddleware layers below, every
+# body arrives streamed and would be compressed whatever its size.
+app.add_middleware(GZipMiddleware, minimum_size=GZIP_MINIMUM_SIZE)
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(RequestContextMiddleware)
 _cors_origins = settings.cors_allow_origins_list()
@@ -84,8 +88,6 @@ if _cors_origins:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-# Outermost, so every response (including errors) can be compressed.
-app.add_middleware(GZipMiddleware, minimum_size=GZIP_MINIMUM_SIZE)
 
 
 @app.exception_handler(StarletteHTTPException)
