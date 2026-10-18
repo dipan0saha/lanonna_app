@@ -439,6 +439,11 @@ class AccountRepository {
     _babyList?.invalidate();
   }
 
+  Future<void> deleteBabyProfile(String babyId) async {
+    await _api.deleteJson('/v1/babies/$babyId');
+    _babyList?.invalidate();
+  }
+
   Future<DataExportJob> requestExport(String babyId) async {
     final json = await _api.postJson(
       '/v1/babies/$babyId/data-export',

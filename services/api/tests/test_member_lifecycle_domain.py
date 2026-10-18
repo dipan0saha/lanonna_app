@@ -4,6 +4,7 @@ from unittest.mock import patch
 import pytest
 
 from lanonna_api.domain.member_errors import MemberLifecycleError
+from lanonna_api.repositories.memberships import OwnLeaveOutcome
 from lanonna_api.domain.member_lifecycle import (
     leave_baby_profile,
     list_members_for_owner,
@@ -117,30 +118,37 @@ def test_leave_sole_owner_blocked():
     baby_id = uuid.uuid4()
     with (
         patch(
-            "lanonna_api.domain.member_lifecycle.get_active_membership",
-            return_value={"role": "owner", "display_name": "Owner"},
+            "lanonna_api.domain.member_lifecycle.soft_remove_own_membership",
+            return_value=OwnLeaveOutcome.SOLE_OWNER,
         ),
-        patch(
-            "lanonna_api.domain.member_lifecycle.count_active_owners",
-            return_value=1,
-        ),
+        patch("lanonna_api.domain.member_lifecycle.insert_activity_event") as activity,
     ):
         with pytest.raises(MemberLifecycleError) as exc:
             leave_baby_profile("owner-1", baby_id)
     assert exc.value.code == "sole_owner_cannot_leave"
+    activity.assert_not_called()
+
+
+def test_leave_not_member():
+    baby_id = uuid.uuid4()
+    with patch(
+        "lanonna_api.domain.member_lifecycle.soft_remove_own_membership",
+        return_value=OwnLeaveOutcome.NOT_MEMBER,
+    ):
+        with pytest.raises(MemberLifecycleError) as exc:
+            leave_baby_profile("stranger", baby_id)
+    assert exc.value.code == "not_member"
 
 
 def test_leave_follower_succeeds():
     baby_id = uuid.uuid4()
     with (
         patch(
-            "lanonna_api.domain.member_lifecycle.get_active_membership",
-            return_value={"role": "follower", "display_name": "Fan"},
-        ),
-        patch(
-            "lanonna_api.domain.member_lifecycle.soft_remove_membership",
-            return_value=True,
-        ),
-        patch("lanonna_api.domain.member_lifecycle.insert_activity_event"),
+            "lanonna_api.domain.member_lifecycle.soft_remove_own_membership",
+            return_value=OwnLeaveOutcome.LEFT,
+        ) as leave,
+        patch("lanonna_api.domain.member_lifecycle.insert_activity_event") as activity,
     ):
         leave_baby_profile("follower-1", baby_id)
+    leave.assert_called_once_with(baby_id, "follower-1")
+    activity.assert_called_once()

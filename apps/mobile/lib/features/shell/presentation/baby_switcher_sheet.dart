@@ -17,6 +17,7 @@ import '../../../core/api/api_error_message.dart';
 import '../../../core/api/run_mutation.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../account/data/account_repository.dart';
+import '../../baby/presentation/delete_baby_profile_flow.dart';
 import '../../home/data/home_refresh_signal.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
@@ -78,22 +79,6 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
 
   Future<void> _leaveBaby(BabySummary baby) async {
     final l10n = AppLocalizations.of(context)!;
-    if (!baby.canLeave) {
-      await showDialog<void>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: Text(l10n.memberSoleOwnerLeaveTitle),
-          content: Text(l10n.memberSoleOwnerLeaveBody),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(AppLocalizations.of(ctx)!.actionOk),
-            ),
-          ],
-        ),
-      );
-      return;
-    }
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -210,6 +195,17 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
                               await _leaveBaby(baby);
                               return;
                             }
+                            if (value == 'delete') {
+                              final deleted =
+                                  await deleteBabyProfileWithConfirmation(
+                                    context,
+                                    baby,
+                                  );
+                              if (deleted && context.mounted) {
+                                Navigator.of(context).pop();
+                              }
+                              return;
+                            }
                             Navigator.of(context).pop();
                             if (value == 'edit') {
                               context.push('/baby/${baby.id}/edit');
@@ -230,10 +226,22 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
                                   child: Text(AppLocalizations.of(context)!.actionManageFollowers),
                                 ),
                               ],
-                              PopupMenuItem(
-                                value: 'leave',
-                                child: Text(l10n.memberLeaveProfile),
-                              ),
+                              if (baby.canDeleteProfile)
+                                PopupMenuItem(
+                                  value: 'delete',
+                                  child: Text(
+                                    AppLocalizations.of(context)!
+                                        .deleteBabyProfileAction,
+                                    style: const TextStyle(
+                                      color: AppColors.error,
+                                    ),
+                                  ),
+                                )
+                              else
+                                PopupMenuItem(
+                                  value: 'leave',
+                                  child: Text(l10n.memberLeaveProfile),
+                                ),
                             ];
                           },
                         ),

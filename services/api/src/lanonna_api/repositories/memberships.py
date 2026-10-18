@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from enum import StrEnum
 from typing import Any
 
 from lanonna_api.db import get_connection
@@ -171,6 +172,36 @@ def soft_remove_membership(
         return _run(conn)
     with get_connection() as connection:
         return _run(connection)
+
+
+class OwnLeaveOutcome(StrEnum):
+    LEFT = "left"
+    NOT_MEMBER = "not_member"
+    SOLE_OWNER = "sole_owner"
+
+
+def soft_remove_own_membership(
+    baby_profile_id: uuid.UUID,
+    firebase_uid: str,
+) -> OwnLeaveOutcome:
+    """Leave a baby: check the owner count and end the membership in one transaction.
+
+    Takes the baby row lock first (same order as baby delete and co-owner
+    accept), so two co-owners leaving at once cannot both pass the count and
+    orphan the profile.
+    """
+    with get_connection() as conn:
+        lock_baby_profile_for_update(baby_profile_id, conn)
+        membership = lock_membership_for_user_for_update(
+            baby_profile_id, firebase_uid, conn
+        )
+        if membership is None:
+            return OwnLeaveOutcome.NOT_MEMBER
+        if membership["role"] == "owner" and count_active_owners(baby_profile_id, conn) <= 1:
+            return OwnLeaveOutcome.SOLE_OWNER
+        if not soft_remove_membership(baby_profile_id, firebase_uid, conn=conn):
+            return OwnLeaveOutcome.NOT_MEMBER
+        return OwnLeaveOutcome.LEFT
 
 
 def soft_remove_memberships_on_babies(

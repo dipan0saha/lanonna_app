@@ -41,6 +41,7 @@ class ErrorCode(StrEnum):
     LAST_OWNER = "last_owner"
     SOLE_OWNER_CANNOT_LEAVE = "sole_owner_cannot_leave"
     USE_LEAVE_ENDPOINT = "use_leave_endpoint"
+    CANNOT_DELETE_SHARED_BABY = "cannot_delete_shared_baby"
     # Invitation accept (``POST /v1/invitations/accept``).
     EXPIRED = "expired"
     REVOKED = "revoked"
