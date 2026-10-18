@@ -643,7 +643,7 @@ abstract class AppLocalizations {
   /// No description provided for @memberSoleOwnerLeaveBody.
   ///
   /// In en, this message translates to:
-  /// **'You are the only owner. Add a co-owner, delete this baby profile, or delete your account to leave.'**
+  /// **'You are the only owner. Add a co-owner and leave, delete the baby profile from Edit baby, or delete your account.'**
   String get memberSoleOwnerLeaveBody;
 
   /// No description provided for @membershipEndedMessage.
@@ -663,6 +663,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You left this baby profile.'**
   String get memberLeftSuccess;
+
+  /// No description provided for @deleteBabyProfileAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete baby profile'**
+  String get deleteBabyProfileAction;
+
+  /// No description provided for @deleteBabyProfileConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this baby profile?'**
+  String get deleteBabyProfileConfirmTitle;
+
+  /// No description provided for @deleteBabyProfileConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently deletes {babyName} for everyone who follows this profile. Photos, calendar events, registry items, and other data will no longer be available in the app.'**
+  String deleteBabyProfileConfirmBody(String babyName);
+
+  /// No description provided for @deleteBabyProfileConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete profile'**
+  String get deleteBabyProfileConfirmAction;
+
+  /// No description provided for @deleteBabyProfileFinalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {babyName} permanently?'**
+  String deleteBabyProfileFinalTitle(String babyName);
+
+  /// No description provided for @deleteBabyProfileFinalBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Followers will lose access immediately. This cannot be undone.'**
+  String get deleteBabyProfileFinalBody;
+
+  /// No description provided for @deleteBabyProfileSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Baby profile deleted.'**
+  String get deleteBabyProfileSuccess;
 
   /// No description provided for @appTitle.
   ///
@@ -3903,6 +3945,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You can\'t remove the last owner of this baby profile.'**
   String get errorLastOwner;
+
+  /// No description provided for @errorCannotDeleteSharedBaby.
+  ///
+  /// In en, this message translates to:
+  /// **'This baby profile has a co-owner. Leave the profile instead of deleting it.'**
+  String get errorCannotDeleteSharedBaby;
 
   /// No description provided for @errorUseLeaveProfile.
   ///

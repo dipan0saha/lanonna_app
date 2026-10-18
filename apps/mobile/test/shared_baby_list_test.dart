@@ -140,10 +140,12 @@ void main() {
     await expectInvalidates(() => invitations.accept('token'));
   });
 
-  test('removing a member and leaving a baby invalidate the list', () async {
+  test('removing a member, leaving, and deleting a baby invalidate the list',
+      () async {
     final account = AccountRepository(api, babyList: babyList);
     await expectInvalidates(() => account.removeMember('baby-a', 'uid-2'));
     await expectInvalidates(() => account.leaveBaby('baby-b'));
+    await expectInvalidates(() => account.deleteBabyProfile('baby-a'));
   });
 
   test('membership ended and joining invalidate the list', () async {

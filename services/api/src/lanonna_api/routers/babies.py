@@ -3,12 +3,13 @@ from __future__ import annotations
 import uuid
 from typing import Any, Literal
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Response, status
 
 from lanonna_api.domain.errors import ErrorCode
 from lanonna_api.auth import AppUser, current_app_user
 from lanonna_api.domain.avatar_urls import normalize_avatar_for_storage
 from lanonna_api.http_errors import api_error, map_domain_errors
+from lanonna_api.domain.baby_delete import delete_baby_profile
 from lanonna_api.domain.home import announce_arrival, build_home_summary, list_activity_events
 from lanonna_api.repositories.babies import (
     create_baby_with_owner_membership,
@@ -134,6 +135,21 @@ def patch_baby(
         )
 
     return baby_summary_from_row(row)
+
+
+@router.delete(
+    "/{baby_profile_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_baby(
+    baby_profile_id: uuid.UUID,
+    user: AppUser = Depends(current_app_user),
+) -> Response:
+    try:
+        delete_baby_profile(user.uid, baby_profile_id)
+    except Exception as exc:
+        raise map_domain_errors(exc) from exc
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get("/{baby_profile_id}/home-summary", response_model=HomeSummaryResponse)

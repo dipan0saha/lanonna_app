@@ -196,10 +196,31 @@
   "memberLeaveConfirmBody": "You will lose access to this baby's photos, calendar, and registry.",
   "memberLeaveAction": "Leave",
   "memberSoleOwnerLeaveTitle": "Can't leave yet",
-  "memberSoleOwnerLeaveBody": "You are the only owner. Add a co-owner, delete this baby profile, or delete your account to leave.",
+  "memberSoleOwnerLeaveBody": "You are the only owner. Add a co-owner and leave, delete the baby profile from Edit baby, or delete your account.",
   "membershipEndedMessage": "You no longer have access to this profile.",
   "memberRemovedSuccess": "Member removed.",
   "memberLeftSuccess": "You left this baby profile.",
+  "deleteBabyProfileAction": "Delete baby profile",
+  "deleteBabyProfileConfirmTitle": "Delete this baby profile?",
+  "deleteBabyProfileConfirmBody": "This permanently deletes {babyName} for everyone who follows this profile. Photos, calendar events, registry items, and other data will no longer be available in the app.",
+  "@deleteBabyProfileConfirmBody": {
+    "placeholders": {
+      "babyName": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteBabyProfileConfirmAction": "Delete profile",
+  "deleteBabyProfileFinalTitle": "Delete {babyName} permanently?",
+  "@deleteBabyProfileFinalTitle": {
+    "placeholders": {
+      "babyName": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteBabyProfileFinalBody": "Followers will lose access immediately. This cannot be undone.",
+  "deleteBabyProfileSuccess": "Baby profile deleted.",
   "appTitle": "La Nonna",
   "appEmailVerifiedSignIn": "Email verified. Sign in with the same address to continue.",
   "appEmailVerifyLinkFailed": "Could not verify your email from this link.",
@@ -1072,6 +1093,7 @@
   "errorNotMember": "You're not a member of this baby profile.",
   "errorTargetNotMember": "That person is no longer a member of this baby profile.",
   "errorLastOwner": "You can't remove the last owner of this baby profile.",
+  "errorCannotDeleteSharedBaby": "This baby profile has a co-owner. Leave the profile instead of deleting it.",
   "errorUseLeaveProfile": "To remove yourself, use Leave profile.",
   "errorEmailNotVerified": "Verify your email before finishing setup.",
   "errorBabyProfileRequired": "Create a baby profile before finishing setup.",
