@@ -100,7 +100,12 @@ class HomeRepository {
       if (current == null) return null;
       return babies.where((b) => b.id == current).firstOrNull;
     }
-    if (babies.isEmpty) return null;
+    if (babies.isEmpty) {
+      // No baby left (last one deleted or left): drop the remembered
+      // selection so the shell title does not keep the old baby's name.
+      await store.clearSelectedBabyId();
+      return null;
+    }
     final selectedId = store.selectedBabyId;
     final match = selectedId != null
         ? babies.where((b) => b.id == selectedId).firstOrNull
