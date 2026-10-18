@@ -2,39 +2,8 @@
 # Worker deploy. Sender checks run before Cloud Build (#43).
 set -euo pipefail
 
-# Assign KEY=VALUE lines into the environment without executing the file.
-# Blank lines and #-comments are ignored. Values may be bare or wrapped in
-# matching single or double quotes (so "La Nonna" is one value). An already
-# set variable is left alone. Command substitutions in the file are not run.
-load_unset_env_file() {
-  local file="$1"
-  local line key value
-  while IFS= read -r line || [[ -n "${line}" ]]; do
-    line="${line#"${line%%[![:space:]]*}"}"
-    line="${line%"${line##*[![:space:]]}"}"
-    [[ -z "${line}" || "${line}" == \#* ]] && continue
-    if [[ "${line}" != *=* ]]; then
-      echo "Invalid env line in ${file}: ${line}" >&2
-      return 1
-    fi
-    key="${line%%=*}"
-    key="${key%"${key##*[![:space:]]}"}"
-    value="${line#*=}"
-    if [[ ! "${key}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
-      echo "Invalid env name in ${file}: ${key}" >&2
-      return 1
-    fi
-    if [[ "${value}" =~ ^\".*\"$ ]]; then
-      value="${value:1:${#value}-2}"
-    elif [[ "${value}" =~ ^\'.*\'$ ]]; then
-      value="${value:1:${#value}-2}"
-    fi
-    if [[ -z "${!key+x}" ]]; then
-      printf -v "${key}" '%s' "${value}"
-      export "${key}"
-    fi
-  done < "${file}"
-}
+# shellcheck source=../../../scripts/lib/env_file.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../scripts/lib" && pwd)/env_file.sh"
 
 # Refuse a missing sender or hello@lanonna.app before any image build.
 # Mailjet returns HTTP 200 for that address and then drops the message (#43).

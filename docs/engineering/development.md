@@ -246,7 +246,7 @@ API verifies Firebase ID tokens with `firebase_admin.auth.verify_id_token`, then
 
 | Service | Cloud Run name | Deploy |
 |--------|----------------|--------|
-| API | `api` | `services/api/scripts/deploy.sh` |
+| API | `api` | `services/api/scripts/deploy.sh` (min/max instances from `infra/env/dev.api.env`; dev keeps 1 warm instance, see [operations.md](operations.md)) |
 | Worker | `worker` | `services/worker/scripts/deploy.sh` then `./scripts/apply-dev-run-iam.sh` |
 
 Cloud Build / local Docker use repo-root [`.gcloudignore`](../../.gcloudignore) and [`.dockerignore`](../../.dockerignore) so uploads include only `packages/` and `services/` ([operations.md](operations.md)).
