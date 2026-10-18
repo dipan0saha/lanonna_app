@@ -45,6 +45,46 @@ def test_gzip_middleware_is_installed_with_minimum_size():
     assert entries[0].kwargs["minimum_size"] == main.GZIP_MINIMUM_SIZE == 1024
 
 
+def test_gzip_is_innermost_so_minimum_size_applies():
+    # Starlette runs the last-added middleware first; GZip must be added first.
+    assert main.app.user_middleware[-1].cls is GZipMiddleware
+
+
+def test_app_leaves_small_responses_uncompressed(monkeypatch):
+    monkeypatch.setattr(settings, "db_password", "")
+    with (
+        patch("lanonna_api.db.close_pool"),
+        patch("lanonna_api.main.warm_up_url_signer"),
+    ):
+        with TestClient(main.app) as client:
+            small = client.get("/health", headers={"Accept-Encoding": "gzip"})
+    assert small.status_code == 200
+    assert "content-encoding" not in small.headers
+
+
+def test_app_compresses_large_responses_through_the_full_stack(monkeypatch):
+    monkeypatch.setattr(settings, "db_password", "")
+    payload = {"items": ["x" * 40] * 100}
+
+    @main.app.get("/__gzip_probe")
+    def _probe():
+        return payload
+
+    try:
+        with (
+            patch("lanonna_api.db.close_pool"),
+            patch("lanonna_api.main.warm_up_url_signer"),
+        ):
+            with TestClient(main.app) as client:
+                big = client.get("/__gzip_probe", headers={"Accept-Encoding": "gzip"})
+        assert big.headers["content-encoding"] == "gzip"
+        assert big.json() == payload
+    finally:
+        main.app.router.routes[:] = [
+            r for r in main.app.router.routes if getattr(r, "path", None) != "/__gzip_probe"
+        ]
+
+
 def _probe_app() -> FastAPI:
     app = FastAPI()
     app.add_middleware(GZipMiddleware, minimum_size=main.GZIP_MINIMUM_SIZE)
