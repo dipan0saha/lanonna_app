@@ -174,7 +174,7 @@ sequenceDiagram
 
   App->>Auth: signIn
   Auth-->>App: ID_token
-  App->>App: decode EXIF, resize long edge, encode WebP or JPEG
+  App->>App: bake EXIF orientation, strip metadata, fit long edge, encode lossy WebP
   App->>API: POST /photos/init (Bearer, AppCheck, content_type, byte_length)
   API->>API: verify JWT + membership; reject if over max display size
   API->>SQL: INSERT photo pending (baby_id, uploader_id)
@@ -204,10 +204,12 @@ sequenceDiagram
 
 | Asset | Where created | Target | Stored in GCS |
 |-------|----------------|--------|----------------|
-| **Display** | **Flutter** before upload | Long edge **~2048px**; WebP preferred, JPEG **~80–85**; strip nonessential EXIF; typical **~400 KB–1.5 MB** | `display/` bucket prefix |
+| **Display** | **Flutter** before upload | Long edge **2048px** (avatars **512px**); **lossy** WebP quality **80**; EXIF orientation baked into pixels, all other EXIF (GPS, device) stripped; typical **~300–500 KB** | `display/` bucket prefix |
 | **Feed thumb** | **Worker** after upload | Width **~320px**; WebP or JPEG; typical **~30–80 KB** | `thumbnails/` bucket prefix |
 
 **API limits (enforced at sign time):** max display object **~2 MB**; allowed `Content-Type` list only. **No** multi-megapixel camera originals in v1.
+
+**Display encoder** ([`display_encode.dart`](../../apps/mobile/lib/core/media/display_encode.dart), one path for every upload): `DisplayEncodeProfile.display` (gallery, event cover, announcement, first moment) or `.avatar` (account and baby photos) sets the long edge; [`DisplayPhotoUpload`](../../apps/mobile/lib/core/api/display_photo_upload.dart) picks it and runs `encodeDisplayAssetInBackground` (a `compute` isolate). The photo is encoded **once** as lossy WebP (`lossless: false`, quality 80, method 2). The 2 MB cap is a guard: only an over-cap result re-encodes, directly at the long edge its byte count predicts (never below 640 px; else `PhotoTooLargeException`). Note `package:image` `encodeWebP` is **lossless by default** and ignores `quality` unless `lossless: false` is passed; that default made every upload a ~2 MB lossless file encoded up to five times (perf fix 1).
 
 **Product tradeoff:** detail view is excellent on phone; saving “full camera roll quality” or print-sized originals is a **future optional tier**, not the default path.
 

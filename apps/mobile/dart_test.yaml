@@ -2,3 +2,6 @@ tags:
   # Pixel goldens are rendered on macOS; Linux CI anti-aliases slightly
   # differently, so CI excludes this tag. Run them locally on macOS.
   golden:
+  # Before/after encoder benchmarks (ratio assertions, so CI runs them too).
+  # Print the numbers: flutter test --tags benchmark
+  benchmark:

@@ -16,7 +16,7 @@ Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [op
 |-------|--------|
 | API `pytest` (`services/api`, unit + Postgres integration) | 315 passed (plus 9 in `packages/lanonna_activity_copy/tests`) |
 | Worker `pytest` | 97 passed (`tests/test_pubsub_terraform.py` asserts live `pubsub.tf` retry policy) |
-| `flutter test` (`--exclude-tags golden` in CI) | 424 passed |
+| `flutter test` (`--exclude-tags golden` in CI) | 436 passed |
 | `flutter analyze` | 0 errors, 0 warnings; infos do not fail CI (`--no-fatal-infos`, L-26) |
 | l10n guard (`tool/check_hardcoded_user_strings.dart`) | 0 violations; allowlist entries all carry a justification |
 
