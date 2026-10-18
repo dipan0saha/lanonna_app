@@ -1,5 +1,6 @@
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exception.dart';
+import '../../../core/data/baby_list_cache.dart';
 import 'models/invitation_accept_result.dart';
 import 'models/invitation_preview.dart';
 
@@ -21,9 +22,11 @@ class MembershipCheckResult {
 }
 
 class InvitationsRepository {
-  InvitationsRepository(this._api);
+  InvitationsRepository(this._api, {BabyListCache? babyList})
+    : _babyList = babyList;
 
   final ApiClient _api;
+  final BabyListCache? _babyList;
 
   Future<MembershipCheckResult> checkMembership(
     String babyId,
@@ -45,6 +48,7 @@ class InvitationsRepository {
       final json = await _api.postJson('/v1/invitations/accept', body: {
         'token': token.trim(),
       });
+      _babyList?.invalidate();
       return InvitationAcceptResult.fromJson(json);
     } on ApiException catch (e) {
       final detail = e.detail;

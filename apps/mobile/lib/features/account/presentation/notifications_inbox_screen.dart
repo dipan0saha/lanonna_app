@@ -3,6 +3,7 @@ import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
+import '../../../core/presentation/tab_load_failure.dart';
 import '../../../core/router/deep_link_navigation.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_empty_state.dart';
@@ -24,6 +25,7 @@ class NotificationsInboxScreen extends StatefulWidget {
 class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
   List<InboxNotification> _items = [];
   var _loading = true;
+  var _hasLoaded = false;
   var _markingAllRead = false;
   String? _loadError;
 
@@ -35,24 +37,35 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
     _load();
   }
 
+  /// The spinner shows only for the first load; reloads after mark-read,
+  /// returning from a notification or pull-to-refresh keep the list and its
+  /// scroll position, and a failed reload is a snackbar.
   Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _loadError = null;
-    });
+    if (!_hasLoaded) {
+      setState(() {
+        _loading = true;
+        _loadError = null;
+      });
+    }
     try {
       final items = await context.read<NotificationsRepository>().listInbox();
       if (!mounted) return;
       setState(() {
         _items = items;
         _loading = false;
+        _hasLoaded = true;
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _loadError = apiErrorMessage(AppLocalizations.of(context)!, e);
-        _loading = false;
-      });
+      reportTabLoadFailure(
+        context,
+        e,
+        hasPayload: _hasLoaded,
+        onBlockingError: (message) => setState(() {
+          _loadError = message;
+          _loading = false;
+        }),
+      );
     }
   }
 

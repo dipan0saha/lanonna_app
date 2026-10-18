@@ -119,7 +119,7 @@ class _GalleryThumb extends StatelessWidget {
         color: AppColors.border,
         child: CachedSignedImage(
           imageUrl: url,
-          cacheKey: 'thumb-${photo.id}',
+          cacheKey: photoThumbCacheKey(photo.id),
           fit: BoxFit.cover,
           onSignedUrlError: onSignedUrlError,
         ),

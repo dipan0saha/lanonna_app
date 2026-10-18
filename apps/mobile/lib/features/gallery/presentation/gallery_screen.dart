@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
+import '../../../core/data/parallel_requests.dart';
 import '../../../core/presentation/tab_load_failure.dart';
 import '../../../core/presentation/tab_load_kind.dart';
 import '../../../core/widgets/app_empty_state.dart';
@@ -169,12 +170,12 @@ class _GalleryScreenState extends State<GalleryScreen>
         });
         return;
       }
-      final photosFuture = galleryRepo.listPhotosPage(baby.id, sort: _apiSort);
-      final activityFuture = _isAllMode
-          ? homeRepo.fetchActivityPage(baby.id, limit: 20, scope: 'gallery')
-          : Future.value(null);
-      final photoPage = await photosFuture;
-      final activityPage = await activityFuture;
+      final (photoPage, activityPage) = await waitBoth(
+        galleryRepo.listPhotosPage(baby.id, sort: _apiSort),
+        _isAllMode
+            ? homeRepo.fetchActivityPage(baby.id, limit: 20, scope: 'gallery')
+            : Future<ActivityPage?>.value(null),
+      );
       final activity = activityPage == null
           ? <HomeActivityItem>[]
           : activityPage.items.take(6).toList();

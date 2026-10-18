@@ -370,7 +370,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     child: CachedSignedImage(
                       imageUrl: detail.coverPhotoDisplayUrl,
                       cacheKey: detail.coverPhotoId != null
-                          ? 'display-${detail.coverPhotoId}'
+                          ? photoDisplayCacheKey(detail.coverPhotoId!)
                           : null,
                       height: 180,
                       width: double.infinity,

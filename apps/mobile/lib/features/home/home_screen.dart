@@ -72,6 +72,9 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void onHomeTabRefresh() => _load();
 
+  @override
+  void onHomeTabShown() => _load(summaryMaxAge: HomeRepository.summaryFreshFor);
+
   Future<void> _refreshSummaryOnly() async {
     final baby = _baby;
     if (baby == null) return;
@@ -89,7 +92,9 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  Future<void> _load() async {
+  /// [summaryMaxAge]: keep a summary fetched within that window (tab shown
+  /// again) instead of refetching it.
+  Future<void> _load({Duration? summaryMaxAge}) async {
     final repository = context.read<HomeRepository>();
     final store = context.read<SelectedBabyStore>();
     if (shouldShowTabLoadSpinner(store, hasDisplayedPayload: _baby != null)) {
@@ -119,7 +124,10 @@ class _HomeScreenState extends State<HomeScreen>
       HomeSummary? summary;
       String? summaryError;
       if (baby != null) {
-        final result = await repository.fetchHomeSummary(baby.id);
+        final result = await repository.fetchHomeSummary(
+          baby.id,
+          maxAge: summaryMaxAge,
+        );
         switch (result) {
           case HomeSummaryLoaded loaded:
             summary = loaded.summary;

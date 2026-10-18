@@ -172,7 +172,10 @@ class _FakeHomeRepository extends HomeRepository {
   }
 
   @override
-  Future<HomeSummaryResult> fetchHomeSummary(String babyId) async {
+  Future<HomeSummaryResult> fetchHomeSummary(
+    String babyId, {
+    Duration? maxAge,
+  }) async {
     if (babyId == 'baby-2') {
       return HomeSummaryLoaded(
         const HomeSummary(

@@ -34,6 +34,9 @@ class CalendarRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Sign-out / account deletion: drop every cached event list.
+  void clearCachedEvents() => _listsByBaby.clear();
+
   static String _cacheKey({String? month, bool upcoming = false}) {
     if (upcoming) return 'upcoming';
     return 'month:$month';

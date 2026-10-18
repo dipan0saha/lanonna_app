@@ -7,6 +7,7 @@ import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
+import '../../../core/presentation/tab_load_failure.dart';
 import '../../../core/api/run_mutation.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../../../core/domain/relationship_preset.dart';
@@ -24,6 +25,7 @@ import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/domain/app_routes.dart';
 import '../data/account_repository.dart';
+import '../../../core/data/parallel_requests.dart';
 
 class FollowersScreen extends StatefulWidget {
   const FollowersScreen({super.key, required this.babyId});
@@ -39,6 +41,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
   List<InvitationRow> _invites = [];
   BabySummary? _baby;
   var _loading = true;
+  var _hasLoaded = false;
   String? _loadError;
 
   @override
@@ -47,33 +50,47 @@ class _FollowersScreenState extends State<FollowersScreen> {
     _load();
   }
 
+  /// The spinner shows only for the first load; reloads after remove,
+  /// resend or revoke keep the list and its scroll position, and a failed
+  /// reload is a snackbar.
   Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _loadError = null;
-    });
+    if (!_hasLoaded) {
+      setState(() {
+        _loading = true;
+        _loadError = null;
+      });
+    }
     try {
       final repo = context.read<AccountRepository>();
       final homeRepo = context.read<HomeRepository>();
-      final members = await repo.listMembers(widget.babyId);
-      final invites = await repo.listInvitations(widget.babyId);
       // Baby name is header copy only; members/invites still render if it fails.
-      final baby = await homeRepo
-          .babyById(widget.babyId)
-          .catchError((Object _) => null);
+      final (members, invites, baby) = await waitAll3(
+        repo.listMembers(widget.babyId),
+        repo.listInvitations(widget.babyId),
+        homeRepo.babyById(widget.babyId).then<BabySummary?>(
+          (b) => b,
+          onError: (Object _) => null,
+        ),
+      );
       if (!mounted) return;
       setState(() {
         _members = members;
         _invites = invites.where((i) => i.status == InvitationStatus.pending).toList();
         _baby = baby;
         _loading = false;
+        _hasLoaded = true;
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _loadError = apiErrorMessage(AppLocalizations.of(context)!, e);
-        _loading = false;
-      });
+      reportTabLoadFailure(
+        context,
+        e,
+        hasPayload: _hasLoaded,
+        onBlockingError: (message) => setState(() {
+          _loadError = message;
+          _loading = false;
+        }),
+      );
     }
   }
 
@@ -128,6 +145,12 @@ class _FollowersScreenState extends State<FollowersScreen> {
       ),
     );
     if (!removed || !mounted) return;
+    setState(() {
+      _members = [
+        for (final m in _members)
+          if (m.firebaseUid != member.firebaseUid) m,
+      ];
+    });
     AppSnackBar.showInfo(context, l10n.memberRemovedSuccess);
     await _load();
   }
@@ -304,6 +327,13 @@ class _FollowersScreenState extends State<FollowersScreen> {
                                                   widget.babyId,
                                                   inv.id,
                                                 );
+                                            if (!mounted) return;
+                                            setState(() {
+                                              _invites = [
+                                                for (final i in _invites)
+                                                  if (i.id != inv.id) i,
+                                              ];
+                                            });
                                             await _load();
                                           } catch (e) {
                                             if (!context.mounted) return;

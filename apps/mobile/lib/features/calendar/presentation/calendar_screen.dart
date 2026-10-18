@@ -29,6 +29,7 @@ import 'widgets/calendar_grouped_events_card.dart';
 import 'widgets/calendar_past_events_sheet.dart';
 import 'widgets/calendar_selected_day_section.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../core/data/parallel_requests.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -109,23 +110,29 @@ class _CalendarScreenState extends State<CalendarScreen>
       final now = DateTime.now();
       final visibleKey = calendarMonthKey(targetMonth);
       final currentKey = calendarMonthKey(now);
-      final month = await calRepo.listEvents(
+      // Independent lists: fetch them together, not one after another.
+      final monthFuture = calRepo.listEvents(
         baby.id,
         month: visibleKey,
         forceRefresh: forceRefresh,
       );
-      final upcomingApi = await calRepo.listEvents(
+      final upcomingFuture = calRepo.listEvents(
         baby.id,
         upcoming: true,
         forceRefresh: forceRefresh,
       );
-      final monthForToday = visibleKey == currentKey
-          ? month
-          : await calRepo.listEvents(
+      final currentMonthFuture = visibleKey == currentKey
+          ? monthFuture
+          : calRepo.listEvents(
               baby.id,
               month: currentKey,
               forceRefresh: forceRefresh,
             );
+      final (month, upcomingApi, monthForToday) = await waitAll3(
+        monthFuture,
+        upcomingFuture,
+        currentMonthFuture,
+      );
       final partition = partitionCalendarListEvents(
         monthEventsForToday: monthForToday,
         upcomingFromApi: upcomingApi,

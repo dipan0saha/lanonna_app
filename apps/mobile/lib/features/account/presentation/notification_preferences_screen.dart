@@ -14,6 +14,7 @@ import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../home/presentation/baby_context_reload.dart';
 import '../data/notifications_repository.dart';
+import '../../../core/data/parallel_requests.dart';
 
 class NotificationPreferencesScreen extends StatefulWidget {
   const NotificationPreferencesScreen({super.key});
@@ -53,12 +54,12 @@ class _NotificationPreferencesScreenState
   void onBabyContextReload() => _load();
 
   Future<void> _load() async {
-    final prefs = await context
-        .read<NotificationsRepository>()
-        .fetchPreferences();
     final homeRepo = context.read<HomeRepository>();
     final store = context.read<SelectedBabyStore>();
-    final baby = await homeRepo.resolveSelectedBaby(store);
+    final (prefs, baby) = await waitBoth(
+      context.read<NotificationsRepository>().fetchPreferences(),
+      homeRepo.resolveSelectedBaby(store),
+    );
     setState(() {
       _prefs = prefs;
       _babyName = baby?.name;

@@ -5,6 +5,8 @@ import 'package:lanonna/features/invitations/domain/invitation_status.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/api/offset_page.dart';
+import '../../../core/data/baby_list_cache.dart';
+import '../../../core/data/single_flight.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../../../core/json/json_readers.dart';
 
@@ -230,26 +232,44 @@ class AccountProfileUpdates extends ChangeNotifier {
 }
 
 class AccountRepository {
-  AccountRepository(this._api);
+  AccountRepository(this._api, {BabyListCache? babyList})
+    : _babyList = babyList;
 
   final ApiClient _api;
+  final BabyListCache? _babyList;
   final AccountProfileUpdates profileUpdates = AccountProfileUpdates();
+  final _accountLoad = SingleFlight<AccountPayload>();
+  var _accountEpoch = 0;
 
   /// Last account payload from [fetchAccount] or a profile save.
   AccountPayload? get cachedAccount => profileUpdates.account;
 
   Future<AccountPayload> fetchAccount() async {
+    final epoch = _accountEpoch;
     final json = await _api.getJson('/v1/me/account');
     final payload = AccountPayload.fromJson(json);
-    profileUpdates.account = payload;
+    // A response for the previous session must not repopulate the cache.
+    if (epoch == _accountEpoch) profileUpdates.account = payload;
     return payload;
   }
 
   /// Loads the account once for passive readers (e.g. the shell top bar) and
   /// notifies [profileUpdates] listeners. No-op when already cached.
+  ///
+  /// Concurrent callers (shell, app lock, create baby) share one request.
   Future<void> ensureAccountLoaded() async {
     if (cachedAccount != null) return;
-    profileUpdates.publish(await fetchAccount());
+    final epoch = _accountEpoch;
+    await _accountLoad.run(fetchAccount);
+    if (epoch != _accountEpoch) return;
+    profileUpdates.publish(profileUpdates.account);
+  }
+
+  /// Sign-out / account deletion: the next account starts with no profile.
+  void clearCachedAccount() {
+    _accountEpoch += 1;
+    _accountLoad.cancel();
+    profileUpdates.publish(null);
   }
 
   Future<void> updateProfile({
@@ -361,12 +381,15 @@ class AccountRepository {
     );
   }
 
+  /// Removing a co-owner changes who else can leave (`can_leave`).
   Future<void> removeMember(String babyId, String firebaseUid) async {
     await _api.deleteJson('/v1/babies/$babyId/members/$firebaseUid');
+    _babyList?.invalidate();
   }
 
   Future<void> leaveBaby(String babyId) async {
     await _api.postJson('/v1/babies/$babyId/leave', body: {});
+    _babyList?.invalidate();
   }
 
   Future<DataExportJob> requestExport(String babyId) async {

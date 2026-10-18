@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../home/data/home_repository.dart';
 
 import 'shell_top_bar.dart';
 
 /// Tab root layout: pinned shell top bar + scrollable body (optional pull-to-refresh).
+///
+/// Pull-to-refresh also refetches the shared baby list, so a change made by
+/// another member (rename, role) shows up on demand.
 class ShellTabLayout extends StatelessWidget {
   const ShellTabLayout({
     super.key,
@@ -15,8 +21,15 @@ class ShellTabLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scrollable = onRefresh != null
-        ? RefreshIndicator(onRefresh: onRefresh!, child: body)
+    final refresh = onRefresh;
+    final scrollable = refresh != null
+        ? RefreshIndicator(
+            onRefresh: () {
+              context.read<HomeRepository>().refreshBabiesOnNextRead();
+              return refresh();
+            },
+            child: body,
+          )
         : body;
 
     return SafeArea(
