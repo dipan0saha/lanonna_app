@@ -88,14 +88,18 @@ def test_list_babies_envelope_builds_summaries_from_list_rows_only():
     with (
         as_user(),
         patch("lanonna_api.routers.babies.list_babies_for_user", return_value=rows) as fetch,
-        patch("lanonna_api.routers.babies.baby_summary_from_row", return_value=summary) as build,
+        patch(
+            "lanonna_api.routers.babies.baby_summaries_from_rows",
+            return_value=[summary, summary],
+        ) as build,
     ):
         resp = client.get("/v1/babies?limit=2")
     assert resp.status_code == 200
     assert fetch.call_args.kwargs == {"limit": 3, "offset": 0}
-    # Owner counts arrive on the list rows; no follow-up query per baby, and
-    # the extra has_more probe row is never summarised.
-    assert [c.args[0] for c in build.call_args_list] == rows[:2]
+    # Owner counts arrive on the list rows; no follow-up query per baby, the
+    # page is summarised (and its avatars signed) in one batch, and the extra
+    # has_more probe row is never summarised.
+    build.assert_called_once_with(rows[:2])
     body = resp.json()
     assert body["has_more"] is True and len(body["items"]) == 2
 

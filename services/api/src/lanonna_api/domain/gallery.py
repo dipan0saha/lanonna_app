@@ -6,7 +6,8 @@ from typing import Any
 from lanonna_api.domain.errors import ErrorCode, InvalidInputError
 from lanonna_api.domain import assert_owner_membership, create_pending_photo
 from lanonna_api.pagination import offset_page_from_extra_row
-from lanonna_api.domain.media_urls import signed_display_url, signed_thumb_url
+from lanonna_api.db import read_scope
+from lanonna_api.domain.media_urls import sign_media, signed_thumb_urls
 from lanonna_api.domain.membership_access import require_active_membership
 from lanonna_api.repositories.babies import list_babies_for_user
 from lanonna_api.repositories.photo_tags import (
@@ -20,15 +21,14 @@ from lanonna_api.domain.content_permissions import (
 )
 from lanonna_api.repositories.photos import (
     PhotoListSort,
-    caller_squished,
     delete_photo,
     get_photo_comment,
+    get_photo_detail_row,
     get_photo_for_baby,
     insert_photo_comment,
     list_photo_comments,
     list_photos_for_baby,
     soft_delete_photo_comment,
-    squish_count,
     toggle_squish,
     update_photo_caption,
     update_photo_comment,
@@ -99,31 +99,33 @@ def list_gallery(
     offset: int = 0,
     sort: str = "default",
 ) -> dict[str, Any]:
-    membership = require_membership(firebase_uid, baby_profile_id)
-    ready_only = membership["role"] != "owner"
     sort_param: PhotoListSort = (
         sort if sort in ("default", "recent", "favorites") else "default"
     )
-    rows = list_photos_for_baby(
-        baby_profile_id,
-        ready_only=ready_only,
-        limit=limit + 1,
-        offset=offset,
-        sort=sort_param,
-    )
+    with read_scope():
+        membership = require_membership(firebase_uid, baby_profile_id)
+        ready_only = membership["role"] != "owner"
+        rows = list_photos_for_baby(
+            baby_profile_id,
+            ready_only=ready_only,
+            limit=limit + 1,
+            offset=offset,
+            sort=sort_param,
+        )
     page = offset_page_from_extra_row(rows, offset=offset, limit=limit)
+    thumb_urls = signed_thumb_urls([row.get("thumb_path") for row in page["items"]])
     page["items"] = [
         {
             "id": str(row["id"]),
             "status": row["status"],
             "caption": row.get("caption"),
             "created_at": row["created_at"].isoformat(),
-            "thumb_url": signed_thumb_url(row.get("thumb_path")),
+            "thumb_url": thumb_url,
             "squish_count": row["squish_count"],
             "comment_count": row["comment_count"],
             "uploader_display_name": uploader_display_name_from_row(row),
         }
-        for row in page["items"]
+        for row, thumb_url in zip(page["items"], thumb_urls)
     ]
     return page
 
@@ -133,25 +135,31 @@ def get_photo_detail(
     baby_profile_id: uuid.UUID,
     photo_id: uuid.UUID,
 ) -> dict[str, Any]:
-    membership = require_membership(firebase_uid, baby_profile_id)
-    row = get_photo_for_baby(baby_profile_id, photo_id)
-    if row is None:
-        raise LookupError("Photo not found.")
-    if membership["role"] != "owner" and row["status"] != "ready":
-        raise PermissionError("Photo not available.")
-    comments = list_photo_comments(photo_id)
-    squished = caller_squished(photo_id, firebase_uid)
+    """Photo detail: membership, photo (+ squish state), comments and tags on
+    one read-only connection; both image URLs signed as one batch."""
+    with read_scope():
+        membership = require_membership(firebase_uid, baby_profile_id)
+        row = get_photo_detail_row(baby_profile_id, photo_id, firebase_uid)
+        if row is None:
+            raise LookupError("Photo not found.")
+        if membership["role"] != "owner" and row["status"] != "ready":
+            raise PermissionError("Photo not available.")
+        comments = list_photo_comments(photo_id)
+        tagged_babies = _tagged_babies_json(photo_id, firebase_uid)
+    display_url, thumb_url = sign_media(
+        [("display", row.get("display_path")), ("thumb", row.get("thumb_path"))]
+    )
     return {
         "id": str(row["id"]),
         "status": row["status"],
         "caption": row.get("caption"),
         "created_at": row["created_at"].isoformat(),
-        "display_url": signed_display_url(row.get("display_path")),
-        "thumb_url": signed_thumb_url(row.get("thumb_path")),
+        "display_url": display_url,
+        "thumb_url": thumb_url,
         "uploader_display_name": uploader_display_name_from_row(row),
-        "squish_count": squish_count(photo_id),
-        "viewer_has_squished": squished,
-        "tagged_babies": _tagged_babies_json(photo_id, firebase_uid),
+        "squish_count": row["squish_count"],
+        "viewer_has_squished": bool(row["viewer_has_squished"]),
+        "tagged_babies": tagged_babies,
         "comments": [
             member_comment_to_json(
                 c, firebase_uid, membership, author_display_name_from_row(c)

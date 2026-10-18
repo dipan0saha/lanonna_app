@@ -81,23 +81,14 @@ def test_get_photo_detail_tagged_babies_scoped_to_viewer():
         "lanonna_api.domain.gallery.require_active_membership",
         return_value={"role": "follower"},
     ), patch(
-        "lanonna_api.domain.gallery.get_photo_for_baby",
-        return_value=photo_row,
+        "lanonna_api.domain.gallery.get_photo_detail_row",
+        return_value={**photo_row, "squish_count": 0, "viewer_has_squished": False},
     ), patch(
         "lanonna_api.domain.gallery.list_photo_comments",
         return_value=[],
     ), patch(
-        "lanonna_api.domain.gallery.caller_squished",
-        return_value=False,
-    ), patch(
-        "lanonna_api.domain.gallery.squish_count",
-        return_value=0,
-    ), patch(
-        "lanonna_api.domain.gallery.signed_display_url",
-        return_value="https://display",
-    ), patch(
-        "lanonna_api.domain.gallery.signed_thumb_url",
-        return_value="https://thumb",
+        "lanonna_api.domain.gallery.sign_media",
+        return_value=["https://display", "https://thumb"],
     ), patch(
         "lanonna_api.domain.gallery.list_tagged_babies_for_photo",
         return_value=[],
@@ -126,23 +117,14 @@ def test_get_photo_detail_owner_sees_tagged_babies_they_belong_to():
         "lanonna_api.domain.gallery.require_active_membership",
         return_value={"role": "owner"},
     ), patch(
-        "lanonna_api.domain.gallery.get_photo_for_baby",
-        return_value=photo_row,
+        "lanonna_api.domain.gallery.get_photo_detail_row",
+        return_value={**photo_row, "squish_count": 0, "viewer_has_squished": False},
     ), patch(
         "lanonna_api.domain.gallery.list_photo_comments",
         return_value=[],
     ), patch(
-        "lanonna_api.domain.gallery.caller_squished",
-        return_value=False,
-    ), patch(
-        "lanonna_api.domain.gallery.squish_count",
-        return_value=0,
-    ), patch(
-        "lanonna_api.domain.gallery.signed_display_url",
-        return_value=None,
-    ), patch(
-        "lanonna_api.domain.gallery.signed_thumb_url",
-        return_value=None,
+        "lanonna_api.domain.gallery.sign_media",
+        return_value=[None, None],
     ), patch(
         "lanonna_api.domain.gallery.list_tagged_babies_for_photo",
         return_value=[

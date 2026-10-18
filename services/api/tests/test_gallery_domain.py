@@ -202,26 +202,17 @@ def test_get_photo_detail_comment_uses_author_display_name():
         "lanonna_api.domain.gallery.require_membership",
         return_value={"role": "follower"},
     ), patch(
-        "lanonna_api.domain.gallery.get_photo_for_baby",
-        return_value=photo_row,
+        "lanonna_api.domain.gallery.get_photo_detail_row",
+        return_value={**photo_row, "squish_count": 0, "viewer_has_squished": False},
     ), patch(
         "lanonna_api.domain.gallery.list_photo_comments",
         return_value=[comment_row],
     ), patch(
-        "lanonna_api.domain.gallery.caller_squished",
-        return_value=False,
-    ), patch(
-        "lanonna_api.domain.gallery.squish_count",
-        return_value=0,
-    ), patch(
         "lanonna_api.domain.gallery.list_tagged_babies_for_photo",
         return_value=[],
     ), patch(
-        "lanonna_api.domain.gallery.signed_display_url",
-        return_value="https://example.com/x.jpg",
-    ), patch(
-        "lanonna_api.domain.gallery.signed_thumb_url",
-        return_value="https://example.com/t.jpg",
+        "lanonna_api.domain.gallery.sign_media",
+        return_value=["https://example.com/x.jpg", "https://example.com/t.jpg"],
     ):
         detail = get_photo_detail("viewer", baby_id, photo_id)
 

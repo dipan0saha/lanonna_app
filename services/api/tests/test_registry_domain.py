@@ -90,8 +90,6 @@ def test_claim_purchase_follower_notifies_owners():
     item_row = {"id": item_id, "name": "Car seat", "purchase_id": None}
     with patch(
         "lanonna_api.domain.registry.require_membership",
-    ), patch(
-        "lanonna_api.domain.registry.get_baby_membership",
         return_value={"role": "follower"},
     ), patch(
         "lanonna_api.domain.registry.get_registry_item",
@@ -126,8 +124,6 @@ def test_claim_purchase_owner_notifies_members():
     item_row = {"id": item_id, "name": "Car seat", "purchase_id": None}
     with patch(
         "lanonna_api.domain.registry.require_membership",
-    ), patch(
-        "lanonna_api.domain.registry.get_baby_membership",
         return_value={"role": "owner"},
     ), patch(
         "lanonna_api.domain.registry.get_registry_item",
@@ -161,8 +157,6 @@ def test_claim_purchase_rejects_when_another_user_won_race():
     item_row = {"id": item_id, "name": "Car seat", "purchase_id": None}
     with patch(
         "lanonna_api.domain.registry.require_membership",
-    ), patch(
-        "lanonna_api.domain.registry.get_baby_membership",
         return_value={"role": "follower"},
     ), patch(
         "lanonna_api.domain.registry.get_registry_item",

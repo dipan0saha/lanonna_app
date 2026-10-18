@@ -6,6 +6,7 @@ from lanonna_api.domain.avatar_urls import (
     gcs_object_path_from_stored,
     normalize_avatar_for_storage,
     signed_avatar_url,
+    signed_avatar_urls,
 )
 from lanonna_api.storage import mint_baby_avatar_upload_url, mint_user_avatar_upload_url
 
@@ -27,9 +28,27 @@ def test_normalize_external_oauth_url_unchanged():
     assert normalize_avatar_for_storage(oauth) == oauth
 
 
-@patch("lanonna_api.domain.avatar_urls.signed_display_url", return_value="https://signed/read")
+def _fake_sign(paths):
+    return [f"https://signed/{p}" if p else None for p in paths]
+
+
+@patch("lanonna_api.domain.avatar_urls.signed_display_urls", side_effect=_fake_sign)
 def test_signed_avatar_url_for_object_path(_mock_sign):
-    assert signed_avatar_url("avatars/users/u1/x.jpg") == "https://signed/read"
+    assert signed_avatar_url("avatars/users/u1/x.jpg") == "https://signed/avatars/users/u1/x.jpg"
+
+
+@patch("lanonna_api.domain.avatar_urls.signed_display_urls", side_effect=_fake_sign)
+def test_signed_avatar_urls_sign_bucket_paths_in_one_batch(mock_sign):
+    oauth = "https://lh3.googleusercontent.com/a/photo"
+    urls = signed_avatar_urls(["avatars/babies/b/1.jpg", oauth, None, "  ", "avatars/babies/b/2.jpg"])
+    assert urls == [
+        "https://signed/avatars/babies/b/1.jpg",
+        oauth,
+        None,
+        None,
+        "https://signed/avatars/babies/b/2.jpg",
+    ]
+    mock_sign.assert_called_once()
 
 
 def test_signed_avatar_url_passthrough_oauth():

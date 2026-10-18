@@ -21,6 +21,13 @@ class Settings(BaseSettings):
     db_user: str = "lanonna_app"
     db_name: str = "lanonna"
     db_password: str = ""
+    # Per-instance connection pool (db.py). Cloud SQL allows 100 connections:
+    # api max 10 instances x 5 + worker max 5 instances x 2 = 60, leaving room
+    # for a rolling deploy, migrations and the proxy.
+    db_pool_min_size: int = 1  # DB_POOL_MIN_SIZE
+    db_pool_max_size: int = 5  # DB_POOL_MAX_SIZE
+    db_pool_timeout_seconds: float = 10.0  # DB_POOL_TIMEOUT_SECONDS: wait for a free connection
+    db_pool_max_idle_seconds: float = 300.0  # DB_POOL_MAX_IDLE_SECONDS: close extra idle connections
 
     display_bucket: str = "lanonna-dev-display"
     thumbnails_bucket: str = "lanonna-dev-thumbnails"  # THUMBNAILS_BUCKET

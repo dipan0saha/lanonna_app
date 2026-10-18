@@ -16,7 +16,7 @@ from lanonna_api.repositories.babies import (
     update_baby_for_owner,
 )
 from lanonna_api.domain.onboarding import seed_expecting_profile_name_suggestions, seed_first_moment
-from lanonna_api.domain.baby_summaries import baby_summary_from_row
+from lanonna_api.domain.baby_summaries import baby_summaries_from_rows, baby_summary_from_row
 from lanonna_api.schemas.babies import (
     BabyCreateRequest,
     BabySummary,
@@ -42,7 +42,8 @@ def list_babies(
     rows = list_babies_for_user(user.uid, limit=limit + 1, offset=offset)
     page = offset_page_from_extra_row(rows, offset=offset, limit=limit)
     page["items"] = [
-        baby_summary_from_row(row).model_dump(mode="json") for row in page["items"]
+        summary.model_dump(mode="json")
+        for summary in baby_summaries_from_rows(page["items"])
     ]
     return page
 

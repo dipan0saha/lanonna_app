@@ -32,47 +32,69 @@ def resolve_app_user(firebase_uid: str, email: str | None) -> dict[str, Any]:
 
     Never writes a tombstoned row. Never replaces a stored email with NULL.
     ``updated_at`` moves only when the email changes. ``last_seen_at`` writes
-    are throttled so a steady-state request is a single read.
+    are throttled: a steady-state request is one plain read (no row lock),
+    and the upsert runs only for a new user, a changed email or a stale
+    ``last_seen_at``.
     """
     with get_connection() as conn:
         row = conn.execute(
             f"""
-            INSERT INTO app_users (firebase_uid, email, last_seen_at)
-            VALUES (%s, %s, now())
-            ON CONFLICT (firebase_uid) DO UPDATE
-              SET email = COALESCE(EXCLUDED.email, app_users.email),
-                  last_seen_at = now(),
-                  updated_at = CASE
-                    WHEN EXCLUDED.email IS NOT NULL
-                     AND EXCLUDED.email IS DISTINCT FROM app_users.email
-                    THEN now()
-                    ELSE app_users.updated_at
-                  END
-              WHERE app_users.deleted_at IS NULL
-                AND (
-                  (
-                    EXCLUDED.email IS NOT NULL
-                    AND EXCLUDED.email IS DISTINCT FROM app_users.email
-                  )
-                  OR app_users.last_seen_at IS NULL
-                  OR app_users.last_seen_at < now() - make_interval(mins => %s)
-                )
-            RETURNING {_RESOLVE_COLUMNS}
+            SELECT {_RESOLVE_COLUMNS},
+                   (last_seen_at IS NULL
+                    OR last_seen_at < now() - make_interval(mins => %s)) AS seen_stale
+            FROM app_users
+            WHERE firebase_uid = %s
             """,
-            (firebase_uid, email, LAST_SEEN_THROTTLE_MINUTES),
+            (LAST_SEEN_THROTTLE_MINUTES, firebase_uid),
         ).fetchone()
-        if row is None:
+        needs_write = row is None or (
+            row["deleted_at"] is None
+            and (
+                row["seen_stale"]
+                or (email is not None and email != row["email"])
+            )
+        )
+        if needs_write:
             row = conn.execute(
                 f"""
-                SELECT {_RESOLVE_COLUMNS}
-                FROM app_users
-                WHERE firebase_uid = %s
+                INSERT INTO app_users (firebase_uid, email, last_seen_at)
+                VALUES (%s, %s, now())
+                ON CONFLICT (firebase_uid) DO UPDATE
+                  SET email = COALESCE(EXCLUDED.email, app_users.email),
+                      last_seen_at = now(),
+                      updated_at = CASE
+                        WHEN EXCLUDED.email IS NOT NULL
+                         AND EXCLUDED.email IS DISTINCT FROM app_users.email
+                        THEN now()
+                        ELSE app_users.updated_at
+                      END
+                  WHERE app_users.deleted_at IS NULL
+                    AND (
+                      (
+                        EXCLUDED.email IS NOT NULL
+                        AND EXCLUDED.email IS DISTINCT FROM app_users.email
+                      )
+                      OR app_users.last_seen_at IS NULL
+                      OR app_users.last_seen_at < now() - make_interval(mins => %s)
+                    )
+                RETURNING {_RESOLVE_COLUMNS}
                 """,
-                (firebase_uid,),
+                (firebase_uid, email, LAST_SEEN_THROTTLE_MINUTES),
             ).fetchone()
+            if row is None:
+                # A concurrent request refreshed the row first.
+                row = conn.execute(
+                    f"""
+                    SELECT {_RESOLVE_COLUMNS}
+                    FROM app_users
+                    WHERE firebase_uid = %s
+                    """,
+                    (firebase_uid,),
+                ).fetchone()
     if row is None:
         raise RuntimeError("resolve_app_user returned no row")
     result = dict(row)
+    result.pop("seen_stale", None)
     if result.get("deleted_at") is not None:
         raise UserDeletedError()
     return result

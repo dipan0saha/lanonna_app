@@ -11,33 +11,22 @@ from lanonna_activity_copy import (
     baby_name_params,
 )
 from lanonna_api.domain.activity_feed import serialize_activity_item
+from lanonna_api.db import read_scope
 from lanonna_api.repositories.activity_events import (
-    count_name_suggestions,
     insert_activity_event,
     list_recent_for_baby,
 )
-from lanonna_api.domain.media_urls import signed_display_url, signed_thumb_url
+from lanonna_api.domain.announcement import announcement_photo_display_url
+from lanonna_api.domain.media_urls import signed_thumb_urls
 from lanonna_api.domain.membership_access import require_active_membership
 from lanonna_api.repositories.babies import (
     get_baby_for_owner,
     update_baby_for_owner,
 )
 from lanonna_api.repositories.events import list_events
-from lanonna_api.repositories.photos import get_photo_for_baby, list_photos_for_baby
-from lanonna_api.repositories.fun import (
-    birthdate_vote_histogram,
-    count_gender_votes,
-    gender_vote_totals,
-    list_name_suggestions,
-)
-from lanonna_api.repositories.home_counts import (
-    count_events,
-    count_follower_memberships,
-    count_photos_for_baby,
-    count_registry_items,
-    count_sent_invitations,
-    list_new_followers,
-)
+from lanonna_api.repositories.photos import list_photos_for_baby
+from lanonna_api.repositories.fun import list_name_suggestions
+from lanonna_api.repositories.home_counts import home_summary_counts, list_new_followers
 from lanonna_api.repositories.invitations import list_invitations_for_baby
 from lanonna_api.repositories.announcements import get_announcement
 from lanonna_api.repositories.system_announcements import list_active_for_user
@@ -53,15 +42,12 @@ from lanonna_api.domain.notifications import (
     safe_enqueue_fan_out,
 )
 _BIRTH_WELCOME_VISIBLE_DAYS = 7
-
-
-def _display_url_for_photo(baby_profile_id: uuid.UUID, photo_id: uuid.UUID | None) -> str | None:
-    if photo_id is None:
-        return None
-    row = get_photo_for_baby(baby_profile_id, photo_id)
-    if row is None:
-        return None
-    return signed_display_url(row.get("display_path"))
+# Home shows the next few upcoming events, the newest pending invites and the
+# newest photos; each is read with a LIMIT, never loaded whole.
+_HOME_UPCOMING_EVENTS = 3
+_HOME_PENDING_INVITES = 5
+_HOME_TEASER_PHOTOS = 4
+_HOME_RECENT_ACTIVITY = 10
 
 
 def _parse_date(value: Any) -> date | None:
@@ -106,7 +92,7 @@ def _build_birth_welcome(
             "announcement_id": str(ann["id"]),
             "first_name": ann.get("first_name"),
             "last_name": ann.get("last_name"),
-            "photo_display_url": _display_url_for_photo(baby_profile_id, photo_id),
+            "photo_display_url": announcement_photo_display_url(baby_profile_id, photo_id),
         }
     birth_iso = birth.isoformat()
     everyone_notified = is_owner and ann is not None
@@ -144,23 +130,24 @@ def list_activity_events(
     return page
 
 
-def _build_home_teasers(baby_profile_id: uuid.UUID) -> dict[str, Any]:
-    photos = list_photos_for_baby(baby_profile_id, ready_only=True, limit=4)
-    recent_photos = [
-        {
-            "id": str(p["id"]),
-            "thumb_url": signed_thumb_url(p.get("thumb_path")),
-        }
-        for p in photos
+def _build_home_teasers(
+    baby_profile_id: uuid.UUID,
+    upcoming: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Teaser strip: newest ready photos (thumbs signed as one batch) and ``upcoming``."""
+    photos = [
+        p
+        for p in list_photos_for_baby(
+            baby_profile_id, ready_only=True, limit=_HOME_TEASER_PHOTOS
+        )
         if p.get("thumb_path")
     ]
-    upcoming_events = [
-        _serialize_upcoming_event(ev)
-        for ev in list_events(baby_profile_id, upcoming_only=True)[:3]
-    ]
+    thumb_urls = signed_thumb_urls([p["thumb_path"] for p in photos])
     return {
-        "recent_photos": recent_photos,
-        "upcoming_events": upcoming_events,
+        "recent_photos": [
+            {"id": str(p["id"]), "thumb_url": url} for p, url in zip(photos, thumb_urls)
+        ],
+        "upcoming_events": [_serialize_upcoming_event(ev) for ev in upcoming],
     }
 
 
@@ -217,6 +204,15 @@ def build_home_summary(
     firebase_uid: str,
     baby_profile_id: uuid.UUID,
 ) -> dict[str, Any]:
+    """Home payload: one read-only connection, one bounded query per section."""
+    with read_scope():
+        return _build_home_summary(firebase_uid, baby_profile_id)
+
+
+def _build_home_summary(
+    firebase_uid: str,
+    baby_profile_id: uuid.UUID,
+) -> dict[str, Any]:
     baby = require_active_membership(firebase_uid, baby_profile_id)
 
     is_owner = baby.get("role") == "owner"
@@ -230,13 +226,14 @@ def build_home_summary(
             due_date = date.fromisoformat(str(due))
         days_to_due = (due_date - _utc_today()).days
 
-    suggestion_count = count_name_suggestions(baby_profile_id)
-    vote_count = count_gender_votes(baby_profile_id)
-    recent = list_recent_for_baby(baby_profile_id, limit=10)
-    totals = gender_vote_totals(baby_profile_id)
+    counts = home_summary_counts(baby_profile_id)
+    suggestion_count = counts["name_suggestion_count"]
+    vote_count = counts["vote_count"]
+    totals = {"male": counts["male_votes"], "female": counts["female_votes"]}
+    recent = list_recent_for_baby(baby_profile_id, limit=_HOME_RECENT_ACTIVITY)
 
     top_name = None
-    names = list_name_suggestions(baby_profile_id)
+    names = list_name_suggestions(baby_profile_id, limit=1)
     if names:
         top = names[0]
         top_name = {
@@ -245,13 +242,15 @@ def build_home_summary(
         }
 
     top_birthdate = None
-    hist = birthdate_vote_histogram(baby_profile_id)
-    if hist:
-        d = hist[0]["predicted_birth_date"]
+    if counts["top_birthdate_guess"] is not None:
+        d = counts["top_birthdate_guess"]
         top_birthdate = d.isoformat() if hasattr(d, "isoformat") else str(d)
 
+    # One read feeds both "next up" and the teaser strip.
+    upcoming = list_events(
+        baby_profile_id, upcoming_only=True, limit=_HOME_UPCOMING_EVENTS
+    )
     next_up = None
-    upcoming = list_events(baby_profile_id, upcoming_only=True)
     if upcoming:
         ev = upcoming[0]
         next_up = {
@@ -267,13 +266,10 @@ def build_home_summary(
         has_profile = bool((baby.get("name") or "").strip()) and baby.get(
             "expected_birth_date"
         ) is not None
-        has_registry = count_registry_items(baby_profile_id) > 0
-        has_invite = (
-            count_sent_invitations(baby_profile_id) > 0
-            or count_follower_memberships(baby_profile_id) > 0
-        )
-        has_photo = count_photos_for_baby(baby_profile_id) > 0
-        has_event = count_events(baby_profile_id) > 0
+        has_registry = counts["has_registry_item"]
+        has_invite = counts["has_invitation"] or counts["has_follower"]
+        has_photo = counts["has_photo"]
+        has_event = counts["has_event"]
         tasks = [
             {
                 "id": "baby_profile",
@@ -347,9 +343,10 @@ def build_home_summary(
                 if hasattr(inv["created_at"], "isoformat")
                 else str(inv["created_at"]),
             }
-            for inv in list_invitations_for_baby(baby_profile_id)
-            if inv.get("status") == "pending"
-        ][:5]
+            for inv in list_invitations_for_baby(
+                baby_profile_id, status="pending", limit=_HOME_PENDING_INVITES
+            )
+        ]
 
     closed = fun_closed_flags(baby)
     show_rich_insight = vote_count > 0 or int((top_name or {}).get("like_count") or 0) > 0
@@ -374,6 +371,6 @@ def build_home_summary(
         "system_announcements": system_announcements,
         "new_followers": new_followers,
         "invite_status": invite_status,
-        "teasers": _build_home_teasers(baby_profile_id),
+        "teasers": _build_home_teasers(baby_profile_id, upcoming),
         "recent_activity": [serialize_activity_item(item) for item in recent],
     }

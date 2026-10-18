@@ -130,7 +130,7 @@ flowchart TB
 | **Read/write data** | API verifies JWT → loads user + membership → domain rule → SQL transaction |
 | **Photo upload** | Client **encodes display asset** (see §2.5) → `POST /photos/init` → API returns **v4 signed PUT** + `photo_id` → PUT to **`display/`** prefix only |
 | **Feed thumb** | GCS finalize → **Pub/Sub** → worker reads **display** object → writes **`thumbnails/`** + marks photo **ready** (**idempotent** on `object_generation`) |
-| **Photo view** | **Feed:** signed read URL for **thumb** only. **Detail:** signed URL for **display** asset. Read URLs TTL **900s** ([`storage.py`](../../services/api/src/lanonna_api/storage.py)); Flutter **disk cache** + optional refresh on image error after TTL |
+| **Photo view** | **Feed:** signed read URL for **thumb** only. **Detail:** signed URL for **display** asset. Read URLs TTL **900s** ([`storage.py`](../../services/api/src/lanonna_api/storage.py)), signed through one shared signer per instance (IAM `signBlob`, no keys) and reused per object for at most 5 minutes; Flutter **disk cache** + optional refresh on image error after TTL |
 | **Invite** | API creates invite row + token → publishes `send_invite_email` → worker calls **Mailjet**. The link is `https://{project}.firebaseapp.com/invite?token=…` on **Firebase Hosting** (App Links / Universal Links, web fallback). The token stays out of application logs; a Cloud Logging exclusion drops request URLs that contain `/invite?` or `/v1/invitations/preview` |
 | **Push** | API or worker sends FCM using device tokens stored in SQL |
 | **Cron** | **Cloud Scheduler** → Pub/Sub (e.g. `weekly_notification_digest`) or OIDC **Run** routes for cleanup and digests |
@@ -228,7 +228,7 @@ sequenceDiagram
 | **API** | Cloud Run (`api`) | JWT + App Check; authorization; CRUD; signed GCS URLs; publish async messages |
 | **Worker** | Cloud Run (`worker`) | Pub/Sub push: **thumb from display** (light CPU), Mailjet, FCM; separate memory from `api` |
 | **Messaging** | Pub/Sub | **Two topics:** GCS finalize → `photo-upload-finalized`; API/Scheduler jobs → `lanonna-async-commands`. **Dev:** push-only delivery (no pull consumer); dead-letter topic (retained 7 days on a pull subscription) + max delivery attempts on push subs ([operations.md](operations.md#dead-letter-queue)) |
-| **Database** | Cloud SQL PostgreSQL (zonal) | Schema, migrations, FKs, transactions; connection pool on Run |
+| **Database** | Cloud SQL PostgreSQL (zonal) | Schema, migrations, FKs, transactions; one `psycopg_pool` pool per Run instance (API 5, worker 2: 60 of 100 connections at max instances) |
 | **Media** | GCS | `display/`, `thumbnails/`; uniform bucket-level access; lifecycle to Nearline only if long-term archive tier added later |
 | **Email (product)** | **Mailjet** (API/SMTP) | Invitations and app transactional mail — [GCP-documented option](https://cloud.google.com/compute/docs/tutorials/sending-mail) |
 | **Email adapter** | In-repo `EmailSender` interface | Templates in git; swap provider (e.g. SendGrid) without changing domain logic |

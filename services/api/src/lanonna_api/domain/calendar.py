@@ -25,6 +25,7 @@ from lanonna_api.domain.notifications import (
 )
 from lanonna_api.pagination import offset_page_from_extra_row
 from lanonna_api.repositories.activity_events import insert_activity_event
+from lanonna_api.db import read_scope
 from lanonna_api.domain.media_urls import signed_display_url
 from lanonna_api.domain.users_display import (
     author_display_name_from_row,
@@ -142,20 +143,22 @@ def get_event_detail(
     baby_profile_id: uuid.UUID,
     event_id: uuid.UUID,
 ) -> dict[str, Any]:
-    membership = require_membership(firebase_uid, baby_profile_id)
-    row = get_event(baby_profile_id, event_id)
-    if row is None:
-        raise LookupError("Event not found.")
-    comments = list_event_comments(event_id)
-    summary = rsvp_summary(event_id)
-    caller = get_caller_rsvp(event_id, firebase_uid)
-    cover_photo_id = row.get("cover_photo_id")
+    with read_scope():
+        membership = require_membership(firebase_uid, baby_profile_id)
+        row = get_event(baby_profile_id, event_id)
+        if row is None:
+            raise LookupError("Event not found.")
+        comments = list_event_comments(event_id)
+        summary = rsvp_summary(event_id)
+        caller = get_caller_rsvp(event_id, firebase_uid)
+        cover_photo_id = row.get("cover_photo_id")
+        cover = (
+            get_photo_for_baby(baby_profile_id, cover_photo_id) if cover_photo_id else None
+        )
+        rsvps = list_rsvps_for_event(event_id)
     cover_display_url = None
-    if cover_photo_id:
-        photo = get_photo_for_baby(baby_profile_id, cover_photo_id)
-        if photo and photo.get("status") == "ready":
-            cover_display_url = signed_display_url(photo.get("display_path"))
-    rsvps = list_rsvps_for_event(event_id)
+    if cover and cover.get("status") == "ready":
+        cover_display_url = signed_display_url(cover.get("display_path"))
     return {
         **_event_row_to_json(row),
         "cover_photo_display_url": cover_display_url,

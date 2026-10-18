@@ -12,9 +12,6 @@ def test_follower_name_limit_per_gender():
         "lanonna_api.domain.fun.require_membership",
         return_value={"role": "follower"},
     ), patch(
-        "lanonna_api.domain.fun.get_baby_membership",
-        return_value={"role": "follower"},
-    ), patch(
         "lanonna_api.domain.fun.find_name_suggestion_case_insensitive",
         return_value=None,
     ), patch(
@@ -37,9 +34,6 @@ def test_suggest_name_rejects_case_insensitive_duplicate():
         "lanonna_api.domain.fun.require_membership",
         return_value={"role": "owner"},
     ), patch(
-        "lanonna_api.domain.fun.get_baby_membership",
-        return_value={"role": "owner"},
-    ), patch(
         "lanonna_api.domain.fun.find_name_suggestion_case_insensitive",
         return_value={"id": uuid.uuid4(), "suggested_name": "James", "gender": "male"},
     ):
@@ -54,14 +48,8 @@ def test_list_names_does_not_call_user_has_like_per_row():
         "lanonna_api.domain.fun.require_membership",
         return_value={"role": "owner"},
     ), patch(
-        "lanonna_api.domain.fun.get_baby_membership",
-        return_value={"role": "owner"},
-    ), patch(
-        "lanonna_api.domain.fun.caller_liked_suggestion_ids",
-        return_value={"male": None, "female": None},
-    ), patch(
-        "lanonna_api.domain.fun.liked_suggestion_id_set",
-        return_value={sid},
+        "lanonna_api.domain.fun.list_caller_likes",
+        return_value=[{"gender": "female", "name_suggestion_id": sid}],
     ), patch(
         "lanonna_api.domain.fun.list_name_suggestions",
         return_value=[

@@ -4,7 +4,6 @@ import uuid
 from datetime import date
 from typing import Any
 
-from lanonna_api.config import settings
 from lanonna_api.domain.announcement_validation import (
     merge_announcement_patch,
     validate_announcement_fields,
@@ -19,7 +18,7 @@ from lanonna_api.repositories.announcements import (
     toggle_squish,
     upsert_announcement,
 )
-from lanonna_api.storage import mint_signed_read_url
+from lanonna_api.domain.media_urls import signed_display_url
 
 
 def _require_baby_announcement_photo(
@@ -32,16 +31,16 @@ def _require_baby_announcement_photo(
         raise ValueError("Photo must belong to this baby profile.")
 
 
-def _photo_display_url(baby_profile_id: uuid.UUID, photo_id: uuid.UUID | None) -> str | None:
+def announcement_photo_display_url(
+    baby_profile_id: uuid.UUID, photo_id: uuid.UUID | None
+) -> str | None:
+    """Signed display URL for the announcement photo (keepsake card and Home welcome)."""
     if photo_id is None:
         return None
     row = get_photo_for_baby(baby_profile_id, photo_id)
     if row is None:
         return None
-    path = row.get("display_path")
-    if not path:
-        return None
-    return mint_signed_read_url(settings.display_bucket, path)
+    return signed_display_url(row.get("display_path"))
 
 
 def _serialize(ann: dict[str, Any], comments: list[dict[str, Any]]) -> dict[str, Any]:
@@ -59,7 +58,7 @@ def _serialize(ann: dict[str, Any], comments: list[dict[str, Any]]) -> dict[str,
         "weight_text": ann.get("weight_text"),
         "length_text": ann.get("length_text"),
         "photo_id": str(photo_id) if photo_id else None,
-        "photo_display_url": _photo_display_url(baby_id, photo_id),
+        "photo_display_url": announcement_photo_display_url(baby_id, photo_id),
         "squish_count": ann.get("squish_count") or 0,
         "comment_count": ann.get("comment_count") or 0,
         "comments": [
