@@ -60,6 +60,10 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
   final _captionFocus = FocusNode();
   var _signedUrlRetried = false;
   var _savingTags = false;
+
+  /// The display image's slot, as last laid out; neighbour precaches decode
+  /// at this size so they fill the same cache entry the screen shows.
+  Size? _displaySlot;
   List<BabySummary> _memberBabies = [];
   Set<String> _taggedBabyIds = {};
   final _captionController = TextEditingController();
@@ -162,11 +166,17 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       if (!mounted || photoId != widget.photoId) return;
       setState(() => _initialLoadInFlight = false);
       if (e is ApiException && e.statusCode == 404) {
-        AppSnackBar.showAlert(context, AppLocalizations.of(context)!.galleryThisPhotoIsNoLonger);
+        AppSnackBar.showAlert(
+          context,
+          AppLocalizations.of(context)!.galleryThisPhotoIsNoLonger,
+        );
         returnToGallery(context);
         return;
       }
-      AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
+      AppSnackBar.showAlert(
+        context,
+        apiErrorMessage(AppLocalizations.of(context)!, e),
+      );
     }
   }
 
@@ -204,7 +214,10 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
         if (_photoIds.length == before) break;
       }
       final idx = _photoIds.indexOf(widget.photoId);
-      if (mounted && _photoIdListHasMore && idx >= 0 && idx >= _photoIds.length - 1) {
+      if (mounted &&
+          _photoIdListHasMore &&
+          idx >= 0 &&
+          idx >= _photoIds.length - 1) {
         await _extendPhotoIds();
       }
     } catch (e) {
@@ -236,17 +249,15 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     for (final n in [idx + 1, idx - 1]) {
       if (n < 0 || n >= ids.length) continue;
       unawaited(
-        galleryRepo.prefetchPhoto(baby.id, ids[n]).then<void>(
-          (detail) {
-            if (!mounted) return;
-            precacheSignedImage(
-              context,
-              imageUrl: detail.displayUrl,
-              cacheKey: photoDisplayCacheKey(detail.id),
-            );
-          },
-          onError: (Object e) => debugPrint('photo_prefetch_failed: $e'),
-        ),
+        galleryRepo.prefetchPhoto(baby.id, ids[n]).then<void>((detail) {
+          if (!mounted) return;
+          final width = MediaQuery.sizeOf(context).width;
+          precacheSignedImage(
+            context,
+            imageUrl: detail.displayUrl,
+            logicalSize: _displaySlot ?? Size.square(width),
+          );
+        }, onError: (Object e) => debugPrint('photo_prefetch_failed: $e')),
       );
     }
   }
@@ -298,7 +309,10 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
 
   void _showApiError(Object e) {
     if (!mounted) return;
-    AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
+    AppSnackBar.showAlert(
+      context,
+      apiErrorMessage(AppLocalizations.of(context)!, e),
+    );
   }
 
   Future<void> _saveCaption() async {
@@ -523,60 +537,63 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                 children: [
                   AspectRatio(
                     aspectRatio: 1,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        if (detail.displayUrl != null)
-                          CachedSignedImage(
-                            imageUrl: detail.displayUrl,
-                            cacheKey: photoDisplayCacheKey(widget.photoId),
-                            fit: BoxFit.cover,
-                            onSignedUrlError: _onDisplayUrlError,
-                            // The grid's thumbnail is usually cached already:
-                            // show it until the full image is ready.
-                            placeholderImageUrl: detail.thumbUrl,
-                            placeholderCacheKey: photoThumbCacheKey(
-                              widget.photoId,
-                            ),
-                          )
-                        else
-                          ColoredBox(
-                            color: Colors.grey.shade300,
-                            child: Center(
-                              child: Text(
-                                AppLocalizations.of(context)!.photoProcessing,
+                    child: LayoutBuilder(
+                      builder: (context, slot) {
+                        _displaySlot = slot.biggest;
+                        return Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            if (detail.displayUrl != null)
+                              CachedSignedImage(
+                                imageUrl: detail.displayUrl,
+                                fit: BoxFit.cover,
+                                onSignedUrlError: _onDisplayUrlError,
+                                // The grid's thumbnail is usually cached already:
+                                // show it until the full image is ready.
+                                placeholderImageUrl: detail.thumbUrl,
+                              )
+                            else
+                              ColoredBox(
+                                color: Colors.grey.shade300,
+                                child: Center(
+                                  child: Text(
+                                    AppLocalizations.of(
+                                      context,
+                                    )!.photoProcessing,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                        if (_hasPreviousPhoto)
-                          Positioned(
-                            left: 0,
-                            right: 0,
-                            top: AppSpacing.md,
-                            child: Center(
-                              child: _PhotoHeroNavButton(
-                                semanticsId: 'photo_previous',
-                                label: l10n.actionPreviousPhoto,
-                                icon: Icons.keyboard_arrow_up,
-                                onPressed: () => unawaited(_goAdjacent(-1)),
+                            if (_hasPreviousPhoto)
+                              Positioned(
+                                left: 0,
+                                right: 0,
+                                top: AppSpacing.md,
+                                child: Center(
+                                  child: _PhotoHeroNavButton(
+                                    semanticsId: 'photo_previous',
+                                    label: l10n.actionPreviousPhoto,
+                                    icon: Icons.keyboard_arrow_up,
+                                    onPressed: () => unawaited(_goAdjacent(-1)),
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                        if (_hasNextPhoto)
-                          Positioned(
-                            left: 0,
-                            right: 0,
-                            bottom: AppSpacing.md,
-                            child: Center(
-                              child: _PhotoHeroNavButton(
-                                semanticsId: 'photo_next',
-                                label: l10n.actionNextPhoto,
-                                icon: Icons.keyboard_arrow_down,
-                                onPressed: () => unawaited(_goAdjacent(1)),
+                            if (_hasNextPhoto)
+                              Positioned(
+                                left: 0,
+                                right: 0,
+                                bottom: AppSpacing.md,
+                                child: Center(
+                                  child: _PhotoHeroNavButton(
+                                    semanticsId: 'photo_next',
+                                    label: l10n.actionNextPhoto,
+                                    icon: Icons.keyboard_arrow_down,
+                                    onPressed: () => unawaited(_goAdjacent(1)),
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                      ],
+                          ],
+                        );
+                      },
                     ),
                   ),
                   Padding(
@@ -611,7 +628,10 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                             children: [
                               Expanded(
                                 child: Text(
-                                  detail.caption ?? AppLocalizations.of(context)!.galleryNoCaption,
+                                  detail.caption ??
+                                      AppLocalizations.of(
+                                        context,
+                                      )!.galleryNoCaption,
                                   style: styles.titleSmall,
                                 ),
                               ),
@@ -628,9 +648,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                             ],
                           ),
                         Text(
-                          AppLocalizations.of(
-                            context,
-                          )!.photoUploadedBy(
+                          AppLocalizations.of(context)!.photoUploadedBy(
                             meta,
                             personDisplayName(
                               AppLocalizations.of(context)!,
@@ -681,7 +699,10 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                               for (final b in _memberBabies)
                                 if (b.id != currentBabyId)
                                   AppToggleChip(
-                                    label: babyNameLabel(AppLocalizations.of(context)!, b.name),
+                                    label: babyNameLabel(
+                                      AppLocalizations.of(context)!,
+                                      b.name,
+                                    ),
                                     selected: _taggedBabyIds.contains(b.id),
                                     onTap: () {
                                       setState(() {
@@ -701,7 +722,12 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                           Text(
                             AppLocalizations.of(context)!.photoTaggedBabies(
                               detail.taggedBabies
-                                  .map((t) => babyNameLabel(AppLocalizations.of(context)!, t.name))
+                                  .map(
+                                    (t) => babyNameLabel(
+                                      AppLocalizations.of(context)!,
+                                      t.name,
+                                    ),
+                                  )
                                   .join(', '),
                             ),
                             style: styles.bodySmall?.copyWith(

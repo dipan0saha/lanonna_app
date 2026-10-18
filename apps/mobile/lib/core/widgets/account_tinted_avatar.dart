@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 
+import '../media/cached_signed_image.dart';
 import '../presentation/display_initials.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_metrics.dart';
@@ -36,10 +37,16 @@ class AccountTintedAvatar extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: url != null && url.isNotEmpty
-          ? Image.network(
-              url,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => _initials(context),
+          ? CachedSignedImage(
+              imageUrl: url,
+              width: size,
+              height: size,
+              // Same look as before: the ring shows while loading, the photo
+              // appears without a fade, initials if it fails.
+              placeholder: (_) => const SizedBox.shrink(),
+              error: _initials,
+              fadeInDuration: Duration.zero,
+              fadeOutDuration: Duration.zero,
             )
           : _initials(context),
     );

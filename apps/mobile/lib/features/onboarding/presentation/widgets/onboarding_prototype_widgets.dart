@@ -103,9 +103,6 @@ class PrototypePhotoUpload extends StatelessWidget {
         height: size,
         circle: true,
         busy: busy,
-        cacheKey: selection.remoteRef == null
-            ? null
-            : 'avatar-preview-${selection.remoteRef}',
         onSignedUrlError: onSignedUrlError,
       ),
     );

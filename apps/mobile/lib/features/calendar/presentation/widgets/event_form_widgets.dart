@@ -29,7 +29,6 @@ class PrototypeEventCoverUpload extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final label = l10n.calendarPhotoOptional;
-    final ref = selection.remoteRef;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -45,7 +44,6 @@ class PrototypeEventCoverUpload extends StatelessWidget {
               height: AppMetrics.photoPickerCoverHeight,
               borderRadius: AppMetrics.photoPickerCoverRadius,
               busy: busy,
-              cacheKey: ref == null ? null : 'event-cover-$ref',
               onSignedUrlError: onSignedUrlError,
             ),
           ),

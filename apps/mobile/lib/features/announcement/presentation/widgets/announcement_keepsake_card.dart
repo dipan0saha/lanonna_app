@@ -82,7 +82,6 @@ class AnnouncementKeepsakeCard extends StatelessWidget {
               clipBehavior: Clip.antiAlias,
               child: CachedSignedImage(
                 imageUrl: d.photoDisplayUrl,
-                cacheKey: 'announcement-photo-${d.id}',
                 width: AppMetrics.keepsakePhotoSize,
                 height: AppMetrics.keepsakePhotoSize,
                 fit: BoxFit.cover,

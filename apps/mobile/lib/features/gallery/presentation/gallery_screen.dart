@@ -234,7 +234,10 @@ class _GalleryScreenState extends State<GalleryScreen>
     } catch (e) {
       if (!mounted) return;
       setState(() => _loadingMore = false);
-      AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
+      AppSnackBar.showAlert(
+        context,
+        apiErrorMessage(AppLocalizations.of(context)!, e),
+      );
     }
   }
 
@@ -264,7 +267,12 @@ class _GalleryScreenState extends State<GalleryScreen>
       }
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showAlert(context, l10n.galleryUploadFailed(apiErrorMessage(AppLocalizations.of(context)!, e)));
+        AppSnackBar.showAlert(
+          context,
+          l10n.galleryUploadFailed(
+            apiErrorMessage(AppLocalizations.of(context)!, e),
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _uploading = false);
@@ -282,10 +290,7 @@ class _GalleryScreenState extends State<GalleryScreen>
       }
     }
     if (mounted) {
-      AppSnackBar.showAlert(
-        context,
-        l10n.galleryPhotoProcessingIsTakingLonger,
-      );
+      AppSnackBar.showAlert(context, l10n.galleryPhotoProcessingIsTakingLonger);
     }
   }
 
@@ -295,8 +300,7 @@ class _GalleryScreenState extends State<GalleryScreen>
         expand: false,
         icon: Icons.history,
         title: l10n.emptyRecentPhotos,
-        message:
-            l10n.emptyPhotosLast30,
+        message: l10n.emptyPhotosLast30,
       ),
       GalleryViewMode.favorites => AppEmptyState(
         expand: false,
@@ -383,15 +387,12 @@ class _GalleryScreenState extends State<GalleryScreen>
                   child: AppSectionCapsLabel(_sectionLabel),
                 ),
               ),
-              SliverToBoxAdapter(
-                child: GalleryPhotoGrid(
-                  photos: _photos,
-                  onPhotoTap: (p) =>
-                      context.push(
-                        GalleryRoutes.photoDetail(p.id, sort: _apiSort),
-                      ),
-                  onSignedUrlError: _onGridSignedUrlError,
+              GalleryPhotoGrid(
+                photos: _photos,
+                onPhotoTap: (p) => context.push(
+                  GalleryRoutes.photoDetail(p.id, sort: _apiSort),
                 ),
+                onSignedUrlError: _onGridSignedUrlError,
               ),
               if (_loadingMore)
                 const SliverToBoxAdapter(

@@ -10,6 +10,9 @@ import '../../../../core/theme/la_nonna_theme.dart';
 import '../../../../core/widgets/app_semantics.dart';
 import '../../data/models/photo_models.dart';
 
+/// The gallery's photo grid, as a sliver: it sits directly in the gallery's
+/// `CustomScrollView`, so only the tiles on screen (plus the cache extent)
+/// are built, downloaded and decoded, however many pages are loaded.
 class GalleryPhotoGrid extends StatelessWidget {
   const GalleryPhotoGrid({
     super.key,
@@ -25,78 +28,81 @@ class GalleryPhotoGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+    return SliverPadding(
       padding: EdgeInsets.symmetric(horizontal: AppMetrics.horizontalPadding),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: AppMetrics.galleryGridSpacing,
-        mainAxisSpacing: AppMetrics.galleryGridSpacing,
-      ),
-      itemCount: photos.length,
-      itemBuilder: (context, index) {
-        final photo = photos[index];
-        final tile = GestureDetector(
-          onTap: () => onPhotoTap(photo),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppMetrics.galleryTileRadius),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                _GalleryThumb(photo: photo, onSignedUrlError: onSignedUrlError),
-                if (photo.status == 'pending')
-                  Container(
-                    color: Colors.black38,
-                    alignment: Alignment.center,
-                    child: Text(
-                      l10n.photoProcessing,
-                      style: context.textStyles.labelSmall?.copyWith(
-                        color: AppColors.surface,
-                        letterSpacing: 0,
-                      ),
-                    ),
+      sliver: SliverGrid.builder(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          crossAxisSpacing: AppMetrics.galleryGridSpacing,
+          mainAxisSpacing: AppMetrics.galleryGridSpacing,
+        ),
+        itemCount: photos.length,
+        itemBuilder: (context, index) {
+          final photo = photos[index];
+          final tile = GestureDetector(
+            onTap: () => onPhotoTap(photo),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppMetrics.galleryTileRadius),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  _GalleryThumb(
+                    photo: photo,
+                    onSignedUrlError: onSignedUrlError,
                   ),
-                if (photo.status != 'pending') ...[
-                  if (photo.commentCount > 0)
-                    Positioned(
-                      left: AppMetrics.appChipDenseVerticalPadding + 1,
-                      bottom: AppMetrics.appChipDenseVerticalPadding + 1,
-                      child: GalleryTileBadge(
-                        glyph: const GalleryCommentGlyph(),
-                        count: photo.commentCount,
-                        semanticsLabel: l10n.photoCommentCount(
-                          photo.commentCount,
+                  if (photo.status == 'pending')
+                    Container(
+                      color: Colors.black38,
+                      alignment: Alignment.center,
+                      child: Text(
+                        l10n.photoProcessing,
+                        style: context.textStyles.labelSmall?.copyWith(
+                          color: AppColors.surface,
+                          letterSpacing: 0,
                         ),
                       ),
                     ),
-                  if (photo.squishCount > 0)
-                    Positioned(
-                      right: AppMetrics.appChipDenseVerticalPadding + 1,
-                      bottom: AppMetrics.appChipDenseVerticalPadding + 1,
-                      child: GalleryTileBadge(
-                        glyph: const GallerySquishGlyph(),
-                        count: photo.squishCount,
-                        semanticsLabel: l10n.photoSquishCount(
-                          photo.squishCount,
+                  if (photo.status != 'pending') ...[
+                    if (photo.commentCount > 0)
+                      Positioned(
+                        left: AppMetrics.appChipDenseVerticalPadding + 1,
+                        bottom: AppMetrics.appChipDenseVerticalPadding + 1,
+                        child: GalleryTileBadge(
+                          glyph: const GalleryCommentGlyph(),
+                          count: photo.commentCount,
+                          semanticsLabel: l10n.photoCommentCount(
+                            photo.commentCount,
+                          ),
                         ),
                       ),
-                    ),
+                    if (photo.squishCount > 0)
+                      Positioned(
+                        right: AppMetrics.appChipDenseVerticalPadding + 1,
+                        bottom: AppMetrics.appChipDenseVerticalPadding + 1,
+                        child: GalleryTileBadge(
+                          glyph: const GallerySquishGlyph(),
+                          count: photo.squishCount,
+                          semanticsLabel: l10n.photoSquishCount(
+                            photo.squishCount,
+                          ),
+                        ),
+                      ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-        );
-        final label =
-            (photo.caption != null && photo.caption!.trim().isNotEmpty)
-            ? photo.caption!.trim()
-            : AppLocalizations.of(context)!.eventPhotoLabel;
-        return AppSemantics.button(
-          index == 0 ? 'gallery_photo_first' : 'gallery_photo_${photo.id}',
-          tile,
-          label: label,
-        );
-      },
+          );
+          final label =
+              (photo.caption != null && photo.caption!.trim().isNotEmpty)
+              ? photo.caption!.trim()
+              : AppLocalizations.of(context)!.eventPhotoLabel;
+          return AppSemantics.button(
+            index == 0 ? 'gallery_photo_first' : 'gallery_photo_${photo.id}',
+            tile,
+            label: label,
+          );
+        },
+      ),
     );
   }
 }
@@ -119,7 +125,6 @@ class _GalleryThumb extends StatelessWidget {
         color: AppColors.border,
         child: CachedSignedImage(
           imageUrl: url,
-          cacheKey: photoThumbCacheKey(photo.id),
           fit: BoxFit.cover,
           onSignedUrlError: onSignedUrlError,
         ),
@@ -140,7 +145,11 @@ class _GalleryThumb extends StatelessWidget {
             ),
             if (photo.status != 'pending') ...[
               SizedBox(height: AppSpacing.xxs),
-              Text(AppLocalizations.of(context)!.photoUnavailable, style: muted, textAlign: TextAlign.center),
+              Text(
+                AppLocalizations.of(context)!.photoUnavailable,
+                style: muted,
+                textAlign: TextAlign.center,
+              ),
             ],
           ],
         ),

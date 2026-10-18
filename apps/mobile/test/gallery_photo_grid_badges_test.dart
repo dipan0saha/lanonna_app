@@ -28,7 +28,9 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
-          body: GalleryPhotoGrid(photos: photos, onPhotoTap: (_) {}),
+          body: CustomScrollView(
+            slivers: [GalleryPhotoGrid(photos: photos, onPhotoTap: (_) {})],
+          ),
         ),
       ),
     );
@@ -62,7 +64,9 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
-          body: GalleryPhotoGrid(photos: photos, onPhotoTap: (_) {}),
+          body: CustomScrollView(
+            slivers: [GalleryPhotoGrid(photos: photos, onPhotoTap: (_) {})],
+          ),
         ),
       ),
     );

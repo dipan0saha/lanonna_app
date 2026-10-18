@@ -78,7 +78,6 @@ class HomeTeasersSection extends StatelessWidget {
                 child: p.thumbUrl != null
                     ? CachedSignedImage(
                         imageUrl: p.thumbUrl,
-                        cacheKey: photoThumbCacheKey(p.id),
                         width: 88,
                         height: 88,
                         fit: BoxFit.cover,
