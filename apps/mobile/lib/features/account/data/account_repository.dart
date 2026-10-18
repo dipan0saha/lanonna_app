@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:lanonna/features/account/domain/data_export_status.dart';
 import 'package:lanonna/features/invitations/domain/invitation_status.dart';
@@ -9,6 +11,7 @@ import '../../../core/data/baby_list_cache.dart';
 import '../../../core/data/single_flight.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../../../core/json/json_readers.dart';
+import 'account_identity_store.dart';
 
 class UserEngagementStats {
   const UserEngagementStats({
@@ -232,11 +235,19 @@ class AccountProfileUpdates extends ChangeNotifier {
 }
 
 class AccountRepository {
-  AccountRepository(this._api, {BabyListCache? babyList})
-    : _babyList = babyList;
+  AccountRepository(
+    this._api, {
+    BabyListCache? babyList,
+    AccountIdentityStore? identityStore,
+    String? Function()? currentUserId,
+  }) : _babyList = babyList,
+       _identityStore = identityStore,
+       _currentUserId = currentUserId;
 
   final ApiClient _api;
   final BabyListCache? _babyList;
+  final AccountIdentityStore? _identityStore;
+  final String? Function()? _currentUserId;
   final AccountProfileUpdates profileUpdates = AccountProfileUpdates();
   final _accountLoad = SingleFlight<AccountPayload>();
   var _accountEpoch = 0;
@@ -244,12 +255,46 @@ class AccountRepository {
   /// Last account payload from [fetchAccount] or a profile save.
   AccountPayload? get cachedAccount => profileUpdates.account;
 
+  /// Who to show on the signed-in user's avatar: the loaded profile, else the
+  /// one this user last loaded on this device (offline cold start). `null`
+  /// when neither is known.
+  AccountIdentity? get identity {
+    final account = cachedAccount;
+    if (account != null) {
+      return AccountIdentity(
+        displayName: account.displayName,
+        email: account.email,
+        avatarUrl: account.avatarUrl,
+      );
+    }
+    return _identityStore?.read(_currentUserId?.call());
+  }
+
+  void _rememberIdentity(AccountPayload account) {
+    final store = _identityStore;
+    final uid = _currentUserId?.call();
+    if (store == null || uid == null) return;
+    unawaited(
+      store.remember(
+        uid,
+        AccountIdentity(
+          displayName: account.displayName,
+          email: account.email,
+          avatarUrl: account.avatarUrl,
+        ),
+      ),
+    );
+  }
+
   Future<AccountPayload> fetchAccount() async {
     final epoch = _accountEpoch;
     final json = await _api.getJson('/v1/me/account');
     final payload = AccountPayload.fromJson(json);
     // A response for the previous session must not repopulate the cache.
-    if (epoch == _accountEpoch) profileUpdates.account = payload;
+    if (epoch == _accountEpoch) {
+      profileUpdates.account = payload;
+      _rememberIdentity(payload);
+    }
     return payload;
   }
 
@@ -270,6 +315,8 @@ class AccountRepository {
     _accountEpoch += 1;
     _accountLoad.cancel();
     profileUpdates.publish(null);
+    final store = _identityStore;
+    if (store != null) unawaited(store.clear());
   }
 
   Future<void> updateProfile({
@@ -333,20 +380,20 @@ class AccountRepository {
       profileUpdates.publish(null);
       return;
     }
-    profileUpdates.publish(
-      current.copyWithProfile(
-        displayName: json['display_name'] as String? ?? fallbackDisplayName,
-        email: json['email'] as String?,
-        avatarUrl: json['avatar_url'] as String?,
-        phone: json['phone'] as String?,
-        birthDate: json['birth_date'] as String?,
-        countryCode: json['country_code'] as String?,
-        postalCode: json['postal_code'] as String?,
-        biometricUnlockEnabled:
-            json['biometric_unlock_enabled'] as bool? ??
-            current.biometricUnlockEnabled,
-      ),
+    final updated = current.copyWithProfile(
+      displayName: json['display_name'] as String? ?? fallbackDisplayName,
+      email: json['email'] as String?,
+      avatarUrl: json['avatar_url'] as String?,
+      phone: json['phone'] as String?,
+      birthDate: json['birth_date'] as String?,
+      countryCode: json['country_code'] as String?,
+      postalCode: json['postal_code'] as String?,
+      biometricUnlockEnabled:
+          json['biometric_unlock_enabled'] as bool? ??
+          current.biometricUnlockEnabled,
     );
+    profileUpdates.publish(updated);
+    _rememberIdentity(updated);
   }
 
   Future<List<MemberRow>> listMembers(String babyId) async {

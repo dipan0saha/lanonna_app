@@ -33,7 +33,7 @@ import '../../../core/domain/baby_summary.dart';
 import '../data/gallery_repository.dart';
 import '../data/photo_comment_thread.dart';
 import '../data/models/photo_models.dart';
-import '../domain/gallery_navigation.dart';
+import '../../../core/router/subpage_navigation.dart';
 import '../domain/gallery_refresh.dart';
 import '../domain/gallery_routes.dart';
 
@@ -170,7 +170,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
           context,
           AppLocalizations.of(context)!.galleryThisPhotoIsNoLonger,
         );
-        returnToGallery(context);
+        popOrGo(context, GalleryRoutes.gallery);
         return;
       }
       AppSnackBar.showAlert(

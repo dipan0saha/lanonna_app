@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:lanonna/l10n/app_localizations.dart';
-
 import '../media/cached_signed_image.dart';
-import '../presentation/display_initials.dart';
 import '../theme/app_colors.dart';
+import 'avatar_initials.dart';
 import '../theme/app_metrics.dart';
 import '../theme/la_nonna_theme.dart';
 
@@ -12,11 +10,15 @@ class AccountTintedAvatar extends StatelessWidget {
   const AccountTintedAvatar({
     super.key,
     required this.displayName,
+    this.fallbackText,
     this.imageUrl,
     this.radius = AppMetrics.accountProfileAvatarRadius,
   });
 
   final String? displayName;
+
+  /// Used for the initials when [displayName] is blank (the sign-in email).
+  final String? fallbackText;
   final String? imageUrl;
   final double radius;
 
@@ -54,8 +56,9 @@ class AccountTintedAvatar extends StatelessWidget {
 
   Widget _initials(BuildContext context) {
     return Center(
-      child: Text(
-        displayInitials(displayName ?? AppLocalizations.of(context)!.commonMe),
+      child: AvatarInitials(
+        name: displayName,
+        fallbackText: fallbackText,
         style: context.textStyles.titleMedium?.copyWith(
           color: AppColors.primaryDark,
         ),

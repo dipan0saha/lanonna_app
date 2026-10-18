@@ -1,18 +1,24 @@
-/// Up to two uppercase initials for an avatar: first letters of the first two words of
-/// [name], or of [fallbackText] (e.g. an email) when [name] is blank.
+import 'package:flutter/widgets.dart';
+
+/// The one initials rule for every avatar in the app.
 ///
-/// Returns [emptyFallback] when both are blank.
-String displayInitials(
-  String? name, {
-  String? fallbackText,
-  String emptyFallback = '?',
-}) {
+/// Up to two uppercase initials: the first letters of the first two words of
+/// the display [name], else the first letter of [fallbackText] (the sign-in
+/// email for the signed-in user). `null` when both are blank: show the neutral
+/// person glyph ([AvatarInitials]), never the initial of a placeholder word.
+///
+/// Works on user-perceived characters, so accents and emoji stay whole.
+String? displayInitials(String? name, {String? fallbackText}) {
   final primary = name?.trim() ?? '';
-  final source = primary.isNotEmpty ? primary : (fallbackText?.trim() ?? '');
-  if (source.isEmpty) return emptyFallback;
-  final parts = source.split(RegExp(r'\s+'));
-  if (parts.length >= 2) {
-    return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+  if (primary.isNotEmpty) {
+    final words = primary.split(RegExp(r'\s+'));
+    final first = _firstCharacter(words[0]);
+    if (words.length >= 2) return '$first${_firstCharacter(words[1])}';
+    return first;
   }
-  return source[0].toUpperCase();
+  final fallback = fallbackText?.trim() ?? '';
+  if (fallback.isEmpty) return null;
+  return _firstCharacter(fallback);
 }
+
+String _firstCharacter(String word) => word.characters.first.toUpperCase();

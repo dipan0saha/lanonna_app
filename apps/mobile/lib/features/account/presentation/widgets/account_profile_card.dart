@@ -32,7 +32,11 @@ class AccountProfileCard extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         children: [
-          AccountTintedAvatar(displayName: displayName, imageUrl: avatarUrl),
+          AccountTintedAvatar(
+            displayName: displayName,
+            fallbackText: email,
+            imageUrl: avatarUrl,
+          ),
           SizedBox(height: AppSpacing.md),
           Text(displayName, style: context.accountProfileNameStyle),
           if (email != null) ...[

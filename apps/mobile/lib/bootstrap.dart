@@ -16,6 +16,7 @@ import 'core/data/baby_list_cache.dart';
 import 'core/data/parallel_requests.dart';
 import 'core/network/connectivity_service.dart';
 import 'core/router/router_refresh.dart';
+import 'features/account/data/account_identity_store.dart';
 import 'features/account/data/account_repository.dart';
 import 'features/account/data/notifications_repository.dart';
 import 'features/announcement/data/announcement_repository.dart';
@@ -90,7 +91,12 @@ Future<Widget> bootstrapLaNonnaApp({
   final calendarRepository = CalendarRepository(apiClient);
   final registryRepository = RegistryRepository(apiClient);
   final funRepository = FunRepository(apiClient);
-  final accountRepository = AccountRepository(apiClient, babyList: babyList);
+  final accountRepository = AccountRepository(
+    apiClient,
+    babyList: babyList,
+    identityStore: AccountIdentityStore(prefs),
+    currentUserId: () => authRepository.currentUser?.uid,
+  );
   final notificationsRepository = NotificationsRepository(apiClient);
   final announcementRepository = AnnouncementRepository(apiClient);
   final invitationsRepository = InvitationsRepository(
