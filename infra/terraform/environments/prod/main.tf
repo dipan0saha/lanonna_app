@@ -19,6 +19,10 @@ locals {
     "cloudbilling.googleapis.com",
     "firebase.googleapis.com",
     "firebasehosting.googleapis.com",
+    # App Check (Play Integrity provider): Firebase decodes the client's integrity
+    # token in this project, so the Play Integrity API must be on here.
+    "firebaseappcheck.googleapis.com",
+    "playintegrity.googleapis.com",
   ]
 }
 
