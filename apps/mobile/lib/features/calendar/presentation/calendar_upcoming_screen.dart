@@ -22,11 +22,14 @@ class _CalendarUpcomingScreenState extends State<CalendarUpcomingScreen>
       const CalendarEventBuckets(today: [], upcoming: []);
   var _loading = true;
   String? _error;
+  late final CalendarRepository _calendarRepo;
 
   @override
   void initState() {
     super.initState();
-    context.read<CalendarRepository>().addListener(_onEventsChanged);
+    // Kept for dispose, where the element tree can no longer be looked up.
+    _calendarRepo = context.read<CalendarRepository>()
+      ..addListener(_onEventsChanged);
     _load();
   }
 
@@ -39,7 +42,7 @@ class _CalendarUpcomingScreenState extends State<CalendarUpcomingScreen>
   @override
   void dispose() {
     disposeBabyContextListeners();
-    context.read<CalendarRepository>().removeListener(_onEventsChanged);
+    _calendarRepo.removeListener(_onEventsChanged);
     super.dispose();
   }
 

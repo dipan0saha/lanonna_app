@@ -17,32 +17,50 @@ class CalendarEventBuckets {
 /// Splits month + API upcoming lists for Calendar tab and view-all screen.
 ///
 /// [monthEventsForToday] should be events from the **current** local month fetch
-/// (with device `utc_offset_minutes` on the API).
+/// (bounds from [calendarLocalMonthQueryParams]).
 /// [upcomingFromApi] is `GET …/events?upcoming=true` (future instants only).
+/// Today holds every event starting on the local day (including ones already
+/// started); Upcoming holds later days only, so nothing is listed twice.
 CalendarEventBuckets partitionCalendarListEvents({
   required List<CalendarEvent> monthEventsForToday,
   required List<CalendarEvent> upcomingFromApi,
   DateTime? now,
 }) {
   final anchor = now ?? DateTime.now();
-  final today = monthEventsForToday
-      .where((e) => eventOnLocalCalendarDay(e.startsAt, anchor))
-      .toList()
-    ..sort((a, b) => a.startsAt.compareTo(b.startsAt));
+  int byStart(CalendarEvent a, CalendarEvent b) =>
+      a.startsAt.compareTo(b.startsAt);
+  // Today = every event starting on the local day: earlier ones come from the
+  // month list, later ones from either list (deduped by id), so a later-today
+  // event never disappears when one list is stale.
+  final todayById = <String, CalendarEvent>{
+    for (final e in [...monthEventsForToday, ...upcomingFromApi])
+      if (eventOnLocalCalendarDay(e.startsAt, anchor)) e.id: e,
+  };
+  final today = todayById.values.toList()..sort(byStart);
   final upcoming = upcomingFromApi
       .where((e) => !eventOnLocalCalendarDay(e.startsAt, anchor))
       .toList()
-    ..sort((a, b) => a.startsAt.compareTo(b.startsAt));
+    ..sort(byStart);
   return CalendarEventBuckets(today: today, upcoming: upcoming);
 }
 
 String calendarMonthKey(DateTime date) =>
     '${date.year}-${date.month.toString().padLeft(2, '0')}';
 
-/// Query suffix params for a device-local calendar month list.
-List<String> calendarLocalMonthQueryParams(String monthKey, {DateTime? now}) {
-  final offset = deviceUtcOffsetMinutes(now);
-  return ['month=$monthKey', 'utc_offset_minutes=$offset'];
+/// Query params for a device-local calendar month list: the UTC instants of
+/// local midnight on the 1st and on the 1st of the next month. `DateTime`
+/// applies the device's time-zone rules to each end, so a DST change inside
+/// the month still gives the exact local month (#68).
+List<String> calendarLocalMonthQueryParams(String monthKey) {
+  final parts = monthKey.split('-');
+  final year = int.parse(parts[0]);
+  final month = int.parse(parts[1]);
+  String param(String name, DateTime localMidnight) =>
+      '$name=${Uri.encodeQueryComponent(toApiInstant(localMidnight))}';
+  return [
+    param('starts_from', DateTime(year, month)),
+    param('starts_before', DateTime(year, month + 1)),
+  ];
 }
 
 bool isSameLocalCalendarDay(DateTime a, DateTime b) {

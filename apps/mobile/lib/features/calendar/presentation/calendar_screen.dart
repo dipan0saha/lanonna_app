@@ -344,34 +344,9 @@ class _CalendarScreenState extends State<CalendarScreen>
                     onAddEvent: () => _openCreateEvent(onDate: _selectedDay),
                   ),
                 )
-              else if (_buckets.isEmpty)
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      AppMetrics.horizontalPadding,
-                      AppSpacing.sm,
-                      AppMetrics.horizontalPadding,
-                      AppMetrics.fabScrollClearance,
-                    ),
-                    child: Center(
-                      child: AppEmptyState(
-                        expand: false,
-                        icon: Icons.event_outlined,
-                        title: l10n.emptyEventsYet,
-                        message: _isOwner
-                            ? AppLocalizations.of(context)!
-                                .calendarAddUltrasoundsShowersOrThe
-                            : AppLocalizations.of(context)!
-                                .calendarNothingOnTheCalendarYet,
-                        actionLabel:
-                            _isOwner ? AppLocalizations.of(context)!.calendarAddEventCta : null,
-                        onAction: _isOwner ? _openCreateEvent : null,
-                      ),
-                    ),
-                  ),
-                )
-              else
+              else ...[
+                // The Upcoming header (with Past) stays visible even with no
+                // current events, so past events remain reachable.
                 SliverToBoxAdapter(
                   child: CalendarTodayUpcomingSections(
                     buckets: _buckets,
@@ -386,6 +361,34 @@ class _CalendarScreenState extends State<CalendarScreen>
                     ),
                   ),
                 ),
+                if (_buckets.isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        AppMetrics.horizontalPadding,
+                        AppSpacing.sm,
+                        AppMetrics.horizontalPadding,
+                        AppMetrics.fabScrollClearance,
+                      ),
+                      child: Center(
+                        child: AppEmptyState(
+                          expand: false,
+                          icon: Icons.event_outlined,
+                          title: l10n.emptyEventsYet,
+                          message: _isOwner
+                              ? AppLocalizations.of(context)!
+                                  .calendarAddUltrasoundsShowersOrThe
+                              : AppLocalizations.of(context)!
+                                  .calendarNothingOnTheCalendarYet,
+                          actionLabel:
+                              _isOwner ? AppLocalizations.of(context)!.calendarAddEventCta : null,
+                          onAction: _isOwner ? _openCreateEvent : null,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
               const SliverToBoxAdapter(child: SizedBox(height: 96)),
             ],
           ],

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
-import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../../../core/widgets/app_section_caps_label.dart';
 import '../../domain/calendar_event_lists.dart';
@@ -30,19 +29,27 @@ class CalendarTodayUpcomingSections extends StatelessWidget {
     if (buckets.today.isNotEmpty) {
       children.add(
         Padding(
-          padding: EdgeInsets.fromLTRB(horizontal, AppSpacing.sm, horizontal, 0),
+          padding: EdgeInsets.fromLTRB(
+            horizontal,
+            AppSpacing.sm,
+            horizontal,
+            0,
+          ),
           child: AppSectionCapsLabel(l10n.labelToday),
         ),
       );
       children.add(
+        // The grouped card applies the screen's horizontal padding itself.
         Padding(
-          padding: EdgeInsets.fromLTRB(horizontal, AppSpacing.sm, horizontal, 0),
+          padding: const EdgeInsets.only(top: AppSpacing.sm),
           child: CalendarGroupedEventsCard(events: buckets.today),
         ),
       );
     }
 
-    if (buckets.today.isNotEmpty || buckets.upcoming.isNotEmpty) {
+    // Shown when there is something to list, or when the caller puts an action
+    // (Calendar tab: Past) in the header.
+    if (!buckets.isEmpty || upcomingHeaderTrailing != null) {
       children.add(
         Padding(
           padding: EdgeInsets.fromLTRB(
@@ -64,7 +71,12 @@ class CalendarTodayUpcomingSections extends StatelessWidget {
     if (buckets.upcoming.isEmpty && buckets.today.isNotEmpty) {
       children.add(
         Padding(
-          padding: EdgeInsets.fromLTRB(horizontal, 0, horizontal, AppSpacing.lg),
+          padding: EdgeInsets.fromLTRB(
+            horizontal,
+            0,
+            horizontal,
+            AppSpacing.lg,
+          ),
           child: Text(
             l10n.emptyFurtherUpcomingEvents,
             style: styles.bodyMedium?.copyWith(color: AppColors.muted),
@@ -74,7 +86,7 @@ class CalendarTodayUpcomingSections extends StatelessWidget {
     } else if (buckets.upcoming.isNotEmpty) {
       children.add(
         Padding(
-          padding: EdgeInsets.fromLTRB(horizontal, 0, horizontal, AppSpacing.lg),
+          padding: const EdgeInsets.only(bottom: AppSpacing.lg),
           child: CalendarGroupedEventsCard(events: buckets.upcoming),
         ),
       );

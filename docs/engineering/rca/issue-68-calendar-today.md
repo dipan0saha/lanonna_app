@@ -24,7 +24,9 @@ Events on the current local day were sometimes absent from the Calendar list (#6
 ## Fix direction
 
 - One shared **Today** + **Upcoming** sections widget for Calendar tab and view-all (`AppSectionCapsLabel`, grouped cards).
-- Optional `utc_offset_minutes` on month list queries so the server filters the device’s local calendar month.
+- Month list queries send `starts_from` / `starts_before`: the UTC instants of the device’s local month start and next month start, computed with `DateTime` so each end uses its own UTC offset. A single fixed offset would be wrong for a month with a DST change (e.g. America/New_York in March and November). `month=YYYY-MM` stays as the legacy UTC month for older builds.
+- **Today** is built from both lists (month events on today, plus upcoming events on today, deduped by id), so an event later today still shows if one list is stale; **Upcoming** keeps later days only.
+- The Calendar tab keeps the **Upcoming** header with **Past** visible when there are no current events, so past events stay reachable.
 - Keep home teasers on `upcoming_only` (future instants only).
 
 ## References

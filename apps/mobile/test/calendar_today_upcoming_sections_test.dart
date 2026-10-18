@@ -71,4 +71,29 @@ void main() {
     expect(find.text('UPCOMING'), findsOneWidget);
     expect(find.text('Future only'), findsOneWidget);
   });
+
+  testWidgets('keeps the Upcoming header action when nothing is listed',
+      (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: AppTheme.light,
+        home: Scaffold(
+          body: CalendarTodayUpcomingSections(
+            buckets: const CalendarEventBuckets(today: [], upcoming: []),
+            upcomingHeaderTrailing: TextButton(
+              onPressed: () {},
+              child: const Text('Past'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('TODAY'), findsNothing);
+    expect(find.text('UPCOMING'), findsOneWidget);
+    expect(find.text('Past'), findsOneWidget);
+  });
 }

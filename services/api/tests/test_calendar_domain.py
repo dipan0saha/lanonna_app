@@ -6,11 +6,13 @@ import pytest
 
 from lanonna_api.domain.calendar import (
     _parse_month,
+    resolve_event_list_window,
     add_event_comment,
     create_calendar_event,
     get_event_detail,
     set_rsvp,
 )
+from lanonna_api.domain.errors import InvalidInputError
 from lanonna_api.domain.url_validation import INVALID_HTTP_URL
 
 
@@ -26,18 +28,38 @@ def test_parse_month_december():
     assert end == datetime(2026, 1, 1, tzinfo=timezone.utc)
 
 
-def test_parse_month_honors_positive_utc_offset():
-    # November 2026 in UTC+11: local midnight is still October in UTC.
-    start, end = _parse_month("2026-11", utc_offset_minutes=660)
-    assert start == datetime(2026, 10, 31, 13, 0, tzinfo=timezone.utc)
-    assert end == datetime(2026, 11, 30, 13, 0, tzinfo=timezone.utc)
+def test_list_window_uses_client_instants_across_a_dst_change():
+    # November 2026 in America/New_York: starts in EDT (-4), ends in EST (-5).
+    start, end = resolve_event_list_window(
+        None,
+        datetime(2026, 11, 1, 4, 0, tzinfo=timezone.utc),
+        datetime(2026, 12, 1, 5, 0, tzinfo=timezone.utc),
+    )
+    assert start == datetime(2026, 11, 1, 4, 0, tzinfo=timezone.utc)
+    assert end == datetime(2026, 12, 1, 5, 0, tzinfo=timezone.utc)
 
 
-def test_parse_month_honors_negative_utc_offset():
-    # October 2026 in UTC-4 (EDT).
-    start, end = _parse_month("2026-10", utc_offset_minutes=-240)
-    assert start == datetime(2026, 10, 1, 4, 0, tzinfo=timezone.utc)
-    assert end == datetime(2026, 11, 1, 4, 0, tzinfo=timezone.utc)
+def test_list_window_legacy_month_is_utc():
+    assert resolve_event_list_window("2026-10", None, None) == _parse_month("2026-10")
+    assert resolve_event_list_window(None, None, None) == (None, None)
+
+
+@pytest.mark.parametrize(
+    "month,starts_from,starts_before",
+    [
+        (None, datetime(2026, 11, 1, 4, tzinfo=timezone.utc), None),
+        ("2026-11", datetime(2026, 11, 1, 4, tzinfo=timezone.utc),
+         datetime(2026, 12, 1, 5, tzinfo=timezone.utc)),
+        (None, datetime(2026, 12, 1, tzinfo=timezone.utc),
+         datetime(2026, 11, 1, tzinfo=timezone.utc)),
+        (None, datetime(2026, 1, 1, tzinfo=timezone.utc),
+         datetime(2026, 3, 1, tzinfo=timezone.utc)),
+    ],
+)
+def test_list_window_rejects_bad_ranges(month, starts_from, starts_before):
+    with pytest.raises(InvalidInputError) as exc:
+        resolve_event_list_window(month, starts_from, starts_before)
+    assert exc.value.code.value == "invalid_request"
 
 
 def test_create_event_rejects_invalid_video_call_url():

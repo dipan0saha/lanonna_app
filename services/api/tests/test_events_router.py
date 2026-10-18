@@ -60,3 +60,34 @@ def test_patch_event_returns_400_when_end_is_before_start():
     assert response.status_code == 400
     assert response.json()["detail"]["error"] == "event_end_before_start"
     update_mock.assert_not_called()
+
+
+def test_list_events_passes_local_month_instants_to_domain():
+    baby_id = uuid.uuid4()
+    with patch(
+        "lanonna_api.routers.events.calendar_domain.list_calendar_events",
+        return_value={"items": [], "offset": 0, "limit": 500, "has_more": False},
+    ) as list_mock, _auth_as():
+        response = client.get(
+            f"/v1/babies/{baby_id}/events",
+            params={
+                "starts_from": "2026-11-01T04:00:00.000Z",
+                "starts_before": "2026-12-01T05:00:00.000Z",
+            },
+        )
+    assert response.status_code == 200
+    kwargs = list_mock.call_args.kwargs
+    assert kwargs["starts_from"] == datetime(2026, 11, 1, 4, tzinfo=timezone.utc)
+    assert kwargs["starts_before"] == datetime(2026, 12, 1, 5, tzinfo=timezone.utc)
+    assert kwargs["month"] is None
+
+
+def test_list_events_rejects_half_a_window():
+    baby_id = uuid.uuid4()
+    with patch("lanonna_api.domain.calendar.require_membership"), _auth_as():
+        response = client.get(
+            f"/v1/babies/{baby_id}/events",
+            params={"starts_from": "2026-11-01T04:00:00Z"},
+        )
+    assert response.status_code == 400
+    assert response.json()["detail"]["error"] == "invalid_request"

@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/features/calendar/data/models/calendar_models.dart';
-import 'package:lanonna/core/time/app_date_time.dart';
 import 'package:lanonna/features/calendar/domain/calendar_event_lists.dart';
 
 CalendarEvent _event(String id, DateTime startsAt) {
@@ -51,13 +50,22 @@ void main() {
     expect(buckets.upcoming, isEmpty);
   });
 
-  test('local month first day event from offset-aware month fetch', () {
-    // Nov 1 2026 01:00 in UTC+11 == Oct 31 14:00 UTC.
-    final novFirstLocal = DateTime.utc(2026, 10, 31, 14, 0);
-    final anchor = DateTime(2026, 11, 1, 9, 0);
-    final month = [_event('edge', novFirstLocal)];
+  test('a later-today event only in the upcoming list still shows under Today',
+      () {
+    final later = DateTime(2026, 10, 12, 18, 0);
     final buckets = partitionCalendarListEvents(
-      monthEventsForToday: month,
+      monthEventsForToday: const [],
+      upcomingFromApi: [_event('late', later)],
+      now: now,
+    );
+    expect(buckets.today.map((e) => e.id), ['late']);
+    expect(buckets.upcoming, isEmpty);
+  });
+
+  test('an event just after local midnight on the 1st is today', () {
+    final anchor = DateTime(2026, 11, 1, 9, 0);
+    final buckets = partitionCalendarListEvents(
+      monthEventsForToday: [_event('edge', DateTime(2026, 11, 1, 0, 30))],
       upcomingFromApi: const [],
       now: anchor,
     );
@@ -68,15 +76,18 @@ void main() {
     expect(calendarMonthKey(DateTime(2026, 3, 5)), '2026-03');
   });
 
-  test('calendarLocalMonthQueryParams includes offset', () {
-    final now = DateTime(2026, 6, 1, 12, 0);
-    final params = calendarLocalMonthQueryParams('2026-06', now: now);
+  test('calendarLocalMonthQueryParams sends local month bounds as UTC', () {
+    String expected(DateTime local) =>
+        Uri.encodeQueryComponent(local.toUtc().toIso8601String());
+    // November holds the US DST change; each bound uses its own offset.
+    expect(calendarLocalMonthQueryParams('2026-11'), [
+      'starts_from=${expected(DateTime(2026, 11))}',
+      'starts_before=${expected(DateTime(2026, 12))}',
+    ]);
+    // December rolls over into January of the next year.
     expect(
-      params,
-      [
-        'month=2026-06',
-        'utc_offset_minutes=${deviceUtcOffsetMinutes(now)}',
-      ],
+      calendarLocalMonthQueryParams('2026-12').last,
+      'starts_before=${expected(DateTime(2027, 1))}',
     );
   });
 

@@ -12,7 +12,9 @@ void main() {
     expect(first, hasLength(1));
     expect(first.first.title, 'March event');
     expect(api.calls, 1);
-    expect(api.lastPath, contains('utc_offset_minutes='));
+    expect(api.lastPath, contains('starts_from='));
+    expect(api.lastPath, contains('starts_before='));
+    expect(api.lastPath, isNot(contains('month=')));
 
     final cached = await repo.listEvents('baby-1', month: '2026-03');
     expect(cached.first.title, first.first.title);
