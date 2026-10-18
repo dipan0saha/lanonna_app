@@ -211,6 +211,8 @@ sequenceDiagram
 
 **Display encoder** ([`display_encode.dart`](../../apps/mobile/lib/core/media/display_encode.dart), one path for every upload): `DisplayEncodeProfile.display` (gallery, event cover, announcement, first moment) or `.avatar` (account and baby photos) sets the long edge; [`DisplayPhotoUpload`](../../apps/mobile/lib/core/api/display_photo_upload.dart) picks it and runs `encodeDisplayAssetInBackground` (a `compute` isolate). The photo is encoded **once** as lossy WebP (`lossless: false`, quality 80, method 2). The 2 MB cap is a guard: only an over-cap result re-encodes, directly at the long edge its byte count predicts (never below 640 px; else `PhotoTooLargeException`). Note `package:image` `encodeWebP` is **lossless by default** and ignores `quality` unless `lossless: false` is passed; that default made every upload a ~2 MB lossless file encoded up to five times (perf fix 1).
 
+**On the device:** every image is disk-cached under its object path (signed URLs change, the object does not) and decoded at the size of the slot that shows it, never at the stored 2048 px unless the slot needs it ([development.md](development.md), Images).
+
 **Product tradeoff:** detail view is excellent on phone; saving “full camera roll quality” or print-sized originals is a **future optional tier**, not the default path.
 
 ---

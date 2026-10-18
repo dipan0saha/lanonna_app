@@ -369,9 +369,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     borderRadius: BorderRadius.circular(12),
                     child: CachedSignedImage(
                       imageUrl: detail.coverPhotoDisplayUrl,
-                      cacheKey: detail.coverPhotoId != null
-                          ? photoDisplayCacheKey(detail.coverPhotoId!)
-                          : null,
                       height: 180,
                       width: double.infinity,
                       fit: BoxFit.cover,

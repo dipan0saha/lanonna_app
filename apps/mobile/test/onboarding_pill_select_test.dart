@@ -26,10 +26,13 @@ theme: AppTheme.light,
       ),
     );
 
-    final motherFinder = find.text('Mother');
-    final fatherFinder = find.text('Father');
-    final motherBox = tester.getRect(motherFinder);
-    final fatherBox = tester.getRect(fatherFinder);
+    // Compare the pills, not the labels: with the bundled brand fonts the two
+    // words have different text widths.
+    Rect pill(String label) => tester.getRect(
+      find.ancestor(of: find.text(label), matching: find.byType(Expanded)),
+    );
+    final motherBox = pill('Mother');
+    final fatherBox = pill('Father');
 
     expect(motherBox.width, closeTo(fatherBox.width, 1));
   });
