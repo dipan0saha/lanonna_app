@@ -10,6 +10,7 @@ class FakeGalleryRepository extends GalleryRepository {
   FakeGalleryRepository() : super(ApiClient(idTokenProvider: () async => null));
 
   int listCalls = 0;
+  final fetchedPhotoIds = <String>[];
   List<PhotoSummary> photos = const [];
 
   /// Files passed to [uploadPhoto], in order.
@@ -59,6 +60,7 @@ class FakeGalleryRepository extends GalleryRepository {
 
   @override
   Future<PhotoDetail> fetchPhoto(String babyId, String photoId) async {
+    fetchedPhotoIds.add(photoId);
     PhotoSummary? summary;
     for (final p in photos) {
       if (p.id == photoId) {

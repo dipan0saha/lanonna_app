@@ -224,6 +224,25 @@ void main() {
     expect(h.calendar.updatedCoverIds, [null]);
   });
 
+  testWidgets(
+    'edit: an expired stored-cover URL is refreshed from the event, not the gallery',
+    (tester) async {
+      final h = await _pumpForm(tester, eventId: 'ev-1');
+      expect(h.calendar.fetchCalls, 1);
+
+      tester
+          .widget<PrototypeEventCoverUpload>(
+            find.byType(PrototypeEventCoverUpload),
+          )
+          .onSignedUrlError!();
+      await tester.pumpAndSettle();
+
+      expect(h.calendar.fetchCalls, 2);
+      expect(h.gallery.fetchedPhotoIds, isEmpty);
+      expect(_coverSelection(tester).remoteRef, 'old-photo');
+    },
+  );
+
   testWidgets('a cancelled device picker keeps the current cover', (
     tester,
   ) async {
