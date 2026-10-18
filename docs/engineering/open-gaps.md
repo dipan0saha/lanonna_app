@@ -159,7 +159,7 @@ Run all three suites before every ship. GitHub Actions CI ([`.github/workflows/c
 
 | ID | Issue | Where | Fix |
 |----|-------|-------|-----|
-| M-27 | App Check token silently omitted when `getToken` fails | `core/app_check/app_check_bootstrap.dart`, `core/api/api_client.dart` | **Partial (2026-10-16):** debug bootstrap retries `getToken` and logs register/pin hints; API client still omits `X-Firebase-AppCheck` on failure |
+| M-27 | App Check token silently omitted when `getToken` fails | `core/app_check/app_check_bootstrap.dart`, `core/api/api_client.dart` | **Partial (2026-10-16):** debug bootstrap retries `getToken` and logs register/pin hints; `AppCheckTokenSource` bounds each read at 10 s; API client still omits `X-Firebase-AppCheck` on failure |
 | ✅ M-31 | Biometric unlock (PRD §5.3) | `local_auth`, `BiometricAppLock`, migration `035` | Profile flag + settings toggle + resume lock overlay; cold start uses `GoRouter.maybeOf` and defers lock eval until the router is ready (2026-10-16) — **Status:** ✅ Fixed |
 | ✅ M-54 | Invite-mismatch PII in GoRouter query strings; invitee email in persisted preview JSON; Android Auto Backup of prefs | `InviteFlowState`, `invite_flow_navigation.dart`, `onboarding_wrong_email_screen.dart`, `AndroidManifest.xml` | In-memory mismatch/prefill/resume; preview JSON omits `invitee_email`; `allowBackup=false` + `backup_rules.xml` |
 | ✅ M-55 | Signed-in invite accept screens show `e.toString()` of an `Exception` instead of mapped copy | `onboarding_follower_invite_screen.dart`, `onboarding_coowner_invite_screen.dart`, `invite_accept_messages.dart` | Shared `inviteLandingAcceptErrorMessage` (`apiErrorMessage` / generic `Exception` strip) — **Status:** ✅ Fixed (2026-10-14) |

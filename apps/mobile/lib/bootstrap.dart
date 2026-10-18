@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'core/api/api_client.dart';
-import 'core/app_check/app_check_bootstrap.dart';
+import 'core/app_check/app_check_token_source.dart';
 import 'core/deep_links/app_link_bootstrap.dart';
 import 'core/deep_links/auth_action_app_link.dart';
 import 'core/deep_links/invite_app_link.dart';
@@ -13,6 +13,7 @@ import 'core/auth/membership_access_handler.dart';
 import 'core/auth/session_cleanup.dart';
 import 'core/auth/user_deleted_session_handler.dart';
 import 'core/data/baby_list_cache.dart';
+import 'core/data/parallel_requests.dart';
 import 'core/network/connectivity_service.dart';
 import 'core/router/router_refresh.dart';
 import 'features/account/data/account_repository.dart';
@@ -33,13 +34,18 @@ import 'features/onboarding/presentation/app_session.dart';
 import 'features/onboarding/presentation/onboarding_coordinator.dart';
 import 'app.dart';
 
-Future<Widget> bootstrapLaNonnaApp() async {
+/// Builds the app's object graph. Local reads (preferences, connectivity, the
+/// cold-start link) run together; nothing here waits on the network.
+Future<Widget> bootstrapLaNonnaApp({
+  required AppCheckTokenSource appCheck,
+}) async {
   if (kDebugMode) {
     const email = String.fromEnvironment('DEV_AUTO_SIGN_IN_EMAIL');
     const password = String.fromEnvironment('DEV_AUTO_SIGN_IN_PASSWORD');
     if (email.isNotEmpty &&
         password.isNotEmpty &&
         FirebaseAuth.instance.currentUser == null) {
+      await appCheck.activated;
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: password,
@@ -47,16 +53,22 @@ Future<Widget> bootstrapLaNonnaApp() async {
     }
   }
 
-  final onboardingStorage = await OnboardingStorage.create();
-  final prefs = onboardingStorage.sharedPreferences;
   final authRepository = AuthRepository();
+  // A signed-in launch makes authorized requests right away; start the
+  // App Check read now so a first-launch attestation overlaps start-up.
+  if (authRepository.currentUser != null) appCheck.prefetch();
+  final connectivityService = ConnectivityService();
+  final (onboardingStorage, _, coldStartUri) = await waitAll3(
+    OnboardingStorage.create(),
+    connectivityService.init(),
+    readColdStartAppLinkUri(),
+  );
+  final prefs = onboardingStorage.sharedPreferences;
   late final OnboardingCoordinator coordinator;
   late final SessionCleanup sessionCleanup;
-  final connectivityService = ConnectivityService();
-  await connectivityService.init();
   final apiClient = ApiClient(
     idTokenProvider: authRepository.getIdToken,
-    appCheckTokenProvider: appCheckTokenForApi,
+    appCheckTokenProvider: appCheck.token,
     isOffline: () => !connectivityService.isOnline,
     onSessionInvalidated: (_) => handleUserDeletedSession(
       authRepository: authRepository,
@@ -124,7 +136,6 @@ Future<Widget> bootstrapLaNonnaApp() async {
     session: session,
   );
 
-  final coldStartUri = await readColdStartAppLinkUri();
   final initialInviteLocation = coldStartUri != null
       ? inviteAppLinkToRouterLocation(coldStartUri)
       : null;

@@ -104,6 +104,17 @@ class _HomeScreenState extends State<HomeScreen>
       });
     }
     try {
+      // The summary of the stored selection loads together with the baby
+      // list instead of after it; it is used only if the list confirms that
+      // baby.
+      final storedBabyId = store.selectedBabyId;
+      final early = storedBabyId == null
+          ? null
+          : repository.fetchHomeSummary(
+              storedBabyId,
+              maxAge: summaryMaxAge,
+              speculative: true,
+            );
       final baby = await repository.resolveSelectedBaby(store);
       if (baby != null) {
         final cached = repository.cachedHomeSummary(baby.id);
@@ -124,10 +135,15 @@ class _HomeScreenState extends State<HomeScreen>
       HomeSummary? summary;
       String? summaryError;
       if (baby != null) {
-        final result = await repository.fetchHomeSummary(
-          baby.id,
-          maxAge: summaryMaxAge,
-        );
+        final prefetched = early != null && baby.id == storedBabyId
+            ? await early
+            : null;
+        final result = prefetched is HomeSummaryLoaded
+            ? prefetched
+            : await repository.fetchHomeSummary(
+                baby.id,
+                maxAge: summaryMaxAge,
+              );
         switch (result) {
           case HomeSummaryLoaded loaded:
             summary = loaded.summary;

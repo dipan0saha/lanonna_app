@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:lanonna/bootstrap.dart';
+import 'package:lanonna/core/app_check/app_check_bootstrap.dart';
 import 'package:lanonna/firebase_options.dart';
 
 void main() {
@@ -15,7 +16,9 @@ void main() {
     expect(password, isNotEmpty, reason: 'Pass SMOKE_TEST_PASSWORD via --dart-define');
 
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-    await tester.pumpWidget(await bootstrapLaNonnaApp());
+    final appCheck = startFirebaseAppCheck();
+    await appCheck.activated;
+    await tester.pumpWidget(await bootstrapLaNonnaApp(appCheck: appCheck));
     await tester.pumpAndSettle(const Duration(seconds: 10));
 
     final onLogin = find.byKey(const Key('auth_email_field'));

@@ -102,7 +102,10 @@ class _StubApi extends ApiClient {
   var babyListCalls = 0;
 
   @override
-  Future<Map<String, dynamic>> getJson(String path) async {
+  Future<Map<String, dynamic>> getJson(
+    String path, {
+    bool notifyMembershipEnded = true,
+  }) async {
     if (path == '/v1/me/account') {
       return {'profile': {'display_name': 'A'}, 'babies': []};
     }

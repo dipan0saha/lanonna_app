@@ -14,7 +14,10 @@ class _Api extends ApiClient {
   var displayName = 'Alex';
 
   @override
-  Future<Map<String, dynamic>> getJson(String path) async {
+  Future<Map<String, dynamic>> getJson(
+    String path, {
+    bool notifyMembershipEnded = true,
+  }) async {
     requests.add(path);
     final pending = gate;
     if (pending != null) await pending.future;

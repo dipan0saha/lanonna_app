@@ -159,9 +159,15 @@ class HomeRepository {
   /// `GET home-summary`. With [maxAge], a summary fetched within that window
   /// is returned without a request (Home tab shown again); without it the
   /// summary is always refetched (mutations, pull-to-refresh, baby switch).
+  ///
+  /// [speculative]: requested for the stored selection before the baby list
+  /// confirms it (Home loads both at once). A `membership_ended` answer then
+  /// does not run the app-wide handler; Home discards a failed speculative
+  /// result and requests again normally.
   Future<HomeSummaryResult> fetchHomeSummary(
     String babyId, {
     Duration? maxAge,
+    bool speculative = false,
   }) async {
     final cachedAt = _summaryFetchedAt[babyId];
     final cachedSummary = _summaryByBaby[babyId];
@@ -172,7 +178,10 @@ class HomeRepository {
       return HomeSummaryLoaded(cachedSummary);
     }
     try {
-      final json = await _api.getJson('/v1/babies/$babyId/home-summary');
+      final json = await _api.getJson(
+        '/v1/babies/$babyId/home-summary',
+        notifyMembershipEnded: !speculative,
+      );
       final summary = HomeSummary.fromJson(json);
       _summaryByBaby[babyId] = summary;
       _summaryFetchedAt[babyId] = _clock();

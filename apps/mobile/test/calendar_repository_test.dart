@@ -91,7 +91,10 @@ class _EventsApi extends ApiClient {
   String? lastPath;
 
   @override
-  Future<Map<String, dynamic>> getJson(String path) async {
+  Future<Map<String, dynamic>> getJson(
+    String path, {
+    bool notifyMembershipEnded = true,
+  }) async {
     lastPath = path;
     calls++;
     if (failRequests) {
@@ -143,7 +146,10 @@ class _DedupeEventsApi extends ApiClient {
   var upcomingCalls = 0;
 
   @override
-  Future<Map<String, dynamic>> getJson(String path) async {
+  Future<Map<String, dynamic>> getJson(
+    String path, {
+    bool notifyMembershipEnded = true,
+  }) async {
     if (path.contains('upcoming=true')) {
       upcomingCalls++;
       return _page([

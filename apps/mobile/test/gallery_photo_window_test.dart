@@ -32,7 +32,10 @@ class _PhotosApi extends ApiClient {
   };
 
   @override
-  Future<Map<String, dynamic>> getJson(String path) async {
+  Future<Map<String, dynamic>> getJson(
+    String path, {
+    bool notifyMembershipEnded = true,
+  }) async {
     requests.add(path);
     final uri = Uri.parse(path);
     if (uri.path.endsWith('/photos')) {
