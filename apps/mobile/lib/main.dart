@@ -3,7 +3,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
-import 'package:flutter/services.dart';
 
 import 'bootstrap.dart';
 import 'core/app_check/app_check_bootstrap.dart';
@@ -19,7 +18,8 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 /// Start-up runs independent steps together; the native launch screen stays
 /// up until [runApp] draws the first frame.
 ///
-/// 1. Firebase, together with the portrait lock.
+/// 1. Firebase. Android portrait is declared on `MainActivity` in the
+///    manifest, so no orientation request is needed here.
 /// 2. App Check activation, together with [bootstrapLaNonnaApp] (local
 ///    storage, connectivity, cold-start link). Neither makes a network call;
 ///    API requests wait for activation through the token source.
@@ -31,10 +31,7 @@ Future<void> main() async {
   if (maestroSemantics) {
     SemanticsBinding.instance.ensureSemantics();
   }
-  await waitBoth(
-    Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
-    _lockPortraitOnAndroid(),
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   final appCheck = startFirebaseAppCheck();
   final (_, app) = await waitBoth(
@@ -42,10 +39,4 @@ Future<void> main() async {
     bootstrapLaNonnaApp(appCheck: appCheck),
   );
   runApp(app);
-}
-
-Future<void> _lockPortraitOnAndroid() async {
-  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-    await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  }
 }
