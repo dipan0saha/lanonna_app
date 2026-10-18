@@ -129,6 +129,8 @@ def _maybe_notify_photo_ready(
     *,
     object_generation: int | None,
 ) -> None:
+    if ready_row.get("purpose") == "event_cover":
+        return
     photo_uuid = ready_row["id"]
     if isinstance(photo_uuid, str):
         photo_uuid = uuid.UUID(photo_uuid)

@@ -22,6 +22,7 @@ import 'features/account/data/notifications_repository.dart';
 import 'features/announcement/data/announcement_repository.dart';
 import 'features/calendar/data/calendar_repository.dart';
 import 'features/fun/data/fun_repository.dart';
+import 'core/media/event_cover_uploader.dart';
 import 'features/gallery/data/gallery_repository.dart';
 import 'features/registry/data/registry_repository.dart';
 import 'features/home/data/home_refresh_signal.dart';
@@ -88,6 +89,7 @@ Future<Widget> bootstrapLaNonnaApp({
   );
   final homeRepository = HomeRepository(apiClient, babyList: babyList);
   final galleryRepository = GalleryRepository(apiClient);
+  final eventCoverUploader = ApiEventCoverUploader(apiClient);
   final calendarRepository = CalendarRepository(apiClient);
   final registryRepository = RegistryRepository(apiClient);
   final funRepository = FunRepository(apiClient);
@@ -159,6 +161,7 @@ Future<Widget> bootstrapLaNonnaApp({
       Provider<AuthRepository>.value(value: authRepository),
       Provider<SessionCleanup>.value(value: sessionCleanup),
       Provider<ApiClient>.value(value: apiClient),
+      Provider<EventCoverUploader>.value(value: eventCoverUploader),
       Provider<OnboardingRepository>.value(value: onboardingRepository),
       Provider<HomeRepository>.value(value: homeRepository),
       ChangeNotifierProvider<GalleryRepository>.value(value: galleryRepository),

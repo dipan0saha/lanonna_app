@@ -65,3 +65,4 @@ def test_init_photo_upload_passes_caption_to_create_pending_photo():
         )
         create.assert_called_once()
         assert create.call_args[0][4] == "First day"
+        assert create.call_args.kwargs.get("purpose").value == "gallery"

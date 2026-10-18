@@ -6,6 +6,7 @@ from typing import Any, Literal
 PhotoListSort = Literal["default", "recent", "favorites"]
 
 from lanonna_api.db import get_connection
+from lanonna_api.domain.photo_purpose import PhotoPurpose
 from lanonna_api.repositories.active_participants import active_participant_join
 
 
@@ -19,7 +20,7 @@ def get_photo_for_baby(
             SELECT
                 p.id, p.baby_profile_id, p.uploader_firebase_uid,
                 p.status, p.display_path, p.thumb_path, p.caption,
-                p.content_type, p.created_at,
+                p.content_type, p.purpose, p.created_at,
                 u.display_name AS uploader_display_name
             FROM photos p
             JOIN app_users u ON u.firebase_uid = p.uploader_firebase_uid
@@ -28,6 +29,33 @@ def get_photo_for_baby(
             (photo_id, baby_profile_id),
         ).fetchone()
     return dict(row) if row else None
+
+
+def get_photo_storage_row(photo_id: uuid.UUID) -> dict[str, Any] | None:
+    with get_connection() as conn:
+        row = conn.execute(
+            """
+            SELECT id, baby_profile_id, purpose, display_path, thumb_path
+            FROM photos
+            WHERE id = %s
+            """,
+            (photo_id,),
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def count_photo_external_references(photo_id: uuid.UUID) -> int:
+    with get_connection() as conn:
+        row = conn.execute(
+            """
+            SELECT
+                (SELECT COUNT(*)::int FROM events WHERE cover_photo_id = %s)
+              + (SELECT COUNT(*)::int FROM birth_announcements WHERE photo_id = %s)
+              AS refs
+            """,
+            (photo_id, photo_id),
+        ).fetchone()
+    return int(row["refs"] or 0) if row else 0
 
 
 def list_photos_for_baby(
@@ -72,13 +100,14 @@ def list_photos_for_baby(
             FROM photos p
             JOIN app_users u ON u.firebase_uid = p.uploader_firebase_uid
             WHERE p.baby_profile_id = %s
+              AND p.purpose = %s
             {status_clause}
             {recent_clause}
             {favorites_clause}
             {order_clause}
             LIMIT %s OFFSET %s
             """,
-            (baby_profile_id, limit, offset),
+            (baby_profile_id, PhotoPurpose.GALLERY.value, limit, offset),
         ).fetchall()
     return [dict(r) for r in rows]
 

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart' show XFile;
 
+import '../domain/photo_purpose.dart';
 import '../media/display_encode.dart';
 import 'api_client.dart';
 import 'api_exception.dart';
@@ -59,6 +60,19 @@ class DisplayPhotoUpload {
     required String babyProfileId,
     required XFile imageFile,
     String? caption,
+  }) =>
+      uploadDisplayPhoto(
+        babyProfileId: babyProfileId,
+        imageFile: imageFile,
+        caption: caption,
+        purpose: PhotoPurpose.gallery,
+      );
+
+  Future<String> uploadDisplayPhoto({
+    required String babyProfileId,
+    required XFile imageFile,
+    String? caption,
+    PhotoPurpose purpose = PhotoPurpose.gallery,
   }) async {
     final encoded = await _encode(imageFile, DisplayEncodeProfile.display);
     final contentType = encoded.contentType;
@@ -68,6 +82,7 @@ class DisplayPhotoUpload {
       'baby_profile_id': babyProfileId,
       'content_type': contentType,
       'byte_length': body.length,
+      'purpose': purpose.apiValue,
     };
     if (trimmedCaption != null && trimmedCaption.isNotEmpty) {
       initBody['caption'] = trimmedCaption;

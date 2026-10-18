@@ -4,6 +4,8 @@ import uuid
 from typing import Any
 
 from lanonna_api.domain.errors import ErrorCode, InvalidInputError
+from lanonna_api.domain.photo_lifecycle import hard_delete_gallery_photo
+from lanonna_api.domain.photo_purpose import PhotoPurpose
 from lanonna_api.domain import assert_owner_membership, create_pending_photo
 from lanonna_api.pagination import offset_page_from_extra_row
 from lanonna_api.db import read_scope
@@ -21,7 +23,6 @@ from lanonna_api.domain.content_permissions import (
 )
 from lanonna_api.repositories.photos import (
     PhotoListSort,
-    delete_photo,
     get_photo_comment,
     get_photo_detail_row,
     get_photo_for_baby,
@@ -68,11 +69,17 @@ def init_photo_upload(
     byte_length: int,
     max_bytes: int = 2_097_152,
     caption: str | None = None,
+    purpose: PhotoPurpose = PhotoPurpose.GALLERY,
 ) -> dict[str, Any]:
     if byte_length > max_bytes:
         raise InvalidInputError(ErrorCode.FILE_TOO_LARGE, "Display asset exceeds maximum size.")
     if content_type not in settings.display_allowed_content_types:
         raise InvalidInputError(ErrorCode.UNSUPPORTED_MEDIA_TYPE, f"Unsupported content type: {content_type}")
+    if purpose == PhotoPurpose.EVENT_COVER and caption:
+        raise InvalidInputError(
+            ErrorCode.INVALID_REQUEST,
+            "Event cover photos cannot include a caption.",
+        )
     assert_owner_membership(user.uid, baby_profile_id)
     photo = create_pending_photo(
         baby_profile_id,
@@ -80,6 +87,7 @@ def init_photo_upload(
         content_type,
         byte_length,
         caption,
+        purpose=purpose,
     )
     signed = mint_display_upload_for_object(
         photo["display_path"],
@@ -188,7 +196,12 @@ def remove_photo(
     photo_id: uuid.UUID,
 ) -> None:
     assert_owner_membership(firebase_uid, baby_profile_id)
-    if not delete_photo(baby_profile_id, photo_id):
+    row = get_photo_for_baby(baby_profile_id, photo_id)
+    if row is None:
+        raise LookupError("Photo not found.")
+    if PhotoPurpose.from_api(row.get("purpose")) != PhotoPurpose.GALLERY:
+        raise LookupError("Photo not found.")
+    if not hard_delete_gallery_photo(baby_profile_id, photo_id):
         raise LookupError("Photo not found.")
 
 
