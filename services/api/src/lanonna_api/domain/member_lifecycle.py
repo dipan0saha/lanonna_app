@@ -9,10 +9,12 @@ from lanonna_api.domain.membership import require_owner_baby
 from lanonna_activity_copy import ActivityEventType
 from lanonna_api.repositories.activity_events import insert_activity_event
 from lanonna_api.repositories.memberships import (
+    OwnLeaveOutcome,
     count_active_owners,
     get_active_membership,
     list_baby_members,
     soft_remove_membership,
+    soft_remove_own_membership,
 )
 
 
@@ -95,22 +97,17 @@ def remove_member(
 
 
 def leave_baby_profile(firebase_uid: str, baby_profile_id: uuid.UUID) -> None:
-    membership = get_active_membership(baby_profile_id, firebase_uid)
-    if membership is None:
+    outcome = soft_remove_own_membership(baby_profile_id, firebase_uid)
+    if outcome is OwnLeaveOutcome.NOT_MEMBER:
         raise MemberLifecycleError(
             ErrorCode.NOT_MEMBER,
             "You are not a member of this baby profile.",
         )
-    if membership["role"] == "owner" and count_active_owners(baby_profile_id) <= 1:
+    if outcome is OwnLeaveOutcome.SOLE_OWNER:
         raise MemberLifecycleError(
             ErrorCode.SOLE_OWNER_CANNOT_LEAVE,
-            "You are the only owner. Add a co-owner, delete the baby profile, "
-            "or delete your account to leave.",
-        )
-    if not soft_remove_membership(baby_profile_id, firebase_uid):
-        raise MemberLifecycleError(
-            ErrorCode.NOT_MEMBER,
-            "You are not a member of this baby profile.",
+            "You are the only owner. Add a co-owner and leave, delete the baby "
+            "profile, or delete your account.",
         )
     insert_activity_event(
         baby_profile_id,

@@ -56,6 +56,8 @@ def list_events_route(
     past: bool = Query(default=False),
     offset: int = Query(default=0, ge=0),
     limit: int | None = Query(default=None, ge=1, le=100),
+    starts_from: datetime | None = Query(default=None),
+    starts_before: datetime | None = Query(default=None),
     user: AppUser = Depends(current_app_user),
 ) -> dict[str, Any]:
     try:
@@ -67,6 +69,8 @@ def list_events_route(
             past=past,
             offset=offset,
             limit=limit,
+            starts_from=starts_from,
+            starts_before=starts_before,
         )
     except Exception as exc:
         raise map_domain_errors(exc) from exc

@@ -8,7 +8,6 @@ import '../../../core/time/app_date_time.dart';
 import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/widgets/app_empty_state.dart';
-import '../../../core/widgets/app_section_caps_label.dart';
 import '../../../core/widgets/async_tab_body.dart';
 import '../../../core/widgets/calendar_ai_suggestion_banner.dart';
 import '../../../core/theme/app_colors.dart';
@@ -25,8 +24,8 @@ import '../domain/calendar_event_lists.dart';
 import '../domain/calendar_routes.dart';
 import 'calendar_display.dart';
 import 'event_form_screen.dart';
-import 'widgets/calendar_grouped_events_card.dart';
 import 'widgets/calendar_past_events_sheet.dart';
+import 'widgets/calendar_today_upcoming_sections.dart';
 import 'widgets/calendar_selected_day_section.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../core/data/parallel_requests.dart';
@@ -43,8 +42,8 @@ class _CalendarScreenState extends State<CalendarScreen>
   BabySummary? _baby;
   DateTime _visibleMonth = DateTime(DateTime.now().year, DateTime.now().month);
   List<CalendarEvent> _monthEvents = [];
-  List<CalendarEvent> _today = [];
-  List<CalendarEvent> _upcoming = [];
+  CalendarEventBuckets _buckets =
+      const CalendarEventBuckets(today: [], upcoming: []);
   DateTime? _selectedDay;
   var _loading = true;
   var _monthRefreshing = false;
@@ -100,8 +99,7 @@ class _CalendarScreenState extends State<CalendarScreen>
         setState(() {
           _baby = null;
           _monthEvents = [];
-          _today = [];
-          _upcoming = [];
+          _buckets = const CalendarEventBuckets(today: [], upcoming: []);
           _loading = false;
           _monthRefreshing = false;
         });
@@ -133,7 +131,7 @@ class _CalendarScreenState extends State<CalendarScreen>
         upcomingFuture,
         currentMonthFuture,
       );
-      final partition = partitionCalendarListEvents(
+      final buckets = partitionCalendarListEvents(
         monthEventsForToday: monthForToday,
         upcomingFromApi: upcomingApi,
         now: now,
@@ -143,8 +141,7 @@ class _CalendarScreenState extends State<CalendarScreen>
         _baby = baby;
         _visibleMonth = targetMonth;
         _monthEvents = month;
-        _today = partition.today;
-        _upcoming = partition.upcoming;
+        _buckets = buckets;
         _loading = false;
         _monthRefreshing = false;
       });
@@ -211,8 +208,6 @@ class _CalendarScreenState extends State<CalendarScreen>
   }
 
   bool get _isOwner => _baby?.role == 'owner';
-
-  List<CalendarEvent> get _groupedUpcoming => [..._today, ..._upcoming];
 
   Set<int> _eventDays() {
     return _monthEvents
@@ -350,32 +345,23 @@ class _CalendarScreenState extends State<CalendarScreen>
                   ),
                 )
               else ...[
+                // The Upcoming header (with Past) stays visible even with no
+                // current events, so past events remain reachable.
                 SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      AppMetrics.horizontalPadding,
-                      AppSpacing.sm,
-                      AppMetrics.horizontalPadding,
-                      AppSpacing.sm,
-                    ),
-                    child: Row(
-                      children: [
-                        AppSectionCapsLabel(AppLocalizations.of(context)!.labelUpcoming),
-                        const Spacer(),
-                        TextButton(
-                          onPressed: _baby == null
-                              ? null
-                              : () => showCalendarPastEventsSheet(
-                                  context,
-                                  babyId: _baby!.id,
-                                ),
-                          child: Text(AppLocalizations.of(context)!.calendarPastButton),
-                        ),
-                      ],
+                  child: CalendarTodayUpcomingSections(
+                    buckets: _buckets,
+                    upcomingHeaderTrailing: TextButton(
+                      onPressed: _baby == null
+                          ? null
+                          : () => showCalendarPastEventsSheet(
+                                context,
+                                babyId: _baby!.id,
+                              ),
+                      child: Text(AppLocalizations.of(context)!.calendarPastButton),
                     ),
                   ),
                 ),
-                if (_groupedUpcoming.isEmpty)
+                if (_buckets.isEmpty)
                   SliverFillRemaining(
                     hasScrollBody: false,
                     child: Padding(
@@ -391,17 +377,16 @@ class _CalendarScreenState extends State<CalendarScreen>
                           icon: Icons.event_outlined,
                           title: l10n.emptyEventsYet,
                           message: _isOwner
-                              ? AppLocalizations.of(context)!.calendarAddUltrasoundsShowersOrThe
-                              : AppLocalizations.of(context)!.calendarNothingOnTheCalendarYet,
-                          actionLabel: _isOwner ? AppLocalizations.of(context)!.calendarAddEventCta : null,
+                              ? AppLocalizations.of(context)!
+                                  .calendarAddUltrasoundsShowersOrThe
+                              : AppLocalizations.of(context)!
+                                  .calendarNothingOnTheCalendarYet,
+                          actionLabel:
+                              _isOwner ? AppLocalizations.of(context)!.calendarAddEventCta : null,
                           onAction: _isOwner ? _openCreateEvent : null,
                         ),
                       ),
                     ),
-                  )
-                else
-                  SliverToBoxAdapter(
-                    child: CalendarGroupedEventsCard(events: _groupedUpcoming),
                   ),
               ],
               const SliverToBoxAdapter(child: SizedBox(height: 96)),

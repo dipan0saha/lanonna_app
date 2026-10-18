@@ -35,6 +35,10 @@ class BabySummary {
 
   bool get isBorn => lifecycle == BabyLifecycle.born;
 
+  /// Sole active owner (an owner the server says cannot leave): offered
+  /// **Delete baby profile** instead of Leave (FR-BABY-007).
+  bool get canDeleteProfile => role == 'owner' && !canLeave;
+
   factory BabySummary.fromJson(Map<String, dynamic> json) {
     return BabySummary(
       id: json['id']?.toString() ?? '',

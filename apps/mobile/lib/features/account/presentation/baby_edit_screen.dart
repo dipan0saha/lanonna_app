@@ -23,6 +23,8 @@ import '../../onboarding/presentation/widgets/onboarding_fields.dart';
 import '../../onboarding/presentation/widgets/onboarding_prototype_widgets.dart';
 import '../../onboarding/presentation/widgets/onboarding_typography.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../core/theme/app_button_styles.dart';
+import '../../baby/presentation/delete_baby_profile_flow.dart';
 
 class BabyEditScreen extends StatefulWidget {
   const BabyEditScreen({super.key, required this.babyId});
@@ -228,6 +230,21 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
             onPressed: () => context.pop(),
             child: Text(AppLocalizations.of(context)!.actionCancel),
           ),
+          if (_baby?.canDeleteProfile ?? false) ...[
+            const SizedBox(height: AppSpacing.xxl),
+            OutlinedButton(
+              style: AppButtonStyles.outlinedDestructive,
+              onPressed: _saving
+                  ? null
+                  : () async {
+                      await deleteBabyProfileWithConfirmation(
+                        context,
+                        _baby!,
+                      );
+                    },
+              child: Text(l10n.deleteBabyProfileAction),
+            ),
+          ],
         ],
       ),
     );

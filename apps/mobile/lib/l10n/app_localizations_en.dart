@@ -368,11 +368,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get memberLeaveAction => 'Leave';
 
   @override
-  String get memberSoleOwnerLeaveTitle => 'Can\'t leave yet';
-
-  @override
   String get memberSoleOwnerLeaveBody =>
-      'You are the only owner. Add a co-owner, delete this baby profile, or delete your account to leave.';
+      'You are the only owner. Add a co-owner and leave, delete the baby profile, or delete your account.';
 
   @override
   String get membershipEndedMessage =>
@@ -383,6 +380,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get memberLeftSuccess => 'You left this baby profile.';
+
+  @override
+  String get deleteBabyProfileAction => 'Delete baby profile';
+
+  @override
+  String get deleteBabyProfileConfirmTitle => 'Delete this baby profile?';
+
+  @override
+  String deleteBabyProfileConfirmBody(String babyName) {
+    return 'This permanently deletes $babyName for everyone who follows this profile. Photos, calendar events, registry items, and other data will no longer be available in the app.';
+  }
+
+  @override
+  String get deleteBabyProfileConfirmAction => 'Delete profile';
+
+  @override
+  String deleteBabyProfileFinalTitle(String babyName) {
+    return 'Delete $babyName permanently?';
+  }
+
+  @override
+  String get deleteBabyProfileFinalBody =>
+      'Followers will lose access immediately. This cannot be undone.';
+
+  @override
+  String get deleteBabyProfileSuccess => 'Baby profile deleted.';
 
   @override
   String get appTitle => 'La Nonna';
@@ -2199,6 +2222,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorLastOwner =>
       'You can\'t remove the last owner of this baby profile.';
+
+  @override
+  String get errorCannotDeleteSharedBaby =>
+      'This baby profile has a co-owner. Leave the profile instead of deleting it.';
 
   @override
   String get errorUseLeaveProfile => 'To remove yourself, use Leave profile.';

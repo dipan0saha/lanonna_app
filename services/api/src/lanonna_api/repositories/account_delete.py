@@ -4,10 +4,8 @@ import uuid
 
 from lanonna_api.db import get_connection
 from lanonna_api.repositories.active_participants import purge_participation
-from lanonna_api.repositories.memberships import (
-    soft_remove_all_memberships_for_user,
-    soft_remove_memberships_on_babies,
-)
+from lanonna_api.repositories.baby_profile_delete import soft_delete_baby_profiles
+from lanonna_api.repositories.memberships import soft_remove_all_memberships_for_user
 
 
 def account_is_tombstoned(firebase_uid: str) -> bool:
@@ -71,23 +69,7 @@ def soft_delete_account_rows(
             (firebase_uid,),
         )
         if sole_owned:
-            conn.execute(
-                """
-                UPDATE invitations
-                SET status = 'revoked', updated_at = now()
-                WHERE baby_profile_id = ANY(%s::uuid[]) AND status = 'pending'
-                """,
-                (sole_owned,),
-            )
-            soft_remove_memberships_on_babies(sole_owned, conn=conn)
-            conn.execute(
-                """
-                UPDATE baby_profiles
-                SET deleted_at = now(), updated_at = now()
-                WHERE id = ANY(%s::uuid[]) AND deleted_at IS NULL
-                """,
-                (sole_owned,),
-            )
+            soft_delete_baby_profiles(sole_owned, conn=conn)
         soft_remove_all_memberships_for_user(firebase_uid, conn=conn)
         purge_participation(conn, firebase_uid)
         conn.execute(
