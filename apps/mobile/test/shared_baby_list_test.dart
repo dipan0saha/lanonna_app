@@ -111,6 +111,18 @@ void main() {
     expect(api.babyListCalls, 3);
   });
 
+  test('an empty baby list clears the remembered selection', () async {
+    await home.resolveSelectedBaby(store);
+    expect(store.hasResolvedSelectedBaby, isTrue);
+
+    api.babyIds = [];
+    babyList.invalidate();
+    expect(await home.resolveSelectedBaby(store), isNull);
+    expect(store.selectedBabyId, isNull);
+    expect(store.selectedBabyName, isNull);
+    expect(store.hasResolvedSelectedBaby, isFalse);
+  });
+
   test('pull-to-refresh refetches the list on the next read', () async {
     await home.listBabies();
     home.refreshBabiesOnNextRead();
