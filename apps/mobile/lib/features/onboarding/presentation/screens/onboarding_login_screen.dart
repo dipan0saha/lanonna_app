@@ -25,7 +25,6 @@ import '../widgets/forgot_password_dialog.dart';
 import '../widgets/biometric_sign_in_button.dart';
 import '../widgets/onboarding_scaffold.dart';
 import '../widgets/onboarding_typography.dart';
-import '../../../account/data/account_repository.dart';
 
 class OnboardingLoginScreen extends StatefulWidget {
   const OnboardingLoginScreen({super.key});
