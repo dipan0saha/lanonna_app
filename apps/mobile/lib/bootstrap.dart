@@ -82,9 +82,9 @@ Future<Widget> bootstrapLaNonnaApp({
   );
   final biometricSignInService = BiometricSignInService(
     credentials: BiometricCredentialRepository(apiClient),
-    store: BiometricSignInStore(),
+    store: BiometricSignInStore(prefs),
     authRepository: authRepository,
-  );
+  )..bindAuthState();
   // One baby list for the whole app; repositories that change memberships
   // invalidate it.
   final babyList = BabyListCache(

@@ -57,8 +57,6 @@ dependencies:
   webview_flutter: ^4.13.0
   local_auth: ^2.3.0
   biometric_signature: ^13.2.0
-  flutter_secure_storage: ^9.2.4
-  uuid: ^4.5.1
   flutter_svg: ^2.3.0
 
 dev_dependencies:

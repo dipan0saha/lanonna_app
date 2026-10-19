@@ -1,106 +1,75 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'dart:math';
 
-const _credentialIdKey = 'biometric_sign_in_credential_id';
-const _firebaseUidKey = 'biometric_sign_in_firebase_uid';
-const _accountHintKey = 'biometric_sign_in_account_hint';
+import 'package:shared_preferences/shared_preferences.dart';
 
-/// Local enrollment marker (no secrets — credential id + display hint only).
+/// This install's biometric sign-in enrollment.
+///
+/// Holds no secret: the private key never leaves the Keystore / Secure
+/// Enclave, and the credential id is useless without it. Kept across Log out
+/// so the login screen can offer biometric sign-in.
 class BiometricSignInStore {
-  BiometricSignInStore({FlutterSecureStorage? storage})
-      : _storage = storage ?? const FlutterSecureStorage();
+  BiometricSignInStore(this._prefs);
 
-  @visibleForTesting
-  factory BiometricSignInStore.memory(Map<String, String> data) {
-    return BiometricSignInStore(storage: _MemorySecureStorage(data));
-  }
+  final SharedPreferences _prefs;
 
-  final FlutterSecureStorage _storage;
+  static const _credentialIdKey = 'biometric_sign_in_credential_id';
+  static const _firebaseUidKey = 'biometric_sign_in_firebase_uid';
+  static const _displayNameKey = 'biometric_sign_in_display_name';
+  static const _deviceIdKey = 'biometric_sign_in_device_id';
 
-  Future<BiometricSignInEnrollment?> read() async {
-    final credentialId = await _storage.read(key: _credentialIdKey);
-    if (credentialId == null || credentialId.isEmpty) return null;
+  BiometricSignInEnrollment? read() {
+    final credentialId = _prefs.getString(_credentialIdKey);
+    final firebaseUid = _prefs.getString(_firebaseUidKey);
+    if (credentialId == null || firebaseUid == null) return null;
     return BiometricSignInEnrollment(
       credentialId: credentialId,
-      firebaseUid: await _storage.read(key: _firebaseUidKey),
-      accountHint: await _storage.read(key: _accountHintKey),
+      firebaseUid: firebaseUid,
+      displayName: _prefs.getString(_displayNameKey),
     );
   }
 
-  Future<void> save({
-    required String credentialId,
-    required String firebaseUid,
-    required String accountHint,
-  }) async {
-    await _storage.write(key: _credentialIdKey, value: credentialId);
-    await _storage.write(key: _firebaseUidKey, value: firebaseUid);
-    await _storage.write(key: _accountHintKey, value: accountHint);
+  Future<void> save(BiometricSignInEnrollment enrollment) async {
+    await _prefs.setString(_credentialIdKey, enrollment.credentialId);
+    await _prefs.setString(_firebaseUidKey, enrollment.firebaseUid);
+    final name = enrollment.displayName;
+    if (name == null || name.isEmpty) {
+      await _prefs.remove(_displayNameKey);
+    } else {
+      await _prefs.setString(_displayNameKey, name);
+    }
   }
 
   Future<void> clear() async {
-    await _storage.delete(key: _credentialIdKey);
-    await _storage.delete(key: _firebaseUidKey);
-    await _storage.delete(key: _accountHintKey);
+    await _prefs.remove(_credentialIdKey);
+    await _prefs.remove(_firebaseUidKey);
+    await _prefs.remove(_displayNameKey);
+  }
+
+  /// Random per-install id, so re-enrolling replaces this install's key on the
+  /// server instead of adding another.
+  Future<String> deviceId() async {
+    final existing = _prefs.getString(_deviceIdKey);
+    if (existing != null) return existing;
+    final random = Random.secure();
+    final id = List.generate(
+      16,
+      (_) => random.nextInt(256),
+    ).map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+    await _prefs.setString(_deviceIdKey, id);
+    return id;
   }
 }
 
 class BiometricSignInEnrollment {
   const BiometricSignInEnrollment({
     required this.credentialId,
-    this.firebaseUid,
-    this.accountHint,
+    required this.firebaseUid,
+    this.displayName,
   });
 
   final String credentialId;
-  final String? firebaseUid;
-  final String? accountHint;
-}
+  final String firebaseUid;
 
-class _MemorySecureStorage extends FlutterSecureStorage {
-  _MemorySecureStorage(this._data);
-
-  final Map<String, String> _data;
-
-  @override
-  Future<String?> read({
-    required String key,
-    IOSOptions? iOptions,
-    AndroidOptions? aOptions,
-    LinuxOptions? lOptions,
-    WebOptions? webOptions,
-    MacOsOptions? mOptions,
-    WindowsOptions? wOptions,
-  }) async =>
-      _data[key];
-
-  @override
-  Future<void> write({
-    required String key,
-    required String? value,
-    IOSOptions? iOptions,
-    AndroidOptions? aOptions,
-    LinuxOptions? lOptions,
-    WebOptions? webOptions,
-    MacOsOptions? mOptions,
-    WindowsOptions? wOptions,
-  }) async {
-    if (value == null) {
-      _data.remove(key);
-    } else {
-      _data[key] = value;
-    }
-  }
-
-  @override
-  Future<void> delete({
-    required String key,
-    IOSOptions? iOptions,
-    AndroidOptions? aOptions,
-    LinuxOptions? lOptions,
-    WebOptions? webOptions,
-    MacOsOptions? mOptions,
-    WindowsOptions? wOptions,
-  }) async {
-    _data.remove(key);
-  }
+  /// First name shown on the login screen ("Continue as …"); never the email.
+  final String? displayName;
 }

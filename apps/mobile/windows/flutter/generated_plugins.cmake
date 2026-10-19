@@ -4,6 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   app_links
+  biometric_signature
   connectivity_plus
   file_selector_windows
   firebase_app_check

@@ -143,7 +143,7 @@ class ApiClient {
     final uri = Uri.parse('${AppConfig.apiBaseUrl}$path');
     final headers = {'Content-Type': 'application/json'};
     if (includeAppCheck && _appCheckTokenProvider != null) {
-      final appCheck = await _appCheckTokenProvider!().timeout(_timeout);
+      final appCheck = await _appCheckTokenProvider().timeout(_timeout);
       if (appCheck != null && appCheck.isNotEmpty) {
         headers['X-Firebase-AppCheck'] = appCheck;
       }

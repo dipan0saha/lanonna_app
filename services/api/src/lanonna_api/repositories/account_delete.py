@@ -5,6 +5,7 @@ import uuid
 from lanonna_api.db import get_connection
 from lanonna_api.repositories.active_participants import purge_participation
 from lanonna_api.repositories.baby_profile_delete import soft_delete_baby_profiles
+from lanonna_api.repositories.biometric_credentials import revoke_all_for_user
 from lanonna_api.repositories.memberships import soft_remove_all_memberships_for_user
 
 
@@ -72,6 +73,7 @@ def soft_delete_account_rows(
             soft_delete_baby_profiles(sole_owned, conn=conn)
         soft_remove_all_memberships_for_user(firebase_uid, conn=conn)
         purge_participation(conn, firebase_uid)
+        revoke_all_for_user(firebase_uid, conn=conn)
         conn.execute(
             """
             UPDATE app_users

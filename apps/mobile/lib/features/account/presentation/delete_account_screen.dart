@@ -193,7 +193,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
     try {
       await context.read<AccountRepository>().deleteAccount();
       if (!mounted) return;
-      await context.read<BiometricSignInService>().revokeEnrollment(deleteKeys: true);
+      await context.read<BiometricSignInService>().clearLocalEnrollment();
       if (!mounted) return;
       await context.read<SessionCleanup>().clearLocalUserData();
       if (!mounted) return;

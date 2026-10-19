@@ -7,7 +7,6 @@ import '../../../../core/api/api_error_message.dart';
 import '../../../../core/auth/auth_error_message.dart';
 import '../../../../core/auth/auth_repository.dart';
 import '../../../../core/auth/biometric_sign_in_service.dart';
-import '../../../../core/auth/biometric_sign_in_store.dart';
 import '../../../../core/validation/form_validators.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -22,7 +21,6 @@ import '../widgets/onboarding_buttons.dart';
 import '../widgets/onboarding_logo_mark.dart';
 import '../widgets/onboarding_fields.dart';
 import '../widgets/forgot_password_dialog.dart';
-import '../widgets/biometric_sign_in_button.dart';
 import '../widgets/onboarding_scaffold.dart';
 import '../widgets/onboarding_typography.dart';
 
@@ -41,7 +39,6 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
   bool _busy = false;
   var _synced = false;
   var _validateOnInteraction = false;
-  BiometricSignInEnrollment? _biometricEnrollment;
   var _biometricBusy = false;
 
   AutovalidateMode get _autovalidateMode => _validateOnInteraction
@@ -78,10 +75,6 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
         await coordinator.saveOnboardingPath(resume.path);
       }
       if (!mounted) return;
-      final biometric = context.read<BiometricSignInService>();
-      final enrollment = await biometric.localEnrollment();
-      if (!mounted) return;
-      setState(() => _biometricEnrollment = enrollment);
       final prefill = flow.takeLoginPrefillEmail();
       if (prefill != null && prefill.isNotEmpty) {
         _emailController.text = prefill;
@@ -112,18 +105,10 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
       _error = null;
     });
     try {
-      final auth = context.read<AuthRepository>();
-      await auth.signInWithEmail(
+      await context.read<AuthRepository>().signInWithEmail(
         _emailController.text,
         _passwordController.text,
       );
-      if (!mounted) return;
-      final user = auth.currentUser;
-      if (user != null) {
-        await context.read<BiometricSignInService>().onInteractiveSignInCompleted(
-          user,
-        );
-      }
       if (!mounted) return;
       await navigateAfterOnboardingAuth(
         context,
@@ -174,15 +159,7 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
       _error = null;
     });
     try {
-      final auth = context.read<AuthRepository>();
-      await auth.signInWithGoogle();
-      if (!mounted) return;
-      final user = auth.currentUser;
-      if (user != null) {
-        await context.read<BiometricSignInService>().onInteractiveSignInCompleted(
-          user,
-        );
-      }
+      await context.read<AuthRepository>().signInWithGoogle();
       if (!mounted) return;
       await navigateAfterOnboardingAuth(
         context,
@@ -216,8 +193,8 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
     });
     final l10n = AppLocalizations.of(context)!;
     try {
-      await context.read<BiometricSignInService>().signInWithBiometrics(
-        promptMessage: l10n.biometricUnlockReason,
+      await context.read<BiometricSignInService>().signIn(
+        promptMessage: l10n.biometricSignInReason,
       );
       if (!mounted) return;
       await navigateAfterOnboardingAuth(
@@ -225,10 +202,16 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
         isSignUp: false,
         usedOAuth: false,
       );
-    } catch (_) {
-      if (mounted) {
-        setState(() => _error = l10n.biometricSignInFailed);
+    } on BiometricSignInFailure catch (e) {
+      if (mounted && e.reason != BiometricSignInFailureReason.cancelled) {
+        setState(() => _error = e.userMessage(l10n));
       }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        setState(() => _error = authErrorMessage(e, l10n, flow: AuthFlow.signIn));
+      }
+    } catch (e) {
+      if (mounted) setState(() => _error = apiErrorMessage(l10n, e));
     } finally {
       if (mounted) setState(() => _biometricBusy = false);
     }
@@ -238,6 +221,8 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final coordinator = context.watch<OnboardingCoordinator>();
+    // Re-read each build: a failed sign-in can clear a dead enrollment.
+    final biometricEnrollment = context.read<BiometricSignInService>().enrollment;
 
     return OnboardingScaffold(
       pinBottomCta: false,
@@ -253,18 +238,18 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
           const SizedBox(height: 8),
           OnboardingSupportText(_loginSubtext(coordinator)),
           const SizedBox(height: 24),
+          if (biometricEnrollment != null) ...[
+            OnboardingBiometricButton(
+              onPressed: _busy ? null : _signInBiometric,
+              isLoading: _biometricBusy,
+              displayName: biometricEnrollment.displayName,
+            ),
+            const SizedBox(height: 12),
+          ],
           OnboardingGoogleButton(
-            onPressed: _busy ? null : _signInGoogle,
+            onPressed: (_busy || _biometricBusy) ? null : _signInGoogle,
             isLoading: _busy,
           ),
-          if (_biometricEnrollment != null) ...[
-            const SizedBox(height: 12),
-            BiometricSignInButton(
-              onPressed: (_busy || _biometricBusy) ? null : _signInBiometric,
-              isLoading: _biometricBusy,
-              accountHint: _biometricEnrollment!.accountHint,
-            ),
-          ],
           OnboardingDivider(label: l10n.labelSignEmail),
           if (_error != null) ...[
             Text(

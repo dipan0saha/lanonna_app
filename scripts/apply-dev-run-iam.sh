@@ -41,5 +41,4 @@ gcloud iam service-accounts add-iam-policy-binding "lanonna-worker@${PROJECT}.ia
   --role="roles/iam.serviceAccountTokenCreator" \
   --quiet
 
-# API custom tokens for biometric sign-in use roles/firebaseauth.admin (Terraform api_firebase_auth_admin).
 echo "Worker Run IAM + Pub/Sub and self token creator applied."

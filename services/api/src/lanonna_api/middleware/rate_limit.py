@@ -10,7 +10,8 @@ from starlette.responses import JSONResponse, Response
 
 from lanonna_api.domain.errors import ErrorCode, error_detail
 
-# Per-IP sliding window for sensitive routes (invite batch + photo init).
+# Per-IP sliding window for sensitive routes (invite batch, photo init and the
+# unauthenticated biometric sign-in routes).
 # In-process only: each Cloud Run instance has its own bucket (effective limit scales
 # with instance count). See docs/engineering/development.md § API rate limiting.
 _LIMITED_PREFIXES = (

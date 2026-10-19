@@ -7,43 +7,39 @@ import 'package:lanonna/core/auth/biometric_credential_repository.dart';
 import 'package:lanonna/core/auth/biometric_sign_in_service.dart';
 import 'package:lanonna/core/auth/biometric_sign_in_store.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
+import 'package:lanonna/features/invitations/presentation/invite_flow_state.dart';
 import 'package:lanonna/features/onboarding/data/onboarding_repository.dart';
 import 'package:lanonna/features/onboarding/data/onboarding_storage.dart';
 import 'package:lanonna/features/onboarding/domain/onboarding_routes.dart';
 import 'package:lanonna/features/onboarding/presentation/onboarding_coordinator.dart';
-import 'package:lanonna/features/invitations/presentation/invite_flow_state.dart';
 import 'package:lanonna/features/onboarding/presentation/screens/onboarding_login_screen.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class _StubBiometricSignInService extends BiometricSignInService {
-  _StubBiometricSignInService(this._enrollment)
-      : super(
-          credentials: BiometricCredentialRepository(
-            ApiClient(idTokenProvider: () async => null),
-          ),
-          store: BiometricSignInStore(),
-          authRepository: AuthRepository(),
-        );
-
-  final BiometricSignInEnrollment? _enrollment;
-
+class _FakeAuth implements AuthRepository {
   @override
-  Future<BiometricSignInEnrollment?> localEnrollment() async => _enrollment;
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 Future<void> _pumpLogin(
-  WidgetTester tester,
-  BiometricSignInService biometricService,
-) async {
+  WidgetTester tester, {
+  BiometricSignInEnrollment? enrollment,
+}) async {
   SharedPreferences.setMockInitialValues({});
-  final storage = OnboardingStorage(await SharedPreferences.getInstance());
+  final prefs = await SharedPreferences.getInstance();
+  final store = BiometricSignInStore(prefs);
+  if (enrollment != null) await store.save(enrollment);
+  final api = ApiClient(idTokenProvider: () async => null);
+  final auth = _FakeAuth();
+  final biometric = BiometricSignInService(
+    credentials: BiometricCredentialRepository(api),
+    store: store,
+    authRepository: auth,
+  );
   final coordinator = OnboardingCoordinator(
-    storage: storage,
-    repository: OnboardingRepository(
-      ApiClient(idTokenProvider: () async => null),
-    ),
+    storage: OnboardingStorage(prefs),
+    repository: OnboardingRepository(api),
   );
   await coordinator.hydrate();
 
@@ -52,7 +48,7 @@ Future<void> _pumpLogin(
     routes: [
       GoRoute(
         path: OnboardingRoutes.login,
-        builder: (_, __) => const OnboardingLoginScreen(),
+        builder: (_, _) => const OnboardingLoginScreen(),
       ),
     ],
   );
@@ -62,8 +58,8 @@ Future<void> _pumpLogin(
       providers: [
         ChangeNotifierProvider<OnboardingCoordinator>.value(value: coordinator),
         ChangeNotifierProvider<InviteFlowState>.value(value: InviteFlowState()),
-        Provider<BiometricSignInService>.value(value: biometricService),
-        Provider<AuthRepository>.value(value: AuthRepository()),
+        Provider<BiometricSignInService>.value(value: biometric),
+        Provider<AuthRepository>.value(value: auth),
       ],
       child: MaterialApp.router(
         theme: AppTheme.light,
@@ -73,28 +69,30 @@ Future<void> _pumpLogin(
       ),
     ),
   );
-  await tester.pump();
-  await tester.pump();
+  await tester.pumpAndSettle();
 }
 
 void main() {
-  testWidgets('login shows biometric CTA when device enrolled', (tester) async {
-    final biometric = _StubBiometricSignInService(
-      const BiometricSignInEnrollment(
+  testWidgets('login offers biometric sign-in for the enrolled account', (
+    tester,
+  ) async {
+    await _pumpLogin(
+      tester,
+      enrollment: const BiometricSignInEnrollment(
         credentialId: 'cred',
         firebaseUid: 'uid',
-        accountHint: 'a***@example.com',
+        displayName: 'Ana',
       ),
     );
-    await _pumpLogin(tester, biometric);
-    await tester.pumpAndSettle();
     expect(find.byKey(const Key('biometric_sign_in_button')), findsOneWidget);
+    expect(find.text('Sign in with biometrics'), findsOneWidget);
+    expect(find.text('Continue as Ana'), findsOneWidget);
   });
 
-  testWidgets('login hides biometric CTA without enrollment', (tester) async {
-    final biometric = _StubBiometricSignInService(null);
-    await _pumpLogin(tester, biometric);
-    await tester.pumpAndSettle();
+  testWidgets('login hides biometric sign-in without an enrollment', (
+    tester,
+  ) async {
+    await _pumpLogin(tester);
     expect(find.byKey(const Key('biometric_sign_in_button')), findsNothing);
   });
 }

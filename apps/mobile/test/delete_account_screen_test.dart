@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/auth/auth_repository.dart';
+import 'package:lanonna/core/auth/biometric_sign_in_service.dart';
 import 'package:lanonna/core/auth/session_cleanup.dart';
 import 'package:lanonna/features/account/data/account_repository.dart';
 import 'package:lanonna/features/account/presentation/delete_account_screen.dart';
@@ -20,6 +21,13 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _FakeFirebaseAuth extends Fake implements FirebaseAuth {}
+
+class _Biometric extends Fake implements BiometricSignInService {
+  var cleared = 0;
+
+  @override
+  Future<void> clearLocalEnrollment() async => cleared++;
+}
 
 class _Auth extends AuthRepository {
   _Auth({this.password = false, this.google = false})
@@ -100,6 +108,7 @@ Future<void> _pump(
   required _Accounts accounts,
   required _Auth auth,
   required _Cleanup cleanup,
+  _Biometric? biometric,
 }) async {
   final router = GoRouter(
     initialLocation: '/account/delete',
@@ -121,6 +130,7 @@ Future<void> _pump(
         Provider<AccountRepository>.value(value: accounts),
         Provider<AuthRepository>.value(value: auth),
         Provider<SessionCleanup>.value(value: cleanup),
+        Provider<BiometricSignInService>.value(value: biometric ?? _Biometric()),
       ],
       child: MaterialApp.router(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -187,7 +197,14 @@ void main() {
     );
     final auth = _Auth();
     final cleanup = _Cleanup(prefs);
-    await _pump(tester, accounts: accounts, auth: auth, cleanup: cleanup);
+    final biometric = _Biometric();
+    await _pump(
+      tester,
+      accounts: accounts,
+      auth: auth,
+      cleanup: cleanup,
+      biometric: biometric,
+    );
 
     await tester.tap(find.text('Delete my account'));
     await tester.pumpAndSettle();
@@ -196,6 +213,7 @@ void main() {
 
     expect(accounts.deletes, 1);
     expect(cleanup.cleared, isTrue);
+    expect(biometric.cleared, 1);
     expect(auth.signOuts, 1);
     expect(find.text('signed out'), findsOneWidget);
   });

@@ -1,3 +1,5 @@
+"""SQL for device-bound biometric sign-in credentials and their challenges."""
+
 from __future__ import annotations
 
 import secrets
@@ -7,7 +9,7 @@ from typing import Any
 
 from lanonna_api.db import get_connection
 
-CHALLENGE_TTL_SECONDS = 120
+CHALLENGE_TTL = timedelta(seconds=120)
 NONCE_BYTES = 32
 
 
@@ -17,164 +19,124 @@ def register_credential(
     public_key_pem: str,
     algorithm: str,
 ) -> dict[str, Any]:
-    device_id = device_id.strip()
-    if not device_id:
-        raise ValueError("device_id required")
-    public_key_pem = public_key_pem.strip()
-    if not public_key_pem:
-        raise ValueError("public_key_pem required")
-    algorithm = algorithm.strip()
-    if not algorithm:
-        raise ValueError("algorithm required")
-    now = datetime.now(timezone.utc)
-    credential_id = uuid.uuid4()
+    """Store a new public key; the account's previous key on this install is revoked."""
     with get_connection() as conn:
         with conn.transaction():
             conn.execute(
                 """
                 UPDATE biometric_credentials
-                SET revoked_at = %s
-                WHERE device_id = %s
+                SET revoked_at = now()
+                WHERE firebase_uid = %s
+                  AND device_id = %s
                   AND revoked_at IS NULL
                 """,
-                (now, device_id),
+                (firebase_uid, device_id),
             )
-            conn.execute(
+            row = conn.execute(
                 """
                 INSERT INTO biometric_credentials (
-                    id, firebase_uid, device_id, public_key_pem, algorithm, created_at
+                    firebase_uid, device_id, public_key_pem, algorithm
                 )
-                VALUES (%s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s)
+                RETURNING id, created_at
                 """,
-                (
-                    credential_id,
-                    firebase_uid,
-                    device_id,
-                    public_key_pem,
-                    algorithm,
-                    now,
-                ),
-            )
-    return {
-        "id": str(credential_id),
-        "created_at": now.isoformat(),
-    }
+                (firebase_uid, device_id, public_key_pem, algorithm),
+            ).fetchone()
+    return {"id": str(row["id"]), "created_at": row["created_at"].isoformat()}
 
 
-def revoke_credential(firebase_uid: str, credential_id: str) -> bool:
-    now = datetime.now(timezone.utc)
+def revoke_all_for_user(firebase_uid: str, *, conn: Any | None = None) -> int:
+    sql = """
+        UPDATE biometric_credentials
+        SET revoked_at = now()
+        WHERE firebase_uid = %s
+          AND revoked_at IS NULL
+    """
+    if conn is not None:
+        return conn.execute(sql, (firebase_uid,)).rowcount or 0
+    with get_connection() as own:
+        return own.execute(sql, (firebase_uid,)).rowcount or 0
+
+
+def revoke_credential(credential_id: uuid.UUID) -> None:
     with get_connection() as conn:
-        row = conn.execute(
+        conn.execute(
             """
             UPDATE biometric_credentials
-            SET revoked_at = %s
+            SET revoked_at = now()
             WHERE id = %s
-              AND firebase_uid = %s
-              AND revoked_at IS NULL
-            RETURNING id
-            """,
-            (now, credential_id, firebase_uid),
-        ).fetchone()
-    return row is not None
-
-
-def revoke_all_for_user(firebase_uid: str) -> int:
-    now = datetime.now(timezone.utc)
-    with get_connection() as conn:
-        result = conn.execute(
-            """
-            UPDATE biometric_credentials
-            SET revoked_at = %s
-            WHERE firebase_uid = %s
               AND revoked_at IS NULL
             """,
-            (now, firebase_uid),
+            (credential_id,),
         )
-    return result.rowcount or 0
 
 
-def get_active_credential(credential_id: str) -> dict[str, Any] | None:
+def get_live_credential(credential_id: uuid.UUID) -> dict[str, Any] | None:
+    """The credential when it is not revoked and its account is not tombstoned."""
     with get_connection() as conn:
         row = conn.execute(
             """
-            SELECT c.id,
-                   c.firebase_uid,
-                   c.device_id,
-                   c.public_key_pem,
-                   c.algorithm,
-                   c.created_at,
-                   c.revoked_at,
-                   u.deleted_at
+            SELECT c.id, c.firebase_uid, c.public_key_pem, c.algorithm, c.created_at
             FROM biometric_credentials c
             JOIN app_users u ON u.firebase_uid = c.firebase_uid
             WHERE c.id = %s
+              AND c.revoked_at IS NULL
+              AND u.deleted_at IS NULL
             """,
             (credential_id,),
         ).fetchone()
     return dict(row) if row else None
 
 
-def create_challenge(credential_id: str) -> dict[str, Any]:
+def create_challenge(credential_id: uuid.UUID) -> dict[str, Any]:
+    """Issue a fresh nonce; any earlier challenge for this credential stops working."""
     nonce = secrets.token_urlsafe(NONCE_BYTES)
-    challenge_id = uuid.uuid4()
-    expires_at = datetime.now(timezone.utc) + timedelta(seconds=CHALLENGE_TTL_SECONDS)
+    expires_at = datetime.now(timezone.utc) + CHALLENGE_TTL
     with get_connection() as conn:
-        conn.execute(
-            """
-            INSERT INTO biometric_sign_in_challenges (
-                id, credential_id, nonce, expires_at
+        with conn.transaction():
+            conn.execute(
+                "DELETE FROM biometric_sign_in_challenges WHERE credential_id = %s",
+                (credential_id,),
             )
-            VALUES (%s, %s, %s, %s)
-            """,
-            (challenge_id, credential_id, nonce, expires_at),
-        )
+            row = conn.execute(
+                """
+                INSERT INTO biometric_sign_in_challenges (credential_id, nonce, expires_at)
+                VALUES (%s, %s, %s)
+                RETURNING id
+                """,
+                (credential_id, nonce, expires_at),
+            ).fetchone()
     return {
-        "challenge_id": str(challenge_id),
+        "challenge_id": str(row["id"]),
         "nonce": nonce,
         "expires_at": expires_at.isoformat(),
     }
 
 
-def consume_challenge(challenge_id: str, credential_id: str) -> str | None:
-    """Mark challenge used and return nonce if valid."""
-    now = datetime.now(timezone.utc)
+def consume_challenge(challenge_id: uuid.UUID, credential_id: uuid.UUID) -> str | None:
+    """Atomically take the nonce of a live challenge; ``None`` when expired, used or unknown.
+
+    The row is deleted in the same statement, so concurrent requests cannot both
+    receive the nonce and a challenge verifies at most once, pass or fail.
+    """
     with get_connection() as conn:
-        with conn.transaction():
-            row = conn.execute(
-                """
-                SELECT nonce, expires_at, used_at
-                FROM biometric_sign_in_challenges
-                WHERE id = %s
-                  AND credential_id = %s
-                FOR UPDATE
-                """,
-                (challenge_id, credential_id),
-            ).fetchone()
-            if row is None:
-                return None
-            if row["used_at"] is not None:
-                return None
-            if row["expires_at"] < now:
-                return None
-            conn.execute(
-                """
-                UPDATE biometric_sign_in_challenges
-                SET used_at = %s
-                WHERE id = %s
-                """,
-                (now, challenge_id),
-            )
-            return row["nonce"]
+        row = conn.execute(
+            """
+            DELETE FROM biometric_sign_in_challenges
+            WHERE id = %s
+              AND credential_id = %s
+            RETURNING nonce, expires_at > now() AS live
+            """,
+            (challenge_id, credential_id),
+        ).fetchone()
+    if row is None or not row["live"]:
+        return None
+    return row["nonce"]
 
 
-def mark_credential_used(credential_id: str) -> None:
-    now = datetime.now(timezone.utc)
+def mark_credential_used(credential_id: uuid.UUID) -> None:
     with get_connection() as conn:
         conn.execute(
-            """
-            UPDATE biometric_credentials
-            SET last_used_at = %s
-            WHERE id = %s
-            """,
-            (now, credential_id),
+            "UPDATE biometric_credentials SET last_used_at = now() WHERE id = %s",
+            (credential_id,),
         )

@@ -1,22 +1,40 @@
+"""Biometric sign-in after logout: device-bound key, server nonce, custom token.
+
+Enrollment (signed in) stores the public half of a hardware-backed P-256 key
+created by the app's ``biometric_signature`` plugin. Sign-in is two
+unauthenticated, App Check-gated calls: a single-use nonce for a credential,
+then the device's signature over that nonce's UTF-8 bytes. The plugin signs with
+``SHA256withECDSA`` (Android Keystore) / ``ecdsaSignatureMessageX962SHA256``
+(Secure Enclave): an ASN.1 DER signature, sent as standard Base64. A valid
+signature from a live credential of a live account yields a Firebase custom
+token for that account.
+"""
+
 from __future__ import annotations
 
 import base64
 import binascii
 import logging
-from datetime import datetime, timezone
+import uuid
+from enum import StrEnum
 from typing import Any
 
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa
+from cryptography.hazmat.primitives.asymmetric import ec
 from firebase_admin import auth as firebase_auth
 
 from lanonna_api.auth import _ensure_firebase
-from lanonna_api.domain.errors import ErrorCode, ForbiddenError, GoneError, InvalidInputError
+from lanonna_api.domain.errors import (
+    ErrorCode,
+    GoneError,
+    InvalidInputError,
+    UnauthenticatedError,
+)
 from lanonna_api.repositories.biometric_credentials import (
     consume_challenge,
     create_challenge,
-    get_active_credential,
+    get_live_credential,
     mark_credential_used,
     register_credential,
     revoke_all_for_user,
@@ -25,141 +43,118 @@ from lanonna_api.repositories.biometric_credentials import (
 
 logger = logging.getLogger("lanonna.biometric_sign_in")
 
-_ALLOWED_ALGORITHMS = frozenset({"ECDSA_SHA256", "RSA_SHA256"})
+
+class BiometricKeyAlgorithm(StrEnum):
+    ECDSA_P256_SHA256 = "ecdsa_p256_sha256"
+
+
+def _credential_invalid() -> UnauthenticatedError:
+    return UnauthenticatedError(
+        ErrorCode.BIOMETRIC_CREDENTIAL_INVALID,
+        "Biometric credential cannot sign in.",
+    )
 
 
 def enroll_biometric_credential(
     firebase_uid: str,
     device_id: str,
     public_key_pem: str,
-    algorithm: str,
+    algorithm: BiometricKeyAlgorithm,
 ) -> dict[str, Any]:
-    algorithm = algorithm.upper()
-    if algorithm not in _ALLOWED_ALGORITHMS:
-        raise InvalidInputError(
-            ErrorCode.INVALID_REQUEST,
-            "Unsupported biometric signature algorithm.",
-        )
     try:
-        _load_public_key(public_key_pem)
-    except ValueError as exc:
+        key = serialization.load_pem_public_key(public_key_pem.encode("utf-8"))
+    except (ValueError, TypeError) as exc:
+        raise InvalidInputError(ErrorCode.INVALID_REQUEST, "Invalid public key.") from exc
+    if not (
+        isinstance(key, ec.EllipticCurvePublicKey)
+        and isinstance(key.curve, ec.SECP256R1)
+    ):
         raise InvalidInputError(
             ErrorCode.INVALID_REQUEST,
-            "Invalid public key.",
-        ) from exc
-    return register_credential(firebase_uid, device_id, public_key_pem, algorithm)
+            "Biometric key must be EC P-256.",
+        )
+    return register_credential(
+        firebase_uid,
+        device_id.strip(),
+        public_key_pem.strip(),
+        BiometricKeyAlgorithm(algorithm).value,
+    )
 
 
-def issue_biometric_challenge(credential_id: str) -> dict[str, Any]:
-    row = get_active_credential(credential_id)
-    if row is None or row.get("revoked_at") is not None:
-        raise GoneError(ErrorCode.REVOKED, "Biometric credential not found or revoked.")
-    if row.get("deleted_at") is not None:
-        raise GoneError(ErrorCode.USER_DELETED, "Account no longer exists.")
+def issue_biometric_challenge(credential_id: uuid.UUID) -> dict[str, Any]:
+    if get_live_credential(credential_id) is None:
+        logger.info("biometric_challenge_rejected credential=%s", credential_id)
+        raise _credential_invalid()
     return create_challenge(credential_id)
 
 
 def complete_biometric_sign_in(
-    credential_id: str,
-    challenge_id: str,
+    credential_id: uuid.UUID,
+    challenge_id: uuid.UUID,
     signature_b64: str,
 ) -> dict[str, str]:
-    row = get_active_credential(credential_id)
-    if row is None or row.get("revoked_at") is not None:
-        logger.info(
-            "biometric_sign_in_rejected credential=%s reason=revoked_or_missing",
-            credential_id,
+    # Consume first: every attempt burns the nonce, pass or fail.
+    nonce = consume_challenge(challenge_id, credential_id)
+    if nonce is None:
+        raise GoneError(
+            ErrorCode.BIOMETRIC_CHALLENGE_EXPIRED,
+            "Challenge expired or already used.",
         )
-        raise GoneError(ErrorCode.REVOKED, "Biometric credential not found or revoked.")
-    if row.get("deleted_at") is not None:
-        raise GoneError(ErrorCode.USER_DELETED, "Account no longer exists.")
+    row = get_live_credential(credential_id)
+    if row is None:
+        logger.info("biometric_sign_in_rejected credential=%s reason=not_live", credential_id)
+        raise _credential_invalid()
+    if not verify_signature(row["public_key_pem"], nonce, signature_b64):
+        logger.info("biometric_sign_in_rejected credential=%s reason=bad_signature", credential_id)
+        raise _credential_invalid()
 
     firebase_uid = row["firebase_uid"]
     _ensure_firebase()
     try:
         user_record = firebase_auth.get_user(firebase_uid)
     except firebase_auth.UserNotFoundError:
-        raise GoneError(ErrorCode.USER_DELETED, "Account no longer exists.") from None
-
-    tokens_valid_after = user_record.tokens_valid_after_timestamp
-    if tokens_valid_after:
-        created_at: datetime = row["created_at"]
-        if created_at.tzinfo is None:
-            created_at = created_at.replace(tzinfo=timezone.utc)
-        if created_at.timestamp() < tokens_valid_after / 1000.0:
-            revoke_credential(firebase_uid, credential_id)
-            raise ForbiddenError(
-                ErrorCode.REVOKED,
-                "Biometric credential expired after password change.",
-            )
-
-    nonce = consume_challenge(challenge_id, credential_id)
-    if nonce is None:
-        raise GoneError(ErrorCode.EXPIRED, "Challenge expired or already used.")
-
-    if not _verify_signature(
-        row["public_key_pem"],
-        row["algorithm"],
-        nonce,
-        signature_b64,
+        user_record = None
+    if user_record is None or user_record.disabled or _sessions_revoked_since(
+        user_record, row
     ):
+        # The account changed under this key (deleted, disabled, password reset or
+        # sessions revoked): the key can never sign in again.
+        revoke_credential(credential_id)
         logger.info(
-            "biometric_sign_in_rejected credential=%s reason=bad_signature uid=%s",
+            "biometric_sign_in_rejected credential=%s reason=account_state",
             credential_id,
-            firebase_uid,
         )
-        raise ForbiddenError(
-            ErrorCode.INVALID_REQUEST,
-            "Biometric signature verification failed.",
-        )
+        raise _credential_invalid()
 
     mark_credential_used(credential_id)
-    custom_token = firebase_auth.create_custom_token(firebase_uid).decode("utf-8")
-    logger.info(
-        "biometric_sign_in_success credential=%s uid=%s",
-        credential_id,
-        firebase_uid,
-    )
-    return {"custom_token": custom_token, "firebase_uid": firebase_uid}
+    token = firebase_auth.create_custom_token(firebase_uid)
+    logger.info("biometric_sign_in_success credential=%s", credential_id)
+    return {"custom_token": token.decode("utf-8")}
 
 
 def revoke_user_biometric_credentials(firebase_uid: str) -> int:
     return revoke_all_for_user(firebase_uid)
 
 
-def _load_public_key(public_key_pem: str):
-    return serialization.load_pem_public_key(public_key_pem.encode("utf-8"))
+def _sessions_revoked_since(user_record: Any, row: dict[str, Any]) -> bool:
+    """Firebase ``tokens_valid_after`` (ms) is later than the key's enrollment."""
+    valid_after_ms = user_record.tokens_valid_after_timestamp
+    if not valid_after_ms:
+        return False
+    return row["created_at"].timestamp() * 1000 < valid_after_ms
 
 
-def _verify_signature(
-    public_key_pem: str,
-    algorithm: str,
-    payload: str,
-    signature_b64: str,
-) -> bool:
-    public_key = _load_public_key(public_key_pem)
+def verify_signature(public_key_pem: str, payload: str, signature_b64: str) -> bool:
+    """ECDSA P-256 / SHA-256 DER signature over ``payload``'s UTF-8 bytes."""
     try:
         signature = base64.b64decode(signature_b64, validate=True)
+        key = serialization.load_pem_public_key(public_key_pem.encode("utf-8"))
     except (ValueError, binascii.Error):
         return False
-
-    data = payload.encode("utf-8")
+    if not isinstance(key, ec.EllipticCurvePublicKey):
+        return False
     try:
-        if algorithm == "ECDSA_SHA256":
-            if not isinstance(public_key, ec.EllipticCurvePublicKey):
-                return False
-            public_key.verify(signature, data, ec.ECDSA(hashes.SHA256()))
-            return True
-        if algorithm == "RSA_SHA256":
-            if not isinstance(public_key, rsa.RSAPublicKey):
-                return False
-            public_key.verify(
-                signature,
-                data,
-                padding.PKCS1v15(),
-                hashes.SHA256(),
-            )
-            return True
+        key.verify(signature, payload.encode("utf-8"), ec.ECDSA(hashes.SHA256()))
     except InvalidSignature:
         return False
-    return False
+    return True

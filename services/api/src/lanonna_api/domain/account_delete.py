@@ -5,7 +5,6 @@ from typing import Any
 import firebase_admin
 from firebase_admin import auth as firebase_auth
 
-from lanonna_api.domain.biometric_sign_in import revoke_user_biometric_credentials
 from lanonna_api.repositories.account_delete import (
     account_is_tombstoned,
     list_sole_owned_baby_ids,
@@ -41,5 +40,4 @@ def delete_account(firebase_uid: str) -> None:
     if not already_deleted:
         sole_owned = list_sole_owned_baby_ids(firebase_uid)
         soft_delete_account_rows(firebase_uid, sole_owned)
-        revoke_user_biometric_credentials(firebase_uid)
     _delete_firebase_user(firebase_uid)

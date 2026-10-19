@@ -35,12 +35,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authSignInWithBiometrics => 'Sign in with biometrics';
 
   @override
-  String authSignInWithBiometricsHint(String accountHint) =>
-      'Continue as $accountHint';
+  String authSignInWithBiometricsAs(String name) {
+    return 'Continue as $name';
+  }
+
+  @override
+  String get biometricSignInReason => 'Sign in to La Nonna';
 
   @override
   String get biometricSignInFailed =>
-      'Biometric sign-in did not work. Try email or Google, or turn biometrics off and on in Settings.';
+      'Biometric sign-in did not work. Try again, or sign in with email or Google.';
+
+  @override
+  String get biometricSignInKeyInvalidated =>
+      'Your fingerprints or face data changed on this device. Sign in with email or Google, then turn on biometric sign-in again in Settings.';
+
+  @override
+  String get biometricLockedOut =>
+      'Too many attempts. Wait a moment, or sign in with email or Google.';
 
   @override
   String get settingsBiometricUnavailable =>
@@ -2310,6 +2322,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorEventEndBeforeStart =>
       'The end time must be at or after the start time.';
+
+  @override
+  String get errorBiometricCredentialInvalid =>
+      'Biometric sign-in is no longer set up on this device. Sign in with email or Google, then turn it on again in Settings.';
+
+  @override
+  String get errorBiometricChallengeExpired =>
+      'Biometric sign-in timed out. Try again.';
 
   @override
   String get errorEmailQueueFailed =>
