@@ -1,4 +1,5 @@
-# GCS signed URLs from Cloud Run (no JSON key).
+# GCS signed URLs and Firebase custom tokens (biometric sign-in) from Cloud Run:
+# the API signs as itself through the IAM Credentials API (no JSON key).
 resource "google_service_account_iam_member" "api_self_token_creator" {
   service_account_id = google_service_account.api.name
   role               = "roles/iam.serviceAccountTokenCreator"

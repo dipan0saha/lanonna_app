@@ -127,14 +127,50 @@ abstract class AppLocalizations {
   /// No description provided for @settingsBiometricUnlock.
   ///
   /// In en, this message translates to:
-  /// **'Use biometric unlock'**
+  /// **'Biometric sign-in & unlock'**
   String get settingsBiometricUnlock;
 
   /// No description provided for @settingsBiometricUnlockSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Require Face ID or fingerprint to open the app after you sign in'**
+  /// **'Sign in with Face ID or fingerprint after logout, and lock the app when you return'**
   String get settingsBiometricUnlockSubtitle;
+
+  /// No description provided for @authSignInWithBiometrics.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with biometrics'**
+  String get authSignInWithBiometrics;
+
+  /// No description provided for @authSignInWithBiometricsAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue as {name}'**
+  String authSignInWithBiometricsAs(String name);
+
+  /// No description provided for @biometricSignInReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to La Nonna'**
+  String get biometricSignInReason;
+
+  /// No description provided for @biometricSignInFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Biometric sign-in did not work. Try again, or sign in with email or Google.'**
+  String get biometricSignInFailed;
+
+  /// No description provided for @biometricSignInKeyInvalidated.
+  ///
+  /// In en, this message translates to:
+  /// **'Your fingerprints or face data changed on this device. Sign in with email or Google, then turn on biometric sign-in again in Settings.'**
+  String get biometricSignInKeyInvalidated;
+
+  /// No description provided for @biometricLockedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many attempts. Wait a moment, or sign in with email or Google.'**
+  String get biometricLockedOut;
 
   /// No description provided for @settingsBiometricUnavailable.
   ///
@@ -4059,6 +4095,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The end time must be at or after the start time.'**
   String get errorEventEndBeforeStart;
+
+  /// No description provided for @errorBiometricCredentialInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Biometric sign-in is no longer set up on this device. Sign in with email or Google, then turn it on again in Settings.'**
+  String get errorBiometricCredentialInvalid;
+
+  /// No description provided for @errorBiometricChallengeExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Biometric sign-in timed out. Try again.'**
+  String get errorBiometricChallengeExpired;
 
   /// No description provided for @errorEmailQueueFailed.
   ///

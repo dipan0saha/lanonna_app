@@ -25,11 +25,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsEditProfile => 'Edit profile';
 
   @override
-  String get settingsBiometricUnlock => 'Use biometric unlock';
+  String get settingsBiometricUnlock => 'Biometric sign-in & unlock';
 
   @override
   String get settingsBiometricUnlockSubtitle =>
-      'Require Face ID or fingerprint to open the app after you sign in';
+      'Sign in with Face ID or fingerprint after logout, and lock the app when you return';
+
+  @override
+  String get authSignInWithBiometrics => 'Sign in with biometrics';
+
+  @override
+  String authSignInWithBiometricsAs(String name) {
+    return 'Continue as $name';
+  }
+
+  @override
+  String get biometricSignInReason => 'Sign in to La Nonna';
+
+  @override
+  String get biometricSignInFailed =>
+      'Biometric sign-in did not work. Try again, or sign in with email or Google.';
+
+  @override
+  String get biometricSignInKeyInvalidated =>
+      'Your fingerprints or face data changed on this device. Sign in with email or Google, then turn on biometric sign-in again in Settings.';
+
+  @override
+  String get biometricLockedOut =>
+      'Too many attempts. Wait a moment, or sign in with email or Google.';
 
   @override
   String get settingsBiometricUnavailable =>
@@ -2299,6 +2322,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorEventEndBeforeStart =>
       'The end time must be at or after the start time.';
+
+  @override
+  String get errorBiometricCredentialInvalid =>
+      'Biometric sign-in is no longer set up on this device. Sign in with email or Google, then turn it on again in Settings.';
+
+  @override
+  String get errorBiometricChallengeExpired =>
+      'Biometric sign-in timed out. Try again.';
 
   @override
   String get errorEmailQueueFailed =>

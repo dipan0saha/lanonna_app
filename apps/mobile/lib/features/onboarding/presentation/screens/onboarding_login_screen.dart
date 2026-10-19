@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/api/api_error_message.dart';
 import '../../../../core/auth/auth_error_message.dart';
 import '../../../../core/auth/auth_repository.dart';
+import '../../../../core/auth/biometric_sign_in_service.dart';
 import '../../../../core/validation/form_validators.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -38,6 +39,7 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
   bool _busy = false;
   var _synced = false;
   var _validateOnInteraction = false;
+  var _biometricBusy = false;
 
   AutovalidateMode get _autovalidateMode => _validateOnInteraction
       ? AutovalidateMode.onUserInteraction
@@ -183,10 +185,44 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
     }
   }
 
+  Future<void> _signInBiometric() async {
+    if (_busy || _biometricBusy) return;
+    setState(() {
+      _biometricBusy = true;
+      _error = null;
+    });
+    final l10n = AppLocalizations.of(context)!;
+    try {
+      await context.read<BiometricSignInService>().signIn(
+        promptMessage: l10n.biometricSignInReason,
+      );
+      if (!mounted) return;
+      await navigateAfterOnboardingAuth(
+        context,
+        isSignUp: false,
+        usedOAuth: false,
+      );
+    } on BiometricSignInFailure catch (e) {
+      if (mounted && e.reason != BiometricSignInFailureReason.cancelled) {
+        setState(() => _error = e.userMessage(l10n));
+      }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        setState(() => _error = authErrorMessage(e, l10n, flow: AuthFlow.signIn));
+      }
+    } catch (e) {
+      if (mounted) setState(() => _error = apiErrorMessage(l10n, e));
+    } finally {
+      if (mounted) setState(() => _biometricBusy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final coordinator = context.watch<OnboardingCoordinator>();
+    // Re-read each build: a failed sign-in can clear a dead enrollment.
+    final biometricEnrollment = context.read<BiometricSignInService>().enrollment;
 
     return OnboardingScaffold(
       pinBottomCta: false,
@@ -202,8 +238,16 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
           const SizedBox(height: 8),
           OnboardingSupportText(_loginSubtext(coordinator)),
           const SizedBox(height: 24),
+          if (biometricEnrollment != null) ...[
+            OnboardingBiometricButton(
+              onPressed: _busy ? null : _signInBiometric,
+              isLoading: _biometricBusy,
+              displayName: biometricEnrollment.displayName,
+            ),
+            const SizedBox(height: 12),
+          ],
           OnboardingGoogleButton(
-            onPressed: _busy ? null : _signInGoogle,
+            onPressed: (_busy || _biometricBusy) ? null : _signInGoogle,
             isLoading: _busy,
           ),
           OnboardingDivider(label: l10n.labelSignEmail),

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lanonna/core/api/api_client.dart';
+import 'package:lanonna/core/auth/biometric_sign_in_service.dart';
+import 'package:lanonna/core/auth/biometric_sign_in_store.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:lanonna/features/onboarding/data/onboarding_repository.dart';
@@ -13,6 +15,12 @@ import 'package:lanonna/features/onboarding/presentation/screens/onboarding_logi
 import 'package:lanonna/features/onboarding/presentation/widgets/onboarding_fields.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+/// No biometric enrollment on this device.
+class _NoBiometric extends Fake implements BiometricSignInService {
+  @override
+  BiometricSignInEnrollment? get enrollment => null;
+}
 
 Future<void> _pumpLogin(WidgetTester tester) async {
   SharedPreferences.setMockInitialValues({});
@@ -40,6 +48,7 @@ Future<void> _pumpLogin(WidgetTester tester) async {
       providers: [
         ChangeNotifierProvider<OnboardingCoordinator>.value(value: coordinator),
         ChangeNotifierProvider<InviteFlowState>.value(value: InviteFlowState()),
+        Provider<BiometricSignInService>.value(value: _NoBiometric()),
       ],
       child: MaterialApp.router(
         theme: AppTheme.light,

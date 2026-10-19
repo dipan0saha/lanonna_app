@@ -11,6 +11,7 @@ from lanonna_api.http_errors import api_error, map_domain_errors
 from lanonna_api.domain.account import build_account_extensions
 from lanonna_api.domain.account_delete import delete_account, delete_account_preview
 from lanonna_api.repositories.babies import list_babies_for_user
+from lanonna_api.domain.biometric_sign_in import revoke_user_biometric_credentials
 from lanonna_api.repositories.users import (
     patch_profile_fields,
     update_notification_preferences,
@@ -81,6 +82,8 @@ def patch_profile(
         raise map_domain_errors(exc) from exc
     except RuntimeError as exc:
         raise map_domain_errors(exc) from exc
+    if changes.get("biometric_unlock_enabled") is False:
+        revoke_user_biometric_credentials(user.uid)
     return _to_profile_response(row)
 
 

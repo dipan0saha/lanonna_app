@@ -42,7 +42,7 @@ class _BiometricAppLockState extends State<BiometricAppLock>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _hydrateAccountIfNeeded().then((_) => _evaluateLock(coldStart: true));
+      _hydrateAccountIfNeeded().then((_) => _evaluateColdStartLock());
     });
   }
 
@@ -57,9 +57,12 @@ class _BiometricAppLockState extends State<BiometricAppLock>
     }
   }
 
+  /// A profile save never locks the app (turning the setting on in Settings,
+  /// or the first save after signing in); it only releases the lock when the
+  /// setting was turned off. Locking happens on cold start and resume.
   void _onProfileUpdated() {
-    if (!_locked) {
-      _evaluateLock(coldStart: false);
+    if (_locked && !_wouldEngageLock()) {
+      setState(() => _locked = false);
     }
   }
 
@@ -124,21 +127,16 @@ class _BiometricAppLockState extends State<BiometricAppLock>
     }
   }
 
-  Future<void> _evaluateLock({required bool coldStart}) async {
+  /// Cold start: lock when a signed-in session opens with the setting on.
+  Future<void> _evaluateColdStartLock() async {
     if (!mounted) return;
     if (_currentPathOrNull() == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _evaluateLock(coldStart: coldStart);
+        _evaluateColdStartLock();
       });
       return;
     }
-    if (!_wouldEngageLock()) {
-      if (_locked) setState(() => _locked = false);
-      return;
-    }
-    if (coldStart || !_locked) {
-      _engageLock();
-    }
+    _engageLock();
   }
 
   void _engageLock() {

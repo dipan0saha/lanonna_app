@@ -78,6 +78,11 @@ class ErrorCode(StrEnum):
     # Calendar.
     ALREADY_ON_CALENDAR = "already_on_calendar"
     EVENT_END_BEFORE_START = "event_end_before_start"
+    # Biometric sign-in (``/v1/auth/biometric/*``). One code for every reason a
+    # device credential cannot sign in, so the unauthenticated routes never say
+    # which (missing, revoked, deleted or disabled account, revoked sessions).
+    BIOMETRIC_CREDENTIAL_INVALID = "biometric_credential_invalid"
+    BIOMETRIC_CHALLENGE_EXPIRED = "biometric_challenge_expired"
     # Async work the API queues.
     EMAIL_QUEUE_FAILED = "email_queue_failed"
     EXPORT_QUEUE_FAILED = "export_queue_failed"

@@ -87,10 +87,12 @@ Use a **throwaway** Firebase account (not Maestro smoke user).
 - [ ] My Account → **Export baby data** (owner): job reaches **ready** and **Download export** works. Open the JSON: comments, RSVPs, members (display names, no member emails), predictions, announcement, photo tags, and registry purchases are present; photo `download_url` values are `https://` and note a 7-day expiry. Check `lanonna-async-commands-dlq-pull` is empty afterward ([operations.md](operations.md#dead-letter-queue)).
 - [ ] Invite a second co-owner and accept → success; invite a **third** co-owner → "max owners" message, no extra membership.
 
-## 11. Biometric unlock (M-31)
+## 11. Biometric sign-in & unlock (M-31)
 
-- [ ] Settings → enable biometric unlock (device must have biometrics enrolled); successful local auth required to turn on.
-- [ ] Kill app with an active Firebase session and completed onboarding → app lock overlay on resume (no GoRouter crash on first frame); unlock with biometrics.
+- [ ] Settings → enable biometrics (device must have biometrics enrolled); key enrollment + profile flag.
+- [ ] Kill app with an active Firebase session and completed onboarding → app lock overlay on resume; unlock with biometrics.
+- [ ] Log out → login screen shows **Sign in with biometrics** → challenge sign-in → lands in app.
+- [ ] Toggle off → biometric CTA hidden; re-enable requires fresh enrollment.
 - [ ] Toggle off in Settings → no lock on next resume.
 
 ## 12. Onboarding UI (carousel, pills, chips)

@@ -2,16 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/api/api_error_message.dart';
+import '../../../core/api/run_mutation.dart';
+import '../../../core/auth/biometric_sign_in_service.dart';
 import '../../../core/auth/biometric_unlock_service.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../account/data/account_repository.dart';
 
+/// One setting for biometric sign-in after Log out and the app lock
+/// (`biometric_unlock_enabled`). Turning it on creates and registers this
+/// install's device key (that prompt is the biometric check); turning it off
+/// revokes every device key on the server and deletes this one.
 class BiometricUnlockSettingsTile extends StatefulWidget {
-  const BiometricUnlockSettingsTile({
-    super.key,
-    this.biometricService,
-  });
+  const BiometricUnlockSettingsTile({super.key, this.biometricService});
 
   final BiometricUnlockService? biometricService;
 
@@ -20,7 +22,8 @@ class BiometricUnlockSettingsTile extends StatefulWidget {
       _BiometricUnlockSettingsTileState();
 }
 
-class _BiometricUnlockSettingsTileState extends State<BiometricUnlockSettingsTile> {
+class _BiometricUnlockSettingsTileState
+    extends State<BiometricUnlockSettingsTile> {
   late final BiometricUnlockService _biometricService =
       widget.biometricService ?? BiometricUnlockService();
   var _loading = true;
@@ -57,38 +60,42 @@ class _BiometricUnlockSettingsTileState extends State<BiometricUnlockSettingsTil
   Future<void> _onChanged(bool value) async {
     if (_saving) return;
     final l10n = AppLocalizations.of(context)!;
-    if (value) {
-      if (!_deviceSupported) {
-        AppSnackBar.showAlert(context, l10n.settingsBiometricUnavailable);
-        return;
-      }
-      final ok = await _biometricService.authenticate(
-        reason: l10n.biometricUnlockReason,
-      );
-      if (!ok) {
-        if (mounted) {
-          AppSnackBar.showAlert(
-            context,
-            l10n.settingsBiometricVerificationFailed,
-          );
-        }
-        return;
-      }
+    if (value && !_deviceSupported) {
+      AppSnackBar.showAlert(context, l10n.settingsBiometricUnavailable);
+      return;
     }
     final repo = context.read<AccountRepository>();
+    final signIn = context.read<BiometricSignInService>();
     setState(() => _saving = true);
-    try {
-      await repo.setBiometricUnlockEnabled(value);
-      if (mounted) {
-        setState(() => _enabled = value);
+    final ok = await runMutation(context, () async {
+      if (value) {
+        await signIn.enroll(
+          promptMessage: l10n.biometricUnlockReason,
+          displayName: _firstName(repo.cachedAccount?.displayName),
+        );
+        try {
+          await repo.setBiometricUnlockEnabled(true);
+        } catch (_) {
+          await signIn.clearLocalEnrollment();
+          rethrow;
+        }
+      } else {
+        // The server revokes every device key when the flag goes off.
+        await repo.setBiometricUnlockEnabled(false);
+        await signIn.clearLocalEnrollment();
       }
-    } catch (e) {
-      if (mounted) {
-        AppSnackBar.showAlert(context, apiErrorMessage(l10n, e));
-      }
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
+    });
+    if (!mounted) return;
+    setState(() {
+      if (ok) _enabled = value;
+      _saving = false;
+    });
+  }
+
+  static String? _firstName(String? displayName) {
+    final trimmed = displayName?.trim() ?? '';
+    if (trimmed.isEmpty) return null;
+    return trimmed.split(RegExp(r'\s+')).first;
   }
 
   @override

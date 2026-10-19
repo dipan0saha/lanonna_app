@@ -137,3 +137,23 @@ def test_patch_profile_explicit_null_clears_phone(mock_patch):
         response = client.patch("/v1/profile", json={"phone": None})
     assert response.status_code == 200
     assert mock_patch.call_args[0][1]["phone"] is None
+
+
+@patch("lanonna_api.routers.profile.revoke_user_biometric_credentials")
+@patch("lanonna_api.routers.profile.patch_profile_fields")
+def test_turning_biometrics_off_revokes_device_credentials(mock_patch, mock_revoke):
+    mock_patch.return_value = _profile_row(biometric_unlock_enabled=False)
+    with _auth_as():
+        response = client.patch("/v1/profile", json={"biometric_unlock_enabled": False})
+    assert response.status_code == 200
+    mock_revoke.assert_called_once_with("user-1")
+
+
+@patch("lanonna_api.routers.profile.revoke_user_biometric_credentials")
+@patch("lanonna_api.routers.profile.patch_profile_fields")
+def test_turning_biometrics_on_keeps_device_credentials(mock_patch, mock_revoke):
+    mock_patch.return_value = _profile_row(biometric_unlock_enabled=True)
+    with _auth_as():
+        response = client.patch("/v1/profile", json={"biometric_unlock_enabled": True})
+    assert response.status_code == 200
+    mock_revoke.assert_not_called()

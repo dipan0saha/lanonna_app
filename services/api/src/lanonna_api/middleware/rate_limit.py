@@ -10,7 +10,8 @@ from starlette.responses import JSONResponse, Response
 
 from lanonna_api.domain.errors import ErrorCode, error_detail
 
-# Per-IP sliding window for sensitive routes (invite batch + photo init).
+# Per-IP sliding window for sensitive routes (invite batch, photo init and the
+# unauthenticated biometric sign-in routes).
 # In-process only: each Cloud Run instance has its own bucket (effective limit scales
 # with instance count). See docs/engineering/development.md § API rate limiting.
 _LIMITED_PREFIXES = (
@@ -18,6 +19,7 @@ _LIMITED_PREFIXES = (
     "/v1/babies/",
 )
 _LIMITED_SUFFIX = "/invitations/batch"
+_BIOMETRIC_AUTH_PREFIX = "/v1/auth/biometric/"
 _MAX_REQUESTS = 30
 _WINDOW_SECONDS = 60.0
 
@@ -38,6 +40,8 @@ def _is_rate_limited_path(path: str) -> bool:
     if path == "/v1/photos/init":
         return True
     if path.startswith(_LIMITED_PREFIXES[1]) and path.endswith(_LIMITED_SUFFIX):
+        return True
+    if path.startswith(_BIOMETRIC_AUTH_PREFIX):
         return True
     return False
 
