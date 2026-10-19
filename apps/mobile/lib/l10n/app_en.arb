@@ -8,6 +8,7 @@
   "settingsBiometricUnlock": "Use biometric unlock",
   "settingsBiometricUnlockSubtitle": "Require Face ID or fingerprint to open the app after you sign in",
   "settingsBiometricUnavailable": "Biometrics are not available on this device.",
+  "settingsBiometricVerificationFailed": "Biometric verification was cancelled or failed. Try again after enrolling a fingerprint or face unlock in device settings.",
   "biometricUnlockReason": "Unlock La Nonna",
   "biometricUnlockTitle": "Locked",
   "biometricUnlockRetry": "Try again",

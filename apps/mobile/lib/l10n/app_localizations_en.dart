@@ -36,6 +36,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Biometrics are not available on this device.';
 
   @override
+  String get settingsBiometricVerificationFailed =>
+      'Biometric verification was cancelled or failed. Try again after enrolling a fingerprint or face unlock in device settings.';
+
+  @override
   String get biometricUnlockReason => 'Unlock La Nonna';
 
   @override

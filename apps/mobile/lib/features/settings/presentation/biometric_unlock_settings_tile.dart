@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/api/api_error_message.dart';
 import '../../../core/auth/biometric_unlock_service.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../account/data/account_repository.dart';
@@ -64,7 +65,15 @@ class _BiometricUnlockSettingsTileState extends State<BiometricUnlockSettingsTil
       final ok = await _biometricService.authenticate(
         reason: l10n.biometricUnlockReason,
       );
-      if (!ok) return;
+      if (!ok) {
+        if (mounted) {
+          AppSnackBar.showAlert(
+            context,
+            l10n.settingsBiometricVerificationFailed,
+          );
+        }
+        return;
+      }
     }
     final repo = context.read<AccountRepository>();
     setState(() => _saving = true);
@@ -72,6 +81,10 @@ class _BiometricUnlockSettingsTileState extends State<BiometricUnlockSettingsTil
       await repo.setBiometricUnlockEnabled(value);
       if (mounted) {
         setState(() => _enabled = value);
+      }
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.showAlert(context, apiErrorMessage(l10n, e));
       }
     } finally {
       if (mounted) setState(() => _saving = false);

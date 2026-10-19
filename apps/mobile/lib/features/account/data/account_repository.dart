@@ -365,6 +365,10 @@ class AccountRepository {
       '/v1/profile',
       body: {'biometric_unlock_enabled': enabled},
     );
+    if (profileUpdates.account == null) {
+      await fetchAccount();
+      return;
+    }
     _rememberProfileResponse(
       json,
       fallbackDisplayName: profileUpdates.account?.displayName ?? '',
