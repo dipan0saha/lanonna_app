@@ -181,6 +181,7 @@ class _LaNonnaAppState extends State<LaNonnaApp> {
       builder: (context, child) => AppVersionGate(
         child: AppOfflineWrapper(
           child: BiometricAppLock(
+            router: _router,
             child: child ?? const SizedBox.shrink(),
           ),
         ),
