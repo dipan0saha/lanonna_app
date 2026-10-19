@@ -157,6 +157,12 @@ abstract class AppLocalizations {
   /// **'Biometrics are not available on this device.'**
   String get settingsBiometricUnavailable;
 
+  /// No description provided for @settingsBiometricVerificationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Biometric verification was cancelled or failed. Try again after enrolling a fingerprint or face unlock in device settings.'**
+  String get settingsBiometricVerificationFailed;
+
   /// No description provided for @biometricUnlockReason.
   ///
   /// In en, this message translates to:

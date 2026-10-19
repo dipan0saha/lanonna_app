@@ -18,6 +18,7 @@
   },
   "biometricSignInFailed": "Biometric sign-in did not work. Try email or Google, or turn biometrics off and on in Settings.",
   "settingsBiometricUnavailable": "Biometrics are not available on this device.",
+  "settingsBiometricVerificationFailed": "Biometric verification was cancelled or failed. Try again after enrolling a fingerprint or face unlock in device settings.",
   "biometricUnlockReason": "Unlock La Nonna",
   "biometricUnlockTitle": "Locked",
   "biometricUnlockRetry": "Try again",
