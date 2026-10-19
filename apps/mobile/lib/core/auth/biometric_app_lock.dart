@@ -16,10 +16,12 @@ import 'session_cleanup.dart';
 class BiometricAppLock extends StatefulWidget {
   const BiometricAppLock({
     super.key,
+    required this.router,
     required this.child,
     this.biometricService,
   });
 
+  final GoRouter router;
   final Widget child;
   final BiometricUnlockService? biometricService;
 
@@ -35,20 +37,29 @@ class _BiometricAppLockState extends State<BiometricAppLock>
   var _lockOnResume = false;
   var _unlockInProgress = false;
   var _accountHydrated = false;
+  var _coldStartLockCompleted = false;
   AccountProfileUpdates? _profileUpdates;
+  AppSession? _session;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    widget.router.routerDelegate.addListener(_onRouterChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _hydrateAccountIfNeeded().then((_) => _evaluateColdStartLock());
+      _hydrateAccountIfNeeded().then((_) => _tryColdStartLock());
     });
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final session = context.read<AppSession>();
+    if (_session != session) {
+      _session?.removeListener(_onSessionChanged);
+      _session = session;
+      session.addListener(_onSessionChanged);
+    }
     final updates = context.read<AccountRepository>().profileUpdates;
     if (_profileUpdates != updates) {
       _profileUpdates?.removeListener(_onProfileUpdated);
@@ -66,19 +77,26 @@ class _BiometricAppLockState extends State<BiometricAppLock>
     }
   }
 
+  void _onRouterChanged() {
+    _tryColdStartLock();
+  }
+
+  void _onSessionChanged() {
+    _tryColdStartLock();
+  }
+
   @override
   void dispose() {
     _profileUpdates?.removeListener(_onProfileUpdated);
+    _session?.removeListener(_onSessionChanged);
+    widget.router.routerDelegate.removeListener(_onRouterChanged);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
-  /// Current route path, or null before [GoRouter] is available under this widget.
-  String? _currentPathOrNull() {
-    if (!mounted) return null;
-    final router = GoRouter.maybeOf(context);
-    if (router == null) return null;
-    final path = router.routerDelegate.currentConfiguration.uri.path;
+  String _currentPath() {
+    final path =
+        widget.router.routerDelegate.currentConfiguration.uri.path;
     return path.isEmpty ? '/' : path;
   }
 
@@ -99,8 +117,7 @@ class _BiometricAppLockState extends State<BiometricAppLock>
     final auth = context.read<AuthRepository>();
     final session = context.read<AppSession>();
     final account = context.read<AccountRepository>().cachedAccount;
-    final location = _currentPathOrNull();
-    if (location == null) return false;
+    final location = _currentPath();
     return biometricAppLockShouldEngage(
       isSignedIn: auth.currentUser != null,
       canAccessMainApp: session.canAccessMainApp,
@@ -112,7 +129,10 @@ class _BiometricAppLockState extends State<BiometricAppLock>
   Future<void> _hydrateAccountIfNeeded() async {
     if (_accountHydrated) return;
     final auth = context.read<AuthRepository>();
-    if (auth.currentUser == null) return;
+    if (auth.currentUser == null) {
+      _accountHydrated = true;
+      return;
+    }
     final repo = context.read<AccountRepository>();
     if (repo.cachedAccount != null) {
       _accountHydrated = true;
@@ -127,15 +147,23 @@ class _BiometricAppLockState extends State<BiometricAppLock>
     }
   }
 
-  /// Cold start: lock when a signed-in session opens with the setting on.
-  Future<void> _evaluateColdStartLock() async {
-    if (!mounted) return;
-    if (_currentPathOrNull() == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _evaluateColdStartLock();
-      });
-      return;
-    }
+  /// True when cold-start evaluation has enough data and is not waiting on a
+  /// redirect from an onboarding route into the main app.
+  bool _isColdStartEvaluationSettled() {
+    final auth = context.read<AuthRepository>();
+    if (auth.currentUser == null) return true;
+    if (!_accountHydrated) return false;
+    final session = context.read<AppSession>();
+    if (session.statusPhase == OnboardingStatusPhase.unknown) return false;
+    if (OnboardingRoutes.isOnboardingPath(_currentPath())) return false;
+    return true;
+  }
+
+  /// Cold start: lock once when a signed-in session opens with the setting on.
+  void _tryColdStartLock() {
+    if (_coldStartLockCompleted || !mounted) return;
+    if (!_isColdStartEvaluationSettled()) return;
+    _coldStartLockCompleted = true;
     _engageLock();
   }
 
@@ -165,7 +193,7 @@ class _BiometricAppLockState extends State<BiometricAppLock>
     await context.read<AuthRepository>().signOut();
     if (!mounted) return;
     setState(() => _locked = false);
-    context.go(OnboardingRoutes.ownerCarousel);
+    widget.router.go(OnboardingRoutes.ownerCarousel);
   }
 
   @override
