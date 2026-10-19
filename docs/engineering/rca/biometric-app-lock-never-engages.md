@@ -20,10 +20,17 @@ The intended “wait until GoRouter is ready” deferral (see [open-gaps.md](../
 
 - **Inject** the app's `GoRouter` instance (owned by [`LaNonnaApp`](../../apps/mobile/lib/app.dart)) into `BiometricAppLock`.
 - Read the current location from `router.routerDelegate.currentConfiguration` (not from `BuildContext`).
-- Listen to `router.routerDelegate` (and `AppSession` when onboarding status is still unknown) to run **one** cold-start evaluation when route + session + account are settled — no post-frame polling loop.
+- Listen to `router.routerDelegate`, `AppSession` and `AccountRepository.profileUpdates` to run **one** cold-start evaluation, no post-frame polling loop. A signed-in launch settles when onboarding status is `loaded` and either the user has no main-app access yet (no lock; finishing onboarding later never pops a cold-start lock) or the profile is known and the route has left the onboarding paths. An offline launch without a profile keeps the evaluation pending and locks when the profile first loads, instead of silently skipping the lock. A listener that fires during a build (the initial route parse) applies the lock right after that frame.
 - Navigate from the lock overlay with `router.go(...)`.
 
-Policy rules ([`biometric_app_lock_policy.dart`](../../apps/mobile/lib/core/auth/biometric_app_lock_policy.dart)) and PR #345 behaviors are unchanged: profile save never engages the lock; onboarding/login paths and signed-out users are excluded; sign-out keeps device enrollment.
+Review follow-ups (same PR):
+
+- **Resume lock arms only on `AppLifecycleState.paused`.** `inactive` is a focus loss (notification shade, permission dialog, the biometric prompt itself), and `hidden` is also passed on the way back to the foreground. Arming on those re-locked the app right after a successful unlock, or locked it when the user pulled down the shade. The state is not re-armed while the overlay is up or a prompt is in progress.
+- Removed the unused `context.watch<AppSession>()` rebuild; router listener moves on `didUpdateWidget`.
+
+Policy rules ([`biometric_app_lock_policy.dart`](../../apps/mobile/lib/core/auth/biometric_app_lock_policy.dart)) and PR #345 behaviors are unchanged: profile save never engages the lock; onboarding/login paths and signed-out users are excluded; a fresh sign-in (password, Google or biometric) never locks; sign-out keeps device enrollment.
+
+`routerDelegate.currentConfiguration.uri` is the full matched location, including nested `ShellRoute` / `StatefulShellRoute` paths. For an imperatively pushed route it is still the base location; the onboarding paths the policy excludes are reached with `go`, so that difference does not change the result.
 
 ## Manual verification (emulator / device)
 

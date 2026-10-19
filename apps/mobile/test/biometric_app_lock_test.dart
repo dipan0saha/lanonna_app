@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -27,14 +29,14 @@ class _FakeFirebaseAuth extends Fake implements FirebaseAuth {}
 class _FakeUser extends Fake implements User {}
 
 class _FakeAuth extends AuthRepository {
-  _FakeAuth({this.signedIn = true})
-    : super(firebaseAuth: _FakeFirebaseAuth());
+  _FakeAuth({this.signedIn = true}) : super(firebaseAuth: _FakeFirebaseAuth());
 
   final bool signedIn;
+  bool? signedInOverride;
   var signOuts = 0;
 
   @override
-  User? get currentUser => signedIn ? _FakeUser() : null;
+  User? get currentUser => (signedInOverride ?? signedIn) ? _FakeUser() : null;
 
   @override
   Future<void> signOut() async {
@@ -43,27 +45,30 @@ class _FakeAuth extends AuthRepository {
 }
 
 class _FakeAccountRepository extends AccountRepository {
-  _FakeAccountRepository({required this.account})
-    : super(ApiClient(idTokenProvider: () async => null));
-
-  final AccountPayload account;
-
-  @override
-  AccountPayload? get cachedAccount => account;
+  _FakeAccountRepository({AccountPayload? account})
+    : super(ApiClient(idTokenProvider: () async => null)) {
+    profileUpdates.account = account;
+  }
 
   @override
   Future<void> ensureAccountLoaded() async {}
 }
 
 class _FakeBiometricUnlock extends BiometricUnlockService {
-  _FakeBiometricUnlock({this.succeed = false});
+  _FakeBiometricUnlock({this.succeed = false, this.pending});
 
-  final bool succeed;
+  /// Result of the next prompt; tests flip it to keep the overlay visible.
+  bool succeed;
+
+  /// When set, [authenticate] waits for this (a prompt still on screen).
+  final Completer<bool>? pending;
   var authenticateCalls = 0;
 
   @override
   Future<bool> authenticate({required String reason}) async {
     authenticateCalls++;
+    final wait = pending;
+    if (wait != null) return wait.future;
     return succeed;
   }
 }
@@ -126,6 +131,7 @@ Future<
     _FakeAuth auth,
     _FakeBiometricUnlock biometric,
     _FakeSessionCleanup cleanup,
+    _FakeAccountRepository accounts,
   })
 >
 _pumpLockHarness(
@@ -133,6 +139,8 @@ _pumpLockHarness(
   required String initialLocation,
   bool signedIn = true,
   bool biometricUnlockEnabled = true,
+  bool accountLoaded = true,
+  OnboardingStatus? status,
   _FakeAuth? auth,
   _FakeBiometricUnlock? biometric,
 }) async {
@@ -149,13 +157,15 @@ _pumpLockHarness(
     storage: OnboardingStorage(prefs),
     coordinator: coordinator,
   );
-  session.debugSetStatus(_mainAppStatus());
+  session.debugSetStatus(status ?? _mainAppStatus());
 
   final fakeAuth = auth ?? _FakeAuth(signedIn: signedIn);
   final fakeBiometric = biometric ?? _FakeBiometricUnlock();
   final cleanup = _FakeSessionCleanup(prefs);
   final accounts = _FakeAccountRepository(
-    account: _account(biometricUnlockEnabled: biometricUnlockEnabled),
+    account: accountLoaded
+        ? _account(biometricUnlockEnabled: biometricUnlockEnabled)
+        : null,
   );
 
   final router = GoRouter(
@@ -206,7 +216,20 @@ _pumpLockHarness(
     auth: fakeAuth,
     biometric: fakeBiometric,
     cleanup: cleanup,
+    accounts: accounts,
   );
+}
+
+void _background(WidgetTester tester) {
+  tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+  tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+  tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+}
+
+void _foreground(WidgetTester tester) {
+  tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+  tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+  tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
 }
 
 void main() {
@@ -237,13 +260,149 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Locked'), findsNothing);
 
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    final callsBefore = harness.biometric.authenticateCalls;
+    harness.biometric.succeed = false;
+    _background(tester);
+    _foreground(tester);
     await tester.pump();
 
     expect(find.text('Locked'), findsOneWidget);
-    expect(harness.biometric.authenticateCalls, greaterThanOrEqualTo(2));
+    expect(harness.biometric.authenticateCalls, callsBefore + 1);
+  });
+
+  testWidgets('a focus loss alone (inactive, then resumed) does not lock', (
+    tester,
+  ) async {
+    final harness = await _pumpLockHarness(
+      tester,
+      initialLocation: '/home',
+      biometric: _FakeBiometricUnlock(succeed: true),
+    );
+    await tester.pumpAndSettle();
+    final callsBefore = harness.biometric.authenticateCalls;
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+
+    expect(find.text('Locked'), findsNothing);
+    expect(harness.biometric.authenticateCalls, callsBefore);
+  });
+
+  testWidgets('the unlock prompt leaving the screen does not re-lock', (
+    tester,
+  ) async {
+    final prompt = Completer<bool>();
+    final harness = await _pumpLockHarness(
+      tester,
+      initialLocation: '/home',
+      biometric: _FakeBiometricUnlock(pending: prompt),
+    );
+    await tester.pump();
+    expect(find.text('Locked'), findsOneWidget);
+    expect(harness.biometric.authenticateCalls, 1);
+
+    // Some devices pause the activity while the system prompt is up.
+    _background(tester);
+    prompt.complete(true);
+    await tester.pump();
+    _foreground(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Locked'), findsNothing);
+    expect(harness.biometric.authenticateCalls, 1);
+  });
+
+  testWidgets('turning the setting on does not lock until the next resume', (
+    tester,
+  ) async {
+    final harness = await _pumpLockHarness(
+      tester,
+      initialLocation: '/home',
+      biometricUnlockEnabled: false,
+    );
+    await tester.pumpAndSettle();
+
+    harness.accounts.profileUpdates.publish(_account());
+    await tester.pumpAndSettle();
+    expect(find.text('Locked'), findsNothing);
+    expect(harness.biometric.authenticateCalls, 0);
+
+    _background(tester);
+    _foreground(tester);
+    await tester.pump();
+    expect(find.text('Locked'), findsOneWidget);
+    expect(harness.biometric.authenticateCalls, 1);
+  });
+
+  testWidgets('a fresh sign-in after a signed-out launch does not lock', (
+    tester,
+  ) async {
+    final auth = _FakeAuth(signedIn: false);
+    final harness = await _pumpLockHarness(
+      tester,
+      initialLocation: OnboardingRoutes.login,
+      auth: auth,
+    );
+    await tester.pumpAndSettle();
+
+    // Simulate sign-in completing: session refresh and redirect to home.
+    auth.signedInOverride = true;
+    harness.session.debugSetStatus(_mainAppStatus());
+    harness.router.go('/home');
+    await tester.pumpAndSettle();
+
+    expect(find.text('home body'), findsOneWidget);
+    expect(find.text('Locked'), findsNothing);
+    expect(harness.biometric.authenticateCalls, 0);
+  });
+
+  testWidgets('cold start waits for the profile, then locks once', (
+    tester,
+  ) async {
+    final harness = await _pumpLockHarness(
+      tester,
+      initialLocation: '/home',
+      accountLoaded: false,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Locked'), findsNothing);
+
+    harness.accounts.profileUpdates.publish(_account());
+    await tester.pump();
+    expect(find.text('Locked'), findsOneWidget);
+    expect(harness.biometric.authenticateCalls, 1);
+
+    harness.accounts.profileUpdates.publish(_account());
+    await tester.pump();
+    expect(harness.biometric.authenticateCalls, 1);
+  });
+
+  testWidgets('cold start does not lock while onboarding is incomplete', (
+    tester,
+  ) async {
+    final harness = await _pumpLockHarness(
+      tester,
+      initialLocation: '/home',
+      status: const OnboardingStatus(
+        emailVerified: true,
+        profileComplete: false,
+        hasOwnerBaby: false,
+        hasBabyMembership: false,
+        ownerOnboardingCompleted: false,
+        needsOwnerOnboarding: true,
+        canAccessMainApp: false,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Locked'), findsNothing);
+
+    // Finishing onboarding later must not pop a cold-start lock mid-session.
+    harness.session.debugSetStatus(_mainAppStatus());
+    harness.router.go('/home');
+    await tester.pumpAndSettle();
+    expect(find.text('Locked'), findsNothing);
+    expect(harness.biometric.authenticateCalls, 0);
   });
 
   testWidgets('does not engage when biometric unlock is disabled', (
@@ -295,10 +454,7 @@ void main() {
   testWidgets('cold start does not keep rescheduling evaluation every frame', (
     tester,
   ) async {
-    final harness = await _pumpLockHarness(
-      tester,
-      initialLocation: '/home',
-    );
+    final harness = await _pumpLockHarness(tester, initialLocation: '/home');
     await tester.pump();
     final callsAfterFirstFrame = harness.biometric.authenticateCalls;
 
@@ -311,10 +467,7 @@ void main() {
   });
 
   testWidgets('sign out from lock navigates to owner carousel', (tester) async {
-    final harness = await _pumpLockHarness(
-      tester,
-      initialLocation: '/home',
-    );
+    final harness = await _pumpLockHarness(tester, initialLocation: '/home');
     await tester.pump();
     expect(find.text('Locked'), findsOneWidget);
 

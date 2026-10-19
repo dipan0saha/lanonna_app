@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
@@ -36,7 +37,6 @@ class _BiometricAppLockState extends State<BiometricAppLock>
   var _locked = false;
   var _lockOnResume = false;
   var _unlockInProgress = false;
-  var _accountHydrated = false;
   var _coldStartLockCompleted = false;
   AccountProfileUpdates? _profileUpdates;
   AppSession? _session;
@@ -49,6 +49,15 @@ class _BiometricAppLockState extends State<BiometricAppLock>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _hydrateAccountIfNeeded().then((_) => _tryColdStartLock());
     });
+  }
+
+  @override
+  void didUpdateWidget(BiometricAppLock oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.router != widget.router) {
+      oldWidget.router.routerDelegate.removeListener(_onRouterChanged);
+      widget.router.routerDelegate.addListener(_onRouterChanged);
+    }
   }
 
   @override
@@ -70,11 +79,14 @@ class _BiometricAppLockState extends State<BiometricAppLock>
 
   /// A profile save never locks the app (turning the setting on in Settings,
   /// or the first save after signing in); it only releases the lock when the
-  /// setting was turned off. Locking happens on cold start and resume.
+  /// setting was turned off. Locking happens on cold start and resume. A
+  /// pending cold-start evaluation may still settle here once the profile
+  /// (and so the setting) is first known.
   void _onProfileUpdated() {
     if (_locked && !_wouldEngageLock()) {
       setState(() => _locked = false);
     }
+    _tryColdStartLock();
   }
 
   void _onRouterChanged() {
@@ -95,21 +107,31 @@ class _BiometricAppLockState extends State<BiometricAppLock>
   }
 
   String _currentPath() {
-    final path =
-        widget.router.routerDelegate.currentConfiguration.uri.path;
+    final path = widget.router.routerDelegate.currentConfiguration.uri.path;
     return path.isEmpty ? '/' : path;
   }
 
+  /// Locks when the app actually leaves the screen: [AppLifecycleState.paused]
+  /// is only reached on the way into the background (the way back passes
+  /// through hidden and inactive). [AppLifecycleState.inactive] alone is a
+  /// focus loss (notification shade, permission dialog, or the biometric
+  /// prompt itself) and must not lock, or unlocking would re-lock the app.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.paused) {
-      _lockOnResume = _wouldEngageLock();
-      return;
-    }
-    if (state == AppLifecycleState.resumed && _lockOnResume) {
-      _lockOnResume = false;
-      _engageLock();
+    switch (state) {
+      case AppLifecycleState.paused:
+        if (!_locked && !_unlockInProgress) {
+          _lockOnResume = _wouldEngageLock();
+        }
+      case AppLifecycleState.resumed:
+        if (_lockOnResume) {
+          _lockOnResume = false;
+          _engageLock();
+        }
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.detached:
+        break;
     }
   }
 
@@ -127,36 +149,29 @@ class _BiometricAppLockState extends State<BiometricAppLock>
   }
 
   Future<void> _hydrateAccountIfNeeded() async {
-    if (_accountHydrated) return;
-    final auth = context.read<AuthRepository>();
-    if (auth.currentUser == null) {
-      _accountHydrated = true;
-      return;
-    }
+    if (!mounted) return;
+    if (context.read<AuthRepository>().currentUser == null) return;
     final repo = context.read<AccountRepository>();
-    if (repo.cachedAccount != null) {
-      _accountHydrated = true;
-      return;
-    }
+    if (repo.cachedAccount != null) return;
     try {
       await repo.ensureAccountLoaded();
     } catch (_) {
-      // Lock stays off when profile flag is unknown.
-    } finally {
-      _accountHydrated = true;
+      // Evaluation stays pending until a later profile load publishes.
     }
   }
 
-  /// True when cold-start evaluation has enough data and is not waiting on a
-  /// redirect from an onboarding route into the main app.
+  /// True when cold-start evaluation has enough data to decide. A signed-in
+  /// launch waits for the profile (the setting) and a loaded onboarding
+  /// status; with main-app access it also waits for the redirect off the
+  /// onboarding routes, so the lock never shows on a sign-in screen.
   bool _isColdStartEvaluationSettled() {
     final auth = context.read<AuthRepository>();
     if (auth.currentUser == null) return true;
-    if (!_accountHydrated) return false;
     final session = context.read<AppSession>();
-    if (session.statusPhase == OnboardingStatusPhase.unknown) return false;
-    if (OnboardingRoutes.isOnboardingPath(_currentPath())) return false;
-    return true;
+    if (session.statusPhase != OnboardingStatusPhase.loaded) return false;
+    if (!session.canAccessMainApp) return true;
+    if (context.read<AccountRepository>().cachedAccount == null) return false;
+    return !OnboardingRoutes.isOnboardingPath(_currentPath());
   }
 
   /// Cold start: lock once when a signed-in session opens with the setting on.
@@ -168,7 +183,15 @@ class _BiometricAppLockState extends State<BiometricAppLock>
   }
 
   void _engageLock() {
-    if (!_wouldEngageLock()) return;
+    if (!mounted || !_wouldEngageLock()) return;
+    // Router and session listeners can fire while the tree is building (the
+    // initial route parse); apply the lock right after that frame instead.
+    if (SchedulerBinding.instance.schedulerPhase ==
+        SchedulerPhase.persistentCallbacks) {
+      SchedulerBinding.instance.addPostFrameCallback((_) => _engageLock());
+      return;
+    }
+    if (_locked) return;
     setState(() => _locked = true);
     _attemptUnlock();
   }
@@ -198,18 +221,13 @@ class _BiometricAppLockState extends State<BiometricAppLock>
 
   @override
   Widget build(BuildContext context) {
-    context.watch<AppSession>();
-
     return Stack(
       fit: StackFit.expand,
       children: [
         widget.child,
         if (_locked) ...[
           const ModalBarrier(dismissible: false, color: AppColors.background),
-          _LockOverlay(
-            onRetry: _attemptUnlock,
-            onSignOut: _signOutFromLock,
-          ),
+          _LockOverlay(onRetry: _attemptUnlock, onSignOut: _signOutFromLock),
         ],
       ],
     );
@@ -217,10 +235,7 @@ class _BiometricAppLockState extends State<BiometricAppLock>
 }
 
 class _LockOverlay extends StatelessWidget {
-  const _LockOverlay({
-    required this.onRetry,
-    required this.onSignOut,
-  });
+  const _LockOverlay({required this.onRetry, required this.onSignOut});
 
   final VoidCallback onRetry;
   final VoidCallback onSignOut;
