@@ -38,7 +38,7 @@ lanonna_app/
 | `shell/` | (sheet from tab `HomeTopBar`) | Baby switcher; **My Account** footer |
 | `onboarding/`, `invitations/` | Onboarding + deep links | Owner/follower/co-owner paths; owner create-baby route wraps shared `CreateBabyScreen` (`CreateBabyMode.onboarding`) |
 | `fun/` | `/gamification` (shell tab) | Names, gender/birthdate predictions |
-| `settings/` | `/settings` | App settings; biometric unlock toggle (server flag via `PATCH /v1/profile`) |
+| `settings/` | `/settings` | App settings; biometric sign-in & unlock toggle (enrollment + `PATCH /v1/profile`) |
 | `legal/` | `/legal/terms`, `/legal/privacy` | Static legal copy |
 | `home/` (activity) | `/home/activity` | Full home activity feed |
 | `account/` (inbox) | `/notifications/inbox` | Notification inbox |
@@ -238,7 +238,7 @@ Clears babies and related rows for that user and clears `owner_onboarding_comple
 
 ## API rate limiting
 
-Sensitive routes (`POST /v1/photos/init`, `POST …/invitations/batch`) use an **in-process** per-IP sliding window in `middleware/rate_limit.py` (30 requests / 60s per path per instance). Cloud Run scales horizontally, so the **effective** cap is roughly `30 × instance count` until you add a shared limiter (e.g. Cloud Armor, Redis/Memorystore) at the edge. No shared limiter is deployed in v1; document and monitor before wide public beta.
+Sensitive routes (`POST /v1/photos/init`, `POST …/invitations/batch`, `POST /v1/auth/biometric/*`) use an **in-process** per-IP sliding window in `middleware/rate_limit.py` (30 requests / 60s per path per instance). Cloud Run scales horizontally, so the **effective** cap is roughly `30 × instance count` until you add a shared limiter (e.g. Cloud Armor, Redis/Memorystore) at the edge. No shared limiter is deployed in v1; document and monitor before wide public beta.
 
 ## Firebase JWT audiences
 
@@ -414,7 +414,7 @@ Baseline on **profile/release** build (`flavors/dev.json`): cold start → home 
 | Server cost | Pooled DB connections opened at startup; aggregates (`home-summary`, photo detail, gallery, names) run bounded queries on one connection via `read_scope()` (home: 17 queries on 17 connections → 9 on 1); gzip for responses ≥ 1 KB; `resolve_app_user` reads first and writes only when something changed |
 | Pagination | One SQL-paged `{items, offset, limit, has_more}` envelope on every list route (incl. past events); capped `home-summary` teasers; per-row aggregates folded into list queries (`active_owner_count`, digest unread counts, bulk photo tags) |
 | Notify | `safe_enqueue_fan_out` after DB commit |
-| Rate limits | Photo init + invite batch (`rate_limit.py`) — per-instance; see [open-gaps.md](open-gaps.md) M-09 |
+| Rate limits | Photo init, invite batch, biometric auth (`rate_limit.py`) — per-instance; see [open-gaps.md](open-gaps.md) M-09 |
 
 ### Backlog (pick one per cycle)
 

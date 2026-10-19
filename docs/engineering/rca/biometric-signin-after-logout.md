@@ -42,7 +42,7 @@ M-31 shipped **biometric unlock** only: `biometric_unlock_enabled` on the profil
 
 ## IAM / deploy
 
-API runtime SA already has `roles/firebaseauth.admin` (custom tokens). No new role required. **Deploy:** migration `041` → API → mobile build. Re-run `./scripts/apply-dev-run-iam.sh` only if IAM scripts change (this change documents parity; TF already grants `firebaseauth.admin`).
+API runtime SA already has `roles/firebaseauth.admin` (custom tokens via Admin SDK). No new IAM binding required. **Deploy order:** migration **`041_biometric_credentials`** → **API** (`services/api/scripts/deploy.sh`) → **mobile** build. `./scripts/apply-dev-run-iam.sh` unchanged (comment added for discoverability).
 
 ## Manual verification
 

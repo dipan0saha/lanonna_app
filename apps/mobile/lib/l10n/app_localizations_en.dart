@@ -25,11 +25,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsEditProfile => 'Edit profile';
 
   @override
-  String get settingsBiometricUnlock => 'Use biometric unlock';
+  String get settingsBiometricUnlock => 'Biometric sign-in & unlock';
 
   @override
   String get settingsBiometricUnlockSubtitle =>
-      'Require Face ID or fingerprint to open the app after you sign in';
+      'Sign in with Face ID or fingerprint after logout, and lock the app when you return';
+
+  @override
+  String get authSignInWithBiometrics => 'Sign in with biometrics';
+
+  @override
+  String authSignInWithBiometricsHint(String accountHint) =>
+      'Continue as $accountHint';
+
+  @override
+  String get biometricSignInFailed =>
+      'Biometric sign-in did not work. Try email or Google, or turn biometrics off and on in Settings.';
 
   @override
   String get settingsBiometricUnavailable =>

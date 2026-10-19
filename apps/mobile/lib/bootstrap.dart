@@ -9,6 +9,9 @@ import 'core/deep_links/app_link_bootstrap.dart';
 import 'core/deep_links/auth_action_app_link.dart';
 import 'core/deep_links/invite_app_link.dart';
 import 'core/auth/auth_repository.dart';
+import 'core/auth/biometric_credential_repository.dart';
+import 'core/auth/biometric_sign_in_service.dart';
+import 'core/auth/biometric_sign_in_store.dart';
 import 'core/auth/membership_access_handler.dart';
 import 'core/auth/session_cleanup.dart';
 import 'core/auth/user_deleted_session_handler.dart';
@@ -76,6 +79,11 @@ Future<Widget> bootstrapLaNonnaApp({
       authRepository: authRepository,
       sessionCleanup: sessionCleanup,
     ),
+  );
+  final biometricSignInService = BiometricSignInService(
+    credentials: BiometricCredentialRepository(apiClient),
+    store: BiometricSignInStore(),
+    authRepository: authRepository,
   );
   // One baby list for the whole app; repositories that change memberships
   // invalidate it.
@@ -159,6 +167,7 @@ Future<Widget> bootstrapLaNonnaApp({
   return MultiProvider(
     providers: [
       Provider<AuthRepository>.value(value: authRepository),
+      Provider<BiometricSignInService>.value(value: biometricSignInService),
       Provider<SessionCleanup>.value(value: sessionCleanup),
       Provider<ApiClient>.value(value: apiClient),
       Provider<EventCoverUploader>.value(value: eventCoverUploader),

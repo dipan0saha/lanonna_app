@@ -127,14 +127,29 @@ abstract class AppLocalizations {
   /// No description provided for @settingsBiometricUnlock.
   ///
   /// In en, this message translates to:
-  /// **'Use biometric unlock'**
+  /// **'Biometric sign-in & unlock'**
   String get settingsBiometricUnlock;
 
   /// No description provided for @settingsBiometricUnlockSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Require Face ID or fingerprint to open the app after you sign in'**
+  /// **'Sign in with Face ID or fingerprint after logout, and lock the app when you return'**
   String get settingsBiometricUnlockSubtitle;
+
+  /// No description provided for @authSignInWithBiometrics.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with biometrics'**
+  String get authSignInWithBiometrics;
+
+  /// No description provided for @authSignInWithBiometricsHint.
+  String authSignInWithBiometricsHint(String accountHint);
+
+  /// No description provided for @biometricSignInFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Biometric sign-in did not work. Try email or Google, or turn biometrics off and on in Settings.'**
+  String get biometricSignInFailed;
 
   /// No description provided for @settingsBiometricUnavailable.
   ///

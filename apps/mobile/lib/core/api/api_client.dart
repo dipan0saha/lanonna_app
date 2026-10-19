@@ -88,6 +88,21 @@ class ApiClient {
     return _decodeObject(response);
   }
 
+  Future<Map<String, dynamic>> postJsonPublic(
+    String path, {
+    Map<String, dynamic>? body,
+    Duration? timeout,
+  }) async {
+    final response = await _publicRequest(
+      'POST',
+      path,
+      body: body,
+      timeout: timeout,
+      includeAppCheck: true,
+    );
+    return _decodeObject(response);
+  }
+
   Future<Map<String, dynamic>> postJson(
     String path, {
     Map<String, dynamic>? body,
@@ -122,10 +137,17 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? body,
     Duration? timeout,
+    bool includeAppCheck = false,
   }) async {
     _throwIfOffline();
     final uri = Uri.parse('${AppConfig.apiBaseUrl}$path');
     final headers = {'Content-Type': 'application/json'};
+    if (includeAppCheck && _appCheckTokenProvider != null) {
+      final appCheck = await _appCheckTokenProvider!().timeout(_timeout);
+      if (appCheck != null && appCheck.isNotEmpty) {
+        headers['X-Firebase-AppCheck'] = appCheck;
+      }
+    }
     final requestTimeout = timeout ?? _timeout;
     try {
       final response = await switch (method) {

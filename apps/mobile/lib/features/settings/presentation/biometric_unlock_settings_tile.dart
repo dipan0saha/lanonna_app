@@ -1,7 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/auth/auth_repository.dart';
+import '../../../core/auth/biometric_sign_in_service.dart';
 import '../../../core/auth/biometric_unlock_service.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../account/data/account_repository.dart';
@@ -10,9 +13,11 @@ class BiometricUnlockSettingsTile extends StatefulWidget {
   const BiometricUnlockSettingsTile({
     super.key,
     this.biometricService,
+    this.biometricSignInService,
   });
 
   final BiometricUnlockService? biometricService;
+  final BiometricSignInService? biometricSignInService;
 
   @override
   State<BiometricUnlockSettingsTile> createState() =>
@@ -26,6 +31,9 @@ class _BiometricUnlockSettingsTileState extends State<BiometricUnlockSettingsTil
   var _saving = false;
   var _deviceSupported = false;
   bool? _enabled;
+
+  BiometricSignInService get _signInService =>
+      widget.biometricSignInService ?? context.read<BiometricSignInService>();
 
   @override
   void initState() {
@@ -53,9 +61,21 @@ class _BiometricUnlockSettingsTileState extends State<BiometricUnlockSettingsTil
     });
   }
 
+  String _accountHint(AccountPayload? account) {
+    final email = account?.email ?? context.read<AuthRepository>().currentUser?.email;
+    if (email == null || email.isEmpty) {
+      return account?.displayName ?? 'your account';
+    }
+    final at = email.indexOf('@');
+    if (at <= 1) return email;
+    return '${email[0]}***${email.substring(at)}';
+  }
+
   Future<void> _onChanged(bool value) async {
     if (_saving) return;
     final l10n = AppLocalizations.of(context)!;
+    final repo = context.read<AccountRepository>();
+    final auth = context.read<AuthRepository>();
     if (value) {
       if (!_deviceSupported) {
         AppSnackBar.showAlert(context, l10n.settingsBiometricUnavailable);
@@ -66,12 +86,34 @@ class _BiometricUnlockSettingsTileState extends State<BiometricUnlockSettingsTil
       );
       if (!ok) return;
     }
-    final repo = context.read<AccountRepository>();
     setState(() => _saving = true);
     try {
-      await repo.setBiometricUnlockEnabled(value);
+      if (value) {
+        final user = auth.currentUser ?? FirebaseAuth.instance.currentUser;
+        if (user == null) {
+          AppSnackBar.showAlert(context, l10n.errorGeneric);
+          return;
+        }
+        final account = repo.cachedAccount;
+        await _signInService.enrollAfterBiometricUnlockEnabled(
+          firebaseUid: user.uid,
+          accountHint: _accountHint(account),
+          promptMessage: l10n.biometricUnlockReason,
+        );
+        await repo.setBiometricUnlockEnabled(true);
+      } else {
+        await _signInService.revokeEnrollment(deleteKeys: true);
+        await repo.setBiometricUnlockEnabled(false);
+      }
       if (mounted) {
         setState(() => _enabled = value);
+      }
+    } catch (_) {
+      if (value) {
+        await _signInService.revokeEnrollment(deleteKeys: true);
+      }
+      if (mounted) {
+        AppSnackBar.showAlert(context, l10n.biometricSignInFailed);
       }
     } finally {
       if (mounted) setState(() => _saving = false);

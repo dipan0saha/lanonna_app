@@ -24,6 +24,7 @@ from lanonna_api.routers import (
     announcements,
     app_config,
     babies,
+    biometric_auth,
     data_export,
     events,
     fun,
@@ -138,6 +139,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 _app_check_deps = [Depends(require_app_check)]
 
 app.include_router(profile.router, dependencies=_app_check_deps)
+app.include_router(biometric_auth.router)
 app.include_router(notifications.router, dependencies=_app_check_deps)
 app.include_router(onboarding.router, dependencies=_app_check_deps)
 app.include_router(babies.router, dependencies=_app_check_deps)

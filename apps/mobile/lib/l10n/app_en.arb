@@ -5,8 +5,18 @@
   "settingsNotificationsSubtitle": "Digest, push, and channel preferences",
   "settingsHelpSupport": "Help & support",
   "settingsEditProfile": "Edit profile",
-  "settingsBiometricUnlock": "Use biometric unlock",
-  "settingsBiometricUnlockSubtitle": "Require Face ID or fingerprint to open the app after you sign in",
+  "settingsBiometricUnlock": "Biometric sign-in & unlock",
+  "settingsBiometricUnlockSubtitle": "Sign in with Face ID or fingerprint after logout, and lock the app when you return",
+  "authSignInWithBiometrics": "Sign in with biometrics",
+  "authSignInWithBiometricsHint": "Continue as {accountHint}",
+  "@authSignInWithBiometricsHint": {
+    "placeholders": {
+      "accountHint": {
+        "type": "String"
+      }
+    }
+  },
+  "biometricSignInFailed": "Biometric sign-in did not work. Try email or Google, or turn biometrics off and on in Settings.",
   "settingsBiometricUnavailable": "Biometrics are not available on this device.",
   "biometricUnlockReason": "Unlock La Nonna",
   "biometricUnlockTitle": "Locked",

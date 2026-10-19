@@ -118,6 +118,10 @@ class AuthRepository {
     await _auth.currentUser?.reload();
   }
 
+  Future<void> signInWithCustomToken(String token) async {
+    await _auth.signInWithCustomToken(token);
+  }
+
   Future<void> signOut() async {
     await _googleSignIn.signOut();
     await _auth.signOut();
