@@ -1,6 +1,22 @@
 # Shared GCP project / environment resolution for deploy and ops scripts.
-# Source this file; do not execute it.
+# Source this file from a bash script; do not execute it.
 # shellcheck shell=bash
+#
+# Rules (fail closed, never fall back to dev for a prod request):
+# - GCP_PROJECT_ID unset and ENVIRONMENT unset or dev -> lanonna-dev / dev.
+# - GCP_PROJECT_ID unset and ENVIRONMENT=prod -> error (prod must name its project).
+# - GCP_PROJECT_ID must be lanonna-dev or lanonna-prod; anything else is an error.
+# - A pre-set ENVIRONMENT that disagrees with GCP_PROJECT_ID is an error.
+
+if [[ -z "${BASH_VERSION:-}" ]]; then
+  echo "scripts/lib/env.sh must be sourced from bash." >&2
+  return 1
+fi
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  echo "scripts/lib/env.sh is a library; source it instead of executing it." >&2
+  exit 1
+fi
+set -euo pipefail
 
 # Repo root (directory that contains infra/env/). Override with LANONNA_REPO_ROOT.
 lanonna_repo_root() {
@@ -8,43 +24,53 @@ lanonna_repo_root() {
     printf '%s\n' "${LANONNA_REPO_ROOT}"
     return 0
   fi
-  local here
-  here="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-  printf '%s\n' "${here}"
+  (cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 }
 
-# Default lanonna-dev preserves existing Mac dev deploy behavior.
-lanonna_resolve_gcp_project_id() {
-  GCP_PROJECT_ID="${GCP_PROJECT_ID:-lanonna-dev}"
-  export GCP_PROJECT_ID
-}
-
-# Resolve ENVIRONMENT (dev|prod). Honors a pre-set ENVIRONMENT; otherwise maps known project ids.
+# Resolve and export GCP_PROJECT_ID and ENVIRONMENT (dev|prod) together.
 lanonna_resolve_environment() {
-  if [[ -n "${ENVIRONMENT:-}" ]]; then
-    case "${ENVIRONMENT}" in
-      dev | prod) export ENVIRONMENT; return 0 ;;
-      *)
-        echo "Invalid ENVIRONMENT=${ENVIRONMENT} (expected dev or prod)." >&2
-        return 1
-        ;;
-    esac
-  fi
-  lanonna_resolve_gcp_project_id
-  case "${GCP_PROJECT_ID}" in
-    lanonna-dev) ENVIRONMENT=dev ;;
-    lanonna-prod) ENVIRONMENT=prod ;;
+  local requested="${ENVIRONMENT:-}"
+  case "${requested}" in
+    "" | dev | prod) ;;
     *)
-      cat >&2 <<EOF
-Unknown GCP_PROJECT_ID=${GCP_PROJECT_ID}.
-Set ENVIRONMENT=dev or ENVIRONMENT=prod explicitly, or use lanonna-dev / lanonna-prod.
-EOF
+      echo "Invalid ENVIRONMENT=${requested} (expected dev or prod)." >&2
       return 1
       ;;
   esac
-  export ENVIRONMENT
+
+  if [[ -z "${GCP_PROJECT_ID:-}" ]]; then
+    if [[ "${requested}" == "prod" ]]; then
+      echo "ENVIRONMENT=prod requires GCP_PROJECT_ID=lanonna-prod; refusing to default to lanonna-dev." >&2
+      return 1
+    fi
+    GCP_PROJECT_ID="lanonna-dev"
+  fi
+
+  local derived
+  case "${GCP_PROJECT_ID}" in
+    lanonna-dev) derived=dev ;;
+    lanonna-prod) derived=prod ;;
+    *)
+      echo "Unknown GCP_PROJECT_ID=${GCP_PROJECT_ID} (expected lanonna-dev or lanonna-prod)." >&2
+      return 1
+      ;;
+  esac
+
+  if [[ -n "${requested}" && "${requested}" != "${derived}" ]]; then
+    echo "ENVIRONMENT=${requested} does not match GCP_PROJECT_ID=${GCP_PROJECT_ID} (${derived})." >&2
+    return 1
+  fi
+
+  ENVIRONMENT="${derived}"
+  export GCP_PROJECT_ID ENVIRONMENT
 }
 
+# Kept for callers that only need the project id; validates the same way.
+lanonna_resolve_gcp_project_id() {
+  lanonna_resolve_environment
+}
+
+# Path of infra/env/<environment>.<component>.env. Call lanonna_resolve_environment first.
 lanonna_infra_env_file() {
   local component="$1"
   case "${component}" in
@@ -54,11 +80,13 @@ lanonna_infra_env_file() {
       return 1
       ;;
   esac
-  lanonna_resolve_environment
+  if [[ -z "${ENVIRONMENT:-}" ]]; then
+    lanonna_resolve_environment
+  fi
   printf '%s/infra/env/%s.%s.env\n' "$(lanonna_repo_root)" "${ENVIRONMENT}" "${component}"
 }
 
-# True when a value is an explicit repo placeholder (fail fast).
+# True when a value is an explicit repo placeholder such as __SET_PROD_X__.
 lanonna_is_placeholder_value() {
   local value="$1"
   [[ "${value}" =~ ^__[A-Z0-9_]+__$ ]]

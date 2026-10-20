@@ -37,12 +37,62 @@ def test_lanonna_prod_maps_to_prod_environment():
     assert result.stdout.strip() == "prod"
 
 
-def test_unknown_project_requires_explicit_environment():
+def test_unknown_project_is_an_error():
     result = _bash_snippet(
         f'source "{_ENV_SH}" && GCP_PROJECT_ID=my-other-project lanonna_resolve_environment'
     )
     assert result.returncode != 0
     assert "Unknown GCP_PROJECT_ID" in result.stderr
+
+
+def test_unknown_project_is_an_error_even_with_environment():
+    result = _bash_snippet(
+        f'source "{_ENV_SH}" && lanonna_resolve_environment',
+        GCP_PROJECT_ID="my-other-project",
+        ENVIRONMENT="dev",
+    )
+    assert result.returncode != 0
+    assert "Unknown GCP_PROJECT_ID" in result.stderr
+
+
+def test_prod_without_project_does_not_fall_back_to_dev():
+    result = _bash_snippet(
+        f'source "{_ENV_SH}" && lanonna_resolve_environment && echo "$GCP_PROJECT_ID"',
+        ENVIRONMENT="prod",
+    )
+    assert result.returncode != 0
+    assert "lanonna-dev" not in result.stdout
+    assert "refusing to default to lanonna-dev" in result.stderr
+
+
+def test_environment_mismatch_is_an_error():
+    result = _bash_snippet(
+        f'source "{_ENV_SH}" && lanonna_resolve_environment',
+        GCP_PROJECT_ID="lanonna-prod",
+        ENVIRONMENT="dev",
+    )
+    assert result.returncode != 0
+    assert "does not match" in result.stderr
+
+
+def test_invalid_environment_is_an_error():
+    result = _bash_snippet(f'source "{_ENV_SH}" && lanonna_resolve_environment', ENVIRONMENT="test")
+    assert result.returncode != 0
+    assert "Invalid ENVIRONMENT" in result.stderr
+
+
+def test_executing_the_library_fails():
+    result = _bash_snippet(f'bash "{_ENV_SH}"')
+    assert result.returncode != 0
+    assert "library" in result.stderr
+
+
+def test_sourcing_enables_strict_mode():
+    result = _bash_snippet(f'source "{_ENV_SH}" && echo "$-" && shopt -o pipefail')
+    assert result.returncode == 0
+    flags = result.stdout.splitlines()[0]
+    assert "e" in flags and "u" in flags
+    assert "on" in result.stdout.splitlines()[1]
 
 
 def test_placeholder_values_detected():

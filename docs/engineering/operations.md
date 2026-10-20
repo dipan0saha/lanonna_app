@@ -113,7 +113,7 @@ Run `./scripts/apply-run-iam.sh` with `GCP_PROJECT_ID=lanonna-prod` after each w
 
 ### Project and environment (deploy scripts)
 
-[`scripts/lib/env.sh`](../../scripts/lib/env.sh) resolves **`GCP_PROJECT_ID`** (default **`lanonna-dev`**) and **`ENVIRONMENT`** (`lanonna-dev` → `dev`, `lanonna-prod` → `prod`, or set `ENVIRONMENT` explicitly for other project ids). API and worker deploy scripts load **`infra/env/<environment>.api.env`** / **`.worker.env`** unless `API_ENV_FILE` / `WORKER_ENV_FILE` overrides.
+[`scripts/lib/env.sh`](../../scripts/lib/env.sh) resolves **`GCP_PROJECT_ID`** (default **`lanonna-dev`**) and **`ENVIRONMENT`** (`lanonna-dev` → `dev`, `lanonna-prod` → `prod`). It fails closed: any other project id is an error, `ENVIRONMENT=prod` without `GCP_PROJECT_ID=lanonna-prod` is an error (never a dev fallback), and a pre-set `ENVIRONMENT` that disagrees with the project is an error. Sourcing it turns on `set -euo pipefail`. API and worker deploy scripts load **`infra/env/<environment>.api.env`** / **`.worker.env`** unless `API_ENV_FILE` / `WORKER_ENV_FILE` overrides.
 
 | File | Purpose |
 |------|---------|

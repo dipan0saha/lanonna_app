@@ -14,7 +14,7 @@ Single PR, repo-only (no GCP project creation). Analysis and design first; imple
 
 | Step | Deliverable | Notes |
 |------|-------------|--------|
-| 1 | `scripts/lib/env.sh` | Derive `ENVIRONMENT` from `GCP_PROJECT_ID` (`lanonna-dev` → `dev`, `lanonna-prod` → `prod`, else fail unless `ENVIRONMENT` set); default project `lanonna-dev` preserves Mac dev deploys. |
+| 1 | `scripts/lib/env.sh` | Derive `ENVIRONMENT` from `GCP_PROJECT_ID` (`lanonna-dev` → `dev`, `lanonna-prod` → `prod`, any other project fails; `ENVIRONMENT=prod` without the prod project fails; a mismatched `ENVIRONMENT` fails); default project `lanonna-dev` preserves Mac dev deploys. |
 | 2 | `infra/env/prod.{api,worker}.env` | Mirror dev shape; prod-only unknowns use `__…__` placeholders that deploy scripts reject. |
 | 3 | Deploy scripts | API/worker load `infra/env/<env>.*.env` by default; `ENVIRONMENT` on Cloud Run matches resolution. |
 | 4 | `scripts/apply-run-iam.sh` | Rename from `apply-dev-run-iam.sh`; update docs/CI/cursor rules. |

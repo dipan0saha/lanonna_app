@@ -4,10 +4,10 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-# shellcheck source=lib/env.sh
+# shellcheck source-path=SCRIPTDIR source=lib/env.sh
 source "${ROOT}/scripts/lib/env.sh"
 
-lanonna_resolve_gcp_project_id
+lanonna_resolve_environment
 PROJECT="${GCP_PROJECT_ID}"
 REGION="${GCP_REGION:-us-central1}"
 PN="$(gcloud projects describe "${PROJECT}" --format='value(projectNumber)')"

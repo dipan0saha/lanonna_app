@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build, push, and deploy the API to Cloud Run (lanonna-dev).
+# Build, push, and deploy the API to Cloud Run (GCP_PROJECT_ID, default lanonna-dev; see scripts/lib/env.sh).
 set -euo pipefail
 
 REGION="${GCP_REGION:-us-central1}"
@@ -9,9 +9,9 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 API_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 REPO_ROOT="$(cd "${API_DIR}/../.." && pwd)"
 
-# shellcheck source=../../../scripts/lib/env_file.sh
+# shellcheck source-path=SCRIPTDIR source=../../../scripts/lib/env_file.sh
 source "${REPO_ROOT}/scripts/lib/env_file.sh"
-# shellcheck source=../../../scripts/lib/env.sh
+# shellcheck source-path=SCRIPTDIR source=../../../scripts/lib/env.sh
 source "${REPO_ROOT}/scripts/lib/env.sh"
 
 lanonna_resolve_environment

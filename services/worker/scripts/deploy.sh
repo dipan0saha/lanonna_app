@@ -3,9 +3,9 @@
 set -euo pipefail
 
 LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../scripts/lib" && pwd)"
-# shellcheck source=../../../scripts/lib/env_file.sh
+# shellcheck source-path=SCRIPTDIR source=../../../scripts/lib/env_file.sh
 source "${LIB_DIR}/env_file.sh"
-# shellcheck source=../../../scripts/lib/env.sh
+# shellcheck source-path=SCRIPTDIR source=../../../scripts/lib/env.sh
 source "${LIB_DIR}/env.sh"
 
 # Refuse a missing sender or hello@lanonna.app before any image build.
