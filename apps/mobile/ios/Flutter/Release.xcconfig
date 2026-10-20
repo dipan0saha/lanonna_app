@@ -1,2 +1,5 @@
 #include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"
+// Dev default; sync_app_link_domain.sh writes the override from APP_LINK_HOST.
+APP_LINK_DOMAIN=lanonna-dev.firebaseapp.com
+#include? "AppLink.generated.xcconfig"
 #include "Generated.xcconfig"

@@ -18,6 +18,7 @@ import 'core/auth/user_deleted_session_handler.dart';
 import 'core/data/baby_list_cache.dart';
 import 'core/data/parallel_requests.dart';
 import 'core/network/connectivity_service.dart';
+import 'core/observability/crash_reporting_bootstrap.dart';
 import 'core/router/router_refresh.dart';
 import 'features/account/data/account_identity_store.dart';
 import 'features/account/data/account_repository.dart';
@@ -59,6 +60,7 @@ Future<Widget> bootstrapLaNonnaApp({
   }
 
   final authRepository = AuthRepository();
+  await startCrashReporting(authRepository: authRepository);
   // A signed-in launch makes authorized requests right away; start the
   // App Check read now so a first-launch attestation overlaps start-up.
   if (authRepository.currentUser != null) appCheck.prefetch();

@@ -194,6 +194,7 @@
 			buildConfigurationList = 97C147051CF9000F007C117D /* Build configuration list for PBXNativeTarget "Runner" */;
 			buildPhases = (
 				A5F15481180CAF06B6D0A2EA /* [CP] Check Pods Manifest.lock */,
+				B1A2C3D41CF901F6004384FD /* Sync App Link domain */,
 				9740EEB61CF901F6004384FC /* Run Script */,
 				97C146EA1CF9000F007C117D /* Sources */,
 				97C146EB1CF9000F007C117D /* Frameworks */,
@@ -272,6 +273,23 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		B1A2C3D41CF901F6004384FD /* Sync App Link domain */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${SRCROOT}/Flutter/Generated.xcconfig",
+			);
+			name = "Sync App Link domain";
+			outputPaths = (
+				"${SRCROOT}/Flutter/AppLink.generated.xcconfig",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "/bin/bash \"${SRCROOT}/Runner/sync_app_link_domain.sh\"\n";
+		};
 		02AC58DA6C19F17B238433A0 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;

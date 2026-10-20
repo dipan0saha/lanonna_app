@@ -57,6 +57,9 @@ override.tf.json
 .terraformrc
 terraform.rc
 
+# Android release signing (upload keystore paths/passwords)
+apps/mobile/android/key.properties
+
 # Maestro local credentials
 apps/mobile/maestro/local.env
 apps/mobile/maestro/.fixtures.env
@@ -66,3 +69,6 @@ apps/mobile/maestro/.qa-fixtures.env
 **/coverage/
 **/tfplan
 apps/mobile/test/failures/
+
+# iOS App Link domain override written by sync_app_link_domain.sh
+apps/mobile/ios/Flutter/AppLink.generated.xcconfig

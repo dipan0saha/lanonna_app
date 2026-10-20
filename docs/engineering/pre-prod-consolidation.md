@@ -56,7 +56,8 @@ flowchart LR
 ## Tracking checklist
 
 - [ ] Create `lanonna-prod` and apply existing migrations `001`–`041` on empty Cloud SQL (no squash gate)
-- [x] Add `infra/env/prod.api.env` / `prod.worker.env`, fix `ENVIRONMENT` in deploy scripts (M-52), TF SQL password → Secret Manager (M-47), generalize `apply-run-iam.sh` — **in PR** `cursor/pre-prod-wiring-0549`
+- [x] Add `infra/env/prod.api.env` / `prod.worker.env`, fix `ENVIRONMENT` in deploy scripts (M-52), TF SQL password → Secret Manager (M-47), generalize `apply-run-iam.sh` — merged in #347
+- [x] Mobile prod flavor + Crashlytics wiring ([mobile-prod-flavor-and-crashlytics.md](mobile-prod-flavor-and-crashlytics.md); owner still: keystore, `flutterfire configure`, fill `flavors/prod.json`)
 - [ ] (Optional, after schema freeze) Generate `001_baseline_v1.sql`, archive `002`–`040`, reset dev DB, add schema-only diff check in CI
 - [ ] Keep L-28 refactors and email-tree merge out of pre-prod scope
 
@@ -130,7 +131,7 @@ These are “make prod and dev symmetric” tasks, not refactors.
 | **FCM IAM in Terraform** (M-50) | ✅ `iam.tf` + dev import in [operations.md](operations.md) |
 | **Scheduler scripts** | ✅ [`scripts/setup-schedulers.sh`](../../scripts/setup-schedulers.sh); Cloud Scheduler stays in scripts, not Terraform |
 | **Hosting / Firebase CLI** | ✅ prod alias in [`hosting/.firebaserc`](../../hosting/.firebaserc); `deploy-invite-hosting.sh` uses env helper + prod `ANDROID_SHA256` |
-| **Crashlytics** | Architecture mentions it; not in app—add when stabilizing prod crashes |
+| **Crashlytics** | ✅ Wired in mobile ([mobile-prod-flavor-and-crashlytics.md](mobile-prod-flavor-and-crashlytics.md)); enable in Firebase console per project |
 | **open-gaps.md cleanup** | Close or re-tag items fixed by prod wiring |
 
 ---

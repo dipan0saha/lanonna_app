@@ -6,6 +6,7 @@
 | [mobile-prototype-parity.md](mobile-prototype-parity.md) | Shared mobile theme tokens/widgets aligned with the HTML prototype ([`nonna_combined_prototype.html`](../prototype/nonna_combined_prototype.html)) |
 | [operations.md](operations.md) | GCP/Terraform, deploy, migrations, dev readiness, ship APK / beta scripts |
 | [pre-prod-consolidation.md](pre-prod-consolidation.md) | What to consolidate before `lanonna-prod` (migrations squash vs wiring) |
+| [mobile-prod-flavor-and-crashlytics.md](mobile-prod-flavor-and-crashlytics.md) | Mobile prod flavor, signing, App Links, Crashlytics |
 | [platform-architecture.md](platform-architecture.md) | Stack principles, flows, cost model, security checklist |
 | [pre-beta-qa.md](pre-beta-qa.md) | Manual device QA before widening beta |
 | [open-gaps.md](open-gaps.md) | Open pre-beta engineering gaps, test health snapshot, Oct 16 2026 architecture-review outcomes |

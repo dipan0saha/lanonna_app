@@ -5,14 +5,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
 import 'bootstrap.dart';
+import 'config/prod_config_guard.dart';
 import 'core/app_check/app_check_bootstrap.dart';
 import 'core/data/parallel_requests.dart';
 import 'core/theme/app_fonts.dart';
-import 'firebase_options.dart';
+import 'firebase/firebase_options_resolver.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Firebase.initializeApp(options: resolveFirebaseOptions());
 }
 
 /// Start-up runs independent steps together; the native launch screen stays
@@ -33,7 +34,8 @@ Future<void> main() async {
   if (maestroSemantics) {
     SemanticsBinding.instance.ensureSemantics();
   }
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  ensureProdConfigReady();
+  await Firebase.initializeApp(options: resolveFirebaseOptions());
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   final appCheck = startFirebaseAppCheck();
   final (_, app, _) = await waitAll3(

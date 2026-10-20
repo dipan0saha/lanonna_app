@@ -2,6 +2,8 @@
 # Format: path|exact literal|justification (why it is not user-facing copy).
 # Symbol/number-only literals are already ignored by the check.
 lib/config/app_config.dart|Release builds must set API_BASE_URL via --dart-define-from-file=flavors/dev.json|Build-time configuration error for developers; never shown in a running app.
+lib/config/app_config.dart|Prod release builds must replace all __PROD_ placeholders in flavors/prod.json|Build-time configuration error for developers; never shown in a running app.
+lib/firebase/firebase_options_prod.dart|'Prod Firebase is not configured. Create the prod Firebase project, ' 'register Android/iOS apps, then run `flutterfire configure` from ' 'apps/mobile and commit the generated prod options.'|Developer configuration error until prod Firebase exists; prod release cannot compile with placeholders.
 lib/core/api/api_client.dart|'Bearer $token'|HTTP Authorization header value.
 lib/core/domain/relationship_preset.dart|Mother|Stored relationship_label value; shown via RelationshipPreset.label.
 lib/core/domain/relationship_preset.dart|Father|Stored relationship_label value; shown via RelationshipPreset.label.
