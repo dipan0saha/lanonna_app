@@ -119,7 +119,7 @@ variable "create_automation_sa" {
 variable "manage_sql_app_password" {
   type        = bool
   default     = false
-  description = "When false, imported DB user password is not rotated by Terraform."
+  description = "When true (fresh prod), Terraform generates the app user password and writes db-lanonna-app-password and database-url secret versions. When false (dev import), SQL user password changes are ignored and no secret versions are managed."
 }
 
 variable "enable_firebase" {

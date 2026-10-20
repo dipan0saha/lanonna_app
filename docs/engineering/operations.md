@@ -21,7 +21,7 @@ gcloud config set project lanonna-dev
 # Optional but recommended (Firebase test user password):
 export SMOKE_TEST_PASSWORD='…'
 
-./scripts/apply-dev-run-iam.sh   # after worker deploy
+./scripts/apply-run-iam.sh   # after worker deploy
 ./scripts/verify-dev-prerequisites.sh
 ```
 
@@ -32,7 +32,7 @@ export SMOKE_TEST_PASSWORD='…'
 | Auth + API | Flutter dev or curl with Firebase JWT; `GET /health` |
 | Cloud SQL | All migrations applied — proxy + `apply_migrations.py`; `./scripts/verify-dev-migrations.sh` checks every file in `infra/db/migrations/` is recorded |
 | GCS → Pub/Sub → worker | `./scripts/infra-smoke-display-upload.sh` (set `SMOKE_TEST_PASSWORD`) |
-| Worker security | **No** `allUsers` on `worker`; Run invoker via `apply-dev-run-iam.sh` |
+| Worker security | **No** `allUsers` on `worker`; Run invoker via `apply-run-iam.sh` |
 | Quality gate | `verify-dev-prerequisites.sh` (Flutter analyze/test, API/worker compile); run `pytest` when you touch Python |
 | Firebase | Local plist/json + `firebase_options.dart` (see [Flutter (dev)](#flutter-dev) below) |
 | Mailjet | Secrets on worker for `send_invite_email` |
@@ -54,7 +54,7 @@ Path B platform: **`infra/terraform/`** — one **`platform`** module, **`dev`**
 
 **Terraform manages:** APIs, GCS (+ upload notification), Pub/Sub (**push** subs + DLQ topic, retention subscription, and service-agent IAM), Cloud SQL, Artifact Registry, Secret Manager **containers**, IAM, Firebase project attachment. The legacy `infra/gcp/bootstrap.sh` has been removed.
 
-**Dev extras:** push subscriptions **`photo-upload-finalized-push-dev`** / **`lanonna-async-commands-push-dev`** (OIDC); push URL is read from live Cloud Run **`worker`** on `terraform apply` (override with `worker_push_endpoint` if needed). **Run invoker** for Pub/Sub is in Terraform (`run_iam.tf`); run `./scripts/apply-dev-run-iam.sh` after worker deploy to remove **`allUsers`** and reconcile IAM if apply lacked `setIamPolicy`.
+**Dev extras:** push subscriptions **`photo-upload-finalized-push-dev`** / **`lanonna-async-commands-push-dev`** (OIDC); push URL is read from live Cloud Run **`worker`** on `terraform apply` (override with `worker_push_endpoint` if needed). **Run invoker** for Pub/Sub is in Terraform (`run_iam.tf`); run `./scripts/apply-run-iam.sh` after worker deploy to remove **`allUsers`** and reconcile IAM if apply lacked `setIamPolicy`.
 
 ### Prerequisites
 
@@ -94,9 +94,33 @@ terraform apply               # when plan looks safe
 
 1. Create **`lanonna-prod`**, link billing.
 2. `./infra/terraform/scripts/ensure-state-bucket.sh lanonna-prod lanonna-prod-terraform-state`
-3. `cd infra/terraform/environments/prod` → `terraform.tfvars` from example → `terraform init && terraform apply` (fresh apply, no import).
+3. `cd infra/terraform/environments/prod` → `terraform.tfvars` from example → `terraform init && terraform apply` (fresh apply, no import). First apply creates Cloud SQL and writes **`db-lanonna-app-password`** and **`database-url`** secret versions from Terraform (`manage_sql_app_password = true`; dev keeps `false` so existing dev passwords are never rotated).
+4. Apply migrations **`001`–`041`** on empty Cloud SQL (same chain as dev).
+5. Set real values in [`infra/env/prod.worker.env`](../../infra/env/prod.worker.env) (`MAILJET_FROM_EMAIL` — placeholders fail deploy) and review [`infra/env/prod.api.env`](../../infra/env/prod.api.env) (`APP_CHECK_ENFORCE`, scaling).
+6. Deploy **worker** → `./scripts/apply-run-iam.sh` → enable push subscriptions (two-phase Terraform below) → **API** → `./scripts/setup-schedulers.sh` → invite hosting with release `ANDROID_SHA256`.
 
 Real users on prod = **new Firebase project + prod flavor**, not renaming dev. See [platform-architecture.md](platform-architecture.md).
+
+#### Prod Terraform: two-phase apply (push subscriptions)
+
+Prod [`environments/prod/main.tf`](../../infra/terraform/environments/prod/main.tf) ships with **`enable_worker_push_subscription = false`** until Cloud Run **`worker`** exists. Match [`terraform.tfvars.example`](../../infra/terraform/environments/prod/terraform.tfvars.example):
+
+**Phase 1 — platform without push subs:** `terraform apply` after creating `terraform.tfvars` (APIs, SQL, secrets, buckets, topics, Run service accounts, FCM IAM, etc.). Deploy the worker image to prod.
+
+**Phase 2 — push subs:** In `module "platform"` set `enable_worker_push_subscription = true`, subscription names (e.g. `photo-upload-finalized-push-prod`, `lanonna-async-commands-push-prod`), leave `worker_push_endpoint` empty to read the live worker URL, then `terraform apply` again.
+
+Run `./scripts/apply-run-iam.sh` with `GCP_PROJECT_ID=lanonna-prod` after each worker deploy (same as dev).
+
+### Project and environment (deploy scripts)
+
+[`scripts/lib/env.sh`](../../scripts/lib/env.sh) resolves **`GCP_PROJECT_ID`** (default **`lanonna-dev`**) and **`ENVIRONMENT`** (`lanonna-dev` → `dev`, `lanonna-prod` → `prod`). It fails closed: any other project id is an error, `ENVIRONMENT=prod` without `GCP_PROJECT_ID=lanonna-prod` is an error (never a dev fallback), and a pre-set `ENVIRONMENT` that disagrees with the project is an error. Sourcing it turns on `set -euo pipefail`. API and worker deploy scripts load **`infra/env/<environment>.api.env`** / **`.worker.env`** unless `API_ENV_FILE` / `WORKER_ENV_FILE` overrides.
+
+| File | Purpose |
+|------|---------|
+| [`infra/env/dev.api.env`](../../infra/env/dev.api.env) | Dev API min/max instances (warm instance) |
+| [`infra/env/dev.worker.env`](../../infra/env/dev.worker.env) | Dev Mailjet sender (non-secret) |
+| [`infra/env/prod.api.env`](../../infra/env/prod.api.env) | Prod API scaling + `APP_CHECK_ENFORCE` |
+| [`infra/env/prod.worker.env`](../../infra/env/prod.worker.env) | Prod Mailjet sender — **must** replace `__SET_PROD_MAILJET_FROM_EMAIL__` before first deploy |
 
 ---
 
@@ -105,13 +129,13 @@ Real users on prod = **new Firebase project + prod flavor**, not renaming dev. S
 | Service | Cloud Run name | Deploy |
 |---------|----------------|--------|
 | **API** | `api` | `./services/api/scripts/deploy.sh` |
-| **Worker** | `worker` | `./services/worker/scripts/deploy.sh` then **`./scripts/apply-dev-run-iam.sh`** |
+| **Worker** | `worker` | `./services/worker/scripts/deploy.sh` then **`./scripts/apply-run-iam.sh`** |
 
 Scripts use **Cloud Build** → `us-central1-docker.pkg.dev/lanonna-dev/lanonna/…`. Optional: `USE_LOCAL_DOCKER=1`.
 
 **Build context (M-48):** `gcloud builds submit` uses the **repo root** as source. Root [`.gcloudignore`](../../.gcloudignore) whitelists only `packages/` and `services/` (plus secret/cache exclusions); root [`.dockerignore`](../../.dockerignore) matches for local Docker. To inspect what would upload: `gcloud meta list-files-for-upload .` from the repo root. If a Dockerfile starts `COPY`ing paths outside those trees, extend both ignore files.
 
-**API scaling (per environment):** `services/api/scripts/deploy.sh` reads non-secret Cloud Run settings from `infra/env/dev.api.env` (parsed, not executed, by the shared `scripts/lib/env_file.sh` loader that the worker deploy also uses; a variable set in the shell wins). Dev sets `API_MIN_INSTANCES=1` so one instance stays warm: a scale-from-zero first request took about 9–10 s (container start), warm requests about 0.05–0.15 s. Idle cost is about $10/month at 1 vCPU / 512 MiB (request-based billing, CPU throttled when idle). Without an env file the defaults are min 0 / max 10, so prod keeps scale to zero until it opts in. The worker stays at min 0 (Pub/Sub push retries absorb its cold start). To change dev without a rebuild: `gcloud run services update api --region=us-central1 --min-instances=N`, and update `dev.api.env` so the next deploy keeps it.
+**API scaling (per environment):** `services/api/scripts/deploy.sh` reads non-secret Cloud Run settings from `infra/env/<env>.api.env` (parsed, not executed, via `scripts/lib/env_file.sh`; shell wins). Dev sets `API_MIN_INSTANCES=1` so one instance stays warm: a scale-from-zero first request took about 9–10 s (container start), warm requests about 0.05–0.15 s. Idle cost is about $10/month at 1 vCPU / 512 MiB (request-based billing, CPU throttled when idle). Without an env file the defaults are min 0 / max 10. Prod [`prod.api.env`](../../infra/env/prod.api.env) mirrors dev warm-instance policy and sets `APP_CHECK_ENFORCE=true`. The worker stays at min 0 (Pub/Sub push retries absorb its cold start). To change dev without a rebuild: `gcloud run services update api --region=us-central1 --min-instances=N`, and update `dev.api.env` so the next deploy keeps it.
 
 **API deploy wires:** Cloud SQL `lanonna-dev:us-central1:lanonna-db`, secret `db-lanonna-app-password` → `DB_PASSWORD`, `DISPLAY_BUCKET=lanonna-dev-display`, `GCS_SIGNING_SERVICE_ACCOUNT=lanonna-api@lanonna-dev.iam.gserviceaccount.com`.
 
@@ -119,23 +143,23 @@ Scripts use **Cloud Build** → `us-central1-docker.pkg.dev/lanonna-dev/lanonna/
 
 **Cloud Build IAM:** If deploy fails, grant default compute / Cloud Build SAs `cloudbuild.builds.builder`, `storage.admin`, `artifactregistry.writer`, `logging.logWriter`, and `run.admin` + `iam.serviceAccountUser` on the Cloud Build SA.
 
-**Deploy order when both change:** apply **migrations** first if needed → **worker** → `apply-dev-run-iam.sh` → **API**. Email templates: `bash scripts/sync-email-templates.sh apply` before worker deploy when templates changed.
+**Deploy order when both change:** apply **migrations** first if needed → **worker** → `apply-run-iam.sh` → **API**. Email templates: `bash scripts/sync-email-templates.sh apply` before worker deploy when templates changed.
 
-**Worker sender (#43):** `MAILJET_FROM_EMAIL` is configuration, not a secret. `services/worker/scripts/deploy.sh` uses the environment variable when it is set, otherwise reads `infra/env/dev.worker.env` (shared loader `scripts/lib/env_file.sh`) (`lanonnaapp@gmail.com`, display name `La Nonna`) without executing it. Values with spaces in that file are quoted. The sender check runs before Cloud Build. Deploy and worker startup both refuse an empty sender and `hello@lanonna.app` (Mailjet returns HTTP 200 for that address and drops the message). A Mailjet HTTP 200 whose `Messages[0].Status` is not `success` is a send failure: the invite claim is released and `email_sent_at` is not set.
+**Worker sender (#43):** `MAILJET_FROM_EMAIL` is configuration, not a secret. `services/worker/scripts/deploy.sh` uses the environment variable when it is set, otherwise reads `infra/env/<env>.worker.env` (`lanonnaapp@gmail.com` on dev). Placeholders like `__SET_PROD_MAILJET_FROM_EMAIL__` fail before Cloud Build. Values with spaces in that file are quoted. Deploy and worker startup refuse an empty sender and `hello@lanonna.app` (Mailjet returns HTTP 200 for that address and drops the message). A Mailjet HTTP 200 whose `Messages[0].Status` is not `success` is a send failure: the invite claim is released and `email_sent_at` is not set.
 
-**Worker invite link and export signing:** `deploy.sh` sets `INVITE_DEEP_LINK_BASE=https://${project_id}.firebaseapp.com` and `GCS_SIGNING_SERVICE_ACCOUNT=lanonna-worker@${project_id}.iam.gserviceaccount.com`. Export media URLs need `lanonna-worker` to be `roles/iam.serviceAccountTokenCreator` on itself (`run_iam.tf` `worker_self_token_creator`, also granted by `./scripts/apply-dev-run-iam.sh`). Startup rejects an invite base that is not `https://`, and rejects a `lanonna-dev` host when `ENVIRONMENT` is not `dev`.
+**Worker invite link and export signing:** `deploy.sh` sets `INVITE_DEEP_LINK_BASE=https://${project_id}.firebaseapp.com` and `GCS_SIGNING_SERVICE_ACCOUNT=lanonna-worker@${project_id}.iam.gserviceaccount.com`. Export media URLs need `lanonna-worker` to be `roles/iam.serviceAccountTokenCreator` on itself (`run_iam.tf` `worker_self_token_creator`, also granted by `./scripts/apply-run-iam.sh`). Startup rejects an invite base that is not `https://`, and rejects a `lanonna-dev` host when `ENVIRONMENT` is not `dev`.
 
 **Invite landing (Firebase Hosting):** from the repo root, after the API is deployed (`--allow-unauthenticated`):
 
 ```bash
-# Fingerprint of the cert that signs the Android app you install.
-# Omit ANDROID_SHA256 to read ~/.android/debug.keystore (alias androiddebugkey).
+# Dev: omit ANDROID_SHA256 to read ~/.android/debug.keystore (alias androiddebugkey).
+# Prod (GCP_PROJECT_ID=lanonna-prod): ANDROID_SHA256 is required (release/upload keystore).
 # APPLE_TEAM_ID is optional; without it iOS stays on the web fallback.
 ANDROID_SHA256='AA:BB:…' APPLE_TEAM_ID='XXXXXXXXXX' \
   bash scripts/deploy-invite-hosting.sh
 ```
 
-The script enables `firebasehosting.googleapis.com`, renders `assetlinks.json` and `apple-app-site-association`, runs `firebase deploy --only hosting` from `hosting/` (serves `/invite`, `/email-verified`, shared [`lanonna-type.css`](../../hosting/public/css/lanonna-type.css)), and grants `service-${PROJECT_NUMBER}@gcp-sa-firebasehosting.iam.gserviceaccount.com` `roles/run.invoker` on Cloud Run `api` so the `/v1/invitations/preview` rewrite works. `hosting/firebase.json` must not ignore `**/.*`: that default drops `.well-known`, so Android App Links and the Apple association file would never be published. That service account does not exist until Hosting is enabled, so it is not in `apply-dev-run-iam.sh`. Re-run is safe. Play Store `https://play.google.com/store/apps/details?id=com.lanonna.lanonna` may 404 until the listing exists; the page says to ask the inviter. After install, the person opens the **same email link** again (no install referrer). Prod later: point the Android manifest host, iOS entitlements, and `INVITE_DEEP_LINK_BASE` at the prod `firebaseapp.com` host.
+The script uses [`scripts/lib/env.sh`](../../scripts/lib/env.sh) for project/environment, enables `firebasehosting.googleapis.com`, renders per-environment `assetlinks.json` and `apple-app-site-association`, runs `firebase deploy --only hosting` from `hosting/` ([`hosting/.firebaserc`](../../hosting/.firebaserc) aliases `dev` / `prod`), and grants `service-${PROJECT_NUMBER}@gcp-sa-firebasehosting.iam.gserviceaccount.com` `roles/run.invoker` on Cloud Run `api` so the `/v1/invitations/preview` rewrite works. `hosting/firebase.json` must not ignore `**/.*`: that default drops `.well-known`, so Android App Links and the Apple association file would never be published. That service account does not exist until Hosting is enabled, so it is not in `apply-run-iam.sh`. Re-run is safe. Play Store `https://play.google.com/store/apps/details?id=com.lanonna.lanonna` may 404 until the listing exists; the page says to ask the inviter. After install, the person opens the **same email link** again (no install referrer). Prod: point the Android manifest host, iOS entitlements, and `INVITE_DEEP_LINK_BASE` at the prod `firebaseapp.com` host.
 
 **Auth email branding:** from the repo root, with `gcloud` ADC for `lanonna-dev`:
 
@@ -177,12 +201,18 @@ cd infra/terraform/environments/dev && terraform apply
 - Push: **`photo-upload-finalized-push-dev`** on **`photo-upload-finalized`** (no pull consumer; failures → DLQ after max attempts — `pubsub.tf`)
 - Commands: **`lanonna-async-commands-push-dev`** on **`lanonna-async-commands`**
 - Handler: `POST /pubsub/push` — thumbnails, Mailjet invites, notifications/FCM, export, invite cleanup, weekly digest
-- Weekly digest: `./scripts/setup-weekly-digest-scheduler.sh` (Sunday 14:00 UTC)
-- Expired invites: `./scripts/setup-expired-invites-scheduler.sh`
-- **Push auth:** OIDC; Run invoker via `apply-dev-run-iam.sh` after each worker deploy
+- Schedulers (weekly digest + expired invites): `./scripts/setup-schedulers.sh` (idempotent; not in Terraform)
+- **Push auth:** OIDC; Run invoker via `apply-run-iam.sh` after each worker deploy
 - **Retry config:** both push subscriptions use exponential backoff (`10s`–`600s`) and dead-letter after **12** attempts (`local.pubsub_max_delivery_attempts` in `pubsub.tf`). Worker env `PUBSUB_MAX_DELIVERY_ATTEMPTS` (default **12**) must match; invite email and export handlers use it to decide which Pub/Sub attempt is final.
 - **Timeouts:** push subscriptions use **`ack_deadline_seconds = 300`**; worker deploy sets **`--timeout=300`**. After changing ack deadline in `pubsub.tf`, run **`terraform apply`** in the target environment (deploy alone does not update Pub/Sub).
-- **FCM:** Worker SA may need **`roles/firebasecloudmessaging.admin`**
+- **FCM:** Terraform grants **`roles/firebasecloudmessaging.admin`** to `lanonna-worker` (`iam.tf`). On **dev**, import the existing binding once so apply does not churn:
+
+```bash
+cd infra/terraform/environments/dev
+terraform import \
+  'module.platform.google_project_iam_member.worker_firebase_cloud_messaging_admin' \
+  'lanonna-dev roles/firebasecloudmessaging.admin serviceAccount:lanonna-worker@lanonna-dev.iam.gserviceaccount.com'
+```
 
 #### Dead-letter queue
 
@@ -290,7 +320,7 @@ Switch back for interactive work: `gcloud config set account lanonnaapp@gmail.co
 ## Security
 
 - No SA JSON, `terraform.tfvars` secrets, or Firebase plist/json in git.
-- Dev worker: **OIDC push**, no `allUsers`; re-run `apply-dev-run-iam.sh` after worker deploy.
+- Dev worker: **OIDC push**, no `allUsers`; re-run `apply-run-iam.sh` after worker deploy.
 - Terraform creates Secret Manager **IDs** only; values via `gcloud` / console.
 
 ---

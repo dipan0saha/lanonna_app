@@ -19,7 +19,7 @@ step "Terraform validate"
 )
 
 step "Cloud Run worker IAM (Pub/Sub OIDC)"
-"${ROOT}/scripts/apply-dev-run-iam.sh"
+"${ROOT}/scripts/apply-run-iam.sh"
 
 step "API /health"
 HEALTH="$(curl -fsS "${API_BASE}/health")"

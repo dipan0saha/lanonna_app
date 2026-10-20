@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
-# Dev worker Run IAM: strips public invoker and reconciles bindings Terraform also manages (run_iam.tf).
+# Worker Run IAM: strips public invoker and reconciles bindings Terraform also manages (run_iam.tf).
 # Run after worker deploy if push fails or allUsers was re-added.
 set -euo pipefail
 
-PROJECT="${GCP_PROJECT_ID:-lanonna-dev}"
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source-path=SCRIPTDIR source=lib/env.sh
+source "${ROOT}/scripts/lib/env.sh"
+
+lanonna_resolve_environment
+PROJECT="${GCP_PROJECT_ID}"
 REGION="${GCP_REGION:-us-central1}"
 PN="$(gcloud projects describe "${PROJECT}" --format='value(projectNumber)')"
 
@@ -41,4 +46,4 @@ gcloud iam service-accounts add-iam-policy-binding "lanonna-worker@${PROJECT}.ia
   --role="roles/iam.serviceAccountTokenCreator" \
   --quiet
 
-echo "Worker Run IAM + Pub/Sub and self token creator applied."
+echo "Worker Run IAM + Pub/Sub and self token creator applied for ${PROJECT}."
