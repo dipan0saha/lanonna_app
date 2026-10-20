@@ -6,9 +6,17 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 HOSTING="${ROOT}/hosting"
-PROJECT_ID="${GCP_PROJECT_ID:-lanonna-dev}"
+# shellcheck source=lib/env.sh
+source "${ROOT}/scripts/lib/env.sh"
+lanonna_resolve_environment
+PROJECT_ID="${GCP_PROJECT_ID}"
 REGION="${GCP_REGION:-us-central1}"
 PACKAGE="com.lanonna.lanonna"
+
+if [[ "${ENVIRONMENT}" == "prod" && -z "${ANDROID_SHA256:-}" ]]; then
+  echo "ENVIRONMENT=prod requires ANDROID_SHA256 (release/upload keystore fingerprint). Debug keystore is not used on prod." >&2
+  exit 1
+fi
 
 if ! command -v firebase >/dev/null 2>&1; then
   echo "firebase CLI is required (npm install -g firebase-tools)." >&2

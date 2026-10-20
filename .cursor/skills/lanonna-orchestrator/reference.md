@@ -26,7 +26,7 @@ Paste into worker prompts when touching runtime behavior:
 4. **Async** — idempotent worker handlers; claims committed with side effects (see `platform-architecture.md`).
 5. **Secrets** — Secret Manager only; not in app or images.
 6. **Region** — `us-central1`; dev project `lanonna-dev`.
-7. **Two Run services** — deploy `api` and `worker` separately; worker not public (`apply-dev-run-iam.sh`).
+7. **Two Run services** — deploy `api` and `worker` separately; worker not public (`apply-run-iam.sh`).
 
 ## Mobile pointers
 
@@ -55,7 +55,7 @@ From `.cursor/rules/project-agent.mdc` + `operations.md`:
 | Migrations | New/changed SQL in `infra/db/migrations/` | Proxy + `DB_PASSWORD` from SM `db-lanonna-app-password`; `infra/db/apply_migrations.py`; `DB_PORT` matches proxy (often **5433** for verify scripts; align with proxy); `./scripts/verify-dev-migrations.sh` |
 | Email templates | Template changes | `bash scripts/sync-email-templates.sh apply` **before** worker |
 | Worker | Worker/runtime change | `./services/worker/scripts/deploy.sh` |
-| IAM | After worker deploy | `./scripts/apply-dev-run-iam.sh` |
+| IAM | After worker deploy | `./scripts/apply-run-iam.sh` |
 | API | API/runtime change (after migrations if schema changed) | `./services/api/scripts/deploy.sh` |
 
 **Order when multiple apply:** migrations → (email templates if needed) → worker → IAM → API.

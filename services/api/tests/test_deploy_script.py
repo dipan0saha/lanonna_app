@@ -71,3 +71,19 @@ def test_env_file_is_parsed_not_executed(tmp_path: Path):
 
 def test_dev_api_env_sets_min_instances():
     assert "API_MIN_INSTANCES=1" in _DEV_API_ENV.read_text(encoding="utf-8")
+
+
+def test_deploy_sets_environment_dev_by_default(tmp_path: Path):
+    result, log = _run_deploy(tmp_path)
+    assert result.returncode == 0, result.stderr
+    line = _deploy_line(log)
+    assert "ENVIRONMENT=dev," in line.replace(" ", "")
+
+
+def test_deploy_uses_prod_env_when_project_is_prod(tmp_path: Path):
+    result, log = _run_deploy(tmp_path, GCP_PROJECT_ID="lanonna-prod")
+    assert result.returncode == 0, result.stderr
+    line = _deploy_line(log)
+    assert "ENVIRONMENT=prod," in line.replace(" ", "")
+    assert "--min-instances=1" in line
+    assert "APP_CHECK_ENFORCE=true" in line

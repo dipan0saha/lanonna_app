@@ -7,7 +7,7 @@ resource "google_service_account_iam_member" "api_self_token_creator" {
 }
 
 # Pub/Sub → worker OIDC push: invoker + token creator in Terraform when push subs are enabled.
-# scripts/apply-dev-run-iam.sh still strips allUsers and reconciles if apply lacked setIamPolicy.
+# scripts/apply-run-iam.sh still strips allUsers and reconciles if apply lacked setIamPolicy.
 
 resource "google_cloud_run_v2_service_iam_member" "worker_pubsub_invoker" {
   count = var.enable_worker_push_subscription ? 1 : 0

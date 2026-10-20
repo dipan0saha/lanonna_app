@@ -2,10 +2,8 @@
 # Build, push, and deploy the API to Cloud Run (lanonna-dev).
 set -euo pipefail
 
-PROJECT_ID="${GCP_PROJECT_ID:-lanonna-dev}"
 REGION="${GCP_REGION:-us-central1}"
 SERVICE="api"
-IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/lanonna/${SERVICE}:$(git -C "$(dirname "$0")/../../.." rev-parse --short HEAD 2>/dev/null || echo local)"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 API_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
@@ -13,11 +11,17 @@ REPO_ROOT="$(cd "${API_DIR}/../.." && pwd)"
 
 # shellcheck source=../../../scripts/lib/env_file.sh
 source "${REPO_ROOT}/scripts/lib/env_file.sh"
+# shellcheck source=../../../scripts/lib/env.sh
+source "${REPO_ROOT}/scripts/lib/env.sh"
+
+lanonna_resolve_environment
+PROJECT_ID="${GCP_PROJECT_ID}"
+IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/lanonna/${SERVICE}:$(git -C "${REPO_ROOT}" rev-parse --short HEAD 2>/dev/null || echo local)"
 
 # Per-environment, non-secret Cloud Run settings (parsed, not executed). Variables
 # already set in the shell win. Without the file the defaults below apply
 # (scale to zero), so an environment opts in to warm instances explicitly.
-API_ENV_FILE="${API_ENV_FILE:-${REPO_ROOT}/infra/env/dev.api.env}"
+API_ENV_FILE="${API_ENV_FILE:-$(lanonna_infra_env_file api)}"
 if [[ -f "${API_ENV_FILE}" ]]; then
   load_unset_env_file "${API_ENV_FILE}"
 fi
@@ -47,8 +51,7 @@ fi
 SQL_INSTANCE="${SQL_INSTANCE_NAME:-lanonna-db}"
 CONN="${PROJECT_ID}:${REGION}:${SQL_INSTANCE}"
 
-# TEMP (2026-10): default false so sideloaded release APKs work without Play Integrity /
-# per-device App Check debug tokens. Set APP_CHECK_ENFORCE=true (or edit default) before wide beta.
+# Dev default false when not in env file; prod.api.env sets true unless the shell overrides.
 APP_CHECK_ENFORCE="${APP_CHECK_ENFORCE:-false}"
 
 gcloud run deploy "${SERVICE}" \
@@ -59,7 +62,7 @@ gcloud run deploy "${SERVICE}" \
   --allow-unauthenticated \
   --add-cloudsql-instances="${CONN}" \
   --set-secrets="DB_PASSWORD=db-lanonna-app-password:latest,ADMIN_API_KEY=admin-api-key:latest" \
-  --set-env-vars="ENVIRONMENT=dev,GCP_PROJECT_ID=${PROJECT_ID},CLOUD_SQL_CONNECTION_NAME=${CONN},DB_USER=lanonna_app,DB_NAME=lanonna,GCS_SIGNING_SERVICE_ACCOUNT=lanonna-api@${PROJECT_ID}.iam.gserviceaccount.com,DISPLAY_BUCKET=${PROJECT_ID}-display,THUMBNAILS_BUCKET=${PROJECT_ID}-thumbnails,PUBSUB_TOPIC_COMMANDS=lanonna-async-commands,APP_CHECK_ENFORCE=${APP_CHECK_ENFORCE}" \
+  --set-env-vars="ENVIRONMENT=${ENVIRONMENT},GCP_PROJECT_ID=${PROJECT_ID},CLOUD_SQL_CONNECTION_NAME=${CONN},DB_USER=lanonna_app,DB_NAME=lanonna,GCS_SIGNING_SERVICE_ACCOUNT=lanonna-api@${PROJECT_ID}.iam.gserviceaccount.com,DISPLAY_BUCKET=${PROJECT_ID}-display,THUMBNAILS_BUCKET=${PROJECT_ID}-thumbnails,PUBSUB_TOPIC_COMMANDS=lanonna-async-commands,APP_CHECK_ENFORCE=${APP_CHECK_ENFORCE}" \
   --min-instances="${API_MIN_INSTANCES}" \
   --max-instances="${API_MAX_INSTANCES}" \
   --memory=512Mi \

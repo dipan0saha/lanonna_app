@@ -127,9 +127,9 @@ These are “make prod and dev symmetric” tasks, not refactors.
 
 | Item | Notes |
 |------|--------|
-| **FCM IAM in Terraform** (M-50) | Today manual per [operations.md](operations.md) |
-| **Scheduler scripts** | Merged into [`scripts/setup-schedulers.sh`](../../scripts/setup-schedulers.sh) (PR `cursor/pre-prod-wiring-0549`); Cloud Scheduler stays in scripts, not Terraform |
-| **Hosting / Firebase CLI** | [`hosting/.firebaserc`](../../hosting/.firebaserc) defaults to dev—add prod project alias or env var in `deploy-invite-hosting.sh` |
+| **FCM IAM in Terraform** (M-50) | ✅ `iam.tf` + dev import in [operations.md](operations.md) |
+| **Scheduler scripts** | ✅ [`scripts/setup-schedulers.sh`](../../scripts/setup-schedulers.sh); Cloud Scheduler stays in scripts, not Terraform |
+| **Hosting / Firebase CLI** | ✅ prod alias in [`hosting/.firebaserc`](../../hosting/.firebaserc); `deploy-invite-hosting.sh` uses env helper + prod `ANDROID_SHA256` |
 | **Crashlytics** | Architecture mentions it; not in app—add when stabilizing prod crashes |
 | **open-gaps.md cleanup** | Close or re-tag items fixed by prod wiring |
 
