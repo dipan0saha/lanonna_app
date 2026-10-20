@@ -6,14 +6,31 @@
 | **Last updated** | 2026-10-20 |
 | **Related** | [operations.md](operations.md), [open-gaps.md](open-gaps.md) (L-28, M-47, M-52), [migrations README](../../infra/db/migrations/README.md) |
 
-**Summary:** Do not delay `lanonna-prod` for a migration squash or L-28 refactors. Run the existing 40-file chain on a fresh prod DB (minutes, safe). Optionally squash to one baseline later when you reset dev. Prioritize small, prod-wiring consolidations (deploy/env, Terraform secrets, IAM scripts) before or in parallel with the prod project.
+**Summary:** Do not delay `lanonna-prod` for a migration squash or L-28 refactors. Run the existing migration chain (`001`–`041_biometric_credentials`) on a fresh prod DB (minutes, safe). Optionally squash to one baseline later when you reset dev. Prioritize small, prod-wiring consolidations (deploy/env, Terraform secrets, IAM scripts) before or in parallel with the prod project.
+
+## Execution plan (2026-10-20)
+
+Single PR, repo-only (no GCP project creation). Analysis and design first; implementation follows existing script/Terraform patterns.
+
+| Step | Deliverable | Notes |
+|------|-------------|--------|
+| 1 | `scripts/lib/env.sh` | Derive `ENVIRONMENT` from `GCP_PROJECT_ID` (`lanonna-dev` → `dev`, `lanonna-prod` → `prod`, else fail unless `ENVIRONMENT` set); default project `lanonna-dev` preserves Mac dev deploys. |
+| 2 | `infra/env/prod.{api,worker}.env` | Mirror dev shape; prod-only unknowns use `__…__` placeholders that deploy scripts reject. |
+| 3 | Deploy scripts | API/worker load `infra/env/<env>.*.env` by default; `ENVIRONMENT` on Cloud Run matches resolution. |
+| 4 | `scripts/apply-run-iam.sh` | Rename from `apply-dev-run-iam.sh`; update docs/CI/cursor rules. |
+| 5 | Terraform `sql_secrets.tf` + FCM in `iam.tf` | When `manage_sql_app_password=true` (prod only today), write `db-lanonna-app-password` and `database-url` secret versions once; dev keeps `manage_sql_app_password=false` so existing passwords are untouched. Document dev import for FCM binding. |
+| 6 | `scripts/setup-schedulers.sh` | Merge weekly digest + expired-invite schedulers (scripts remain source of truth — not in TF). |
+| 7 | Hosting | `hosting/.firebaserc` prod alias; `deploy-invite-hosting.sh` uses env helper; prod requires explicit `ANDROID_SHA256` (no debug keystore). |
+| 8 | Docs | `operations.md` prod env files + two-phase prod TF apply; `open-gaps.md` + checklist updates; fix migration count references to **41**. |
+
+**Dev equivalence:** Unchanged default `GCP_PROJECT_ID=lanonna-dev` → same env files, same `ENVIRONMENT=dev`, same Cloud Run env vars as before this PR.
 
 ## Recommendation (short)
 
 | Approach | Verdict |
 |----------|---------|
-| **Squash 40 migrations → 1 before creating prod** | **Not required.** Fresh prod applies [`apply_migrations.py`](../../infra/db/apply_migrations.py) over empty Cloud SQL; backfill migrations (e.g. `032`–`039`) are **no-ops** on empty data. Cost of squash: large diff, review risk, doc/CI updates—benefit: slightly faster apply and less history noise. |
-| **Squash after you reset dev** | **Reasonable optional cleanup** if you are OK wiping dev. Best done **once** schema is stable for v1 launch (after `040`), not as a gate for prod. |
+| **Squash migrations → 1 before creating prod** | **Not required.** Fresh prod applies [`apply_migrations.py`](../../infra/db/apply_migrations.py) over empty Cloud SQL; backfill migrations (e.g. `032`–`039`) are **no-ops** on empty data. Cost of squash: large diff, review risk, doc/CI updates—benefit: slightly faster apply and less history noise. |
+| **Squash after you reset dev** | **Reasonable optional cleanup** if you are OK wiping dev. Best done **once** schema is stable for v1 launch (after `041`), not as a gate for prod. |
 | **L-28 code consolidation** ([open-gaps.md](open-gaps.md) L-28) | **Defer** until post-launch or quiet cycles—explicitly “medium risk, live request paths.” |
 | **Prod-wiring “consolidation”** | **Do**—these reduce copy-paste and prod footguns without refactoring domain logic. |
 
@@ -22,7 +39,7 @@ flowchart LR
   subgraph now [Do not block prod]
     A[Create lanonna-prod]
     B[TF apply + secrets bootstrap]
-    C[Run migrations 001 through 040]
+    C[Run migrations 001 through 041]
     D[Deploy API/worker with prod env]
   end
   subgraph optional [Optional after v1 schema freeze]
@@ -38,8 +55,8 @@ flowchart LR
 
 ## Tracking checklist
 
-- [ ] Create `lanonna-prod` and apply existing migrations `001`–`040` on empty Cloud SQL (no squash gate)
-- [ ] Add `infra/env/prod.api.env` / `prod.worker.env`, fix `ENVIRONMENT` in deploy scripts (M-52), TF SQL password → Secret Manager (M-47), generalize `apply-run-iam.sh`
+- [ ] Create `lanonna-prod` and apply existing migrations `001`–`041` on empty Cloud SQL (no squash gate)
+- [x] Add `infra/env/prod.api.env` / `prod.worker.env`, fix `ENVIRONMENT` in deploy scripts (M-52), TF SQL password → Secret Manager (M-47), generalize `apply-run-iam.sh` — **in PR** `cursor/pre-prod-wiring-0549`
 - [ ] (Optional, after schema freeze) Generate `001_baseline_v1.sql`, archive `002`–`040`, reset dev DB, add schema-only diff check in CI
 - [ ] Keep L-28 refactors and email-tree merge out of pre-prod scope
 
@@ -51,7 +68,7 @@ flowchart LR
 
 - [`infra/db/apply_migrations.py`](../../infra/db/apply_migrations.py): lexicographic `*.sql`, skip if `schema_migrations.version` exists.
 - Each file self-registers via `INSERT INTO schema_migrations` (see [`001_app_users.sql`](../../infra/db/migrations/001_app_users.sql)).
-- [`scripts/verify-dev-migrations.sh`](../../scripts/verify-dev-migrations.sh): **file count must equal row count** in `schema_migrations` (currently 40).
+- [`scripts/verify-dev-migrations.sh`](../../scripts/verify-dev-migrations.sh): **file count must equal row count** in `schema_migrations` (currently 41).
 
 ### Why squashing is not a prod prerequisite
 
@@ -63,18 +80,18 @@ flowchart LR
 
 Do this **after** prod is up or in the same window as a planned dev wipe—not instead of prod:
 
-1. **Freeze schema:** no new `041_*.sql` until squash is done.
-2. **Generate baseline** from a DB that has all 40 applied (dev after proxy):
+1. **Freeze schema:** no new migrations until squash is done.
+2. **Generate baseline** from a DB that has all 41 applied (dev after proxy):
    - `pg_dump --schema-only --no-owner` (or use Cloud SQL export), then hand-edit: keep `schema_migrations` table, end with `INSERT INTO schema_migrations (version) VALUES ('001_baseline_v1')`.
    - **Omit** dev-only backfill DML from the baseline; keep only final `CREATE`/`ALTER`/indexes/constraints.
 3. **Replace migration set:**
-   - Move `002`–`040` to `infra/db/migrations/archive/pre_baseline/` (read-only audit trail) **or** delete with pointer in [migrations README](../../infra/db/migrations/README.md).
+   - Move `002`–`041` to `infra/db/migrations/archive/pre_baseline/` (read-only audit trail) **or** delete with pointer in [migrations README](../../infra/db/migrations/README.md).
    - Single active file: e.g. `001_baseline_v1.sql`.
-4. **Reset environments:** drop/recreate `lanonna` DB on dev (and only use baseline on **new** prod if prod was not already migrated—if prod already ran `001`–`040`, **do not** squash prod in place without a deliberate migration strategy).
+4. **Reset environments:** drop/recreate `lanonna` DB on dev (and only use baseline on **new** prod if prod was not already migrated—if prod already ran the incremental chain, **do not** squash prod in place without a deliberate migration strategy).
 5. **Update tooling:** `verify-dev-migrations.sh` expected count = 1; Postgres integration tests that assume specific migration files (grep `infra/db/migrations` in tests).
 6. **Going forward:** new changes are `002_add_foo.sql`, etc.
 
-**Risk control:** add a one-off CI job or script that compares `pg_dump --schema-only` of “baseline apply” vs “040 chain apply” on empty Postgres (Docker) and diffs—only merge squash when identical.
+**Risk control:** add a one-off CI job or script that compares `pg_dump --schema-only` of “baseline apply” vs the full incremental chain on empty Postgres (Docker) and diffs—only merge squash when identical.
 
 ---
 
@@ -87,7 +104,7 @@ These are “make prod and dev symmetric” tasks, not refactors.
 | **Prod env files** | Today only [`infra/env/dev.api.env`](../../infra/env/dev.api.env) / [`dev.worker.env`](../../infra/env/dev.worker.env). Prod needs explicit min instances, sender, etc. | Add `infra/env/prod.api.env`, `prod.worker.env`; document in [operations.md](operations.md) |
 | **Deploy `ENVIRONMENT` + project** (M-52) | [`services/api/scripts/deploy.sh`](../../services/api/scripts/deploy.sh) and [`services/worker/scripts/deploy.sh`](../../services/worker/scripts/deploy.sh) hardcode `ENVIRONMENT=dev` while buckets use `GCP_PROJECT_ID` | Derive `ENVIRONMENT` from `project_id` (`lanonna-prod` → `prod`) or require explicit flag; load `API_ENV_FILE` / worker env by environment |
 | **SQL password → Secret Manager** (M-47) | Prod TF sets password in [`sql.tf`](../../infra/terraform/modules/platform/sql.tf) but not `db-lanonna-app-password` version | Extend [`secrets.tf`](../../infra/terraform/modules/platform/secrets.tf) or documented bootstrap script |
-| **Generalize Run IAM script** | [`scripts/apply-dev-run-iam.sh`](../../scripts/apply-dev-run-iam.sh) is dev-named but project-agnostic via `GCP_PROJECT_ID` | Rename to `apply-run-iam.sh`, call from prod runbook |
+| **Generalize Run IAM script** | Former `apply-dev-run-iam.sh` | Renamed to [`scripts/apply-run-iam.sh`](../../scripts/apply-run-iam.sh) (PR `cursor/pre-prod-wiring-0549`) |
 | **Prod Terraform push subs** (M-19) | [`environments/prod/main.tf`](../../infra/terraform/environments/prod/main.tf) lacks `enable_worker_push_subscription` until worker exists | Document two-phase apply in operations (already in `terraform.tfvars.example`) |
 | **Mobile prod flavor** | Not a “cleanup” but blocks prod binaries | `flavors/prod.json`, `flutterfire configure`, manifest/entitlements hosts—not dev hard-codes in [`AndroidManifest.xml`](../../apps/mobile/android/app/src/main/AndroidManifest.xml) / [`Runner.entitlements`](../../apps/mobile/ios/Runner/Runner.entitlements) |
 
@@ -111,7 +128,7 @@ These are “make prod and dev symmetric” tasks, not refactors.
 | Item | Notes |
 |------|--------|
 | **FCM IAM in Terraform** (M-50) | Today manual per [operations.md](operations.md) |
-| **Scheduler scripts** | Merge `setup-weekly-digest-scheduler.sh` + `setup-expired-invites-scheduler.sh` into one `setup-prod-schedulers.sh` with `GCP_PROJECT_ID` |
+| **Scheduler scripts** | Merged into [`scripts/setup-schedulers.sh`](../../scripts/setup-schedulers.sh) (PR `cursor/pre-prod-wiring-0549`); Cloud Scheduler stays in scripts, not Terraform |
 | **Hosting / Firebase CLI** | [`hosting/.firebaserc`](../../hosting/.firebaserc) defaults to dev—add prod project alias or env var in `deploy-invite-hosting.sh` |
 | **Crashlytics** | Architecture mentions it; not in app—add when stabilizing prod crashes |
 | **open-gaps.md cleanup** | Close or re-tag items fixed by prod wiring |
@@ -127,6 +144,6 @@ These are “make prod and dev symmetric” tasks, not refactors.
 
 ## 6. Practical decision
 
-1. **Create `lanonna-prod` now** and apply **existing** `001`–`040` on fresh Cloud SQL.
-2. In the same release train, land **deploy/env + M-47 + IAM script rename** (small PRs).
+1. **Create `lanonna-prod` now** and apply **existing** `001`–`041` on fresh Cloud SQL.
+2. Land **deploy/env + M-47 + IAM script rename** (see PR `cursor/pre-prod-wiring-0549`).
 3. **After v1 schema freeze** (no pending DDL for a few weeks), optionally **squash to `001_baseline_v1`** and **reset dev**—keeps one migration file for the greenfield era without blocking prod.
