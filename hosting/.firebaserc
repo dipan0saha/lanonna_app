@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "lanonna-dev"
+    "default": "lanonna-dev",
+    "dev": "lanonna-dev",
+    "prod": "lanonna-prod"
   }
 }

@@ -16,7 +16,11 @@ def _run_deploy(tmp_path: Path, **extra_env: str) -> tuple[subprocess.CompletedP
     stub = bin_dir / "gcloud"
     stub.write_text(f'#!/bin/sh\nprintf "%s\\n" "$*" >> "{log}"\nexit 0\n', encoding="utf-8")
     stub.chmod(0o755)
-    env = {k: v for k, v in os.environ.items() if not k.startswith("API_")}
+    env = {
+        k: v
+        for k, v in os.environ.items()
+        if not k.startswith("API_") and k not in ("ENVIRONMENT", "GCP_PROJECT_ID")
+    }
     env["PATH"] = f"{bin_dir}{os.pathsep}{env.get('PATH', '')}"
     env["USE_LOCAL_DOCKER"] = "0"
     env.update(extra_env)
@@ -71,3 +75,33 @@ def test_env_file_is_parsed_not_executed(tmp_path: Path):
 
 def test_dev_api_env_sets_min_instances():
     assert "API_MIN_INSTANCES=1" in _DEV_API_ENV.read_text(encoding="utf-8")
+
+
+def test_deploy_sets_environment_dev_by_default(tmp_path: Path):
+    result, log = _run_deploy(tmp_path)
+    assert result.returncode == 0, result.stderr
+    line = _deploy_line(log)
+    assert "ENVIRONMENT=dev," in line.replace(" ", "")
+
+
+def test_deploy_uses_prod_env_when_project_is_prod(tmp_path: Path):
+    result, log = _run_deploy(tmp_path, GCP_PROJECT_ID="lanonna-prod")
+    assert result.returncode == 0, result.stderr
+    line = _deploy_line(log)
+    assert "ENVIRONMENT=prod," in line.replace(" ", "")
+    assert "--min-instances=1" in line
+    assert "APP_CHECK_ENFORCE=true" in line
+
+
+def test_prod_environment_without_project_never_deploys_dev(tmp_path: Path):
+    result, log = _run_deploy(tmp_path, ENVIRONMENT="prod")
+    assert result.returncode != 0
+    assert "refusing to default to lanonna-dev" in result.stderr
+    assert log == ""
+
+
+def test_environment_project_mismatch_fails_before_gcloud(tmp_path: Path):
+    result, log = _run_deploy(tmp_path, ENVIRONMENT="dev", GCP_PROJECT_ID="lanonna-prod")
+    assert result.returncode != 0
+    assert "does not match" in result.stderr
+    assert log == ""

@@ -227,9 +227,9 @@ Clears babies and related rows for that user and clears `owner_onboarding_comple
 
 | Script | Purpose |
 |--------|---------|
-| `verify-dev-prerequisites.sh`, `verify-dev-migrations.sh`, `apply-dev-run-iam.sh`, `infra-smoke-display-upload.sh`, `run-beta-gate.sh` | Dev readiness, schema gate, worker Run IAM, upload smoke, beta gate — see [operations.md](operations.md) |
+| `verify-dev-prerequisites.sh`, `verify-dev-migrations.sh`, `apply-run-iam.sh`, `infra-smoke-display-upload.sh`, `run-beta-gate.sh` | Dev readiness, schema gate, worker Run IAM, upload smoke, beta gate — see [operations.md](operations.md) |
 | `ship_release_apk_to_drive.sh`, `ship_release_apk_x86_64_to_drive.sh`, `copy_release_apk_to_drive.sh` | Build the release APK (universal / x86_64 emulator) and copy it to Drive; the copy script takes an optional destination file name |
-| `setup-weekly-digest-scheduler.sh`, `setup-expired-invites-scheduler.sh` | Create the Cloud Scheduler jobs (weekly digest, expired-invite cleanup) |
+| `setup-schedulers.sh` | Create/update Cloud Scheduler jobs (weekly digest, expired-invite cleanup) |
 | `sync-email-templates.sh`, `sync-firebase-auth-templates.sh`, `configure-firebase-auth-email-project.sh`, `deploy-invite-hosting.sh` | Mailjet template mirror check/apply; Firebase auth email templates (`check` / `check-remote` / `apply`) and public-facing name; HTTPS invite landing on Firebase Hosting |
 | `hard_delete_user.sh <email>` | Hard-delete a dev user (SQL + GCS + Firebase); use `--dry-run` first |
 | `provision_qa_validation_accounts.sh`, `seed_qa_gallery_photo.sh` | Provision QA owner/follower accounts and seed a gallery photo for Maestro/manual QA |
@@ -249,7 +249,7 @@ API verifies Firebase ID tokens with `firebase_admin.auth.verify_id_token`, then
 | Service | Cloud Run name | Deploy |
 |--------|----------------|--------|
 | API | `api` | `services/api/scripts/deploy.sh` (min/max instances from `infra/env/dev.api.env`; dev keeps 1 warm instance, see [operations.md](operations.md)) |
-| Worker | `worker` | `services/worker/scripts/deploy.sh` then `./scripts/apply-dev-run-iam.sh` |
+| Worker | `worker` | `services/worker/scripts/deploy.sh` then `./scripts/apply-run-iam.sh` |
 
 Cloud Build / local Docker use repo-root [`.gcloudignore`](../../.gcloudignore) and [`.dockerignore`](../../.dockerignore) so uploads include only `packages/` and `services/` ([operations.md](operations.md)).
 
@@ -345,7 +345,7 @@ Covers gallery/calendar/registry/fun domain rules (`services/api/tests/`).
 
 **GCS finalize:** display bucket events publish to **`photo-upload-finalized`** only (worker thumbnails).
 
-**In-app + push notifications:** API `domain/notifications.py` publishes `notify_fan_out` or `notify_user` to **`lanonna-async-commands`**; the worker handles the same types on `POST /pubsub/push` and inserts `notifications` rows. **Instant FCM** only when `push_notifications_enabled` and `notification_digest=realtime`. **`daily`** digest: in-app inbox only (no batch push). **`weekly`** digest: one summary push (Sunday 14:00 UTC) via Cloud Scheduler → Pub/Sub `{"type":"weekly_notification_digest"}` on **`lanonna-async-commands`** (`./scripts/setup-weekly-digest-scheduler.sh`; optional manual `POST /cron/weekly-notification-digest` on worker).
+**In-app + push notifications:** API `domain/notifications.py` publishes `notify_fan_out` or `notify_user` to **`lanonna-async-commands`**; the worker handles the same types on `POST /pubsub/push` and inserts `notifications` rows. **Instant FCM** only when `push_notifications_enabled` and `notification_digest=realtime`. **`daily`** digest: in-app inbox only (no batch push). **`weekly`** digest: one summary push (Sunday 14:00 UTC) via Cloud Scheduler → Pub/Sub `{"type":"weekly_notification_digest"}` on **`lanonna-async-commands`** (`./scripts/setup-schedulers.sh`; optional manual `POST /cron/weekly-notification-digest` on worker).
 
 | Trigger | Publisher | Audience |
 |---------|-----------|----------|

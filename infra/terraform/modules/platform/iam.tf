@@ -52,6 +52,13 @@ resource "google_project_iam_member" "api_firebase_auth_admin" {
   member  = "serviceAccount:${google_service_account.api.email}"
 }
 
+# FCM multicast (weekly digest, notify-user). Dev binding may pre-exist — import before apply (operations.md).
+resource "google_project_iam_member" "worker_firebase_cloud_messaging_admin" {
+  project = var.project_id
+  role    = "roles/firebasecloudmessaging.admin"
+  member  = "serviceAccount:${google_service_account.worker.email}"
+}
+
 resource "google_storage_bucket_iam_member" "runtime_display_admin" {
   for_each = local.runtime_sas
 
