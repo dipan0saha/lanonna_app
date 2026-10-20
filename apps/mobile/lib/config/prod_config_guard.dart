@@ -3,6 +3,15 @@ import 'app_config.dart';
 /// Prefix for values in [flavors/prod.json] that must be replaced before prod ship.
 const String prodConfigPlaceholderPrefix = '__PROD_';
 
+/// Exact placeholder values shipped in flavors/prod.json. Kept as literals so
+/// the compile-time guard in app_config.dart can compare them in a const
+/// expression (String.startsWith is not allowed in const context). A test
+/// keeps this list in sync with flavors/prod.json.
+const String prodApiBaseUrlPlaceholder = '__PROD_API_BASE_URL__';
+const String prodAppLinkHostPlaceholder = '__PROD_APP_LINK_HOST__';
+const String prodGoogleSignInClientIdPlaceholder =
+    '__PROD_GOOGLE_SIGN_IN_SERVER_CLIENT_ID__';
+
 /// Returns true when [value] is still an unreplaced prod placeholder.
 bool isProdPlaceholderValue(String value) {
   final trimmed = value.trim();

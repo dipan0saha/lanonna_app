@@ -66,12 +66,19 @@ const bool _isProdEnvironment = _appEnvFromEnvironment == 'prod';
 const bool _releaseMissingApiBaseUrl =
     _releaseOrProfile && _apiBaseUrlFromEnvironment == '';
 
-const bool _prodReleaseHasPlaceholderConfig = _releaseOrProfile &&
+/// Prod release/profile with a placeholder, a missing value, or a dev
+/// fallback (no silent dev defaults in prod).
+const bool _prodReleaseHasPlaceholderConfig =
+    _releaseOrProfile &&
     _isProdEnvironment &&
-    (_apiBaseUrlFromEnvironment.startsWith(prodConfigPlaceholderPrefix) ||
-        _appLinkHostFromEnvironment.startsWith(prodConfigPlaceholderPrefix) ||
-        _googleSignInClientIdFromEnvironment
-            .startsWith(prodConfigPlaceholderPrefix));
+    (_apiBaseUrlFromEnvironment == '' ||
+        _apiBaseUrlFromEnvironment == prodApiBaseUrlPlaceholder ||
+        _apiBaseUrlFromEnvironment == devApiBaseUrl ||
+        _appLinkHostFromEnvironment == prodAppLinkHostPlaceholder ||
+        _appLinkHostFromEnvironment == devAppLinkHost ||
+        _googleSignInClientIdFromEnvironment == '' ||
+        _googleSignInClientIdFromEnvironment ==
+            prodGoogleSignInClientIdPlaceholder);
 
 const String _resolvedApiBaseUrl = _apiBaseUrlFromEnvironment != ''
     ? _apiBaseUrlFromEnvironment

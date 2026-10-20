@@ -69,3 +69,6 @@ apps/mobile/maestro/.qa-fixtures.env
 **/coverage/
 **/tfplan
 apps/mobile/test/failures/
+
+# iOS App Link domain override written by sync_app_link_domain.sh
+apps/mobile/ios/Flutter/AppLink.generated.xcconfig

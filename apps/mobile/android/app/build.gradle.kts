@@ -62,6 +62,17 @@ val appEnv = dartDefines["APP_ENV"] ?: "dev"
 val appLinkHost = dartDefines["APP_LINK_HOST"] ?: "lanonna-dev.firebaseapp.com"
 val isProdBuild = appEnv == "prod"
 
+// Prod must not ship with the dev Firebase app baked into native resources
+// (Crashlytics, FCM and Analytics read google-services.json before Dart runs).
+fun googleServicesProjectId(appDir: File): String? {
+    val json = File(appDir, "google-services.json")
+    if (!json.isFile) return null
+    @Suppress("UNCHECKED_CAST")
+    val root = groovy.json.JsonSlurper().parse(json) as Map<String, Any?>
+    val info = root["project_info"] as Map<String, Any?>?
+    return info?.get("project_id") as String?
+}
+
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.isFile) {
@@ -125,19 +136,12 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            when {
-                isProdBuild && !keystorePropertiesFile.isFile -> {
-                    throw GradleException(
-                        "Prod release requires android/key.properties with an upload keystore. " +
-                            "See apps/mobile/android/README.md",
-                    )
-                }
-                keystorePropertiesFile.isFile -> {
-                    signingConfig = signingConfigs.getByName("release")
-                }
-                else -> {
-                    signingConfig = signingConfigs.getByName("debug")
-                }
+            // Prod without key.properties gets no signing config here; the
+            // release-task check below fails the build with a clear message.
+            signingConfig = when {
+                keystorePropertiesFile.isFile -> signingConfigs.getByName("release")
+                isProdBuild -> null
+                else -> signingConfigs.getByName("debug")
             }
         }
     }
@@ -149,4 +153,26 @@ flutter {
 
 dependencies {
     implementation("com.google.firebase:firebase-common")
+}
+
+// Prod release guards run only when a release task is actually scheduled, so a
+// prod `flutter run` (debug) or Gradle sync still works without a keystore.
+gradle.taskGraph.whenReady {
+    val releaseRequested = allTasks.any { task ->
+        task.project == project && task.name.contains("Release")
+    }
+    if (!isProdBuild || !releaseRequested) return@whenReady
+    if (!keystorePropertiesFile.isFile) {
+        throw GradleException(
+            "Prod release requires android/key.properties with an upload keystore. " +
+                "See apps/mobile/android/README.md",
+        )
+    }
+    val firebaseProject = googleServicesProjectId(project.projectDir)
+    if (firebaseProject == null || firebaseProject == "lanonna-dev") {
+        throw GradleException(
+            "Prod release requires android/app/google-services.json for the prod Firebase project " +
+                "(found ${firebaseProject ?: "none"}). Run flutterfire configure for prod first.",
+        )
+    }
 }

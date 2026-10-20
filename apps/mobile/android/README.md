@@ -2,7 +2,7 @@
 
 ## Upload keystore (Play release)
 
-Prod release builds (`APP_ENV=prod` via `flavors/prod.json`) **require** `android/key.properties`. Dev release builds may still use the debug keystore when `key.properties` is absent.
+Prod release builds (`APP_ENV=prod` via `flavors/prod.json`) **require** `android/key.properties`. Dev release builds may still use the debug keystore when `key.properties` is absent. A prod release also refuses a `google-services.json` that is missing or belongs to `lanonna-dev`.
 
 1. Create an upload keystore (once per app signing identity):
 

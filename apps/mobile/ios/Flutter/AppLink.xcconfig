@@ -1,2 +1,0 @@
-// Default dev App Link domain; overridden by sync_app_link_domain.sh from DART_DEFINES.
-APP_LINK_DOMAIN=lanonna-dev.firebaseapp.com

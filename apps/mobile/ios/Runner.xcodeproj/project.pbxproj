@@ -284,11 +284,11 @@
 			);
 			name = "Sync App Link domain";
 			outputPaths = (
-				"${SRCROOT}/Flutter/AppLink.xcconfig",
+				"${SRCROOT}/Flutter/AppLink.generated.xcconfig",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "/bin/sh \"${SRCROOT}/Runner/sync_app_link_domain.sh\"\n";
+			shellScript = "/bin/bash \"${SRCROOT}/Runner/sync_app_link_domain.sh\"\n";
 		};
 		02AC58DA6C19F17B238433A0 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;

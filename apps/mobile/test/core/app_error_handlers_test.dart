@@ -1,12 +1,28 @@
+import 'dart:ui';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/observability/app_error_handlers.dart';
 import 'package:lanonna/core/observability/crash_reporter.dart';
 
 void main() {
-  tearDown(resetAppErrorHandlersForTest);
+  late FlutterExceptionHandler? originalFlutterOnError;
+  late ErrorCallback? originalPlatformOnError;
 
-  test('forwards FlutterError to reporter when enabled', () {
+  setUp(() {
+    originalFlutterOnError = FlutterError.onError;
+    originalPlatformOnError = PlatformDispatcher.instance.onError;
+  });
+
+  tearDown(() {
+    resetAppErrorHandlersForTest();
+    FlutterError.onError = originalFlutterOnError;
+    PlatformDispatcher.instance.onError = originalPlatformOnError;
+  });
+
+  test('chains FlutterError to the reporter and the existing handler', () {
+    final previous = <FlutterErrorDetails>[];
+    FlutterError.onError = previous.add;
     final reporter = NoOpCrashReporter();
     configureAppErrorReporting(reporter: reporter, enabled: true);
 
@@ -18,6 +34,7 @@ void main() {
 
     expect(reporter.flutterErrors, hasLength(1));
     expect(reporter.flutterErrors.first.exception, isA<StateError>());
+    expect(previous, [details]);
   });
 
   test('does not install handlers when disabled', () {
@@ -28,17 +45,49 @@ void main() {
     expect(reporter.flutterErrors, isEmpty);
   });
 
-  test('PlatformDispatcher.onError records fatal errors', () {
+  test('installs once even when configured twice', () {
+    final previous = <FlutterErrorDetails>[];
+    FlutterError.onError = previous.add;
+    final reporter = NoOpCrashReporter();
+    configureAppErrorReporting(reporter: reporter, enabled: true);
+    configureAppErrorReporting(reporter: reporter, enabled: true);
+
+    FlutterError.onError?.call(FlutterErrorDetails(exception: 'x'));
+
+    expect(reporter.flutterErrors, hasLength(1));
+    expect(previous, hasLength(1));
+  });
+
+  test('PlatformDispatcher.onError records fatal errors and chains', () {
+    final chained = <Object>[];
+    PlatformDispatcher.instance.onError = (error, stack) {
+      chained.add(error);
+      return false;
+    };
     final reporter = NoOpCrashReporter();
     configureAppErrorReporting(reporter: reporter, enabled: true);
 
+    final error = Exception('platform');
     final handled = PlatformDispatcher.instance.onError!(
-      Exception('platform'),
+      error,
       StackTrace.current,
     );
 
-    expect(handled, isTrue);
+    expect(handled, isFalse);
+    expect(chained, [error]);
     expect(reporter.errors, hasLength(1));
     expect(reporter.errors.first.$3, isTrue);
+  });
+
+  test('reset restores the original handlers', () {
+    final previous = <FlutterErrorDetails>[];
+    FlutterError.onError = previous.add;
+    final installedBefore = FlutterError.onError;
+    configureAppErrorReporting(reporter: NoOpCrashReporter(), enabled: true);
+    expect(FlutterError.onError, isNot(same(installedBefore)));
+
+    resetAppErrorHandlersForTest();
+
+    expect(FlutterError.onError, same(installedBefore));
   });
 }

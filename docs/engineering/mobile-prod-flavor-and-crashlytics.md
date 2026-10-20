@@ -40,7 +40,7 @@
 
 - **Dart:** `APP_ENV`, `API_BASE_URL`, `APP_LINK_HOST`, `CRASHLYTICS_ENABLED`, etc. from `--dart-define-from-file` (same as today for API URL).
 - **Android:** Gradle decodes Flutter’s `dart-defines` property (base64 `KEY=value` list) and sets `manifestPlaceholders["appLinkHost"]`. Fallback when absent: `lanonna-dev.firebaseapp.com` (debug builds without a flavor file).
-- **iOS:** `Runner.entitlements` uses `applinks:$(APP_LINK_DOMAIN)`. `ios/Runner/sync_app_link_domain.sh` (Run Script phase) decodes `DART_DEFINES` from `Flutter/Generated.xcconfig` and writes `Flutter/AppLink.xcconfig`. Default checked-in `AppLink.xcconfig` matches dev.
+- **iOS:** `Runner.entitlements` uses `applinks:$(APP_LINK_DOMAIN)`. `Debug.xcconfig` / `Release.xcconfig` default `APP_LINK_DOMAIN` to the dev host. `ios/Runner/sync_app_link_domain.sh` (bash Run Script phase) decodes `APP_LINK_HOST` from `DART_DEFINES` in `Flutter/Generated.xcconfig`, rejects anything that is not a plain hostname (e.g. an unreplaced `__PROD_` placeholder), and writes the gitignored `Flutter/AppLink.generated.xcconfig`. Xcode reads build settings before build phases run, so when the host changes (dev → prod) the script writes the override and fails the build; run it again so the entitlement is signed with the new domain.
 
 This keeps one flavor file per environment without a second dimension in Gradle/Xcode schemes.
 
@@ -57,7 +57,7 @@ Entry: `resolveFirebaseOptions()` in `lib/firebase/firebase_options_resolver.dar
 
 Placeholders in `flavors/prod.json` use the prefix `__PROD_` (e.g. `__PROD_API_BASE_URL__`).
 
-- **Compile time (release/profile, `APP_ENV=prod`):** const guards in `app_config.dart` (same pattern as `releaseApiBaseUrlGuard`) for `API_BASE_URL` and `APP_LINK_HOST`.
+- **Compile time (release/profile, `APP_ENV=prod`):** const guard `prodPlaceholderConfigGuard` in `app_config.dart` (same pattern as `releaseApiBaseUrlGuard`) fails the Dart compile when `API_BASE_URL`, `APP_LINK_HOST` or `GOOGLE_SIGN_IN_SERVER_CLIENT_ID` is still the exact `__PROD_…__` placeholder, is empty, or equals the dev default (no silent dev fallback). The placeholders are compared by equality because `String.startsWith` is not a constant expression; `prod_config_guard_test.dart` keeps the list in sync with `flavors/prod.json`.
 - **Runtime:** `ProdConfigGuard.ensureReady()` at startup (before network/Firebase) throws `StateError` with a clear message if placeholders slipped through a debug build.
 
 ### Release signing
@@ -74,7 +74,7 @@ Document keystore creation in [apps/mobile/android/README.md](../../apps/mobile/
 
 - **Package:** `firebase_crashlytics` + Android Gradle Crashlytics plugin (with existing `google-services`).
 - **Abstraction:** `CrashReporter` + `NoOpCrashReporter` + `FirebaseCrashReporter` in `lib/core/observability/`.
-- **Wiring:** `configureAppErrorReporting()` sets `FlutterError.onError` and `PlatformDispatcher.instance.onError` once; forwards to Crashlytics when collection is enabled. No second parallel global handler.
+- **Wiring:** `configureAppErrorReporting()` chains `FlutterError.onError` and `PlatformDispatcher.instance.onError` once: it records to Crashlytics, then calls the handler that was already installed (framework default printing, or any earlier app/test handler). Installed only when collection is enabled.
 - **Collection:** `AppConfig.crashlyticsCollectionEnabled` — always true when `APP_ENV=prod`; in dev, `CRASHLYTICS_ENABLED` dart-define (`true`/`false`), default **true** when `dart.vm.product` (release) and unset.
 - **User id:** set/clear on auth state changes using Firebase **uid** only (never email or display name).
 
@@ -109,4 +109,4 @@ flutter build apk --release --target-platform android-arm64 --dart-define-from-f
 # iOS: same --dart-define-from-file=flavors/prod.json on flutter build ipa / ios
 ```
 
-Prod release APK/AAB will **fail at Gradle configure** without `android/key.properties`.
+A prod release APK/AAB fails before any task runs (Gradle task-graph check, so a prod debug `flutter run` still works) without `android/key.properties`, or when `android/app/google-services.json` is missing or still points at `lanonna-dev`. With both in place it still fails at the Dart compile guard until the `__PROD_` placeholders are replaced.
