@@ -57,6 +57,9 @@ override.tf.json
 .terraformrc
 terraform.rc
 
+# Android release signing (upload keystore paths/passwords)
+apps/mobile/android/key.properties
+
 # Maestro local credentials
 apps/mobile/maestro/local.env
 apps/mobile/maestro/.fixtures.env

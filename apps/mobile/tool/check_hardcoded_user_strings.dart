@@ -67,7 +67,8 @@ void main(List<String> args) {
 bool _isGenerated(String rel) =>
     rel.endsWith('.g.dart') ||
     rel.endsWith('.freezed.dart') ||
-    rel == 'lib/firebase_options.dart';
+    rel == 'lib/firebase_options.dart' ||
+    rel == 'lib/firebase/firebase_options_dev.dart';
 
 Set<(String, String)> _loadAllowlist(String path) {
   final file = File(path);

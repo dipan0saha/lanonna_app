@@ -36,10 +36,10 @@ Run all three suites before every ship. GitHub Actions CI ([`.github/workflows/c
 
 ## High
 
-### H-01 Android release is signed with debug keys — Verified
-- **Where:** `apps/mobile/android/app/build.gradle.kts` (release `signingConfig = signingConfigs.getByName("debug")`)
-- **Issue:** Release APK/AAB uses the debug keystore (TODO left in file). Not acceptable for Play upload or any distribution you intend to update in place.
-- **Fix:** Add an upload keystore + `signingConfigs.release` read from `key.properties` / release signing secrets; keep debug signing only for local `flutter run --release`.
+### H-01 Android release signing — Partial (dev vs prod)
+- **Where:** `apps/mobile/android/app/build.gradle.kts`, `android/key.properties` (gitignored)
+- **Issue:** Play upload requires an upload keystore, not the debug key.
+- **Status:** **Prod** release (`APP_ENV=prod`) fails Gradle configure without `key.properties`. **Dev** release may still use the debug keystore when `key.properties` is absent (local testing). Owner must create the upload keystore and `key.properties` before the first prod ship — [android/README.md](../../apps/mobile/android/README.md), [mobile-prod-flavor-and-crashlytics.md](mobile-prod-flavor-and-crashlytics.md).
 
 ### ✅ H-03 Account delete must tombstone SQL before Firebase — Verified
 - **Where:** `services/api/src/lanonna_api/domain/account_delete.py`, `repositories/account_delete.py`

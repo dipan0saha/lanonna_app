@@ -40,6 +40,7 @@ flowchart LR
 
 - [ ] Create `lanonna-prod` and apply existing migrations `001`–`040` on empty Cloud SQL (no squash gate)
 - [ ] Add `infra/env/prod.api.env` / `prod.worker.env`, fix `ENVIRONMENT` in deploy scripts (M-52), TF SQL password → Secret Manager (M-47), generalize `apply-run-iam.sh`
+- [x] Mobile prod flavor + Crashlytics wiring ([mobile-prod-flavor-and-crashlytics.md](mobile-prod-flavor-and-crashlytics.md); owner still: keystore, `flutterfire configure`, fill `flavors/prod.json`)
 - [ ] (Optional, after schema freeze) Generate `001_baseline_v1.sql`, archive `002`–`040`, reset dev DB, add schema-only diff check in CI
 - [ ] Keep L-28 refactors and email-tree merge out of pre-prod scope
 
@@ -113,7 +114,7 @@ These are “make prod and dev symmetric” tasks, not refactors.
 | **FCM IAM in Terraform** (M-50) | Today manual per [operations.md](operations.md) |
 | **Scheduler scripts** | Merge `setup-weekly-digest-scheduler.sh` + `setup-expired-invites-scheduler.sh` into one `setup-prod-schedulers.sh` with `GCP_PROJECT_ID` |
 | **Hosting / Firebase CLI** | [`hosting/.firebaserc`](../../hosting/.firebaserc) defaults to dev—add prod project alias or env var in `deploy-invite-hosting.sh` |
-| **Crashlytics** | Architecture mentions it; not in app—add when stabilizing prod crashes |
+| **Crashlytics** | ✅ Wired in mobile ([mobile-prod-flavor-and-crashlytics.md](mobile-prod-flavor-and-crashlytics.md)); enable in Firebase console per project |
 | **open-gaps.md cleanup** | Close or re-tag items fixed by prod wiring |
 
 ---

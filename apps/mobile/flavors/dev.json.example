@@ -1,5 +1,6 @@
 {
   "API_BASE_URL": "https://YOUR_CLOUD_RUN_API_URL",
   "APP_ENV": "dev",
+  "APP_LINK_HOST": "YOUR_PROJECT_ID.firebaseapp.com",
   "GOOGLE_SIGN_IN_SERVER_CLIENT_ID": "YOUR_WEB_CLIENT_ID.apps.googleusercontent.com"
 }

@@ -1,0 +1,6 @@
+# Copy to key.properties (gitignored) after creating an upload keystore.
+# Do not commit key.properties or the .jks / .keystore file.
+storePassword=YOUR_KEYSTORE_PASSWORD
+keyPassword=YOUR_KEY_PASSWORD
+keyAlias=upload
+storeFile=/absolute/path/to/upload-keystore.jks

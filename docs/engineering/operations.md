@@ -229,13 +229,28 @@ After migration `030` is applied, null emails on active users can be restored fr
 
 - Package: `com.lanonna.lanonna`; Firebase **`lanonna-dev`**
 - Gitignored: `google-services.json`, `GoogleService-Info.plist`
-- Checked in: `firebase_options.dart` (or `flutterfire configure`)
-- Flavor: `apps/mobile/flavors/dev.json` — **`API_BASE_URL`**, `APP_ENV=dev`
+- Checked in: `lib/firebase/firebase_options_dev.dart` (prod placeholder in `firebase_options_prod.dart` until `flutterfire configure`)
+- Flavor: `apps/mobile/flavors/dev.json` — **`API_BASE_URL`**, `APP_LINK_HOST`, `APP_ENV=dev`
+- Prod template: `flavors/prod.json` — see [mobile-prod-flavor-and-crashlytics.md](mobile-prod-flavor-and-crashlytics.md)
+- Release signing: `android/key.properties` (gitignored) required for **prod** release; optional for dev release ([android/README.md](../../apps/mobile/android/README.md))
+- Crashlytics: enabled for prod; dev release on by default (`CRASHLYTICS_ENABLED` in flavor JSON to opt out)
 
 ```bash
 cd apps/mobile
 flutter pub get
 flutter run --dart-define-from-file=flavors/dev.json
+```
+
+**Dev release APK (unchanged):**
+
+```bash
+flutter build apk --release --target-platform android-arm64 --dart-define-from-file=flavors/dev.json
+```
+
+**Prod release (after owner fills `flavors/prod.json`, keystore, and `flutterfire configure`):**
+
+```bash
+flutter build apk --release --target-platform android-arm64 --dart-define-from-file=flavors/prod.json
 ```
 
 Create **Email/Password** users in Firebase console (or smoke user `lanonna.dev.smoke@test.com`). iOS: `cd ios && pod install` once.

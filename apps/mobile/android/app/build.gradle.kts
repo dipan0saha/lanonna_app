@@ -1,9 +1,12 @@
 import java.io.File
+import java.util.Base64
+import java.util.Properties
 
 plugins {
     id("com.android.application")
     // START: FlutterFire Configuration
     id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
     // END: FlutterFire Configuration
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -39,8 +42,31 @@ fun readAppCheckDebugToken(mobileRoot: File): String {
 fun escapeBuildConfigString(value: String): String =
     value.replace("\\", "\\\\").replace("\"", "\\\"")
 
+fun decodeDartDefines(): Map<String, String> {
+    val raw = project.findProperty("dart-defines") as String? ?: return emptyMap()
+    val result = mutableMapOf<String, String>()
+    for (entry in raw.split(",")) {
+        if (entry.isBlank()) continue
+        val decoded = String(Base64.getDecoder().decode(entry), Charsets.UTF_8)
+        val eq = decoded.indexOf('=')
+        if (eq <= 0) continue
+        result[decoded.substring(0, eq)] = decoded.substring(eq + 1)
+    }
+    return result
+}
+
 val mobileRoot = rootProject.file("..")
 val appCheckDebugToken = readAppCheckDebugToken(mobileRoot)
+val dartDefines = decodeDartDefines()
+val appEnv = dartDefines["APP_ENV"] ?: "dev"
+val appLinkHost = dartDefines["APP_LINK_HOST"] ?: "lanonna-dev.firebaseapp.com"
+val isProdBuild = appEnv == "prod"
+
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.isFile) {
+    keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
+}
 
 android {
     namespace = "com.lanonna.lanonna"
@@ -60,21 +86,26 @@ android {
         buildConfig = true
     }
 
+    signingConfigs {
+        create("release") {
+            if (keystorePropertiesFile.isFile) {
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+                storeFile = keystoreProperties.getProperty("storeFile")?.let { file(it) }
+                storePassword = keystoreProperties.getProperty("storePassword")
+            }
+        }
+    }
+
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.lanonna.lanonna"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         manifestPlaceholders["applicationName"] = "com.lanonna.lanonna.LanonnaApplication"
-        // Every build type gets the field (empty = no pinned App Check debug
-        // secret); only debug overrides it. Defining it here rather than per
-        // build type also covers Flutter's `profile` type, which the Flutter
-        // Gradle plugin creates from `debug` before this file configures it.
+        manifestPlaceholders["appLinkHost"] = appLinkHost
         buildConfigField("String", "APP_CHECK_DEBUG_TOKEN", "\"\"")
     }
 
@@ -85,17 +116,29 @@ android {
                 "APP_CHECK_DEBUG_TOKEN",
                 "\"${escapeBuildConfigString(appCheckDebugToken)}\"",
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            when {
+                isProdBuild && !keystorePropertiesFile.isFile -> {
+                    throw GradleException(
+                        "Prod release requires android/key.properties with an upload keystore. " +
+                            "See apps/mobile/android/README.md",
+                    )
+                }
+                keystorePropertiesFile.isFile -> {
+                    signingConfig = signingConfigs.getByName("release")
+                }
+                else -> {
+                    signingConfig = signingConfigs.getByName("debug")
+                }
+            }
         }
     }
 }
