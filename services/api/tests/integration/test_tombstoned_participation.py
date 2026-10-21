@@ -285,6 +285,10 @@ def test_reads_skip_tombstoned_participation_and_keep_authored_comments():
 def test_delete_account_purges_participation_rows():
     owner = "purge-owner"
     _user(owner, "purge@example.com", "Owner")
+    # Someone else's photo: the deleted user's own uploads on babies they do not
+    # sole-own are removed with the account (storage cleanup), not kept.
+    uploader = "purge-uploader"
+    _user(uploader, "purge-uploader@example.com", "Uploader")
     baby_id = _baby(owner)
     event_id = uuid.uuid4()
     photo_id = uuid.uuid4()
@@ -337,7 +341,7 @@ def test_delete_account_purges_participation_rows():
             INSERT INTO photos (id, baby_profile_id, uploader_firebase_uid, status)
             VALUES (%s, %s, %s, 'ready')
             """,
-            (photo_id, baby_id, owner),
+            (photo_id, baby_id, uploader),
         )
         conn.execute(
             "INSERT INTO photo_squishes (photo_id, firebase_uid) VALUES (%s, %s)",
