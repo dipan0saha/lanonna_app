@@ -37,7 +37,7 @@ Repo-only PR before `lanonna-prod` exists (GCP project quota). Goal: prod-sized 
 
 **Dev plan impact:** `google_secret_manager_secret.app` is a `for_each` over `secret_ids`. Dropping `database-url` makes Terraform plan **destroy** `google_secret_manager_secret.app["database-url"]` on the next apply, which **deletes the Secret Manager secret in GCP** (including any enabled versions), not just “stop managing” it.
 
-**Fix (Terraform ≥ 1.7):** Keep the secret out of `secret_ids` (no new prod secret). Add a `removed` block targeting `google_secret_manager_secret.app["database-url"]` with `lifecycle { destroy = false }` so the next dev apply **drops it from state only** and leaves the GCP resource in place. Bump `required_version` to `>= 1.7`. Document one-time `terraform state rm` as an alternative for operators on Terraform 1.5–1.6.
+**Fix:** Keep `database-url` out of the module default `secret_ids` (prod never creates it). **Dev** passes an explicit `secret_ids` list in `environments/dev/main.tf` that still includes `database-url`, so imported state matches config and the plan stays clean. Terraform 1.9 `removed` blocks cannot target a single `for_each` instance (`from` must be the whole resource address); alternatives are dev-only `secret_ids` (chosen) or one-time `terraform state rm 'module.platform.google_secret_manager_secret.app["database-url"]'` before apply. Bump `required_version` to `>= 1.7` for consistency with current Terraform releases.
 
 **Prod:** Fresh apply never created `database-url`; no action.
 
@@ -122,7 +122,8 @@ flowchart LR
 
 ## Tracking checklist
 
-- [ ] Create `lanonna-prod` and apply existing migrations `001`–`041` on empty Cloud SQL (no squash gate)
+- [ ] Create `lanonna-prod` (GCP quota) and apply existing migrations `001`–`041` on empty Cloud SQL (no squash gate)
+- [x] Prod Terraform sizing, deletion protection, bucket lifecycle, monitoring opt-in, `database-url` dev safety, `verify-migrations.sh` — lanonna-prod prep PR
 - [x] Add `infra/env/prod.api.env` / `prod.worker.env`, fix `ENVIRONMENT` in deploy scripts (M-52), TF SQL password → Secret Manager (M-47), generalize `apply-run-iam.sh` — merged in #347
 - [x] Mobile prod flavor + Crashlytics wiring ([mobile-prod-flavor-and-crashlytics.md](mobile-prod-flavor-and-crashlytics.md); owner still: keystore, `flutterfire configure`, fill `flavors/prod.json`)
 - [ ] (Optional, after schema freeze) Generate `001_baseline_v1.sql`, archive `002`–`040`, reset dev DB, add schema-only diff check in CI
@@ -136,7 +137,7 @@ flowchart LR
 
 - [`infra/db/apply_migrations.py`](../../infra/db/apply_migrations.py): lexicographic `*.sql`, skip if `schema_migrations.version` exists.
 - Each file self-registers via `INSERT INTO schema_migrations` (see [`001_app_users.sql`](../../infra/db/migrations/001_app_users.sql)).
-- [`scripts/verify-dev-migrations.sh`](../../scripts/verify-dev-migrations.sh): **file count must equal row count** in `schema_migrations` (currently 41).
+- [`scripts/verify-migrations.sh`](../../scripts/verify-migrations.sh): **file count must equal row count** in `schema_migrations` (currently 41).
 
 ### Why squashing is not a prod prerequisite
 
@@ -156,7 +157,7 @@ Do this **after** prod is up or in the same window as a planned dev wipe—not i
    - Move `002`–`041` to `infra/db/migrations/archive/pre_baseline/` (read-only audit trail) **or** delete with pointer in [migrations README](../../infra/db/migrations/README.md).
    - Single active file: e.g. `001_baseline_v1.sql`.
 4. **Reset environments:** drop/recreate `lanonna` DB on dev (and only use baseline on **new** prod if prod was not already migrated—if prod already ran the incremental chain, **do not** squash prod in place without a deliberate migration strategy).
-5. **Update tooling:** `verify-dev-migrations.sh` expected count = 1; Postgres integration tests that assume specific migration files (grep `infra/db/migrations` in tests).
+5. **Update tooling:** `verify-migrations.sh` expected count = 1; Postgres integration tests that assume specific migration files (grep `infra/db/migrations` in tests).
 6. **Going forward:** new changes are `002_add_foo.sql`, etc.
 
 **Risk control:** add a one-off CI job or script that compares `pg_dump --schema-only` of “baseline apply” vs the full incremental chain on empty Postgres (Docker) and diffs—only merge squash when identical.

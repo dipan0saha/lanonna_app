@@ -5,15 +5,20 @@ resource "google_sql_database_instance" "main" {
   project          = var.project_id
 
   settings {
-    tier              = var.sql_tier
-    edition           = "ENTERPRISE"
-    availability_type = var.sql_availability
-    disk_type         = "PD_SSD"
-    disk_size         = var.sql_disk_gb
+    tier                  = var.sql_tier
+    edition               = "ENTERPRISE"
+    availability_type     = var.sql_availability
+    disk_type             = "PD_SSD"
+    disk_size             = var.sql_disk_gb
+    disk_autoresize       = var.sql_disk_autoresize
+    disk_autoresize_limit = var.sql_disk_autoresize_limit
+
+    deletion_protection_enabled = var.sql_deletion_protection
 
     backup_configuration {
       enabled                        = true
       point_in_time_recovery_enabled = true
+      transaction_log_retention_days = var.sql_transaction_log_retention_days
       start_time                     = "03:00"
     }
 
@@ -27,7 +32,7 @@ resource "google_sql_database_instance" "main" {
     }
   }
 
-  deletion_protection = var.environment == "prod"
+  deletion_protection = var.sql_deletion_protection
 
   depends_on = [google_project_service.apis]
 }

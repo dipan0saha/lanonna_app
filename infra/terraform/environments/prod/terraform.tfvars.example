@@ -1,12 +1,20 @@
-# Create project lanonna-prod, link billing, create gs://lanonna-prod-terraform-state, then:
-# cp terraform.tfvars.example terraform.tfvars
+# Prerequisites: GCP project quota for lanonna-prod, billing linked, state bucket created.
+# cp terraform.tfvars.example terraform.tfvars  (terraform.tfvars is gitignored)
 
 project_id        = "lanonna-prod"
 region            = "us-central1"
 bucket_display    = "lanonna-prod-display"
 bucket_thumbnails = "lanonna-prod-thumbnails"
-sql_tier          = "db-custom-2-7680"
-sql_disk_gb       = 20
+
+# Dedicated core (Cloud SQL SLA); zonal launch sizing ~$35–60/mo with warm API + small SQL.
+sql_tier                = "db-custom-1-3840"
+sql_disk_gb             = 10
+sql_disk_autoresize_limit = 20
+sql_availability        = "ZONAL"
+
+# Set in terraform.tfvars (not committed):
+# monitoring_notification_emails = ["ops@example.com"]
+# After API deploy: monitoring_api_host = "api-xxxxxxxx-uc.a.run.app"
 
 # After worker is deployed to prod, in module "platform" (prod/main.tf) set:
 #   enable_worker_push_subscription = true

@@ -47,4 +47,18 @@ module "platform" {
 
   enable_worker_push_subscription = true
   # worker_push_endpoint: leave empty to use the live Cloud Run `worker` URL (see worker_push.tf).
+
+  # Legacy import-only secret (unused by Cloud Run). Keep in dev state so e25c3fd does not plan a destroy.
+  secret_ids = [
+    "database-url",
+    "db-lanonna-app-password",
+    "db-postgres-root-password",
+    "mailjet-api-key",
+    "mailjet-api-secret",
+    "admin-api-key",
+  ]
+
+  enable_platform_monitoring     = var.enable_platform_monitoring
+  monitoring_notification_emails = var.monitoring_notification_emails
+  monitoring_api_host            = var.monitoring_api_host
 }

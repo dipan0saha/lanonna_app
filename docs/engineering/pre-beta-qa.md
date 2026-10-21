@@ -4,7 +4,7 @@ Manual device checks before widening beta. Run against **lanonna-dev** with `flu
 
 **Prerequisites**
 
-- **Deploy / schema:** [operations.md](operations.md) — dev API + worker deployed; all SQL migrations applied on dev (`apply_migrations.py`; confirm with `./scripts/verify-dev-migrations.sh`).
+- **Deploy / schema:** [operations.md](operations.md) — dev API + worker deployed; all SQL migrations applied on dev (`apply_migrations.py`; confirm with `./scripts/verify-migrations.sh`).
 - **App Check policy:** [`deploy.sh`](../../services/api/scripts/deploy.sh) defaults to **`APP_CHECK_ENFORCE=false`** on dev so sideloaded APKs work without registering every emulator token. The Flutter client still sends App Check when Firebase provides a token. Before wide beta, deploy with `APP_CHECK_ENFORCE=true ./services/api/scripts/deploy.sh` and register debug tokens (section 1 below). When enforce is off, the API accepts missing `X-Firebase-AppCheck` headers.
 - **Beta gate script:** `./scripts/run-beta-gate.sh` runs unit tests and optionally deploys API. Force-update requires migration **`020_app_versions`** (covered by the migration gate).
 - Firebase **App Check** enabled for Android/iOS. **Android (recommended):** `APP_CHECK_DEBUG_TOKEN` in `apps/mobile/maestro/local.env`, `./maestro/scripts/register-app-check-debug.sh`, rebuild debug — same UUID after `pm clear` / reinstall. Otherwise register from logcat (`Firebase App Check debug token: …`).
@@ -122,7 +122,7 @@ Record date, device/emulator ID, and tester in your release notes when all boxes
 |------|--------|--------|
 | API deploy | | Revision from `gcloud run services describe api --region=us-central1`; URL from `flavors/dev.json` |
 | `APP_CHECK_ENFORCE` | | Dev default **false** in `deploy.sh`; set **true** + debug tokens before wide beta |
-| Migrations | | `apply_migrations.py` + `verify-dev-migrations.sh` via Cloud SQL proxy |
+| Migrations | | `apply_migrations.py` + `verify-migrations.sh` via Cloud SQL proxy |
 | App Check debug token | | `maestro/local.env` + `register-app-check-debug.sh`, or Firebase Console / CLI |
 | Invite cold start (adb) | | Needs valid pending invite token |
 | Push / encode / cache / tags | Manual | Second member account for fan-out |

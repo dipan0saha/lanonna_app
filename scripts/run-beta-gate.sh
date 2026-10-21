@@ -19,7 +19,7 @@ if command -v gcloud >/dev/null 2>&1; then
   "${ROOT}/services/api/scripts/deploy.sh"
   echo "After deploy: apply any pending migrations on dev SQL, then verify:"
   echo "  DB_PORT=5433 DB_PASSWORD=… python infra/db/apply_migrations.py"
-  echo "  PGPASSWORD=… DB_PORT=5433 ./scripts/verify-dev-migrations.sh"
+  echo "  PGPASSWORD=… DB_PORT=5433 ./scripts/verify-migrations.sh"
   echo "Pre-beta manual QA: docs/engineering/pre-beta-qa.md"
 else
   echo "gcloud not found — skip deploy; run services/api/scripts/deploy.sh locally."
