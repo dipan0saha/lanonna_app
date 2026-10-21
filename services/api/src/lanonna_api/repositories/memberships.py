@@ -126,23 +126,31 @@ def get_active_membership(
     return dict(row) if row else None
 
 
-def has_removed_membership(
+def membership_access_ended(
     baby_profile_id: uuid.UUID,
     firebase_uid: str,
 ) -> bool:
+    """True when the user was removed from the baby or the baby was deleted.
+
+    Baby delete is a hard delete (memberships cascade away), so a missing
+    baby is ended access too: clients get ``membership_ended`` and drop it.
+    """
     with get_connection() as conn:
         row = conn.execute(
             """
-            SELECT 1
-            FROM baby_memberships
-            WHERE baby_profile_id = %s
-              AND firebase_uid = %s
-              AND removed_at IS NOT NULL
-            LIMIT 1
+            SELECT
+                NOT EXISTS (SELECT 1 FROM baby_profiles WHERE id = %(baby)s)
+                OR EXISTS (
+                    SELECT 1
+                    FROM baby_memberships
+                    WHERE baby_profile_id = %(baby)s
+                      AND firebase_uid = %(uid)s
+                      AND removed_at IS NOT NULL
+                ) AS ended
             """,
-            (baby_profile_id, firebase_uid),
+            {"baby": baby_profile_id, "uid": firebase_uid},
         ).fetchone()
-    return row is not None
+    return bool(row["ended"])
 
 
 def soft_remove_membership(

@@ -58,6 +58,10 @@ An integration test (`test_every_row_scoped_to_a_baby_cascades_from_it`) walks t
 
 `delete_account_rows` locks every baby the user actively owns (`FOR UPDATE`, the same row lock co-owner invite/accept/leave take) and keeps only those with one active owner, in the same transaction as the hard delete. A co-owner accepting at the same moment either commits first (the baby is kept and passes to them) or waits until the delete has finished.
 
+## Followers of a deleted baby still get `membership_ended`
+
+Mobile drops a baby from the session when the API answers `403 membership_ended`. Before, that came from the soft-removed membership row; with the hard delete those rows are gone, so followers would get a generic 403 and stay stuck on the deleted baby. `membership_access_ended` now also treats a missing baby as ended access.
+
 ## Verification (dev)
 
 1. Apply migration `043`.
