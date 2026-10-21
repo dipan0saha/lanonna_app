@@ -1,8 +1,13 @@
-"""Remove authored media on shared babies during account delete."""
+"""SQL slice of media and export removal for account and baby profile delete.
+
+Rows are deleted here, in the caller's transaction; the returned storage paths go
+into a ``storage_cleanup_jobs`` row so the worker deletes the GCS objects.
+"""
 
 from __future__ import annotations
 
 import uuid
+from collections.abc import Sequence
 from typing import Any
 
 DetachedObject = dict[str, str | None]
@@ -11,104 +16,46 @@ DetachedObject = dict[str, str | None]
 def purge_authored_photos_on_shared_babies(
     conn: Any,
     firebase_uid: str,
-    sole_owned_baby_ids: list[uuid.UUID],
+    sole_owned_baby_ids: Sequence[uuid.UUID],
 ) -> list[DetachedObject]:
-    """Delete photos the user uploaded on babies they do not sole-own.
+    """Delete photos (gallery and event covers) the user uploaded on babies they do
+    not sole-own; return their display/thumbnail paths.
 
-    Returns storage paths for the worker to delete from GCS (rows are already gone).
+    Comments, squishes, tags and worker idempotency rows cascade; events and birth
+    announcements using a deleted photo lose it via ``ON DELETE SET NULL``. Photos
+    on sole-owned babies stay with the soft-deleted baby; the worker purges their
+    objects by baby id.
     """
-    if sole_owned_baby_ids:
-        rows = conn.execute(
-            """
-            SELECT id, display_path, thumb_path
-            FROM photos
-            WHERE uploader_firebase_uid = %s
-              AND NOT (baby_profile_id = ANY(%s::uuid[]))
-            """,
-            (firebase_uid, sole_owned_baby_ids),
-        ).fetchall()
-    else:
-        rows = conn.execute(
-            """
-            SELECT id, display_path, thumb_path
-            FROM photos
-            WHERE uploader_firebase_uid = %s
-            """,
-            (firebase_uid,),
-        ).fetchall()
-    if not rows:
-        return []
-
-    photo_ids = [row["id"] for row in rows]
-    detached = [
-        {
-            "display_path": row.get("display_path"),
-            "thumb_path": row.get("thumb_path"),
-        }
+    rows = conn.execute(
+        """
+        DELETE FROM photos
+        WHERE uploader_firebase_uid = %s
+          AND NOT (baby_profile_id = ANY(%s::uuid[]))
+        RETURNING display_path, thumb_path
+        """,
+        (firebase_uid, list(sole_owned_baby_ids)),
+    ).fetchall()
+    return [
+        {"display_path": row["display_path"], "thumb_path": row["thumb_path"]}
         for row in rows
     ]
-    conn.execute(
-        """
-        UPDATE events SET cover_photo_id = NULL
-        WHERE cover_photo_id = ANY(%s::uuid[])
-        """,
-        (photo_ids,),
-    )
-    conn.execute(
-        "DELETE FROM photo_baby_tags WHERE photo_id = ANY(%s::uuid[])",
-        (photo_ids,),
-    )
-    conn.execute(
-        "DELETE FROM photo_comments WHERE photo_id = ANY(%s::uuid[])",
-        (photo_ids,),
-    )
-    conn.execute(
-        "DELETE FROM photo_squishes WHERE photo_id = ANY(%s::uuid[])",
-        (photo_ids,),
-    )
-    conn.execute("DELETE FROM photos WHERE id = ANY(%s::uuid[])", (photo_ids,))
-    return detached
 
 
-def collect_and_delete_baby_export_jobs(
+def collect_and_delete_export_jobs(
     conn: Any,
-    baby_profile_id: uuid.UUID,
+    *,
+    firebase_uid: str | None = None,
+    baby_profile_ids: Sequence[uuid.UUID] = (),
 ) -> list[str]:
-    """Delete export jobs for one baby profile; return GCS paths to purge."""
+    """Delete export jobs requested by ``firebase_uid`` or for any of
+    ``baby_profile_ids``; return the export object paths to purge."""
     rows = conn.execute(
         """
-        SELECT object_path
-        FROM baby_data_export_jobs
-        WHERE baby_profile_id = %s
-          AND object_path IS NOT NULL
-        """,
-        (baby_profile_id,),
-    ).fetchall()
-    paths = [row["object_path"] for row in rows if row.get("object_path")]
-    conn.execute(
-        "DELETE FROM baby_data_export_jobs WHERE baby_profile_id = %s",
-        (baby_profile_id,),
-    )
-    return paths
-
-
-def collect_and_delete_user_export_jobs(
-    conn: Any,
-    firebase_uid: str,
-) -> list[str]:
-    """Delete export job rows for this user; return GCS object paths to purge."""
-    rows = conn.execute(
-        """
-        SELECT object_path
-        FROM baby_data_export_jobs
+        DELETE FROM baby_data_export_jobs
         WHERE requested_by_firebase_uid = %s
-          AND object_path IS NOT NULL
+           OR baby_profile_id = ANY(%s::uuid[])
+        RETURNING object_path
         """,
-        (firebase_uid,),
+        (firebase_uid, list(baby_profile_ids)),
     ).fetchall()
-    paths = [row["object_path"] for row in rows if row.get("object_path")]
-    conn.execute(
-        "DELETE FROM baby_data_export_jobs WHERE requested_by_firebase_uid = %s",
-        (firebase_uid,),
-    )
-    return paths
+    return [row["object_path"] for row in rows if row["object_path"]]

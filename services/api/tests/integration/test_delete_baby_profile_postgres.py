@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from unittest.mock import patch
 
 import pytest
 
@@ -14,6 +15,12 @@ from lanonna_api.repositories.babies import list_babies_for_user
 from lanonna_api.repositories.users import resolve_app_user
 
 pytestmark = pytest.mark.integration
+
+
+@pytest.fixture(autouse=True)
+def _published_cleanup_jobs():
+    with patch("lanonna_api.domain.storage_cleanup.publish_storage_cleanup") as publish:
+        yield publish
 
 
 def _user(tag: str) -> str:
@@ -58,11 +65,24 @@ def _pending_invite(baby_id: uuid.UUID, owner_uid: str) -> None:
         )
 
 
-def test_sole_owner_delete_removes_baby_from_lists_and_ends_follower_access():
+def test_sole_owner_delete_removes_baby_from_lists_and_ends_follower_access(
+    _published_cleanup_jobs,
+):
     owner = _user("owner")
     follower = _user("follower")
     baby_id = _baby([(owner, "owner"), (follower, "follower")])
     _pending_invite(baby_id, owner)
+    export_path = f"exports/{baby_id}/{uuid.uuid4()}/export.json"
+    with get_connection() as conn:
+        conn.execute(
+            """
+            INSERT INTO baby_data_export_jobs (
+                baby_profile_id, requested_by_firebase_uid, status, object_path
+            )
+            VALUES (%s, %s, 'ready', %s)
+            """,
+            (baby_id, owner, export_path),
+        )
 
     delete_baby_profile(owner, baby_id)
 
@@ -84,6 +104,23 @@ def test_sole_owner_delete_removes_baby_from_lists_and_ends_follower_access():
             (baby_id,),
         ).fetchone()
         assert pending is not None and pending["status"] == "revoked"
+        job = conn.execute(
+            """
+            SELECT id, kind, status, firebase_uid, baby_profile_ids, export_object_paths
+            FROM storage_cleanup_jobs
+            """
+        ).fetchone()
+        exports_left = conn.execute(
+            "SELECT COUNT(*)::int AS n FROM baby_data_export_jobs WHERE baby_profile_id = %s",
+            (baby_id,),
+        ).fetchone()["n"]
+    # Committed with the delete, then published.
+    assert job["kind"] == "baby_profile_delete" and job["status"] == "pending"
+    assert job["firebase_uid"] == owner
+    assert job["baby_profile_ids"] == [baby_id]
+    assert job["export_object_paths"] == [export_path]
+    assert exports_left == 0
+    _published_cleanup_jobs.assert_called_once_with(job["id"])
 
 
 def test_co_owned_delete_refused():
@@ -97,6 +134,11 @@ def test_co_owned_delete_refused():
         delete_baby_profile(owner_a, baby_id)
 
     assert len(list_babies_for_user(owner_a)) == 1
+    with get_connection() as conn:
+        jobs = conn.execute(
+            "SELECT COUNT(*)::int AS n FROM storage_cleanup_jobs"
+        ).fetchone()["n"]
+    assert jobs == 0
 
 
 def test_co_owners_deleting_and_leaving_at_once_never_orphan_the_baby():

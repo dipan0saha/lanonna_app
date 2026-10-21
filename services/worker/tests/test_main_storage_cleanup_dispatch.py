@@ -49,3 +49,14 @@ def test_storage_cleanup_redelivery_calls_handler_again(client):
     assert first.status_code == 500
     assert second.status_code == 204
     assert run.call_count == 2
+
+
+def test_sweep_dispatch_runs_sweep(client):
+    data = base64.b64encode(b'{"type":"sweep_storage_cleanup_jobs"}').decode()
+    with patch("lanonna_worker.main.sweep_storage_cleanup_jobs") as sweep:
+        resp = client.post(
+            "/pubsub/push", json={"message": {"data": data, "messageId": "m"}}
+        )
+
+    assert resp.status_code == 204
+    sweep.assert_called_once_with()

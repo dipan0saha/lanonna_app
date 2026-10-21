@@ -28,6 +28,12 @@ MAX_DISPLAY_BYTES = 2_097_152
 MAX_IMAGE_PIXELS = 20_000_000
 
 
+def thumbnail_path_for_display(display_path: str) -> str | None:
+    """Thumbnail object key derived from a photo display key, else None."""
+    match = _DISPLAY_PATH.match(display_path)
+    return f"thumbnails/{match.group(1)}.jpg" if match else None
+
+
 def process_gcs_finalize(payload: dict[str, Any]) -> None:
     bucket = payload.get("bucket")
     name = payload.get("name")
@@ -37,13 +43,10 @@ def process_gcs_finalize(payload: dict[str, Any]) -> None:
     if bucket != settings.display_bucket:
         logger.debug("Ignoring bucket %s", bucket)
         return
-    match = _DISPLAY_PATH.match(name)
-    if not match:
+    thumb_path = thumbnail_path_for_display(name)
+    if thumb_path is None:
         logger.info("Skipping non-photo display object name=%s", name)
         return
-
-    photo_id = match.group(1)
-    thumb_path = f"thumbnails/{photo_id}.jpg"
 
     client = storage.Client(project=settings.gcp_project_id)
     display_blob = client.bucket(bucket).blob(name)
@@ -114,7 +117,7 @@ def process_gcs_finalize(payload: dict[str, Any]) -> None:
         else:
             logger.info(
                 "photo_ready photo_id=%s thumb=%s bytes=%s",
-                photo_id,
+                ready_row["id"],
                 thumb_path,
                 len(data),
             )

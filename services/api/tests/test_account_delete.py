@@ -25,6 +25,19 @@ def _auth_as(uid: str = "uid-1", email: str = "user@test.com"):
         app.dependency_overrides.pop(current_user, None)
 
 
+@pytest.fixture(autouse=True)
+def _no_storage_cleanup_io():
+    """Storage cleanup enqueueing is covered in test_account_delete_storage.py."""
+    with (
+        patch("lanonna_api.domain.account_delete.enqueue_storage_cleanup"),
+        patch(
+            "lanonna_api.domain.account_delete.account_cleanup_job_needs_publish",
+            return_value=None,
+        ),
+    ):
+        yield
+
+
 def test_preview_lists_sole_owned_babies_only():
     """Deletion is never blocked (FR-SET-005); the preview has no gate fields."""
     with patch(

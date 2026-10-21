@@ -4,7 +4,7 @@ Pub/Sub push handler: **thumbnails** from `display/` objects, **Mailjet** invite
 
 Non-2xx responses on `/pubsub/push` cause Pub/Sub to retry with exponential backoff (`10s`–`600s` in `pubsub.tf`). Both push subscriptions dead-letter after `max_delivery_attempts` (**12**, mirrored by `PUBSUB_MAX_DELIVERY_ATTEMPTS`) to `lanonna-async-commands-dlq`, which is retained 7 days on the `…-dlq-pull` subscription (inspect/replay: [operations.md](../../docs/engineering/operations.md#dead-letter-queue)). Invite email records `email_delivery_status` / `email_last_error` on the invitation row; transient Mailjet errors return `InviteSendOutcome.RETRY` → 500 (Pub/Sub backoff is the only retry — no in-process `sleep`), permanent failures ack 204.
 
-**Layout:** `src/lanonna_worker/` — `main.py`, `pubsub_payload.py`, `thumbnails.py`, `notifications.py`, `invite_email.py`, `invite_cleanup.py`, `baby_data_export.py` (job lifecycle), `storage_cleanup.py` / `gcs_delete.py` (account and baby profile GCS purge), `export/` (version 2 document), `idempotency.py`, `db.py`, `config.py`.
+**Layout:** `src/lanonna_worker/` — `main.py`, `pubsub_payload.py`, `thumbnails.py`, `notifications.py`, `invite_email.py`, `invite_cleanup.py`, `baby_data_export.py` (job lifecycle), `storage_cleanup.py` / `gcs_delete.py` (account and baby profile GCS purge; `storage_cleanup` per job, `sweep_storage_cleanup_jobs` every 15 min from Cloud Scheduler re-runs stuck jobs), `export/` (version 2 document), `idempotency.py`, `db.py`, `config.py`.
 
 Pub/Sub handlers are **idempotent** (migration `021`+). Duplicate push deliveries return **204** without duplicate inbox rows or Mailjet sends:
 

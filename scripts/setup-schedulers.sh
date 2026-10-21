@@ -48,3 +48,7 @@ upsert_pubsub_job "${WEEKLY_JOB}" "0 14 * * 0" '{"type":"weekly_notification_dig
 EXPIRE_JOB="${EXPIRE_INVITES_JOB_NAME:-expire-pending-invitations}"
 upsert_pubsub_job "${EXPIRE_JOB}" "0 6 * * *" '{"type":"expire_pending_invitations"}' \
   "Mark pending invitations past expires_at as expired"
+
+STORAGE_SWEEP_JOB="${STORAGE_CLEANUP_SWEEP_JOB_NAME:-sweep-storage-cleanup-jobs}"
+upsert_pubsub_job "${STORAGE_SWEEP_JOB}" "*/15 * * * *" '{"type":"sweep_storage_cleanup_jobs"}' \
+  "Re-run storage cleanup jobs left pending, stuck running, or failed after account/baby delete"

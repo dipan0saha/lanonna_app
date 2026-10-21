@@ -51,10 +51,10 @@ Dev-only `infra/db/hard_delete_user.py` already documents the intended hard SQL 
 
 ## Fix architecture
 
-1. **SQL (API, same transaction as tombstone):** Purge authored photos on non–sole-owned babies; delete export jobs (collect `object_path`s); insert `storage_cleanup_jobs` row with `baby_profile_ids`, `detached_objects`, `export_object_paths`.
-2. **Pub/Sub:** `publish_storage_cleanup(job_id)` on `lanonna-async-commands` (same topic as exports). Retry-safe: tombstone retry republishes if job not `completed`.
-3. **Worker:** `run_storage_cleanup` claims job (`pending` → `running` → `completed`/`failed`), deletes detached paths, export paths, `avatars/users/{uid}/`, then for each sole-owned baby id: all `photos` paths in SQL + `avatars/babies/{id}/` + `exports/{id}/` prefixes. Transient GCS errors → HTTP 500 → Pub/Sub retry → DLQ after 12 attempts (`pubsub.tf`).
-4. **Baby profile delete:** Same worker job with `kind = baby_profile_delete` after owner-initiated `DELETE /v1/babies/{id}`.
+1. **SQL (API, one transaction):** account delete purges the user's photos on babies they do not sole-own (one `DELETE … RETURNING`; comments, squishes, tags cascade; event covers and birth announcements are cleared by `ON DELETE SET NULL`), deletes export jobs the user requested or that belong to their sole-owned babies, soft-deletes sole-owned babies, and inserts a `storage_cleanup_jobs` row (`baby_profile_ids`, `detached_objects`, `export_object_paths`) in the same transaction as the tombstone. Owner-initiated baby delete inserts its job in the same transaction as the sole-owner check and soft delete.
+2. **Pub/Sub after commit:** `enqueue_storage_cleanup(job_id)` publishes `{"type":"storage_cleanup"}` on `lanonna-async-commands` (existing topic and push subscription; no Terraform change). A failed publish is logged, not raised; a delete-account retry re-publishes an unfinished job.
+3. **Worker:** `run_storage_cleanup` claims `pending` → `running`, deletes detached photo objects, export objects, every photo on the deleted babies (display + thumbnail; the thumbnail key is derived when a photo had not finished processing), and the folder prefixes `avatars/babies/{id}/` and `exports/{id}/`; account jobs also delete `avatars/users/{uid}/` (baby jobs never touch the owner's avatar). Prefixes must be complete folders (trailing `/`, no empty segment). An absent object counts as deleted, so re-runs are safe. Errors release the claim for Pub/Sub retry, or mark the job `failed` on the final attempt.
+4. **Recovery sweep:** Cloud Scheduler `sweep-storage-cleanup-jobs` (every 15 min, `scripts/setup-schedulers.sh`) publishes `{"type":"sweep_storage_cleanup_jobs"}`. The worker re-runs up to 10 jobs that are `pending` for over 10 minutes (lost publish), `running` for over 30 minutes (worker died), or `failed` for over 6 hours.
 
 **Migration:** `042_storage_cleanup_jobs.sql`.
 
@@ -68,7 +68,7 @@ Dev-only `infra/db/hard_delete_user.py` already documents the intended hard SQL 
 2. Deploy API + worker.
 3. Create test user with avatar, sole-owned baby (photos + baby avatar), and a photo uploaded on a followed baby.
 4. Delete account; confirm Firebase user gone, shared photo row removed, sole-owned baby soft-deleted.
-5. Inspect worker logs: `storage_cleanup_completed job_id=... objects_deleted=N`.
+5. Inspect worker logs: `storage_cleanup_completed job_id=... kind=account_delete objects_deleted=N`.
 6. Confirm GCS objects absent (`gsutil ls` on prefixes/paths).
 7. Retry `POST /v1/me/delete-account` after tombstone: idempotent; republish does not error if job already completed.
 

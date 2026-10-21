@@ -29,6 +29,8 @@ def insert_storage_cleanup_job(
     export_object_paths: list[str],
     conn: Any,
 ) -> uuid.UUID:
+    """Insert a ``pending`` job on the caller's connection (same transaction as the
+    SQL delete it belongs to). Publish only after that transaction commits."""
     job_id = uuid.uuid4()
     conn.execute(
         """
@@ -49,40 +51,6 @@ def insert_storage_cleanup_job(
         ),
     )
     return job_id
-
-
-def latest_account_cleanup_job_id(firebase_uid: str) -> uuid.UUID | None:
-    with get_connection() as conn:
-        row = conn.execute(
-            """
-            SELECT id, status
-            FROM storage_cleanup_jobs
-            WHERE firebase_uid = %s
-              AND kind = %s
-            ORDER BY created_at DESC
-            LIMIT 1
-            """,
-            (firebase_uid, StorageCleanupKind.ACCOUNT_DELETE.value),
-        ).fetchone()
-    if row is None:
-        return None
-    return uuid.UUID(str(row["id"]))
-
-
-def create_baby_profile_storage_cleanup_job(
-    firebase_uid: str,
-    baby_profile_id: uuid.UUID,
-    export_object_paths: list[str],
-) -> uuid.UUID:
-    with get_connection() as conn:
-        return insert_storage_cleanup_job(
-            kind=StorageCleanupKind.BABY_PROFILE_DELETE,
-            firebase_uid=firebase_uid,
-            baby_profile_ids=[baby_profile_id],
-            detached_objects=[],
-            export_object_paths=export_object_paths,
-            conn=conn,
-        )
 
 
 def account_cleanup_job_needs_publish(firebase_uid: str) -> uuid.UUID | None:

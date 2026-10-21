@@ -575,6 +575,9 @@ def main() -> None:
         _purge_user_on_remaining_babies(conn, uid, sole_owned, dry_run=args.dry_run)
 
         if not args.dry_run:
+            conn.execute(
+                "DELETE FROM storage_cleanup_jobs WHERE firebase_uid = %s", (uid,)
+            )
             conn.execute("DELETE FROM app_users WHERE firebase_uid = %s", (uid,))
             print("Deleted app_users row.")
             conn.commit()

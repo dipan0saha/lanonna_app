@@ -9,7 +9,10 @@ from lanonna_worker.config import settings, validate_worker_settings
 
 validate_worker_settings()
 from lanonna_worker.baby_data_export import run_baby_data_export
-from lanonna_worker.storage_cleanup import run_storage_cleanup
+from lanonna_worker.storage_cleanup import (
+    run_storage_cleanup,
+    sweep_storage_cleanup_jobs,
+)
 from lanonna_worker.invite_email import InviteSendOutcome, send_invite_email
 from lanonna_worker.notifications import (
     process_notify_fan_out,
@@ -87,7 +90,8 @@ async def cron_weekly_notification_digest() -> Response:
 
 @app.post("/pubsub/push")
 async def pubsub_push(request: Request) -> Response:
-    """Pub/Sub push: thumbnails, invite email, notifications, exports, invite expiry."""
+    """Pub/Sub push: thumbnails, invite email, notifications, exports, invite expiry,
+    storage cleanup."""
     body: dict[str, Any] = await request.json()
     message = body.get("message", {})
     pubsub_message_id = message.get("messageId")
@@ -160,6 +164,14 @@ async def pubsub_push(request: Request) -> Response:
             process_weekly_notification_digest(pubsub_message_id=pubsub_message_id)
         except Exception:
             logger.exception("weekly_notification_digest_failed")
+            return Response(status_code=500)
+        return Response(status_code=204)
+
+    if payload.get("type") == "sweep_storage_cleanup_jobs":
+        try:
+            sweep_storage_cleanup_jobs()
+        except Exception:
+            logger.exception("sweep_storage_cleanup_jobs_failed")
             return Response(status_code=500)
         return Response(status_code=204)
 
