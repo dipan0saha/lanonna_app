@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
-# Verify dev Cloud SQL has every migration file in infra/db/migrations recorded in
+# Verify Cloud SQL has every migration file in infra/db/migrations recorded in
 # schema_migrations (when proxy + PGPASSWORD are set).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source-path=SCRIPTDIR source=lib/env.sh
+source "${ROOT}/scripts/lib/env.sh"
+lanonna_resolve_environment
+
 MIG_DIR="${ROOT}/infra/db/migrations"
 DB_HOST="${DB_HOST:-127.0.0.1}"
 DB_PORT="${DB_PORT:-5433}"
@@ -11,7 +15,7 @@ DB_USER="${DB_USER:-lanonna_app}"
 DB_NAME="${DB_NAME:-lanonna}"
 
 expected="$(find "${MIG_DIR}" -maxdepth 1 -name '*.sql' | wc -l | tr -d ' ')"
-echo "Expected migration files: ${expected}"
+echo "Expected migration files: ${expected} (project ${GCP_PROJECT_ID}, env ${ENVIRONMENT})"
 
 export DB_PASSWORD="${DB_PASSWORD:-${PGPASSWORD:-}}"
 
@@ -56,4 +60,4 @@ psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" -tAc \
 psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" -tAc \
   "SELECT 1 FROM information_schema.tables WHERE table_name = 'photo_baby_tags'" | grep -q 1
 
-echo "Dev migration gate OK (${count}/${expected})."
+echo "Migration gate OK (${count}/${expected}, ${ENVIRONMENT})."

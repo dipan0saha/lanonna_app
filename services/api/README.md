@@ -10,8 +10,8 @@ Cloud Run service **`api`** in `lanonna-dev`.
 
 ```bash
 gcloud config set account <your-deploy-account>
-gcloud config set project lanonna-dev
-./scripts/deploy.sh
+# GCP_PROJECT_ID defaults to lanonna-dev; use GCP_PROJECT_ID=lanonna-prod for prod.
+GCP_PROJECT_ID=lanonna-dev ./scripts/deploy.sh
 ```
 
 Uses **Cloud Build** by default (`USE_LOCAL_DOCKER=1` if you have Docker).

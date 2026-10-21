@@ -2,7 +2,7 @@
 # Copy terraform.tfvars.example → terraform.tfvars and create state bucket first.
 
 terraform {
-  required_version = ">= 1.5.0"
+  required_version = ">= 1.7.0"
 
   required_providers {
     google = {

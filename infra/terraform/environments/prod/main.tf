@@ -37,11 +37,21 @@ module "platform" {
   bucket_display    = var.bucket_display
   bucket_thumbnails = var.bucket_thumbnails
 
-  sql_tier         = var.sql_tier
-  sql_disk_gb      = var.sql_disk_gb
-  sql_availability = "ZONAL"
+  sql_tier                           = var.sql_tier
+  sql_disk_gb                        = var.sql_disk_gb
+  sql_disk_autoresize                = true
+  sql_disk_autoresize_limit          = var.sql_disk_autoresize_limit
+  sql_availability                   = var.sql_availability
+  sql_deletion_protection            = true
+  sql_transaction_log_retention_days = 7
+
+  bucket_lifecycle_rules_enabled = true
 
   create_automation_sa    = false
   manage_sql_app_password = true
   enable_firebase         = true
+
+  enable_platform_monitoring     = true
+  monitoring_notification_emails = var.monitoring_notification_emails
+  monitoring_api_host            = var.monitoring_api_host
 }

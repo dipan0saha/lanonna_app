@@ -3,7 +3,7 @@
 | Field | Value |
 |-------|--------|
 | **Status** | Planning (not yet executed) |
-| **Last updated** | 2026-10-20 |
+| **Last updated** | 2026-10-21 |
 | **Related** | [operations.md](operations.md), [open-gaps.md](open-gaps.md) (L-28, M-47, M-52), [migrations README](../../infra/db/migrations/README.md) |
 
 **Summary:** Do not delay `lanonna-prod` for a migration squash or L-28 refactors. Run the existing migration chain (`001`–`041_biometric_credentials`) on a fresh prod DB (minutes, safe). Optionally squash to one baseline later when you reset dev. Prioritize small, prod-wiring consolidations (deploy/env, Terraform secrets, IAM scripts) before or in parallel with the prod project.
@@ -24,6 +24,71 @@ Single PR, repo-only (no GCP project creation). Analysis and design first; imple
 | 8 | Docs | `operations.md` prod env files + two-phase prod TF apply; `open-gaps.md` + checklist updates; fix migration count references to **41**. |
 
 **Dev equivalence:** Unchanged default `GCP_PROJECT_ID=lanonna-dev` → same committed env files and `ENVIRONMENT=dev` once `infra/env/dev.worker.local.env` exists (one-time copy from `dev.worker.local.env.example` with the real Mailjet sender). Cloud Run env vars unchanged after deploy.
+
+---
+
+## Lanonna-prod prep — analysis and design (2026-10-21)
+
+Repo-only PR before `lanonna-prod` exists (GCP project quota). Goal: prod-sized defaults, safe secret lifecycle, optional monitoring, and docs/runbooks — **without** a dev `terraform plan` diff unless explicitly opted in.
+
+### 1. Commit `e25c3fd` — `database-url` secret container
+
+**What changed:** `database-url` was removed from `secret_ids` (and from `import-dev.sh`). Cloud Run never read this secret; app connectivity uses `DB_*` + `db-lanonna-app-password`.
+
+**Dev outcome:** `google_secret_manager_secret.app` is a `for_each` over `secret_ids`, so the next dev `terraform apply` after `e25c3fd` destroyed `google_secret_manager_secret.app["database-url"]`. That was intentional: the secret was unused, and the audit log shows DeleteSecret at 2026-10-21 03:23 UTC. Dev state and GCP no longer have it, the API and worker never referenced it, and both stayed healthy. Dev uses the module default `secret_ids`; do not re-add `database-url` (it would recreate an unused secret).
+
+**Prod:** Fresh apply never created `database-url`; no action.
+
+### 2. Prod sizing (~$35–60/mo target)
+
+| Component | Prod default | Rationale |
+|-----------|--------------|-----------|
+| Cloud SQL | `db-custom-1-3840`, **zonal**, 10 GB PD-SSD, **autoresize** (cap 20 GB) | Dedicated vCPU/RAM (not shared-core `g1-small`) for [Cloud SQL SLA](https://cloud.google.com/sql/sla) eligibility; smallest practical custom tier. HA deferred via existing `sql_availability` (`ZONAL` → `REGIONAL`). |
+| Backups | On + PITR, **7-day** log retention | Matches owner ask; explicit `transaction_log_retention_days = 7`. |
+| API Cloud Run | `API_MIN_INSTANCES=1` in `prod.api.env` | One warm instance (~$10/mo idle at 1 vCPU / 512 MiB request-based billing). |
+| Worker Cloud Run | min **0** (deploy script) | Push subs absorb cold start; no idle worker cost. |
+
+**Scale-up path (documented in operations.md):** raise `sql_tier` / `sql_disk_gb` / `sql_availability = REGIONAL`, bump `API_MAX_INSTANCES`, then `terraform apply` + redeploy.
+
+### 3. Cloud SQL deletion protection
+
+Today: `deletion_protection = (environment == "prod")` only at the Terraform resource level.
+
+**Design:** `sql_deletion_protection` variable (module default `false`; prod env passes `true`). Set **both** `deletion_protection` on the instance resource and `settings.deletion_protection_enabled` in API. Dev omits the variable → stays `false` → **no plan churn**.
+
+### 4. GCS lifecycle (display + thumbnails)
+
+Variable-driven lifecycle rules on both buckets:
+
+- Abort incomplete multipart uploads after **1 day**.
+- Delete **noncurrent** objects after **30 days** when bucket versioning is enabled (optional `bucket_versioning_enabled`; off by default so dev does not gain versioning + churn).
+
+`bucket_lifecycle_rules_enabled`: **off** for dev (default), **on** for prod in `environments/prod/main.tf`. Rules never delete current/live objects.
+
+### 5. Monitoring module
+
+Single opt-in flag `enable_platform_monitoring` (default `false`). When `true` (prod `main.tf` + owner emails in gitignored `terraform.tfvars`):
+
+| Piece | Behavior |
+|-------|----------|
+| `monitoring_notification_emails` | `google_monitoring_notification_channel` (email), no addresses in git |
+| Dead-letter alert | Attach channels when monitoring enabled |
+| Uptime | HTTPS check on Cloud Run `api` URI + `/health` (data source, same pattern as worker push URL) |
+| Alerts | Cloud Run 5xx rate, p95 latency, uptime failure, Cloud SQL CPU & disk — thresholds in variables with defaults |
+
+Dev: flag stays `false` → **no new monitoring resources** in plan.
+
+### 6. `verify-migrations.sh`
+
+Rename/generalize `verify-dev-migrations.sh` → `scripts/verify-migrations.sh`, source `scripts/lib/env.sh` for messaging (`ENVIRONMENT` / project), keep proxy + `PGPASSWORD` semantics. Update repo references; remove old script name.
+
+### 7. Documentation
+
+- **operations.md** — prod bootstrap order (quota note), sizing table, monitoring tfvars, scaling, migration verify script name.
+- **open-gaps.md** — M-49/M-61 updates, monitoring gap closure.
+- **This file** — checklist for prod prep PR.
+
+**Dev equivalence checklist:** default dev module inputs unchanged; `enable_platform_monitoring=false`, `bucket_lifecycle_rules_enabled=false`, `sql_deletion_protection` unset/false; `removed` block only affects state for legacy secret.
 
 ## Recommendation (short)
 
@@ -55,7 +120,8 @@ flowchart LR
 
 ## Tracking checklist
 
-- [ ] Create `lanonna-prod` and apply existing migrations `001`–`041` on empty Cloud SQL (no squash gate)
+- [ ] Create `lanonna-prod` (GCP quota) and apply existing migrations `001`–`041` on empty Cloud SQL (no squash gate)
+- [x] Prod Terraform sizing, deletion protection, bucket lifecycle, monitoring opt-in, `verify-migrations.sh` — lanonna-prod prep PR
 - [x] Add `infra/env/prod.api.env` / `prod.worker.env`, fix `ENVIRONMENT` in deploy scripts (M-52), TF SQL password → Secret Manager (M-47), generalize `apply-run-iam.sh` — merged in #347
 - [x] Mobile prod flavor + Crashlytics wiring ([mobile-prod-flavor-and-crashlytics.md](mobile-prod-flavor-and-crashlytics.md); owner still: keystore, `flutterfire configure`, fill `flavors/prod.json`)
 - [ ] (Optional, after schema freeze) Generate `001_baseline_v1.sql`, archive `002`–`040`, reset dev DB, add schema-only diff check in CI
@@ -69,7 +135,7 @@ flowchart LR
 
 - [`infra/db/apply_migrations.py`](../../infra/db/apply_migrations.py): lexicographic `*.sql`, skip if `schema_migrations.version` exists.
 - Each file self-registers via `INSERT INTO schema_migrations` (see [`001_app_users.sql`](../../infra/db/migrations/001_app_users.sql)).
-- [`scripts/verify-dev-migrations.sh`](../../scripts/verify-dev-migrations.sh): **file count must equal row count** in `schema_migrations` (currently 41).
+- [`scripts/verify-migrations.sh`](../../scripts/verify-migrations.sh): **file count must equal row count** in `schema_migrations` (currently 41).
 
 ### Why squashing is not a prod prerequisite
 
@@ -89,7 +155,7 @@ Do this **after** prod is up or in the same window as a planned dev wipe—not i
    - Move `002`–`041` to `infra/db/migrations/archive/pre_baseline/` (read-only audit trail) **or** delete with pointer in [migrations README](../../infra/db/migrations/README.md).
    - Single active file: e.g. `001_baseline_v1.sql`.
 4. **Reset environments:** drop/recreate `lanonna` DB on dev (and only use baseline on **new** prod if prod was not already migrated—if prod already ran the incremental chain, **do not** squash prod in place without a deliberate migration strategy).
-5. **Update tooling:** `verify-dev-migrations.sh` expected count = 1; Postgres integration tests that assume specific migration files (grep `infra/db/migrations` in tests).
+5. **Update tooling:** `verify-migrations.sh` expected count = 1; Postgres integration tests that assume specific migration files (grep `infra/db/migrations` in tests).
 6. **Going forward:** new changes are `002_add_foo.sql`, etc.
 
 **Risk control:** add a one-off CI job or script that compares `pg_dump --schema-only` of “baseline apply” vs the full incremental chain on empty Postgres (Docker) and diffs—only merge squash when identical.

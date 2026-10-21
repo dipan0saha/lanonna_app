@@ -104,10 +104,95 @@ variable "sql_disk_gb" {
   default = 10
 }
 
+variable "sql_disk_autoresize" {
+  type        = bool
+  default     = true
+  description = "Grow PD-SSD automatically when usage is high."
+}
+
+variable "sql_disk_autoresize_limit" {
+  type        = number
+  default     = null
+  nullable    = true
+  description = "Max disk size (GB) when autoresize is on; null means no cap."
+}
+
+variable "sql_transaction_log_retention_days" {
+  type        = number
+  default     = 7
+  description = "Point-in-time recovery log retention (days)."
+}
+
+variable "sql_deletion_protection" {
+  type        = bool
+  default     = false
+  description = "Terraform and API deletion protection for the Cloud SQL instance."
+}
+
 variable "sql_availability" {
   type        = string
   default     = "ZONAL"
   description = "ZONAL or REGIONAL (HA)."
+}
+
+variable "bucket_lifecycle_rules_enabled" {
+  type        = bool
+  default     = false
+  description = "When true, apply GCS lifecycle rules on display/thumbnail buckets (no live object deletion)."
+}
+
+variable "bucket_versioning_enabled" {
+  type        = bool
+  default     = false
+  description = "When true, enable object versioning on display/thumbnail buckets (required for noncurrent cleanup rules)."
+}
+
+variable "api_cloud_run_service_name" {
+  type        = string
+  default     = "api"
+  description = "Cloud Run service name for Run metric alert filters."
+}
+
+variable "monitoring_api_host" {
+  type        = string
+  default     = ""
+  description = "API hostname for HTTPS uptime checks (no scheme), e.g. api-xxx.run.app. When empty, uptime check resources are skipped."
+}
+
+variable "enable_platform_monitoring" {
+  type        = bool
+  default     = false
+  description = "When true, create uptime checks and alert policies (opt-in on dev via tfvars)."
+}
+
+variable "monitoring_notification_emails" {
+  type        = list(string)
+  default     = []
+  description = "Email addresses for Monitoring notification channels (set in gitignored tfvars)."
+}
+
+variable "monitoring_cloud_run_5xx_rate_threshold" {
+  type        = number
+  default     = 0.05
+  description = "Alert when 5xx responses exceed this fraction of request count (over alignment window)."
+}
+
+variable "monitoring_cloud_run_p95_latency_ms" {
+  type        = number
+  default     = 2000
+  description = "Alert when Cloud Run request latency p95 exceeds this value (milliseconds)."
+}
+
+variable "monitoring_cloud_sql_cpu_threshold" {
+  type        = number
+  default     = 0.85
+  description = "Alert when Cloud SQL CPU utilization exceeds this fraction."
+}
+
+variable "monitoring_cloud_sql_disk_threshold" {
+  type        = number
+  default     = 0.85
+  description = "Alert when Cloud SQL disk utilization exceeds this fraction."
 }
 
 variable "create_automation_sa" {

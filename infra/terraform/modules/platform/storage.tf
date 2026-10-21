@@ -5,6 +5,37 @@ resource "google_storage_bucket" "display" {
 
   uniform_bucket_level_access = true
 
+  dynamic "versioning" {
+    for_each = var.bucket_versioning_enabled ? [1] : []
+    content {
+      enabled = true
+    }
+  }
+
+  dynamic "lifecycle_rule" {
+    for_each = var.bucket_lifecycle_rules_enabled ? [1] : []
+    content {
+      action {
+        type = "AbortIncompleteMultipartUpload"
+      }
+      condition {
+        age = 1
+      }
+    }
+  }
+
+  dynamic "lifecycle_rule" {
+    for_each = var.bucket_lifecycle_rules_enabled && var.bucket_versioning_enabled ? [1] : []
+    content {
+      action {
+        type = "Delete"
+      }
+      condition {
+        days_since_noncurrent_time = 30
+      }
+    }
+  }
+
   # Flutter web / local dev signed PUT uploads (mobile native uploads do not use CORS).
   cors {
     origin          = var.display_bucket_cors_origins
@@ -27,6 +58,37 @@ resource "google_storage_bucket" "thumbnails" {
   project  = var.project_id
 
   uniform_bucket_level_access = true
+
+  dynamic "versioning" {
+    for_each = var.bucket_versioning_enabled ? [1] : []
+    content {
+      enabled = true
+    }
+  }
+
+  dynamic "lifecycle_rule" {
+    for_each = var.bucket_lifecycle_rules_enabled ? [1] : []
+    content {
+      action {
+        type = "AbortIncompleteMultipartUpload"
+      }
+      condition {
+        age = 1
+      }
+    }
+  }
+
+  dynamic "lifecycle_rule" {
+    for_each = var.bucket_lifecycle_rules_enabled && var.bucket_versioning_enabled ? [1] : []
+    content {
+      action {
+        type = "Delete"
+      }
+      condition {
+        days_since_noncurrent_time = 30
+      }
+    }
+  }
 
   labels = {
     environment = var.environment

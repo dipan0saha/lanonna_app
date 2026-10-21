@@ -47,4 +47,8 @@ module "platform" {
 
   enable_worker_push_subscription = true
   # worker_push_endpoint: leave empty to use the live Cloud Run `worker` URL (see worker_push.tf).
+
+  enable_platform_monitoring     = var.enable_platform_monitoring
+  monitoring_notification_emails = var.monitoring_notification_emails
+  monitoring_api_host            = var.monitoring_api_host
 }

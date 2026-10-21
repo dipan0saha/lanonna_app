@@ -227,7 +227,7 @@ Clears babies and related rows for that user and clears `owner_onboarding_comple
 
 | Script | Purpose |
 |--------|---------|
-| `verify-dev-prerequisites.sh`, `verify-dev-migrations.sh`, `apply-run-iam.sh`, `infra-smoke-display-upload.sh`, `run-beta-gate.sh` | Dev readiness, schema gate, worker Run IAM, upload smoke, beta gate — see [operations.md](operations.md) |
+| `verify-dev-prerequisites.sh`, `verify-migrations.sh`, `apply-run-iam.sh`, `infra-smoke-display-upload.sh`, `run-beta-gate.sh` | Dev readiness, schema gate, worker Run IAM, upload smoke, beta gate — see [operations.md](operations.md) |
 | `ship_release_apk_to_drive.sh`, `ship_release_apk_x86_64_to_drive.sh`, `copy_release_apk_to_drive.sh` | Build the release APK (universal / x86_64 emulator) and copy it to Drive; the copy script takes an optional destination file name |
 | `setup-schedulers.sh` | Create/update Cloud Scheduler jobs (weekly digest, expired-invite cleanup) |
 | `sync-email-templates.sh`, `sync-firebase-auth-templates.sh`, `configure-firebase-auth-email-project.sh`, `deploy-invite-hosting.sh` | Mailjet template mirror check/apply; Firebase auth email templates (`check` / `check-remote` / `apply`) and public-facing name; HTTPS invite landing on Firebase Hosting |
@@ -372,7 +372,7 @@ Preview includes `lifecycle_status` and birth dates for invite subtitles and car
 
 ## Database
 
-Apply every SQL file in `infra/db/migrations/` in lexicographic order (the [migrations README](../../infra/db/migrations/README.md) lists them all and is the single source for the current set). Cloud SQL Auth Proxy may use port **5432** or **5433** — set `DB_PORT` consistently (`apply_migrations.py` defaults to **5432**; Maestro, `clear_dev_test_data.py`, and `verify-dev-migrations.sh` default to **5433**). Cloud SQL via Auth Proxy + `infra/db/apply_migrations.py` or `psql -f` per file. Use the venv under `infra/db/.venv` (`pip install psycopg`) or any environment with `psycopg` installed.
+Apply every SQL file in `infra/db/migrations/` in lexicographic order (the [migrations README](../../infra/db/migrations/README.md) lists them all and is the single source for the current set). Cloud SQL Auth Proxy may use port **5432** or **5433** — set `DB_PORT` consistently (`apply_migrations.py` defaults to **5432**; Maestro, `clear_dev_test_data.py`, and `verify-migrations.sh` default to **5433**). Cloud SQL via Auth Proxy + `infra/db/apply_migrations.py` or `psql -f` per file. Use the venv under `infra/db/.venv` (`pip install psycopg`) or any environment with `psycopg` installed.
 
 | Script | Purpose |
 |--------|---------|

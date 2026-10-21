@@ -52,7 +52,7 @@ From `.cursor/rules/project-agent.mdc` + `operations.md`:
 | Step | When | Action |
 |------|------|--------|
 | Commit/push | Orchestrator ship worker (auto) | Logical commit(s); repo commit message style; no secrets, no `tfplan` |
-| Migrations | New/changed SQL in `infra/db/migrations/` | Proxy + `DB_PASSWORD` from SM `db-lanonna-app-password`; `infra/db/apply_migrations.py`; `DB_PORT` matches proxy (often **5433** for verify scripts; align with proxy); `./scripts/verify-dev-migrations.sh` |
+| Migrations | New/changed SQL in `infra/db/migrations/` | Proxy + `DB_PASSWORD` from SM `db-lanonna-app-password`; `infra/db/apply_migrations.py`; `DB_PORT` matches proxy (often **5433** for verify scripts; align with proxy); `./scripts/verify-migrations.sh` |
 | Email templates | Template changes | `bash scripts/sync-email-templates.sh apply` **before** worker |
 | Worker | Worker/runtime change | `./services/worker/scripts/deploy.sh` |
 | IAM | After worker deploy | `./scripts/apply-run-iam.sh` |

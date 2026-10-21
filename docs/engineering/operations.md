@@ -15,7 +15,7 @@
 Run before product feature work. Platform plumbing should be **green** first.
 
 ```bash
-gcloud config set project lanonna-dev
+# Scripts default to GCP_PROJECT_ID=lanonna-dev and pass --project; never change the gcloud default project.
 
 # Optional but recommended (Firebase test user password):
 export SMOKE_TEST_PASSWORD='…'
@@ -29,7 +29,7 @@ export SMOKE_TEST_PASSWORD='…'
 | Terraform `lanonna-dev` | `terraform validate` passes; `terraform apply` when module changes — push subs (upload + async commands), **DLQ** on push, CORS, API/worker TokenCreator |
 | Cloud Run `api` / `worker` | `services/*/scripts/deploy.sh` |
 | Auth + API | Flutter dev or curl with Firebase JWT; `GET /health` |
-| Cloud SQL | All migrations applied — proxy + `apply_migrations.py`; `./scripts/verify-dev-migrations.sh` checks every file in `infra/db/migrations/` is recorded |
+| Cloud SQL | All migrations applied — proxy + `apply_migrations.py`; `./scripts/verify-migrations.sh` checks every file in `infra/db/migrations/` is recorded |
 | GCS → Pub/Sub → worker | `./scripts/infra-smoke-display-upload.sh` (set `SMOKE_TEST_PASSWORD`) |
 | Worker security | **No** `allUsers` on `worker`; Run invoker via `apply-run-iam.sh` |
 | Quality gate | `verify-dev-prerequisites.sh` (Flutter analyze/test, API/worker compile); run `pytest` when you touch Python |
@@ -57,14 +57,15 @@ Path B platform: **`infra/terraform/`** — one **`platform`** module, **`dev`**
 
 ### Prerequisites
 
-- [Google Cloud SDK](https://cloud.google.com/sdk), [Terraform](https://developer.hashicorp.com/terraform/install) ≥ 1.5, [Flutter](https://docs.flutter.dev/get-started/install)
+- [Google Cloud SDK](https://cloud.google.com/sdk), [Terraform](https://developer.hashicorp.com/terraform/install) ≥ 1.7, [Flutter](https://docs.flutter.dev/get-started/install)
 
 ```bash
 gcloud auth login
 gcloud auth application-default login
 gcloud auth application-default set-quota-project lanonna-dev
-gcloud config set project lanonna-dev
 ```
+
+Do not run `gcloud config set project`: repo scripts resolve the project from `GCP_PROJECT_ID` (default `lanonna-dev`; `lanonna-prod` for prod) via `scripts/lib/env.sh` and pass `--project` on every call. For ad-hoc commands, pass `--project=…` explicitly.
 
 ### Terraform workflow
 
@@ -85,17 +86,32 @@ terraform apply               # when plan looks safe
 
 | Setting | Dev | Prod (`terraform.tfvars.example`) |
 |---------|-----|-------------------------------------|
-| Cloud SQL | `db-custom-1-3840`, 10 GB zonal | `db-custom-2-7680`, 20+ GB |
+| Cloud SQL | `db-custom-1-3840`, 10 GB zonal, deletion protection off | `db-custom-1-3840`, 10 GB zonal, autoresize cap 20 GB, backups + 7-day PITR, deletion protection on |
+| Cloud SQL HA | Zonal | Zonal (`sql_availability = REGIONAL` when ready) |
+| API Cloud Run | `API_MIN_INSTANCES=1` in `dev.api.env` | `API_MIN_INSTANCES=1` in `prod.api.env` |
+| Worker Cloud Run | min **0** (deploy script) | min **0** |
+| GCS lifecycle rules | Off (default module) | On (abort stale multipart uploads after 1 day) |
+| Platform monitoring | Off unless opted in via tfvars | On (emails + optional uptime host in tfvars) |
 | Automation SA (`lanonna-automation`, Editor) | **Yes** (local only) | **No** — CI + WIF later |
+
+**Prod launch budget (order of magnitude):** dedicated-core zonal SQL (~\$25–35/mo) + one warm API instance (~\$10–15/mo idle at 1 vCPU / 512 MiB) + small GCS/Pub/Secret/Monitoring footprint → about **\$35–60/mo** at low traffic. Shared-core tiers (e.g. `g1-small`) are cheaper but do not qualify for the [Cloud SQL SLA](https://cloud.google.com/sql/sla); prod defaults use **`db-custom-1-3840`**.
+
+**Scale up later:** raise `sql_tier` / `sql_disk_gb` / `sql_disk_autoresize_limit`, set `sql_availability = "REGIONAL"` for HA, bump `API_MAX_INSTANCES` in `prod.api.env`, then `terraform apply` and redeploy API/worker.
 
 ### Prod (when you launch)
 
+**Quota:** `lanonna-prod` does not exist until GCP grants a new project quota. Request quota, then run the sequence below.
+
 1. Create **`lanonna-prod`**, link billing.
 2. `./infra/terraform/scripts/ensure-state-bucket.sh lanonna-prod lanonna-prod-terraform-state`
-3. `cd infra/terraform/environments/prod` → `terraform.tfvars` from example → `terraform init && terraform apply` (fresh apply, no import). First apply creates Cloud SQL and writes a **`db-lanonna-app-password`** secret version from Terraform (`manage_sql_app_password = true`; dev keeps `false` so existing dev passwords are never rotated).
-4. Apply migrations **`001`–`041`** on empty Cloud SQL (same chain as dev).
-5. Set real values in [`infra/env/prod.worker.env`](../../infra/env/prod.worker.env) (`MAILJET_FROM_EMAIL` — placeholders fail deploy) and review [`infra/env/prod.api.env`](../../infra/env/prod.api.env) (`APP_CHECK_ENFORCE`, scaling).
-6. Deploy **worker** → `./scripts/apply-run-iam.sh` → enable push subscriptions (two-phase Terraform below) → **API** → `./scripts/setup-schedulers.sh` → invite hosting with release `ANDROID_SHA256`.
+3. `cd infra/terraform/environments/prod` → `cp terraform.tfvars.example terraform.tfvars` → set **`monitoring_notification_emails`** (gitignored tfvars; no addresses in git).
+4. `terraform init && terraform apply` (fresh apply, no import). Creates Cloud SQL (small dedicated tier), Secret Manager containers, writes **`db-lanonna-app-password`** (`manage_sql_app_password = true`), enables prod bucket lifecycle rules and alert policies (uptime check waits until step 8).
+5. Bootstrap remaining secrets (`mailjet-*`, `admin-api-key`, `db-postgres-root-password` as needed) via `gcloud secrets versions add`.
+6. Cloud SQL Auth Proxy + `infra/db/apply_migrations.py` with `DB_PASSWORD` from **`db-lanonna-app-password`** — migrations **`001`–`041`** on empty DB. Confirm with `./scripts/verify-migrations.sh` (`GCP_PROJECT_ID=lanonna-prod`, proxy + `PGPASSWORD`).
+7. Set real values in [`infra/env/prod.worker.env`](../../infra/env/prod.worker.env) (`MAILJET_FROM_EMAIL`) and review [`infra/env/prod.api.env`](../../infra/env/prod.api.env).
+8. Deploy **worker** (`GCP_PROJECT_ID=lanonna-prod`) → `./scripts/apply-run-iam.sh` → enable push subscriptions (two-phase Terraform below) → deploy **API** → set **`monitoring_api_host`** in `terraform.tfvars` from `gcloud run services describe api --format='value(status.uri)'` (hostname only) → `terraform apply` for uptime alerts → `./scripts/setup-schedulers.sh` → invite hosting with release `ANDROID_SHA256`.
+
+**Legacy `database-url` secret:** removed from the module in `e25c3fd` and intentionally deleted from `lanonna-dev` by the next apply. Cloud Run uses `DB_*` + `db-lanonna-app-password`; do not recreate it.
 
 Real users on prod = **new Firebase project + prod flavor**, not renaming dev. See [platform-architecture.md](platform-architecture.md).
 
@@ -242,7 +258,7 @@ export PGPASSWORD=$(gcloud secrets versions access latest --secret=db-lanonna-ap
 cd infra/db
 python3 -m venv .venv && .venv/bin/pip install 'psycopg[binary]'
 DB_PASSWORD="$PGPASSWORD" DB_PORT=5432 .venv/bin/python apply_migrations.py
-cd ../.. && ./scripts/verify-dev-migrations.sh   # repo root; PGPASSWORD set
+cd ../.. && ./scripts/verify-migrations.sh   # repo root; PGPASSWORD set
 ```
 
 Secrets (values in Secret Manager only): `db-lanonna-app-password`, `db-postgres-root-password`, `admin-api-key` (add version via `gcloud` after first apply if empty).
@@ -310,7 +326,7 @@ Optional local automation key (never commit): `~/Neo_Workspace/secrets/lanonna/g
 ```bash
 export GOOGLE_APPLICATION_CREDENTIALS="$HOME/Neo_Workspace/secrets/lanonna/gcp-automation-key.json"
 gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS"
-gcloud config set project lanonna-dev
+# Pass --project=lanonna-dev (or GCP_PROJECT_ID) instead of changing the gcloud default project.
 ```
 
 Switch back for interactive work: `gcloud config set account YOUR_HUMAN_GOOGLE_ACCOUNT` (the email you use for `gcloud auth login`).
