@@ -9,7 +9,6 @@ from lanonna_api.repositories._paging import limit_offset_clause
 from lanonna_api.repositories.active_participants import (
     purge_participation,
     purge_participation_on_baby,
-    purge_participation_on_babies,
 )
 
 
@@ -85,7 +84,6 @@ def lock_baby_profile_for_update(
         SELECT name
         FROM baby_profiles
         WHERE id = %s
-          AND deleted_at IS NULL
         FOR UPDATE
         """,
         (baby_profile_id,),
@@ -128,23 +126,31 @@ def get_active_membership(
     return dict(row) if row else None
 
 
-def has_removed_membership(
+def membership_access_ended(
     baby_profile_id: uuid.UUID,
     firebase_uid: str,
 ) -> bool:
+    """True when the user was removed from the baby or the baby was deleted.
+
+    Baby delete is a hard delete (memberships cascade away), so a missing
+    baby is ended access too: clients get ``membership_ended`` and drop it.
+    """
     with get_connection() as conn:
         row = conn.execute(
             """
-            SELECT 1
-            FROM baby_memberships
-            WHERE baby_profile_id = %s
-              AND firebase_uid = %s
-              AND removed_at IS NOT NULL
-            LIMIT 1
+            SELECT
+                NOT EXISTS (SELECT 1 FROM baby_profiles WHERE id = %(baby)s)
+                OR EXISTS (
+                    SELECT 1
+                    FROM baby_memberships
+                    WHERE baby_profile_id = %(baby)s
+                      AND firebase_uid = %(uid)s
+                      AND removed_at IS NOT NULL
+                ) AS ended
             """,
-            (baby_profile_id, firebase_uid),
+            {"baby": baby_profile_id, "uid": firebase_uid},
         ).fetchone()
-    return row is not None
+    return bool(row["ended"])
 
 
 def soft_remove_membership(
@@ -202,30 +208,6 @@ def soft_remove_own_membership(
         if not soft_remove_membership(baby_profile_id, firebase_uid, conn=conn):
             return OwnLeaveOutcome.NOT_MEMBER
         return OwnLeaveOutcome.LEFT
-
-
-def soft_remove_memberships_on_babies(
-    baby_profile_ids: list[uuid.UUID],
-    conn=None,
-) -> None:
-    """End every membership on these babies and drop presence on them."""
-    if not baby_profile_ids:
-        return
-    sql = """
-        UPDATE baby_memberships
-        SET removed_at = now(), updated_at = now()
-        WHERE baby_profile_id = ANY(%s::uuid[]) AND removed_at IS NULL
-    """
-
-    def _run(connection) -> None:
-        connection.execute(sql, (baby_profile_ids,))
-        purge_participation_on_babies(connection, baby_profile_ids)
-
-    if conn is not None:
-        _run(conn)
-    else:
-        with get_connection() as connection:
-            _run(connection)
 
 
 def soft_remove_all_memberships_for_user(firebase_uid: str, conn=None) -> None:

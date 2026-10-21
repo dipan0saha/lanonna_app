@@ -268,11 +268,9 @@ def user_has_self_created_baby(firebase_uid: str) -> bool:
             """
             SELECT 1
             FROM baby_memberships m
-            JOIN baby_profiles b ON b.id = m.baby_profile_id
             WHERE m.firebase_uid = %s
               AND m.role = 'owner'
               AND m.removed_at IS NULL
-              AND b.deleted_at IS NULL
               AND m.joined_via = 'created'
             LIMIT 1
             """,
@@ -292,7 +290,6 @@ def self_created_owner_baby_profile_id(firebase_uid: str) -> uuid.UUID | None:
             WHERE m.firebase_uid = %s
               AND m.role = 'owner'
               AND m.removed_at IS NULL
-              AND b.deleted_at IS NULL
               AND m.joined_via = 'created'
             ORDER BY b.created_at DESC
             LIMIT 1

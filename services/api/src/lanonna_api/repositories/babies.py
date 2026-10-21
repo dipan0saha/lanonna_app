@@ -44,7 +44,6 @@ _ACTIVE_MEMBERSHIP_JOIN = """
     WHERE b.id = %s
       AND m.firebase_uid = %s
       AND m.removed_at IS NULL
-      AND b.deleted_at IS NULL
 """
 
 
@@ -82,7 +81,6 @@ def list_babies_for_user(
             JOIN baby_profiles b ON b.id = m.baby_profile_id
             WHERE m.firebase_uid = %s
               AND m.removed_at IS NULL
-              AND b.deleted_at IS NULL
             ORDER BY b.created_at ASC, b.id ASC
             {paging}
             """,
@@ -163,7 +161,6 @@ def update_baby_for_owner(
               AND m.firebase_uid = %s
               AND m.role = 'owner'
               AND m.removed_at IS NULL
-              AND b.deleted_at IS NULL
             RETURNING {BABY_SUMMARY_COLUMNS}
             """,
             values,

@@ -106,55 +106,6 @@ def purge_participation_on_baby(
     )
 
 
-def purge_participation_on_babies(conn, baby_profile_ids: list[uuid.UUID]) -> None:
-    """Remove every person's presence on these babies (all memberships ended)."""
-    if not baby_profile_ids:
-        return
-    conn.execute(
-        """
-        DELETE FROM event_rsvps r
-        USING events e
-        WHERE r.event_id = e.id
-          AND e.baby_profile_id = ANY(%s::uuid[])
-        """,
-        (baby_profile_ids,),
-    )
-    conn.execute(
-        """
-        DELETE FROM votes
-        WHERE baby_profile_id = ANY(%s::uuid[])
-        """,
-        (baby_profile_ids,),
-    )
-    conn.execute(
-        """
-        DELETE FROM name_suggestion_likes l
-        USING name_suggestions n
-        WHERE l.name_suggestion_id = n.id
-          AND n.baby_profile_id = ANY(%s::uuid[])
-        """,
-        (baby_profile_ids,),
-    )
-    conn.execute(
-        """
-        DELETE FROM photo_squishes s
-        USING photos p
-        WHERE s.photo_id = p.id
-          AND p.baby_profile_id = ANY(%s::uuid[])
-        """,
-        (baby_profile_ids,),
-    )
-    conn.execute(
-        """
-        DELETE FROM announcement_squishes s
-        USING birth_announcements a
-        WHERE s.announcement_id = a.id
-          AND a.baby_profile_id = ANY(%s::uuid[])
-        """,
-        (baby_profile_ids,),
-    )
-
-
 def _assert_ident(value: str) -> None:
     parts = value.split(".")
     if not parts or any(

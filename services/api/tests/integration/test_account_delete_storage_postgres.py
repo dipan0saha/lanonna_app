@@ -6,8 +6,7 @@ import pytest
 
 from lanonna_api.db import get_connection
 from lanonna_api.repositories.account_delete import (
-    list_sole_owned_baby_ids,
-    soft_delete_account_rows,
+    delete_account_rows,
 )
 from lanonna_api.repositories.users import resolve_app_user
 
@@ -77,7 +76,7 @@ def test_account_delete_removes_shared_upload_and_creates_cleanup_job():
             ),
         )
 
-    job_id = soft_delete_account_rows(uploader, list_sole_owned_baby_ids(uploader))
+    job_id = delete_account_rows(uploader)
 
     with get_connection() as conn:
         row = conn.execute(
@@ -99,7 +98,7 @@ def test_account_delete_removes_shared_upload_and_creates_cleanup_job():
     assert job["detached_objects"][0]["display_path"] == f"display/{photo_id}.webp"
 
 
-def test_account_delete_keeps_sole_owned_baby_photos_for_worker_and_collects_exports():
+def test_account_delete_hard_deletes_sole_owned_baby_and_collects_photo_paths():
     owner = "store-sole-owner"
     other = "store-other-owner"
     _user(owner)
@@ -153,7 +152,7 @@ def test_account_delete_keeps_sole_owned_baby_photos_for_worker_and_collects_exp
             ),
         )
 
-    job_id = soft_delete_account_rows(owner, list_sole_owned_baby_ids(owner))
+    job_id = delete_account_rows(owner)
 
     with get_connection() as conn:
         remaining = {
@@ -177,12 +176,17 @@ def test_account_delete_keeps_sole_owned_baby_photos_for_worker_and_collects_exp
             """,
             (job_id,),
         ).fetchone()
-    # Sole-owned baby photos stay for the worker; the shared upload is gone.
-    assert remaining == {sole_photo, others_own_photo}
+    assert remaining == {others_own_photo}
     assert cover is None
     assert exports == [other_baby]
     assert job["baby_profile_ids"] == [sole_baby]
-    assert [o["display_path"] for o in job["detached_objects"]] == [
-        f"display/{other_photo}.webp"
-    ]
+    assert {o["display_path"] for o in job["detached_objects"]} == {
+        f"display/{other_photo}.webp",
+        f"display/{sole_photo}.webp",
+    }
     assert job["export_object_paths"] == [f"exports/{sole_baby}/a/export.json"]
+    with get_connection() as conn:
+        sole_row = conn.execute(
+            "SELECT 1 FROM baby_profiles WHERE id = %s", (sole_baby,)
+        ).fetchone()
+    assert sole_row is None

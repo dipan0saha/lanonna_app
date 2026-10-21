@@ -6,13 +6,13 @@ from lanonna_api.domain.errors import ErrorCode
 from lanonna_api.domain.member_errors import MemberLifecycleError
 from lanonna_api.repositories.babies import get_baby_for_owner
 from lanonna_api.repositories.memberships import (
-    has_removed_membership,
+    membership_access_ended,
     owner_membership_exists,
 )
 
 
 def _raise_if_membership_ended(firebase_uid: str, baby_profile_id: uuid.UUID) -> None:
-    if has_removed_membership(baby_profile_id, firebase_uid):
+    if membership_access_ended(baby_profile_id, firebase_uid):
         raise MemberLifecycleError(
             ErrorCode.MEMBERSHIP_ENDED,
             "You no longer have access to this baby profile.",

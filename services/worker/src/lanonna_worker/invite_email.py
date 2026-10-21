@@ -94,7 +94,7 @@ def _claim_invitation_for_send(
             b.name AS baby_name,
             COALESCE(u.display_name, 'A family member') AS inviter_display_name
         FROM invitations i
-        JOIN baby_profiles b ON b.id = i.baby_profile_id AND b.deleted_at IS NULL
+        JOIN baby_profiles b ON b.id = i.baby_profile_id
         JOIN app_users u ON u.firebase_uid = i.inviter_firebase_uid
         WHERE i.id = %s
         """,

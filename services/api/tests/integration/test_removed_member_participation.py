@@ -26,7 +26,6 @@ from lanonna_api.repositories.fun import (
 from lanonna_api.repositories.memberships import (
     reactivate_membership,
     soft_remove_membership,
-    soft_remove_memberships_on_babies,
 )
 from lanonna_api.repositories.photos import (
     get_photo_detail_row,
@@ -457,25 +456,3 @@ def test_remove_purges_presence_on_that_baby_only_and_reactivate_does_not_restor
     assert rsvp_summary(home_ids["event_id"]) == {"going": 1, "maybe": 0, "cant_go": 0}
     assert _count("event_rsvps", member, home) == 0
     assert list_rsvps_for_event(home_ids["event_id"])[0]["firebase_uid"] == owner
-
-
-def test_ending_every_membership_on_a_baby_purges_that_babys_presence():
-    owner = "bulk-owner"
-    member = "bulk-member"
-    _user(owner, "bulk-owner@example.com", "Owner")
-    _user(member, "bulk-member@example.com", "Aunt May")
-    closing = _baby(owner, "Closing")
-    staying = _baby(owner, "Staying")
-    _follower(closing, member)
-    _follower(staying, member)
-    closing_ids = _seed_presence(closing, owner, member, owner)
-    staying_ids = _seed_presence(staying, owner, member, owner)
-
-    soft_remove_memberships_on_babies([closing])
-
-    assert rsvp_summary(closing_ids["event_id"]) == {"going": 0, "maybe": 0, "cant_go": 0}
-    assert _count("votes", member, closing) == 0
-    assert _count("votes", owner, closing) == 0
-    assert rsvp_summary(staying_ids["event_id"])["going"] == 1
-    assert _count("event_rsvps", member, staying) == 1
-    assert list_event_comments(closing_ids["event_id"])[0]["body"] == "See you there"

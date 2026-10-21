@@ -1,9 +1,10 @@
 """Async GCS purge after account or baby profile deletion (``storage_cleanup_jobs``).
 
-The API commits the job with the SQL delete and publishes ``storage_cleanup`` after
-commit. Cloud Scheduler's ``sweep_storage_cleanup_jobs`` re-runs jobs whose publish
-was lost, whose worker died mid-run, or that used up their Pub/Sub retries. Deletes
-treat an absent object as done, so running a job twice is safe.
+The API commits the job with photo/export paths in ``detached_objects`` (baby rows may
+already be hard-deleted) and publishes ``storage_cleanup`` after commit. Cloud
+Scheduler's ``sweep_storage_cleanup_jobs`` re-runs jobs whose publish was lost, whose
+worker died mid-run, or that used up their Pub/Sub retries. Deletes treat an absent
+object as done, so running a job twice is safe.
 """
 
 from __future__ import annotations
@@ -73,25 +74,9 @@ def _release_claim(conn: Any, job_id: uuid.UUID) -> None:
     )
 
 
-def _baby_photo_paths(baby_ids: list[uuid.UUID]) -> list[dict[str, Any]]:
-    """Every photo on the deleted babies (gallery and event covers, any uploader)."""
-    if not baby_ids:
-        return []
-    with get_connection() as conn:
-        return conn.execute(
-            """
-            SELECT display_path, thumb_path
-            FROM photos
-            WHERE baby_profile_id = ANY(%s::uuid[])
-            """,
-            (baby_ids,),
-        ).fetchall()
-
-
 def _purge(job: dict[str, Any]) -> int:
     baby_ids = [uuid.UUID(str(b)) for b in job["baby_profile_ids"] or []]
     photos = [o for o in job["detached_objects"] or [] if isinstance(o, dict)]
-    photos += _baby_photo_paths(baby_ids)
 
     deleted = sum(
         gcs_delete.delete_photo_paths(p.get("display_path"), p.get("thumb_path"))

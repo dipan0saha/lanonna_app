@@ -168,7 +168,6 @@ def _primary_owner_baby(conn: psycopg.Connection, owner_uid: str) -> dict[str, A
         WHERE m.firebase_uid = %s
           AND m.role = 'owner'
           AND m.removed_at IS NULL
-          AND b.deleted_at IS NULL
         ORDER BY b.created_at ASC
         LIMIT 1
         """,
@@ -281,7 +280,7 @@ def provision_dual_baby(conn: psycopg.Connection, owner_uid: str) -> uuid.UUID:
         SELECT b.id FROM baby_profiles b
         JOIN baby_memberships m ON m.baby_profile_id = b.id
         WHERE m.firebase_uid = %s AND m.role = 'owner' AND b.name = 'Maestro Baby Two'
-          AND m.removed_at IS NULL AND b.deleted_at IS NULL
+          AND m.removed_at IS NULL
         LIMIT 1
         """,
         (owner_uid,),
@@ -624,7 +623,7 @@ def provision_qa_enrichment(
             SELECT b.id FROM baby_profiles b
             JOIN baby_memberships m ON m.baby_profile_id = b.id
             WHERE m.firebase_uid = %s AND m.role = 'owner'
-              AND b.name = 'Maestro Baby Two' AND b.deleted_at IS NULL
+              AND b.name = 'Maestro Baby Two'
         )
         """,
         (owner_uid,),

@@ -21,7 +21,7 @@ def _delete_with(
             return_value={"id": baby_id},
         ),
         patch(
-            "lanonna_api.domain.baby_delete.soft_delete_baby_profile_if_sole_owner",
+            "lanonna_api.domain.baby_delete.hard_delete_baby_profile_if_sole_owner",
             return_value=(outcome, job_id),
         ) as repo,
         patch("lanonna_api.domain.baby_delete.enqueue_storage_cleanup") as enqueue,

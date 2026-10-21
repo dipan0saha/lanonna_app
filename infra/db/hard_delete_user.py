@@ -152,163 +152,18 @@ def _hard_delete_babies(
 ) -> None:
     if not baby_ids:
         return
-    print(f"Hard-deleting {len(baby_ids)} sole-owned baby profile(s).")
-
-    steps: list[tuple[str, str, tuple[Any, ...]]] = [
-        (
-            "events.cover_photo_id cleared",
-            """
-            UPDATE events SET cover_photo_id = NULL
-            WHERE baby_profile_id = ANY(%s::uuid[])
-            """,
-            (baby_ids,),
-        ),
-        (
-            "announcement_comments",
-            """
-            DELETE FROM announcement_comments
-            WHERE announcement_id IN (
-                SELECT id FROM birth_announcements
-                WHERE baby_profile_id = ANY(%s::uuid[])
-            )
-            """,
-            (baby_ids,),
-        ),
-        (
-            "announcement_squishes",
-            """
-            DELETE FROM announcement_squishes
-            WHERE announcement_id IN (
-                SELECT id FROM birth_announcements
-                WHERE baby_profile_id = ANY(%s::uuid[])
-            )
-            """,
-            (baby_ids,),
-        ),
-        (
-            "birth_announcements",
-            "DELETE FROM birth_announcements WHERE baby_profile_id = ANY(%s::uuid[])",
-            (baby_ids,),
-        ),
-        (
-            "photo_baby_tags",
-            """
-            DELETE FROM photo_baby_tags
-            WHERE photo_id IN (SELECT id FROM photos WHERE baby_profile_id = ANY(%s::uuid[]))
-               OR tagged_baby_profile_id = ANY(%s::uuid[])
-            """,
-            (baby_ids, baby_ids),
-        ),
-        (
-            "registry_purchases",
-            """
-            DELETE FROM registry_purchases
-            WHERE registry_item_id IN (
-                SELECT id FROM registry_items WHERE baby_profile_id = ANY(%s::uuid[])
-            )
-            """,
-            (baby_ids,),
-        ),
-        (
-            "name_suggestion_likes",
-            """
-            DELETE FROM name_suggestion_likes
-            WHERE name_suggestion_id IN (
-                SELECT id FROM name_suggestions WHERE baby_profile_id = ANY(%s::uuid[])
-            )
-            """,
-            (baby_ids,),
-        ),
-        (
-            "event_comments",
-            """
-            DELETE FROM event_comments
-            WHERE event_id IN (SELECT id FROM events WHERE baby_profile_id = ANY(%s::uuid[]))
-            """,
-            (baby_ids,),
-        ),
-        (
-            "event_rsvps",
-            """
-            DELETE FROM event_rsvps
-            WHERE event_id IN (SELECT id FROM events WHERE baby_profile_id = ANY(%s::uuid[]))
-            """,
-            (baby_ids,),
-        ),
-        (
-            "photo_comments",
-            """
-            DELETE FROM photo_comments
-            WHERE photo_id IN (SELECT id FROM photos WHERE baby_profile_id = ANY(%s::uuid[]))
-            """,
-            (baby_ids,),
-        ),
-        (
-            "photo_squishes",
-            """
-            DELETE FROM photo_squishes
-            WHERE photo_id IN (SELECT id FROM photos WHERE baby_profile_id = ANY(%s::uuid[]))
-            """,
-            (baby_ids,),
-        ),
-        (
-            "photos",
-            "DELETE FROM photos WHERE baby_profile_id = ANY(%s::uuid[])",
-            (baby_ids,),
-        ),
-        (
-            "events",
-            "DELETE FROM events WHERE baby_profile_id = ANY(%s::uuid[])",
-            (baby_ids,),
-        ),
-        (
-            "registry_items",
-            "DELETE FROM registry_items WHERE baby_profile_id = ANY(%s::uuid[])",
-            (baby_ids,),
-        ),
-        (
-            "votes",
-            "DELETE FROM votes WHERE baby_profile_id = ANY(%s::uuid[])",
-            (baby_ids,),
-        ),
-        (
-            "name_suggestions",
-            "DELETE FROM name_suggestions WHERE baby_profile_id = ANY(%s::uuid[])",
-            (baby_ids,),
-        ),
-        (
-            "activity_events",
-            "DELETE FROM activity_events WHERE baby_profile_id = ANY(%s::uuid[])",
-            (baby_ids,),
-        ),
-        (
-            "invitations",
-            "DELETE FROM invitations WHERE baby_profile_id = ANY(%s::uuid[])",
-            (baby_ids,),
-        ),
-        (
-            "baby_data_export_jobs",
-            "DELETE FROM baby_data_export_jobs WHERE baby_profile_id = ANY(%s::uuid[])",
-            (baby_ids,),
-        ),
-        (
-            "baby_memberships",
-            "DELETE FROM baby_memberships WHERE baby_profile_id = ANY(%s::uuid[])",
-            (baby_ids,),
-        ),
-        (
-            "baby_profiles",
-            "DELETE FROM baby_profiles WHERE id = ANY(%s::uuid[])",
-            (baby_ids,),
-        ),
-    ]
-
-    for label, sql, params in steps:
-        if dry_run:
-            print(f"  [dry-run] {label}")
-            continue
-        conn.execute(sql, params)
-        print(f"  {label}")
+    print(
+        f"Hard-deleting {len(baby_ids)} sole-owned baby profile(s) "
+        "(ON DELETE CASCADE dependents)."
+    )
+    if dry_run:
+        print("  [dry-run] DELETE FROM baby_profiles …")
+        return
+    conn.execute(
+        "DELETE FROM baby_profiles WHERE id = ANY(%s::uuid[])",
+        (baby_ids,),
+    )
+    print("  baby_profiles (+ cascaded dependents)")
 
 
 def _purge_user_on_remaining_babies(

@@ -99,7 +99,7 @@ def _baby_ids_for_user(conn: psycopg.Connection, uid: str) -> list[str]:
 
 def _all_baby_ids(conn: psycopg.Connection) -> list[str]:
     rows = conn.execute(
-        "SELECT id::text FROM baby_profiles WHERE deleted_at IS NULL"
+        "SELECT id::text FROM baby_profiles"
     ).fetchall()
     return [_scalar(r) for r in rows]
 
