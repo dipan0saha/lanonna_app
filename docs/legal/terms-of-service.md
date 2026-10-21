@@ -94,7 +94,7 @@ Our Privacy Policy explains how we collect and use personal information, includi
 
 You may delete your account in the app (**Account → Delete account**). The flow previews baby profiles that will be removed when you are the only owner, asks for confirmation, and may require re-authentication.
 
-Deletion removes your Firebase login and tombstones your account in our database as described in the Privacy Policy. Some authored content may remain for other members; cloud media may not be fully purged by the automated in-app path. Contact **{{CONTACT_EMAIL}}** if you need assistance.
+Deletion removes your Firebase login and tombstones your account as described in the Privacy Policy, and enqueues **async removal** of your cloud media (avatars, exports, sole-owned baby media, and your photo uploads on shared babies). Text you left on shared babies (comments, suggestions, registry claims) may remain under “Deleted user.” Contact **{{CONTACT_EMAIL}}** if you need assistance.
 
 ### 9.2 Data export
 
