@@ -33,8 +33,6 @@ if [[ ! "${API_MIN_INSTANCES}" =~ ^[0-9]+$ || ! "${API_MAX_INSTANCES}" =~ ^[0-9]
   exit 1
 fi
 
-gcloud config set project "${PROJECT_ID}"
-
 # Prefer Cloud Build (no local Docker required). Set USE_LOCAL_DOCKER=1 to build locally.
 if [[ "${USE_LOCAL_DOCKER:-0}" == "1" ]] && command -v docker >/dev/null; then
   gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
@@ -55,6 +53,7 @@ CONN="${PROJECT_ID}:${REGION}:${SQL_INSTANCE}"
 APP_CHECK_ENFORCE="${APP_CHECK_ENFORCE:-false}"
 
 gcloud run deploy "${SERVICE}" \
+  --project="${PROJECT_ID}" \
   --image="${IMAGE}" \
   --region="${REGION}" \
   --platform=managed \
@@ -69,4 +68,4 @@ gcloud run deploy "${SERVICE}" \
   --cpu=1
 
 echo "Deployed. URL:"
-gcloud run services describe "${SERVICE}" --region="${REGION}" --format='value(status.url)'
+gcloud run services describe "${SERVICE}" --project="${PROJECT_ID}" --region="${REGION}" --format='value(status.url)'

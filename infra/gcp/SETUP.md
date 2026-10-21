@@ -54,7 +54,7 @@ gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS
 gcloud config set project lanonna-dev
 ```
 
-Prefer **`lanonnaapp@gmail.com`** for Cloud Build / `deploy.sh` (automation SA often cannot upload to Cloud Build).
+Prefer your **human Google account** (ADC) for Cloud Build / `deploy.sh` (automation SA often cannot upload to Cloud Build).
 
 ## Manual / ongoing (summary)
 

@@ -12,15 +12,17 @@ source "${LIB_DIR}/env.sh"
 # Mailjet returns HTTP 200 for that address and then drops the message (#43).
 require_mailjet_sender() {
   local env_file="$1"
+  local local_env_file="$2"
   if [[ -z "${MAILJET_FROM_EMAIL:-}" ]]; then
-    if [[ ! -f "${env_file}" ]]; then
-      echo "MAILJET_FROM_EMAIL is required. Set it or add ${env_file}." >&2
-      return 1
+    if [[ -f "${env_file}" ]]; then
+      load_unset_env_file "${env_file}"
     fi
-    load_unset_env_file "${env_file}"
+    if [[ -f "${local_env_file}" ]]; then
+      load_env_file_overrides "${local_env_file}"
+    fi
   fi
   if [[ -z "${MAILJET_FROM_EMAIL:-}" ]]; then
-    echo "MAILJET_FROM_EMAIL is required." >&2
+    echo "MAILJET_FROM_EMAIL is required. Export it or set it in ${local_env_file} (copy from ${local_env_file}.example)." >&2
     return 1
   fi
   lanonna_reject_placeholder MAILJET_FROM_EMAIL "${MAILJET_FROM_EMAIL}" || return 1
@@ -44,8 +46,9 @@ deploy_worker() {
   lanonna_resolve_environment
   project_id="${GCP_PROJECT_ID}"
   worker_env_file="${WORKER_ENV_FILE:-$(lanonna_infra_env_file worker)}"
+  worker_local_env_file="${WORKER_LOCAL_ENV_FILE:-$(lanonna_infra_env_local_file worker)}"
 
-  require_mailjet_sender "${worker_env_file}"
+  require_mailjet_sender "${worker_env_file}" "${worker_local_env_file}"
 
   image="${region}-docker.pkg.dev/${project_id}/lanonna/${service}:$(git -C "${repo_root}" rev-parse --short HEAD 2>/dev/null || echo local)"
 

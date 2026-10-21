@@ -108,15 +108,5 @@ echo "Deploying Hosting (invite landing page + /.well-known)..."
   firebase deploy --only hosting --project "${PROJECT_ID}" --non-interactive
 )
 
-PN="$(gcloud projects describe "${PROJECT_ID}" --format='value(projectNumber)')"
-MEMBER="serviceAccount:service-${PN}@gcp-sa-firebasehosting.iam.gserviceaccount.com"
-echo "Granting Hosting permission to invoke the API (preview rewrite)..."
-gcloud run services add-iam-policy-binding api \
-  --project="${PROJECT_ID}" \
-  --region="${REGION}" \
-  --member="${MEMBER}" \
-  --role="roles/run.invoker" \
-  --quiet
-
 echo "Invite hosting is live at https://${PROJECT_ID}.firebaseapp.com/invite"
 echo "Worker invite links use INVITE_DEEP_LINK_BASE=https://${PROJECT_ID}.firebaseapp.com"

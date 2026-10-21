@@ -84,6 +84,13 @@ def test_deploy_sets_environment_dev_by_default(tmp_path: Path):
     assert "ENVIRONMENT=dev," in line.replace(" ", "")
 
 
+def test_deploy_does_not_mutate_gcloud_config_project(tmp_path: Path):
+    result, log = _run_deploy(tmp_path)
+    assert result.returncode == 0, result.stderr
+    assert "config set project" not in log
+    assert "--project=lanonna-dev" in _deploy_line(log)
+
+
 def test_deploy_uses_prod_env_when_project_is_prod(tmp_path: Path):
     result, log = _run_deploy(tmp_path, GCP_PROJECT_ID="lanonna-prod")
     assert result.returncode == 0, result.stderr

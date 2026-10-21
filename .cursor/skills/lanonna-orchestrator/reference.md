@@ -60,7 +60,7 @@ From `.cursor/rules/project-agent.mdc` + `operations.md`:
 
 **Order when multiple apply:** migrations → (email templates if needed) → worker → IAM → API.
 
-**GCP account (dev deploys):** `lanonnaapp@gmail.com`, project `lanonna-dev`.
+**GCP account (dev deploys):** human Google account with access, project `lanonna-dev`.
 
 **Quality gates:** `./scripts/verify-dev-prerequisites.sh`; `pytest` when Python changes; Flutter analyze/test for mobile.
 

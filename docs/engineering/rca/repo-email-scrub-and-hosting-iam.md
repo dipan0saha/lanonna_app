@@ -13,7 +13,7 @@ The repository is public. Tracked files contained the dev Mailjet sender address
 
 ### Symptoms
 
-Roughly nineteen occurrences of `@gmail.com` in tracked sources: `infra/env/dev.worker.env`, worker tests/docs, `docs/engineering/operations.md`, setup READMEs, and `scripts/copy_release_apk_to_drive.sh` (operator Drive path).
+Roughly nineteen occurrences of personal Gmail addresses in tracked sources: `infra/env/dev.worker.env`, worker tests/docs, `docs/engineering/operations.md`, setup READMEs, and `scripts/copy_release_apk_to_drive.sh` (operator Drive path).
 
 ### Root cause
 
@@ -23,7 +23,7 @@ Dev deploy convenience: the validated Mailjet sender and the human `gcloud`/`fir
 
 - **Docs and tests:** neutral placeholders (`sender@example.com`, `operator@example.com`, `@test.com` QA patterns).
 - **Runtime dev sender:** `MAILJET_FROM_EMAIL` moves to gitignored `infra/env/dev.worker.local.env`, with committed `infra/env/dev.worker.local.env.example`. Deploy loads committed `dev.worker.env` then the local override and **fails fast** if the sender is still missing.
-- **CI:** `scripts/verify-no-personal-emails.sh` (also exercised from API tests) fails on non-allowlisted email domains in tracked files.
+- **CI:** `scripts/verify-no-personal-emails.sh` (also exercised from API tests) fails when tracked files contain addresses on blocked personal domains (for example Gmail).
 
 ### Git history
 

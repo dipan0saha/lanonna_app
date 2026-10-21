@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+infra/env/*.local.env
 *.pem
 *.p12
 credentials.json

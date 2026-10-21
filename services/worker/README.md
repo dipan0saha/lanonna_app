@@ -31,7 +31,7 @@ Before deploy, if you edited [packages/email-templates](../../packages/email-tem
 
 `ENVIRONMENT=dev` allows default GCP project/bucket names for local runs; non-dev startup fails if those dev defaults are still configured (see `validate_worker_settings` in `config.py`).
 
-`MAILJET_FROM_EMAIL` has no placeholder default (#43). When it is unset, deploy reads `infra/env/dev.worker.env` (it does not `source` the file) and refuses an empty value or `hello@lanonna.app` before Cloud Build. Quote values that contain spaces (`MAILJET_FROM_NAME="La Nonna"`). Startup uses the same sender check in every environment. Dev's validated sender is `lanonnaapp@gmail.com`.
+`MAILJET_FROM_EMAIL` has no placeholder default (#43). When it is unset, deploy parses `infra/env/<env>.worker.env` and gitignored `infra/env/<env>.worker.local.env` (see `dev.worker.local.env.example` on dev). Deploy refuses a missing value or `hello@lanonna.app` before Cloud Build. Quote values that contain spaces (`MAILJET_FROM_NAME="La Nonna"`). Startup uses the same sender check in every environment.
 
 See [docs/engineering/development.md](../../docs/engineering/development.md) and [platform-architecture.md](../../docs/engineering/platform-architecture.md).
 

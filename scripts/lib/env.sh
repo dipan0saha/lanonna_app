@@ -86,6 +86,22 @@ lanonna_infra_env_file() {
   printf '%s/infra/env/%s.%s.env\n' "$(lanonna_repo_root)" "${ENVIRONMENT}" "${component}"
 }
 
+# Gitignored local overrides (secrets / operator-specific values). Example files are committed.
+lanonna_infra_env_local_file() {
+  local component="$1"
+  case "${component}" in
+    api | worker) ;;
+    *)
+      echo "lanonna_infra_env_local_file: invalid component ${component}" >&2
+      return 1
+      ;;
+  esac
+  if [[ -z "${ENVIRONMENT:-}" ]]; then
+    lanonna_resolve_environment
+  fi
+  printf '%s/infra/env/%s.%s.local.env\n' "$(lanonna_repo_root)" "${ENVIRONMENT}" "${component}"
+}
+
 # True when a value is an explicit repo placeholder such as __SET_PROD_X__.
 lanonna_is_placeholder_value() {
   local value="$1"

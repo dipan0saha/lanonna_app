@@ -5,7 +5,11 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 APK="${ROOT}/apps/mobile/build/app/outputs/flutter-apk/app-release.apk"
-DRIVE_DIR="${LANONNA_DRIVE_DIR:-$HOME/Library/CloudStorage/GoogleDrive-dipan.saha@gmail.com/My Drive/Online Library/Apps/Current Work/LaNonna}"
+if [[ -z "${LANONNA_DRIVE_DIR:-}" ]]; then
+  echo "Set LANONNA_DRIVE_DIR to the Google Drive folder that should receive release APKs." >&2
+  exit 1
+fi
+DRIVE_DIR="${LANONNA_DRIVE_DIR}"
 DEST_NAME="${1:-lanonna_app.apk}"
 
 if [[ ! -f "${APK}" ]]; then

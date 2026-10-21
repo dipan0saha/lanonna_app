@@ -36,6 +36,8 @@ jobs:
       - name: API unit + integration tests
         run: |
           PYTHONPATH=services/api/src /tmp/api-venv/bin/pytest -q services/api/tests
+      - name: No personal email domains in tracked files
+        run: bash scripts/verify-no-personal-emails.sh
 
   worker:
     runs-on: ubuntu-latest
