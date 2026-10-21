@@ -3,14 +3,14 @@
 | Field | Value |
 |-------|--------|
 | **Status** | Implemented (mobile); prod Firebase project still owner-owned |
-| **Last updated** | 2026-10-20 |
+| **Last updated** | 2026-10-21 |
 | **Related** | [pre-prod-consolidation.md](pre-prod-consolidation.md) §2 / §4, [platform-architecture.md](platform-architecture.md), [operations.md](operations.md), [open-gaps.md](open-gaps.md) H-01 |
 
 ## Goals
 
 1. **Prod flavor** — `flavors/prod.json` mirrors dev with explicit placeholders; release/profile **prod** builds fail at compile time or at startup if placeholders remain, so a prod binary never silently talks to dev.
 2. **Single config surface** — runtime values flow through [`AppConfig`](../../apps/mobile/lib/config/app_config.dart) and `--dart-define-from-file`; native App Link hosts follow the same defines (Android via Gradle + `manifestPlaceholders`; iOS via a build-phase script reading Flutter `DART_DEFINES`).
-3. **Release signing** — upload keystore via gitignored `key.properties`; dev release keeps optional debug signing; **prod release requires** `key.properties`.
+3. **Release signing** — upload keystore via gitignored `key.properties` for **prod release only**; dev release always uses the debug keystore (even when `key.properties` exists); **prod release requires** `key.properties`.
 4. **Crashlytics** — `firebase_crashlytics` wired through one error-handling module; collection on for prod, dev controlled by dart-define (default **on** in dev release for owner testing); tests use a no-op reporter.
 
 ## Analysis
@@ -65,8 +65,10 @@ Placeholders in `flavors/prod.json` use the prefix `__PROD_` (e.g. `__PROD_API_B
 | Build | `key.properties` | Signing |
 |-------|------------------|---------|
 | Debug | ignored | Debug keystore |
-| Release, `APP_ENV` ≠ `prod` | optional | Release config if present, else debug (local dev release) |
-| Release, `APP_ENV` = `prod` | **required** | Release config; Gradle fails configuration otherwise |
+| Release, `APP_ENV` ≠ `prod` | **ignored** | Debug keystore (matches lanonna-dev Firebase debug SHA) |
+| Release, `APP_ENV` = `prod` | **required** | Upload keystore; Gradle fails release tasks otherwise |
+
+See [rca/release-signing-environment.md](rca/release-signing-environment.md) for why dev release must not pick up the upload key when `key.properties` exists locally.
 
 Document keystore creation in [apps/mobile/android/README.md](../../apps/mobile/android/README.md) (or flavors README); do not generate keys in repo.
 

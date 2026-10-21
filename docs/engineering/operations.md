@@ -276,7 +276,7 @@ After migration `030` is applied, null emails on active users can be restored fr
 - Checked in: `lib/firebase/firebase_options_dev.dart` (prod placeholder in `firebase_options_prod.dart` until `flutterfire configure`)
 - Flavor: `apps/mobile/flavors/dev.json` — **`API_BASE_URL`**, `APP_LINK_HOST`, `APP_ENV=dev`
 - Prod template: `flavors/prod.json` — see [mobile-prod-flavor-and-crashlytics.md](mobile-prod-flavor-and-crashlytics.md)
-- Release signing: `android/key.properties` (gitignored) required for **prod** release; optional for dev release ([android/README.md](../../apps/mobile/android/README.md))
+- Release signing: dev release always uses the debug keystore; `android/key.properties` (gitignored) is required only for **prod** release ([android/README.md](../../apps/mobile/android/README.md), [rca/release-signing-environment.md](rca/release-signing-environment.md))
 - Crashlytics: enabled for prod; dev release on by default (`CRASHLYTICS_ENABLED` in flavor JSON to opt out)
 
 ```bash
