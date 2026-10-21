@@ -9,6 +9,7 @@ from lanonna_worker.config import settings, validate_worker_settings
 
 validate_worker_settings()
 from lanonna_worker.baby_data_export import run_baby_data_export
+from lanonna_worker.storage_cleanup import run_storage_cleanup
 from lanonna_worker.invite_email import InviteSendOutcome, send_invite_email
 from lanonna_worker.notifications import (
     process_notify_fan_out,
@@ -159,6 +160,32 @@ async def pubsub_push(request: Request) -> Response:
             process_weekly_notification_digest(pubsub_message_id=pubsub_message_id)
         except Exception:
             logger.exception("weekly_notification_digest_failed")
+            return Response(status_code=500)
+        return Response(status_code=204)
+
+    if payload.get("type") == "storage_cleanup":
+        job_id_raw = payload.get("job_id")
+        if not job_id_raw:
+            logger.warning(
+                "storage_cleanup missing job_id message_id=%s",
+                message.get("messageId"),
+            )
+            return Response(status_code=204)
+        job_id = parse_uuid_field("job_id", job_id_raw)
+        if job_id is None:
+            return Response(status_code=204)
+        delivery_attempt = _delivery_attempt(body)
+        try:
+            run_storage_cleanup(
+                job_id,
+                redelivery=delivery_attempt is not None and delivery_attempt > 1,
+                final_attempt=(
+                    delivery_attempt is None
+                    or delivery_attempt >= settings.pubsub_max_delivery_attempts
+                ),
+            )
+        except Exception:
+            logger.exception("storage_cleanup_failed job_id=%s", job_id_raw)
             return Response(status_code=500)
         return Response(status_code=204)
 

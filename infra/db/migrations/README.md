@@ -47,6 +47,7 @@ Apply in **lexicographic order** (filename prefix):
 | `039_baby_name_nullable_gender_not_null.sql` | `baby_profiles.name` nullable (unnamed baby = `NULL`) with `CHECK (name IS NULL OR btrim(name) <> '')`; clears names stored as exactly `'Baby'` (the app's persisted default — the only locale was English and the value was sent verbatim) or blank, and strips the matching snapshotted `baby_name` params from those babies' activity / inbox rows; `gender` `NOT NULL DEFAULT 'unknown'` after backfilling `NULL` (L-36) |
 | `040_photo_purpose.sql` | `photos.purpose` (`gallery` \| `event_cover`); default `gallery`, no backfill; partial index for gallery lists; `events.cover_photo_id` FK becomes `ON DELETE SET NULL` so deleting a photo clears the cover (#315) |
 | `041_biometric_credentials.sql` | `biometric_credentials` (public key per account per install; `algorithm` is `ecdsa_p256_sha256`; live row unique on `(firebase_uid, device_id)`) and `biometric_sign_in_challenges` (single-use nonce, 2-minute TTL; a row is deleted when consumed, so a nonce verifies at most once) for biometric sign-in after logout (M-31) |
+| `042_storage_cleanup_jobs.sql` | `storage_cleanup_jobs` for async GCS purge after account or baby profile delete (FR-SET-005 / Play data deletion) |
 
 ## Apply (dev)
 

@@ -20,7 +20,18 @@ def _delete_with(outcome: SoleOwnerDeleteOutcome, baby_id: uuid.UUID):
             "lanonna_api.domain.baby_delete.soft_delete_baby_profile_if_sole_owner",
             return_value=outcome,
         ) as repo,
+        patch("lanonna_api.domain.baby_delete.get_connection") as mock_conn,
+        patch(
+            "lanonna_api.domain.baby_delete.collect_and_delete_baby_export_jobs",
+            return_value=[],
+        ),
+        patch(
+            "lanonna_api.domain.baby_delete.create_baby_profile_storage_cleanup_job",
+            return_value=uuid.uuid4(),
+        ),
+        patch("lanonna_api.domain.baby_delete._safe_publish_storage_cleanup"),
     ):
+        mock_conn.return_value.__enter__.return_value = object()
         delete_baby_profile("owner-1", baby_id)
     return repo
 

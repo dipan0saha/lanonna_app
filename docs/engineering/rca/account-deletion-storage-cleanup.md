@@ -1,0 +1,77 @@
+# RCA: Account deletion does not purge Google Cloud Storage
+
+## Summary
+
+In-app **Delete account** (FR-SET-005) tombstones `app_users`, soft-deletes sole-owned baby profiles, ends memberships, purges participation (RSVPs, votes, likes, squishes), revokes biometric credentials, and deletes the Firebase Auth user. **GCS objects were never deleted**, so photos, avatars, baby export JSON, and other display/thumbnail assets could remain indefinitely after account deletion. Google Play’s data-deletion policy requires associated user data to be removed.
+
+## Where GCS objects are created
+
+| Asset | Bucket | Object key pattern | Owner / scope |
+|-------|--------|-------------------|---------------|
+| Gallery / event-cover display image | `DISPLAY_BUCKET` | `display/{photo_id}.jpg` or `.webp` | Photo row: `baby_profile_id`, `uploader_firebase_uid` |
+| Feed thumbnail | `THUMBNAILS_BUCKET` | `thumbnails/{photo_id}.jpg` | Worker after finalize on display object |
+| User avatar | `DISPLAY_BUCKET` | `avatars/users/{firebase_uid}/{uuid}.jpg\|webp` | `app_users.avatar_url` stores object path |
+| Baby avatar | `DISPLAY_BUCKET` | `avatars/babies/{baby_profile_id}/{uuid}.jpg\|webp` | `baby_profiles.avatar_url` |
+| Baby data export | `DISPLAY_BUCKET` | `exports/{baby_profile_id}/{job_id}/export.json` | `baby_data_export_jobs.object_path` |
+| Legacy smoke paths | `DISPLAY_BUCKET` | `smoke/...` | Dev only; same signer rules as avatars |
+
+Upload init: `POST /v1/photos/init` → signed PUT to `display/{photo_id}.*` only. Avatars: `POST /v1/uploads/display/signed-url` under `avatars/`.
+
+**IAM:** Cloud Run API and worker service accounts already have `roles/storage.objectAdmin` on display and thumbnails buckets (`infra/terraform/modules/platform/iam.tf`). No new bucket role was required; cleanup runs in the **worker** via Pub/Sub (same as exports and thumbnails).
+
+## Current delete-account flow (before fix)
+
+1. Mobile: preview → reauth → `POST /v1/me/delete-account` `{"confirm": true}` (`current_user` only — allows retry after SQL tombstone).
+2. API `delete_account`: if not tombstoned → `list_sole_owned_baby_ids` → `soft_delete_account_rows`.
+3. `soft_delete_account_rows`: revoke pending invites; soft-delete sole-owned babies; end all memberships; `purge_participation`; revoke biometrics; set `app_users.deleted_at`, strip email/avatar, `display_name = 'Deleted user'`.
+4. Firebase `delete_user` (idempotent if already gone).
+
+**Gaps:**
+
+- No SQL removal of **photos the user uploaded on someone else’s baby** (authored media on shared babies).
+- No deletion of **baby data export** job rows or export blobs for the requester.
+- No **GCS** deletes for avatars, display/thumb paths, or `exports/` prefixes.
+- Sole-owned baby **photo rows remain** in SQL (baby soft-delete only); only GCS was missing for those assets.
+- **Comments** and other authored text on shared babies correctly remain; reads show `author_display_name` from tombstoned `app_users` (`Deleted user`).
+
+Dev-only `infra/db/hard_delete_user.py` already documents the intended hard SQL + GCS footprint; production account delete did not mirror its media/export cleanup.
+
+## Deletion semantics (implemented)
+
+| Data | Sole-owned baby (deleted with account) | Shared / co-owned baby | Tombstoned `app_users` row |
+|------|----------------------------------------|-------------------------|----------------------------|
+| Baby profile SQL | `baby_profiles.deleted_at` set | Co-owned: ownership stays with co-owner; follower babies: membership ended only | Row kept with PII stripped |
+| Gallery / cover photos on sole-owned baby | SQL rows kept (soft baby); **GCS** deleted async | Photos **uploaded by deleting user**: SQL row removed; **GCS** deleted async | — |
+| User / baby avatars | **GCS** prefix purge (`avatars/users/{uid}/`, `avatars/babies/{id}/`) | User avatar prefix only | `avatar_url` NULL |
+| Baby data export files | **GCS** `exports/{baby_id}/` + job rows for sole-owned babies | Job rows for requester deleted; paths enqueued | — |
+| Comments, name suggestions, registry claims | N/A (baby soft-deleted) | **Retained**; author shows as deleted member (integrity for other members) | `display_name` placeholder only |
+| RSVPs, votes, likes, squishes | Purged on delete | Purged globally for user | Already purged |
+
+**Anonymize vs delete:** Remove media and export artifacts (user-provided binary content). Keep text contributions where removal would alter another family’s timeline; tombstone supplies anonymized display name.
+
+## Fix architecture
+
+1. **SQL (API, same transaction as tombstone):** Purge authored photos on non–sole-owned babies; delete export jobs (collect `object_path`s); insert `storage_cleanup_jobs` row with `baby_profile_ids`, `detached_objects`, `export_object_paths`.
+2. **Pub/Sub:** `publish_storage_cleanup(job_id)` on `lanonna-async-commands` (same topic as exports). Retry-safe: tombstone retry republishes if job not `completed`.
+3. **Worker:** `run_storage_cleanup` claims job (`pending` → `running` → `completed`/`failed`), deletes detached paths, export paths, `avatars/users/{uid}/`, then for each sole-owned baby id: all `photos` paths in SQL + `avatars/babies/{id}/` + `exports/{id}/` prefixes. Transient GCS errors → HTTP 500 → Pub/Sub retry → DLQ after 12 attempts (`pubsub.tf`).
+4. **Baby profile delete:** Same worker job with `kind = baby_profile_delete` after owner-initiated `DELETE /v1/babies/{id}`.
+
+**Migration:** `042_storage_cleanup_jobs.sql`.
+
+## Tombstoned rows
+
+`app_users` rows are retained for FK integrity with `email = NULL`, `avatar_url = NULL`, `display_name = 'Deleted user'`, `deleted_at` set. No separate purge job: no PII columns remain populated beyond the non-identifying placeholder name required for comment attribution.
+
+## Verification (dev)
+
+1. Apply migration `042`.
+2. Deploy API + worker.
+3. Create test user with avatar, sole-owned baby (photos + baby avatar), and a photo uploaded on a followed baby.
+4. Delete account; confirm Firebase user gone, shared photo row removed, sole-owned baby soft-deleted.
+5. Inspect worker logs: `storage_cleanup_completed job_id=... objects_deleted=N`.
+6. Confirm GCS objects absent (`gsutil ls` on prefixes/paths).
+7. Retry `POST /v1/me/delete-account` after tombstone: idempotent; republish does not error if job already completed.
+
+## PR #351 / `data-inventory.md`
+
+On branch `cursor/legal-pages-store-listing-c9e6`, update the data-inventory table to state that account deletion enqueues **async GCS cleanup** for avatars, photos, thumbnails, and exports, with semantics above. Main does not yet include `docs/legal/data-inventory.md`.
