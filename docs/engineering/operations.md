@@ -92,7 +92,7 @@ terraform apply               # when plan looks safe
 
 1. Create **`lanonna-prod`**, link billing.
 2. `./infra/terraform/scripts/ensure-state-bucket.sh lanonna-prod lanonna-prod-terraform-state`
-3. `cd infra/terraform/environments/prod` → `terraform.tfvars` from example → `terraform init && terraform apply` (fresh apply, no import). First apply creates Cloud SQL and writes a **`db-lanonna-app-password`** secret version from Terraform (`manage_sql_app_password = true`; dev keeps `false` so existing dev passwords are never rotated). The legacy **`database-url`** secret container may still exist from imports; Cloud Run does not use it (see [open-gaps.md](open-gaps.md)).
+3. `cd infra/terraform/environments/prod` → `terraform.tfvars` from example → `terraform init && terraform apply` (fresh apply, no import). First apply creates Cloud SQL and writes a **`db-lanonna-app-password`** secret version from Terraform (`manage_sql_app_password = true`; dev keeps `false` so existing dev passwords are never rotated).
 4. Apply migrations **`001`–`041`** on empty Cloud SQL (same chain as dev).
 5. Set real values in [`infra/env/prod.worker.env`](../../infra/env/prod.worker.env) (`MAILJET_FROM_EMAIL` — placeholders fail deploy) and review [`infra/env/prod.api.env`](../../infra/env/prod.api.env) (`APP_CHECK_ENFORCE`, scaling).
 6. Deploy **worker** → `./scripts/apply-run-iam.sh` → enable push subscriptions (two-phase Terraform below) → **API** → `./scripts/setup-schedulers.sh` → invite hosting with release `ANDROID_SHA256`.
@@ -245,7 +245,7 @@ DB_PASSWORD="$PGPASSWORD" DB_PORT=5432 .venv/bin/python apply_migrations.py
 cd ../.. && ./scripts/verify-dev-migrations.sh   # repo root; PGPASSWORD set
 ```
 
-Secrets (values in Secret Manager only): `db-lanonna-app-password`, `db-postgres-root-password`, `admin-api-key` (add version via `gcloud` after first apply if empty). Legacy **`database-url`** on dev is unused by Cloud Run; safe to delete in GCP when convenient (see [open-gaps.md](open-gaps.md)).
+Secrets (values in Secret Manager only): `db-lanonna-app-password`, `db-postgres-root-password`, `admin-api-key` (add version via `gcloud` after first apply if empty).
 
 After migration `030` is applied, null emails on active users can be restored from Firebase Auth with `DB_PORT=5433 python infra/db/backfill_null_user_emails.py` (dry-run), then the same command with `--apply`. `--report-orphans` prints read-only counts and does not delete rows. The script needs Application Default Credentials that can call Firebase Auth `get_user`.
 

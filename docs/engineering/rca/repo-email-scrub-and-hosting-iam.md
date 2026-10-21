@@ -60,4 +60,4 @@ Remove the post-deploy IAM grant from `deploy-invite-hosting.sh`. Document that 
 | API `deploy.sh` sets global `gcloud config project` | Legacy pattern before `--project` on each command | Use `--project` per `gcloud` call (worker/scheduler already do) |
 | `env_file.sh` shellcheck SC2163 | `printf -v` + `export` on a dynamic name | Assign with `export "${key}=${value}"` |
 | Prod SQL password in Terraform state | `random_password` + `database_url` local embed the secret in state | Document risk in `open-gaps.md`; stop managing unused `database-url` secret **versions** in Terraform |
-| Dev `database-url` secret | Legacy monolithic URL format; Cloud Run uses discrete `DB_*` + `db-lanonna-app-password` | Confirmed unused in app/scripts; document optional GCP secret deletion; keep secret **container** in TF for import compatibility |
+| Dev `database-url` secret | Legacy monolithic URL format; Cloud Run uses discrete `DB_*` + `db-lanonna-app-password` | Removed from Terraform; secret deleted in GCP (M-61) |

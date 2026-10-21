@@ -28,7 +28,7 @@ Resource inventory for Path B. **Deploy, smoke tests, and runbooks:** [docs/engi
 | GCS notification | `lanonna-dev-display` → topic (`OBJECT_FINALIZE`) |
 | Artifact Registry (Docker) | `us-central1-docker.pkg.dev/lanonna-dev/lanonna` |
 | Cloud Run | `api`, `worker` |
-| Secret Manager | `database-url`, `db-lanonna-app-password`, `db-postgres-root-password`, `mailjet-api-key`, `mailjet-api-secret` |
+| Secret Manager | `db-lanonna-app-password`, `db-postgres-root-password`, `mailjet-api-key`, `mailjet-api-secret`, `admin-api-key` |
 
 ## Service accounts
 

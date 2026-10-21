@@ -119,7 +119,7 @@ variable "create_automation_sa" {
 variable "manage_sql_app_password" {
   type        = bool
   default     = false
-  description = "When true (fresh prod), Terraform generates the app user password and writes a db-lanonna-app-password secret version. When false (dev import), SQL user password changes are ignored and no secret versions are managed. Legacy database-url secret versions are not managed (unused by Cloud Run)."
+  description = "When true (fresh prod), Terraform generates the app user password and writes a db-lanonna-app-password secret version. When false (dev import), SQL user password changes are ignored and no secret versions are managed."
 }
 
 variable "enable_firebase" {
@@ -130,7 +130,6 @@ variable "enable_firebase" {
 variable "secret_ids" {
   type = list(string)
   default = [
-    "database-url",
     "db-lanonna-app-password",
     "db-postgres-root-password",
     "mailjet-api-key",
