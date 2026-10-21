@@ -31,7 +31,7 @@ Upload init: `POST /v1/photos/init` → signed PUT to `display/{photo_id}.*` onl
 - No SQL removal of **photos the user uploaded on someone else’s baby** (authored media on shared babies).
 - No deletion of **baby data export** job rows or export blobs for the requester.
 - No **GCS** deletes for avatars, display/thumb paths, or `exports/` prefixes.
-- Sole-owned baby **photo rows remain** in SQL (baby soft-delete only); only GCS was missing for those assets.
+- Sole-owned baby **photo rows remained** in SQL (baby soft-delete only); only GCS was missing for those assets. **Superseded:** [baby-hard-delete.md](./baby-hard-delete.md) — sole-owned babies are hard-deleted with paths in the cleanup job payload.
 - **Comments** and other authored text on shared babies correctly remain; reads show `author_display_name` from tombstoned `app_users` (`Deleted user`).
 
 Dev-only `infra/db/hard_delete_user.py` already documents the intended hard SQL + GCS footprint; production account delete did not mirror its media/export cleanup.
@@ -40,18 +40,18 @@ Dev-only `infra/db/hard_delete_user.py` already documents the intended hard SQL 
 
 | Data | Sole-owned baby (deleted with account) | Shared / co-owned baby | Tombstoned `app_users` row |
 |------|----------------------------------------|-------------------------|----------------------------|
-| Baby profile SQL | `baby_profiles.deleted_at` set | Co-owned: ownership stays with co-owner; follower babies: membership ended only | Row kept with PII stripped |
-| Gallery / cover photos on sole-owned baby | SQL rows kept (soft baby); **GCS** deleted async | Photos **uploaded by deleting user**: SQL row removed; **GCS** deleted async | — |
+| Baby profile SQL | **Hard-deleted** (see baby-hard-delete RCA) | Co-owned: ownership stays with co-owner; follower babies: membership ended only | Row kept with PII stripped |
+| Gallery / cover photos on sole-owned baby | SQL rows removed with baby; **GCS** deleted async from job payload | Photos **uploaded by deleting user**: SQL row removed; **GCS** deleted async | — |
 | User / baby avatars | **GCS** prefix purge (`avatars/users/{uid}/`, `avatars/babies/{id}/`) | User avatar prefix only | `avatar_url` NULL |
 | Baby data export files | **GCS** `exports/{baby_id}/` + job rows for sole-owned babies | Job rows for requester deleted; paths enqueued | — |
-| Comments, name suggestions, registry claims | N/A (baby soft-deleted) | **Retained**; author shows as deleted member (integrity for other members) | `display_name` placeholder only |
+| Comments, name suggestions, registry claims | N/A (baby hard-deleted) | **Retained**; author shows as deleted member (integrity for other members) | `display_name` placeholder only |
 | RSVPs, votes, likes, squishes | Purged on delete | Purged globally for user | Already purged |
 
 **Anonymize vs delete:** Remove media and export artifacts (user-provided binary content). Keep text contributions where removal would alter another family’s timeline; tombstone supplies anonymized display name.
 
 ## Fix architecture
 
-1. **SQL (API, one transaction):** account delete purges the user's photos on babies they do not sole-own (one `DELETE … RETURNING`; comments, squishes, tags cascade; event covers and birth announcements are cleared by `ON DELETE SET NULL`), deletes export jobs the user requested or that belong to their sole-owned babies, soft-deletes sole-owned babies, and inserts a `storage_cleanup_jobs` row (`baby_profile_ids`, `detached_objects`, `export_object_paths`) in the same transaction as the tombstone. Owner-initiated baby delete inserts its job in the same transaction as the sole-owner check and soft delete.
+1. **SQL (API, one transaction):** account delete purges the user's photos on babies they do not sole-own (one `DELETE … RETURNING`; comments, squishes, tags cascade; event covers and birth announcements are cleared by `ON DELETE SET NULL`), deletes export jobs the user requested or that belong to their sole-owned babies, **hard-deletes** sole-owned babies (paths collected first), and inserts a `storage_cleanup_jobs` row (`baby_profile_ids`, `detached_objects`, `export_object_paths`) in the same transaction as the tombstone. Owner-initiated baby delete inserts its job in the same transaction as the sole-owner check and hard delete.
 2. **Pub/Sub after commit:** `enqueue_storage_cleanup(job_id)` publishes `{"type":"storage_cleanup"}` on `lanonna-async-commands` (existing topic and push subscription; no Terraform change). A failed publish is logged, not raised; a delete-account retry re-publishes an unfinished job.
 3. **Worker:** `run_storage_cleanup` claims `pending` → `running`, deletes detached photo objects, export objects, every photo on the deleted babies (display + thumbnail; the thumbnail key is derived when a photo had not finished processing), and the folder prefixes `avatars/babies/{id}/` and `exports/{id}/`; account jobs also delete `avatars/users/{uid}/` (baby jobs never touch the owner's avatar). Prefixes must be complete folders (trailing `/`, no empty segment). An absent object counts as deleted, so re-runs are safe. Errors release the claim for Pub/Sub retry, or mark the job `failed` on the final attempt.
 4. **Recovery sweep:** Cloud Scheduler `sweep-storage-cleanup-jobs` (every 15 min, `scripts/setup-schedulers.sh`) publishes `{"type":"sweep_storage_cleanup_jobs"}`. The worker re-runs up to 10 jobs that are `pending` for over 10 minutes (lost publish), `running` for over 30 minutes (worker died), or `failed` for over 6 hours.
@@ -67,7 +67,7 @@ Dev-only `infra/db/hard_delete_user.py` already documents the intended hard SQL 
 1. Apply migration `042`.
 2. Deploy API + worker.
 3. Create test user with avatar, sole-owned baby (photos + baby avatar), and a photo uploaded on a followed baby.
-4. Delete account; confirm Firebase user gone, shared photo row removed, sole-owned baby soft-deleted.
+4. Delete account; confirm Firebase user gone, shared photo row removed, sole-owned baby hard-deleted.
 5. Inspect worker logs: `storage_cleanup_completed job_id=... kind=account_delete objects_deleted=N`.
 6. Confirm GCS objects absent (`gsutil ls` on prefixes/paths).
 7. Retry `POST /v1/me/delete-account` after tombstone: idempotent; republish does not error if job already completed.

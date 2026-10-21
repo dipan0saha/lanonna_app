@@ -5,10 +5,11 @@ import uuid
 from lanonna_api.db import get_connection
 from lanonna_api.repositories.account_delete_media import (
     collect_and_delete_export_jobs,
+    collect_photo_storage_for_babies,
+    hard_delete_baby_profiles,
     purge_authored_photos_on_shared_babies,
 )
 from lanonna_api.repositories.active_participants import purge_participation
-from lanonna_api.repositories.baby_profile_delete import soft_delete_baby_profiles
 from lanonna_api.repositories.biometric_credentials import revoke_all_for_user
 from lanonna_api.repositories.memberships import soft_remove_all_memberships_for_user
 from lanonna_api.repositories.storage_cleanup_jobs import (
@@ -85,7 +86,8 @@ def soft_delete_account_rows(
             conn, firebase_uid=firebase_uid, baby_profile_ids=sole_owned
         )
         if sole_owned:
-            soft_delete_baby_profiles(sole_owned, conn=conn)
+            detached.extend(collect_photo_storage_for_babies(conn, sole_owned))
+            hard_delete_baby_profiles(conn, sole_owned)
         soft_remove_all_memberships_for_user(firebase_uid, conn=conn)
         purge_participation(conn, firebase_uid)
         revoke_all_for_user(firebase_uid, conn=conn)

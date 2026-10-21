@@ -1,4 +1,4 @@
-"""Owner-initiated soft delete of a sole-owned baby profile."""
+"""Owner-initiated hard delete of a sole-owned baby profile."""
 
 from __future__ import annotations
 
@@ -95,18 +95,18 @@ def test_sole_owner_delete_removes_baby_from_lists_and_ends_follower_access(
 
     with get_connection() as conn:
         row = conn.execute(
-            "SELECT deleted_at FROM baby_profiles WHERE id = %s",
+            "SELECT 1 FROM baby_profiles WHERE id = %s",
             (baby_id,),
         ).fetchone()
-        assert row is not None and row["deleted_at"] is not None
-        pending = conn.execute(
-            "SELECT status FROM invitations WHERE baby_profile_id = %s",
+        assert row is None
+        invites = conn.execute(
+            "SELECT COUNT(*)::int AS n FROM invitations WHERE baby_profile_id = %s",
             (baby_id,),
-        ).fetchone()
-        assert pending is not None and pending["status"] == "revoked"
+        ).fetchone()["n"]
         job = conn.execute(
             """
-            SELECT id, kind, status, firebase_uid, baby_profile_ids, export_object_paths
+            SELECT id, kind, status, firebase_uid, baby_profile_ids,
+                   export_object_paths, detached_objects
             FROM storage_cleanup_jobs
             """
         ).fetchone()
@@ -114,7 +114,7 @@ def test_sole_owner_delete_removes_baby_from_lists_and_ends_follower_access(
             "SELECT COUNT(*)::int AS n FROM baby_data_export_jobs WHERE baby_profile_id = %s",
             (baby_id,),
         ).fetchone()["n"]
-    # Committed with the delete, then published.
+    assert invites == 0
     assert job["kind"] == "baby_profile_delete" and job["status"] == "pending"
     assert job["firebase_uid"] == owner
     assert job["baby_profile_ids"] == [baby_id]
@@ -173,7 +173,7 @@ def test_co_owners_deleting_and_leaving_at_once_never_orphan_the_baby():
 
         with get_connection() as conn:
             baby = conn.execute(
-                "SELECT deleted_at FROM baby_profiles WHERE id = %s", (baby_id,)
+                "SELECT 1 FROM baby_profiles WHERE id = %s", (baby_id,)
             ).fetchone()
             owners = conn.execute(
                 """
@@ -183,9 +183,7 @@ def test_co_owners_deleting_and_leaving_at_once_never_orphan_the_baby():
                 (baby_id,),
             ).fetchone()["n"]
         # Either the delete was refused (B left, A keeps it) or B left first and A deleted.
-        assert (baby["deleted_at"] is None and owners == 1) or (
-            baby["deleted_at"] is not None and owners == 0
-        )
+        assert (baby is not None and owners == 1) or (baby is None and owners == 0)
 
 
 def test_co_owners_leaving_at_once_keep_one_owner():
@@ -217,7 +215,7 @@ def test_co_owners_leaving_at_once_keep_one_owner():
         assert refused[0].code.value == "sole_owner_cannot_leave"
 
 
-def test_account_delete_still_soft_deletes_sole_owned_babies():
+def test_account_delete_hard_deletes_sole_owned_babies():
     from lanonna_api.repositories.account_delete import (
         list_sole_owned_baby_ids,
         soft_delete_account_rows,
@@ -233,10 +231,11 @@ def test_account_delete_still_soft_deletes_sole_owned_babies():
     assert list_babies_for_user(follower) == []
     with get_connection() as conn:
         row = conn.execute(
-            "SELECT deleted_at FROM baby_profiles WHERE id = %s", (baby_id,)
+            "SELECT 1 FROM baby_profiles WHERE id = %s", (baby_id,)
         ).fetchone()
-        assert row["deleted_at"] is not None
-        status = conn.execute(
-            "SELECT status FROM invitations WHERE baby_profile_id = %s", (baby_id,)
-        ).fetchone()["status"]
-        assert status == "revoked"
+        assert row is None
+        invites = conn.execute(
+            "SELECT COUNT(*)::int AS n FROM invitations WHERE baby_profile_id = %s",
+            (baby_id,),
+        ).fetchone()["n"]
+        assert invites == 0

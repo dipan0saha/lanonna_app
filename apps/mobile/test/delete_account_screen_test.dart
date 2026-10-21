@@ -151,7 +151,8 @@ void main() {
       l10n.deleteAccountBody,
       contains('solely owned by your account will also be deleted'),
     );
-    expect(l10n.deleteAccountBody, contains('co owner will not be deleted'));
+    expect(l10n.deleteAccountBody, contains('co-owner will not be deleted'));
+    expect(l10n.deleteAccountBody, contains('photos you uploaded'));
     expect(l10n.deleteAccountButton, 'Delete my account');
     expect(l10n.deleteAccountConfirmTitle, 'Delete your account permanently?');
   });

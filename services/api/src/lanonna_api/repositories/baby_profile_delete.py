@@ -4,12 +4,15 @@ import uuid
 from enum import StrEnum
 
 from lanonna_api.db import get_connection
-from lanonna_api.repositories.account_delete_media import collect_and_delete_export_jobs
+from lanonna_api.repositories.account_delete_media import (
+    collect_and_delete_export_jobs,
+    collect_photo_storage_for_babies,
+    hard_delete_baby_profiles,
+)
 from lanonna_api.repositories.memberships import (
     count_active_owners,
     lock_baby_profile_for_update,
     lock_membership_for_user_for_update,
-    soft_remove_memberships_on_babies,
 )
 from lanonna_api.repositories.storage_cleanup_jobs import (
     StorageCleanupKind,
@@ -23,49 +26,11 @@ class SoleOwnerDeleteOutcome(StrEnum):
     SHARED = "shared"
 
 
-def soft_delete_baby_profiles(
-    baby_profile_ids: list[uuid.UUID],
-    conn=None,
-) -> None:
-    """Soft-delete baby profiles and end all memberships on them.
-
-    Same SQL slice used for sole-owned babies during account delete and for
-    explicit owner-initiated baby profile deletion.
-    """
-    if not baby_profile_ids:
-        return
-
-    def _run(connection) -> None:
-        connection.execute(
-            """
-            UPDATE invitations
-            SET status = 'revoked', updated_at = now()
-            WHERE baby_profile_id = ANY(%s::uuid[]) AND status = 'pending'
-            """,
-            (baby_profile_ids,),
-        )
-        soft_remove_memberships_on_babies(baby_profile_ids, conn=connection)
-        connection.execute(
-            """
-            UPDATE baby_profiles
-            SET deleted_at = now(), updated_at = now()
-            WHERE id = ANY(%s::uuid[]) AND deleted_at IS NULL
-            """,
-            (baby_profile_ids,),
-        )
-
-    if conn is not None:
-        _run(conn)
-    else:
-        with get_connection() as connection:
-            _run(connection)
-
-
-def soft_delete_baby_profile_if_sole_owner(
+def hard_delete_baby_profile_if_sole_owner(
     baby_profile_id: uuid.UUID,
     firebase_uid: str,
 ) -> tuple[SoleOwnerDeleteOutcome, uuid.UUID | None]:
-    """Check sole ownership, delete, and enqueue storage cleanup in one transaction.
+    """Check sole ownership, hard-delete the baby, and enqueue storage cleanup.
 
     The baby row lock (``lock_baby_profile_for_update``) is the same lock
     co-owner invite and accept take, so an owner joining or leaving cannot
@@ -83,15 +48,17 @@ def soft_delete_baby_profile_if_sole_owner(
             return SoleOwnerDeleteOutcome.NOT_OWNER, None
         if count_active_owners(baby_profile_id, conn) > 1:
             return SoleOwnerDeleteOutcome.SHARED, None
-        soft_delete_baby_profiles([baby_profile_id], conn=conn)
+        export_paths = collect_and_delete_export_jobs(
+            conn, baby_profile_ids=[baby_profile_id]
+        )
+        detached = collect_photo_storage_for_babies(conn, [baby_profile_id])
+        hard_delete_baby_profiles(conn, [baby_profile_id])
         job_id = insert_storage_cleanup_job(
             kind=StorageCleanupKind.BABY_PROFILE_DELETE,
             firebase_uid=firebase_uid,
             baby_profile_ids=[baby_profile_id],
-            detached_objects=[],
-            export_object_paths=collect_and_delete_export_jobs(
-                conn, baby_profile_ids=[baby_profile_id]
-            ),
+            detached_objects=detached,
+            export_object_paths=export_paths,
             conn=conn,
         )
         return SoleOwnerDeleteOutcome.DELETED, job_id

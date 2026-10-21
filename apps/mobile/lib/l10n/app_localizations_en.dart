@@ -119,7 +119,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteAccountBody =>
-      'This permanently deletes your La Nonna account. Any Baby Profiles solely owned by your account will also be deleted. Baby Profiles with a co owner will not be deleted; ownership will transfer fully to the co owner.';
+      'This permanently deletes your La Nonna account and removes photos you uploaded to baby profiles owned by others. Any baby profiles solely owned by your account will also be deleted, including their photos, events, registry, and other data. Baby profiles with a co-owner will not be deleted; ownership will transfer fully to the co-owner.';
 
   @override
   String get deleteAccountButton => 'Delete my account';
@@ -135,7 +135,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteAccountConfirmBody =>
-      'This permanently deletes your La Nonna account. Any Baby Profiles solely owned by your account will also be deleted. Baby Profiles with a co owner will not be deleted; ownership will transfer fully to the co owner.';
+      'This permanently deletes your La Nonna account and removes photos you uploaded to baby profiles owned by others. Any baby profiles solely owned by your account will also be deleted, including their photos, events, registry, and other data. Baby profiles with a co-owner will not be deleted; ownership will transfer fully to the co-owner.';
 
   @override
   String get deleteAccountConfirmAction => 'Delete account';
@@ -423,7 +423,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String deleteBabyProfileConfirmBody(String babyName) {
-    return 'This permanently deletes $babyName for everyone who follows this profile. Photos, calendar events, registry items, and other data will no longer be available in the app.';
+    return 'This permanently deletes $babyName for everyone who follows this profile. All photos, calendar events, registry items, comments, and other data for this baby will be removed from La Nonna and cannot be recovered.';
   }
 
   @override
@@ -436,7 +436,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteBabyProfileFinalBody =>
-      'Followers will lose access immediately. This cannot be undone.';
+      'Followers will lose access immediately. Database records and cloud storage for this baby will be deleted. This cannot be undone.';
 
   @override
   String get deleteBabyProfileSuccess => 'Baby profile deleted.';

@@ -1,7 +1,8 @@
 """SQL slice of media and export removal for account and baby profile delete.
 
-Rows are deleted here, in the caller's transaction; the returned storage paths go
-into a ``storage_cleanup_jobs`` row so the worker deletes the GCS objects.
+Photo and export paths are collected in the caller's transaction, then baby rows
+are hard-deleted (``ON DELETE CASCADE``). Paths go into ``storage_cleanup_jobs``
+so the worker can purge GCS without reading ``photos``.
 """
 
 from __future__ import annotations
@@ -23,8 +24,8 @@ def purge_authored_photos_on_shared_babies(
 
     Comments, squishes, tags and worker idempotency rows cascade; events and birth
     announcements using a deleted photo lose it via ``ON DELETE SET NULL``. Photos
-    on sole-owned babies stay with the soft-deleted baby; the worker purges their
-    objects by baby id.
+    on sole-owned babies are collected and removed when those profiles are
+    hard-deleted.
     """
     rows = conn.execute(
         """
@@ -59,3 +60,40 @@ def collect_and_delete_export_jobs(
         (firebase_uid, list(baby_profile_ids)),
     ).fetchall()
     return [row["object_path"] for row in rows if row["object_path"]]
+
+
+def collect_photo_storage_for_babies(
+    conn: Any,
+    baby_profile_ids: Sequence[uuid.UUID],
+) -> list[DetachedObject]:
+    """Return display/thumbnail paths for every photo on the given babies (pre-delete)."""
+    if not baby_profile_ids:
+        return []
+    rows = conn.execute(
+        """
+        SELECT display_path, thumb_path
+        FROM photos
+        WHERE baby_profile_id = ANY(%s::uuid[])
+        """,
+        (list(baby_profile_ids),),
+    ).fetchall()
+    return [
+        {"display_path": row["display_path"], "thumb_path": row["thumb_path"]}
+        for row in rows
+    ]
+
+
+def hard_delete_baby_profiles(
+    conn: Any,
+    baby_profile_ids: Sequence[uuid.UUID],
+) -> None:
+    """Remove baby profiles and all dependent rows (DB CASCADE)."""
+    if not baby_profile_ids:
+        return
+    conn.execute(
+        """
+        DELETE FROM baby_profiles
+        WHERE id = ANY(%s::uuid[])
+        """,
+        (list(baby_profile_ids),),
+    )

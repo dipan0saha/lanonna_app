@@ -9,7 +9,7 @@ from lanonna_worker.gcs_delete import GcsDeleteError
 from lanonna_worker.storage_cleanup import run_storage_cleanup, sweep_storage_cleanup_jobs
 
 
-def _conn(job: dict | None, photo_rows: list[dict] | None = None):
+def _conn(job: dict | None):
     conn = MagicMock()
 
     def execute(sql, params=None):
@@ -17,8 +17,6 @@ def _conn(job: dict | None, photo_rows: list[dict] | None = None):
         result = MagicMock()
         if "SET status = 'running'" in text:
             result.fetchone.return_value = job
-        elif "FROM photos" in text:
-            result.fetchall.return_value = photo_rows or []
         return result
 
     conn.execute.side_effect = execute
@@ -54,10 +52,11 @@ def gcs():
 def test_account_job_deletes_detached_baby_photos_exports_and_avatars(gcs):
     photos, exports, prefix = gcs
     baby_id = uuid.uuid4()
-    conn = _conn(
-        _job("account_delete", baby_id),
-        [{"display_path": "display/baby.webp", "thumb_path": None}],
+    job = _job("account_delete", baby_id)
+    job["detached_objects"].append(
+        {"display_path": "display/baby.webp", "thumb_path": None}
     )
+    conn = _conn(job)
     with patch("lanonna_worker.storage_cleanup.get_connection") as ctx:
         ctx.return_value.__enter__.return_value = conn
         run_storage_cleanup(uuid.uuid4())
