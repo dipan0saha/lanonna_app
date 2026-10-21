@@ -53,6 +53,14 @@ def publish_baby_data_export(job_id: uuid.UUID) -> None:
     _publish_commands_payload(payload)
 
 
+def publish_storage_cleanup(job_id: uuid.UUID) -> None:
+    payload = {
+        "type": "storage_cleanup",
+        "job_id": str(job_id),
+    }
+    _publish_commands_payload(payload)
+
+
 def _publish_worker_payload(payload: dict) -> None:
     if settings.notify_publish_disabled and payload.get("type") in (
         "notify_fan_out",
