@@ -178,19 +178,24 @@ resource "google_monitoring_alert_policy" "api_uptime_check_failing" {
     display_name = "Uptime check ${google_monitoring_uptime_check_config.api_health[0].display_name}"
 
     condition_threshold {
+      # check_passed is reported on the uptime_url resource, one series per
+      # checker region. Alert when more than one region fails (Google's
+      # recommended shape; a single flaky region does not page).
       filter = <<-EOT
-        resource.type = "uptime_check"
+        resource.type = "uptime_url"
         AND metric.type = "monitoring.googleapis.com/uptime_check/check_passed"
         AND metric.labels.check_id = "${google_monitoring_uptime_check_config.api_health[0].uptime_check_id}"
       EOT
 
-      comparison      = "COMPARISON_LT"
+      comparison      = "COMPARISON_GT"
       threshold_value = 1
       duration        = "300s"
 
       aggregations {
-        alignment_period   = "60s"
-        per_series_aligner = "ALIGN_FRACTION_TRUE"
+        alignment_period     = "60s"
+        per_series_aligner   = "ALIGN_NEXT_OLDER"
+        cross_series_reducer = "REDUCE_COUNT_FALSE"
+        group_by_fields      = ["resource.label.project_id", "resource.label.host"]
       }
     }
   }

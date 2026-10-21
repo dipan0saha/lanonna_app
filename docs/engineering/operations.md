@@ -15,7 +15,7 @@
 Run before product feature work. Platform plumbing should be **green** first.
 
 ```bash
-gcloud config set project lanonna-dev
+# Scripts default to GCP_PROJECT_ID=lanonna-dev and pass --project; never change the gcloud default project.
 
 # Optional but recommended (Firebase test user password):
 export SMOKE_TEST_PASSWORD='…'
@@ -63,8 +63,9 @@ Path B platform: **`infra/terraform/`** — one **`platform`** module, **`dev`**
 gcloud auth login
 gcloud auth application-default login
 gcloud auth application-default set-quota-project lanonna-dev
-gcloud config set project lanonna-dev
 ```
+
+Do not run `gcloud config set project`: repo scripts resolve the project from `GCP_PROJECT_ID` (default `lanonna-dev`; `lanonna-prod` for prod) via `scripts/lib/env.sh` and pass `--project` on every call. For ad-hoc commands, pass `--project=…` explicitly.
 
 ### Terraform workflow
 
@@ -110,7 +111,7 @@ terraform apply               # when plan looks safe
 7. Set real values in [`infra/env/prod.worker.env`](../../infra/env/prod.worker.env) (`MAILJET_FROM_EMAIL`) and review [`infra/env/prod.api.env`](../../infra/env/prod.api.env).
 8. Deploy **worker** (`GCP_PROJECT_ID=lanonna-prod`) → `./scripts/apply-run-iam.sh` → enable push subscriptions (two-phase Terraform below) → deploy **API** → set **`monitoring_api_host`** in `terraform.tfvars` from `gcloud run services describe api --format='value(status.uri)'` (hostname only) → `terraform apply` for uptime alerts → `./scripts/setup-schedulers.sh` → invite hosting with release `ANDROID_SHA256`.
 
-**Dev `database-url` secret:** module defaults no longer manage the legacy secret. Dev keeps it via explicit `secret_ids` in `environments/dev/main.tf`. If you applied commit `e25c3fd` without that override, run `terraform state rm 'module.platform.google_secret_manager_secret.app["database-url"]'` once before apply (see [pre-prod-consolidation.md](pre-prod-consolidation.md)).
+**Legacy `database-url` secret:** removed from the module in `e25c3fd` and intentionally deleted from `lanonna-dev` by the next apply. Cloud Run uses `DB_*` + `db-lanonna-app-password`; do not recreate it.
 
 Real users on prod = **new Firebase project + prod flavor**, not renaming dev. See [platform-architecture.md](platform-architecture.md).
 
@@ -325,7 +326,7 @@ Optional local automation key (never commit): `~/Neo_Workspace/secrets/lanonna/g
 ```bash
 export GOOGLE_APPLICATION_CREDENTIALS="$HOME/Neo_Workspace/secrets/lanonna/gcp-automation-key.json"
 gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS"
-gcloud config set project lanonna-dev
+# Pass --project=lanonna-dev (or GCP_PROJECT_ID) instead of changing the gcloud default project.
 ```
 
 Switch back for interactive work: `gcloud config set account YOUR_HUMAN_GOOGLE_ACCOUNT` (the email you use for `gcloud auth login`).

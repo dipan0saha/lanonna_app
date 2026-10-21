@@ -35,9 +35,7 @@ Repo-only PR before `lanonna-prod` exists (GCP project quota). Goal: prod-sized 
 
 **What changed:** `database-url` was removed from `secret_ids` (and from `import-dev.sh`). Cloud Run never read this secret; app connectivity uses `DB_*` + `db-lanonna-app-password`.
 
-**Dev plan impact:** `google_secret_manager_secret.app` is a `for_each` over `secret_ids`. Dropping `database-url` makes Terraform plan **destroy** `google_secret_manager_secret.app["database-url"]` on the next apply, which **deletes the Secret Manager secret in GCP** (including any enabled versions), not just “stop managing” it.
-
-**Fix:** Keep `database-url` out of the module default `secret_ids` (prod never creates it). **Dev** passes an explicit `secret_ids` list in `environments/dev/main.tf` that still includes `database-url`, so imported state matches config and the plan stays clean. Terraform 1.9 `removed` blocks cannot target a single `for_each` instance (`from` must be the whole resource address); alternatives are dev-only `secret_ids` (chosen) or one-time `terraform state rm 'module.platform.google_secret_manager_secret.app["database-url"]'` before apply. Bump `required_version` to `>= 1.7` for consistency with current Terraform releases.
+**Dev outcome:** `google_secret_manager_secret.app` is a `for_each` over `secret_ids`, so the next dev `terraform apply` after `e25c3fd` destroyed `google_secret_manager_secret.app["database-url"]`. That was intentional: the secret was unused, and the audit log shows DeleteSecret at 2026-10-21 03:23 UTC. Dev state and GCP no longer have it, the API and worker never referenced it, and both stayed healthy. Dev uses the module default `secret_ids`; do not re-add `database-url` (it would recreate an unused secret).
 
 **Prod:** Fresh apply never created `database-url`; no action.
 
@@ -123,7 +121,7 @@ flowchart LR
 ## Tracking checklist
 
 - [ ] Create `lanonna-prod` (GCP quota) and apply existing migrations `001`–`041` on empty Cloud SQL (no squash gate)
-- [x] Prod Terraform sizing, deletion protection, bucket lifecycle, monitoring opt-in, `database-url` dev safety, `verify-migrations.sh` — lanonna-prod prep PR
+- [x] Prod Terraform sizing, deletion protection, bucket lifecycle, monitoring opt-in, `verify-migrations.sh` — lanonna-prod prep PR
 - [x] Add `infra/env/prod.api.env` / `prod.worker.env`, fix `ENVIRONMENT` in deploy scripts (M-52), TF SQL password → Secret Manager (M-47), generalize `apply-run-iam.sh` — merged in #347
 - [x] Mobile prod flavor + Crashlytics wiring ([mobile-prod-flavor-and-crashlytics.md](mobile-prod-flavor-and-crashlytics.md); owner still: keystore, `flutterfire configure`, fill `flavors/prod.json`)
 - [ ] (Optional, after schema freeze) Generate `001_baseline_v1.sql`, archive `002`–`040`, reset dev DB, add schema-only diff check in CI

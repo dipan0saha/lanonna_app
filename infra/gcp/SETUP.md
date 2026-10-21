@@ -51,7 +51,7 @@ Resource inventory for Path B. **Deploy, smoke tests, and runbooks:** [docs/engi
 ```bash
 export GOOGLE_APPLICATION_CREDENTIALS="$HOME/Neo_Workspace/secrets/lanonna/gcp-automation-key.json"
 gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS"
-gcloud config set project lanonna-dev
+# Pass --project=lanonna-dev (or GCP_PROJECT_ID) instead of changing the gcloud default project.
 ```
 
 Prefer your **human Google account** (ADC) for Cloud Build / `deploy.sh` (automation SA often cannot upload to Cloud Build).
