@@ -12,7 +12,7 @@ were signed with the **upload** certificate instead of the **debug** certificate
 
 ## Root cause
 
-[PR #348](https://github.com/lanonna/lanonna_app/pull/348) added release signing via gitignored `key.properties` and wired `buildTypes.release.signingConfig` like this:
+[PR #348](https://github.com/dipan0saha/lanonna_app/pull/348) added release signing via gitignored `key.properties` and wired `buildTypes.release.signingConfig` like this:
 
 - If `key.properties` exists → always use the `release` signing config (upload keystore).
 - Else if `APP_ENV=prod` (from decoded Flutter `dart-defines`) → no signing config (Gradle task-graph check fails).

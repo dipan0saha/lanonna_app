@@ -45,9 +45,13 @@ fun escapeBuildConfigString(value: String): String =
 fun decodeDartDefines(): Map<String, String> {
     val raw = project.findProperty("dart-defines") as String? ?: return emptyMap()
     val result = mutableMapOf<String, String>()
+    // Flutter passes each define as base64("KEY=value"), comma-separated.
+    // Skip entries that are not valid base64 rather than failing configuration.
     for (entry in raw.split(",")) {
-        if (entry.isBlank()) continue
-        val decoded = String(Base64.getDecoder().decode(entry), Charsets.UTF_8)
+        val trimmed = entry.trim()
+        if (trimmed.isEmpty()) continue
+        val bytes = runCatching { Base64.getDecoder().decode(trimmed) }.getOrNull() ?: continue
+        val decoded = String(bytes, Charsets.UTF_8)
         val eq = decoded.indexOf('=')
         if (eq <= 0) continue
         result[decoded.substring(0, eq)] = decoded.substring(eq + 1)
@@ -167,6 +171,20 @@ gradle.taskGraph.whenReady {
         throw GradleException(
             "Prod release requires android/key.properties with an upload keystore. " +
                 "See apps/mobile/android/README.md",
+        )
+    }
+    val missingKeys = listOf("storeFile", "storePassword", "keyAlias", "keyPassword")
+        .filter { keystoreProperties.getProperty(it).isNullOrBlank() }
+    if (missingKeys.isNotEmpty()) {
+        throw GradleException(
+            "Prod release: android/key.properties is missing ${missingKeys.joinToString()}. " +
+                "See apps/mobile/android/README.md",
+        )
+    }
+    val storeFile = file(keystoreProperties.getProperty("storeFile"))
+    if (!storeFile.isFile) {
+        throw GradleException(
+            "Prod release: upload keystore not found at the storeFile path in android/key.properties.",
         )
     }
     val firebaseProject = googleServicesProjectId(project.projectDir)
