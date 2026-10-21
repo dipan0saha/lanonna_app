@@ -46,15 +46,17 @@ Docs-only deliverable; no deploy performed from the legal-pages PR. Use with `do
 ## Security and operations
 
 - [ ] Production Firebase project: App Check enforced, API keys restricted, Crashlytics acceptable for privacy policy.
-- [ ] Confirm account deletion and export flows on a production-like build.
-- [ ] Decide policy for GCS media after account soft-delete (inventory notes gap—legal/ops).
+- [ ] Confirm account deletion and export flows on a production-like build (including worker `storage_cleanup_completed` logs and GCS objects removed).
+- [ ] Decide policy for **soft-deleted SQL rows** (sole-owned babies, photo metadata rows) after GCS purge—legal/ops (**Owner/lawyer review**).
+- [ ] Disclose **async** media deletion timing in published privacy policy if counsel requires.
 - [ ] Incident response contact and breach notification process (`{{CONTACT_EMAIL}}`).
 
 ---
 
 ## Open questions (from data inventory)
 
-- [ ] Retention for tombstoned SQL rows and soft-deleted baby profiles.
+- [ ] Retention for tombstoned `app_users` and soft-deleted `baby_profiles` **database rows** after async GCS cleanup (files purged; rows may remain).
+- [ ] Privacy copy for failed or delayed `storage_cleanup_jobs` (sweep every 15 minutes; user contact path).
 - [ ] Whether `email_digest_enabled` should be disclosed as “email digest” when only weekly **push** digest is implemented in worker.
 - [ ] COPPA / GDPR Art. 8 / UK ICO guidance for baby photos and identifiers.
 - [ ] Regions of Cloud SQL and GCS (transfer disclosures).

@@ -43,7 +43,14 @@
     <p>We do not sell personal information. We share data with family members you authorize, with service providers (Google/Firebase, Mailjet) under contract, and when required by law. Invite pages may be served from https://{{DOMAIN}}/.</p>
 
     <h2>5. Retention and deletion</h2>
-    <p>We retain data while your account is active. Pending invites expire per schedule. When you <strong>delete your account</strong> in the app, we tombstone your profile, delete your Firebase login, end memberships, revoke invites, soft-delete baby profiles you solely own, remove certain participation data, and revoke biometric credentials. Some content you created may remain for other members; cloud media may not all be removed automatically. Contact {{CONTACT_EMAIL}} for questions.</p>
+    <p>
+      We retain data while your account is active. Pending invites expire per schedule.
+      When you <strong>delete your account</strong>, we tombstone your profile (email and avatar removed, display name “Deleted user”),
+      delete your Firebase login, end memberships, revoke invites, soft-delete baby profiles you solely own, remove certain participation data,
+      and revoke biometric credentials. We then <strong>enqueue async removal</strong> of your cloud media: your avatar, export files,
+      all media for babies you solely own, and photos you uploaded on shared babies. Comments and similar text on shared babies may remain under “Deleted user.”
+      Cleanup usually completes shortly after deletion; a periodic job retries stuck tasks. Contact {{CONTACT_EMAIL}} for questions.
+    </p>
 
     <h2>6. Your choices</h2>
     <ul>
