@@ -36,10 +36,10 @@ Run all three suites before every ship. GitHub Actions CI ([`.github/workflows/c
 
 ## High
 
-### H-01 Android release signing — Partial (dev vs prod)
+### H-01 Android release signing — Partial (upload keystore owner-owned)
 - **Where:** `apps/mobile/android/app/build.gradle.kts`, `android/key.properties` (gitignored)
 - **Issue:** Play upload requires an upload keystore, not the debug key.
-- **Status:** **Prod** release (`APP_ENV=prod`) fails Gradle configure without `key.properties`. **Dev** release may still use the debug keystore when `key.properties` is absent (local testing). Owner must create the upload keystore and `key.properties` before the first prod ship — [android/README.md](../../apps/mobile/android/README.md), [mobile-prod-flavor-and-crashlytics.md](mobile-prod-flavor-and-crashlytics.md).
+- **Status:** **Prod** release (`APP_ENV=prod`) requires `key.properties` and upload signing. **Dev** release always uses the debug keystore (Gradle ignores `key.properties` for non-prod). Owner must create the upload keystore and `key.properties` before the first prod ship — [android/README.md](../../apps/mobile/android/README.md), [mobile-prod-flavor-and-crashlytics.md](mobile-prod-flavor-and-crashlytics.md), [rca/release-signing-environment.md](rca/release-signing-environment.md).
 
 ### ✅ H-03 Account delete must tombstone SQL before Firebase — Verified
 - **Where:** `services/api/src/lanonna_api/domain/account_delete.py`, `repositories/account_delete.py`

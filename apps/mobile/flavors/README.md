@@ -24,7 +24,7 @@ Release and profile builds read `API_BASE_URL` from this file. If the key is mis
 
 `APP_LINK_HOST` must match the Firebase Hosting origin used for invites and email verification (`{project_id}.firebaseapp.com`). Android reads it from Flutter `dart-defines`; iOS syncs it in a build phase.
 
-**Prod:** see [mobile-prod-flavor-and-crashlytics.md](../../../docs/engineering/mobile-prod-flavor-and-crashlytics.md). Prod release APKs require `android/key.properties`.
+**Prod:** see [mobile-prod-flavor-and-crashlytics.md](../../../docs/engineering/mobile-prod-flavor-and-crashlytics.md). Prod release APKs require `android/key.properties`. Dev release APKs always use the debug keystore even if `key.properties` exists locally.
 
 ```bash
 flutter build apk --release --target-platform android-arm64 --dart-define-from-file=flavors/prod.json
