@@ -33,11 +33,7 @@ def test_delete_account_publishes_storage_cleanup_after_sql():
             return_value=False,
         ),
         patch(
-            "lanonna_api.domain.account_delete.list_sole_owned_baby_ids",
-            return_value=[],
-        ),
-        patch(
-            "lanonna_api.domain.account_delete.soft_delete_account_rows",
+            "lanonna_api.domain.account_delete.delete_account_rows",
             return_value=job_id,
         ) as soft_delete,
         patch(
@@ -64,7 +60,7 @@ def test_delete_account_retry_republishes_incomplete_cleanup_job():
             return_value=job_id,
         ),
         patch(
-            "lanonna_api.domain.account_delete.soft_delete_account_rows",
+            "lanonna_api.domain.account_delete.delete_account_rows",
         ) as soft_delete,
         patch(
             "lanonna_api.domain.storage_cleanup.publish_storage_cleanup",
@@ -86,11 +82,7 @@ def test_delete_account_swallows_pubsub_publish_errors():
             return_value=False,
         ),
         patch(
-            "lanonna_api.domain.account_delete.list_sole_owned_baby_ids",
-            return_value=[],
-        ),
-        patch(
-            "lanonna_api.domain.account_delete.soft_delete_account_rows",
+            "lanonna_api.domain.account_delete.delete_account_rows",
             return_value=job_id,
         ),
         patch(

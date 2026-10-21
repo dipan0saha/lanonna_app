@@ -265,7 +265,7 @@ def fetch_invitation_preview_row(token: str) -> dict[str, Any] | None:
                 b.actual_birth_date,
                 NULLIF(TRIM(u.display_name), '') AS inviter_display_name
             FROM invitations i
-            JOIN baby_profiles b ON b.id = i.baby_profile_id AND b.deleted_at IS NULL
+            JOIN baby_profiles b ON b.id = i.baby_profile_id
             JOIN app_users u ON u.firebase_uid = i.inviter_firebase_uid
             WHERE i.token_hash = %s
             LIMIT 1
@@ -337,7 +337,7 @@ def accept_invitation_by_token(
         ).fetchone()
 
         baby_row = conn.execute(
-            "SELECT name FROM baby_profiles WHERE id = %s AND deleted_at IS NULL",
+            "SELECT name FROM baby_profiles WHERE id = %s",
             (baby_profile_id,),
         ).fetchone()
         if baby_row is None:

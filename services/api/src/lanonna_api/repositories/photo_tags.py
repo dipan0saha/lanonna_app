@@ -22,7 +22,6 @@ def list_tagged_babies_for_photo(
              AND m.firebase_uid = %s
              AND m.removed_at IS NULL
             WHERE t.photo_id = %s
-              AND b.deleted_at IS NULL
             ORDER BY b.name ASC
             """,
             (viewer_firebase_uid, photo_id),

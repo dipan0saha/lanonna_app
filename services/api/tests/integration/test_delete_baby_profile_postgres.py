@@ -217,8 +217,7 @@ def test_co_owners_leaving_at_once_keep_one_owner():
 
 def test_account_delete_hard_deletes_sole_owned_babies():
     from lanonna_api.repositories.account_delete import (
-        list_sole_owned_baby_ids,
-        soft_delete_account_rows,
+        delete_account_rows,
     )
 
     owner = _user("acct")
@@ -226,7 +225,7 @@ def test_account_delete_hard_deletes_sole_owned_babies():
     baby_id = _baby([(owner, "owner"), (follower, "follower")])
     _pending_invite(baby_id, owner)
 
-    soft_delete_account_rows(owner, list_sole_owned_baby_ids(owner))
+    delete_account_rows(owner)
 
     assert list_babies_for_user(follower) == []
     with get_connection() as conn:

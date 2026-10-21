@@ -436,7 +436,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteBabyProfileFinalBody =>
-      'Followers will lose access immediately. Database records and cloud storage for this baby will be deleted. This cannot be undone.';
+      'Followers will lose access immediately. This cannot be undone.';
 
   @override
   String get deleteBabyProfileSuccess => 'Baby profile deleted.';

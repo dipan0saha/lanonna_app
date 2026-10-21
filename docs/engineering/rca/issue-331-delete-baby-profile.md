@@ -1,5 +1,7 @@
 # RCA: Issue #331 — Delete baby profile (sole owner)
 
+> **Superseded (PR #355):** baby delete is now a hard delete with async GCS cleanup. The soft-delete (`deleted_at`) design below is historical; see [baby-hard-delete.md](./baby-hard-delete.md).
+
 ## Summary
 
 Users tried **Leave profile** in the baby switcher expecting the baby to be removed or deleted. Sole owners are blocked (`can_leave` false) with copy that mentions “delete this baby profile,” but no standalone delete-baby feature existed—only **account delete** soft-deleted sole-owned babies.

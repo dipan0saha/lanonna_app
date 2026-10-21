@@ -8,7 +8,7 @@ from datetime import date, datetime, timezone
 import pytest
 
 from lanonna_api.db import get_connection
-from lanonna_api.repositories.account_delete import soft_delete_account_rows
+from lanonna_api.repositories.account_delete import delete_account_rows
 from lanonna_api.repositories.announcements import get_announcement
 from lanonna_api.repositories.events import (
     list_event_comments,
@@ -289,7 +289,9 @@ def test_delete_account_purges_participation_rows():
     # sole-own are removed with the account (storage cleanup), not kept.
     uploader = "purge-uploader"
     _user(uploader, "purge-uploader@example.com", "Uploader")
-    baby_id = _baby(owner)
+    # Someone else's baby, so account delete keeps it (sole-owned babies are deleted).
+    baby_id = _baby(uploader)
+    _member(baby_id, owner)
     event_id = uuid.uuid4()
     photo_id = uuid.uuid4()
     suggestion_id = uuid.uuid4()
@@ -371,7 +373,7 @@ def test_delete_account_purges_participation_rows():
             (photo_id, owner),
         )
 
-    soft_delete_account_rows(owner, [])
+    delete_account_rows(owner)
 
     for table in (
         "event_rsvps",

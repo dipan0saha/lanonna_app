@@ -9,7 +9,6 @@ from lanonna_api.repositories._paging import limit_offset_clause
 from lanonna_api.repositories.active_participants import (
     purge_participation,
     purge_participation_on_baby,
-    purge_participation_on_babies,
 )
 
 
@@ -85,7 +84,6 @@ def lock_baby_profile_for_update(
         SELECT name
         FROM baby_profiles
         WHERE id = %s
-          AND deleted_at IS NULL
         FOR UPDATE
         """,
         (baby_profile_id,),
@@ -202,30 +200,6 @@ def soft_remove_own_membership(
         if not soft_remove_membership(baby_profile_id, firebase_uid, conn=conn):
             return OwnLeaveOutcome.NOT_MEMBER
         return OwnLeaveOutcome.LEFT
-
-
-def soft_remove_memberships_on_babies(
-    baby_profile_ids: list[uuid.UUID],
-    conn=None,
-) -> None:
-    """End every membership on these babies and drop presence on them."""
-    if not baby_profile_ids:
-        return
-    sql = """
-        UPDATE baby_memberships
-        SET removed_at = now(), updated_at = now()
-        WHERE baby_profile_id = ANY(%s::uuid[]) AND removed_at IS NULL
-    """
-
-    def _run(connection) -> None:
-        connection.execute(sql, (baby_profile_ids,))
-        purge_participation_on_babies(connection, baby_profile_ids)
-
-    if conn is not None:
-        _run(conn)
-    else:
-        with get_connection() as connection:
-            _run(connection)
 
 
 def soft_remove_all_memberships_for_user(firebase_uid: str, conn=None) -> None:

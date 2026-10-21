@@ -50,7 +50,6 @@ def storage_usage_for_owner_babies(firebase_uid: str) -> dict[str, Any] | None:
             """
             SELECT COALESCE(SUM(p.byte_length), 0)::bigint AS used_bytes
             FROM photos p
-            JOIN baby_profiles b ON b.id = p.baby_profile_id AND b.deleted_at IS NULL
             JOIN baby_memberships m ON m.baby_profile_id = p.baby_profile_id
             WHERE m.firebase_uid = %s
               AND m.role = 'owner'

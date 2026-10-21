@@ -47,9 +47,16 @@ Content authored by **other users** on that baby (follower comments, RSVPs, regi
 - `DELETE /v1/babies/{id}`: refused when more than one active owner (`cannot_delete_shared_baby`).
 - Account delete: sole-owned babies hard-deleted; co-owned babies keep profile; user memberships ended and participation purged per #353.
 
-## Backfill (dev soft-deleted babies)
+## Migrations
 
-Migration `043_baby_hard_delete.sql` enqueues one `baby_profile_delete` job per row with `baby_profiles.deleted_at IS NOT NULL` (photo paths + export paths in payload), then hard-deletes those rows. Re-run worker / sweep if jobs were never published.
+- **`043_baby_hard_delete.sql`:** each FK to `baby_profiles` (`activity_events`, `baby_memberships`, `events`, `invitations`, `name_suggestions`, `notifications`, `photos`, `registry_items`, `votes`) is re-added `ON DELETE CASCADE NOT VALID` and then validated, under a 5 s `lock_timeout`. A guard fails the migration if any FK to `baby_profiles` is still not CASCADE. Backfill: one `baby_profile_delete` job per soft-deleted baby (photo and export paths in the payload), then those babies are deleted. The jobs are inserted `pending`; the worker sweep (every 15 min, pending older than 10 min) runs them, so no publish is needed. Re-runnable.
+- **`044_drop_baby_profiles_deleted_at.sql`:** drops the now-unused column. Apply **after** deploying the API and worker (expand/contract), since the previous revisions still filter on it.
+
+An integration test (`test_every_row_scoped_to_a_baby_cascades_from_it`) walks the FK tree from `baby_profiles` and fails if any FK in it is neither CASCADE nor SET NULL, so a future table cannot silently block or orphan a baby delete.
+
+## Account delete: sole-owned babies decided inside the transaction
+
+`delete_account_rows` locks every baby the user actively owns (`FOR UPDATE`, the same row lock co-owner invite/accept/leave take) and keeps only those with one active owner, in the same transaction as the hard delete. A co-owner accepting at the same moment either commits first (the baby is kept and passes to them) or waits until the delete has finished.
 
 ## Verification (dev)
 

@@ -51,7 +51,7 @@ def collect_baby_export(
         conn,
         """
         SELECT id, name, expected_birth_date, actual_birth_date, gender,
-               lifecycle_status, avatar_url, created_at, updated_at, deleted_at,
+               lifecycle_status, avatar_url, created_at, updated_at,
                created_by_firebase_uid,
                registry_shipping_line1, registry_shipping_line2,
                registry_shipping_city, registry_shipping_region,
@@ -122,7 +122,6 @@ def collect_baby_export(
         JOIN photos p ON p.id = t.photo_id AND p.baby_profile_id = %s
         JOIN baby_profiles b
           ON b.id = t.tagged_baby_profile_id
-         AND b.deleted_at IS NULL
         JOIN baby_memberships m
           ON m.baby_profile_id = t.tagged_baby_profile_id
          AND m.firebase_uid = %s

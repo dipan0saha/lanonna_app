@@ -234,7 +234,7 @@
       }
     }
   },
-  "deleteBabyProfileFinalBody": "Followers will lose access immediately. Database records and cloud storage for this baby will be deleted. This cannot be undone.",
+  "deleteBabyProfileFinalBody": "Followers will lose access immediately. This cannot be undone.",
   "deleteBabyProfileSuccess": "Baby profile deleted.",
   "appTitle": "La Nonna",
   "appEmailVerifiedSignIn": "Email verified. Sign in with the same address to continue.",

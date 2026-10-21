@@ -140,3 +140,27 @@ def test_hard_delete_removes_follower_content_and_leaves_other_baby_alone():
         ).fetchone()
     paths = {o["display_path"] for o in job["detached_objects"]}
     assert paths == {f"display/{photo_id}.webp"}
+
+
+def test_every_row_scoped_to_a_baby_cascades_from_it():
+    """Schema invariant: deleting a baby can never fail on, or leave behind, a row
+    scoped to it. Every FK into the baby_profiles cascade tree is CASCADE (or SET
+    NULL for optional links such as an event's cover photo)."""
+    with get_connection() as conn:
+        bad = conn.execute(
+            """
+            WITH RECURSIVE scoped(rel) AS (
+                SELECT 'baby_profiles'::regclass
+                UNION
+                SELECT c.conrelid
+                FROM pg_constraint c
+                JOIN scoped s ON c.confrelid = s.rel
+                WHERE c.contype = 'f' AND c.confdeltype = 'c'
+            )
+            SELECT c.conrelid::regclass::text AS child, c.conname
+            FROM pg_constraint c
+            JOIN scoped s ON c.confrelid = s.rel
+            WHERE c.contype = 'f' AND c.confdeltype NOT IN ('c', 'n')
+            """
+        ).fetchall()
+    assert bad == []

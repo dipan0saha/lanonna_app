@@ -92,9 +92,9 @@ def test_revoke_all_and_tombstone_hide_credentials(postgres_database: str):
 
     tomb = _user("bio-tombstoned")
     tomb_cred = _register(tomb)
-    from lanonna_api.repositories.account_delete import soft_delete_account_rows
+    from lanonna_api.repositories.account_delete import delete_account_rows
 
-    soft_delete_account_rows(tomb)
+    delete_account_rows(tomb)
     assert get_live_credential(tomb_cred) is None
     with get_connection() as conn:
         row = conn.execute(

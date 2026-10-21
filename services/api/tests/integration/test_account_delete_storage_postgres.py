@@ -6,8 +6,7 @@ import pytest
 
 from lanonna_api.db import get_connection
 from lanonna_api.repositories.account_delete import (
-    list_sole_owned_baby_ids,
-    soft_delete_account_rows,
+    delete_account_rows,
 )
 from lanonna_api.repositories.users import resolve_app_user
 
@@ -77,7 +76,7 @@ def test_account_delete_removes_shared_upload_and_creates_cleanup_job():
             ),
         )
 
-    job_id = soft_delete_account_rows(uploader, list_sole_owned_baby_ids(uploader))
+    job_id = delete_account_rows(uploader)
 
     with get_connection() as conn:
         row = conn.execute(
@@ -153,7 +152,7 @@ def test_account_delete_hard_deletes_sole_owned_baby_and_collects_photo_paths():
             ),
         )
 
-    job_id = soft_delete_account_rows(owner, list_sole_owned_baby_ids(owner))
+    job_id = delete_account_rows(owner)
 
     with get_connection() as conn:
         remaining = {

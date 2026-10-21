@@ -20,5 +20,4 @@ def test_list_tagged_babies_for_photo_scopes_by_viewer_membership():
     assert "baby_memberships" in sql
     assert "m.firebase_uid = %s" in sql
     assert "m.removed_at IS NULL" in sql
-    assert "b.deleted_at IS NULL" in sql
     assert params == (viewer_uid, photo_id)

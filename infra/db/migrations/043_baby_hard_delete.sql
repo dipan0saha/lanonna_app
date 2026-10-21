@@ -1,37 +1,89 @@
--- Hard-delete baby profiles and dependents (ON DELETE CASCADE). Backfill soft-deleted babies.
+-- 043: deleting a baby profile hard-deletes every row scoped to it (owner decision
+-- 2026-10-21). Every FK to baby_profiles becomes ON DELETE CASCADE; children of
+-- those rows (comments, RSVPs, squishes, likes, purchases, tags) already cascade.
+-- birth_announcements, baby_data_export_jobs and photo_baby_tags already cascade.
+-- storage_cleanup_jobs holds baby ids in an array (no FK), so its rows survive.
+--
+-- Lock-light: each FK is re-added NOT VALID (no scan under the strong lock) and then
+-- validated. lock_timeout makes a busy table fail the migration instead of queueing
+-- traffic behind it. Re-runnable: constraints are dropped IF EXISTS and re-added, and
+-- the backfill only touches rows that are still soft-deleted.
 
+SET LOCAL lock_timeout = '5s';
+
+ALTER TABLE activity_events
+    DROP CONSTRAINT IF EXISTS activity_events_baby_profile_id_fkey,
+    ADD CONSTRAINT activity_events_baby_profile_id_fkey
+        FOREIGN KEY (baby_profile_id) REFERENCES baby_profiles (id) ON DELETE CASCADE NOT VALID;
+ALTER TABLE activity_events VALIDATE CONSTRAINT activity_events_baby_profile_id_fkey;
+
+ALTER TABLE baby_memberships
+    DROP CONSTRAINT IF EXISTS baby_memberships_baby_profile_id_fkey,
+    ADD CONSTRAINT baby_memberships_baby_profile_id_fkey
+        FOREIGN KEY (baby_profile_id) REFERENCES baby_profiles (id) ON DELETE CASCADE NOT VALID;
+ALTER TABLE baby_memberships VALIDATE CONSTRAINT baby_memberships_baby_profile_id_fkey;
+
+ALTER TABLE events
+    DROP CONSTRAINT IF EXISTS events_baby_profile_id_fkey,
+    ADD CONSTRAINT events_baby_profile_id_fkey
+        FOREIGN KEY (baby_profile_id) REFERENCES baby_profiles (id) ON DELETE CASCADE NOT VALID;
+ALTER TABLE events VALIDATE CONSTRAINT events_baby_profile_id_fkey;
+
+ALTER TABLE invitations
+    DROP CONSTRAINT IF EXISTS invitations_baby_profile_id_fkey,
+    ADD CONSTRAINT invitations_baby_profile_id_fkey
+        FOREIGN KEY (baby_profile_id) REFERENCES baby_profiles (id) ON DELETE CASCADE NOT VALID;
+ALTER TABLE invitations VALIDATE CONSTRAINT invitations_baby_profile_id_fkey;
+
+ALTER TABLE name_suggestions
+    DROP CONSTRAINT IF EXISTS name_suggestions_baby_profile_id_fkey,
+    ADD CONSTRAINT name_suggestions_baby_profile_id_fkey
+        FOREIGN KEY (baby_profile_id) REFERENCES baby_profiles (id) ON DELETE CASCADE NOT VALID;
+ALTER TABLE name_suggestions VALIDATE CONSTRAINT name_suggestions_baby_profile_id_fkey;
+
+ALTER TABLE notifications
+    DROP CONSTRAINT IF EXISTS notifications_baby_profile_id_fkey,
+    ADD CONSTRAINT notifications_baby_profile_id_fkey
+        FOREIGN KEY (baby_profile_id) REFERENCES baby_profiles (id) ON DELETE CASCADE NOT VALID;
+ALTER TABLE notifications VALIDATE CONSTRAINT notifications_baby_profile_id_fkey;
+
+ALTER TABLE photos
+    DROP CONSTRAINT IF EXISTS photos_baby_profile_id_fkey,
+    ADD CONSTRAINT photos_baby_profile_id_fkey
+        FOREIGN KEY (baby_profile_id) REFERENCES baby_profiles (id) ON DELETE CASCADE NOT VALID;
+ALTER TABLE photos VALIDATE CONSTRAINT photos_baby_profile_id_fkey;
+
+ALTER TABLE registry_items
+    DROP CONSTRAINT IF EXISTS registry_items_baby_profile_id_fkey,
+    ADD CONSTRAINT registry_items_baby_profile_id_fkey
+        FOREIGN KEY (baby_profile_id) REFERENCES baby_profiles (id) ON DELETE CASCADE NOT VALID;
+ALTER TABLE registry_items VALIDATE CONSTRAINT registry_items_baby_profile_id_fkey;
+
+ALTER TABLE votes
+    DROP CONSTRAINT IF EXISTS votes_baby_profile_id_fkey,
+    ADD CONSTRAINT votes_baby_profile_id_fkey
+        FOREIGN KEY (baby_profile_id) REFERENCES baby_profiles (id) ON DELETE CASCADE NOT VALID;
+ALTER TABLE votes VALIDATE CONSTRAINT votes_baby_profile_id_fkey;
+
+-- Guard: any FK to baby_profiles that is not CASCADE would make baby delete fail.
 DO $$
 DECLARE
-  r RECORD;
+    leftover TEXT;
 BEGIN
-  FOR r IN
-    SELECT tc.table_schema, tc.table_name, tc.constraint_name
-    FROM information_schema.table_constraints AS tc
-    JOIN information_schema.key_column_usage AS kcu
-      ON tc.constraint_schema = kcu.constraint_schema
-     AND tc.constraint_name = kcu.constraint_name
-    WHERE tc.constraint_type = 'FOREIGN KEY'
-      AND tc.table_schema = 'public'
-      AND kcu.column_name = 'baby_profile_id'
-      AND tc.table_name NOT IN ('birth_announcements', 'baby_data_export_jobs')
-  LOOP
-    EXECUTE format(
-      'ALTER TABLE %I.%I DROP CONSTRAINT %I',
-      r.table_schema,
-      r.table_name,
-      r.constraint_name
-    );
-    EXECUTE format(
-      'ALTER TABLE %I.%I ADD CONSTRAINT %I '
-      'FOREIGN KEY (baby_profile_id) REFERENCES baby_profiles (id) ON DELETE CASCADE',
-      r.table_schema,
-      r.table_name,
-      r.constraint_name
-    );
-  END LOOP;
+    SELECT string_agg(conrelid::regclass::text || '.' || conname, ', ')
+    INTO leftover
+    FROM pg_constraint
+    WHERE contype = 'f'
+      AND confrelid = 'baby_profiles'::regclass
+      AND confdeltype <> 'c';
+    IF leftover IS NOT NULL THEN
+        RAISE EXCEPTION 'baby_profiles FKs without ON DELETE CASCADE: %', leftover;
+    END IF;
 END $$;
 
--- Backfill: enqueue GCS cleanup for rows that were only soft-deleted, then remove them.
+-- Backfill: babies soft-deleted before this migration. One baby_profile_delete
+-- cleanup job per baby carries its photo and export paths (rows are about to go);
+-- the worker sweep runs pending jobs older than 10 minutes, so no publish is needed.
 WITH doomed AS (
     SELECT
         b.id,
@@ -42,12 +94,22 @@ WITH doomed AS (
                 FROM baby_memberships m
                 WHERE m.baby_profile_id = b.id
                   AND m.role = 'owner'
-                ORDER BY m.created_at ASC, m.id ASC
+                ORDER BY m.created_at, m.id
                 LIMIT 1
             )
         ) AS firebase_uid
     FROM baby_profiles b
     WHERE b.deleted_at IS NOT NULL
+),
+photo_objects AS (
+    SELECT
+        p.baby_profile_id,
+        jsonb_agg(
+            jsonb_build_object('display_path', p.display_path, 'thumb_path', p.thumb_path)
+        ) AS detached
+    FROM photos p
+    WHERE p.baby_profile_id IN (SELECT id FROM doomed)
+    GROUP BY p.baby_profile_id
 ),
 export_paths AS (
     SELECT
@@ -56,30 +118,9 @@ export_paths AS (
     FROM baby_data_export_jobs j
     WHERE j.baby_profile_id IN (SELECT id FROM doomed)
     GROUP BY j.baby_profile_id
-),
-photo_objects AS (
-    SELECT
-        p.baby_profile_id,
-        COALESCE(
-            jsonb_agg(
-                jsonb_build_object(
-                    'display_path', p.display_path,
-                    'thumb_path', p.thumb_path
-                )
-            ),
-            '[]'::jsonb
-        ) AS detached
-    FROM photos p
-    WHERE p.baby_profile_id IN (SELECT id FROM doomed)
-    GROUP BY p.baby_profile_id
 )
 INSERT INTO storage_cleanup_jobs (
-    kind,
-    firebase_uid,
-    baby_profile_ids,
-    detached_objects,
-    export_object_paths,
-    status
+    kind, firebase_uid, baby_profile_ids, detached_objects, export_object_paths, status
 )
 SELECT
     'baby_profile_delete',

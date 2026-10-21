@@ -26,7 +26,7 @@ def get_shipping_address_row(baby_profile_id: uuid.UUID) -> dict[str, Any] | Non
             f"""
             SELECT {_SHIPPING_COLUMNS}
             FROM baby_profiles
-            WHERE id = %s AND deleted_at IS NULL
+            WHERE id = %s
             """,
             (baby_profile_id,),
         ).fetchone()
@@ -54,7 +54,7 @@ def update_shipping_address_fields(
                 registry_shipping_postal_code = %s,
                 registry_shipping_country_code = %s,
                 updated_at = now()
-            WHERE id = %s AND deleted_at IS NULL
+            WHERE id = %s
             """,
             (
                 line1,

@@ -446,7 +446,6 @@ def build_export_document(
             "lifecycle_status": baby.get("lifecycle_status"),
             "created_at": _iso(baby.get("created_at")),
             "updated_at": _iso(baby.get("updated_at")),
-            "deleted_at": _iso(baby.get("deleted_at")),
             "created_by": people.pid(baby.get("created_by_firebase_uid")),
             "avatar": media(display_bucket, baby.get("avatar_url")),
             "registry_shipping": {
