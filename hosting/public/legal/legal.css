@@ -1,0 +1,91 @@
+:root {
+  color-scheme: light;
+  --sage: #7fae6e;
+  --sage-light: #a8c99b;
+  --sage-tint: #eaf3e4;
+  --peach-tint: #fce8dc;
+  --ink: #2d2d2d;
+  --muted: #6b5b57;
+  --line: #e9e9ea;
+  --bg: #f6f6f7;
+  --error: #c62828;
+  --font-display: 'Baloo 2', ui-rounded, 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  line-height: 1.55;
+  font-size: 1rem;
+}
+
+main {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3rem;
+}
+
+.brand {
+  margin: 0 0 0.25rem;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.5rem;
+  color: var(--sage);
+}
+
+h1 {
+  margin: 0 0 1rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.75rem;
+  line-height: 1.25;
+}
+
+h2 {
+  margin: 1.75rem 0 0.5rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+}
+
+p, li { font-size: 0.98rem; }
+
+.notice {
+  background: var(--peach-tint);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+  margin: 0 0 1.25rem;
+  font-size: 0.92rem;
+}
+
+.meta {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-bottom: 1.25rem;
+}
+
+a { color: var(--sage); font-weight: 600; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+nav.legal-nav {
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+nav.legal-nav a { margin-right: 1rem; }
+
+ul { padding-left: 1.25rem; }
+
+footer {
+  margin-top: 2.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
