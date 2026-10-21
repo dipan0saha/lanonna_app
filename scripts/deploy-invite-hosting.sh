@@ -10,7 +10,6 @@ HOSTING="${ROOT}/hosting"
 source "${ROOT}/scripts/lib/env.sh"
 lanonna_resolve_environment
 PROJECT_ID="${GCP_PROJECT_ID}"
-REGION="${GCP_REGION:-us-central1}"
 
 if [[ "${ENVIRONMENT}" == "prod" && -z "${ANDROID_SHA256:-}" ]]; then
   echo "ENVIRONMENT=prod requires ANDROID_SHA256 (release/upload keystore fingerprint). Debug keystore is not used on prod." >&2

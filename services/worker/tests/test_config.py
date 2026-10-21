@@ -203,7 +203,60 @@ def test_plain_deploy_loads_spaced_name_before_build(tmp_path: Path):
     assert "command not found" not in result.stderr
     assert result.returncode != 0
     recorded = log.read_text(encoding="utf-8")
-    assert recorded.startswith("config set project")
+    assert "config set project" not in recorded
+    assert recorded.startswith("builds submit")
+    assert "--project lanonna-dev" in recorded
+
+
+def _run_require_sender(tmp_path: Path, base_text: str, local_text: str | None, exported: str | None):
+    base = tmp_path / "dev.worker.env"
+    base.write_text(base_text, encoding="utf-8")
+    local = tmp_path / "dev.worker.local.env"
+    if local_text is not None:
+        local.write_text(local_text, encoding="utf-8")
+    env = {"PATH": os.environ.get("PATH", "")}
+    if exported is not None:
+        env["MAILJET_FROM_EMAIL"] = exported
+    return subprocess.run(
+        [
+            "bash",
+            "-c",
+            'source "$1"; require_mailjet_sender "$2" "$3"; printf "%s|%s" "$MAILJET_FROM_EMAIL" "$MAILJET_FROM_NAME"',
+            "bash",
+            str(_DEPLOY),
+            str(base),
+            str(local),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+
+def test_sender_precedence_shell_over_local_over_tracked(tmp_path: Path):
+    base = 'MAILJET_FROM_EMAIL=tracked@example.com\nMAILJET_FROM_NAME="La Nonna"\n'
+    local = "MAILJET_FROM_EMAIL=local@example.com\n"
+    r = _run_require_sender(tmp_path, base, local, None)
+    assert r.returncode == 0, r.stderr
+    assert r.stdout == "local@example.com|La Nonna"
+    r = _run_require_sender(tmp_path, base, local, "shell@example.com")
+    assert r.returncode == 0, r.stderr
+    # Tracked non-secret settings still load when the sender is exported.
+    assert r.stdout == "shell@example.com|La Nonna"
+
+
+def test_sender_missing_everywhere_fails(tmp_path: Path):
+    r = _run_require_sender(tmp_path, 'MAILJET_FROM_NAME="La Nonna"\n', None, None)
+    assert r.returncode != 0
+    assert "MAILJET_FROM_EMAIL is required" in r.stderr
+
+
+def test_prod_placeholder_sender_is_rejected_even_with_local_name(tmp_path: Path):
+    r = _run_require_sender(
+        tmp_path, "MAILJET_FROM_EMAIL=__SET_PROD_MAILJET_FROM_EMAIL__\n", "MAILJET_FROM_NAME=X\n", None
+    )
+    assert r.returncode != 0
 
 
 def test_invite_link_base_rejects_custom_scheme_and_dev_host_outside_dev():

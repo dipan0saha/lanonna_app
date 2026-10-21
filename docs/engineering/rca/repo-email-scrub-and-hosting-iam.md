@@ -22,8 +22,8 @@ Dev deploy convenience: the validated Mailjet sender and the human `gcloud`/`fir
 ### Fix
 
 - **Docs and tests:** neutral placeholders (`sender@example.com`, `operator@example.com`, `@test.com` QA patterns).
-- **Runtime dev sender:** `MAILJET_FROM_EMAIL` moves to gitignored `infra/env/dev.worker.local.env`, with committed `infra/env/dev.worker.local.env.example`. Deploy loads committed `dev.worker.env` then the local override and **fails fast** if the sender is still missing.
-- **CI:** `scripts/verify-no-personal-emails.sh` (also exercised from API tests) fails when tracked files contain addresses on blocked personal domains (for example Gmail).
+- **Runtime dev sender:** `MAILJET_FROM_EMAIL` moves to gitignored `infra/env/dev.worker.local.env`, with committed `infra/env/dev.worker.local.env.example`. Deploy resolves the sender as exported shell value > local file > committed `dev.worker.env` and **fails fast** if it is still missing.
+- **CI:** `scripts/verify-no-personal-emails.sh` (also exercised from API tests) scans every tracked file as bytes (including encoded `%40` / `&#64;` forms) and fails on consumer mail providers (Gmail, Yahoo, Outlook/Hotmail/Live, iCloud, Proton, GMX, … with regional suffixes), agent inbox domains, and non-role addresses on `lanonna.app`. Findings print path, line and domain only, never the local part.
 
 ### Git history
 

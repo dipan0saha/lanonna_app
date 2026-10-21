@@ -33,31 +33,3 @@ load_unset_env_file() {
     fi
   done < "${file}"
 }
-
-# Like load_unset_env_file, but always applies values from the file (for gitignored overrides).
-load_env_file_overrides() {
-  local file="$1"
-  local line key value
-  while IFS= read -r line || [[ -n "${line}" ]]; do
-    line="${line#"${line%%[![:space:]]*}"}"
-    line="${line%"${line##*[![:space:]]}"}"
-    [[ -z "${line}" || "${line}" == \#* ]] && continue
-    if [[ "${line}" != *=* ]]; then
-      echo "Invalid env line in ${file}: ${line}" >&2
-      return 1
-    fi
-    key="${line%%=*}"
-    key="${key%"${key##*[![:space:]]}"}"
-    value="${line#*=}"
-    if [[ ! "${key}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
-      echo "Invalid env name in ${file}: ${key}" >&2
-      return 1
-    fi
-    if [[ "${value}" =~ ^\".*\"$ ]]; then
-      value="${value:1:${#value}-2}"
-    elif [[ "${value}" =~ ^\'.*\'$ ]]; then
-      value="${value:1:${#value}-2}"
-    fi
-    export "${key}=${value}"
-  done < "${file}"
-}

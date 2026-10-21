@@ -10,16 +10,15 @@ source "${LIB_DIR}/env.sh"
 
 # Refuse a missing sender or hello@lanonna.app before any image build.
 # Mailjet returns HTTP 200 for that address and then drops the message (#43).
+# Precedence: exported shell value > gitignored local file > tracked env file.
 require_mailjet_sender() {
   local env_file="$1"
   local local_env_file="$2"
-  if [[ -z "${MAILJET_FROM_EMAIL:-}" ]]; then
-    if [[ -f "${env_file}" ]]; then
-      load_unset_env_file "${env_file}"
-    fi
-    if [[ -f "${local_env_file}" ]]; then
-      load_env_file_overrides "${local_env_file}"
-    fi
+  if [[ -f "${local_env_file}" ]]; then
+    load_unset_env_file "${local_env_file}"
+  fi
+  if [[ -f "${env_file}" ]]; then
+    load_unset_env_file "${env_file}"
   fi
   if [[ -z "${MAILJET_FROM_EMAIL:-}" ]]; then
     echo "MAILJET_FROM_EMAIL is required. Export it or set it in ${local_env_file} (copy from ${local_env_file}.example)." >&2
@@ -38,6 +37,7 @@ deploy_worker() {
   local region="${GCP_REGION:-us-central1}"
   local service="worker"
   local script_dir worker_dir repo_root image sql_instance conn worker_url project_id worker_env_file
+  local worker_local_env_file
 
   script_dir="$(cd "$(dirname "$0")" && pwd)"
   worker_dir="$(cd "${script_dir}/.." && pwd)"
@@ -51,8 +51,6 @@ deploy_worker() {
   require_mailjet_sender "${worker_env_file}" "${worker_local_env_file}"
 
   image="${region}-docker.pkg.dev/${project_id}/lanonna/${service}:$(git -C "${repo_root}" rev-parse --short HEAD 2>/dev/null || echo local)"
-
-  gcloud config set project "${project_id}"
 
   if [[ "${USE_LOCAL_DOCKER:-0}" == "1" ]] && command -v docker >/dev/null; then
     gcloud auth configure-docker "${region}-docker.pkg.dev" --quiet
@@ -70,6 +68,7 @@ deploy_worker() {
   conn="${project_id}:${region}:${sql_instance}"
 
   gcloud run deploy "${service}" \
+    --project="${project_id}" \
     --image="${image}" \
     --region="${region}" \
     --platform=managed \
@@ -84,7 +83,7 @@ deploy_worker() {
     --cpu=1 \
     --timeout=300
 
-  worker_url="$(gcloud run services describe "${service}" --region="${region}" --format='value(status.url)')"
+  worker_url="$(gcloud run services describe "${service}" --project="${project_id}" --region="${region}" --format='value(status.url)')"
   echo "Worker URL: ${worker_url}"
   echo "Deploy complete. Update Terraform worker_push_endpoint if this URL changed."
 }
