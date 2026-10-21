@@ -89,7 +89,7 @@ Document keystore creation in [apps/mobile/android/README.md](../../apps/mobile/
 2. Create **lanonna-prod** (or chosen) Firebase/GCP project; register prod Android/iOS apps (application ID TBD).
 3. Run **`flutterfire configure`** for prod; replace `firebase_options_prod.dart` generated output.
 4. Fill **`flavors/prod.json`** (API URL, invite host, Google Sign-In web client ID).
-5. Firebase console: enable **Crashlytics** for prod (and dev if desired).
+5. Firebase console: enable **Crashlytics** for prod (and dev if desired). On **dev** release builds (`flavors/dev.json`), use **Settings → Send test crash (Crashlytics)** or a one-off build with `--dart-define=CRASHLYTICS_TEST_CRASH_ON_START=true` (crashes ~3s after launch; relaunch once to upload).
 6. Play Console / App Store signing and App Links verification with prod `assetlinks` / AASA (hosting deploy — separate infra PR).
 
 ## Build commands

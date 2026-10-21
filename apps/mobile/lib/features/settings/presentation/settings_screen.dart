@@ -8,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
+import '../../../core/observability/crashlytics_dev_tools.dart';
 import 'biometric_unlock_settings_tile.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -55,6 +56,12 @@ class SettingsScreen extends StatelessWidget {
             trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
             onTap: () => _openHelp(context),
           ),
+          if (showCrashlyticsDevToolsInSettings)
+            ListTile(
+              title: Text(l10n.settingsSendTestCrash),
+              subtitle: Text(l10n.settingsSendTestCrashSubtitle),
+              onTap: sendCrashlyticsTestCrash,
+            ),
         ],
       ),
     );

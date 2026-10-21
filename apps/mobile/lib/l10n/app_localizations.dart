@@ -118,6 +118,18 @@ abstract class AppLocalizations {
   /// **'Help & support'**
   String get settingsHelpSupport;
 
+  /// No description provided for @settingsSendTestCrash.
+  ///
+  /// In en, this message translates to:
+  /// **'Send test crash (Crashlytics)'**
+  String get settingsSendTestCrash;
+
+  /// No description provided for @settingsSendTestCrashSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Dev builds only. Verifies Firebase Crashlytics.'**
+  String get settingsSendTestCrashSubtitle;
+
   /// No description provided for @settingsEditProfile.
   ///
   /// In en, this message translates to:

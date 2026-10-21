@@ -4,6 +4,8 @@
   "settingsNotifications": "Notifications",
   "settingsNotificationsSubtitle": "Digest, push, and channel preferences",
   "settingsHelpSupport": "Help & support",
+  "settingsSendTestCrash": "Send test crash (Crashlytics)",
+  "settingsSendTestCrashSubtitle": "Dev builds only. Verifies Firebase Crashlytics.",
   "settingsEditProfile": "Edit profile",
   "settingsBiometricUnlock": "Biometric sign-in & unlock",
   "settingsBiometricUnlockSubtitle": "Sign in with Face ID or fingerprint after logout, and lock the app when you return",

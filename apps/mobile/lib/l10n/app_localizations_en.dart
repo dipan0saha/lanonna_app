@@ -22,6 +22,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsHelpSupport => 'Help & support';
 
   @override
+  String get settingsSendTestCrash => 'Send test crash (Crashlytics)';
+
+  @override
+  String get settingsSendTestCrashSubtitle =>
+      'Dev builds only. Verifies Firebase Crashlytics.';
+
+  @override
   String get settingsEditProfile => 'Edit profile';
 
   @override
