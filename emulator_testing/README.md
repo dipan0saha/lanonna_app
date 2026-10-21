@@ -224,7 +224,7 @@ adb shell am start -a android.intent.action.VIEW \
 
 ## Cleaning up disposable test data
 
-**Email patterns used in QA:** `lanonna.del.*@gmail.com`, `lanonna.delete.test.*@gmail.com`.
+**Email patterns used in QA:** `lanonna.del.*@example.com`, `lanonna.delete.test.*@example.com`.
 
 1. Delete Firebase users (Admin SDK `list_users` + filter by email prefix).
 2. Full wipe (SQL + GCS + Firebase): `./scripts/hard_delete_user.sh you@example.com` (sole-owned babies hard-deleted; co-owned babies kept).

@@ -9,7 +9,7 @@ Cloud Run service **`api`** in `lanonna-dev`.
 ## Deploy
 
 ```bash
-gcloud config set account lanonnaapp@gmail.com
+gcloud config set account <your-deploy-account>
 gcloud config set project lanonna-dev
 ./scripts/deploy.sh
 ```

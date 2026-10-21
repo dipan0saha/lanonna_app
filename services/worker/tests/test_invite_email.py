@@ -225,7 +225,7 @@ def test_send_invite_email_sends_and_marks_sent(mock_settings):
 def test_send_invite_email_connect_error_returns_retry_for_pubsub_backoff(mock_settings):
     mock_settings.mailjet_api_key = "key"
     mock_settings.mailjet_api_secret = "secret"
-    mock_settings.mailjet_from_email = "lanonnaapp@gmail.com"
+    mock_settings.mailjet_from_email = "sender@example.com"
     mock_settings.mailjet_from_name = "La Nonna"
     mock_settings.invite_deep_link_base = "https://lanonna-dev.firebaseapp.com"
     inv_id = uuid.uuid4()
@@ -273,7 +273,7 @@ def test_send_invite_email_connect_error_returns_retry_for_pubsub_backoff(mock_s
 def test_send_invite_email_permanent_http_400_marks_failed(mock_settings):
     mock_settings.mailjet_api_key = "key"
     mock_settings.mailjet_api_secret = "secret"
-    mock_settings.mailjet_from_email = "lanonnaapp@gmail.com"
+    mock_settings.mailjet_from_email = "sender@example.com"
     mock_settings.mailjet_from_name = "La Nonna"
     mock_settings.invite_deep_link_base = "https://lanonna-dev.firebaseapp.com"
     inv_id = uuid.uuid4()
@@ -330,7 +330,7 @@ def test_send_invite_email_permanent_http_400_marks_failed(mock_settings):
 def test_send_invite_email_raises_on_mailjet_message_error(mock_settings):
     mock_settings.mailjet_api_key = "key"
     mock_settings.mailjet_api_secret = "secret"
-    mock_settings.mailjet_from_email = "lanonnaapp@gmail.com"
+    mock_settings.mailjet_from_email = "sender@example.com"
     mock_settings.mailjet_from_name = "La Nonna"
     mock_settings.invite_deep_link_base = "https://lanonna-dev.firebaseapp.com"
     inv_id = uuid.uuid4()

@@ -1,6 +1,6 @@
 # Operations — GCP, deploy, and dev readiness
 
-**Project:** `lanonna-dev` (Terraform state: `gs://lanonna-dev-terraform-state`). Use account **`lanonnaapp@gmail.com`** for Firebase CLI and Cloud Build deploys.
+**Project:** `lanonna-dev` (Terraform state: `gs://lanonna-dev-terraform-state`). Use a Google account with deploy access to this project for Firebase CLI and Cloud Build (`gcloud auth list` / `gcloud config get-value account`).
 
 | Topic | Doc |
 |-------|-----|
@@ -15,7 +15,6 @@
 Run before product feature work. Platform plumbing should be **green** first.
 
 ```bash
-gcloud config set account lanonnaapp@gmail.com
 gcloud config set project lanonna-dev
 
 # Optional but recommended (Firebase test user password):
@@ -65,7 +64,6 @@ gcloud auth login
 gcloud auth application-default login
 gcloud auth application-default set-quota-project lanonna-dev
 gcloud config set project lanonna-dev
-gcloud config set account lanonnaapp@gmail.com
 ```
 
 ### Terraform workflow
@@ -94,7 +92,7 @@ terraform apply               # when plan looks safe
 
 1. Create **`lanonna-prod`**, link billing.
 2. `./infra/terraform/scripts/ensure-state-bucket.sh lanonna-prod lanonna-prod-terraform-state`
-3. `cd infra/terraform/environments/prod` → `terraform.tfvars` from example → `terraform init && terraform apply` (fresh apply, no import). First apply creates Cloud SQL and writes **`db-lanonna-app-password`** and **`database-url`** secret versions from Terraform (`manage_sql_app_password = true`; dev keeps `false` so existing dev passwords are never rotated).
+3. `cd infra/terraform/environments/prod` → `terraform.tfvars` from example → `terraform init && terraform apply` (fresh apply, no import). First apply creates Cloud SQL and writes a **`db-lanonna-app-password`** secret version from Terraform (`manage_sql_app_password = true`; dev keeps `false` so existing dev passwords are never rotated). The legacy **`database-url`** secret container may still exist from imports; Cloud Run does not use it (see [open-gaps.md](open-gaps.md)).
 4. Apply migrations **`001`–`041`** on empty Cloud SQL (same chain as dev).
 5. Set real values in [`infra/env/prod.worker.env`](../../infra/env/prod.worker.env) (`MAILJET_FROM_EMAIL` — placeholders fail deploy) and review [`infra/env/prod.api.env`](../../infra/env/prod.api.env) (`APP_CHECK_ENFORCE`, scaling).
 6. Deploy **worker** → `./scripts/apply-run-iam.sh` → enable push subscriptions (two-phase Terraform below) → **API** → `./scripts/setup-schedulers.sh` → invite hosting with release `ANDROID_SHA256`.
@@ -145,7 +143,7 @@ Scripts use **Cloud Build** → `us-central1-docker.pkg.dev/lanonna-dev/lanonna/
 
 **Deploy order when both change:** apply **migrations** first if needed → **worker** → `apply-run-iam.sh` → **API**. Email templates: `bash scripts/sync-email-templates.sh apply` before worker deploy when templates changed.
 
-**Worker sender (#43):** `MAILJET_FROM_EMAIL` is configuration, not a secret. `services/worker/scripts/deploy.sh` uses the environment variable when it is set, otherwise reads `infra/env/<env>.worker.env` (`lanonnaapp@gmail.com` on dev). Placeholders like `__SET_PROD_MAILJET_FROM_EMAIL__` fail before Cloud Build. Values with spaces in that file are quoted. Deploy and worker startup refuse an empty sender and `hello@lanonna.app` (Mailjet returns HTTP 200 for that address and drops the message). A Mailjet HTTP 200 whose `Messages[0].Status` is not `success` is a send failure: the invite claim is released and `email_sent_at` is not set.
+**Worker sender (#43):** `MAILJET_FROM_EMAIL` is configuration, not a Secret Manager value. `services/worker/scripts/deploy.sh` resolves it with precedence exported shell variable > gitignored **`infra/env/<env>.worker.local.env`** (copy from `dev.worker.local.env.example` on dev) > `infra/env/<env>.worker.env`; the tracked file's other settings (e.g. `MAILJET_FROM_NAME`) always load. Worker and API deploys pass `--project` and never change the gcloud default project. Deploy **fails fast** if the sender is missing. Prod committed values use placeholders like `__SET_PROD_MAILJET_FROM_EMAIL__` that deploy rejects. Values with spaces are quoted. Deploy and worker startup refuse an empty sender and `hello@lanonna.app` (Mailjet returns HTTP 200 for that address and drops the message). A Mailjet HTTP 200 whose `Messages[0].Status` is not `success` is a send failure: the invite claim is released and `email_sent_at` is not set.
 
 **Worker invite link and export signing:** `deploy.sh` sets `INVITE_DEEP_LINK_BASE=https://${project_id}.firebaseapp.com` and `GCS_SIGNING_SERVICE_ACCOUNT=lanonna-worker@${project_id}.iam.gserviceaccount.com`. Export media URLs need `lanonna-worker` to be `roles/iam.serviceAccountTokenCreator` on itself (`run_iam.tf` `worker_self_token_creator`, also granted by `./scripts/apply-run-iam.sh`). Startup rejects an invite base that is not `https://`, and rejects a `lanonna-dev` host when `ENVIRONMENT` is not `dev`.
 
@@ -159,7 +157,7 @@ ANDROID_SHA256='AA:BB:…' APPLE_TEAM_ID='XXXXXXXXXX' \
   bash scripts/deploy-invite-hosting.sh
 ```
 
-The script uses [`scripts/lib/env.sh`](../../scripts/lib/env.sh) for project/environment, enables `firebasehosting.googleapis.com`, renders per-environment `assetlinks.json` and `apple-app-site-association`, runs `firebase deploy --only hosting` from `hosting/` ([`hosting/.firebaserc`](../../hosting/.firebaserc) aliases `dev` / `prod`), and grants `service-${PROJECT_NUMBER}@gcp-sa-firebasehosting.iam.gserviceaccount.com` `roles/run.invoker` on Cloud Run `api` so the `/v1/invitations/preview` rewrite works. `hosting/firebase.json` must not ignore `**/.*`: that default drops `.well-known`, so Android App Links and the Apple association file would never be published. That service account does not exist until Hosting is enabled, so it is not in `apply-run-iam.sh`. Re-run is safe. Play Store `https://play.google.com/store/apps/details?id=com.lanonna.lanonna` may 404 until the listing exists; the page says to ask the inviter. After install, the person opens the **same email link** again (no install referrer). Prod: point the Android manifest host, iOS entitlements, and `INVITE_DEEP_LINK_BASE` at the prod `firebaseapp.com` host.
+The script uses [`scripts/lib/env.sh`](../../scripts/lib/env.sh) for project/environment, enables `firebasehosting.googleapis.com`, renders per-environment `assetlinks.json` and `apple-app-site-association`, and runs `firebase deploy --only hosting` from `hosting/` ([`hosting/.firebaserc`](../../hosting/.firebaserc) aliases `dev` / `prod`). The `/v1/invitations/preview` rewrite targets Cloud Run **`api`**, which must stay **publicly invokable** at the Run layer (`--allow-unauthenticated` on deploy); Firebase Hosting does not use a separate invoker binding in this project ([rca/repo-email-scrub-and-hosting-iam.md](rca/repo-email-scrub-and-hosting-iam.md)). `hosting/firebase.json` must not ignore `**/.*`: that default drops `.well-known`, so Android App Links and the Apple association file would never be published. Re-run is safe. Play Store `https://play.google.com/store/apps/details?id=com.lanonna.lanonna` may 404 until the listing exists; the page says to ask the inviter. After install, the person opens the **same email link** again (no install referrer). Prod: point the Android manifest host, iOS entitlements, and `INVITE_DEEP_LINK_BASE` at the prod `firebaseapp.com` host.
 
 **Auth email branding:** from the repo root, with `gcloud` ADC for `lanonna-dev`:
 
@@ -247,7 +245,7 @@ DB_PASSWORD="$PGPASSWORD" DB_PORT=5432 .venv/bin/python apply_migrations.py
 cd ../.. && ./scripts/verify-dev-migrations.sh   # repo root; PGPASSWORD set
 ```
 
-Secrets (values in Secret Manager only): `db-lanonna-app-password`, `database-url`, `db-postgres-root-password`, `admin-api-key` (add version via `gcloud` after first apply if empty).
+Secrets (values in Secret Manager only): `db-lanonna-app-password`, `db-postgres-root-password`, `admin-api-key` (add version via `gcloud` after first apply if empty). Legacy **`database-url`** on dev is unused by Cloud Run; safe to delete in GCP when convenient (see [open-gaps.md](open-gaps.md)).
 
 After migration `030` is applied, null emails on active users can be restored from Firebase Auth with `DB_PORT=5433 python infra/db/backfill_null_user_emails.py` (dry-run), then the same command with `--apply`. `--report-orphans` prints read-only counts and does not delete rows. The script needs Application Default Credentials that can call Firebase Auth `get_user`.
 
@@ -315,7 +313,7 @@ gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS
 gcloud config set project lanonna-dev
 ```
 
-Switch back for interactive work: `gcloud config set account lanonnaapp@gmail.com`
+Switch back for interactive work: `gcloud config set account YOUR_HUMAN_GOOGLE_ACCOUNT` (the email you use for `gcloud auth login`).
 
 ---
 

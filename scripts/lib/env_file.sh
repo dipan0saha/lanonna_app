@@ -29,8 +29,7 @@ load_unset_env_file() {
       value="${value:1:${#value}-2}"
     fi
     if [[ -z "${!key+x}" ]]; then
-      printf -v "${key}" '%s' "${value}"
-      export "${key}"
+      export "${key}=${value}"
     fi
   done < "${file}"
 }

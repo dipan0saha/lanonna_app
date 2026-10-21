@@ -10,7 +10,6 @@ HOSTING="${ROOT}/hosting"
 source "${ROOT}/scripts/lib/env.sh"
 lanonna_resolve_environment
 PROJECT_ID="${GCP_PROJECT_ID}"
-REGION="${GCP_REGION:-us-central1}"
 
 if [[ "${ENVIRONMENT}" == "prod" && -z "${ANDROID_SHA256:-}" ]]; then
   echo "ENVIRONMENT=prod requires ANDROID_SHA256 (release/upload keystore fingerprint). Debug keystore is not used on prod." >&2
@@ -107,16 +106,6 @@ echo "Deploying Hosting (invite landing page + /.well-known)..."
   cd "${HOSTING}"
   firebase deploy --only hosting --project "${PROJECT_ID}" --non-interactive
 )
-
-PN="$(gcloud projects describe "${PROJECT_ID}" --format='value(projectNumber)')"
-MEMBER="serviceAccount:service-${PN}@gcp-sa-firebasehosting.iam.gserviceaccount.com"
-echo "Granting Hosting permission to invoke the API (preview rewrite)..."
-gcloud run services add-iam-policy-binding api \
-  --project="${PROJECT_ID}" \
-  --region="${REGION}" \
-  --member="${MEMBER}" \
-  --role="roles/run.invoker" \
-  --quiet
 
 echo "Invite hosting is live at https://${PROJECT_ID}.firebaseapp.com/invite"
 echo "Worker invite links use INVITE_DEEP_LINK_BASE=https://${PROJECT_ID}.firebaseapp.com"

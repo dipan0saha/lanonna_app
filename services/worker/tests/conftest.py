@@ -2,4 +2,4 @@
 
 import os
 
-os.environ.setdefault("MAILJET_FROM_EMAIL", "lanonnaapp@gmail.com")
+os.environ.setdefault("MAILJET_FROM_EMAIL", "sender@example.com")

@@ -28,7 +28,7 @@ Dev QA and onboarding retests need fast resets; operators are trusted. Also docu
 
 ## Operator expectations
 
-- Use **`lanonnaapp@gmail.com`** or documented human ADC for deploys; automation SA is optional and dev-only ([operations.md](operations.md) service accounts).
+- Use a **human Google account** (ADC) for deploys; automation SA is optional and dev-only ([operations.md](operations.md) service accounts).
 - Admin key: Secret Manager `admin-api-key`; never log or commit.
 - DB scripts: Cloud SQL Auth Proxy to **dev** only; confirm `gcloud config get-value project` before `clear_dev_test_data` / `hard_delete_user`.
 

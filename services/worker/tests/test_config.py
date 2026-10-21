@@ -12,11 +12,14 @@ from lanonna_worker.config import (
 
 _DEPLOY = Path(__file__).resolve().parents[1] / "scripts" / "deploy.sh"
 _WORKER_ENV = Path(__file__).resolve().parents[3] / "infra" / "env" / "dev.worker.env"
+_WORKER_LOCAL_EXAMPLE = (
+    Path(__file__).resolve().parents[3] / "infra" / "env" / "dev.worker.local.env.example"
+)
 
 
 def test_validate_worker_settings_allows_dev_defaults():
     validate_worker_settings(
-        Settings(environment="dev", mailjet_from_email="lanonnaapp@gmail.com"),
+        Settings(environment="dev", mailjet_from_email="sender@example.com"),
     )
 
 
@@ -42,9 +45,13 @@ def test_deploy_script_has_no_unvalidated_sender_fallback():
     assert "MAILJET_FROM_EMAIL:-hello@lanonna.app" not in text
     assert "hello@lanonna.app" in text
     assert 'source "${WORKER_ENV_FILE}"' not in text
+    assert "lanonna_infra_env_local_file" in text
     # Sender check is before Cloud Build.
     assert text.index("require_mailjet_sender") < text.index("gcloud builds submit")
-    assert "MAILJET_FROM_EMAIL=lanonnaapp@gmail.com" in _WORKER_ENV.read_text()
+    worker_env = _WORKER_ENV.read_text()
+    assert "MAILJET_FROM_EMAIL=" not in worker_env
+    assert _WORKER_LOCAL_EXAMPLE.is_file()
+    assert "MAILJET_FROM_EMAIL=" in _WORKER_LOCAL_EXAMPLE.read_text()
 
 
 def test_dev_worker_env_sources_as_shell():
@@ -71,7 +78,7 @@ def test_env_loader_reads_spaces_and_does_not_execute(tmp_path: Path):
     marker = tmp_path / "executed"
     env_file = tmp_path / "worker.env"
     env_file.write_text(
-        "MAILJET_FROM_EMAIL=lanonnaapp@gmail.com\n"
+        "MAILJET_FROM_EMAIL=sender@example.com\n"
         "MAILJET_FROM_NAME=La Nonna\n"
         f"PWNED=$(touch {marker})\n",
         encoding="utf-8",
@@ -83,12 +90,13 @@ def test_env_loader_reads_spaces_and_does_not_execute(tmp_path: Path):
             """
             unset MAILJET_FROM_EMAIL MAILJET_FROM_NAME PWNED
             source "$1"
-            require_mailjet_sender "$2"
+            require_mailjet_sender "$2" "$3"
             printf '%s\\n%s' "$MAILJET_FROM_NAME" "$PWNED"
             """,
             "bash",
             str(_DEPLOY),
             str(env_file),
+            str(tmp_path / "missing.local.env"),
         ],
         check=False,
         capture_output=True,
@@ -98,6 +106,35 @@ def test_env_loader_reads_spaces_and_does_not_execute(tmp_path: Path):
     assert result.returncode == 0, result.stderr
     assert result.stdout == f"La Nonna\n$(touch {marker})"
     assert not marker.exists()
+
+
+def test_require_mailjet_sender_loads_local_override(tmp_path: Path):
+    base = tmp_path / "dev.worker.env"
+    base.write_text('MAILJET_FROM_NAME="La Nonna"\n', encoding="utf-8")
+    local = tmp_path / "dev.worker.local.env"
+    local.write_text("MAILJET_FROM_EMAIL=sender@example.com\n", encoding="utf-8")
+    result = subprocess.run(
+        [
+            "bash",
+            "-c",
+            """
+            unset MAILJET_FROM_EMAIL MAILJET_FROM_NAME
+            source "$1"
+            require_mailjet_sender "$2" "$3"
+            printf '%s' "$MAILJET_FROM_EMAIL"
+            """,
+            "bash",
+            str(_DEPLOY),
+            str(base),
+            str(local),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env={"PATH": os.environ.get("PATH", "")},
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == "sender@example.com"
 
 
 def _gcloud_stub(tmp_path: Path) -> tuple[Path, dict[str, str]]:
@@ -134,8 +171,28 @@ def test_deploy_rejects_unvalidated_sender_before_gcloud(tmp_path: Path):
     assert not log.exists()
 
 
+def test_deploy_fails_without_sender_before_gcloud(tmp_path: Path):
+    log, env = _gcloud_stub(tmp_path)
+    env["WORKER_ENV_FILE"] = str(tmp_path / "missing.env")
+    env["WORKER_LOCAL_ENV_FILE"] = str(tmp_path / "missing.local.env")
+    result = subprocess.run(
+        ["bash", str(_DEPLOY)],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    assert result.returncode != 0
+    assert "MAILJET_FROM_EMAIL is required" in result.stderr
+    assert not log.exists()
+
+
 def test_plain_deploy_loads_spaced_name_before_build(tmp_path: Path):
     log, env = _gcloud_stub(tmp_path)
+    local = tmp_path / "dev.worker.local.env"
+    local.write_text("MAILJET_FROM_EMAIL=sender@example.com\n", encoding="utf-8")
+    env["WORKER_LOCAL_ENV_FILE"] = str(local)
+    env["WORKER_ENV_FILE"] = str(_WORKER_ENV)
     result = subprocess.run(
         ["bash", str(_DEPLOY)],
         check=False,
@@ -146,8 +203,60 @@ def test_plain_deploy_loads_spaced_name_before_build(tmp_path: Path):
     assert "command not found" not in result.stderr
     assert result.returncode != 0
     recorded = log.read_text(encoding="utf-8")
-    assert recorded.startswith("config set project")
-    assert "builds submit" not in recorded
+    assert "config set project" not in recorded
+    assert recorded.startswith("builds submit")
+    assert "--project lanonna-dev" in recorded
+
+
+def _run_require_sender(tmp_path: Path, base_text: str, local_text: str | None, exported: str | None):
+    base = tmp_path / "dev.worker.env"
+    base.write_text(base_text, encoding="utf-8")
+    local = tmp_path / "dev.worker.local.env"
+    if local_text is not None:
+        local.write_text(local_text, encoding="utf-8")
+    env = {"PATH": os.environ.get("PATH", "")}
+    if exported is not None:
+        env["MAILJET_FROM_EMAIL"] = exported
+    return subprocess.run(
+        [
+            "bash",
+            "-c",
+            'source "$1"; require_mailjet_sender "$2" "$3"; printf "%s|%s" "$MAILJET_FROM_EMAIL" "$MAILJET_FROM_NAME"',
+            "bash",
+            str(_DEPLOY),
+            str(base),
+            str(local),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+
+def test_sender_precedence_shell_over_local_over_tracked(tmp_path: Path):
+    base = 'MAILJET_FROM_EMAIL=tracked@example.com\nMAILJET_FROM_NAME="La Nonna"\n'
+    local = "MAILJET_FROM_EMAIL=local@example.com\n"
+    r = _run_require_sender(tmp_path, base, local, None)
+    assert r.returncode == 0, r.stderr
+    assert r.stdout == "local@example.com|La Nonna"
+    r = _run_require_sender(tmp_path, base, local, "shell@example.com")
+    assert r.returncode == 0, r.stderr
+    # Tracked non-secret settings still load when the sender is exported.
+    assert r.stdout == "shell@example.com|La Nonna"
+
+
+def test_sender_missing_everywhere_fails(tmp_path: Path):
+    r = _run_require_sender(tmp_path, 'MAILJET_FROM_NAME="La Nonna"\n', None, None)
+    assert r.returncode != 0
+    assert "MAILJET_FROM_EMAIL is required" in r.stderr
+
+
+def test_prod_placeholder_sender_is_rejected_even_with_local_name(tmp_path: Path):
+    r = _run_require_sender(
+        tmp_path, "MAILJET_FROM_EMAIL=__SET_PROD_MAILJET_FROM_EMAIL__\n", "MAILJET_FROM_NAME=X\n", None
+    )
+    assert r.returncode != 0
 
 
 def test_invite_link_base_rejects_custom_scheme_and_dev_host_outside_dev():

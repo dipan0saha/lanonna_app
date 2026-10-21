@@ -109,3 +109,11 @@ def test_infra_env_path_for_dev_api():
     )
     assert result.returncode == 0
     assert result.stdout.strip().endswith("infra/env/dev.api.env")
+
+
+def test_infra_env_local_path_for_dev_worker():
+    result = _bash_snippet(
+        f'source "{_ENV_SH}" && lanonna_infra_env_local_file worker'
+    )
+    assert result.returncode == 0
+    assert result.stdout.strip().endswith("infra/env/dev.worker.local.env")
