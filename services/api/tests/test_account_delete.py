@@ -179,3 +179,25 @@ def test_delete_account_continues_when_firebase_user_missing():
     ):
         delete_account("uid-3")
     soft_delete.assert_called_once_with("uid-3", [])
+
+
+def test_delete_account_route_passes_token_uid_to_domain():
+    """The route depends on ``current_user`` (verified claims dict), not ``AppUser``."""
+    with (
+        _auth_as("uid-route"),
+        patch("lanonna_api.routers.profile.delete_account") as delete,
+    ):
+        resp = client.post("/v1/me/delete-account", json={"confirm": True})
+    assert resp.status_code == 200
+    assert resp.json() == {"status": "deleted"}
+    delete.assert_called_once_with("uid-route")
+
+
+def test_delete_account_route_requires_confirm():
+    with (
+        _auth_as("uid-route"),
+        patch("lanonna_api.routers.profile.delete_account") as delete,
+    ):
+        resp = client.post("/v1/me/delete-account", json={"confirm": False})
+    assert resp.status_code == 400
+    delete.assert_not_called()

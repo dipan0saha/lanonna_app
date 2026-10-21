@@ -154,12 +154,14 @@ def get_delete_account_preview(
 @router.post("/me/delete-account")
 def post_delete_account(
     body: DeleteAccountBody,
-    user: dict[str, Any] = Depends(current_user),
+    claims: dict[str, Any] = Depends(current_user),
 ) -> dict[str, str]:
+    # Verified token claims, not ``AppUser``: a retry after the SQL tombstone must
+    # still reach Firebase deletion, and ``current_app_user`` rejects tombstones.
     if not body.confirm:
         raise api_error(status.HTTP_400_BAD_REQUEST, ErrorCode.INVALID_REQUEST, "confirm must be true")
     try:
-        delete_account(user.uid)
+        delete_account(claims["uid"])
     except PermissionError as exc:
         raise map_domain_errors(exc) from exc
     except RuntimeError as exc:
