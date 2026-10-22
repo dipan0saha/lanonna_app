@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/run_mutation.dart';
-import '../../../core/widgets/app_confirm_dialog.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/validation/form_validators.dart';
 import '../../../core/theme/app_colors.dart';
@@ -18,6 +17,7 @@ import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../data/registry_repository.dart';
+import 'delete_registry_item_flow.dart';
 import '../../../core/theme/app_button_styles.dart';
 import '../../../l10n/app_localizations.dart';
 
@@ -150,24 +150,12 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
   Future<void> _delete() async {
     final baby = _baby;
     if (baby == null || !widget.isEdit) return;
-    final l10n = AppLocalizations.of(context)!;
-    final confirmed = await showConfirmDialog(
+    final deleted = await deleteRegistryItemWithConfirmation(
       context,
-      title: l10n.registryDeleteConfirmTitle,
-      message: l10n.messageRemoves,
-      confirmLabel: l10n.actionDelete,
-      variant: ConfirmDialogVariant.destructive,
+      babyId: baby.id,
+      itemId: widget.itemId!,
     );
-    if (confirmed != true || !mounted) return;
-    final ok = await runMutation(
-      context,
-      () => context.read<RegistryRepository>().deleteItem(
-        baby.id,
-        widget.itemId!,
-      ),
-    );
-    if (!ok || !mounted) return;
-    context.read<HomeRefreshSignal>().notifyHomeShouldRefresh();
+    if (!deleted || !mounted) return;
     context.pop();
   }
 

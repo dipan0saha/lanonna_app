@@ -140,4 +140,20 @@ void main() {
 
     expect(registry.deleteCalls, 1);
   });
+
+  testWidgets('barrier tap on registry delete confirm does not delete', (
+    tester,
+  ) async {
+    final registry = _FakeRegistryRepository();
+    await _pumpRegistryScreen(tester, registry);
+
+    await tester.tap(find.byTooltip('Delete item'));
+    await tester.pumpAndSettle();
+    expect(find.text('Delete this item?'), findsOneWidget);
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Delete this item?'), findsNothing);
+    expect(registry.deleteCalls, 0);
+  });
 }

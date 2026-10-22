@@ -715,7 +715,7 @@ abstract class AppLocalizations {
   /// No description provided for @inviteRevokeConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'The invite to {email} will be revoked.'**
+  /// **'{email} will no longer be able to join with this invite.'**
   String inviteRevokeConfirmBody(String email);
 
   /// No description provided for @memberLeftSuccess.

@@ -215,7 +215,7 @@
   "membershipEndedMessage": "You no longer have access to this profile.",
   "memberRemovedSuccess": "Member removed.",
   "inviteRevokeConfirmTitle": "Revoke invitation?",
-  "inviteRevokeConfirmBody": "The invite to {email} will be revoked.",
+  "inviteRevokeConfirmBody": "{email} will no longer be able to join with this invite.",
   "@inviteRevokeConfirmBody": {
     "placeholders": {
       "email": {

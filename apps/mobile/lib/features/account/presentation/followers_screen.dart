@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/api/api_error_message.dart';
 import '../../../core/presentation/tab_load_failure.dart';
 import '../../../core/api/run_mutation.dart';
 import '../../../core/widgets/app_confirm_dialog.dart';
@@ -26,6 +25,7 @@ import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/domain/app_routes.dart';
 import '../data/account_repository.dart';
+import '../../invitations/presentation/revoke_invitation_flow.dart';
 import '../../../core/data/parallel_requests.dart';
 
 class FollowersScreen extends StatefulWidget {
@@ -149,35 +149,20 @@ class _FollowersScreenState extends State<FollowersScreen> {
   }
 
   Future<void> _confirmRevokeInvite(InvitationRow inv) async {
-    final l10n = AppLocalizations.of(context)!;
-    final ok = await showConfirmDialog(
+    final revoked = await revokeInvitationWithConfirmation(
       context,
-      title: l10n.inviteRevokeConfirmTitle,
-      message: l10n.inviteRevokeConfirmBody(inv.email),
-      confirmLabel: l10n.actionRevoke,
-      variant: ConfirmDialogVariant.destructive,
+      babyId: widget.babyId,
+      invitationId: inv.id,
+      inviteeEmail: inv.email,
     );
-    if (ok != true || !mounted) return;
-    try {
-      await context.read<AccountRepository>().revokeInvitation(
-        widget.babyId,
-        inv.id,
-      );
-      if (!mounted) return;
-      setState(() {
-        _invites = [
-          for (final i in _invites)
-            if (i.id != inv.id) i,
-        ];
-      });
-      await _load();
-    } catch (e) {
-      if (!context.mounted) return;
-      AppSnackBar.showAlert(
-        context,
-        apiErrorMessage(AppLocalizations.of(context)!, e),
-      );
-    }
+    if (!revoked || !mounted) return;
+    setState(() {
+      _invites = [
+        for (final i in _invites)
+          if (i.id != inv.id) i,
+      ];
+    });
+    await _load();
   }
 
   @override

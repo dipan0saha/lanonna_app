@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/api/api_client.dart';
+import 'package:lanonna/core/theme/app_colors.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/features/account/data/account_repository.dart';
 import 'package:lanonna/features/account/presentation/followers_screen.dart';
@@ -119,6 +120,17 @@ void main() {
     await tester.tap(find.text('Revoke'));
     await tester.pumpAndSettle();
     expect(find.text('Revoke invitation?'), findsOneWidget);
+    expect(
+      find.text('friend@example.com will no longer be able to join with this invite.'),
+      findsOneWidget,
+    );
+    final confirm = tester.widget<ElevatedButton>(
+      find.widgetWithText(ElevatedButton, 'Revoke'),
+    );
+    expect(
+      confirm.style?.backgroundColor?.resolve(<WidgetState>{}),
+      AppColors.error,
+    );
 
     await tester.tap(find.widgetWithText(ElevatedButton, 'Revoke'));
     await tester.pumpAndSettle();

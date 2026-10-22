@@ -16,11 +16,11 @@ Roughly a dozen destructive and affirmative confirmation flows in `apps/mobile` 
 
 | Area | Primary files |
 |------|----------------|
-| Registry delete confirm | `registry_screen.dart`, `registry_item_form_screen.dart`, l10n `registryDeleteConfirmTitle` (+ shared `messageRemoves` / `actionDelete` like photo/event delete) |
-| Invite revoke confirm | `followers_screen.dart`, `home_owner_sections.dart`, l10n `inviteRevokeConfirmTitle` / `inviteRevokeConfirmBody` |
+| Registry delete confirm | `delete_registry_item_flow.dart` (`deleteRegistryItemWithConfirmation`, used by `registry_screen.dart` and `registry_item_form_screen.dart`), l10n `registryDeleteConfirmTitle` (+ shared `messageRemoves` / `actionDelete` like photo/event delete) |
+| Invite revoke confirm | `revoke_invitation_flow.dart` (`revokeInvitationWithConfirmation`, used by `followers_screen.dart` and `home_owner_sections.dart`; errors via `runMutation`), l10n `inviteRevokeConfirmTitle` / `inviteRevokeConfirmBody` |
 | Follower **Remove** label | `followers_screen.dart` (list action text → `memberRemoveAction`) |
 | Shared sheet | `app_confirm_dialog.dart` (unchanged API), `ConfirmDialogVariant.destructive` |
-| Tests | `followers_screen_test.dart`, new `registry_delete_confirm_test.dart` |
+| Tests | `followers_screen_test.dart`, new `registry_delete_confirm_test.dart`, new `home_invite_revoke_confirm_test.dart` |
 
 ### Why
 
@@ -45,10 +45,10 @@ Owner-approved product follow-up to PRs #356/#357: irreversible registry deletes
 | 13 | `home_screen.dart` | After mark born, no announcement | `homeCreateAnnouncementTitle` | `actionShareKeepsakeCardPhoto` | `actionLater` | `actionCreate` | No | `bool` | Optional push announcement create |
 | 14 | `names_tab.dart` | Delete name suggestion | `funRemoveNameTitle` | `funRemoveNameBody(name)` | `actionCancel` | `actionRemove` | No | `bool` | `runMutation` delete suggestion |
 | 15 | `predictions_tab.dart` | Save/update birthdate guess | `funBirthdateConfirmSaveTitle` / `funBirthdateConfirmUpdateTitle` | Matching body with date | `actionCancel` | `funBirthdateConfirmAction` | No | `bool` | Submit guess API |
-| 16 | `registry_screen.dart` | Owner deletes registry item (trash) | `registryDeleteConfirmTitle` | `messageRemoves` | `actionCancel` | `actionDelete` | Yes | `bool` | `runMutation` delete, `_load` |
-| 17 | `registry_item_form_screen.dart` | Owner deletes from edit form | `registryDeleteConfirmTitle` | `messageRemoves` | `actionCancel` | `actionDelete` | Yes | `bool` | `runMutation` delete, home refresh, `pop` |
-| 18 | `followers_screen.dart` | Revoke pending invite | `inviteRevokeConfirmTitle` | `inviteRevokeConfirmBody(email)` | `actionCancel` | `actionRevoke` | Yes | `bool` | `revokeInvitation`, list update, `_load` |
-| 19 | `home_owner_sections.dart` | Revoke pending invite (home) | `inviteRevokeConfirmTitle` | `inviteRevokeConfirmBody(email)` | `actionCancel` | `actionRevoke` | Yes | `bool` | `revokeInvitation`, `onChanged` |
+| 16 | `registry_screen.dart` | Owner deletes registry item (trash) | `registryDeleteConfirmTitle` | `messageRemoves` | `actionCancel` | `actionDelete` | Yes | `bool` | `deleteRegistryItemWithConfirmation` (delete, home refresh), `_load` |
+| 17 | `registry_item_form_screen.dart` | Owner deletes from edit form | `registryDeleteConfirmTitle` | `messageRemoves` | `actionCancel` | `actionDelete` | Yes | `bool` | `deleteRegistryItemWithConfirmation` (delete, home refresh), `pop` |
+| 18 | `followers_screen.dart` | Revoke pending invite | `inviteRevokeConfirmTitle` | `inviteRevokeConfirmBody(email)` | `actionCancel` | `actionRevoke` | Yes | `bool` | `revokeInvitationWithConfirmation`, list update, `_load` |
+| 19 | `home_owner_sections.dart` | Revoke pending invite (home) | `inviteRevokeConfirmTitle` | `inviteRevokeConfirmBody(email)` | `actionCancel` | `actionRevoke` | Yes | `bool` | `revokeInvitationWithConfirmation` (error alert; previously unhandled), `onChanged` |
 
 ### Related dialogs (out of scope for shared confirm)
 
@@ -91,4 +91,4 @@ Owner-approved product follow-up to PRs #356/#357: irreversible registry deletes
 - `lib/core/widgets/app_confirm_dialog.dart` — `showConfirmDialog`, `showConfirmDialogSequence`, `AppConfirmDialog`, `ConfirmDialogVariant`, `ConfirmDialogStep`.
 - `lib/core/theme/app_button_styles.dart` — `primaryDestructive`.
 - Migrated inventory rows #1–3, #5–15; left form dialogs (#4, edit comment, forgot password) unchanged.
-- Follow-up: rows #16–19 (registry delete, invite revoke confirms; follower list action label **Remove**).
+- Follow-up: rows #16–19 (registry delete, invite revoke confirms; follower list action label **Remove**). Each pair of entry points shares one flow (`deleteRegistryItemWithConfirmation`, `revokeInvitationWithConfirmation`) so confirm copy, error handling and refresh cannot drift. Invite body: "{email} will no longer be able to join with this invite." (consequence-first, like `memberRemoveConfirmBody`).

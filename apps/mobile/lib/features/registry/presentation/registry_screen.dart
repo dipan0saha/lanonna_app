@@ -26,6 +26,7 @@ import '../../../core/domain/baby_summary.dart';
 import '../data/models/registry_models.dart';
 import '../data/registry_repository.dart';
 import '../domain/registry_routes.dart';
+import 'delete_registry_item_flow.dart';
 import 'widgets/registry_empty_state.dart';
 import 'widgets/registry_item_row.dart';
 import '../../../l10n/app_localizations.dart';
@@ -211,19 +212,12 @@ class _RegistryScreenState extends State<RegistryScreen>
   Future<void> _deleteItem(RegistryItem item) async {
     final baby = _baby;
     if (baby == null) return;
-    final confirmed = await showConfirmDialog(
+    final deleted = await deleteRegistryItemWithConfirmation(
       context,
-      title: l10n.registryDeleteConfirmTitle,
-      message: l10n.messageRemoves,
-      confirmLabel: l10n.actionDelete,
-      variant: ConfirmDialogVariant.destructive,
+      babyId: baby.id,
+      itemId: item.id,
     );
-    if (confirmed != true || !mounted) return;
-    final ok = await runMutation(
-      context,
-      () => context.read<RegistryRepository>().deleteItem(baby.id, item.id),
-    );
-    if (!ok || !mounted) return;
+    if (!deleted || !mounted) return;
     await _load();
   }
 

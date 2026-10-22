@@ -417,7 +417,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String inviteRevokeConfirmBody(String email) {
-    return 'The invite to $email will be revoked.';
+    return '$email will no longer be able to join with this invite.';
   }
 
   @override

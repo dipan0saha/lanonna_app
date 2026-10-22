@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
 import '../../../../core/domain/person_display_label.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../core/widgets/app_icon_button.dart';
-import '../../../account/data/account_repository.dart';
+import '../../../invitations/presentation/revoke_invitation_flow.dart';
 import '../../data/models/home_summary.dart';
 import 'home_scroll_section.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -75,20 +73,13 @@ class HomeInviteStatusSection extends StatelessWidget {
                 label: l10n.actionRevokeInvitation,
                 icon: const Icon(Icons.close),
                 onPressed: () async {
-                  final ok = await showConfirmDialog(
+                  final revoked = await revokeInvitationWithConfirmation(
                     context,
-                    title: l10n.inviteRevokeConfirmTitle,
-                    message: l10n.inviteRevokeConfirmBody(inv.inviteeEmail),
-                    confirmLabel: l10n.actionRevoke,
-                    variant: ConfirmDialogVariant.destructive,
+                    babyId: babyId,
+                    invitationId: inv.id,
+                    inviteeEmail: inv.inviteeEmail,
                   );
-                  if (ok != true || !context.mounted) return;
-                  await context.read<AccountRepository>().revokeInvitation(
-                    babyId,
-                    inv.id,
-                  );
-                  if (!context.mounted) return;
-                  onChanged();
+                  if (revoked) onChanged();
                 },
               ),
             ),
