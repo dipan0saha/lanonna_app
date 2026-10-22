@@ -9,6 +9,7 @@ import '../../../core/widgets/app_empty_state.dart';
 import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/async_tab_body.dart';
 import '../../../core/api/run_mutation.dart';
+import '../../../core/widgets/app_confirm_dialog.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/validation/form_validators.dart';
 import '../../../core/widgets/app_text_form_field.dart';
@@ -146,24 +147,12 @@ class _NamesTabState extends State<NamesTab> {
 
   Future<void> _delete(NameSuggestion s) async {
     if (!s.canDelete) return;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(AppLocalizations.of(ctx)!.funRemoveNameTitle),
-        content: Text(
-          AppLocalizations.of(ctx)!.funRemoveNameBody(s.suggestedName),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(AppLocalizations.of(ctx)!.actionCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(AppLocalizations.of(ctx)!.actionRemove),
-          ),
-        ],
-      ),
+    final l10n = AppLocalizations.of(context)!;
+    final ok = await showConfirmDialog(
+      context,
+      title: l10n.funRemoveNameTitle,
+      message: l10n.funRemoveNameBody(s.suggestedName),
+      confirmLabel: l10n.actionRemove,
     );
     if (ok != true) return;
     if (!mounted) return;

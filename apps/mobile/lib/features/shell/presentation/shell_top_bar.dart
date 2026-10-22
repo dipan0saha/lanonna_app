@@ -10,6 +10,7 @@ import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../home/domain/app_routes.dart';
 import '../../home/presentation/widgets/home_top_bar.dart';
+import '../../../core/widgets/app_confirm_dialog.dart';
 import 'baby_switcher_sheet.dart';
 
 Widget shellHomeTopBar(BuildContext context) {
@@ -28,28 +29,17 @@ Future<void> onShellInviteFamilyTap(BuildContext context) async {
   await context.push(AppRoutes.inviteFamily);
 }
 
-Future<void> showShellInviteRequiresOwnerBabyDialog(BuildContext context) {
+Future<void> showShellInviteRequiresOwnerBabyDialog(BuildContext context) async {
   final l10n = AppLocalizations.of(context)!;
-  return showDialog<void>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text(l10n.shellInviteRequiresOwnerBabyTitle),
-      content: Text(l10n.shellInviteRequiresOwnerBabyMessage),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx),
-          child: Text(l10n.authPasswordResetCancel),
-        ),
-        FilledButton(
-          onPressed: () {
-            Navigator.pop(ctx);
-            ctx.push('/baby/create');
-          },
-          child: Text(l10n.actionAddBaby),
-        ),
-      ],
-    ),
+  final addBaby = await showConfirmDialog(
+    context,
+    title: l10n.shellInviteRequiresOwnerBabyTitle,
+    message: l10n.shellInviteRequiresOwnerBabyMessage,
+    confirmLabel: l10n.actionAddBaby,
   );
+  if (addBaby && context.mounted) {
+    context.push('/baby/create');
+  }
 }
 
 /// The shell top bar: a view over shared state, so the five tab copies cost

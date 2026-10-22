@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/presentation/tab_load_failure.dart';
 import '../../../core/api/run_mutation.dart';
+import '../../../core/widgets/app_confirm_dialog.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../../../core/domain/relationship_preset.dart';
 import '../../../core/theme/app_colors.dart';
@@ -119,22 +120,13 @@ class _FollowersScreenState extends State<FollowersScreen> {
 
   Future<void> _confirmRemove(MemberRow member) async {
     final l10n = AppLocalizations.of(context)!;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.memberRemoveConfirmTitle),
-        content: Text(l10n.memberRemoveConfirmBody(personDisplayName(l10n, member.displayName))),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.authPasswordResetCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.memberRemoveAction),
-          ),
-        ],
+    final ok = await showConfirmDialog(
+      context,
+      title: l10n.memberRemoveConfirmTitle,
+      message: l10n.memberRemoveConfirmBody(
+        personDisplayName(l10n, member.displayName),
       ),
+      confirmLabel: l10n.memberRemoveAction,
     );
     if (ok != true || !mounted) return;
     final removed = await runMutation(

@@ -7,6 +7,7 @@ import '../../core/domain/baby_summary.dart';
 import '../../core/presentation/tab_load_failure.dart';
 import '../../core/presentation/tab_load_kind.dart';
 import '../../core/theme/app_metrics.dart';
+import '../../core/widgets/app_confirm_dialog.dart';
 import '../../core/widgets/app_snackbar.dart';
 import '../../core/widgets/async_tab_body.dart';
 import 'data/home_repository.dart';
@@ -213,24 +214,13 @@ class _HomeScreenState extends State<HomeScreen>
           final ann = await context.read<AnnouncementRepository>().fetch(baby.id);
           if (ann == null) {
             if (!mounted) return;
-            final goCreate = await showDialog<bool>(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                title: Text(AppLocalizations.of(ctx)!.homeCreateAnnouncementTitle),
-                content: Text(
-                  AppLocalizations.of(ctx)!.actionShareKeepsakeCardPhoto,
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(ctx, false),
-                    child: Text(AppLocalizations.of(ctx)!.actionLater),
-                  ),
-                  FilledButton(
-                    onPressed: () => Navigator.pop(ctx, true),
-                    child: Text(AppLocalizations.of(ctx)!.actionCreate),
-                  ),
-                ],
-              ),
+            final l10n = AppLocalizations.of(context)!;
+            final goCreate = await showConfirmDialog(
+              context,
+              title: l10n.homeCreateAnnouncementTitle,
+              message: l10n.actionShareKeepsakeCardPhoto,
+              confirmLabel: l10n.actionCreate,
+              cancelLabel: l10n.actionLater,
             );
             if (goCreate == true && mounted) {
               context.push('/baby/${baby.id}/announcement/create');

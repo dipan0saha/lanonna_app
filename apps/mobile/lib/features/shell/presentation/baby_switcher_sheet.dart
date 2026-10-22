@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/la_nonna_theme.dart';
+import '../../../core/widgets/app_confirm_dialog.dart';
 import '../../../core/widgets/app_modal_sheet.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/widgets/baby_profile_avatar.dart';
@@ -79,22 +80,11 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
 
   Future<void> _leaveBaby(BabySummary baby) async {
     final l10n = AppLocalizations.of(context)!;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.memberLeaveConfirmTitle),
-        content: Text(l10n.memberLeaveConfirmBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.authPasswordResetCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.memberLeaveAction),
-          ),
-        ],
-      ),
+    final ok = await showConfirmDialog(
+      context,
+      title: l10n.memberLeaveConfirmTitle,
+      message: l10n.memberLeaveConfirmBody,
+      confirmLabel: l10n.memberLeaveAction,
     );
     if (ok != true || !mounted) return;
     final left = await runMutation(

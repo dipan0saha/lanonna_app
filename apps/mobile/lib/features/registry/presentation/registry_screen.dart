@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/run_mutation.dart';
+import '../../../core/widgets/app_confirm_dialog.dart';
 import '../../../core/presentation/tab_load_failure.dart';
 import '../../../core/presentation/tab_load_kind.dart';
 import '../../../core/auth/auth_repository.dart';
@@ -189,24 +190,12 @@ class _RegistryScreenState extends State<RegistryScreen>
     final baby = _baby;
     if (baby == null) return;
     if (_isOwner) {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: Text(AppLocalizations.of(ctx)!.registryMarkPurchasedTitle),
-          content: Text(
-            AppLocalizations.of(ctx)!.messageItem,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(AppLocalizations.of(ctx)!.actionCancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text(AppLocalizations.of(ctx)!.registryMarkPurchased),
-            ),
-          ],
-        ),
+      final l10n = AppLocalizations.of(context)!;
+      final confirmed = await showConfirmDialog(
+        context,
+        title: l10n.registryMarkPurchasedTitle,
+        message: l10n.messageItem,
+        confirmLabel: l10n.registryMarkPurchased,
       );
       if (confirmed != true) return;
     }
