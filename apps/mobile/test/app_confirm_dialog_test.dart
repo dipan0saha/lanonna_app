@@ -145,4 +145,42 @@ void main() {
     await tester.pumpAndSettle();
     expect(result, isTrue);
   });
+
+  group('action layout on a 411dp phone', () {
+    Future<void> openOnPhone(WidgetTester tester, String confirmLabel) async {
+      tester.view.physicalSize = const Size(1233, 2673);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      await _pumpHost(
+        tester,
+        onOpen: (context) async {
+          await showConfirmDialog(
+            context,
+            title: 'Title',
+            confirmLabel: confirmLabel,
+          );
+        },
+      );
+    }
+
+    double topOf(WidgetTester tester, Finder f) => tester.getTopLeft(f).dy;
+
+    testWidgets('short labels sit side by side', (tester) async {
+      await openOnPhone(tester, 'Delete');
+      expect(
+        topOf(tester, find.widgetWithText(OutlinedButton, 'Cancel')),
+        topOf(tester, find.widgetWithText(ElevatedButton, 'Delete')),
+      );
+    });
+
+    testWidgets('a label that would wrap stacks the actions', (tester) async {
+      await openOnPhone(tester, 'Mark as purchased');
+      expect(
+        topOf(tester, find.widgetWithText(ElevatedButton, 'Mark as purchased')),
+        greaterThan(
+          topOf(tester, find.widgetWithText(OutlinedButton, 'Cancel')),
+        ),
+      );
+    });
+  });
 }

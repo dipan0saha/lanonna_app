@@ -113,24 +113,74 @@ class AppConfirmDialog extends StatelessWidget {
               ),
             ),
           const SizedBox(height: AppSpacing.md),
-          AppResponsiveButtonPair(
-            breakpoint: AppMetrics.confirmButtonPairBreakpoint,
-            start: OutlinedButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(cancelLabel ?? l10n.actionCancel),
-            ),
-            // ElevatedButton carries the theme's primary CTA metrics, so both
-            // halves of the pair share size, padding and shape.
-            end: ElevatedButton(
-              style: variant == ConfirmDialogVariant.destructive
-                  ? AppButtonStyles.primaryDestructive
-                  : null,
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text(confirmLabel),
-            ),
+          _ConfirmActions(
+            cancelLabel: cancelLabel ?? l10n.actionCancel,
+            confirmLabel: confirmLabel,
+            variant: variant,
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Outline Cancel + filled confirm, side by side like the prototype when both
+/// labels fit on one line at half width; otherwise stacked so a long label
+/// (e.g. "Mark as purchased") never wraps inside a squeezed button.
+class _ConfirmActions extends StatelessWidget {
+  const _ConfirmActions({
+    required this.cancelLabel,
+    required this.confirmLabel,
+    required this.variant,
+  });
+
+  final String cancelLabel;
+  final String confirmLabel;
+  final ConfirmDialogVariant variant;
+
+  double _buttonWidth(BuildContext context, String label) {
+    final theme = Theme.of(context);
+    final style =
+        theme.elevatedButtonTheme.style?.textStyle?.resolve({}) ??
+        theme.textTheme.labelLarge;
+    final painter = TextPainter(
+      text: TextSpan(text: label, style: style),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 1,
+    )..layout();
+    final width = painter.width + 2 * AppMetrics.buttonHorizontalPadding;
+    painter.dispose();
+    return width;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final gap = AppSpacing.smMd;
+        final half = (constraints.maxWidth - gap) / 2;
+        final fitsSideBySide =
+            _buttonWidth(context, cancelLabel) <= half &&
+            _buttonWidth(context, confirmLabel) <= half;
+        return AppResponsiveButtonPair(
+          spacing: gap,
+          breakpoint: fitsSideBySide ? 0 : double.infinity,
+          start: OutlinedButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(cancelLabel),
+          ),
+          // ElevatedButton carries the theme's primary CTA metrics, so both
+          // halves of the pair share size, padding and shape.
+          end: ElevatedButton(
+            style: variant == ConfirmDialogVariant.destructive
+                ? AppButtonStyles.primaryDestructive
+                : null,
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(confirmLabel),
+          ),
+        );
+      },
     );
   }
 }
