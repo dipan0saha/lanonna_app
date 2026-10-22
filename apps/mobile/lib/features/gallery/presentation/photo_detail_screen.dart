@@ -445,6 +445,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       title: l10n.photoDeleteConfirmTitle,
       message: l10n.messageRemoves,
       confirmLabel: l10n.actionDelete,
+      variant: ConfirmDialogVariant.destructive,
     );
     if (ok != true) return;
     try {

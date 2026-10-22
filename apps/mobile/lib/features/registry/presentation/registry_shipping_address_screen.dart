@@ -170,6 +170,7 @@ class _RegistryShippingAddressScreenState
       title: l10n.shippingRemoveTitle,
       message: l10n.messageFollowersLonger,
       confirmLabel: l10n.actionRemove,
+      variant: ConfirmDialogVariant.destructive,
     );
     if (confirmed != true) return;
     if (!mounted) return;

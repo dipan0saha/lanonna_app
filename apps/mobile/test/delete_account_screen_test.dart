@@ -209,7 +209,7 @@ void main() {
 
     await tester.tap(find.text('Delete my account'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Delete account'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Delete account'));
     await tester.pumpAndSettle();
 
     expect(accounts.deletes, 1);
@@ -235,7 +235,7 @@ void main() {
 
     await tester.tap(find.text('Delete my account'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Delete account'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Delete account'));
     await tester.pumpAndSettle();
 
     expect(find.text('Confirm your password'), findsOneWidget);
@@ -245,7 +245,7 @@ void main() {
 
     await tester.tap(find.text('Delete my account'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Delete account'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Delete account'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'secret-pass');
     await tester.tap(find.text('Continue'));
@@ -272,7 +272,7 @@ void main() {
 
     await tester.tap(find.text('Delete my account'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Delete account'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Delete account'));
     await tester.pumpAndSettle();
 
     expect(auth.googleReauths, 1);

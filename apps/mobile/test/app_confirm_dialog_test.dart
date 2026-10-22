@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/core/theme/app_colors.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/core/widgets/app_confirm_dialog.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
@@ -48,9 +49,29 @@ void main() {
 
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Delete'));
     await tester.pumpAndSettle();
     expect(result, isTrue);
+  });
+
+  testWidgets('renders as a bottom sheet with title and message', (
+    tester,
+  ) async {
+    await _pumpHost(
+      tester,
+      onOpen: (context) async {
+        await showConfirmDialog(
+          context,
+          title: 'Delete item?',
+          message: 'Cannot undo.',
+          confirmLabel: 'Delete',
+        );
+      },
+    );
+    expect(find.byType(BottomSheet), findsOneWidget);
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.text('Delete item?'), findsOneWidget);
+    expect(find.text('Cannot undo.'), findsOneWidget);
   });
 
   testWidgets('barrier dismiss returns false', (tester) async {
@@ -71,7 +92,9 @@ void main() {
     expect(result, isFalse);
   });
 
-  testWidgets('destructive confirm uses error color from theme', (tester) async {
+  testWidgets('destructive confirm uses the shared error button style', (
+    tester,
+  ) async {
     await _pumpHost(
       tester,
       onOpen: (context) async {
@@ -84,43 +107,12 @@ void main() {
       },
     );
 
-    final button = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Delete'),
+    final button = tester.widget<ElevatedButton>(
+      find.widgetWithText(ElevatedButton, 'Delete'),
     );
-    final scheme = AppTheme.light.colorScheme;
-    final style = button.style!.resolve({});
-    expect(style?.backgroundColor, scheme.error);
-    expect(style?.foregroundColor, scheme.onError);
-  });
-
-  testWidgets('typed confirmation enables confirm only when phrase matches', (
-    tester,
-  ) async {
-    bool? result;
-    await _pumpHost(
-      tester,
-      onOpen: (context) async {
-        result = await showConfirmDialog(
-          context,
-          title: 'Type to confirm',
-          confirmLabel: 'Proceed',
-          typedConfirmationPhrase: 'DELETE',
-        );
-      },
-    );
-
-    final proceed = find.widgetWithText(FilledButton, 'Proceed');
-    FilledButton filled = tester.widget(proceed);
-    expect(filled.onPressed, isNull);
-
-    await tester.enterText(find.byType(TextField), 'DELETE');
-    await tester.pump();
-    filled = tester.widget(proceed);
-    expect(filled.onPressed, isNotNull);
-
-    await tester.tap(proceed);
-    await tester.pumpAndSettle();
-    expect(result, isTrue);
+    final style = button.style!;
+    expect(style.backgroundColor?.resolve({}), AppColors.error);
+    expect(style.foregroundColor?.resolve({}), AppColors.surface);
   });
 
   testWidgets('sequence stops on first cancel', (tester) async {
@@ -129,19 +121,10 @@ void main() {
     await _pumpHost(
       tester,
       onOpen: (context) async {
-        result = await showConfirmDialogSequence(
-          context,
-          [
-            ConfirmDialogStep(
-              title: 'Step one',
-              confirmLabel: 'Next',
-            ),
-            ConfirmDialogStep(
-              title: 'Step two',
-              confirmLabel: 'Done',
-            ),
-          ],
-        );
+        result = await showConfirmDialogSequence(context, [
+          ConfirmDialogStep(title: 'Step one', confirmLabel: 'Next'),
+          ConfirmDialogStep(title: 'Step two', confirmLabel: 'Done'),
+        ]);
       },
     );
 
@@ -155,10 +138,10 @@ void main() {
 
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Next'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Next'));
     await tester.pumpAndSettle();
     expect(find.text('Step two'), findsOneWidget);
-    await tester.tap(find.widgetWithText(FilledButton, 'Done'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Done'));
     await tester.pumpAndSettle();
     expect(result, isTrue);
   });

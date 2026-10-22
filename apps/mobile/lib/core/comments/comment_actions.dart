@@ -56,7 +56,7 @@ Future<bool> confirmDeleteComment(BuildContext context) async {
     context,
     title: l10n.commentDeleteTitle,
     confirmLabel: l10n.commentDeleteAction,
-    cancelLabel: l10n.commentCancel,
+    variant: ConfirmDialogVariant.destructive,
   );
 }
 

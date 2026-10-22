@@ -85,6 +85,7 @@ class _BabySwitcherSheetBodyState extends State<_BabySwitcherSheetBody> {
       title: l10n.memberLeaveConfirmTitle,
       message: l10n.memberLeaveConfirmBody,
       confirmLabel: l10n.memberLeaveAction,
+      variant: ConfirmDialogVariant.destructive,
     );
     if (ok != true || !mounted) return;
     final left = await runMutation(

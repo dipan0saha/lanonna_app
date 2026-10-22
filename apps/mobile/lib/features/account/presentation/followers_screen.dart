@@ -127,6 +127,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
         personDisplayName(l10n, member.displayName),
       ),
       confirmLabel: l10n.memberRemoveAction,
+      variant: ConfirmDialogVariant.destructive,
     );
     if (ok != true || !mounted) return;
     final removed = await runMutation(

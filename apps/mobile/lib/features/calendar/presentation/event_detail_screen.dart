@@ -267,6 +267,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       title: l10n.eventDeleteConfirmTitle,
       message: l10n.eventDeleteConfirmBody,
       confirmLabel: l10n.actionDelete,
+      variant: ConfirmDialogVariant.destructive,
     );
     if (confirmed != true) return;
     if (!mounted) return;

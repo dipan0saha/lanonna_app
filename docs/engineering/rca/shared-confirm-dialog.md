@@ -47,11 +47,13 @@ Roughly a dozen destructive and affirmative confirmation flows in `apps/mobile` 
 
 ## Decision
 
-- Add `showConfirmDialog` / `showConfirmDialogSequence` and `AppConfirmDialog` under `lib/core/widgets/`, styled with `AppTheme` tokens (`AppMetrics`, `AppColors`, `ColorScheme.error`, `AppResponsiveButtonPair`, `OutlinedButton` cancel per prototype).
-- `ConfirmDialogVariant.destructive` only where rows #1–3 already used error fill; preserve green confirm for other rows.
-- Default cancel string: `actionCancel` at call sites that used equivalent `Cancel` keys (visible text unchanged).
-- Keep password, forgot-password, and edit-comment as dedicated dialogs.
-- Widget tests on shared dialog; update flow tests that tap confirm/cancel by label.
+- One shared confirm: `showConfirmDialog` / `showConfirmDialogSequence` + `AppConfirmDialog` in `lib/core/widgets/app_confirm_dialog.dart`.
+- **Presentation matches the prototype `#confirmOverlay`:** a modal **bottom sheet** (not a centered `AlertDialog`) built on the shared `presentAppModalSheet` / `AppModalSheet` chrome — handle, title, muted message, then an equal-width **outline Cancel + filled confirm** row (`AppResponsiveButtonPair`). The message scrolls, so long bodies (delete account's sole-owned profile list) never push the actions off-screen.
+- **Styling only via theme tokens:** Cancel is a themed `OutlinedButton`; confirm is a themed `ElevatedButton` (the app's primary CTA — same size, padding and shape as the outlined half). Destructive confirm layers `AppButtonStyles.primaryDestructive` (`AppColors.error` fill).
+- **Destructive styling applies to every irreversible delete/removal** (app-wide consistency): rows #1–3, #5 remove follower, #6 leave baby, #9 remove shipping address, #10 delete photo, #11 delete comment, #12 delete event, #14 remove name. Affirmative confirms stay standard (sage): #7 add baby, #8 mark purchased, #13 create announcement, #15 save birthdate guess.
+- **Copy:** every title, message and confirm label is unchanged. Cancel uses `actionCancel` everywhere (English `Cancel`, previously split across `authPasswordResetCancel` / `commentCancel` / `actionCancel`); home announcement keeps `Later` by design.
+- Return contract unchanged: `true` only on confirm; Cancel, barrier tap and swipe-down return `false`. Sheets use the root navigator, as `showDialog` did.
+- Password reauth, forgot-password and edit-comment stay dedicated form dialogs.
 
 ## Test plan
 
@@ -60,5 +62,10 @@ Roughly a dozen destructive and affirmative confirmation flows in `apps/mobile` 
 
 ## Implementation
 
-- `lib/core/widgets/app_confirm_dialog.dart` — `showConfirmDialog`, `showConfirmDialogSequence`, `AppConfirmDialog`, `ConfirmDialogVariant`, optional `typedConfirmationPhrase`.
+- `lib/core/widgets/app_confirm_dialog.dart` — `showConfirmDialog`, `showConfirmDialogSequence`, `AppConfirmDialog`, `ConfirmDialogVariant`, `ConfirmDialogStep`.
+- `lib/core/theme/app_button_styles.dart` — `primaryDestructive`.
 - Migrated inventory rows #1–3, #5–15; left form dialogs (#4, edit comment, forgot password) unchanged.
+
+## Follow-ups (not in this change)
+
+- Registry item delete (trash icon) and pending-invite **Revoke** act immediately with no confirm. Adding a confirm there is a behaviour change, so it is left for a separate decision.

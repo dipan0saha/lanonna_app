@@ -153,6 +153,7 @@ class _NamesTabState extends State<NamesTab> {
       title: l10n.funRemoveNameTitle,
       message: l10n.funRemoveNameBody(s.suggestedName),
       confirmLabel: l10n.actionRemove,
+      variant: ConfirmDialogVariant.destructive,
     );
     if (ok != true) return;
     if (!mounted) return;
