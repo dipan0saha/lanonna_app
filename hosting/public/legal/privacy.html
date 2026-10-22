@@ -46,10 +46,12 @@
     <p>
       We retain data while your account is active. Pending invites expire per schedule.
       When you <strong>delete your account</strong>, we tombstone your profile (email and avatar removed, display name “Deleted user”),
-      delete your Firebase login, end memberships, revoke invites, soft-delete baby profiles you solely own, remove certain participation data,
-      and revoke biometric credentials. We then <strong>enqueue async removal</strong> of your cloud media: your avatar, export files,
-      all media for babies you solely own, and photos you uploaded on shared babies. Comments and similar text on shared babies may remain under “Deleted user.”
-      Cleanup usually completes shortly after deletion; a periodic job retries stuck tasks. Contact {{CONTACT_EMAIL}} for questions.
+      delete your Firebase login, end memberships, revoke invites, remove certain participation data, and revoke biometric credentials.
+      Baby profiles you <strong>solely</strong> own are <strong>removed from our databases</strong> (including family content on those babies).
+      We <strong>enqueue async removal</strong> of cloud files: your avatar, exports, media for those babies, and photos you uploaded on co-owned babies.
+      On co-owned babies, the profile stays with the other owner; your comments and similar text there may remain under “Deleted user.”
+      Sole owners can delete a baby profile in the app to remove that baby’s data from our systems, with the same async file cleanup.
+      A periodic job retries stuck tasks. Contact {{CONTACT_EMAIL}} for questions.
     </p>
 
     <h2>6. Your choices</h2>

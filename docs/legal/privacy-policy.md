@@ -90,7 +90,7 @@ We keep information while your account is active and as needed to provide the se
 
 - Expired pending invitations are marked expired by a scheduled job.
 - Object storage may apply bucket lifecycle rules (for example cleaning incomplete uploads and old object versions where enabled).
-- When you **delete your account**, we tombstone your profile (`email` and avatar removed, display name set to “Deleted user”), remove your Firebase login, end memberships, delete certain participation data (such as RSVPs and reactions), revoke pending invites, soft-delete baby profiles you solely own, revoke biometric credentials, and **enqueue removal of your media in cloud storage**. That async cleanup deletes your user avatar, your baby data export files, all photos and thumbnails for babies you solely own (including baby avatars), and photos you uploaded on shared babies; it does **not** delete text you left on shared babies (comments, name suggestions, registry claims), which may still show under “Deleted user.” Sole-owned baby records may remain in our database in soft-deleted form after files are removed. A background job retries stuck cleanups (including a periodic sweep). **Owner/lawyer review:** disclose typical timing and what SQL rows are retained.
+- When you **delete your account**, we tombstone your profile (`email` and avatar removed, display name set to “Deleted user”), remove your Firebase login, end memberships, delete certain participation data (such as RSVPs and reactions), revoke pending invites, revoke biometric credentials, and **remove baby profiles you solely own** from our databases (including photos, calendar, registry, comments, and other data tied to those babies). We **enqueue async removal** of related files in cloud storage (your avatar, export files, and media for those babies, plus photos you uploaded on babies shared with other owners). On **co-owned** babies, the profile stays with the remaining owner; text you left there (comments, suggestions, registry claims) may remain under “Deleted user,” while your photo uploads on those babies are removed. A background job retries stuck cleanups (including a periodic sweep). **Owner/lawyer review:** disclose typical timing for cloud file removal.
 
 Export files are stored temporarily for download as part of the export feature.
 
@@ -105,7 +105,7 @@ Depending on where you live, you may have rights to access, correct, delete, res
 - **Edit profile:** Account settings → profile fields.
 - **Notifications:** Account / notification settings.
 - **Leave a baby circle:** Membership controls (when you are not the sole owner).
-- **Delete a baby profile:** Available to the sole owner via the baby profile deletion flow.
+- **Delete a baby profile:** Available to the sole owner via the baby profile deletion flow; removes that baby and associated app data from our databases (including content from all members on that baby), with cloud media removed asynchronously.
 
 ### 8.2 Account deletion
 

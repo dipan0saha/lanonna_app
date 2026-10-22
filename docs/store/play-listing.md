@@ -103,8 +103,8 @@ Complete the form in Play Console; this table is a worksheet derived from the in
 | **Email address** | Yes | With service providers (Firebase, Mailjet) | Yes (account) | Account management, invites | Yes (HTTPS) | Account deletion in app; contact {{CONTACT_EMAIL}} |
 | **Name** | Yes | With family circle on shared babies | Optional (display name) | App functionality | Yes | Account deletion / profile edit |
 | **User IDs** | Yes (Firebase UID) | With Google/Firebase | Yes | Account management, security | Yes | Account deletion |
-| **Photos** | Yes | With invited family on a baby profile | Optional | App functionality | Yes | Delete in app where supported; **account deletion** removes your uploads (including on shared babies) and all media for babies you solely own via **async cloud storage cleanup** |
-| **Other user-generated content** | Yes (comments, events, registry text) | With family circle | Optional | App functionality | Yes | Edit/delete in app where supported; **account deletion** may leave comments/suggestions/registry text on shared babies attributed to “Deleted user” |
+| **Photos** | Yes | With invited family on a baby profile | Optional | App functionality | Yes | Delete in app where supported; **account deletion** removes sole-owned babies (DB + async GCS) and your uploads on co-owned babies; **sole-owner baby delete** removes all baby media (async GCS) |
+| **Other user-generated content** | Yes (comments, events, registry text) | With family circle | Optional | App functionality | Yes | Edit/delete in app where supported; **sole-owner baby delete** removes all baby-scoped content from DB; **account deletion** removes sole-owned babies entirely; on **co-owned** babies your text may remain as “Deleted user” |
 | **Device or other IDs** | Yes (FCM token) | With Google (FCM) | Optional (notifications) | Push notifications | Yes | Disable notifications; account deletion |
 | **Crash logs** | Yes (Crashlytics) | With Google | Optional (build-dependent) | Analytics / stability | Yes | Firebase/Google controls; see policy |
 | **Phone number** | Optional | Not sold; stored on profile | Optional | App functionality | Yes | Profile edit / account deletion |
@@ -115,7 +115,7 @@ Complete the form in Play Console; this table is a worksheet derived from the in
 | Question | Draft answer |
 |----------|----------------|
 | Data encrypted in transit? | **Yes** (HTTPS/TLS for API and uploads) |
-| Users can request data deletion? | **Yes** — in-app account deletion (SQL tombstone + Firebase removal + **async** deletion of avatars, exports, and applicable photos/thumbnails in cloud storage); baby data export for owners; contact {{CONTACT_EMAIL}} |
+| Users can request data deletion? | **Yes** — in-app account deletion (tombstone + hard-delete sole-owned babies in DB + Firebase removal + **async** GCS cleanup); sole-owner baby delete removes baby data from DB; baby data export for owners; contact {{CONTACT_EMAIL}} |
 | Data collection optional where applicable? | **Partially** — account requires email; many profile/baby fields optional |
 | Committed to Play Families Policy? | **Owner decision** — app stores child-related content created by adults |
 

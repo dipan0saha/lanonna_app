@@ -98,7 +98,7 @@ Firebase Hosting serves invite landing pages (`hosting/public/invite/index.html`
 | Data | Why | Where | Code references |
 |------|-----|-------|-----------------|
 | Storage cleanup job payload | Async GCS purge after account or sole-owner baby delete | `storage_cleanup_jobs` (`detached_objects`, `export_object_paths`, `baby_profile_ids`) | `042_storage_cleanup_jobs.sql`; `repositories/storage_cleanup_jobs.py`; worker `storage_cleanup.py` |
-| Engineering RCA | Deletion semantics and verification | — | `docs/engineering/rca/account-deletion-storage-cleanup.md` |
+| Engineering RCA | Deletion semantics and verification | — | `docs/engineering/rca/account-deletion-storage-cleanup.md`; `docs/engineering/rca/baby-hard-delete.md` |
 
 ### 2.6 Photos and uploads
 
@@ -142,14 +142,16 @@ No `flutter_secure_storage` usage found. Android manifest: `android:allowBackup=
 | Export jobs stuck in `running` | Reclaimed to `pending` after 30 minutes | `baby_data_export.py` |
 | Cloud SQL PITR | Log retention (e.g. 7 days prod) | `infra/terraform/environments/prod/main.tf` |
 | Pub/Sub DLQ | Message retention (documented in ops) | `infra/gcp/SETUP.md` |
-| Account / baby delete | **Soft delete** in Postgres; Firebase user **hard deleted** | `domain/account_delete.py`, `account_delete.py` |
-| GCS after account / sole-owner baby delete | **Async purge** via `storage_cleanup_jobs` + Pub/Sub `storage_cleanup`; worker deletes objects (idempotent) | `account_delete_media.py`, `storage_cleanup.py`; RCA `docs/engineering/rca/account-deletion-storage-cleanup.md` |
-| Storage cleanup recovery | Cloud Scheduler **every 15 minutes** publishes `sweep_storage_cleanup_jobs` (stuck `pending` / `running` / `failed` jobs) | `scripts/setup-schedulers.sh`; `storage_cleanup.sweep_storage_cleanup_jobs` |
-| Authored content after account delete | **Comments, name suggestions, registry claims** on shared babies **remain**; author shows as `Deleted user`. **Photos** the user uploaded on shared babies: SQL row removed + GCS deleted async. Sole-owned baby **photo SQL rows** kept with soft-deleted baby; **GCS** for those babies purged async | `account_delete_media.py`; `active_participants.py`; RCA semantics table |
-| Participation rows on delete | RSVPs, votes, likes, squishes **removed** | `purge_participation` in `active_participants.py` |
-| Tombstoned `app_users` | `email` and `avatar_url` cleared; `display_name` → `Deleted user`; row retained for FK / comment attribution | `repositories/account_delete.py` |
+| Account delete (`app_users`) | **Tombstone** in Postgres (`email`/`avatar_url` cleared, `display_name` = `Deleted user`); Firebase user **hard deleted** | `delete_account_rows` in `repositories/account_delete.py` |
+| Sole-owned baby on account or owner baby delete | **`baby_profiles` hard-deleted**; dependent rows removed via **`ON DELETE CASCADE`** (photos, events, comments—including other members’—RSVPs, registry/shipping fields, suggestions, votes, invites, notifications, export jobs, etc.) after photo/export paths are captured for GCS | `043_baby_hard_delete.sql`, `044_drop_baby_profiles_deleted_at.sql`; `hard_delete_baby_profiles` in `account_delete_media.py`; RCA `baby-hard-delete.md` |
+| Co-owned baby on account delete | Baby **kept**; deleting user’s memberships ended; participation purged; photos **they uploaded** on that baby removed (SQL + async GCS). Other owners retain the profile | `_lock_sole_owned_baby_ids` in `account_delete.py`; `purge_authored_photos_on_shared_babies` |
+| GCS after account / baby delete | **Async purge** via `storage_cleanup_jobs` + Pub/Sub `storage_cleanup`; worker uses paths in job payload only (does not read `photos` after hard-delete) | `storage_cleanup.py`; RCAs above |
+| Storage cleanup recovery | Cloud Scheduler **every 15 minutes** publishes `sweep_storage_cleanup_jobs` | `scripts/setup-schedulers.sh` |
+| Authored text after **account** delete on **shared** babies | **Comments, name suggestions, registry claims** on co-owned/follower babies **remain**; author shows as `Deleted user` | `active_participants.py` module docstring |
+| Participation rows on account delete | RSVPs, votes, likes, squishes **removed** globally for user | `purge_participation` |
+| Tombstoned `app_users` | Row retained for FK / attribution on shared babies; non-email profile columns may still be present | `repositories/account_delete.py` |
 
-**Owner/lawyer review:** Retention period for tombstoned SQL rows and soft-deleted `baby_profiles` (media files are removed from GCS; database rows may remain). Align disclosure with Play “account deletion” timing (async cleanup, not instantaneous).
+**Owner/lawyer review:** Retention period for tombstoned `app_users` rows; disclose **async** GCS cleanup timing (not instantaneous).
 
 ---
 
@@ -161,17 +163,17 @@ No `flutter_secure_storage` usage found. Android manifest: `android:allowBackup=
 2. Preview: `GET /v1/me/delete-account/preview` (sole-owned babies).
 3. Confirm dialog; re-authenticate (password or Google if applicable).
 4. `POST /v1/me/delete-account` with `{ "confirm": true }`.
-5. Server (one SQL transaction, then publish after commit): revoke pending invites; delete photos the user uploaded on **non–sole-owned** babies (returning GCS paths); delete export job rows (and enqueue export blob paths) for the user and sole-owned babies; soft-delete sole-owned babies; end memberships; purge participation; revoke biometric creds; insert `storage_cleanup_jobs` (`kind=account_delete`); tombstone user (`email`/`avatar_url` NULL, `display_name` = `Deleted user`). Then Pub/Sub `storage_cleanup` and `firebase_auth.delete_user` (`domain/account_delete.py`, `repositories/account_delete.py`).
-6. Worker async: delete user avatar prefix `avatars/users/{uid}/`, detached/shared photo objects, all display/thumbnail objects for sole-owned babies, baby avatar and `exports/{baby_id}/` prefixes, and listed export paths (`services/worker/src/lanonna_worker/storage_cleanup.py`).
+5. Server (one SQL transaction, then publish after commit): lock sole-owned babies (`FOR UPDATE`, same lock as co-owner invite/accept); revoke pending invites sent by user; delete photos the user uploaded on **co-owned/follower** babies (`RETURNING` GCS paths); delete export jobs for user and sole-owned babies; **collect photo paths and hard-delete** sole-owned `baby_profiles` (CASCADE removes all baby-scoped SQL); end all memberships; purge participation; revoke biometric creds; insert `storage_cleanup_jobs` (`kind=account_delete`); tombstone user. Then Pub/Sub `storage_cleanup` and `firebase_auth.delete_user` (`delete_account_rows`, `domain/account_delete.py`).
+6. Worker async: delete objects listed in `detached_objects` and `export_object_paths`, prefix-purge `avatars/babies/{id}/` and `exports/{id}/` for deleted babies, and `avatars/users/{uid}/` for account jobs (`storage_cleanup.py`).
 7. Client: clear biometric enrollment, `SessionCleanup`, sign out, route to onboarding.
 
-**Retry:** Tombstoned account can call delete again; unfinished cleanup job is re-published. **Sweep:** every 15 minutes, stuck jobs are retried (see §4).
+**Retry:** Tombstoned account can call delete again; unfinished cleanup job is re-published. **Sweep:** every 15 minutes (see §4).
 
-**Not removed:** Text authored on shared babies (comments, suggestions, registry claims) remains attributed to a deleted member. Sole-owned baby **profile and photo rows** stay soft-deleted in SQL while GCS media is purged (**Owner/lawyer review:** whether SQL hard-delete is required).
+**Co-owned babies:** Profile and other members’ content **remain**; only the deleting member’s participation and their photo uploads on those babies are removed. **Sole-owned babies:** Entire baby and all members’ content on that baby are removed from the database; media removed from cloud storage asynchronously.
 
 ### 5.2 Baby profile deletion (owner)
 
-Separate flow: `delete_baby_profile_flow.dart` → `DELETE /v1/babies/{id}` (sole owner only). Same transaction inserts `storage_cleanup_jobs` (`kind=baby_profile_delete`) and enqueues GCS purge for that baby’s media and exports (does not delete the owner’s user avatar prefix). Co-owned babies require leaving instead (`members.py`; `domain/baby_delete.py`).
+`delete_baby_profile_flow.dart` → `DELETE /v1/babies/{id}` when the caller is the **sole** active owner (`hard_delete_baby_profile_if_sole_owner` in `baby_profile_delete.py`). Refused if another owner exists (`SHARED`). Same transaction: collect photo/export paths, hard-delete baby row (CASCADE), insert `storage_cleanup_jobs` (`kind=baby_profile_delete`), publish GCS cleanup (does not delete the owner’s user avatar prefix). Followers lose access (missing baby treated as `membership_ended` per `baby-hard-delete.md` RCA).
 
 ### 5.3 Data export (baby archive)
 
@@ -206,7 +208,7 @@ Bundled WebView HTML (placeholders today): `assets/legal/terms.html`, `privacy.h
 1. Legal entity name, registered address, and `{{CONTACT_EMAIL}}` for privacy/data requests.
 2. `{{EFFECTIVE_DATE}}`, governing law `{{JURISDICTION}}`, and whether EU/UK/CA users need separate clauses.
 3. Baby/child data: lawful basis, parental consent, and COPPA/GDPR Art. 8 positioning (**Owner/lawyer review**).
-4. Retention period for tombstoned `app_users` rows and soft-deleted `baby_profiles` **in SQL** after GCS media purge (files removed asynchronously; rows may remain).
+4. Retention period for tombstoned `app_users` rows (and any non-cleared profile columns such as phone or birth date).
 5. User-facing disclosure of **async** storage deletion (typical completion window; contact path if cleanup `failed`).
 6. Whether `email_digest_enabled` requires disclosure despite **no Mailjet digest sender** found in worker (only weekly **push** digest: `weekly_notification_digest` in worker `main.py`).
 7. International data transfers and Google/Mailjet DPAs.
