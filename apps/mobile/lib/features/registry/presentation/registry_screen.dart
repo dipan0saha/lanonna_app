@@ -26,6 +26,7 @@ import '../../../core/domain/baby_summary.dart';
 import '../data/models/registry_models.dart';
 import '../data/registry_repository.dart';
 import '../domain/registry_routes.dart';
+import 'delete_registry_item_flow.dart';
 import 'widgets/registry_empty_state.dart';
 import 'widgets/registry_item_row.dart';
 import '../../../l10n/app_localizations.dart';
@@ -208,6 +209,18 @@ class _RegistryScreenState extends State<RegistryScreen>
     await _load();
   }
 
+  Future<void> _deleteItem(RegistryItem item) async {
+    final baby = _baby;
+    if (baby == null) return;
+    final deleted = await deleteRegistryItemWithConfirmation(
+      context,
+      babyId: baby.id,
+      itemId: item.id,
+    );
+    if (!deleted || !mounted) return;
+    await _load();
+  }
+
   Future<void> _undo(RegistryItem item) async {
     final baby = _baby;
     if (baby == null) return;
@@ -326,18 +339,7 @@ class _RegistryScreenState extends State<RegistryScreen>
                                     onEdit: () => context.push(
                                       RegistryRoutes.itemEdit(item.id),
                                     ),
-                                    onDelete: () async {
-                                      final baby = _baby;
-                                      if (baby == null) return;
-                                      final ok = await runMutation(
-                                        context,
-                                        () => context
-                                            .read<RegistryRepository>()
-                                            .deleteItem(baby.id, item.id),
-                                      );
-                                      if (!ok || !mounted) return;
-                                      await _load();
-                                    },
+                                    onDelete: () => _deleteItem(item),
                                   ),
                               ],
                             ),

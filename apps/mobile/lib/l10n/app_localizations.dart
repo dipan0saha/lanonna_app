@@ -706,6 +706,18 @@ abstract class AppLocalizations {
   /// **'Member removed.'**
   String get memberRemovedSuccess;
 
+  /// No description provided for @inviteRevokeConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke invitation?'**
+  String get inviteRevokeConfirmTitle;
+
+  /// No description provided for @inviteRevokeConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{email} will no longer be able to join with this invite.'**
+  String inviteRevokeConfirmBody(String email);
+
   /// No description provided for @memberLeftSuccess.
   ///
   /// In en, this message translates to:
@@ -1407,6 +1419,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete Item'**
   String get registryDeleteItem;
+
+  /// No description provided for @registryDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this item?'**
+  String get registryDeleteConfirmTitle;
 
   /// No description provided for @registryMarkPurchasedTitle.
   ///

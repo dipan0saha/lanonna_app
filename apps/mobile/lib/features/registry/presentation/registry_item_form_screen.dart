@@ -17,6 +17,7 @@ import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../data/registry_repository.dart';
+import 'delete_registry_item_flow.dart';
 import '../../../core/theme/app_button_styles.dart';
 import '../../../l10n/app_localizations.dart';
 
@@ -149,15 +150,12 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
   Future<void> _delete() async {
     final baby = _baby;
     if (baby == null || !widget.isEdit) return;
-    final ok = await runMutation(
+    final deleted = await deleteRegistryItemWithConfirmation(
       context,
-      () => context.read<RegistryRepository>().deleteItem(
-        baby.id,
-        widget.itemId!,
-      ),
+      babyId: baby.id,
+      itemId: widget.itemId!,
     );
-    if (!ok || !mounted) return;
-    context.read<HomeRefreshSignal>().notifyHomeShouldRefresh();
+    if (!deleted || !mounted) return;
     context.pop();
   }
 

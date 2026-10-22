@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/api/api_error_message.dart';
 import '../../../core/presentation/tab_load_failure.dart';
 import '../../../core/api/run_mutation.dart';
 import '../../../core/widgets/app_confirm_dialog.dart';
@@ -26,6 +25,7 @@ import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/domain/app_routes.dart';
 import '../data/account_repository.dart';
+import '../../invitations/presentation/revoke_invitation_flow.dart';
 import '../../../core/data/parallel_requests.dart';
 
 class FollowersScreen extends StatefulWidget {
@@ -148,6 +148,23 @@ class _FollowersScreenState extends State<FollowersScreen> {
     await _load();
   }
 
+  Future<void> _confirmRevokeInvite(InvitationRow inv) async {
+    final revoked = await revokeInvitationWithConfirmation(
+      context,
+      babyId: widget.babyId,
+      invitationId: inv.id,
+      inviteeEmail: inv.email,
+    );
+    if (!revoked || !mounted) return;
+    setState(() {
+      _invites = [
+        for (final i in _invites)
+          if (i.id != inv.id) i,
+      ];
+    });
+    await _load();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -233,7 +250,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
                                     style: TextButton.styleFrom(
                                       foregroundColor: AppColors.error,
                                     ),
-                                    child: Text(AppLocalizations.of(context)!.actionRevoke),
+                                    child: Text(l10n.memberRemoveAction),
                                   ),
                                   label: l10n.memberRemoveAction,
                                 ),
@@ -312,30 +329,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
                                     AppSemantics.button(
                                       'revoke_invite_${inv.id}',
                                       TextButton(
-                                        onPressed: () async {
-                                          try {
-                                            await context
-                                                .read<AccountRepository>()
-                                                .revokeInvitation(
-                                                  widget.babyId,
-                                                  inv.id,
-                                                );
-                                            if (!mounted) return;
-                                            setState(() {
-                                              _invites = [
-                                                for (final i in _invites)
-                                                  if (i.id != inv.id) i,
-                                              ];
-                                            });
-                                            await _load();
-                                          } catch (e) {
-                                            if (!context.mounted) return;
-                                            AppSnackBar.showAlert(
-                                              context,
-                                              apiErrorMessage(AppLocalizations.of(context)!, e),
-                                            );
-                                          }
-                                        },
+                                        onPressed: () => _confirmRevokeInvite(inv),
                                         style: TextButton.styleFrom(
                                           foregroundColor: AppColors.error,
                                         ),
