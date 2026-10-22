@@ -3,6 +3,7 @@ import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../theme/app_button_styles.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_metrics.dart';
 import '../theme/la_nonna_theme.dart';
 import 'app_modal_sheet.dart';
 import 'app_responsive_button_pair.dart';
@@ -113,6 +114,7 @@ class AppConfirmDialog extends StatelessWidget {
             ),
           const SizedBox(height: AppSpacing.md),
           AppResponsiveButtonPair(
+            breakpoint: AppMetrics.confirmButtonPairBreakpoint,
             start: OutlinedButton(
               onPressed: () => Navigator.of(context).pop(false),
               child: Text(cancelLabel ?? l10n.actionCancel),
