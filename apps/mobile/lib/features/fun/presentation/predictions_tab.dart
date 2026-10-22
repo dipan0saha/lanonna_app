@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
 import '../../../core/api/run_mutation.dart';
+import '../../../core/widgets/app_confirm_dialog.dart';
 import '../../../core/presentation/tab_load_failure.dart';
 import '../../../core/widgets/async_tab_body.dart';
 import '../../../core/time/app_date_time.dart';
@@ -136,30 +137,15 @@ class _PredictionsTabState extends State<PredictionsTab> {
     final locale = localeNameForFormatting(context);
     final dateLabel = formatApiCalendarDateFromParts(date, locale);
     final isUpdate = saved != null && saved.isNotEmpty;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(
-          isUpdate
-              ? l10n.funBirthdateConfirmUpdateTitle
-              : l10n.funBirthdateConfirmSaveTitle,
-        ),
-        content: Text(
-          isUpdate
-              ? l10n.funBirthdateConfirmUpdateBody(dateLabel)
-              : l10n.funBirthdateConfirmSaveBody(dateLabel),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(AppLocalizations.of(ctx)!.actionCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.funBirthdateConfirmAction),
-          ),
-        ],
-      ),
+    final ok = await showConfirmDialog(
+      context,
+      title: isUpdate
+          ? l10n.funBirthdateConfirmUpdateTitle
+          : l10n.funBirthdateConfirmSaveTitle,
+      message: isUpdate
+          ? l10n.funBirthdateConfirmUpdateBody(dateLabel)
+          : l10n.funBirthdateConfirmSaveBody(dateLabel),
+      confirmLabel: l10n.funBirthdateConfirmAction,
     );
     if (ok != true || !mounted) return;
     try {

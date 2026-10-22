@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/comments/comment_actions.dart';
+import '../../../core/widgets/app_confirm_dialog.dart';
 import '../../../core/comments/comment_composer_controller.dart';
 import '../../../core/presentation/detail_screen_load.dart';
 import '../../../core/input/app_text_input_kind.dart';
@@ -438,22 +439,13 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     final baby = _baby;
     final detail = _detail;
     if (baby == null || detail == null || !_isOwner) return;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.photoDeleteConfirmTitle),
-        content: Text(AppLocalizations.of(context)!.messageRemoves),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(AppLocalizations.of(context)!.actionCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(AppLocalizations.of(context)!.actionDelete),
-          ),
-        ],
-      ),
+    final l10n = AppLocalizations.of(context)!;
+    final ok = await showConfirmDialog(
+      context,
+      title: l10n.photoDeleteConfirmTitle,
+      message: l10n.messageRemoves,
+      confirmLabel: l10n.actionDelete,
+      variant: ConfirmDialogVariant.destructive,
     );
     if (ok != true) return;
     try {

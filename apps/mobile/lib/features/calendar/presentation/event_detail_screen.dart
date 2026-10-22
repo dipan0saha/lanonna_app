@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/platform/external_link_launcher.dart';
 import '../../../core/comments/comment_actions.dart';
+import '../../../core/widgets/app_confirm_dialog.dart';
 import '../../../core/comments/comment_composer_controller.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/presentation/detail_screen_load.dart';
@@ -260,22 +261,13 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   Future<void> _deleteEvent() async {
     final baby = _baby;
     if (baby == null || !_isOwner) return;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(AppLocalizations.of(ctx)!.eventDeleteConfirmTitle),
-        content: Text(AppLocalizations.of(ctx)!.eventDeleteConfirmBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(AppLocalizations.of(ctx)!.actionCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(AppLocalizations.of(ctx)!.actionDelete),
-          ),
-        ],
-      ),
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showConfirmDialog(
+      context,
+      title: l10n.eventDeleteConfirmTitle,
+      message: l10n.eventDeleteConfirmBody,
+      confirmLabel: l10n.actionDelete,
+      variant: ConfirmDialogVariant.destructive,
     );
     if (confirmed != true) return;
     if (!mounted) return;

@@ -9,6 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/api/run_mutation.dart';
+import '../../../core/widgets/app_confirm_dialog.dart';
 import '../../../core/validation/form_validators.dart';
 import '../../../core/widgets/app_country_dropdown_field.dart';
 import '../../../core/widgets/app_labeled_text_form_field.dart';
@@ -163,24 +164,13 @@ class _RegistryShippingAddressScreenState
   Future<void> _clear() async {
     final baby = _baby;
     if (baby == null) return;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(AppLocalizations.of(ctx)!.shippingRemoveTitle),
-        content: Text(
-          AppLocalizations.of(ctx)!.messageFollowersLonger,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(AppLocalizations.of(ctx)!.actionCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(AppLocalizations.of(ctx)!.actionRemove),
-          ),
-        ],
-      ),
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showConfirmDialog(
+      context,
+      title: l10n.shippingRemoveTitle,
+      message: l10n.messageFollowersLonger,
+      confirmLabel: l10n.actionRemove,
+      variant: ConfirmDialogVariant.destructive,
     );
     if (confirmed != true) return;
     if (!mounted) return;

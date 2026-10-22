@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/api/run_mutation.dart';
 import '../../../core/domain/baby_summary.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/app_confirm_dialog.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../account/data/account_repository.dart';
 import '../../home/data/home_refresh_signal.dart';
@@ -21,45 +21,24 @@ Future<bool> deleteBabyProfileWithConfirmation(
   final l10n = AppLocalizations.of(context)!;
   final name = babyNameLabel(l10n, baby.name);
 
-  final previewOk = await showDialog<bool>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text(l10n.deleteBabyProfileConfirmTitle),
-      content: Text(l10n.deleteBabyProfileConfirmBody(name)),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, false),
-          child: Text(l10n.authPasswordResetCancel),
-        ),
-        FilledButton(
-          style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-          onPressed: () => Navigator.pop(ctx, true),
-          child: Text(l10n.deleteBabyProfileConfirmAction),
-        ),
-      ],
-    ),
+  final confirmed = await showConfirmDialogSequence(
+    context,
+    [
+      ConfirmDialogStep(
+        title: l10n.deleteBabyProfileConfirmTitle,
+        message: l10n.deleteBabyProfileConfirmBody(name),
+        confirmLabel: l10n.deleteBabyProfileConfirmAction,
+        variant: ConfirmDialogVariant.destructive,
+      ),
+      ConfirmDialogStep(
+        title: l10n.deleteBabyProfileFinalTitle(name),
+        message: l10n.deleteBabyProfileFinalBody,
+        confirmLabel: l10n.deleteBabyProfileConfirmAction,
+        variant: ConfirmDialogVariant.destructive,
+      ),
+    ],
   );
-  if (previewOk != true || !context.mounted) return false;
-
-  final finalOk = await showDialog<bool>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text(l10n.deleteBabyProfileFinalTitle(name)),
-      content: Text(l10n.deleteBabyProfileFinalBody),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, false),
-          child: Text(l10n.authPasswordResetCancel),
-        ),
-        FilledButton(
-          style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-          onPressed: () => Navigator.pop(ctx, true),
-          child: Text(l10n.deleteBabyProfileConfirmAction),
-        ),
-      ],
-    ),
-  );
-  if (finalOk != true || !context.mounted) return false;
+  if (!confirmed || !context.mounted) return false;
 
   final deleted = await runMutation(
     context,

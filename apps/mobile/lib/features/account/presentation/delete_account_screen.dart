@@ -12,6 +12,7 @@ import '../../../core/auth/session_cleanup.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
+import '../../../core/widgets/app_confirm_dialog.dart';
 import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
@@ -80,25 +81,13 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
             for (final baby in babies)
               l10n.deleteAccountSoleOwnedBaby(babyNameLabel(l10n, baby.name)),
           ].join('\n');
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.deleteAccountConfirmTitle),
-        content: Text(body),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.authPasswordResetCancel),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.deleteAccountConfirmAction),
-          ),
-        ],
-      ),
+    return showConfirmDialog(
+      context,
+      title: l10n.deleteAccountConfirmTitle,
+      message: body,
+      confirmLabel: l10n.deleteAccountConfirmAction,
+      variant: ConfirmDialogVariant.destructive,
     );
-    return ok == true;
   }
 
   Future<bool> _reauthenticateIfSupported() async {

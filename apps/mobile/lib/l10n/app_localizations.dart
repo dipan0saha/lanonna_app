@@ -289,7 +289,7 @@ abstract class AppLocalizations {
   /// No description provided for @deleteAccountBody.
   ///
   /// In en, this message translates to:
-  /// **'This permanently deletes your La Nonna account. Any Baby Profiles solely owned by your account will also be deleted. Baby Profiles with a co owner will not be deleted; ownership will transfer fully to the co owner.'**
+  /// **'This permanently deletes your La Nonna account and removes photos you uploaded to baby profiles owned by others. Any baby profiles solely owned by your account will also be deleted, including their photos, events, registry, and other data. Baby profiles with a co-owner will not be deleted; ownership will transfer fully to the co-owner.'**
   String get deleteAccountBody;
 
   /// No description provided for @deleteAccountButton.
@@ -319,7 +319,7 @@ abstract class AppLocalizations {
   /// No description provided for @deleteAccountConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'This permanently deletes your La Nonna account. Any Baby Profiles solely owned by your account will also be deleted. Baby Profiles with a co owner will not be deleted; ownership will transfer fully to the co owner.'**
+  /// **'This permanently deletes your La Nonna account and removes photos you uploaded to baby profiles owned by others. Any baby profiles solely owned by your account will also be deleted, including their photos, events, registry, and other data. Baby profiles with a co-owner will not be deleted; ownership will transfer fully to the co-owner.'**
   String get deleteAccountConfirmBody;
 
   /// No description provided for @deleteAccountConfirmAction.
@@ -727,7 +727,7 @@ abstract class AppLocalizations {
   /// No description provided for @deleteBabyProfileConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'This permanently deletes {babyName} for everyone who follows this profile. Photos, calendar events, registry items, and other data will no longer be available in the app.'**
+  /// **'This permanently deletes {babyName} for everyone who follows this profile. All photos, calendar events, registry items, comments, and other data for this baby will be removed from La Nonna and cannot be recovered.'**
   String deleteBabyProfileConfirmBody(String babyName);
 
   /// No description provided for @deleteBabyProfileConfirmAction.
