@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/domain/person_display_label.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_confirm_dialog.dart';
 import '../../../../core/widgets/app_icon_button.dart';
 import '../../../account/data/account_repository.dart';
 import '../../data/models/home_summary.dart';
@@ -74,10 +75,19 @@ class HomeInviteStatusSection extends StatelessWidget {
                 label: l10n.actionRevokeInvitation,
                 icon: const Icon(Icons.close),
                 onPressed: () async {
+                  final ok = await showConfirmDialog(
+                    context,
+                    title: l10n.inviteRevokeConfirmTitle,
+                    message: l10n.inviteRevokeConfirmBody(inv.inviteeEmail),
+                    confirmLabel: l10n.actionRevoke,
+                    variant: ConfirmDialogVariant.destructive,
+                  );
+                  if (ok != true || !context.mounted) return;
                   await context.read<AccountRepository>().revokeInvitation(
                     babyId,
                     inv.id,
                   );
+                  if (!context.mounted) return;
                   onChanged();
                 },
               ),

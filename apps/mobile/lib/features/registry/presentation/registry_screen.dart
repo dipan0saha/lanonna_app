@@ -208,6 +208,25 @@ class _RegistryScreenState extends State<RegistryScreen>
     await _load();
   }
 
+  Future<void> _deleteItem(RegistryItem item) async {
+    final baby = _baby;
+    if (baby == null) return;
+    final confirmed = await showConfirmDialog(
+      context,
+      title: l10n.registryDeleteConfirmTitle,
+      message: l10n.messageRemoves,
+      confirmLabel: l10n.actionDelete,
+      variant: ConfirmDialogVariant.destructive,
+    );
+    if (confirmed != true || !mounted) return;
+    final ok = await runMutation(
+      context,
+      () => context.read<RegistryRepository>().deleteItem(baby.id, item.id),
+    );
+    if (!ok || !mounted) return;
+    await _load();
+  }
+
   Future<void> _undo(RegistryItem item) async {
     final baby = _baby;
     if (baby == null) return;
@@ -326,18 +345,7 @@ class _RegistryScreenState extends State<RegistryScreen>
                                     onEdit: () => context.push(
                                       RegistryRoutes.itemEdit(item.id),
                                     ),
-                                    onDelete: () async {
-                                      final baby = _baby;
-                                      if (baby == null) return;
-                                      final ok = await runMutation(
-                                        context,
-                                        () => context
-                                            .read<RegistryRepository>()
-                                            .deleteItem(baby.id, item.id),
-                                      );
-                                      if (!ok || !mounted) return;
-                                      await _load();
-                                    },
+                                    onDelete: () => _deleteItem(item),
                                   ),
                               ],
                             ),

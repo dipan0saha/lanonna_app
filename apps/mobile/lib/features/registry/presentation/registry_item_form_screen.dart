@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/run_mutation.dart';
+import '../../../core/widgets/app_confirm_dialog.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/validation/form_validators.dart';
 import '../../../core/theme/app_colors.dart';
@@ -149,6 +150,15 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
   Future<void> _delete() async {
     final baby = _baby;
     if (baby == null || !widget.isEdit) return;
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showConfirmDialog(
+      context,
+      title: l10n.registryDeleteConfirmTitle,
+      message: l10n.messageRemoves,
+      confirmLabel: l10n.actionDelete,
+      variant: ConfirmDialogVariant.destructive,
+    );
+    if (confirmed != true || !mounted) return;
     final ok = await runMutation(
       context,
       () => context.read<RegistryRepository>().deleteItem(
