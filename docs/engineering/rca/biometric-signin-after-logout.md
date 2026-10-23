@@ -22,7 +22,7 @@ M-31 shipped **biometric unlock** only: `biometric_unlock_enabled` on the profil
 **Removed** (server + local):
 
 - Toggle off — `PATCH /v1/profile` with `false` revokes every device key of the account; the app deletes its key.
-- Account deletion — `soft_delete_account_rows` revokes in the same transaction; the app deletes its key.
+- Account deletion — `delete_account_rows` deletes the credentials in the same transaction (`purge_personal_user_data`); the app deletes its key.
 - Any other account signing in on this device (email, Google, sign-up, invite) — `BiometricSignInService.bindAuthState` drops the local enrollment and key.
 - A key that can never work again — invalidated by a biometric change, or rejected by the API (`biometric_credential_invalid`) — is dropped on the failed attempt and the CTA disappears.
 

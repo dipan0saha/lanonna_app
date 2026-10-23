@@ -51,7 +51,7 @@ Apply in **lexicographic order** (filename prefix):
 | `043_baby_hard_delete.sql` | Every FK to `baby_profiles` becomes `ON DELETE CASCADE` (re-added `NOT VALID` then validated, 5 s `lock_timeout`); fails if any FK to `baby_profiles` is left without cascade. Backfill: one `baby_profile_delete` cleanup job per soft-deleted baby (photo + export paths), then those babies are deleted; the worker sweep runs the jobs |
 | `044_drop_baby_profiles_deleted_at.sql` | Drops `baby_profiles.deleted_at` (unused after 043). **Apply after** deploying the API and worker that no longer read it |
 | `045_notifications_inbox_keyset_index.sql` | Inbox keyset index `(firebase_uid, created_at DESC, id DESC)` for `GET /v1/me/notifications?cursor=`; drops the superseded `idx_notifications_user_created` prefix index. Safe before or after the API deploy |
-| `046_tombstoned_personal_user_data.sql` | Deletes inbox, device tokens, biometric credentials, and banner dismissals for already-tombstoned accounts; nulls `notifications` actor fields where the actor was deleted (#364) |
+| `046_tombstoned_personal_user_data.sql` | For already-tombstoned accounts: deletes their inbox and others' inbox rows about them, device tokens, biometric credentials, banner dismissals; clears remaining profile PII; re-renders feed summaries that named them (#364). 5 s `lock_timeout`; idempotent. Safe before or after the API deploy |
 
 ## Apply (dev)
 
@@ -87,7 +87,7 @@ Removes baby profiles and related rows (`photos`, `invitations`, `activity_event
 For disposable QA accounts (not Maestro smoke / `lanonna.dev.qa.*` fixtures):
 
 ```bash
-./scripts/hard_delete_user.sh you@example.com
+./scripts/delete_dev_account.sh you@example.com   # product delete path; --dry-run first
 ```
 
 Sole-owned baby profiles and media are removed from Cloud SQL and GCS; co-owned babies stay; Firebase Auth user is deleted. Use `--dry-run`, `--skip-gcs`, or `--skip-firebase` as needed.

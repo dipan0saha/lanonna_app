@@ -10,7 +10,11 @@ from lanonna_api.repositories.account_delete_media import (
     purge_authored_photos_on_shared_babies,
 )
 from lanonna_api.repositories.active_participants import purge_participation
-from lanonna_api.repositories.account_delete_user_data import purge_personal_user_data
+from lanonna_api.repositories.account_delete_user_data import (
+    purge_personal_user_data,
+    rerender_activity_summaries,
+    tombstone_user,
+)
 from lanonna_api.repositories.memberships import (
     count_active_owners,
     soft_remove_all_memberships_for_user,
@@ -85,6 +89,14 @@ def _lock_sole_owned_baby_ids(conn, firebase_uid: str) -> list[uuid.UUID]:
     return [row["id"] for row in rows if count_active_owners(row["id"], conn) == 1]
 
 
+def _email_for_update(conn, firebase_uid: str) -> str | None:
+    row = conn.execute(
+        "SELECT email FROM app_users WHERE firebase_uid = %s FOR UPDATE",
+        (firebase_uid,),
+    ).fetchone()
+    return row["email"] if row else None
+
+
 def delete_account_rows(firebase_uid: str) -> uuid.UUID:
     """Tombstone the user, hard-delete their sole-owned babies, and enqueue GCS
     cleanup, in one transaction. Returns the cleanup job id."""
@@ -109,7 +121,7 @@ def delete_account_rows(firebase_uid: str) -> uuid.UUID:
             hard_delete_baby_profiles(conn, sole_owned)
         soft_remove_all_memberships_for_user(firebase_uid, conn=conn)
         purge_participation(conn, firebase_uid)
-        purge_personal_user_data(conn, firebase_uid)
+        purge_personal_user_data(conn, firebase_uid, _email_for_update(conn, firebase_uid))
         job_id = insert_storage_cleanup_job(
             kind=StorageCleanupKind.ACCOUNT_DELETE,
             firebase_uid=firebase_uid,
@@ -118,15 +130,6 @@ def delete_account_rows(firebase_uid: str) -> uuid.UUID:
             export_object_paths=export_paths,
             conn=conn,
         )
-        conn.execute(
-            """
-            UPDATE app_users
-            SET display_name = 'Deleted user',
-                email = NULL,
-                avatar_url = NULL,
-                deleted_at = now()
-            WHERE firebase_uid = %s
-            """,
-            (firebase_uid,),
-        )
+        tombstone_user(conn, firebase_uid)
+        rerender_activity_summaries(conn, firebase_uid)
     return job_id

@@ -22,7 +22,7 @@ Low-traffic admin surface (system announcements); key rotation via Secret Manage
 
 ### M-53
 
-**`infra/db/clear_dev_test_data.py`** and **`hard_delete_user.py`** remain powerful (wide baby/user deletes, Firebase via ADC) without automated project-id guards.
+**`infra/db/clear_dev_test_data.py`** and **`delete_dev_account.py`** remain powerful (wide baby/user deletes, Firebase via ADC) without automated project-id guards.
 
 Dev QA and onboarding retests need fast resets; operators are trusted. Also documented in [operations.md](operations.md). **Revisit:** never run against non-dev; optional explicit `--project lanonna-dev` guard if the team grows.
 
@@ -30,7 +30,7 @@ Dev QA and onboarding retests need fast resets; operators are trusted. Also docu
 
 - Use a **human Google account** (ADC) for deploys; automation SA is optional and dev-only ([operations.md](operations.md) service accounts).
 - Admin key: Secret Manager `admin-api-key`; never log or commit.
-- DB scripts: Cloud SQL Auth Proxy to **dev** only; confirm `gcloud config get-value project` before `clear_dev_test_data` / `hard_delete_user`.
+- DB scripts: Cloud SQL Auth Proxy to **dev** only; confirm `gcloud config get-value project` before `clear_dev_test_data` / `delete_dev_account`.
 
 ## Code / infra touchpoints
 
@@ -39,4 +39,4 @@ Dev QA and onboarding retests need fast resets; operators are trusted. Also docu
 | M-21 | `infra/terraform/modules/platform/iam.tf` (`automation_*`); `environments/dev/main.tf` (`create_automation_sa = true`) |
 | M-20 | `infra/terraform/modules/platform/iam.tf` (`runtime_secret_accessor`) |
 | H-06 | `services/api/src/lanonna_api/admin_auth.py`, `routers/admin_system_announcements.py`, `deploy.sh` (`--allow-unauthenticated`) |
-| M-53 | `infra/db/clear_dev_test_data.py`, `infra/db/hard_delete_user.py` |
+| M-53 | `infra/db/clear_dev_test_data.py`, `infra/db/delete_dev_account.py` |
