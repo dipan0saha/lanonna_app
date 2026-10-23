@@ -50,7 +50,9 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
-    _load();
+    // A summary from the cold-start prefetch (or an earlier Home) within the
+    // freshness window is reused rather than requested twice.
+    _load(summaryMaxAge: HomeRepository.summaryFreshFor);
   }
 
   @override
