@@ -593,9 +593,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get calendarPastEventsEmpty => 'No past events yet.';
 
   @override
-  String get calendarLoadMore => 'Load more';
-
-  @override
   String get registrySortPriorityHighFirst => 'Priority: High first';
 
   @override

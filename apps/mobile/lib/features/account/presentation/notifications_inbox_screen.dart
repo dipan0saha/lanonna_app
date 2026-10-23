@@ -9,6 +9,7 @@ import '../../../core/presentation/tab_load_failure.dart';
 import '../../../core/router/deep_link_navigation.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_empty_state.dart';
+import '../../../core/widgets/app_load_more_button.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/widgets/app_snackbar.dart';
@@ -36,11 +37,12 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
 
   bool get _hasUnread => _items.any((n) => n.readAt == null);
 
-  NotificationsRepository get _repo => context.read<NotificationsRepository>();
+  late final NotificationsRepository _repo;
 
   @override
   void initState() {
     super.initState();
+    _repo = context.read<NotificationsRepository>();
     _scrollController.addListener(_onScroll);
     _repo.addListener(_onInboxRepoChanged);
     unawaited(_openInbox());
@@ -53,9 +55,12 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
     super.dispose();
   }
 
+  /// Repository changes (load more, mark read, a push marking the inbox
+  /// stale) repaint from the shared window; a stale window revalidates.
   void _onInboxRepoChanged() {
     if (!mounted) return;
     _syncFromRepo();
+    if (_hasLoaded && !_repo.isInboxFresh) unawaited(_revalidateInBackground());
   }
 
   void _syncFromRepo() {
@@ -149,6 +154,17 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
     }
   }
 
+  /// Optimistic: the row and badge flip at once and navigation does not wait;
+  /// the repository rolls both back if the request fails.
+  Future<void> _markRead(String id) async {
+    try {
+      await _repo.markRead(id);
+    } catch (e) {
+      if (!mounted) return;
+      AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
+    }
+  }
+
   Future<void> _markAllRead() async {
     if (_markingAllRead || !_hasUnread) return;
     setState(() => _markingAllRead = true);
@@ -220,12 +236,12 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
                 child: ListView.builder(
                   controller: _scrollController,
                   padding: AppMetrics.subpageScrollPadding,
-                  itemCount: _items.length + (_loadingMore ? 1 : 0),
+                  itemCount: _items.length + (_hasMore ? 1 : 0),
                   itemBuilder: (context, i) {
                     if (i >= _items.length) {
-                      return const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        child: Center(child: CircularProgressIndicator()),
+                      return AppLoadMoreButton(
+                        loading: _loadingMore,
+                        onPressed: _loadMore,
                       );
                     }
                     final n = _items[i];
@@ -236,19 +252,8 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
                       'notification_${n.id}',
                       InkWell(
                         onTap: () async {
-                          if (n.readAt == null) {
-                            try {
-                              await _repo.markRead(n.id);
-                            } catch (e) {
-                              if (!context.mounted) return;
-                              AppSnackBar.showAlert(
-                                context,
-                                apiErrorMessage(l10n, e),
-                              );
-                            }
-                          }
+                          if (n.readAt == null) unawaited(_markRead(n.id));
                           if (n.deepLink != null && n.deepLink!.isNotEmpty) {
-                            if (!context.mounted) return;
                             await navigateAppDeepLink(
                               context,
                               n.deepLink,

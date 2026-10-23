@@ -37,20 +37,32 @@ def offset_page_from_extra_row(
     return offset_page(rows[:limit], offset=offset, limit=limit, has_more=has_more)
 
 
+# Opaque to clients (base64url JSON). Not signed: the query is always scoped to
+# the caller's own rows, so an edited cursor can only re-page their own data.
+MAX_CURSOR_LEN = 200
+
+
 def encode_created_at_id_cursor(created_at: datetime, row_id: uuid.UUID) -> str:
     payload = {"created_at": created_at.isoformat(), "id": str(row_id)}
     raw = json.dumps(payload, separators=(",", ":")).encode("utf-8")
-    return base64.urlsafe_b64encode(raw).decode("ascii")
+    return base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
 
 
 def decode_created_at_id_cursor(cursor: str) -> tuple[datetime, uuid.UUID]:
+    """``(created_at, id)`` from :func:`encode_created_at_id_cursor`; ``ValueError`` if malformed."""
     try:
-        raw = base64.urlsafe_b64decode(cursor.encode("ascii"))
-        payload = json.loads(raw.decode("utf-8"))
+        if len(cursor) > MAX_CURSOR_LEN:
+            raise ValueError("cursor too long")
+        raw = base64.urlsafe_b64decode(cursor + "=" * (-len(cursor) % 4))
+        payload = json.loads(raw)
+        if not isinstance(payload, dict):
+            raise ValueError("cursor payload")
         created_at = datetime.fromisoformat(payload["created_at"])
         row_id = uuid.UUID(payload["id"])
-    except (ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
+    except (ValueError, KeyError, TypeError) as exc:
         raise ValueError("invalid cursor") from exc
+    if created_at.tzinfo is None:
+        raise ValueError("invalid cursor")
     return created_at, row_id
 
 

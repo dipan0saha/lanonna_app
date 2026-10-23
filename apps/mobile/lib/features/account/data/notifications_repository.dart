@@ -100,14 +100,15 @@ class InboxNotification {
   final InboxNotificationType notificationType;
   final String? actorDisplayName;
 
-  InboxNotification copyWith({String? readAt}) {
+  /// This row with [readAt] replaced (null marks it unread).
+  InboxNotification withReadAt(String? readAt) {
     return InboxNotification(
       id: id,
       title: title,
       body: body,
       kind: kind,
       params: params,
-      readAt: readAt ?? this.readAt,
+      readAt: readAt,
       deepLink: deepLink,
       babyProfileId: babyProfileId,
       createdAt: createdAt,
@@ -184,6 +185,10 @@ class NotificationsRepository extends ChangeNotifier {
   final _inboxFirstPage = SingleFlight<void>();
   final _inboxExtend = SingleFlight<void>();
 
+  /// Rows marked read locally whose PATCH has not settled; a page fetched
+  /// meanwhile still shows them read.
+  final _pendingReadIds = <String>{};
+
   InboxListWindow? peekInbox() => _inboxWindow;
 
   bool get isInboxFresh {
@@ -232,6 +237,7 @@ class NotificationsRepository extends ChangeNotifier {
     _inboxEpoch += 1;
     _inboxWindow = null;
     _inboxFetchedAt = null;
+    _pendingReadIds.clear();
     _inboxFirstPage.cancel();
     _inboxExtend.cancel();
   }
@@ -276,22 +282,17 @@ class NotificationsRepository extends ChangeNotifier {
   }
 
   /// First inbox page: from memory when fresh, else from the network.
-  Future<InboxListWindow> ensureInboxFirstPage({bool forceRefresh = false}) {
-    if (!forceRefresh && isInboxFresh && _inboxWindow != null) {
-      return Future.value(_inboxWindow!);
-    }
-    return _inboxFirstPage.run(_fetchInboxFirstPage);
+  Future<InboxListWindow> ensureInboxFirstPage({bool forceRefresh = false}) async {
+    final cached = _inboxWindow;
+    if (!forceRefresh && isInboxFresh && cached != null) return cached;
+    await _inboxFirstPage.run(_fetchInboxFirstPage);
+    // Null only when a sign-out cleared the cache mid-request.
+    return _inboxWindow ?? const InboxListWindow(items: [], hasMore: false);
   }
 
-  /// Stale-while-revalidate: returns cached rows immediately when present and
-  /// refetches the first page in the background.
-  Future<void> revalidateInbox() async {
-    if (_inboxWindow == null) {
-      await ensureInboxFirstPage();
-      return;
-    }
-    await _inboxFirstPage.run(_fetchInboxFirstPage);
-  }
+  /// Stale-while-revalidate: callers show [peekInbox] and call this to
+  /// refetch the first page in the background.
+  Future<void> revalidateInbox() => _inboxFirstPage.run(_fetchInboxFirstPage);
 
   Future<void> extendInbox() {
     final window = _inboxWindow;
@@ -304,11 +305,7 @@ class NotificationsRepository extends ChangeNotifier {
     try {
       final page = await _fetchInboxPage();
       if (epoch != _inboxEpoch) return;
-      _inboxWindow = InboxListWindow(
-        items: page.items,
-        hasMore: page.hasMore,
-        nextCursor: page.nextCursor,
-      );
+      _inboxWindow = _mergeFirstPage(page, _inboxWindow);
       _inboxFetchedAt = _clock();
       notifyListeners();
     } catch (e) {
@@ -321,22 +318,50 @@ class NotificationsRepository extends ChangeNotifier {
     }
   }
 
-  Future<void> _fetchInboxNextPage() async {
-    final epoch = _inboxEpoch;
-    final window = _inboxWindow;
-    if (window == null || !window.hasMore) return;
-    final cursor = window.nextCursor;
-    if (cursor == null) return;
-    final page = await _fetchInboxPage(cursor: cursor);
-    if (epoch != _inboxEpoch) return;
-    final existingIds = window.items.map((n) => n.id).toSet();
-    final newItems = page.items.where((n) => !existingIds.contains(n.id)).toList();
-    _inboxWindow = InboxListWindow(
-      items: [...window.items, ...newItems],
+  /// A refreshed first page replaces the head of the window. When its last row
+  /// is still in the loaded window, the older rows after it (and their cursor)
+  /// are kept, so revalidating does not drop pages the user already scrolled
+  /// through. Keyset order only gains rows at the head, so that tail is
+  /// exactly the continuation of the new page.
+  static InboxListWindow _mergeFirstPage(
+    CursorPage<InboxNotification> page,
+    InboxListWindow? previous,
+  ) {
+    final fresh = InboxListWindow(
+      items: page.items,
       hasMore: page.hasMore,
       nextCursor: page.nextCursor,
     );
-    _inboxFetchedAt = _clock();
+    if (previous == null || !page.hasMore || page.items.isEmpty) return fresh;
+    final tailId = page.items.last.id;
+    final at = previous.items.indexWhere((n) => n.id == tailId);
+    if (at < 0 || at == previous.items.length - 1) return fresh;
+    return InboxListWindow(
+      items: [...page.items, ...previous.items.skip(at + 1)],
+      hasMore: previous.hasMore,
+      nextCursor: previous.nextCursor,
+    );
+  }
+
+  Future<void> _fetchInboxNextPage() async {
+    final epoch = _inboxEpoch;
+    final cursor = _inboxWindow?.nextCursor;
+    if (cursor == null || !(_inboxWindow?.hasMore ?? false)) return;
+    final page = await _fetchInboxPage(cursor: cursor);
+    final window = _inboxWindow;
+    // A sign-out, or a refresh that replaced the tail, makes this page stale.
+    if (epoch != _inboxEpoch || window == null || window.nextCursor != cursor) {
+      return;
+    }
+    final existingIds = window.items.map((n) => n.id).toSet();
+    _inboxWindow = InboxListWindow(
+      items: [
+        ...window.items,
+        ...page.items.where((n) => !existingIds.contains(n.id)),
+      ],
+      hasMore: page.hasMore,
+      nextCursor: page.nextCursor,
+    );
     notifyListeners();
   }
 
@@ -345,7 +370,24 @@ class NotificationsRepository extends ChangeNotifier {
         ? '?limit=$inboxPageSize'
         : '?limit=$inboxPageSize&cursor=${Uri.encodeQueryComponent(cursor)}';
     final json = await _api.getJson('/v1/me/notifications$suffix');
-    return parseCursorPage(json, InboxNotification.fromJson, defaultLimit: inboxPageSize);
+    final page = parseCursorPage(
+      json,
+      InboxNotification.fromJson,
+      defaultLimit: inboxPageSize,
+    );
+    if (_pendingReadIds.isEmpty) return page;
+    final readAt = toApiInstant(_clock());
+    return CursorPage(
+      items: [
+        for (final n in page.items)
+          n.readAt == null && _pendingReadIds.contains(n.id)
+              ? n.withReadAt(readAt)
+              : n,
+      ],
+      hasMore: page.hasMore,
+      nextCursor: page.nextCursor,
+      limit: page.limit,
+    );
   }
 
   static bool _shouldServeStaleInbox(Object error) {
@@ -356,16 +398,33 @@ class NotificationsRepository extends ChangeNotifier {
     return true;
   }
 
+  /// Optimistic: the row and the unread badge update before the request, and
+  /// both are restored if it fails.
   Future<void> markRead(String id) async {
-    final snapshot = _optimisticMarkRead(id);
+    final previous = _setInboxRow(id, read: true);
+    final wasUnread = previous != null && previous.readAt == null;
+    // A count fetched before this PATCH lands would resurrect the badge.
+    _unreadEpoch += 1;
+    _unreadRequest.cancel();
+    if (wasUnread) unread._set(unread.count > 0 ? unread.count - 1 : 0);
+    _pendingReadIds.add(id);
     try {
       await _api.patchJson('/v1/me/notifications/$id/read', body: {});
-      if (snapshot.wasUnread) {
-        unread._set((unread.count - 1).clamp(0, 1 << 30));
+      _pendingReadIds.remove(id);
+      if (previous == null) {
+        // Row was not loaded, so its read state was unknown; ask the server.
+        _unreadFetchedAt = null;
+        unawaited(refreshUnreadCount().catchError((Object e) {
+          debugPrint('unread_count_refresh_failed: $e');
+        }));
+      } else {
         _unreadFetchedAt = _clock();
       }
     } catch (e) {
-      _restoreInboxItem(snapshot);
+      if (_pendingReadIds.remove(id) && wasUnread) {
+        _setInboxRow(id, read: false);
+        unread._set(unread.count + 1);
+      }
       rethrow;
     }
   }
@@ -373,6 +432,8 @@ class NotificationsRepository extends ChangeNotifier {
   Future<int> markAllRead() async {
     final json = await _api.postJson('/v1/me/notifications/read-all', body: {});
     final updated = readInt(json['updated'], strict: true, field: 'updated');
+    _unreadEpoch += 1;
+    _unreadRequest.cancel();
     _markAllReadLocal();
     unread._set(0);
     _unreadFetchedAt = _clock();
@@ -380,41 +441,24 @@ class NotificationsRepository extends ChangeNotifier {
     return updated;
   }
 
-  ({InboxNotification? previous, bool wasUnread}) _optimisticMarkRead(String id) {
+  /// Sets one loaded row's read state; returns the row as it was, or null
+  /// when it is not in the window.
+  InboxNotification? _setInboxRow(String id, {required bool read}) {
     final window = _inboxWindow;
-    if (window == null) return (previous: null, wasUnread: false);
+    if (window == null) return null;
     final index = window.items.indexWhere((n) => n.id == id);
-    if (index < 0) return (previous: null, wasUnread: false);
+    if (index < 0) return null;
     final row = window.items[index];
-    if (row.readAt != null) return (previous: row, wasUnread: false);
-    final readAt = toApiInstant(_clock());
-    final updated = row.copyWith(readAt: readAt);
+    if ((row.readAt != null) == read) return row;
     final items = [...window.items];
-    items[index] = updated;
+    items[index] = row.withReadAt(read ? toApiInstant(_clock()) : null);
     _inboxWindow = InboxListWindow(
       items: items,
       hasMore: window.hasMore,
       nextCursor: window.nextCursor,
     );
     notifyListeners();
-    return (previous: row, wasUnread: true);
-  }
-
-  void _restoreInboxItem(({InboxNotification? previous, bool wasUnread}) snapshot) {
-    final previous = snapshot.previous;
-    if (previous == null) return;
-    final window = _inboxWindow;
-    if (window == null) return;
-    final index = window.items.indexWhere((n) => n.id == previous.id);
-    if (index < 0) return;
-    final items = [...window.items];
-    items[index] = previous;
-    _inboxWindow = InboxListWindow(
-      items: items,
-      hasMore: window.hasMore,
-      nextCursor: window.nextCursor,
-    );
-    notifyListeners();
+    return row;
   }
 
   void _markAllReadLocal() {
@@ -423,7 +467,7 @@ class NotificationsRepository extends ChangeNotifier {
     final readAt = toApiInstant(_clock());
     _inboxWindow = InboxListWindow(
       items: window.items
-          .map((n) => n.readAt == null ? n.copyWith(readAt: readAt) : n)
+          .map((n) => n.readAt == null ? n.withReadAt(readAt) : n)
           .toList(),
       hasMore: window.hasMore,
       nextCursor: window.nextCursor,

@@ -26,7 +26,7 @@ def _auth_as(uid: str = "user-1"):
         app.dependency_overrides.pop(current_app_user, None)
 
 
-@patch("lanonna_api.routers.notifications.list_notifications_for_user_keyset")
+@patch("lanonna_api.routers.notifications.list_notifications_for_user")
 def test_list_notifications_returns_cursor_page(mock_list):
     now = datetime.now(timezone.utc)
     mock_list.return_value = [
@@ -56,5 +56,4 @@ def test_list_notifications_returns_cursor_page(mock_list):
     args, kwargs = mock_list.call_args
     assert args[0] == "user-1"
     assert kwargs["limit"] == 51
-    assert kwargs["cursor_created_at"] is None
-    assert kwargs["cursor_id"] is None
+    assert kwargs["after"] is None

@@ -1,14 +1,18 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+import base64
+import json
 from types import MappingProxyType
 from contextlib import contextmanager
 from unittest.mock import patch
 from uuid import UUID, uuid4
 
+import pytest
 from fastapi.testclient import TestClient
 
 from lanonna_api.auth import AppUser, current_app_user
+from lanonna_api.domain.errors import ErrorCode
 from lanonna_api.main import app
 from lanonna_api.pagination import decode_created_at_id_cursor, encode_created_at_id_cursor
 
@@ -55,7 +59,7 @@ def test_cursor_round_trip():
     assert decoded_at == now
 
 
-@patch("lanonna_api.routers.notifications.list_notifications_for_user_keyset")
+@patch("lanonna_api.routers.notifications.list_notifications_for_user")
 def test_list_notifications_first_page_returns_cursor_envelope(mock_list):
     base = datetime(2026, 10, 1, 12, tzinfo=timezone.utc)
     rows = [_row(base - timedelta(hours=i), uuid4()) for i in range(3)]
@@ -72,11 +76,10 @@ def test_list_notifications_first_page_returns_cursor_envelope(mock_list):
     mock_list.assert_called_once()
     _, kwargs = mock_list.call_args
     assert kwargs["limit"] == 3
-    assert kwargs["cursor_created_at"] is None
-    assert kwargs["cursor_id"] is None
+    assert kwargs["after"] is None
 
 
-@patch("lanonna_api.routers.notifications.list_notifications_for_user_keyset")
+@patch("lanonna_api.routers.notifications.list_notifications_for_user")
 def test_list_notifications_second_page_uses_decoded_cursor(mock_list):
     base = datetime(2026, 10, 1, 12, tzinfo=timezone.utc)
     id_a, id_b = uuid4(), uuid4()
@@ -90,11 +93,10 @@ def test_list_notifications_second_page_uses_decoded_cursor(mock_list):
     assert len(payload["items"]) == 1
     mock_list.assert_called_once()
     _, kwargs = mock_list.call_args
-    assert kwargs["cursor_created_at"] == base
-    assert kwargs["cursor_id"] == id_a
+    assert kwargs["after"] == (base, id_a)
 
 
-@patch("lanonna_api.routers.notifications.list_notifications_for_user_keyset")
+@patch("lanonna_api.routers.notifications.list_notifications_for_user")
 def test_cursor_pages_do_not_overlap(mock_list):
     """Simulate stable ordering: page 2 starts strictly after page 1 tail."""
     base = datetime(2026, 10, 5, 8, tzinfo=timezone.utc)
@@ -103,15 +105,10 @@ def test_cursor_pages_do_not_overlap(mock_list):
 
     def fetch(**kwargs):
         limit = kwargs["limit"]
-        cursor_created_at = kwargs.get("cursor_created_at")
-        cursor_id = kwargs.get("cursor_id")
+        after = kwargs.get("after")
         filtered = all_rows
-        if cursor_created_at is not None:
-            filtered = [
-                r
-                for r in all_rows
-                if (r["created_at"], r["id"]) < (cursor_created_at, cursor_id)
-            ]
+        if after is not None:
+            filtered = [r for r in all_rows if (r["created_at"], r["id"]) < after]
         return filtered[:limit]
 
     mock_list.side_effect = lambda firebase_uid, **kwargs: fetch(**kwargs)
@@ -131,3 +128,43 @@ def test_cursor_pages_do_not_overlap(mock_list):
             cursor = payload["next_cursor"]
     assert seen == [str(i) for i in ids]
     assert len(seen) == len(set(seen))
+
+
+def _b64(payload: object) -> str:
+    raw = json.dumps(payload).encode()
+    return base64.urlsafe_b64encode(raw).decode().rstrip("=")
+
+
+@pytest.mark.parametrize(
+    "token",
+    [
+        "not-base64!!",
+        _b64(["2026-10-01T12:00:00+00:00", str(uuid4())]),
+        _b64({"created_at": "2026-10-01T12:00:00", "id": str(uuid4())}),
+        _b64({"created_at": "2026-10-01T12:00:00+00:00", "id": "nope"}),
+        _b64({"id": str(uuid4())}),
+        "A" * 500,
+    ],
+    ids=["garbage", "not-object", "naive-time", "bad-id", "missing-key", "too-long"],
+)
+@patch("lanonna_api.routers.notifications.list_notifications_for_user")
+def test_malformed_cursor_is_400_and_never_queries(mock_list, token):
+    with pytest.raises(ValueError):
+        decode_created_at_id_cursor(token)
+    with _auth_as():
+        response = client.get(f"/v1/me/notifications?cursor={token}")
+    assert response.status_code == 400
+    assert response.json()["detail"]["error"] == ErrorCode.INVALID_REQUEST.value
+    mock_list.assert_not_called()
+
+
+@patch("lanonna_api.routers.notifications.list_notifications_for_user")
+def test_legacy_client_without_cursor_gets_first_page(mock_list):
+    """Pre-cursor app builds call the endpoint bare and read only ``items``."""
+    mock_list.return_value = [_row(datetime(2026, 10, 1, tzinfo=timezone.utc))]
+    with _auth_as():
+        response = client.get("/v1/me/notifications")
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 1
+    _, kwargs = mock_list.call_args
+    assert kwargs == {"limit": 51, "after": None}

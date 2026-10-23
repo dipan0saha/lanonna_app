@@ -11,7 +11,7 @@ from lanonna_api.auth import AppUser, current_app_user
 from lanonna_api.repositories.device_tokens import delete_device_token, upsert_device_token
 from lanonna_api.repositories.notifications import (
     count_unread_notifications,
-    list_notifications_for_user_keyset,
+    list_notifications_for_user,
     mark_all_notifications_read,
     mark_notification_read,
 )
@@ -39,23 +39,17 @@ def list_my_notifications(
     limit: int = Query(default=50, ge=1, le=100),
     cursor: str | None = Query(default=None),
 ) -> dict[str, Any]:
-    cursor_created_at = None
-    cursor_id = None
+    after = None
     if cursor is not None:
         try:
-            cursor_created_at, cursor_id = decode_created_at_id_cursor(cursor)
+            after = decode_created_at_id_cursor(cursor)
         except ValueError:
             raise api_error(
                 status.HTTP_400_BAD_REQUEST,
                 ErrorCode.INVALID_REQUEST,
                 "Invalid cursor",
             ) from None
-    rows = list_notifications_for_user_keyset(
-        user.uid,
-        limit=limit + 1,
-        cursor_created_at=cursor_created_at,
-        cursor_id=cursor_id,
-    )
+    rows = list_notifications_for_user(user.uid, limit=limit + 1, after=after)
     page = cursor_page_from_extra_row(
         rows,
         limit=limit,

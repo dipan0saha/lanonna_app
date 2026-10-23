@@ -44,6 +44,19 @@ The calendar tab loads **month bounds** and **`upcoming=true`** in parallel (`ca
 | Calendar mobile | `CalendarRepository` | `KeyedSingleFlight` per list key; coalesced `_load` generation on screen |
 | Tests | `services/api/tests`, `apps/mobile/test` | Cursor stability; inbox paging/optimistic tap; calendar single HTTP per key |
 
+## Review follow-ups (before merge)
+
+- **Mobile build:** `ensureInboxFirstPage` returned the `Future<void>` of the single-flight as a `Future<InboxListWindow>` (analyzer error, mobile CI red). It now awaits the flight and returns the window.
+- **Cursor:** decode rejects naive timestamps, non-object payloads and oversize tokens (all `400`). No HMAC: every query is `WHERE firebase_uid = caller`, so an edited cursor can only re-page the caller's own rows.
+- **One repository query:** the offset `list_notifications_for_user` and the unused `unread_only` flag are gone; the keyset query takes `after=(created_at, id)`. Postgres test covers five rows sharing one `created_at` and another user's rows.
+- **Migration 045:** `SET LOCAL lock_timeout`, and drops `idx_notifications_user_created` — a strict prefix of the new index with no other reader. Plain `CREATE INDEX` because `apply_migrations.py` runs in one transaction.
+- **Unread badge:** `markRead` decrements the badge with the row (not after the PATCH), invalidates any unread-count fetch already in flight, and restores both on failure. Rows with a pending PATCH stay read in pages fetched meanwhile. Navigation from a row no longer waits for the PATCH.
+- **Revalidate keeps depth:** a refreshed first page whose tail is still in the window keeps the older rows and their cursor (keyset pages only gain rows at the head). A next page whose cursor was replaced meanwhile is dropped instead of overwriting the refresh.
+- **Open inbox and push:** `notifyInboxMayHaveChanged` marks the window stale; an open inbox now revalidates on that change (it only repainted before).
+- **Cache scope:** the inbox is per user, not per baby, so a baby switch keeps it; every sign-out / account switch / account deletion path runs `SessionCleanup.clearLocalUserData` → `clearUnreadCount` → `clearCachedInbox`, which also drops in-flight pages.
+- **Calendar:** mutations now bump a list epoch and cancel in-flight list fetches, so a fetch that started before an edit is neither cached nor joined by the reload the edit triggers.
+- **Shared footer:** `AppLoadMoreButton` (`core/widgets`) replaces three hand-rolled "Load more"/spinner footers (inbox, home activity, past events); the duplicate `calendarLoadMore` string is removed in favour of `actionLoadMore`. The inbox screen caches its repository in `initState` (no `context.read` in `dispose`).
+
 ## References
 
 - `apps/mobile/lib/features/account/presentation/notifications_inbox_screen.dart`

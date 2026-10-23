@@ -11,10 +11,18 @@ def list_notifications_for_user(
     firebase_uid: str,
     *,
     limit: int = 50,
-    offset: int = 0,
-    unread_only: bool = False,
+    after: tuple[datetime, uuid.UUID] | None = None,
 ) -> list[dict[str, Any]]:
-    clause = "AND read_at IS NULL" if unread_only else ""
+    """Newest-first inbox page (``created_at DESC, id DESC``).
+
+    ``after`` is the ``(created_at, id)`` of the last row of the previous page;
+    the row comparison matches ``idx_notifications_user_created_id``, so ties
+    on ``created_at`` page by ``id`` without skips or repeats.
+    """
+    cursor_clause = "AND (created_at, id) < (%(after_at)s, %(after_id)s)" if after else ""
+    params: dict[str, Any] = {"uid": firebase_uid, "limit": limit}
+    if after:
+        params["after_at"], params["after_id"] = after
     with get_connection() as conn:
         rows = conn.execute(
             f"""
@@ -23,48 +31,12 @@ def list_notifications_for_user(
                 notification_type, notification_kind, params,
                 actor_firebase_uid, actor_display_name
             FROM notifications
-            WHERE firebase_uid = %s
-            {clause}
-            ORDER BY created_at DESC, id DESC
-            LIMIT %s OFFSET %s
-            """,
-            (firebase_uid, limit, offset),
-        ).fetchall()
-    return [dict(row) for row in rows]
-
-
-def list_notifications_for_user_keyset(
-    firebase_uid: str,
-    *,
-    limit: int = 50,
-    cursor_created_at: datetime | None = None,
-    cursor_id: uuid.UUID | None = None,
-    unread_only: bool = False,
-) -> list[dict[str, Any]]:
-    """Newest-first inbox page; optional cursor is the last row of the prior page."""
-    assert (cursor_created_at is None) == (cursor_id is None)
-    clause = "AND read_at IS NULL" if unread_only else ""
-    cursor_clause = ""
-    params: list[Any] = [firebase_uid]
-    if cursor_created_at is not None and cursor_id is not None:
-        cursor_clause = "AND (created_at, id) < (%s, %s)"
-        params.extend([cursor_created_at, cursor_id])
-    params.append(limit)
-    with get_connection() as conn:
-        rows = conn.execute(
-            f"""
-            SELECT
-                id, baby_profile_id, title, body, deep_link, read_at, created_at,
-                notification_type, notification_kind, params,
-                actor_firebase_uid, actor_display_name
-            FROM notifications
-            WHERE firebase_uid = %s
-            {clause}
+            WHERE firebase_uid = %(uid)s
             {cursor_clause}
             ORDER BY created_at DESC, id DESC
-            LIMIT %s
+            LIMIT %(limit)s
             """,
-            tuple(params),
+            params,
         ).fetchall()
     return [dict(row) for row in rows]
 
