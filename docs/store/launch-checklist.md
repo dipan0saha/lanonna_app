@@ -45,7 +45,7 @@ Docs-only deliverable; no deploy performed from the legal-pages PR. Use with `do
 
 ## Security and operations
 
-- [ ] Production Firebase project: App Check enforced, API keys restricted, Crashlytics acceptable for privacy policy.
+- [ ] Production Firebase project: complete **App Check** setup (Play Integrity / App Attest, token TTL, then `APP_CHECK_ENFORCE=true`) per [mobile-prod-flavor-and-crashlytics.md § Owner follow-up step 7](../engineering/mobile-prod-flavor-and-crashlytics.md#prod-app-check); restrict API keys; confirm Crashlytics matches the privacy policy.
 - [ ] Confirm account deletion and export flows on a production-like build (including worker `storage_cleanup_completed` logs and GCS objects removed).
 - [ ] Disclose **async** media deletion timing in published privacy policy if counsel requires.
 - [ ] Incident response contact and breach notification process (`{{CONTACT_EMAIL}}`).
@@ -54,7 +54,7 @@ Docs-only deliverable; no deploy performed from the legal-pages PR. Use with `do
 
 ## Open questions (from data inventory)
 
-- [ ] Retention for tombstoned `app_users` database rows (sole-owned babies are **hard-deleted** from Postgres; see `docs/engineering/rca/baby-hard-delete.md`).
+- [ ] Retention period for tombstoned `app_users` rows (profile PII is cleared; row kept for attribution on shared babies; sole-owned babies are **hard-deleted** from Postgres — see `docs/engineering/rca/account-deletion-user-data-audit.md`, `docs/engineering/rca/baby-hard-delete.md`).
 - [ ] Privacy copy for failed or delayed `storage_cleanup_jobs` (sweep every 15 minutes; user contact path).
 - [ ] Whether `email_digest_enabled` should be disclosed as “email digest” when only weekly **push** digest is implemented in worker.
 - [ ] COPPA / GDPR Art. 8 / UK ICO guidance for baby photos and identifiers.

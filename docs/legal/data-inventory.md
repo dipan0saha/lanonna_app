@@ -32,7 +32,7 @@ La Nonna is a family circle app for expecting and new parents. Account holders (
 | Last seen (activity) | Session freshness; throttled DB write | `app_users.last_seen_at` | `030_app_users_last_seen.sql`; `repositories/users.py` |
 | Notification preferences | Push/in-app notification behavior | `app_users.notification_digest`, `push_notifications_enabled`, `email_digest_enabled`, per-channel `notify_*` | `011_notifications_and_prefs.sql`, `016_notification_channels.sql`; `routers/profile.py` |
 | Biometric unlock preference | Optional app lock | `app_users.biometric_unlock_enabled` | `035_app_users_biometric_unlock.sql` |
-| Account tombstone | Deleted account marker | `app_users.deleted_at`; cleared `email`, `avatar_url`; `display_name` → `"Deleted user"` | `012_export_jobs_and_account_delete.sql`; `repositories/account_delete.py` |
+| Account tombstone | Deleted account marker; row kept for FK / “Deleted user” attribution on shared babies | `app_users.deleted_at`; `display_name` → `"Deleted user"`; cleared `email`, `avatar_url`, `phone`, `birth_date`, `country_code`, `postal_code`, `last_seen_at`; `biometric_unlock_enabled` → false. Kept: `terms_accepted_at`, notification preference flags, timestamps | `012_export_jobs_and_account_delete.sql`; `repositories/account_delete.py`; `repositories/account_delete_user_data.py` (`tombstone_user`); migration `046_tombstoned_personal_user_data.sql` |
 
 **Authentication methods (mobile):**
 
@@ -40,7 +40,7 @@ La Nonna is a family circle app for expecting and new parents. Account holders (
 - Google Sign-In → Firebase credential (`apps/mobile/lib/core/auth/auth_repository.dart`).
 - Biometric sign-in: device key pair; server stores **public key only** (`041_biometric_credentials.sql`; `routers/biometric_auth.py`; `biometric_signature` + `local_auth` in `pubspec.yaml`).
 
-**Owner/lawyer review:** Tombstoned accounts may retain some non-cleared columns (e.g. phone, birth date) in Postgres while `email` is nulled — confirm retention and erasure obligations (`repositories/account_delete.py` only updates display name, email, avatar, `deleted_at`).
+**Owner/lawyer review:** Tombstoned `app_users` rows are retained indefinitely for attribution on co-owned babies; confirm disclosure and whether a shorter retention period is required (`docs/engineering/rca/account-deletion-user-data-audit.md`).
 
 ### 2.2 Children and baby-related data (about minors)
 
@@ -98,7 +98,7 @@ Firebase Hosting serves invite landing pages (`hosting/public/invite/index.html`
 | Data | Why | Where | Code references |
 |------|-----|-------|-----------------|
 | Storage cleanup job payload | Async GCS purge after account or sole-owner baby delete | `storage_cleanup_jobs` (`detached_objects`, `export_object_paths`, `baby_profile_ids`) | `042_storage_cleanup_jobs.sql`; `repositories/storage_cleanup_jobs.py`; worker `storage_cleanup.py` |
-| Engineering RCA | Deletion semantics and verification | — | `docs/engineering/rca/account-deletion-storage-cleanup.md`; `docs/engineering/rca/baby-hard-delete.md` |
+| Engineering RCA | Deletion semantics and verification | — | `docs/engineering/rca/account-deletion-user-data-audit.md`; `docs/engineering/rca/account-deletion-storage-cleanup.md`; `docs/engineering/rca/baby-hard-delete.md` |
 
 ### 2.6 Photos and uploads
 
@@ -142,14 +142,14 @@ No `flutter_secure_storage` usage found. Android manifest: `android:allowBackup=
 | Export jobs stuck in `running` | Reclaimed to `pending` after 30 minutes | `baby_data_export.py` |
 | Cloud SQL PITR | Log retention (e.g. 7 days prod) | `infra/terraform/environments/prod/main.tf` |
 | Pub/Sub DLQ | Message retention (documented in ops) | `infra/gcp/SETUP.md` |
-| Account delete (`app_users`) | **Tombstone** in Postgres (`email`/`avatar_url` cleared, `display_name` = `Deleted user`); Firebase user **hard deleted** | `delete_account_rows` in `repositories/account_delete.py` |
+| Account delete (`app_users`) | **Tombstone** in Postgres (all profile-identifying columns cleared, `display_name` = `Deleted user`); **delete** personal rows (own notifications inbox, other members’ notifications about the user, FCM `device_tokens`, `announcement_dismissals`, `biometric_credentials`, non-pending `invitations` to the user’s email); **re-render** `activity_events.summary` as “Deleted user”; Firebase user **hard deleted**; async GCS via `storage_cleanup_jobs` | `delete_account_rows` in `repositories/account_delete.py`; `account_delete_user_data.py`; `docs/engineering/rca/account-deletion-user-data-audit.md` |
 | Sole-owned baby on account or owner baby delete | **`baby_profiles` hard-deleted**; dependent rows removed via **`ON DELETE CASCADE`** (photos, events, comments—including other members’—RSVPs, registry/shipping fields, suggestions, votes, invites, notifications, export jobs, etc.) after photo/export paths are captured for GCS | `043_baby_hard_delete.sql`, `044_drop_baby_profiles_deleted_at.sql`; `hard_delete_baby_profiles` in `account_delete_media.py`; RCA `baby-hard-delete.md` |
 | Co-owned baby on account delete | Baby **kept**; deleting user’s memberships ended; participation purged; photos **they uploaded** on that baby removed (SQL + async GCS). Other owners retain the profile | `_lock_sole_owned_baby_ids` in `account_delete.py`; `purge_authored_photos_on_shared_babies` |
 | GCS after account / baby delete | **Async purge** via `storage_cleanup_jobs` + Pub/Sub `storage_cleanup`; worker uses paths in job payload only (does not read `photos` after hard-delete) | `storage_cleanup.py`; RCAs above |
 | Storage cleanup recovery | Cloud Scheduler **every 15 minutes** publishes `sweep_storage_cleanup_jobs` | `scripts/setup-schedulers.sh` |
 | Authored text after **account** delete on **shared** babies | **Comments, name suggestions, registry claims** on co-owned/follower babies **remain**; author shows as `Deleted user` | `active_participants.py` module docstring |
 | Participation rows on account delete | RSVPs, votes, likes, squishes **removed** globally for user | `purge_participation` |
-| Tombstoned `app_users` | Row retained for FK / attribution on shared babies; non-email profile columns may still be present | `repositories/account_delete.py` |
+| Tombstoned `app_users` | Row retained for FK / attribution on shared babies; profile PII columns cleared (see §2.1); notification preference flags and `terms_accepted_at` may remain | `account_delete_user_data.py`; migration `046` |
 
 **Owner/lawyer review:** Retention period for tombstoned `app_users` rows; disclose **async** GCS cleanup timing (not instantaneous).
 
@@ -163,7 +163,7 @@ No `flutter_secure_storage` usage found. Android manifest: `android:allowBackup=
 2. Preview: `GET /v1/me/delete-account/preview` (sole-owned babies).
 3. Confirm dialog; re-authenticate (password or Google if applicable).
 4. `POST /v1/me/delete-account` with `{ "confirm": true }`.
-5. Server (one SQL transaction, then publish after commit): lock sole-owned babies (`FOR UPDATE`, same lock as co-owner invite/accept); revoke pending invites sent by user; delete photos the user uploaded on **co-owned/follower** babies (`RETURNING` GCS paths); delete export jobs for user and sole-owned babies; **collect photo paths and hard-delete** sole-owned `baby_profiles` (CASCADE removes all baby-scoped SQL); end all memberships; purge participation; revoke biometric creds; insert `storage_cleanup_jobs` (`kind=account_delete`); tombstone user. Then Pub/Sub `storage_cleanup` and `firebase_auth.delete_user` (`delete_account_rows`, `domain/account_delete.py`).
+5. Server (one SQL transaction, then publish after commit): lock sole-owned babies (`FOR UPDATE`, same lock as co-owner invite/accept); revoke pending invites sent by user; delete photos the user uploaded on **co-owned/follower** babies (`RETURNING` GCS paths); delete export jobs for user and sole-owned babies; **collect photo paths and hard-delete** sole-owned `baby_profiles` (CASCADE removes all baby-scoped SQL); end all memberships; purge participation; **delete** personal user data (`purge_personal_user_data`: notifications as recipient and as actor, `device_tokens`, `announcement_dismissals`, `biometric_credentials`, settled invitations to the user’s email); **tombstone** user (`tombstone_user` clears profile PII); **re-render** feed summaries that named the user; insert `storage_cleanup_jobs` (`kind=account_delete`). Then Pub/Sub `storage_cleanup` and `firebase_auth.delete_user` (`delete_account_rows`, `account_delete_user_data.py`, `domain/account_delete.py`).
 6. Worker async: delete objects listed in `detached_objects` and `export_object_paths`, prefix-purge `avatars/babies/{id}/` and `exports/{id}/` for deleted babies, and `avatars/users/{uid}/` for account jobs (`storage_cleanup.py`).
 7. Client: clear biometric enrollment, `SessionCleanup`, sign out, route to onboarding.
 
@@ -208,12 +208,11 @@ Bundled WebView HTML (placeholders today): `assets/legal/terms.html`, `privacy.h
 1. Legal entity name, registered address, and `{{CONTACT_EMAIL}}` for privacy/data requests.
 2. `{{EFFECTIVE_DATE}}`, governing law `{{JURISDICTION}}`, and whether EU/UK/CA users need separate clauses.
 3. Baby/child data: lawful basis, parental consent, and COPPA/GDPR Art. 8 positioning (**Owner/lawyer review**).
-4. Retention period for tombstoned `app_users` rows (and any non-cleared profile columns such as phone or birth date).
-5. User-facing disclosure of **async** storage deletion (typical completion window; contact path if cleanup `failed`).
-6. Whether `email_digest_enabled` requires disclosure despite **no Mailjet digest sender** found in worker (only weekly **push** digest: `weekly_notification_digest` in worker `main.py`).
-7. International data transfers and Google/Mailjet DPAs.
-8. Age rating and Play “target audience” given family/child **content** created by adults.
-9. Update in-app `assets/legal/*.html` to match published web policy (track in launch checklist).
+4. User-facing disclosure of **async** storage deletion (typical completion window; contact path if cleanup `failed`).
+5. Whether `email_digest_enabled` requires disclosure despite **no Mailjet digest sender** found in worker (only weekly **push** digest: `weekly_notification_digest` in worker `main.py`).
+6. International data transfers and Google/Mailjet DPAs.
+7. Age rating and Play “target audience” given family/child **content** created by adults.
+8. Update in-app `assets/legal/*.html` to match published web policy (track in launch checklist).
 
 ---
 

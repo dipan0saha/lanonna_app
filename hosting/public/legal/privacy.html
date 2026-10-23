@@ -45,8 +45,9 @@
     <h2>5. Retention and deletion</h2>
     <p>
       We retain data while your account is active. Pending invites expire per schedule.
-      When you <strong>delete your account</strong>, we tombstone your profile (email and avatar removed, display name “Deleted user”),
-      delete your Firebase login, end memberships, revoke invites, remove certain participation data, and revoke biometric credentials.
+      When you <strong>delete your account</strong>, we tombstone your profile (display name “Deleted user”; email, avatar, phone, birth date, country, postal code, and last-seen cleared on our servers),
+      delete your Firebase login, delete your in-app notifications and notifications other members received about you, delete push tokens and banner-dismissal records, delete biometric sign-in keys on our servers,
+      delete settled invitation history to your email, end memberships, revoke pending invites you sent, remove certain participation data, and re-render activity feed text that named you as “Deleted user”.
       Baby profiles you <strong>solely</strong> own are <strong>removed from our databases</strong> (including family content on those babies).
       We <strong>enqueue async removal</strong> of cloud files: your avatar, exports, media for those babies, and photos you uploaded on co-owned babies.
       On co-owned babies, the profile stays with the other owner; your comments and similar text there may remain under “Deleted user.”
