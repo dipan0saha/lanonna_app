@@ -53,11 +53,12 @@ Future<T?> showAppModalSheet<T>({
   );
 }
 
-/// Scrollable list region for [AppModalSheet].
+/// Scrollable list region for [AppModalSheet]. Use it for every list body.
 ///
-/// Do not use [ListView] with [shrinkWrap] and [NeverScrollableScrollPhysics]
-/// inside a modal sheet: [AppModalSheet] gives the body a bounded max height
-/// via [Flexible], so a non-scrollable list is clipped with no way to scroll.
+/// [AppModalSheet] gives the body a bounded max height via [Flexible]. The list
+/// shrink-wraps so a short list keeps the sheet compact, and scrolls once it
+/// reaches that height. Never use [NeverScrollableScrollPhysics] in a sheet
+/// body: the overflow is clipped with no way to reach it (#371).
 class AppModalSheetListBody extends StatelessWidget {
   const AppModalSheetListBody({
     super.key,
@@ -71,7 +72,8 @@ class AppModalSheetListBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: padding,
+      shrinkWrap: true,
+      padding: padding ?? EdgeInsets.zero,
       children: children,
     );
   }

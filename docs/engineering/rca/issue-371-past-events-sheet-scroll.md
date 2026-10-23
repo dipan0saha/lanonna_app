@@ -24,13 +24,33 @@ Any `showAppModalSheet` body that uses non-scrollable shrink-wrapped lists insid
 
 Sheets that already work use `SingleChildScrollView` (e.g. baby switcher) or a normal `ListView` without `NeverScrollableScrollPhysics` inside `Flexible`.
 
-## Fix direction
+## Fix
 
 | Layer | Change |
 |-------|--------|
-| `core/widgets/app_modal_sheet.dart` | Add `AppModalSheetListBody` — a `ListView` configured for use inside `AppModalSheet` (no shrinkWrap, default scroll physics) |
+| `core/widgets/app_modal_sheet.dart` | `AppModalSheetListBody`: the one list body for `AppModalSheet`. Scrollable `ListView` with `shrinkWrap: true` (a short list keeps the sheet compact instead of stretching to the max height; a long one scrolls once it reaches it) and zero default padding. |
 | Past events, RSVP, voters sheets | Build list children through `AppModalSheetListBody` |
-| Tests | Widget test asserts scroll physics are not `NeverScrollableScrollPhysics` for the shared list body |
+
+### Sheet audit
+
+| Sheet | Body | Status |
+|-------|------|--------|
+| Past events (`calendar_past_events_sheet.dart`) | list + `AppLoadMoreButton` | fixed |
+| RSVP attendees (`event_detail_screen.dart`) | list | fixed |
+| Voters (`predictions_tab.dart`) | list | fixed |
+| Baby switcher | `SingleChildScrollView` | already scrolls |
+| Confirm dialog (`app_confirm_dialog.dart`) | `SingleChildScrollView` | already scrolls |
+| Event cover photo picker (`event_form_screen.dart`) | `SingleChildScrollView` + horizontal strip | already scrolls |
+| Photo caption (`photo_upload_caption_sheet.dart`) | `SingleChildScrollView` | already scrolls |
+| Announce arrival, photo source | short fixed `Column` (no list) | n/a |
+
+No other `NeverScrollableScrollPhysics` remains in a sheet body (the predictions month grid is inline in the tab, not a sheet).
+
+## Tests
+
+`app_modal_sheet_list_body_test.dart` opens a real `showAppModalSheet`:
+- 40 rows + `AppLoadMoreButton`: the list scrolls to the footer and the button fires (the first version of this test used a bare `Column` and failed on CI).
+- 2 rows: the list is exactly its content height (sheet stays compact).
 
 ## References
 
