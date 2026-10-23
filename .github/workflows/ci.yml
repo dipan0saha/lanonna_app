@@ -81,6 +81,8 @@ jobs:
         run: |
           cd apps/mobile
           flutter pub get
+          flutter gen-l10n
+          git diff --exit-code -- lib/l10n/ || { echo "Generated l10n is stale: run flutter gen-l10n and commit lib/l10n/"; exit 1; }
           bash scripts/check-no-material-chips.sh
           dart run tool/check_hardcoded_user_strings.dart .
           flutter analyze --no-fatal-infos

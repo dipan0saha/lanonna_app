@@ -144,7 +144,7 @@ class _RegistryItemFormScreenState extends State<RegistryItemFormScreen> {
     if (mounted) setState(() => _saving = false);
     if (!ok || !mounted) return;
     context.read<HomeRefreshSignal>().notifyHomeShouldRefresh();
-    context.pop(!widget.isEdit);
+    context.pop();
   }
 
   Future<void> _delete() async {

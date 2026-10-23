@@ -1,8 +1,16 @@
+import 'package:flutter/foundation.dart';
+
 import '../../../core/api/api_client.dart';
 import '../../../core/api/offset_page.dart';
 import 'models/registry_models.dart';
 
-class RegistryRepository {
+/// Registry items and shipping address for a baby.
+///
+/// Notifies listeners after every successful mutation, so any screen showing
+/// registry data (the Registry tab, AI suggestions) reloads no matter which
+/// screen made the change. Screens do not pass "changed" results back through
+/// route pops.
+class RegistryRepository extends ChangeNotifier {
   RegistryRepository(this._api);
 
   final ApiClient _api;
@@ -35,6 +43,7 @@ class RegistryRepository {
           'catalog_suggestion_id': catalogSuggestionId,
       },
     );
+    notifyListeners();
     return RegistryItem.fromJson(json);
   }
 
@@ -55,19 +64,23 @@ class RegistryRepository {
         if (priority != null) 'priority': priority,
       },
     );
+    notifyListeners();
     return RegistryItem.fromJson(json);
   }
 
   Future<void> deleteItem(String babyId, String itemId) async {
     await _api.deleteJson('/v1/babies/$babyId/registry/items/$itemId');
+    notifyListeners();
   }
 
   Future<void> claimPurchase(String babyId, String itemId) async {
     await _api.postJson('/v1/babies/$babyId/registry/items/$itemId/purchase');
+    notifyListeners();
   }
 
   Future<void> undoPurchase(String babyId, String itemId) async {
     await _api.deleteJson('/v1/babies/$babyId/registry/items/$itemId/purchase');
+    notifyListeners();
   }
 
   Future<RegistryShippingAddress> getShippingAddress(String babyId) async {
@@ -85,6 +98,7 @@ class RegistryRepository {
       '/v1/babies/$babyId/registry/shipping-address',
       body: body,
     );
+    notifyListeners();
     return RegistryShippingAddress.fromJson(json);
   }
 }
