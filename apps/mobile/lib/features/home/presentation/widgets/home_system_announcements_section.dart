@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/router/deep_link_navigation.dart';
 import '../../../../core/theme/app_metrics.dart';
-import '../../../../core/widgets/app_system_announcement_banner.dart';
+import '../../../../core/widgets/app_banner.dart';
 import '../../data/home_repository.dart';
 import '../../data/models/home_summary.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -31,9 +31,10 @@ class HomeSystemAnnouncementsSection extends StatelessWidget {
             AppMetrics.horizontalPadding,
             8,
           ),
-          child: AppSystemAnnouncementBanner(
+          child: AppBanner(
+            icon: Icons.campaign_outlined,
             title: item.title,
-            body: item.body,
+            message: item.body,
             actions: [
               if (item.ctaLabel != null &&
                   item.ctaDeepLink != null &&

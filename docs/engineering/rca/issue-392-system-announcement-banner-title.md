@@ -12,10 +12,11 @@ There was no shared announcement banner widget; the Home section inlined `Materi
 
 ## Fix
 
-- Add `AppSystemAnnouncementBanner` under `core/widgets/` — title (semibold) above body, combined semantics label, standard campaign icon.
-- Use it from `HomeSystemAnnouncementsSection`.
-- Widget test asserts both strings render.
+- New shared `AppBanner` (`core/widgets/app_banner.dart`): a themed `MaterialBanner` with an optional semibold title above the message, an optional leading icon, and actions. A blank title is omitted.
+- `HomeSystemAnnouncementsSection` passes `title`, `body` and the campaign icon.
+- The Home load-error banner (`home_screen.dart`) uses the same widget, so Home has no raw `MaterialBanner` left.
+- No separate semantics label: the title and message `Text`s are read in order.
 
-## Test plan
+## Tests
 
-- `apps/mobile/test/app_system_announcement_banner_test.dart` — title + body visible; semantics label includes both.
+- `apps/mobile/test/app_banner_test.dart`: title renders above the message; a blank title shows only the message; `HomeSystemAnnouncementsSection` renders the API title, body and icon.
