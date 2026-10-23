@@ -58,6 +58,7 @@ dependencies:
   webview_flutter: ^4.13.0
   local_auth: ^2.3.0
   biometric_signature: ^13.2.0
+  ffi: ^2.2.0 # clock_gettime(CLOCK_BOOTTIME) for the app-lock resume grace (monotonic_clock.dart)
   flutter_svg: ^2.3.0
 
 dev_dependencies:

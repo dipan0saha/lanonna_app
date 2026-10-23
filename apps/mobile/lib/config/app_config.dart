@@ -8,6 +8,9 @@ const String devApiBaseUrl = 'https://api-r27szgit5q-uc.a.run.app';
 /// Dev Firebase Hosting origin for App Links when `APP_LINK_HOST` is omitted.
 const String devAppLinkHost = 'lanonna-dev.firebaseapp.com';
 
+/// After backgrounding, resume within this window skips the biometric lock.
+const Duration biometricAppLockResumeGracePeriod = Duration(seconds: 30);
+
 /// Compiler-facing message when a release or profile build has no API URL.
 const String releaseApiBaseUrlMissingMessage =
     'Release builds must set API_BASE_URL via --dart-define-from-file=flavors/dev.json';

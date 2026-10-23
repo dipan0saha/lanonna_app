@@ -6,8 +6,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/auth/auth_repository.dart';
+import 'package:lanonna/config/app_config.dart';
 import 'package:lanonna/core/auth/biometric_app_lock.dart';
 import 'package:lanonna/core/auth/biometric_unlock_service.dart';
+import 'package:lanonna/core/time/monotonic_clock.dart';
+import 'support/fake_monotonic_clock.dart';
 import 'package:lanonna/core/auth/session_cleanup.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/features/account/data/account_repository.dart';
@@ -143,6 +146,7 @@ _pumpLockHarness(
   OnboardingStatus? status,
   _FakeAuth? auth,
   _FakeBiometricUnlock? biometric,
+  MonotonicClock? monotonicClock,
 }) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
@@ -161,6 +165,7 @@ _pumpLockHarness(
 
   final fakeAuth = auth ?? _FakeAuth(signedIn: signedIn);
   final fakeBiometric = biometric ?? _FakeBiometricUnlock();
+  final clock = monotonicClock ?? FakeMonotonicClock();
   final cleanup = _FakeSessionCleanup(prefs);
   final accounts = _FakeAccountRepository(
     account: accountLoaded
@@ -203,6 +208,7 @@ _pumpLockHarness(
         builder: (context, child) => BiometricAppLock(
           router: router,
           biometricService: fakeBiometric,
+          monotonicClock: clock,
           child: child ?? const SizedBox.shrink(),
         ),
       ),
@@ -232,6 +238,10 @@ void _foreground(WidgetTester tester) {
   tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
 }
 
+void _advancePastGrace(FakeMonotonicClock clock) {
+  clock.advance(biometricAppLockResumeGracePeriod);
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -251,11 +261,13 @@ void main() {
   });
 
   testWidgets('engages on resume when enabled and signed in', (tester) async {
+    final clock = FakeMonotonicClock();
     final harness = await _pumpLockHarness(
       tester,
       initialLocation: '/home',
       biometricUnlockEnabled: true,
       biometric: _FakeBiometricUnlock(succeed: true),
+      monotonicClock: clock,
     );
     await tester.pumpAndSettle();
     expect(find.text('Locked'), findsNothing);
@@ -263,6 +275,7 @@ void main() {
     final callsBefore = harness.biometric.authenticateCalls;
     harness.biometric.succeed = false;
     _background(tester);
+    _advancePastGrace(clock);
     _foreground(tester);
     await tester.pump();
 
@@ -270,18 +283,97 @@ void main() {
     expect(harness.biometric.authenticateCalls, callsBefore + 1);
   });
 
-  testWidgets('a focus loss alone (inactive, then resumed) does not lock', (
+  testWidgets('does not engage on resume within the grace period', (
     tester,
   ) async {
+    final clock = FakeMonotonicClock();
     final harness = await _pumpLockHarness(
       tester,
       initialLocation: '/home',
       biometric: _FakeBiometricUnlock(succeed: true),
+      monotonicClock: clock,
+    );
+    await tester.pumpAndSettle();
+    final callsBefore = harness.biometric.authenticateCalls;
+
+    _background(tester);
+    clock.advance(
+      biometricAppLockResumeGracePeriod - const Duration(seconds: 1),
+    );
+    _foreground(tester);
+    await tester.pump();
+
+    expect(find.text('Locked'), findsNothing);
+    expect(harness.biometric.authenticateCalls, callsBefore);
+  });
+
+  testWidgets('a quick return does not carry over to the next background', (
+    tester,
+  ) async {
+    final clock = FakeMonotonicClock();
+    final harness = await _pumpLockHarness(
+      tester,
+      initialLocation: '/home',
+      biometric: _FakeBiometricUnlock(succeed: true),
+      monotonicClock: clock,
+    );
+    await tester.pumpAndSettle();
+    final callsBefore = harness.biometric.authenticateCalls;
+
+    // Quick switch: no lock.
+    _background(tester);
+    clock.advance(const Duration(seconds: 5));
+    _foreground(tester);
+    await tester.pump();
+    expect(harness.biometric.authenticateCalls, callsBefore);
+
+    // Time in the foreground does not count as time away.
+    clock.advance(const Duration(minutes: 5));
+    _background(tester);
+    clock.advance(const Duration(seconds: 5));
+    _foreground(tester);
+    await tester.pump();
+    expect(harness.biometric.authenticateCalls, callsBefore);
+
+    // A long background locks.
+    harness.biometric.succeed = false;
+    _background(tester);
+    _advancePastGrace(clock);
+    _foreground(tester);
+    await tester.pump();
+    expect(find.text('Locked'), findsOneWidget);
+    expect(harness.biometric.authenticateCalls, callsBefore + 1);
+  });
+
+  testWidgets('cold start still locks when resume grace would apply', (
+    tester,
+  ) async {
+    final clock = FakeMonotonicClock();
+    await _pumpLockHarness(
+      tester,
+      initialLocation: '/home',
+      monotonicClock: clock,
+    );
+    await tester.pump();
+
+    expect(find.text('Locked'), findsOneWidget);
+  });
+
+  testWidgets('a focus loss alone (inactive, then resumed) does not lock', (
+    tester,
+  ) async {
+    final clock = FakeMonotonicClock();
+    final harness = await _pumpLockHarness(
+      tester,
+      initialLocation: '/home',
+      biometric: _FakeBiometricUnlock(succeed: true),
+      monotonicClock: clock,
     );
     await tester.pumpAndSettle();
     final callsBefore = harness.biometric.authenticateCalls;
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    _advancePastGrace(clock);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pump();
 
@@ -293,10 +385,12 @@ void main() {
     tester,
   ) async {
     final prompt = Completer<bool>();
+    final clock = FakeMonotonicClock();
     final harness = await _pumpLockHarness(
       tester,
       initialLocation: '/home',
       biometric: _FakeBiometricUnlock(pending: prompt),
+      monotonicClock: clock,
     );
     await tester.pump();
     expect(find.text('Locked'), findsOneWidget);
@@ -304,6 +398,7 @@ void main() {
 
     // Some devices pause the activity while the system prompt is up.
     _background(tester);
+    _advancePastGrace(clock);
     prompt.complete(true);
     await tester.pump();
     _foreground(tester);
@@ -316,10 +411,12 @@ void main() {
   testWidgets('turning the setting on does not lock until the next resume', (
     tester,
   ) async {
+    final clock = FakeMonotonicClock();
     final harness = await _pumpLockHarness(
       tester,
       initialLocation: '/home',
       biometricUnlockEnabled: false,
+      monotonicClock: clock,
     );
     await tester.pumpAndSettle();
 
@@ -329,6 +426,7 @@ void main() {
     expect(harness.biometric.authenticateCalls, 0);
 
     _background(tester);
+    _advancePastGrace(clock);
     _foreground(tester);
     await tester.pump();
     expect(find.text('Locked'), findsOneWidget);
