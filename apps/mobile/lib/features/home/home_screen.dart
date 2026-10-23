@@ -100,7 +100,10 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _load({Duration? summaryMaxAge}) async {
     final repository = context.read<HomeRepository>();
     final store = context.read<SelectedBabyStore>();
-    if (shouldShowTabLoadSpinner(store, hasDisplayedPayload: _baby != null)) {
+    if (shouldShowTabLoadSpinner(
+      store,
+      hasDisplayedPayload: hasCurrentTabPayload(store, _baby?.id),
+    )) {
       setState(() {
         _loading = true;
         _loadError = null;
@@ -165,10 +168,18 @@ class _HomeScreenState extends State<HomeScreen>
       rememberTabLoadGeneration(store, baby);
     } catch (e) {
       if (!mounted) return;
+      final hasPayload = hasCurrentTabPayload(store, _baby?.id);
+      if (!hasPayload) {
+        setState(() {
+          _baby = null;
+          _summary = null;
+          _summaryError = null;
+        });
+      }
       reportTabLoadFailure(
         context,
         e,
-        hasPayload: _baby != null,
+        hasPayload: hasPayload,
         onBlockingError: (message) {
           setState(() {
             _loadError = message;
@@ -176,7 +187,7 @@ class _HomeScreenState extends State<HomeScreen>
           });
         },
       );
-      if (_baby != null && mounted) {
+      if (hasPayload && mounted) {
         setState(() => _loading = false);
       }
     }
@@ -245,10 +256,11 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final store = context.read<SelectedBabyStore>();
     final kind = resolveTabLoadKind(
       loading: _loading,
       hasError: _loadError != null,
-      hasPayload: _baby != null,
+      hasPayload: hasCurrentTabPayload(store, _baby?.id),
     );
     return Scaffold(
       body: ShellTabLayout(

@@ -73,7 +73,10 @@ class _RegistryScreenState extends State<RegistryScreen>
 
   Future<void> _load() async {
     final store = context.read<SelectedBabyStore>();
-    if (shouldShowTabLoadSpinner(store, hasDisplayedPayload: _baby != null)) {
+    if (shouldShowTabLoadSpinner(
+      store,
+      hasDisplayedPayload: hasCurrentTabPayload(store, _baby?.id),
+    )) {
       setState(() {
         _loading = true;
         _loadError = null;
@@ -104,11 +107,18 @@ class _RegistryScreenState extends State<RegistryScreen>
       rememberTabLoadGeneration(store, baby);
     } catch (e) {
       if (!mounted) return;
-      final hadBaby = _baby != null;
+      final hasPayload = hasCurrentTabPayload(store, _baby?.id);
+      if (!hasPayload) {
+        setState(() {
+          _baby = null;
+          _items = [];
+          _shipping = null;
+        });
+      }
       reportTabLoadFailure(
         context,
         e,
-        hasPayload: hadBaby,
+        hasPayload: hasPayload,
         onBlockingError: (message) {
           setState(() {
             _loadError = message;
@@ -116,7 +126,7 @@ class _RegistryScreenState extends State<RegistryScreen>
           });
         },
       );
-      if (hadBaby && mounted) {
+      if (hasPayload && mounted) {
         setState(() => _loading = false);
       }
     }
@@ -236,10 +246,11 @@ class _RegistryScreenState extends State<RegistryScreen>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final uid = context.read<AuthRepository>().currentUser?.uid;
+    final store = context.read<SelectedBabyStore>();
     final kind = resolveTabLoadKind(
       loading: _loading,
       hasError: _loadError != null,
-      hasPayload: _baby != null,
+      hasPayload: hasCurrentTabPayload(store, _baby?.id),
     );
     return Scaffold(
       backgroundColor: AppColors.background,

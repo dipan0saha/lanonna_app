@@ -21,6 +21,24 @@ bool tabLoadShouldShowSpinner({
   return false;
 }
 
+/// Whether on-screen baby tab data belongs to the current [SelectedBabyStore] selection.
+///
+/// Stale payload from a previous baby (e.g. offline switch before load completes)
+/// must not count as displayable content for snackbar-only load failures.
+bool tabDisplayedPayloadIsCurrent({
+  required SelectedBabyStore store,
+  required String? displayedBabyId,
+  required String? loadedBabyId,
+  required int loadedSelectionGeneration,
+}) {
+  final selectedId = store.selectedBabyId;
+  if (selectedId == null || displayedBabyId == null) return false;
+  if (displayedBabyId != selectedId) return false;
+  if (loadedBabyId != selectedId) return false;
+  if (loadedSelectionGeneration != store.selectionGeneration) return false;
+  return true;
+}
+
 /// Reload baby-scoped shell tabs when [HomeRefreshSignal.babyContext] fires
 /// or connectivity returns after being offline.
 mixin BabyContextReload<T extends StatefulWidget> on State<T> {
@@ -121,6 +139,15 @@ mixin TabLoadGenerationCache<T extends StatefulWidget> on State<T> {
       selectedBabyId: store.selectedBabyId,
       loadedSelectionGeneration: cachedSelectionGeneration,
       selectionGeneration: store.selectionGeneration,
+    );
+  }
+
+  bool hasCurrentTabPayload(SelectedBabyStore store, String? displayedBabyId) {
+    return tabDisplayedPayloadIsCurrent(
+      store: store,
+      displayedBabyId: displayedBabyId,
+      loadedBabyId: cachedLoadedBabyId,
+      loadedSelectionGeneration: cachedSelectionGeneration,
     );
   }
 }
