@@ -121,8 +121,14 @@ class _NamesTabState extends State<NamesTab> {
       ),
     );
     if (!ok) return;
-    _input.clear();
+    _resetSuggestForm();
     await _load();
+  }
+
+  void _resetSuggestForm() {
+    _input.clear();
+    setState(() => _validateSuggestOnInteraction = false);
+    _suggestFormKey.currentState?.reset();
   }
 
   Future<void> _like(NameSuggestion s) async {
@@ -163,6 +169,7 @@ class _NamesTabState extends State<NamesTab> {
           context.read<FunRepository>().deleteSuggestion(widget.baby.id, s.id),
     );
     if (!removed) return;
+    _resetSuggestForm();
     await _load();
   }
 

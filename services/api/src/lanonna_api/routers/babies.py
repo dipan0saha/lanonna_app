@@ -10,6 +10,7 @@ from lanonna_api.auth import AppUser, current_app_user
 from lanonna_api.domain.avatar_urls import normalize_avatar_for_storage
 from lanonna_api.http_errors import api_error, map_domain_errors
 from lanonna_api.domain.baby_delete import delete_baby_profile
+from lanonna_api.domain.membership import require_owner_baby
 from lanonna_api.domain.home import announce_arrival, build_home_summary, list_activity_events
 from lanonna_api.repositories.babies import (
     create_baby_with_owner_membership,
@@ -107,6 +108,7 @@ def patch_baby(
 
     announcing = body.lifecycle_status == "born" and body.actual_birth_date is not None
     try:
+        require_owner_baby(user.uid, baby_profile_id)
         if announcing:
             extra = {k: v for k, v in fields.items() if k not in ("lifecycle_status", "actual_birth_date")}
             row = announce_arrival(

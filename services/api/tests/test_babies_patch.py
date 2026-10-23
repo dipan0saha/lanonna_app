@@ -20,6 +20,23 @@ def _auth_as(uid: str = "owner-1"):
         app.dependency_overrides.pop(current_user, None)
 
 
+def test_patch_baby_non_owner_returns_403():
+    baby_id = uuid.uuid4()
+    with (
+        _auth_as("follower-1"),
+        patch(
+            "lanonna_api.routers.babies.require_owner_baby",
+            side_effect=PermissionError("Owner access required"),
+        ),
+    ):
+        response = client.patch(
+            f"/v1/babies/{baby_id}",
+            json={"name": "Nope"},
+        )
+    assert response.status_code == 403
+    assert response.json()["detail"]["error"] == "forbidden"
+
+
 def test_patch_baby_born_invokes_announce_arrival():
     baby_id = uuid.uuid4()
     birth = date(2026, 10, 1)
