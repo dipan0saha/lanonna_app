@@ -5,7 +5,7 @@ from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, Query, Response, status
 
-from lanonna_api.domain.errors import DomainError, ErrorCode
+from lanonna_api.domain.errors import ErrorCode
 from lanonna_api.auth import AppUser, current_app_user
 from lanonna_api.domain.avatar_urls import normalize_baby_avatar_for_storage
 from lanonna_api.http_errors import api_error, map_domain_errors
@@ -100,7 +100,7 @@ def patch_baby(
             fields["avatar_url"] = normalize_baby_avatar_for_storage(
                 body.avatar_url, baby_profile_id
             )
-        except (ValueError, DomainError) as exc:
+        except ValueError as exc:
             raise map_domain_errors(exc) from exc
 
     suggestions = body.profile_name_suggestions

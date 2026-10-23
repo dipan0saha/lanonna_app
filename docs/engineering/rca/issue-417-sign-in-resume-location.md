@@ -12,8 +12,8 @@ An email-verified user with `profile_complete: true` and no baby memberships who
 
 | Layer | Change |
 |-------|--------|
-| `navigateAfterOnboardingAuth` | After `refreshFromApi()`, navigate with `context.go(session.signedInResumeLocation(emailVerified: …))` (same table as cold start / redirect) |
-| Tests | `onboarding_auth_navigation_test.dart` — profile-complete, no-baby sign-in vs cold-start resume location |
+| `navigateAfterOnboardingAuth` | After `refreshFromApi()`, navigate with `context.go(session.signedInResumeLocation(emailVerified: …))` (same table as cold start / redirect). `emailVerified` comes from `AuthRepository.currentUser`; the unused `isSignUp` flag and the sign-up-only email-verify branch were removed, so sign-up and login share one path. |
+| Tests | `onboarding_auth_navigation_test.dart`: verified vs unverified sign-in lands where cold start would; profile-complete, no-baby sign-in matches the cold-start resume location |
 
 ## References
 

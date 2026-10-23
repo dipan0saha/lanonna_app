@@ -540,26 +540,16 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
     if (_isOnboarding) {
       return OnboardingScaffold(
         pinBottomCta: false,
-        showBack: true,
-        onBack: () async {
-          final profileComplete =
-              context.read<AppSession>().status?.profileComplete ?? false;
-          if (profileComplete) {
-            await goOnboardingBack(
-              context,
-              step: OnboardingStep.login,
-              route: OnboardingRoutes.login,
-              persist: _syncDraft,
-            );
-          } else {
-            await goOnboardingBack(
-              context,
-              step: OnboardingStep.completeProfile,
-              route: OnboardingRoutes.completeProfile,
-              persist: _syncDraft,
-            );
-          }
-        },
+        showBack: onboardingBackAllowed(
+          context,
+          OnboardingRoutes.completeProfile,
+        ),
+        onBack: () => goOnboardingBack(
+          context,
+          step: OnboardingStep.completeProfile,
+          route: OnboardingRoutes.completeProfile,
+          persist: _syncDraft,
+        ),
         body: _buildFormColumn(),
       );
     }

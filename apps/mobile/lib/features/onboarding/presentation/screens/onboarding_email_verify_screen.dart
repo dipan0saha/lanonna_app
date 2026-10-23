@@ -12,7 +12,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../domain/onboarding_routes.dart';
 import '../../domain/onboarding_step.dart';
 import '../app_session.dart';
-import '../onboarding_coordinator.dart';
 import '../widgets/onboarding_sign_out_button.dart';
 import '../widgets/onboarding_buttons.dart';
 import '../widgets/onboarding_prototype_widgets.dart';
@@ -92,7 +91,7 @@ class _OnboardingEmailVerifyScreenState
         email.endsWith('@test.com') || email.contains('.smoke@');
     return OnboardingScaffold(
       pinBottomCta: false,
-      showBack: true,
+      showBack: onboardingBackAllowed(context, OnboardingRoutes.signup),
       onBack: () => goOnboardingBack(
         context,
         step: OnboardingStep.signup,

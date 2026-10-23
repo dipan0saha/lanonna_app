@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Any
 
-from lanonna_api.domain.avatar_urls import signed_baby_avatar_urls_from_rows
+from lanonna_api.domain.avatar_urls import signed_baby_avatar_urls
 from lanonna_api.domain.fun_closed import fun_closed_flags
 from lanonna_api.domain.member_lifecycle import can_leave_baby
 from lanonna_api.schemas.babies import BabySummary
@@ -11,7 +11,7 @@ from lanonna_api.schemas.babies import BabySummary
 
 def baby_summaries_from_rows(rows: Sequence[dict[str, Any]]) -> list[BabySummary]:
     """Summaries for baby rows; every avatar URL is signed in one batch."""
-    avatars = signed_baby_avatar_urls_from_rows(rows)
+    avatars = signed_baby_avatar_urls(rows)
     summaries: list[BabySummary] = []
     for row, avatar_url in zip(rows, avatars):
         closed = fun_closed_flags(row)

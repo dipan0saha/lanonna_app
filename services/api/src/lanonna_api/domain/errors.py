@@ -131,10 +131,6 @@ class InvalidInputError(DomainError, ValueError):
     status_code = 400
 
 
-class UnprocessableInputError(DomainError, ValueError):
-    status_code = 422
-
-
 class UnauthenticatedError(DomainError):
     status_code = 401
 

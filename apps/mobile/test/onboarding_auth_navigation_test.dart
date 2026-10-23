@@ -1,7 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lanonna/core/api/api_client.dart';
+import 'package:lanonna/core/auth/auth_repository.dart';
 import 'package:lanonna/features/onboarding/data/models/onboarding_status.dart';
 import 'package:lanonna/features/onboarding/data/onboarding_repository.dart';
 import 'package:lanonna/features/onboarding/data/onboarding_storage.dart';
@@ -22,8 +24,36 @@ class _FakeOnboardingRepository extends OnboardingRepository {
   Future<OnboardingStatus> fetchStatus() async => _status;
 }
 
+class _FakeFirebaseAuth extends Fake implements FirebaseAuth {}
+
+class _FakeUser extends Fake implements User {
+  _FakeUser({required this.emailVerified});
+
+  @override
+  final bool emailVerified;
+
+  @override
+  String get uid => 'user-1';
+}
+
+class _FakeAuth extends AuthRepository {
+  _FakeAuth({required this.emailVerified})
+    : super(firebaseAuth: _FakeFirebaseAuth());
+
+  final bool emailVerified;
+
+  @override
+  User? get currentUser => _FakeUser(emailVerified: emailVerified);
+}
+
 void main() {
-  testWidgets('navigateAfterOnboardingAuth uses signedInResumeLocation', (
+  for (final (emailVerified, expected) in [
+    (true, 'create_baby'),
+    (false, 'email_verify'),
+  ]) {
+    testWidgets(
+    'navigateAfterOnboardingAuth lands where cold start would '
+    '(emailVerified: $emailVerified)', (
     tester,
   ) async {
     SharedPreferences.setMockInitialValues({});
@@ -66,29 +96,43 @@ void main() {
           path: OnboardingRoutes.completeProfile,
           builder: (_, _) => const SizedBox(key: Key('complete_profile')),
         ),
+        GoRoute(
+          path: OnboardingRoutes.emailVerify,
+          builder: (_, _) => const SizedBox(key: Key('email_verify')),
+        ),
       ],
     );
 
     await tester.pumpWidget(
       MultiProvider(
         providers: [
-          Provider<OnboardingCoordinator>.value(value: coordinator),
-          Provider<AppSession>.value(value: session),
+          ChangeNotifierProvider<OnboardingCoordinator>.value(
+            value: coordinator,
+          ),
+          ChangeNotifierProvider<AppSession>.value(value: session),
+          Provider<AuthRepository>.value(
+            value: _FakeAuth(emailVerified: emailVerified),
+          ),
         ],
         child: MaterialApp.router(routerConfig: router),
       ),
     );
 
     await navigateAfterOnboardingAuth(
-      tester.element(find.byType(MaterialApp)),
-      isSignUp: false,
+      tester.element(find.byKey(const Key('login'))),
       usedOAuth: false,
     );
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('create_baby')), findsOneWidget);
-    expect(find.byKey(const Key('complete_profile')), findsNothing);
+    expect(find.byKey(Key(expected)), findsOneWidget);
+    expect(
+      session.signedInResumeLocation(emailVerified: emailVerified),
+      emailVerified
+          ? OnboardingRoutes.ownerCreateBaby
+          : OnboardingRoutes.emailVerify,
+    );
   });
+  }
 
   test('sign-in resume matches cold-start resume for profile-complete no-baby', () async {
     SharedPreferences.setMockInitialValues({});

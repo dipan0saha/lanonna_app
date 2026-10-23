@@ -2,7 +2,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, status
 
-from lanonna_api.domain.errors import DomainError, ErrorCode
+from lanonna_api.domain.errors import ErrorCode
 from lanonna_api.auth import AppUser, current_app_user, current_user
 from lanonna_api.db import read_scope
 from lanonna_api.domain.date_validation import validate_user_birth_date
@@ -79,7 +79,7 @@ def patch_profile(
             changes["avatar_url"] = normalize_user_avatar_for_storage(
                 changes["avatar_url"], user.uid
             )
-        except (ValueError, DomainError) as exc:
+        except ValueError as exc:
             raise map_domain_errors(exc) from exc
     try:
         row = patch_profile_fields(user.uid, changes)

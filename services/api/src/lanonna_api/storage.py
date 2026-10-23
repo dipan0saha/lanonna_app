@@ -31,6 +31,7 @@ from uuid import UUID
 
 from lanonna_api.config import settings
 from lanonna_api.domain.errors import ErrorCode, InvalidInputError
+from lanonna_api.domain.storage_references import baby_avatar_prefix, user_avatar_prefix
 
 READ_URL_TTL = timedelta(seconds=900)
 UPLOAD_URL_TTL = timedelta(seconds=900)
@@ -255,7 +256,7 @@ def mint_user_avatar_upload_url(
         raise InvalidInputError(ErrorCode.FILE_TOO_LARGE, "Display asset exceeds maximum size.")
 
     ext = "webp" if content_type == "image/webp" else "jpg"
-    object_name = f"avatars/users/{firebase_uid}/{uuid.uuid4().hex}.{ext}"
+    object_name = f"{user_avatar_prefix(firebase_uid)}{uuid.uuid4().hex}.{ext}"
     return _sign_put(object_name, content_type, max_bytes)
 
 
@@ -272,7 +273,7 @@ def mint_baby_avatar_upload_url(
         raise InvalidInputError(ErrorCode.FILE_TOO_LARGE, "Display asset exceeds maximum size.")
 
     ext = "webp" if content_type == "image/webp" else "jpg"
-    object_name = f"avatars/babies/{baby_profile_id}/{uuid.uuid4().hex}.{ext}"
+    object_name = f"{baby_avatar_prefix(baby_profile_id)}{uuid.uuid4().hex}.{ext}"
     return _sign_put(object_name, content_type, max_bytes)
 
 

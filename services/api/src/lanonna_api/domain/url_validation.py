@@ -1,11 +1,15 @@
-"""Normalize and validate optional user-entered http(s) URLs (registry, calendar)."""
+"""Normalize and validate optional user-entered links (registry, calendar).
+
+Links are opened by every member, so they must be ``https`` on a real host in
+every environment (#415). A bare domain gets ``https://``.
+"""
 
 from __future__ import annotations
 
 from urllib.parse import urlparse
 from lanonna_api.domain.errors import ErrorCode, InvalidInputError
 
-INVALID_HTTP_URL = "Enter a valid link, e.g. https://…"
+INVALID_HTTP_URL = "Enter a secure link that starts with https://"
 _MAX_URL_LENGTH = 2048
 
 
@@ -25,15 +29,13 @@ def normalize_optional_http_url(raw: str | None) -> str | None:
         value = f"https://{value}"
 
     parsed = urlparse(value)
-    if parsed.scheme not in ("http", "https"):
+    if parsed.scheme != "https":
         raise InvalidInputError(ErrorCode.INVALID_URL, INVALID_HTTP_URL)
-    if parsed.scheme == "http" and parsed.hostname not in ("localhost", "127.0.0.1"):
-        raise InvalidInputError(ErrorCode.INVALID_URL, INVALID_HTTP_URL)
-
-    host = parsed.netloc
-    if not host:
-        raise InvalidInputError(ErrorCode.INVALID_URL, INVALID_HTTP_URL)
-    if host != "localhost" and "." not in host:
+    try:
+        parsed.port
+    except ValueError:
+        raise InvalidInputError(ErrorCode.INVALID_URL, INVALID_HTTP_URL) from None
+    if not parsed.hostname or "." not in parsed.hostname:
         raise InvalidInputError(ErrorCode.INVALID_URL, INVALID_HTTP_URL)
 
     return value

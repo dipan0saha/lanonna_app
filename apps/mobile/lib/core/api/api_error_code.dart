@@ -129,7 +129,7 @@ enum ApiErrorCode {
         invalidBirthDate => l10n.errorInvalidBirthDate,
         birthDateInFuture => l10n.homeDateOfBirthCannotBe,
         invalidUrl => l10n.validationUrlInvalid,
-        invalidStorageReference => l10n.errorInvalidRequest,
+        invalidStorageReference => l10n.errorInvalidPhotoReference,
         textTooLong => switch (params['max_length']) {
             final int maxLength => l10n.errorTextTooLong(maxLength),
             _ => l10n.errorInvalidRequest,

@@ -287,7 +287,7 @@ class _LockOverlay extends StatelessWidget {
                 const SizedBox(height: 12),
                 TextButton(
                   onPressed: onSignOut,
-                  child: Text(l10n.biometricUnlockSignOut),
+                  child: Text(l10n.authSignOut),
                 ),
               ],
             ),

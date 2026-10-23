@@ -19,10 +19,19 @@ def test_accepts_https():
     )
 
 
-def test_rejects_plain_http_except_localhost():
+@pytest.mark.parametrize(
+    "value",
+    [
+        "http://example.com",
+        "http://localhost/shop",
+        "http://127.0.0.1:8080/x",
+        "https://localhost/shop",
+        "localhost:8080",
+    ],
+)
+def test_links_are_https_on_a_real_host_in_every_environment(value):
     with pytest.raises(ValueError, match=INVALID_HTTP_URL):
-        normalize_optional_http_url("http://example.com")
-    assert normalize_optional_http_url("http://localhost/shop") == "http://localhost/shop"
+        normalize_optional_http_url(value)
 
 
 def test_bare_domain_gets_https_prefix():
@@ -39,6 +48,7 @@ def test_rejects_invalid_values():
         "ftp://files.example.com/x",
         "https://",
         "://example.com",
+        "https://example.com:port/x",
     ):
         with pytest.raises(ValueError, match=INVALID_HTTP_URL):
             normalize_optional_http_url(bad)

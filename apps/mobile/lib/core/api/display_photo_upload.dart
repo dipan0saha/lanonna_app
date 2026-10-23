@@ -16,21 +16,30 @@ class DisplayPhotoUpload {
   Future<String> uploadProfileAvatar({required XFile imageFile}) =>
       _uploadAvatar(imageFile: imageFile);
 
-  /// Downloads an OAuth (or other remote) image and uploads it as the user's avatar.
-  Future<String> uploadProfileAvatarFromRemoteUrl(String url) async {
-    final response = await http.get(Uri.parse(url));
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw ApiException(
-        'avatar_remote_fetch_${response.statusCode}',
-        statusCode: response.statusCode,
-      );
+  /// Copies a remote https image (an OAuth provider photo) into the user's
+  /// avatar prefix and returns its object path; the API stores only our own
+  /// objects (#415). Best effort: null when the download or upload fails or
+  /// times out, so callers carry on without an avatar.
+  Future<String?> importProfileAvatar(
+    String url, {
+    Duration timeout = const Duration(seconds: 15),
+  }) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null || uri.scheme != 'https') return null;
+    try {
+      final response = await http.get(uri).timeout(timeout);
+      if (response.statusCode < 200 ||
+          response.statusCode >= 300 ||
+          response.bodyBytes.isEmpty) {
+        return null;
+      }
+      // Re-encoded by [_encode], so the source content type does not matter.
+      return await uploadProfileAvatar(
+        imageFile: XFile.fromData(response.bodyBytes),
+      ).timeout(timeout);
+    } catch (_) {
+      return null;
     }
-    final contentType = response.headers['content-type'] ?? 'image/jpeg';
-    final file = XFile.fromData(
-      response.bodyBytes,
-      mimeType: contentType.split(';').first.trim(),
-    );
-    return uploadProfileAvatar(imageFile: file);
   }
 
   /// Uploads a baby profile avatar; returns the GCS object path to persist as `avatar_url`.

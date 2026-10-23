@@ -16,11 +16,12 @@ From create-baby, Back opened **Complete your profile**; Back again briefly show
 
 | Layer | Change |
 |-------|--------|
-| Complete profile `_onBack` | Verified users go to login (sign-up path when OAuth); never push email-verify when already verified |
-| Create-baby onboarding Back | When `profileComplete`, Back goes to login instead of complete profile |
-| Email verify screen | On load, if already verified, `go(signedInResumeLocation)` instead of always complete profile |
-| `redirectFor` | Drop `emailVerify` from the no-baby allow-set when profile is complete |
-| `OnboardingSignOutButton` | Shared widget on setup screens (complete profile, create-baby, email verify) calling `AuthSessionService.signOut` |
+| `AppSession.redirectFor` | One table rule: a signed-in user on `emailVerify` who is verified (or skips verification, OAuth) is redirected to the resume step. `emailVerify` was removed from the profile-incomplete, no-baby and post-baby allow-sets, so no state can render it for a verified user. |
+| `AppSession.allowsSignedInLocation` | Asks the same table whether a location is reachable. |
+| `onboardingBackAllowed` | Shared helper: setup screens show Back only when its target is allowed for the current session, so Back can never open a screen the router would reject (no flash). Per-screen login special cases from the first draft were reverted; Back targets stay the natural previous step. |
+| Email verify screen | Checks once on load and on each poll; once verified it refreshes the session and goes to `signedInResumeLocation` instead of a hard-coded Complete profile. |
+| `OnboardingSignOutButton` | Shared widget on setup screens (complete profile, create-baby, email verify) calling `AuthSessionService.signOut`; uses the shared `authSignOut` string (also used by the biometric lock). |
+| Tests | `app_session_redirect_test.dart`: verified user on email verify redirects for every no-main-app state; Back targets follow the table |
 
 ## References
 

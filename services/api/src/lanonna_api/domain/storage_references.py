@@ -1,133 +1,79 @@
-"""Validate client-supplied display-bucket object paths and owned avatars."""
+"""Avatar storage references sent by the app (#415).
+
+Avatars are the only fields where the client names a storage object. Every
+other photo field (event covers, announcement photos, gallery, tags) takes a
+photo id that the API looks up under the baby. An avatar must name an object
+directly under its owner's upload prefix, the same prefix
+``/v1/uploads/display/signed-url`` mints into (``storage.py``), so nobody can
+point their avatar at another account's object or at an outside URL.
+"""
 
 from __future__ import annotations
 
-import re
 import uuid
-from typing import Literal
 from urllib.parse import unquote, urlparse
 
 from lanonna_api.config import settings
-from lanonna_api.domain.errors import ErrorCode, UnprocessableInputError
+from lanonna_api.domain.errors import ErrorCode, InvalidInputError
 
-INVALID_STORAGE_REFERENCE = (
-    "Use a photo uploaded from this app for your profile or baby avatar."
-)
-
-_AVATAR_USER_PREFIX = "avatars/users/"
-_AVATAR_BABY_PREFIX = "avatars/babies/"
-_DISPLAY_PREFIX = "display/"
-_ALLOWED_OBJECT_PREFIXES = (_AVATAR_USER_PREFIX, _AVATAR_BABY_PREFIX, _DISPLAY_PREFIX)
-
-# Firebase uid and UUID string forms used in object paths.
-_UID_SEGMENT = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
-_UUID_SEGMENT = re.compile(
-    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
-    re.IGNORECASE,
-)
+INVALID_AVATAR_REFERENCE = "Choose the photo again from this app."
 
 
-def _reject_storage_reference(message: str = INVALID_STORAGE_REFERENCE) -> None:
-    raise UnprocessableInputError(ErrorCode.INVALID_STORAGE_REFERENCE, message)
+def user_avatar_prefix(firebase_uid: str) -> str:
+    return f"avatars/users/{firebase_uid}/"
 
 
-def _normalize_object_path(path: str) -> str:
-    cleaned = path.strip().lstrip("/")
-    if not cleaned or ".." in cleaned or "\\" in cleaned:
-        _reject_storage_reference()
-    if not cleaned.startswith(_ALLOWED_OBJECT_PREFIXES):
-        _reject_storage_reference()
-    return cleaned
+def baby_avatar_prefix(baby_profile_id: uuid.UUID) -> str:
+    return f"avatars/babies/{baby_profile_id}/"
 
 
-def display_object_path_from_client_value(value: str) -> str | None:
-    """Parse a stored object path or legacy public GCS URL for our display bucket."""
-    s = value.strip()
+def display_object_path(value: str | None) -> str | None:
+    """The display-bucket object a stored or sent avatar names, else ``None``.
+
+    Accepts a bare object path or an https URL into our display bucket (a
+    signed or legacy public URL; the query string is ignored). Never raises,
+    so reads can call it on any stored row.
+    """
+    s = (value or "").strip()
     if not s:
         return None
-    if s.startswith(_ALLOWED_OBJECT_PREFIXES):
-        return _normalize_object_path(s)
-
-    if not (s.startswith("http://") or s.startswith("https://")):
+    if "://" in s:
+        parsed = urlparse(s)
+        if parsed.scheme != "https":
+            return None
+        bucket = settings.display_bucket
+        raw = unquote(parsed.path).lstrip("/")
+        if parsed.netloc == "storage.googleapis.com" and raw.startswith(f"{bucket}/"):
+            s = raw[len(bucket) + 1 :]
+        elif parsed.netloc == f"{bucket}.storage.googleapis.com":
+            s = raw
+        else:
+            return None
+    if s.startswith("/") or "\\" in s:
         return None
-
-    bucket = settings.display_bucket
-    parsed = urlparse(s)
-    path = unquote(parsed.path.lstrip("/"))
-
-    if parsed.netloc == "storage.googleapis.com":
-        if path.startswith(f"{bucket}/"):
-            return _normalize_object_path(path[len(bucket) + 1 :])
-        parts = path.split("/", 1)
-        if len(parts) == 2 and parts[0] == bucket:
-            return _normalize_object_path(parts[1])
-
-    if parsed.netloc == f"{bucket}.storage.googleapis.com":
-        return _normalize_object_path(path)
-
-    return None
-
-
-def user_avatar_object_prefix(firebase_uid: str) -> str:
-    if not _UID_SEGMENT.match(firebase_uid):
-        _reject_storage_reference()
-    return f"{_AVATAR_USER_PREFIX}{firebase_uid}/"
-
-
-def baby_avatar_object_prefix(baby_profile_id: uuid.UUID) -> str:
-    baby_id = str(baby_profile_id)
-    if not _UUID_SEGMENT.match(baby_id):
-        _reject_storage_reference()
-    return f"{_AVATAR_BABY_PREFIX}{baby_id}/"
-
-
-def normalize_owned_avatar_for_storage(
-    value: str | None,
-    *,
-    owner_kind: Literal["user", "baby"],
-    owner_id: str,
-) -> str | None:
-    """Persist only object paths under the owner's avatar upload prefix."""
-    if value is None:
+    if any(part in ("", ".", "..") for part in s.split("/")):
         return None
-    s = value.strip()
-    if not s:
+    return s
+
+
+def owned_avatar_path(value: str | None, prefix: str) -> str | None:
+    """The object path when it sits directly under [prefix] (as minted)."""
+    path = display_object_path(value)
+    if path is None or not path.startswith(prefix):
         return None
+    name = path[len(prefix) :]
+    return path if name and "/" not in name else None
 
-    if s.startswith("http://"):
-        _reject_storage_reference()
 
-    path = display_object_path_from_client_value(s)
+def normalize_avatar_for_storage(value: str | None, prefix: str) -> str | None:
+    """The value to persist: ``None`` clears, else the owned object path.
+
+    Raises ``invalid_storage_reference`` (400) for anything else: another
+    account's object, a path outside the avatar prefixes, or any outside URL.
+    """
+    if value is None or not value.strip():
+        return None
+    path = owned_avatar_path(value, prefix)
     if path is None:
-        _reject_storage_reference()
-
-    expected = (
-        user_avatar_object_prefix(owner_id)
-        if owner_kind == "user"
-        else baby_avatar_object_prefix(uuid.UUID(owner_id))
-    )
-    if not path.startswith(expected):
-        _reject_storage_reference()
-    return path
-
-
-def avatar_object_path_authorized(
-    stored: str | None,
-    *,
-    owner_kind: Literal["user", "baby"],
-    owner_id: str,
-) -> str | None:
-    """Return the object path only if [stored] is owned by [owner_id]; else None."""
-    if not stored or not str(stored).strip():
-        return None
-    path = display_object_path_from_client_value(str(stored).strip())
-    if path is None:
-        return None
-    expected = (
-        user_avatar_object_prefix(owner_id)
-        if owner_kind == "user"
-        else baby_avatar_object_prefix(uuid.UUID(owner_id))
-    )
-    if not path.startswith(expected):
-        return None
+        raise InvalidInputError(ErrorCode.INVALID_STORAGE_REFERENCE, INVALID_AVATAR_REFERENCE)
     return path

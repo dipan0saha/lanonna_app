@@ -214,11 +214,11 @@ abstract class AppLocalizations {
   /// **'Try again'**
   String get biometricUnlockRetry;
 
-  /// No description provided for @biometricUnlockSignOut.
+  /// No description provided for @authSignOut.
   ///
   /// In en, this message translates to:
   /// **'Sign out'**
-  String get biometricUnlockSignOut;
+  String get authSignOut;
 
   /// No description provided for @notificationChannelGallery.
   ///
@@ -4321,8 +4321,14 @@ abstract class AppLocalizations {
   /// No description provided for @validationUrlInvalid.
   ///
   /// In en, this message translates to:
-  /// **'Enter a valid link, e.g. https://…'**
+  /// **'Enter a secure link that starts with https://'**
   String get validationUrlInvalid;
+
+  /// No description provided for @errorInvalidPhotoReference.
+  ///
+  /// In en, this message translates to:
+  /// **'That photo can\'t be used. Choose a photo again.'**
+  String get errorInvalidPhotoReference;
 
   /// No description provided for @authErrorTooManyAttempts.
   ///

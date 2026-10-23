@@ -36,11 +36,6 @@ import '../widgets/onboarding_typography.dart';
 import '../widgets/onboarding_sign_out_button.dart';
 import '../../../../l10n/app_localizations.dart';
 
-bool _isOwnedAvatarObjectPath(String? value) {
-  final trimmed = value?.trim();
-  return trimmed != null && trimmed.startsWith('avatars/');
-}
-
 class OnboardingCompleteProfileScreen extends StatefulWidget {
   const OnboardingCompleteProfileScreen({super.key});
 
@@ -66,6 +61,8 @@ class _OnboardingCompleteProfileScreenState
   bool _acceptedTerms = false;
   XFile? _photoFile;
   String? _networkPhotoUrl;
+  /// The avatar the server returned (already ours); unchanged means no write.
+  String? _serverAvatarUrl;
   bool _prefilledFromProvider = false;
   var _hydrated = false;
   List<IsoCountry> _countries = const [];
@@ -138,6 +135,7 @@ class _OnboardingCompleteProfileScreenState
           account.birthDate!.isNotEmpty) {
         _birthDate = tryParseApiCalendarDate(account.birthDate);
       }
+      _serverAvatarUrl = account.avatarUrl;
       if (_networkPhotoUrl == null && account.avatarUrl != null) {
         _networkPhotoUrl = account.avatarUrl;
       }
@@ -292,14 +290,9 @@ class _OnboardingCompleteProfileScreenState
       _error = null;
     });
     try {
-      String? avatarUrl = _networkPhotoUrl;
-      final file = _photoFile;
-      final upload = DisplayPhotoUpload(context.read<ApiClient>());
-      if (file != null) {
-        avatarUrl = await upload.uploadProfileAvatar(imageFile: file);
-      } else if (avatarUrl != null && !_isOwnedAvatarObjectPath(avatarUrl)) {
-        avatarUrl = await upload.uploadProfileAvatarFromRemoteUrl(avatarUrl);
-      }
+      final avatarUrl = await _avatarForSave(
+        DisplayPhotoUpload(context.read<ApiClient>()),
+      );
       if (!mounted) return;
       await context.read<AccountRepository>().updateProfile(
         displayName: displayName,
@@ -321,33 +314,31 @@ class _OnboardingCompleteProfileScreenState
     }
   }
 
-  Future<void> _onBack() async {
-    final coordinator = context.read<OnboardingCoordinator>();
-    final user = FirebaseAuth.instance.currentUser;
-    final emailVerified =
-        coordinator.skipEmailVerify || (user?.emailVerified ?? false);
-    if (!emailVerified) {
-      if (coordinator.skipEmailVerify) {
-        await goOnboardingBack(
-          context,
-          step: OnboardingStep.signup,
-          route: OnboardingRoutes.signup,
-          persist: _persistDraft,
-        );
-      } else {
-        await goOnboardingBack(
-          context,
-          step: OnboardingStep.emailVerify,
-          route: OnboardingRoutes.emailVerify,
-          persist: _persistDraft,
-        );
-      }
-      return;
-    }
-    await goOnboardingBack(
+  /// The step before this one: sign-up for OAuth (no verify step), else
+  /// email verify. Offered only while the routing table allows it (#418).
+  ({OnboardingStep step, String route}) get _backTarget =>
+      Provider.of<OnboardingCoordinator>(context, listen: false).skipEmailVerify
+      ? (step: OnboardingStep.signup, route: OnboardingRoutes.signup)
+      : (step: OnboardingStep.emailVerify, route: OnboardingRoutes.emailVerify);
+
+  /// `avatar_url` for the save: a fresh upload path, or null to leave the
+  /// stored avatar as it is. The API stores only our own objects (#415), so a
+  /// provider (e.g. Google) photo is copied into the user's avatar prefix
+  /// first; that copy is best effort and never blocks finishing the profile.
+  Future<String?> _avatarForSave(DisplayPhotoUpload upload) async {
+    final file = _photoFile;
+    if (file != null) return upload.uploadProfileAvatar(imageFile: file);
+    final remote = _networkPhotoUrl;
+    if (remote == null || remote == _serverAvatarUrl) return null;
+    return upload.importProfileAvatar(remote);
+  }
+
+  Future<void> _onBack() {
+    final target = _backTarget;
+    return goOnboardingBack(
       context,
-      step: OnboardingStep.login,
-      route: OnboardingRoutes.login,
+      step: target.step,
+      route: target.route,
       persist: _persistDraft,
     );
   }
@@ -360,7 +351,7 @@ class _OnboardingCompleteProfileScreenState
 
     return OnboardingScaffold(
       pinBottomCta: false,
-      showBack: true,
+      showBack: onboardingBackAllowed(context, _backTarget.route),
       onBack: _onBack,
       body: SingleChildScrollView(
         child: Column(

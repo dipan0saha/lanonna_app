@@ -79,7 +79,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get biometricUnlockRetry => 'Try again';
 
   @override
-  String get biometricUnlockSignOut => 'Sign out';
+  String get authSignOut => 'Sign out';
 
   @override
   String get notificationChannelGallery => 'Gallery';
@@ -2455,7 +2455,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get validationCountryRequired => 'Select a country';
 
   @override
-  String get validationUrlInvalid => 'Enter a valid link, e.g. https://…';
+  String get validationUrlInvalid =>
+      'Enter a secure link that starts with https://';
+
+  @override
+  String get errorInvalidPhotoReference =>
+      'That photo can\'t be used. Choose a photo again.';
 
   @override
   String get authErrorTooManyAttempts =>

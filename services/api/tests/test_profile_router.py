@@ -165,7 +165,7 @@ def test_patch_profile_rejects_other_users_avatar_path():
             "/v1/profile",
             json={"avatar_url": "avatars/users/other-user/secret.jpg"},
         )
-    assert response.status_code == 422
+    assert response.status_code == 400
     assert response.json()["detail"]["error"] == "invalid_storage_reference"
 
 
@@ -175,12 +175,16 @@ def test_patch_profile_rejects_external_avatar_url():
             "/v1/profile",
             json={"avatar_url": "https://example.com/track.png"},
         )
-    assert response.status_code == 422
+    assert response.status_code == 400
     assert response.json()["detail"]["error"] == "invalid_storage_reference"
 
 
+@patch(
+    "lanonna_api.domain.avatar_urls.signed_display_urls",
+    side_effect=lambda paths: [f"https://signed/{p}" if p else None for p in paths],
+)
 @patch("lanonna_api.routers.profile.patch_profile_fields")
-def test_patch_profile_accepts_own_avatar_path(mock_patch):
+def test_patch_profile_accepts_own_avatar_path(mock_patch, _mock_sign):
     own_path = "avatars/users/user-1/photo.webp"
     mock_patch.return_value = _profile_row(avatar_url=own_path)
     with _auth_as("user-1"):
@@ -197,5 +201,5 @@ def test_patch_baby_rejects_other_babys_avatar_path():
             f"/v1/babies/{baby_id}",
             json={"avatar_url": f"avatars/babies/{other}/pic.jpg"},
         )
-    assert response.status_code == 422
+    assert response.status_code == 400
     assert response.json()["detail"]["error"] == "invalid_storage_reference"
