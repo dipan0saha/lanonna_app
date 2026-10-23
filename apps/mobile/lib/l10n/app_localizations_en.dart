@@ -956,9 +956,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionAnnounceArrival2 => 'Announce arrival';
 
   @override
-  String get announcementOnlyOwnersCanCreate =>
-      'Only owners can create or edit the birth announcement.';
-
   String get announcementTitle => 'Announcement';
 
   @override
@@ -1718,10 +1715,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get calendarOnlyOwnersCanCreateOr =>
-      'Only owners can create or edit calendar events.';
-
-  @override
   String get calendarBabyProfileIsStillLoading =>
       'Baby profile is still loading. Try again.';
 
@@ -1747,6 +1740,9 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get calendarNothingOnTheCalendarYet =>
       'Nothing on the calendar yet — check back soon.';
+
+  @override
+  String get ownerOnlyPageBlocked => 'Only owners can do that.';
 
   @override
   String get calendarAddEventCta => '+ Add Event';
@@ -1860,10 +1856,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String funLove(String suggestedName) {
     return 'Love $suggestedName';
   }
-
-  @override
-  String get registryOnlyOwnersCanEditThe =>
-      'Only owners can edit the shipping address.';
 
   @override
   String registryCouldNotLoadShippingAddress(String e) {

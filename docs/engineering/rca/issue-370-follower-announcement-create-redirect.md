@@ -10,9 +10,9 @@ When a baby is marked born but owners have not published a keepsake announcement
 
 `AnnouncementCardScreen._load()` sets `_isOwner` from `routeBaby?.role == 'owner'` then, if `detail == null`, always `context.replace('…/announcement/create')` without checking ownership. The follower empty state in `build()` (`AppEmptyState` + `emptyAnnouncementYet`) is unreachable because navigation happens first.
 
-### 2. Create route has no owner guard
+### 2. Owner-only routes have no route-level guard
 
-`/baby/:babyId/announcement/create` builds `AnnouncementCreateScreen` for any member. Calendar and registry shipping already reject non-owners in-screen (`event_form_screen.dart`, `registry_shipping_address_screen.dart`).
+`/baby/:babyId/announcement/create` builds `AnnouncementCreateScreen` for any member. Only some owner pages checked the role in-screen (`event_form_screen.dart`, `registry_shipping_address_screen.dart`); registry item forms, AI suggestions, baby edit and followers relied on the entry buttons being hidden.
 
 ### 3. Home CTA does not reflect announcement availability for followers
 
@@ -28,14 +28,39 @@ When a baby is marked born but owners have not published a keepsake announcement
 
 Owner home flow that pushes create after marking born (`home_screen.dart`) is correct — owners only.
 
-## Fix direction
+## Fix
+
+The deeper flaw is that owner-only pages had no route-level guard: each screen decided for itself whether to check the role, so a missed check (announcement create) let a follower reach an owner form. The fix moves the rule into the router.
 
 | Layer | Change |
 |-------|--------|
-| `announcement_card_screen.dart` | Redirect to create only when `_isOwner && detail == null` |
-| `announcement_create_screen.dart` | On load, if `babyById` role ≠ owner: snackbar + pop (match event form) |
-| `home_birth_welcome_card.dart` | Show **View Announcement** when owner **or** `announcementId != null` |
-| Tests | Card screen: follower + null detail → empty state, not create; create screen: follower turned away |
+| `core/router/owner_only_gate.dart` (new) | `OwnerOnlyGate` resolves the baby (route `:babyId`, or the selected baby for tab routes). A known non-owner gets the shared `ownerOnlyPageBlocked` snackbar and `popOrGo(fallback)`; the screen is never built. An unresolved baby (offline, no cache) is left to the screen's own load. The API enforces the same rule. |
+| `core/router/app_router.dart` | Every owner-only route builds through the gate (table below). |
+| `event_form_screen.dart`, `registry_shipping_address_screen.dart` | In-screen role checks removed (the router covers them); per-feature "only owners" strings replaced by one shared string. |
+| `announcement_card_screen.dart` | Redirect to create only when `_isOwner && detail == null`; followers get the empty state. |
+| `home_birth_welcome_card.dart` | **View Announcement** shows for owners, or for followers when `announcementId != null`. |
+
+### Owner-only routes (all gated)
+
+| Route | Baby | Fallback |
+|-------|------|----------|
+| `/baby/:babyId/edit` | route | Home |
+| `/baby/:babyId/followers` | route | Home |
+| `/baby/:babyId/announcement/create` | route | announcement card |
+| `/calendar/event/create`, `/calendar/event/:eventId/edit`, `/calendar/ai-suggestions` | selected | Calendar |
+| `/registry/item/create`, `/registry/item/:itemId/edit`, `/registry/ai-suggestions`, `/registry/shipping-address` | selected | Registry |
+
+`/invite-family` is not gated by role of the selected baby: it already targets the user's owned baby (`resolveOwnerBaby`) and handles "no owned baby" itself. Onboarding owner routes are only reachable inside the owner onboarding flow.
+
+### Rule
+
+A new owner-only page must be registered through `OwnerOnlyGate` in `app_router.dart`; screens do not re-check the role.
+
+## Tests
+
+- `owner_only_gate_test.dart`: owner sees the page; follower is turned back with feedback (route baby and selected baby); deep link with nothing to pop goes to the fallback; unresolved baby falls through to the screen.
+- `announcement_card_screen_test.dart`: follower + no announcement → empty state; owner → create.
+- `home_birth_welcome_card_test.dart`: follower without announcement hides the View button.
 
 ## References
 
