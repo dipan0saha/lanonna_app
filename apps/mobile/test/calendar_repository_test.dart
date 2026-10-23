@@ -5,6 +5,16 @@ import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/features/calendar/data/calendar_repository.dart';
 
 void main() {
+  test('concurrent listEvents for the same key shares one HTTP request', () async {
+    final api = _EventsApi();
+    final repo = CalendarRepository(api);
+    await Future.wait([
+      repo.listEvents('baby-1', month: '2026-03'),
+      repo.listEvents('baby-1', month: '2026-03'),
+    ]);
+    expect(api.calls, 1);
+  });
+
   test('listEvents caches by baby and month key', () async {
     final api = _EventsApi();
     final repo = CalendarRepository(api);

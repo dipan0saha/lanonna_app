@@ -4,6 +4,7 @@ import 'package:lanonna/core/domain/rsvp_status.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/api/offset_page.dart';
+import '../../../core/data/single_flight.dart';
 import '../../../core/time/app_date_time.dart';
 import '../domain/calendar_event_lists.dart';
 import 'models/calendar_models.dart';
@@ -28,6 +29,7 @@ class CalendarRepository extends ChangeNotifier {
   final ApiClient _api;
 
   final Map<String, Map<String, List<CalendarEvent>>> _listsByBaby = {};
+  final _listRequests = KeyedSingleFlight<String, List<CalendarEvent>>();
 
   void _markEventsChanged() {
     _listsByBaby.clear();
@@ -35,7 +37,10 @@ class CalendarRepository extends ChangeNotifier {
   }
 
   /// Sign-out / account deletion: drop every cached event list.
-  void clearCachedEvents() => _listsByBaby.clear();
+  void clearCachedEvents() {
+    _listsByBaby.clear();
+    _listRequests.cancelAll();
+  }
 
   /// Month lists are keyed by their UTC bounds, so a device time-zone change
   /// fetches the new local month instead of serving the old one.
@@ -96,25 +101,32 @@ class CalendarRepository extends ChangeNotifier {
       final cached = _listsByBaby[babyId]?[key];
       if (cached != null) return cached;
     }
-    try {
-      final query = <String>[];
-      if (month != null) {
-        query.addAll(calendarLocalMonthQueryParams(month));
+    final flightKey = '$babyId|$key';
+    return _listRequests.run(flightKey, () async {
+      if (!forceRefresh) {
+        final cached = _listsByBaby[babyId]?[key];
+        if (cached != null) return cached;
       }
-      if (upcoming) query.add('upcoming=true');
-      final suffix = query.isEmpty ? '' : '?${query.join('&')}';
-      final json = await _api.getJson('/v1/babies/$babyId/events$suffix');
-      final events = parseOffsetPage(json, CalendarEvent.fromJson).items;
-      final babyCache = _listsByBaby.putIfAbsent(babyId, () => {});
-      babyCache[key] = events;
-      return events;
-    } catch (e) {
-      final cached = _listsByBaby[babyId]?[key];
-      if (cached != null && _shouldServeStaleListCache(e)) {
-        return cached;
+      try {
+        final query = <String>[];
+        if (month != null) {
+          query.addAll(calendarLocalMonthQueryParams(month));
+        }
+        if (upcoming) query.add('upcoming=true');
+        final suffix = query.isEmpty ? '' : '?${query.join('&')}';
+        final json = await _api.getJson('/v1/babies/$babyId/events$suffix');
+        final events = parseOffsetPage(json, CalendarEvent.fromJson).items;
+        final babyCache = _listsByBaby.putIfAbsent(babyId, () => {});
+        babyCache[key] = events;
+        return events;
+      } catch (e) {
+        final cached = _listsByBaby[babyId]?[key];
+        if (cached != null && _shouldServeStaleListCache(e)) {
+          return cached;
+        }
+        rethrow;
       }
-      rethrow;
-    }
+    });
   }
 
   /// Catalog dedupe: current calendar month plus upcoming (not full history).

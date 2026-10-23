@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
@@ -27,20 +29,75 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
   var _loading = true;
   var _hasLoaded = false;
   var _markingAllRead = false;
+  var _loadingMore = false;
+  var _hasMore = false;
   String? _loadError;
+  final _scrollController = ScrollController();
 
   bool get _hasUnread => _items.any((n) => n.readAt == null);
+
+  NotificationsRepository get _repo => context.read<NotificationsRepository>();
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _scrollController.addListener(_onScroll);
+    _repo.addListener(_onInboxRepoChanged);
+    unawaited(_openInbox());
   }
 
-  /// The spinner shows only for the first load; reloads after mark-read,
+  @override
+  void dispose() {
+    _repo.removeListener(_onInboxRepoChanged);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onInboxRepoChanged() {
+    if (!mounted) return;
+    _syncFromRepo();
+  }
+
+  void _syncFromRepo() {
+    final window = _repo.peekInbox();
+    if (window == null) return;
+    setState(() {
+      _items = window.items;
+      _hasMore = window.hasMore;
+      _loading = false;
+      _hasLoaded = true;
+    });
+  }
+
+  Future<void> _openInbox() async {
+    final cached = _repo.peekInbox();
+    if (cached != null && cached.items.isNotEmpty) {
+      setState(() {
+        _items = cached.items;
+        _hasMore = cached.hasMore;
+        _loading = false;
+        _hasLoaded = true;
+        _loadError = null;
+      });
+      unawaited(_revalidateInBackground());
+      return;
+    }
+    await _loadFirstPage();
+  }
+
+  Future<void> _revalidateInBackground() async {
+    try {
+      await _repo.revalidateInbox();
+    } catch (e) {
+      if (!mounted || !_hasLoaded) return;
+      AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
+    }
+  }
+
+  /// The spinner shows only for the first load; reloads after mark-all,
   /// returning from a notification or pull-to-refresh keep the list and its
   /// scroll position, and a failed reload is a snackbar.
-  Future<void> _load() async {
+  Future<void> _loadFirstPage({bool forceRefresh = false}) async {
     if (!_hasLoaded) {
       setState(() {
         _loading = true;
@@ -48,10 +105,11 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
       });
     }
     try {
-      final items = await context.read<NotificationsRepository>().listInbox();
+      final window = await _repo.ensureInboxFirstPage(forceRefresh: forceRefresh);
       if (!mounted) return;
       setState(() {
-        _items = items;
+        _items = window.items;
+        _hasMore = window.hasMore;
         _loading = false;
         _hasLoaded = true;
       });
@@ -69,13 +127,35 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
     }
   }
 
+  Future<void> _loadMore() async {
+    if (_loadingMore || !_hasMore || _loading) return;
+    setState(() => _loadingMore = true);
+    try {
+      await _repo.extendInbox();
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
+      }
+    } finally {
+      if (mounted) setState(() => _loadingMore = false);
+    }
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - 240) {
+      unawaited(_loadMore());
+    }
+  }
+
   Future<void> _markAllRead() async {
     if (_markingAllRead || !_hasUnread) return;
     setState(() => _markingAllRead = true);
     try {
-      await context.read<NotificationsRepository>().markAllRead();
+      await _repo.markAllRead();
       if (!mounted) return;
-      await _load();
+      _syncFromRepo();
     } catch (e) {
       if (!mounted) return;
       AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
@@ -122,7 +202,7 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
                       Text(_loadError!, textAlign: TextAlign.center),
                       const SizedBox(height: 12),
                       FilledButton(
-                        onPressed: _load,
+                        onPressed: () => _loadFirstPage(forceRefresh: true),
                         child: Text(l10n.actionRetry),
                       ),
                     ],
@@ -136,11 +216,18 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
                 message: l10n.notificationsInboxEmptyMessage,
               )
             : RefreshIndicator(
-                onRefresh: _load,
+                onRefresh: () => _loadFirstPage(forceRefresh: true),
                 child: ListView.builder(
+                  controller: _scrollController,
                   padding: AppMetrics.subpageScrollPadding,
-                  itemCount: _items.length,
+                  itemCount: _items.length + (_loadingMore ? 1 : 0),
                   itemBuilder: (context, i) {
+                    if (i >= _items.length) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
                     final n = _items[i];
                     final label = n.title.trim().isEmpty
                         ? l10n.inboxNotificationFallbackTitle
@@ -150,9 +237,15 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
                       InkWell(
                         onTap: () async {
                           if (n.readAt == null) {
-                            await context
-                                .read<NotificationsRepository>()
-                                .markRead(n.id);
+                            try {
+                              await _repo.markRead(n.id);
+                            } catch (e) {
+                              if (!context.mounted) return;
+                              AppSnackBar.showAlert(
+                                context,
+                                apiErrorMessage(l10n, e),
+                              );
+                            }
                           }
                           if (n.deepLink != null && n.deepLink!.isNotEmpty) {
                             if (!context.mounted) return;
@@ -162,7 +255,6 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
                               babyProfileId: n.babyProfileId,
                             );
                           }
-                          await _load();
                         },
                         child: InboxNotificationRow(notification: n),
                       ),

@@ -261,7 +261,7 @@ Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps:
 | GET | `/v1/app/version?platform=` | Public force-update config (`android` \| `ios`); `minimum_version`, `store_url` (migration `020_app_versions`; no JWT / App Check) |
 | GET | `/v1/me/account` | Firebase Bearer JWT; profile + babies + `engagement` stats; `storage_usage` when user owns a baby. Auth smoke: unauthenticated request → 401. |
 | GET, PATCH | `/v1/me/notification-preferences` | Digest (`realtime`/`daily`/`weekly`), push + email digest toggles; per-channel `notify_*_enabled` (`gallery`, `calendar`, `registry`, `comments`) |
-| GET | `/v1/me/notifications` | Offset page of inbox rows: `notification_kind` + `params` (rendered from ARB), `notification_type` (icon), `actor_display_name` (null when unnamed); `title` / `body` are the English push copy, shown only for rows with no kind (pre-038 rows that could not be classified) |
+| GET | `/v1/me/notifications` | Keyset page of inbox rows (`limit`, optional `cursor`, `has_more`, `next_cursor` on `(created_at DESC, id DESC)`); `notification_kind` + `params` (rendered from ARB), `notification_type` (icon), `actor_display_name` (null when unnamed); `title` / `body` are the English push copy, shown only for rows with no kind (pre-038 rows that could not be classified) |
 | GET | `/v1/me/notifications/unread-count` | Unread inbox count (shell bell dot) |
 | PATCH | `/v1/me/notifications/{id}/read` | Mark notification read |
 | POST | `/v1/me/notifications/read-all` | Mark all inbox notifications read for the current user (`updated` count) |
