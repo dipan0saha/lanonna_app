@@ -263,6 +263,11 @@ class OnboardingStorage {
     }
   }
 
+  /// Owner-funnel progress only. The invite handoff (token, path, preview)
+  /// belongs to the invite funnel and is cleared as a unit by
+  /// `OnboardingCoordinator.clearPendingInvite` or invite completion, so an
+  /// owner who finishes or syncs owner onboarding keeps an invite they
+  /// opened (#427).
   Future<void> clearProgress() async {
     await _prefs.remove(OnboardingStorageKeys.step);
     await _prefs.remove(OnboardingStorageKeys.createdBabyId);
@@ -274,6 +279,5 @@ class OnboardingStorage {
     await _prefs.remove(OnboardingStorageKeys.signupEmailDraft);
     await _prefs.remove(OnboardingStorageKeys.loginEmailDraft);
     await _prefs.remove(OnboardingStorageKeys.batchInviteDraft);
-    await _prefs.remove(OnboardingStorageKeys.pendingInviteToken);
   }
 }

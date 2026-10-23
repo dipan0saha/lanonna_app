@@ -23,6 +23,7 @@ class OnboardingCoordinator extends ChangeNotifier {
   OnboardingStep? _activeStep;
   String? _createdBabyId;
   bool _hydrated = false;
+  String? _acceptRequestedToken;
 
   OnboardingStep? get activeStep => _activeStep;
   String? get createdBabyId => _createdBabyId ?? _storage.createdBabyId;
@@ -183,7 +184,30 @@ class OnboardingCoordinator extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// The user tapped Accept on the invite landing and had to sign in (or
+  /// switch account) first (#427). [AppSession.signedInResumeLocation] sends
+  /// them back to the landing, which continues that Accept once. In memory
+  /// only: after a cold start the landing waits for a fresh tap.
+  bool get acceptRequestedBeforeSignIn {
+    final requested = _acceptRequestedToken;
+    return requested != null && requested == pendingInviteToken?.trim();
+  }
+
+  void requestAcceptAfterSignIn(String token) {
+    final trimmed = token.trim();
+    _acceptRequestedToken = trimmed.isEmpty ? null : trimmed;
+  }
+
+  /// Consumes the request from [requestAcceptAfterSignIn]; true when it was
+  /// for the current invite.
+  bool takeAcceptRequestedBeforeSignIn() {
+    final requested = acceptRequestedBeforeSignIn;
+    _acceptRequestedToken = null;
+    return requested;
+  }
+
   Future<void> clearPendingInvite() async {
+    _acceptRequestedToken = null;
     await _storage.savePendingInviteToken(null);
     await _storage.saveOnboardingPath(null);
     await _storage.saveInvitePreviewJson(null);

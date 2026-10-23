@@ -256,6 +256,7 @@ gcloud pubsub topics publish lanonna-async-commands --project=lanonna-dev --mess
 
 ```bash
 export SMOKE_TEST_PASSWORD='…'
+# FIREBASE_API_KEY is optional: defaults from apps/mobile/lib/firebase/firebase_options_dev.dart
 ./scripts/infra-smoke-display-upload.sh
 ```
 

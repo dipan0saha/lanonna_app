@@ -544,6 +544,53 @@ void main() {
       );
     });
 
+    test(
+      'invite login step with handoff resumes at landing, not login (#427)',
+      () async {
+        final f = await _fixtures(path: OnboardingPath.follower);
+        await f.storage.savePendingInviteToken('invite-token');
+        await f.coordinator.hydrate();
+        await f.coordinator.setStep(OnboardingStep.login);
+        f.session.debugSetStatus(noBaby);
+        expect(
+          f.session.signedInResumeLocation(emailVerified: true),
+          OnboardingRoutes.followerInvite,
+        );
+        expect(
+          f.session.redirectFor(
+            isSignedIn: true,
+            emailVerified: true,
+            location: OnboardingRoutes.login,
+          ),
+          OnboardingRoutes.followerInvite,
+        );
+      },
+    );
+
+    test(
+      'Accept tapped before sign-in resumes at the landing even with main-app access (#427)',
+      () async {
+        final f = await _fixtures(path: OnboardingPath.follower);
+        await f.storage.savePendingInviteToken('invite-token');
+        await f.coordinator.hydrate();
+        f.session.debugSetStatus(mainApp);
+        expect(f.session.signedInResumeLocation(emailVerified: true), '/home');
+        f.coordinator.requestAcceptAfterSignIn('invite-token');
+        expect(
+          f.session.signedInResumeLocation(emailVerified: true),
+          OnboardingRoutes.followerInvite,
+        );
+        expect(
+          f.session.redirectFor(
+            isSignedIn: true,
+            emailVerified: true,
+            location: OnboardingRoutes.followerInvite,
+          ),
+          isNull,
+        );
+      },
+    );
+
     test('stale invite path without a handoff -> create baby', () async {
       final f = await _fixtures(path: OnboardingPath.follower);
       f.session.debugSetStatus(noBaby);

@@ -51,8 +51,13 @@ class OnboardingScaffold extends StatelessWidget {
             Expanded(
               child: scrollBody
                   ? SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppMetrics.horizontalPadding,
+                      // SafeArea above already clears the system bars; this
+                      // keeps the last line of long forms off that edge (#429).
+                      padding: const EdgeInsets.fromLTRB(
+                        AppMetrics.horizontalPadding,
+                        0,
+                        AppMetrics.horizontalPadding,
+                        16,
                       ),
                       keyboardDismissBehavior:
                           ScrollViewKeyboardDismissBehavior.onDrag,

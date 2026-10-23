@@ -150,6 +150,7 @@ class AppSession extends ChangeNotifier {
   /// | email not verified | email verify |
   /// | no status yet (fetch in flight or failed, nothing cached) | session screen (spinner / offline retry), never a guessed step |
   /// | profile incomplete | complete profile |
+  /// | tapped Accept on an invite, then had to sign in | invite landing (continues the accept, #427) |
   /// | may use the main app | /home |
   /// | invite handoff to resume | invite step |
   /// | no owned baby and no membership | create baby (with the invite note) |
@@ -161,11 +162,12 @@ class AppSession extends ChangeNotifier {
     }
     if (resolved == null) return OnboardingRoutes.sessionOffline;
     if (!resolved.profileComplete) return OnboardingRoutes.completeProfile;
+    if (_coordinator.acceptRequestedBeforeSignIn) return _inviteLandingPath();
     if (resolved.canAccessMainApp) return '/home';
     if (_coordinator.shouldResumeInviteFlow(
       hasBabyMembership: resolved.hasBabyMembership,
     )) {
-      return _inviteResumePath();
+      return _inviteResumePath(signedIn: true);
     }
     if (!resolved.hasOwnerBaby && !resolved.hasBabyMembership) {
       return OnboardingRoutes.ownerCreateBaby;
@@ -365,7 +367,7 @@ class AppSession extends ChangeNotifier {
         return OnboardingRoutes.completeProfile;
       }
       if (_inviteSignedIn.contains(path)) return null;
-      return _inviteResumePath();
+      return _inviteResumePath(signedIn: true);
     }
 
     if (!_coordinator.skipEmailVerify && !emailVerified) {
@@ -434,7 +436,7 @@ class AppSession extends ChangeNotifier {
         _invitePublic.contains(path)) {
       return null;
     }
-    final resume = _inviteResumePath();
+    final resume = _inviteResumePath(signedIn: false);
     // Steps past sign-up (verify email, complete profile) need a session;
     // signed out, the invite landing is the resume point.
     if (resume == OnboardingRoutes.login ||
@@ -450,12 +452,16 @@ class AppSession extends ChangeNotifier {
           ? OnboardingRoutes.coOwnerInvite
           : OnboardingRoutes.followerInvite;
 
-  String _inviteResumePath() {
+  /// Login and sign-up are signed-out entry steps: a signed-in user resumes
+  /// at the invite landing instead, where Accept runs (#427).
+  String _inviteResumePath({required bool signedIn}) {
     final step = _coordinator.activeStep;
-    if (step != null) {
-      return OnboardingRoutes.pathForStep(step);
+    if (step == null ||
+        (signedIn &&
+            (step == OnboardingStep.login || step == OnboardingStep.signup))) {
+      return _inviteLandingPath();
     }
-    return _inviteLandingPath();
+    return OnboardingRoutes.pathForStep(step);
   }
 
   String _resumePathForOwnerOnboardingStep() {

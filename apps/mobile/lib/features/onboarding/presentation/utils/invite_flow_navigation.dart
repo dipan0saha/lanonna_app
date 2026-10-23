@@ -56,6 +56,8 @@ Future<void> navigateAfterCompleteProfile(BuildContext context) async {
   final token = coordinator.pendingInviteToken;
 
   if (coordinator.isInvitePath && token != null && token.isNotEmpty) {
+    // New account: the Accept tapped before sign-up runs here, not on the landing.
+    coordinator.takeAcceptRequestedBeforeSignIn();
     final result = await context.read<InvitationsRepository>().accept(token);
     if (!context.mounted) return;
 
@@ -170,15 +172,29 @@ Future<String?> runInviteLandingPrimaryAction(
   }
 }
 
+/// Whether the landing should continue an Accept the user tapped before they
+/// signed in (#427). Sign-in brings them back here through
+/// [AppSession.signedInResumeLocation], then the landing runs
+/// [runInviteLandingPrimaryAction] once, exactly as if they had tapped again.
+/// Consumes the request.
+bool takeInviteAcceptRequestedBeforeSignIn(BuildContext context) {
+  final coordinator = context.read<OnboardingCoordinator>();
+  if (!coordinator.acceptRequestedBeforeSignIn) return false;
+  if (context.read<AuthRepository>().currentUser == null) return false;
+  return coordinator.takeAcceptRequestedBeforeSignIn();
+}
+
 Future<void> _acceptPendingInvite(
   BuildContext context,
   InvitationPreview preview,
 ) async {
-  final token = context.read<OnboardingCoordinator>().pendingInviteToken;
+  final coordinator = context.read<OnboardingCoordinator>();
+  final token = coordinator.pendingInviteToken;
   if (token == null || token.isEmpty) {
     throw const InviteAcceptException('not_found');
   }
   if (context.read<AuthRepository>().currentUser == null) {
+    coordinator.requestAcceptAfterSignIn(token);
     context.read<InviteFlowState>().setSignupPrefillEmail(preview.inviteeEmail);
     context.go(OnboardingRoutes.signup);
     return;

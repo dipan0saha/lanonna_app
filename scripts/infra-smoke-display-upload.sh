@@ -15,7 +15,7 @@ if [[ -z "${TEST_PASSWORD}" && -n "${SMOKE_CREDS_FILE}" && -f "${SMOKE_CREDS_FIL
 fi
 
 if [[ -z "${FIREBASE_API_KEY}" ]]; then
-  FIREBASE_API_KEY="$(python3 -c "import re; print(re.search(r\"apiKey: '([^']+)'\", open('apps/mobile/lib/firebase_options.dart').read()).group(1))")"
+  FIREBASE_API_KEY="$("$(dirname "$0")/read_firebase_api_key.sh")"
 fi
 
 if [[ -z "${TEST_PASSWORD}" ]]; then

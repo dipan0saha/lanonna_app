@@ -56,7 +56,7 @@ echo "Clearing old gallery rows (fake SQL + broken seeds)…"
 cd "${REPO_ROOT}/infra/db"
 "${PROVISION_PY}" provision_maestro_fixtures.py qa_cleanup_gallery
 
-FIREBASE_API_KEY="$(python3 -c "import re; print(re.search(r\"apiKey: '([^']+)'\", open('${MOBILE}/lib/firebase_options.dart').read()).group(1))")"
+FIREBASE_API_KEY="$("${REPO_ROOT}/scripts/read_firebase_api_key.sh")"
 
 sign_in() {
   local email=$1
