@@ -20,6 +20,21 @@ def _auth_as(uid: str = "owner-1"):
         app.dependency_overrides.pop(current_user, None)
 
 
+def test_patch_baby_follower_returns_403_without_updating():
+    """#397: a follower's PATCH was a 404 from the empty owner-scoped UPDATE."""
+    baby_id = uuid.uuid4()
+    with (
+        _auth_as("follower-1"),
+        patch("lanonna_api.domain.membership.membership_access_ended", return_value=False),
+        patch("lanonna_api.domain.membership.get_baby_for_owner", return_value=None),
+        patch("lanonna_api.domain.baby_update.update_baby_for_owner") as update,
+    ):
+        response = client.patch(f"/v1/babies/{baby_id}", json={"name": "Nope"})
+    assert response.status_code == 403
+    assert response.json()["detail"]["error"] == "forbidden"
+    update.assert_not_called()
+
+
 def test_patch_baby_born_invokes_announce_arrival():
     baby_id = uuid.uuid4()
     birth = date(2026, 10, 1)
@@ -71,7 +86,7 @@ def test_patch_baby_seeds_profile_name_suggestions_when_expecting():
     with (
         _auth_as(),
         patch(
-            "lanonna_api.routers.babies.update_baby_for_owner",
+            "lanonna_api.routers.babies.update_baby_profile",
             return_value=row,
         ) as update,
         patch(

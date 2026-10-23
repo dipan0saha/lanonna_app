@@ -10,11 +10,11 @@ from lanonna_api.auth import AppUser, current_app_user
 from lanonna_api.domain.avatar_urls import normalize_avatar_for_storage
 from lanonna_api.http_errors import api_error, map_domain_errors
 from lanonna_api.domain.baby_delete import delete_baby_profile
+from lanonna_api.domain.baby_update import update_baby_profile
 from lanonna_api.domain.home import announce_arrival, build_home_summary, list_activity_events
 from lanonna_api.repositories.babies import (
     create_baby_with_owner_membership,
     list_babies_for_user,
-    update_baby_for_owner,
 )
 from lanonna_api.domain.onboarding import seed_expecting_profile_name_suggestions, seed_first_moment
 from lanonna_api.domain.baby_summaries import baby_summaries_from_rows, baby_summary_from_row
@@ -116,12 +116,9 @@ def patch_baby(
                 extra_fields=extra or None,
             )
         else:
-            row = update_baby_for_owner(user.uid, baby_profile_id, fields)
+            row = update_baby_profile(user.uid, baby_profile_id, fields)
     except (ValueError, PermissionError) as exc:
         raise map_domain_errors(exc) from exc
-
-    if row is None:
-        raise api_error(status.HTTP_404_NOT_FOUND, ErrorCode.NOT_FOUND, "Baby not found")
 
     if suggestions:
         lifecycle = row.get("lifecycle_status") or "expecting"

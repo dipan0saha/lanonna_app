@@ -120,9 +120,18 @@ class _NamesTabState extends State<NamesTab> {
         _gender,
       ),
     );
-    if (!ok) return;
-    _input.clear();
+    if (!ok || !mounted) return;
+    _resetSuggestForm();
     await _load();
+  }
+
+  /// After a successful suggest (#397). Clearing the controller alone counts
+  /// as an edit, so with validation on it flagged the now-empty field as
+  /// "Name is required". [FormState.reset] empties the field and forgets that
+  /// interaction, and validation waits for the next submit again.
+  void _resetSuggestForm() {
+    _suggestFormKey.currentState?.reset();
+    setState(() => _validateSuggestOnInteraction = false);
   }
 
   Future<void> _like(NameSuggestion s) async {
