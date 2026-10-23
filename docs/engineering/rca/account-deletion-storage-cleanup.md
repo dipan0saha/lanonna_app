@@ -23,7 +23,7 @@ Upload init: `POST /v1/photos/init` → signed PUT to `display/{photo_id}.*` onl
 
 1. Mobile: preview → reauth → `POST /v1/me/delete-account` `{"confirm": true}` (`current_user` only — allows retry after SQL tombstone).
 2. API `delete_account`: if not tombstoned → `list_sole_owned_baby_ids` → `soft_delete_account_rows`.
-3. `soft_delete_account_rows`: revoke pending invites; soft-delete sole-owned babies; end all memberships; `purge_participation`; revoke biometrics; set `app_users.deleted_at`, strip email/avatar, `display_name = 'Deleted user'`.
+3. `delete_account_rows`: revoke pending invites; purge authored photos on shared babies; hard-delete sole-owned babies; end all memberships; `purge_participation`; **purge personal inbox / device / biometric rows** (see [account-deletion-user-data-audit.md](./account-deletion-user-data-audit.md)); set `app_users.deleted_at`, strip email/avatar, `display_name = 'Deleted user'`.
 4. Firebase `delete_user` (idempotent if already gone).
 
 **Gaps:**
@@ -56,7 +56,9 @@ Dev-only `infra/db/hard_delete_user.py` already documents the intended hard SQL 
 3. **Worker:** `run_storage_cleanup` claims `pending` → `running`, deletes detached photo objects, export objects, every photo on the deleted babies (display + thumbnail; the thumbnail key is derived when a photo had not finished processing), and the folder prefixes `avatars/babies/{id}/` and `exports/{id}/`; account jobs also delete `avatars/users/{uid}/` (baby jobs never touch the owner's avatar). Prefixes must be complete folders (trailing `/`, no empty segment). An absent object counts as deleted, so re-runs are safe. Errors release the claim for Pub/Sub retry, or mark the job `failed` on the final attempt.
 4. **Recovery sweep:** Cloud Scheduler `sweep-storage-cleanup-jobs` (every 15 min, `scripts/setup-schedulers.sh`) publishes `{"type":"sweep_storage_cleanup_jobs"}`. The worker re-runs up to 10 jobs that are `pending` for over 10 minutes (lost publish), `running` for over 30 minutes (worker died), or `failed` for over 6 hours.
 
-**Migration:** `042_storage_cleanup_jobs.sql`.
+**Migrations:** `042_storage_cleanup_jobs.sql`; `046_tombstoned_personal_user_data.sql` backfills inbox/device/biometric cleanup for accounts tombstoned before the API purge.
+
+Personal SQL artifacts (inbox notifications, FCM tokens, biometric keys, banner dismissals) are documented in [account-deletion-user-data-audit.md](./account-deletion-user-data-audit.md).
 
 ## Tombstoned rows
 

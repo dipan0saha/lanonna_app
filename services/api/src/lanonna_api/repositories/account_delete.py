@@ -10,7 +10,7 @@ from lanonna_api.repositories.account_delete_media import (
     purge_authored_photos_on_shared_babies,
 )
 from lanonna_api.repositories.active_participants import purge_participation
-from lanonna_api.repositories.biometric_credentials import revoke_all_for_user
+from lanonna_api.repositories.account_delete_user_data import purge_personal_user_data
 from lanonna_api.repositories.memberships import (
     count_active_owners,
     soft_remove_all_memberships_for_user,
@@ -109,7 +109,7 @@ def delete_account_rows(firebase_uid: str) -> uuid.UUID:
             hard_delete_baby_profiles(conn, sole_owned)
         soft_remove_all_memberships_for_user(firebase_uid, conn=conn)
         purge_participation(conn, firebase_uid)
-        revoke_all_for_user(firebase_uid, conn=conn)
+        purge_personal_user_data(conn, firebase_uid)
         job_id = insert_storage_cleanup_job(
             kind=StorageCleanupKind.ACCOUNT_DELETE,
             firebase_uid=firebase_uid,
