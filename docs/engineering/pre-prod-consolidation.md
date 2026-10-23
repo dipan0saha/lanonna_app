@@ -175,7 +175,7 @@ These are “make prod and dev symmetric” tasks, not refactors.
 | **Prod Terraform push subs** (M-19) | [`environments/prod/main.tf`](../../infra/terraform/environments/prod/main.tf) lacks `enable_worker_push_subscription` until worker exists | Document two-phase apply in operations (already in `terraform.tfvars.example`) |
 | **Mobile prod flavor** | Not a “cleanup” but blocks prod binaries | `flavors/prod.json`, `flutterfire configure`, manifest/entitlements hosts—not dev hard-codes in [`AndroidManifest.xml`](../../apps/mobile/android/app/src/main/AndroidManifest.xml) / [`Runner.entitlements`](../../apps/mobile/ios/Runner/Runner.entitlements) |
 
-**Suggested order:** create prod project → TF apply → bootstrap secrets → migrations (existing chain) → worker deploy → IAM script → enable push subs → API deploy with `prod.*.env` and `APP_CHECK_ENFORCE=true` when ready.
+**Suggested order:** create prod project → TF apply → bootstrap secrets → migrations (existing chain) → worker deploy → IAM script → enable push subs → API deploy with `prod.*.env` and `APP_CHECK_ENFORCE=true` when ready → `setup-schedulers.sh` (includes `purge-stale-event-covers`). Full steps, and the migration order for a running prod (`047` any time; `048`/`049` after the API deploy), are in [operations.md](operations.md#prod-when-you-launch).
 
 ---
 
