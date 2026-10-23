@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
+from lanonna_api.domain.birthdate_vote_window import birthdate_vote_bounds
 from lanonna_api.domain.fun import get_predictions, set_birthdate_vote, set_gender_vote
 from lanonna_api.domain.fun_closed import PredictionsClosedError
 
@@ -72,10 +73,47 @@ def test_get_predictions_masks_legacy_anonymous_voters():
     assert payload["predictions_closed"] is False
 
 
+def test_get_predictions_filters_out_of_range_histogram_rows():
+    due = date(2027, 1, 15)
+    with patch(
+        "lanonna_api.domain.fun.require_membership",
+        return_value={
+            "role": "follower",
+            "lifecycle_status": "expecting",
+            "expected_birth_date": due,
+        },
+    ), patch(
+        "lanonna_api.domain.fun.gender_vote_totals",
+        return_value={"male": 0, "female": 0},
+    ), patch(
+        "lanonna_api.domain.fun.get_caller_votes",
+        return_value={},
+    ), patch(
+        "lanonna_api.domain.fun.list_gender_voters",
+        return_value=[],
+    ), patch(
+        "lanonna_api.domain.fun.birthdate_vote_histogram",
+        return_value=[
+            {"predicted_birth_date": date(2027, 1, 14), "count": 1},
+            {"predicted_birth_date": date(2099, 12, 31), "count": 1},
+        ],
+    ):
+        payload = get_predictions("uid1", _BABY)
+
+    vote_min, vote_max = birthdate_vote_bounds(due)
+    assert payload["birthdate_vote_min"] == vote_min.isoformat()
+    assert payload["birthdate_vote_max"] == vote_max.isoformat()
+    assert payload["birthdate_histogram"] == [{"date": "2027-01-14", "count": 1}]
+
+
 def test_get_predictions_closed_when_baby_is_born():
     with patch(
         "lanonna_api.domain.fun.require_membership",
-        return_value={"role": "follower", "lifecycle_status": "born"},
+        return_value={
+            "role": "follower",
+            "lifecycle_status": "born",
+            "expected_birth_date": date(2026, 8, 1),
+        },
     ), patch(
         "lanonna_api.domain.fun.gender_vote_totals",
         return_value={"male": 1, "female": 2},

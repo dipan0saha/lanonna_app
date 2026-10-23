@@ -163,15 +163,25 @@ class _PredictionsTabState extends State<PredictionsTab> {
   Future<void> _pickDate() async {
     if (_predictionsClosed) return;
     final due = babyExpectedDueDate(widget.baby);
+    final payload = _payload;
+    final first = birthdatePickerFirstDate(
+      voteMinIso: payload?.birthdateVoteMin,
+      dueDate: due,
+    );
+    final last = birthdatePickerLastDate(
+      voteMaxIso: payload?.birthdateVoteMax,
+      dueDate: due,
+    );
+    if (first.isAfter(last)) return;
     final picked = await showDatePicker(
       context: context,
       initialDate: birthdatePickerInitialDate(
         pendingSelection: _pendingGuess,
-        savedVoteIso: _payload?.viewerBirthdateVote,
+        savedVoteIso: payload?.viewerBirthdateVote,
         dueDate: due,
       ),
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2035),
+      firstDate: first,
+      lastDate: last,
     );
     if (picked == null || !mounted) return;
     setState(() => _pendingGuess = picked);

@@ -422,7 +422,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Choose how often you\'d like updates from {babyName}.'**
-  String notificationPreferencesIntro(String babyName);
+  String get notificationPreferencesIntro;
 
   /// Subtitle under AI Suggestions app bar (calendar + registry).
   ///
@@ -2816,7 +2816,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'How often would you like updates for {babyLabel}?'**
-  String notificationPrefsFrequencyTitle(String babyLabel);
+  String get notificationPrefsFrequencyTitle;
 
   /// No description provided for @accountStorageUsed.
   ///
@@ -4089,6 +4089,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Predictions are closed — baby has arrived!'**
   String get errorPredictionsClosed;
+
+  /// No description provided for @errorBirthdateVoteOutOfRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a date within the allowed window around the due date.'**
+  String get errorBirthdateVoteOutOfRange;
 
   /// No description provided for @errorDuplicateNameSuggestion.
   ///

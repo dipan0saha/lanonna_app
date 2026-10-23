@@ -4,6 +4,11 @@ import uuid
 from datetime import date
 from typing import Any
 
+from lanonna_api.domain.birthdate_vote_window import (
+    birthdate_in_vote_window,
+    birthdate_vote_bounds,
+    validate_birthdate_vote,
+)
 from lanonna_api.domain.errors import ErrorCode, ForbiddenError, InvalidInputError
 from lanonna_api.domain.gallery import require_membership
 from lanonna_api.domain.fun_closed import (
@@ -179,6 +184,10 @@ def get_predictions(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, 
         caller = get_caller_votes(baby_profile_id, firebase_uid)
         gender_voters = list_gender_voters(baby_profile_id)
         hist = birthdate_vote_histogram(baby_profile_id)
+    due = membership.get("expected_birth_date")
+    if due is not None and not hasattr(due, "isoformat"):
+        due = date.fromisoformat(str(due))
+    vote_min, vote_max = birthdate_vote_bounds(due)
     voters = []
     for v in gender_voters:
         name = "Anonymous"
@@ -199,6 +208,8 @@ def get_predictions(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, 
             str(caller.get("birthdate")) if caller.get("birthdate") else None
         ),
         "gender_voters": voters,
+        "birthdate_vote_min": vote_min.isoformat(),
+        "birthdate_vote_max": vote_max.isoformat(),
         "birthdate_histogram": [
             {
                 "date": row["predicted_birth_date"].isoformat()
@@ -207,6 +218,12 @@ def get_predictions(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict[str, 
                 "count": row["count"],
             }
             for row in hist
+            if birthdate_in_vote_window(
+                row["predicted_birth_date"]
+                if isinstance(row["predicted_birth_date"], date)
+                else date.fromisoformat(str(row["predicted_birth_date"])),
+                due,
+            )
         ],
         "predictions_closed": fun_writes_closed(membership),
     }
@@ -238,5 +255,9 @@ def set_birthdate_vote(
 ) -> dict[str, Any]:
     membership = require_membership(firebase_uid, baby_profile_id)
     ensure_fun_writes_open(membership, PredictionsClosedError)
+    due = membership.get("expected_birth_date")
+    if due is not None and not isinstance(due, date):
+        due = date.fromisoformat(str(due))
+    validate_birthdate_vote(predicted_birth_date, due)
     upsert_birthdate_vote(baby_profile_id, firebase_uid, predicted_birth_date, False)
     return {"date": predicted_birth_date.isoformat()}

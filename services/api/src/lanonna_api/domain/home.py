@@ -243,8 +243,16 @@ def _build_home_summary(
 
     top_birthdate = None
     if counts["top_birthdate_guess"] is not None:
+        from lanonna_api.domain.birthdate_vote_window import birthdate_in_vote_window
+
         d = counts["top_birthdate_guess"]
-        top_birthdate = d.isoformat() if hasattr(d, "isoformat") else str(d)
+        if not isinstance(d, date):
+            d = date.fromisoformat(str(d))
+        due = baby.get("expected_birth_date")
+        if due is not None and not isinstance(due, date):
+            due = date.fromisoformat(str(due))
+        if birthdate_in_vote_window(d, due):
+            top_birthdate = d.isoformat()
 
     # One read feeds both "next up" and the teaser strip.
     upcoming = list_events(

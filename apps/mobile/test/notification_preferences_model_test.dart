@@ -7,7 +7,6 @@ void main() {
     final prefs = NotificationPreferences.fromJson({
       'notification_digest': 'daily',
       'push_notifications_enabled': true,
-      'email_digest_enabled': false,
       'notify_gallery_enabled': false,
       'notify_calendar_enabled': true,
       'notify_registry_enabled': true,

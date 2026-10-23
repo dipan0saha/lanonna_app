@@ -9,12 +9,7 @@ import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/app_section_title.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
-import '../../../core/domain/baby_display_label.dart';
-import '../../home/data/home_repository.dart';
-import '../../home/data/selected_baby_store.dart';
-import '../../home/presentation/baby_context_reload.dart';
 import '../data/notifications_repository.dart';
-import '../../../core/data/parallel_requests.dart';
 
 class NotificationPreferencesScreen extends StatefulWidget {
   const NotificationPreferencesScreen({super.key});
@@ -25,12 +20,10 @@ class NotificationPreferencesScreen extends StatefulWidget {
 }
 
 class _NotificationPreferencesScreenState
-    extends State<NotificationPreferencesScreen>
-    with BabyContextReload {
+    extends State<NotificationPreferencesScreen> {
   NotificationPreferences? _prefs;
   var _loading = true;
   var _saving = false;
-  String? _babyName;
 
   @override
   void initState() {
@@ -38,31 +31,11 @@ class _NotificationPreferencesScreenState
     _load();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    registerBabyContextListeners();
-  }
-
-  @override
-  void dispose() {
-    disposeBabyContextListeners();
-    super.dispose();
-  }
-
-  @override
-  void onBabyContextReload() => _load();
-
   Future<void> _load() async {
-    final homeRepo = context.read<HomeRepository>();
-    final store = context.read<SelectedBabyStore>();
-    final (prefs, baby) = await waitBoth(
-      context.read<NotificationsRepository>().fetchPreferences(),
-      homeRepo.resolveSelectedBaby(store),
-    );
+    final prefs =
+        await context.read<NotificationsRepository>().fetchPreferences();
     setState(() {
       _prefs = prefs;
-      _babyName = baby?.name;
       _loading = false;
     });
   }
@@ -77,7 +50,6 @@ class _NotificationPreferencesScreenState
           .updatePreferences(
             digest: prefs.digest,
             pushEnabled: prefs.pushEnabled,
-            emailDigestEnabled: prefs.emailDigestEnabled,
             notifyGalleryEnabled: prefs.notifyGalleryEnabled,
             notifyCalendarEnabled: prefs.notifyCalendarEnabled,
             notifyRegistryEnabled: prefs.notifyRegistryEnabled,
@@ -94,7 +66,6 @@ class _NotificationPreferencesScreenState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final prefs = _prefs;
-    final babyLabel = babyDisplayName(l10n, _babyName);
     return PrototypeSubpageScaffold(
       title: l10n.notificationPrefsTitle,
       body: _loading || prefs == null
@@ -103,7 +74,7 @@ class _NotificationPreferencesScreenState
               padding: AppMetrics.subpageScrollPadding,
               children: [
                 Text(
-                  l10n.notificationPreferencesIntro(babyLabel),
+                  l10n.notificationPreferencesIntro,
                   style: context.textStyles.bodyMedium?.copyWith(
                     color: AppColors.muted,
                   ),
@@ -117,9 +88,7 @@ class _NotificationPreferencesScreenState
                 ),
                 SizedBox(height: AppSpacing.lg),
                 AppSectionTitle(
-                  title: AppLocalizations.of(
-                    context,
-                  )!.notificationPrefsFrequencyTitle(babyLabel),
+                  title: l10n.notificationPrefsFrequencyTitle,
                   style: context.textStyles.titleSmall,
                 ),
                 for (final digest in NotificationDigest.values)
@@ -134,20 +103,6 @@ class _NotificationPreferencesScreenState
                   value: prefs.pushEnabled,
                   onChanged: (v) =>
                       setState(() => _prefs = prefs.copyWith(pushEnabled: v)),
-                ),
-                SwitchListTile(
-                  title: Text(
-                    AppLocalizations.of(context)!.notificationPrefsDigestTitle,
-                  ),
-                  subtitle: Text(
-                    AppLocalizations.of(
-                      context,
-                    )!.notificationPrefsDigestSubtitle,
-                  ),
-                  value: prefs.emailDigestEnabled,
-                  onChanged: (v) => setState(
-                    () => _prefs = prefs.copyWith(emailDigestEnabled: v),
-                  ),
                 ),
                 const SizedBox(height: AppMetrics.sectionBlockSpacing),
                 AppSectionTitle(

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:lanonna/core/domain/baby_display_label.dart';
 import 'package:lanonna/core/domain/person_display_label.dart';
@@ -7,6 +9,9 @@ import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/presentation/tab_load_failure.dart';
+import '../../../core/api/api_error_code.dart';
+import '../../../core/api/api_error_message.dart';
+import '../../../core/api/api_exception.dart';
 import '../../../core/api/run_mutation.dart';
 import '../../../core/widgets/app_confirm_dialog.dart';
 import '../../../core/domain/baby_summary.dart';
@@ -25,6 +30,7 @@ import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/domain/app_routes.dart';
 import '../data/account_repository.dart';
+import '../../invitations/domain/invite_email_delivery.dart';
 import '../../invitations/presentation/revoke_invitation_flow.dart';
 import '../../../core/data/parallel_requests.dart';
 
@@ -44,11 +50,20 @@ class _FollowersScreenState extends State<FollowersScreen> {
   var _loading = true;
   var _hasLoaded = false;
   String? _loadError;
+  Timer? _inviteDeliveryPoll;
+  static const _invitePollInterval = Duration(seconds: 2);
+  static const _invitePollMaxTicks = 30;
 
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _inviteDeliveryPoll?.cancel();
+    super.dispose();
   }
 
   /// The spinner shows only for the first load; reloads after remove,
@@ -74,13 +89,16 @@ class _FollowersScreenState extends State<FollowersScreen> {
         ),
       );
       if (!mounted) return;
+      final pendingInvites =
+          invites.where((i) => i.status == InvitationStatus.pending).toList();
       setState(() {
         _members = members;
-        _invites = invites.where((i) => i.status == InvitationStatus.pending).toList();
+        _invites = pendingInvites;
         _baby = baby;
         _loading = false;
         _hasLoaded = true;
       });
+      _syncInviteDeliveryPolling(pendingInvites);
     } catch (e) {
       if (!mounted) return;
       reportTabLoadFailure(
@@ -92,6 +110,41 @@ class _FollowersScreenState extends State<FollowersScreen> {
           _loading = false;
         }),
       );
+    }
+  }
+
+  void _syncInviteDeliveryPolling(List<InvitationRow> invites) {
+    _inviteDeliveryPoll?.cancel();
+    if (!invitationsNeedDeliveryRefresh(invites)) return;
+    var ticks = 0;
+    _inviteDeliveryPoll = Timer.periodic(_invitePollInterval, (timer) async {
+      ticks++;
+      if (!mounted || ticks > _invitePollMaxTicks) {
+        timer.cancel();
+        return;
+      }
+      await _load();
+      if (!mounted || !invitationsNeedDeliveryRefresh(_invites)) {
+        timer.cancel();
+      }
+    });
+  }
+
+  Future<void> _resendInvite(InvitationRow inv) async {
+    final l10n = AppLocalizations.of(context)!;
+    try {
+      await context
+          .read<AccountRepository>()
+          .resendInvitation(widget.babyId, inv.id);
+      if (!mounted) return;
+      AppSnackBar.showInfo(context, l10n.accountInviteEmailQueued);
+      await _load();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      AppSnackBar.showAlert(context, apiErrorMessage(l10n, e));
+      if (e.code == ApiErrorCode.inviteAlreadyDelivered) {
+        await _load();
+      }
     }
   }
 
@@ -301,23 +354,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
                                       AppSemantics.button(
                                         'resend_invite_${inv.id}',
                                         TextButton(
-                                          onPressed: () async {
-                                            final sent = await runMutation(
-                                              context,
-                                              () => context
-                                                  .read<AccountRepository>()
-                                                  .resendInvitation(
-                                                    widget.babyId,
-                                                    inv.id,
-                                                  ),
-                                            );
-                                            if (!sent || !mounted) return;
-                                            AppSnackBar.showInfo(
-                                              context,
-                                              AppLocalizations.of(context)!.accountInviteEmailQueued,
-                                            );
-                                            await _load();
-                                          },
+                                          onPressed: () => _resendInvite(inv),
                                           style: TextButton.styleFrom(
                                             foregroundColor:
                                                 AppColors.primaryDark,

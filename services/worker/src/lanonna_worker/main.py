@@ -20,6 +20,7 @@ from lanonna_worker.notifications import (
     process_weekly_notification_digest,
 )
 from lanonna_worker.invite_cleanup import expire_stale_pending_invitations
+from lanonna_worker.event_cover_cleanup import purge_stale_unreferenced_event_covers
 from lanonna_worker.pubsub_payload import (
     decode_pubsub_data,
     parse_uuid_field,
@@ -172,6 +173,14 @@ async def pubsub_push(request: Request) -> Response:
             sweep_storage_cleanup_jobs()
         except Exception:
             logger.exception("sweep_storage_cleanup_jobs_failed")
+            return Response(status_code=500)
+        return Response(status_code=204)
+
+    if payload.get("type") == "purge_stale_event_covers":
+        try:
+            purge_stale_unreferenced_event_covers()
+        except Exception:
+            logger.exception("purge_stale_event_covers_failed")
             return Response(status_code=500)
         return Response(status_code=204)
 

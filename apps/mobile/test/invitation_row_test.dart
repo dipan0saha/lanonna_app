@@ -3,6 +3,24 @@ import 'package:lanonna/features/account/data/account_repository.dart';
 import 'package:lanonna/features/invitations/domain/invitation_status.dart';
 
 void main() {
+  test('canResendEmail is true only for failed delivery', () {
+    const failed = InvitationRow(
+      id: 'inv-1',
+      email: 'a@b.com',
+      status: InvitationStatus.pending,
+      emailDeliveryStatus: InviteEmailDeliveryStatus.failed,
+    );
+    expect(failed.canResendEmail, isTrue);
+
+    const inFlight = InvitationRow(
+      id: 'inv-2',
+      email: 'a@b.com',
+      status: InvitationStatus.pending,
+      emailDeliveryStatus: InviteEmailDeliveryStatus.pending,
+    );
+    expect(inFlight.canResendEmail, isFalse);
+  });
+
   test('canResendEmail is false when email_sent_at is set', () {
     const row = InvitationRow(
       id: 'inv-1',

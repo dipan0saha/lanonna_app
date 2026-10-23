@@ -104,14 +104,7 @@
       }
     }
   },
-  "notificationPreferencesIntro": "Choose how often you'd like updates from {babyName}.",
-  "@notificationPreferencesIntro": {
-    "placeholders": {
-      "babyName": {
-        "type": "String"
-      }
-    }
-  },
+  "notificationPreferencesIntro": "Choose how often you'd like updates across every baby you follow on this account.",
   "aiSuggestionsSubtitle": "Pick a stage, then add suggestions to your calendar or registry.",
   "@aiSuggestionsSubtitle": {
     "description": "Subtitle under AI Suggestions app bar (calendar + registry)."
@@ -675,14 +668,7 @@
       }
     }
   },
-  "notificationPrefsFrequencyTitle": "How often would you like updates for {babyLabel}?",
-  "@notificationPrefsFrequencyTitle": {
-    "placeholders": {
-      "babyLabel": {
-        "type": "String"
-      }
-    }
-  },
+  "notificationPrefsFrequencyTitle": "How often would you like updates?",
   "accountStorageUsed": "{used} of {quota} used",
   "@accountStorageUsed": {
     "placeholders": {
@@ -785,8 +771,8 @@
   "digestDaily": "Daily digest",
   "digestWeekly": "Weekly digest",
   "digestSummaryRealtime": "Real-time updates",
-  "digestSummaryDaily": "Daily email summary",
-  "digestSummaryWeekly": "Weekly email summary",
+  "digestSummaryDaily": "Daily in-app summary",
+  "digestSummaryWeekly": "Weekly push summary",
   "invitationStatusPending": "Pending",
   "invitationStatusAccepted": "Accepted",
   "invitationStatusExpired": "Expired",
@@ -794,7 +780,8 @@
   "inviteEmailPending": "Pending — email sending",
   "inviteEmailSent": "Invite email sent",
   "inviteEmailFailed": "Email failed to send",
-  "errorInviteAlreadyDelivered": "This invite was already delivered and cannot be sent again.",
+  "errorInviteAlreadyDelivered": "This invite email was already delivered. To send a new link, revoke it and invite them again.",
+  "errorBirthdateVoteOutOfRange": "Pick a date within the allowed window around the due date.",
   "settingsCouldNotOpenEmailTo": "Could not open email to {supportEmail}. Copy link?",
   "@settingsCouldNotOpenEmailTo": {
     "placeholders": {

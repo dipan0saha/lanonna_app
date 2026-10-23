@@ -85,4 +85,17 @@ void main() {
       DateTime(2027, 2),
     );
   });
+
+  test('picker bounds prefer server ISO window', () {
+    final first = birthdatePickerFirstDate(
+      voteMinIso: '2026-12-04',
+      dueDate: DateTime(2027, 1, 15),
+    );
+    final last = birthdatePickerLastDate(
+      voteMaxIso: '2027-02-26',
+      dueDate: DateTime(2027, 1, 15),
+    );
+    expect(first, DateTime(2026, 12, 4));
+    expect(last, DateTime(2027, 2, 26));
+  });
 }

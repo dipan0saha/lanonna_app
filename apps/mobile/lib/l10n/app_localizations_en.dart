@@ -230,9 +230,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String notificationPreferencesIntro(String babyName) {
-    return 'Choose how often you\'d like updates from $babyName.';
-  }
+  String get notificationPreferencesIntro =>
+      'Choose how often you\'d like updates across every baby you follow on this account.';
 
   @override
   String get aiSuggestionsSubtitle =>
@@ -1552,9 +1551,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String notificationPrefsFrequencyTitle(String babyLabel) {
-    return 'How often would you like updates for $babyLabel?';
-  }
+  String get notificationPrefsFrequencyTitle =>
+      'How often would you like updates?';
 
   @override
   String accountStorageUsed(String used, String quota) {
@@ -1647,10 +1645,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get digestSummaryRealtime => 'Real-time updates';
 
   @override
-  String get digestSummaryDaily => 'Daily email summary';
+  String get digestSummaryDaily => 'Daily in-app summary';
 
   @override
-  String get digestSummaryWeekly => 'Weekly email summary';
+  String get digestSummaryWeekly => 'Weekly push summary';
 
   @override
   String get invitationStatusPending => 'Pending';
@@ -1675,7 +1673,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorInviteAlreadyDelivered =>
-      'This invite was already delivered and cannot be sent again.';
+      'This invite email was already delivered. To send a new link, revoke it and invite them again.';
+
+  @override
+  String get errorBirthdateVoteOutOfRange =>
+      'Pick a date within the allowed window around the due date.';
 
   @override
   String settingsCouldNotOpenEmailTo(String supportEmail) {

@@ -37,6 +37,25 @@ DateTime birthdatePickerInitialDate({
       DateTime.now();
 }
 
+DateTime birthdatePickerFirstDate({
+  required String? voteMinIso,
+  DateTime? dueDate,
+}) {
+  final fromApi = tryParseApiCalendarDate(voteMinIso);
+  if (fromApi != null) return fromApi;
+  return dueDate ?? DateTime.now();
+}
+
+DateTime birthdatePickerLastDate({
+  required String? voteMaxIso,
+  DateTime? dueDate,
+}) {
+  final fromApi = tryParseApiCalendarDate(voteMaxIso);
+  if (fromApi != null) return fromApi;
+  final anchor = dueDate ?? DateTime.now();
+  return anchor.add(const Duration(days: 42));
+}
+
 DateTime visibleMonthForBirthdateGuess({
   String? savedVoteIso,
   DateTime? dueDate,

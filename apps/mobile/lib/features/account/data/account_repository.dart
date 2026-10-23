@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:lanonna/features/account/domain/data_export_status.dart';
 import 'package:lanonna/features/invitations/domain/invitation_status.dart';
+import 'package:lanonna/features/invitations/domain/invite_email_delivery.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exception.dart';
@@ -188,12 +189,8 @@ class InvitationRow {
   final InviteEmailDeliveryStatus? emailDeliveryStatus;
   final String? emailSentAt;
 
-  /// Mirrors the API resend rule: pending and never delivered
-  /// (`email_sent_at` unset), else `409 invite_already_delivered`.
-  bool get canResendEmail =>
-      status == InvitationStatus.pending &&
-      emailSentAt == null &&
-      emailDeliveryStatus != InviteEmailDeliveryStatus.sent;
+  /// Mirrors the API resend rule (`invite_email_delivery.dart`).
+  bool get canResendEmail => invitationCanResendEmail(this);
 
   factory InvitationRow.fromJson(Map<String, dynamic> json) {
     return InvitationRow(

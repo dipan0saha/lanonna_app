@@ -73,7 +73,6 @@ class _Notifications extends NotificationsRepository {
     return NotificationPreferences(
       digest: NotificationDigest.weekly,
       pushEnabled: true,
-      emailDigestEnabled: true,
       notifyGalleryEnabled: true,
       notifyCalendarEnabled: true,
       notifyRegistryEnabled: true,

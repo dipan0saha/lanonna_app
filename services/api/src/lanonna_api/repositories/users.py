@@ -306,7 +306,6 @@ def update_notification_preferences(
     *,
     notification_digest: str | None = None,
     push_notifications_enabled: bool | None = None,
-    email_digest_enabled: bool | None = None,
     notify_gallery_enabled: bool | None = None,
     notify_calendar_enabled: bool | None = None,
     notify_registry_enabled: bool | None = None,
@@ -320,11 +319,6 @@ def update_notification_preferences(
         push_notifications_enabled
         if push_notifications_enabled is not None
         else user.get("push_notifications_enabled", True)
-    )
-    email_digest = (
-        email_digest_enabled
-        if email_digest_enabled is not None
-        else user.get("email_digest_enabled", True)
     )
     notify_gallery = (
         notify_gallery_enabled
@@ -352,7 +346,6 @@ def update_notification_preferences(
             UPDATE app_users
             SET notification_digest = %s,
                 push_notifications_enabled = %s,
-                email_digest_enabled = %s,
                 notify_gallery_enabled = %s,
                 notify_calendar_enabled = %s,
                 notify_registry_enabled = %s,
@@ -365,7 +358,6 @@ def update_notification_preferences(
             (
                 digest,
                 push,
-                email_digest,
                 notify_gallery,
                 notify_calendar,
                 notify_registry,
