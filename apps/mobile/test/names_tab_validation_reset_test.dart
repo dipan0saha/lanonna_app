@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/api/api_client.dart';
@@ -16,6 +18,10 @@ class _SuggestFunRepository extends FunRepository {
 
   final suggested = <String>[];
 
+  /// Completed by the test, so the request spans frames like a real network
+  /// call (the form rebuilds with the typed text before the reply).
+  Completer<void>? pendingSuggest;
+
   @override
   Future<NamesPayload> fetchNames(String babyId) async =>
       NamesPayload(suggestions: const []);
@@ -27,6 +33,8 @@ class _SuggestFunRepository extends FunRepository {
     BabyGender gender,
   ) async {
     suggested.add(name);
+    final pending = pendingSuggest;
+    if (pending != null) await pending.future;
   }
 }
 
@@ -57,12 +65,21 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextFormField), 'Ada');
+    repo.pendingSuggest = Completer<void>();
     await tester.tap(find.text('Add'));
+    // Frames while the request is in flight (#402: the form rebuilt with
+    // 'Ada' as the field's initialValue, and reset() restored it).
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(repo.suggested, ['Ada']);
+    repo.pendingSuggest!.complete();
+    repo.pendingSuggest = null;
     await tester.pumpAndSettle();
 
     expect(repo.suggested, ['Ada']);
     final field = tester.widget<TextFormField>(find.byType(TextFormField));
     expect(field.controller!.text, isEmpty);
+    expect(find.text('Ada'), findsNothing);
     expect(find.text('Name is required'), findsNothing);
 
     await tester.tap(find.text('Add'));
