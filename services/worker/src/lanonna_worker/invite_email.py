@@ -13,9 +13,8 @@ import httpx
 
 from lanonna_worker.config import mailjet_sender_error, settings
 from lanonna_worker.mailjet_send import (
-    build_send_payload,
     mailjet_message_error,
-    post_mailjet,
+    send_messages,
 )
 from lanonna_worker.db import get_connection
 from lanonna_worker.invite_email_copy import (
@@ -289,23 +288,19 @@ def send_invite_email(
     invite_url = build_invite_url(str(invite_token), ctx["role"])
     subject, html, text = _render_invite_email(ctx, invite_url)
 
-    payload = build_send_payload(
-        [
-            {
-                "From": {
-                    "Email": settings.mailjet_from_email,
-                    "Name": settings.mailjet_from_name,
-                },
-                "To": [{"Email": ctx["invitee_email"]}],
-                "Subject": subject,
-                "HTMLPart": html,
-                "TextPart": text,
-            }
-        ]
-    )
+    mail = {
+        "From": {
+            "Email": settings.mailjet_from_email,
+            "Name": settings.mailjet_from_name,
+        },
+        "To": [{"Email": ctx["invitee_email"]}],
+        "Subject": subject,
+        "HTMLPart": html,
+        "TextPart": text,
+    }
 
     try:
-        response = post_mailjet(payload)
+        response = send_messages([mail])
     except Exception as exc:
         transient = _is_transient_exception(exc)
         message = f"{type(exc).__name__}: {exc}"

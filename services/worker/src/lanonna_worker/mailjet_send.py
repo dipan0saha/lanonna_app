@@ -23,18 +23,16 @@ def with_transactional_tracking(message: dict[str, Any]) -> dict[str, Any]:
     return {**message, **TRANSACTIONAL_TRACKING_DISABLED}
 
 
-def build_send_payload(messages: list[dict[str, Any]]) -> dict[str, Any]:
-    """Wrap messages for POST /v3.1/send with transactional tracking defaults."""
-    return {
-        "Messages": [with_transactional_tracking(message) for message in messages],
-    }
+def send_messages(messages: list[dict[str, Any]]) -> httpx.Response:
+    """POST messages to Mailjet v3.1 /send with tracking disabled on each one.
 
-
-def post_mailjet(payload: dict[str, Any]) -> httpx.Response:
+    This is the only Mailjet send path in the codebase: callers pass messages,
+    never a raw payload, so no sender can skip the tracking defaults.
+    """
     return httpx.post(
         _MAILJET_SEND_URL,
         auth=(settings.mailjet_api_key, settings.mailjet_api_secret),
-        json=payload,
+        json={"Messages": [with_transactional_tracking(m) for m in messages]},
         timeout=30.0,
     )
 

@@ -4,9 +4,8 @@ import httpx
 
 from lanonna_worker.mailjet_send import (
     TRANSACTIONAL_TRACKING_DISABLED,
-    build_send_payload,
     mailjet_message_error,
-    post_mailjet,
+    send_messages,
     with_transactional_tracking,
 )
 
@@ -18,19 +17,6 @@ def test_with_transactional_tracking_disables_click_and_open():
     assert enriched["TrackOpens"] == "disabled"
     assert enriched["Subject"] == "Hello"
     assert message.get("TrackClicks") is None
-
-
-def test_build_send_payload_applies_tracking_to_every_message():
-    payload = build_send_payload(
-        [
-            {"Subject": "One"},
-            {"Subject": "Two"},
-        ]
-    )
-    assert len(payload["Messages"]) == 2
-    for message in payload["Messages"]:
-        assert message["TrackClicks"] == TRANSACTIONAL_TRACKING_DISABLED["TrackClicks"]
-        assert message["TrackOpens"] == TRANSACTIONAL_TRACKING_DISABLED["TrackOpens"]
 
 
 def test_mailjet_message_error_success_returns_none():
@@ -54,13 +40,32 @@ def test_mailjet_message_error_surfaces_error_status():
 
 @patch("lanonna_worker.mailjet_send.settings")
 @patch("lanonna_worker.mailjet_send.httpx.post")
-def test_post_mailjet_uses_v31_send_endpoint(mock_post, mock_settings):
+def test_send_messages_posts_v31_with_tracking_disabled_on_every_message(
+    mock_post, mock_settings
+):
     mock_settings.mailjet_api_key = "key"
     mock_settings.mailjet_api_secret = "secret"
     mock_post.return_value = MagicMock(status_code=200)
-    post_mailjet({"Messages": []})
+    send_messages([{"Subject": "One"}, {"Subject": "Two", "TrackClicks": "enabled"}])
     mock_post.assert_called_once()
     assert mock_post.call_args.args[0] == "https://api.mailjet.com/v3.1/send"
     assert mock_post.call_args.kwargs["auth"] == ("key", "secret")
-    assert mock_post.call_args.kwargs["json"] == {"Messages": []}
     assert mock_post.call_args.kwargs["timeout"] == 30.0
+    messages = mock_post.call_args.kwargs["json"]["Messages"]
+    assert [m["Subject"] for m in messages] == ["One", "Two"]
+    for message in messages:
+        assert message["TrackClicks"] == TRANSACTIONAL_TRACKING_DISABLED["TrackClicks"]
+        assert message["TrackOpens"] == TRANSACTIONAL_TRACKING_DISABLED["TrackOpens"]
+
+
+def test_no_other_module_calls_the_mailjet_api_directly():
+    """Every Mailjet send must go through send_messages (#389)."""
+    from pathlib import Path
+
+    src = Path(__file__).resolve().parents[1] / "src" / "lanonna_worker"
+    offenders = [
+        p.name
+        for p in src.rglob("*.py")
+        if p.name != "mailjet_send.py" and "api.mailjet.com" in p.read_text()
+    ]
+    assert offenders == []

@@ -18,9 +18,10 @@ Only **invite** email is sent via Mailjet today; future transactional sends (e.g
 
 ## Fix
 
-- Added `services/worker/src/lanonna_worker/mailjet_send.py`: shared `build_send_payload()` applies `TrackClicks: disabled` and `TrackOpens: disabled` on every message before send.
-- `invite_email.py` uses this layer for all Mailjet traffic.
-- Worker tests assert tracking fields on the JSON payload (`test_mailjet_send.py`, `test_invite_email.py`).
+- Added `services/worker/src/lanonna_worker/mailjet_send.py`. Its `send_messages(messages)` is the single Mailjet send path: it takes messages (never a raw payload) and sets `TrackClicks: disabled` and `TrackOpens: disabled` on each one, overriding any caller value.
+- `invite_email.py` sends through `send_messages`.
+- Sender audit (worker and API): invite email is the only Mailjet sender. The API sends no email. Export-ready and the weekly digest are FCM push / in-app only. Verification and password-reset mail come from Firebase Auth.
+- Worker tests assert the tracking fields on the posted JSON (`test_mailjet_send.py`, `test_invite_email.py`), and a guard test fails if any other worker module calls `api.mailjet.com` directly.
 
 Operational note: disabling tracking in the API payload is authoritative for sends from this code path. Mailjet sender-level defaults can remain for any non-worker traffic, but product transactional mail should always go through `mailjet_send`.
 
@@ -28,7 +29,7 @@ Operational note: disabling tracking in the API payload is authoritative for sen
 
 Email verification and password reset are **not** sent through Mailjet. The mobile app calls Firebase Auth; Google delivers mail from Identity Toolkit templates synced from `packages/firebase-auth-email-templates` (`scripts/sync-firebase-auth-templates.sh`). Action links use Firebase Hosting (`https://{project}.firebaseapp.com/__/auth/action?...`) with OOB codes, not Mailjet `mjt.lu` wrappers.
 
-La Nonna does not configure Mailjet-style click rewriting on those messages. Google’s own email infrastructure may still log delivery and link usage under the Firebase/Google Cloud terms—disclose Firebase as the processor for auth mail in `docs/legal/data-inventory.md`, not Mailjet click tracking.
+La Nonna does not configure Mailjet-style click rewriting on those messages. Google’s own email infrastructure may still log delivery and link usage under the Firebase/Google Cloud terms—disclose Firebase as the processor for auth mail in `docs/legal/data-inventory.md` (PR #351), not Mailjet click tracking.
 
 ## Verification
 
@@ -39,5 +40,5 @@ La Nonna does not configure Mailjet-style click rewriting on those messages. Goo
 ## Related
 
 - Issue #389
-- `docs/legal/data-inventory.md` (Mailjet row, §3)
+- `docs/legal/data-inventory.md` and `privacy-policy.md` (Mailjet row and processor note): these only exist on PR #351's branch, so the wording is committed there, not on main.
 - `packages/email-templates/README.md` (product mail vs Firebase auth mail)
