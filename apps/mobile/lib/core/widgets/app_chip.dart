@@ -114,6 +114,58 @@ class AppToggleChip extends StatelessWidget {
   }
 }
 
+/// One option in an [AppToggleChipBar].
+class AppToggleChipOption<T> {
+  const AppToggleChipOption(this.value, this.label);
+
+  final T value;
+  final String label;
+}
+
+/// A horizontal, scrollable row of [AppToggleChip]s with one selected value:
+/// the app's view switcher (AI suggestion tabs, gallery All / Recent /
+/// Favorites). Use it instead of Material chips or `SegmentedButton`.
+class AppToggleChipBar<T> extends StatelessWidget {
+  const AppToggleChipBar({
+    super.key,
+    required this.options,
+    required this.selected,
+    required this.onSelected,
+    this.padding = const EdgeInsets.fromLTRB(
+      AppMetrics.horizontalPadding,
+      AppSpacing.lg,
+      AppMetrics.horizontalPadding,
+      AppSpacing.lg,
+    ),
+  });
+
+  final List<AppToggleChipOption<T>> options;
+  final T selected;
+  final ValueChanged<T> onSelected;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: padding,
+      child: Row(
+        children: [
+          for (final option in options)
+            Padding(
+              padding: const EdgeInsetsDirectional.only(end: AppSpacing.sm),
+              child: AppToggleChip(
+                label: option.label,
+                selected: option.value == selected,
+                onTap: () => onSelected(option.value),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Filled pill with remove control (e.g. first-moment name suggestions).
 class AppRemovableChip extends StatelessWidget {
   const AppRemovableChip({

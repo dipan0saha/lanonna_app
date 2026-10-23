@@ -32,6 +32,7 @@ import 'sheets/photo_source_sheet.dart';
 import 'gallery_list_reload.dart';
 import 'widgets/gallery_empty_state.dart';
 import 'widgets/gallery_photo_grid.dart';
+import 'widgets/gallery_view_mode_selector.dart';
 import '../../../l10n/app_localizations.dart';
 
 enum GalleryViewMode { all, recent, favorites }
@@ -101,12 +102,6 @@ class _GalleryScreenState extends State<GalleryScreen>
     GalleryViewMode.all => 'default',
     GalleryViewMode.recent => 'recent',
     GalleryViewMode.favorites => 'favorites',
-  };
-
-  String get _pageTitle => switch (widget.mode) {
-    GalleryViewMode.all => l10n.notificationChannelGallery,
-    GalleryViewMode.recent => l10n.labelRecentPhotos,
-    GalleryViewMode.favorites => l10n.galleryFavorites,
   };
 
   String get _sectionLabel => switch (widget.mode) {
@@ -351,9 +346,14 @@ class _GalleryScreenState extends State<GalleryScreen>
                   AppMetrics.horizontalPadding,
                   10,
                 ),
-                child: Text(_pageTitle, style: headline),
+                // One tab title; the selector below names the view (#393).
+                child: Text(l10n.notificationChannelGallery, style: headline),
               ),
             ),
+            if (kind == TabLoadKind.loading || _baby != null)
+              SliverToBoxAdapter(
+                child: GalleryViewModeSelector(selected: widget.mode),
+              ),
             if (kind == TabLoadKind.loading)
               const SliverFillRemaining(
                 child: Center(child: CircularProgressIndicator()),

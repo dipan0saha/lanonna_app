@@ -54,27 +54,12 @@ class AiSuggestionsScaffold extends StatelessWidget {
                 ),
               ),
             ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.fromLTRB(
-              AppMetrics.horizontalPadding,
-              16,
-              AppMetrics.horizontalPadding,
-              16,
-            ),
-            child: Row(
-              children: [
-                for (final tab in tabs)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: AppToggleChip(
-                      label: tab.label,
-                      selected: selectedTab == tab.key,
-                      onTap: () => onTabChanged(tab.key),
-                    ),
-                  ),
-              ],
-            ),
+          AppToggleChipBar<String>(
+            options: [
+              for (final tab in tabs) AppToggleChipOption(tab.key, tab.label),
+            ],
+            selected: selectedTab,
+            onSelected: onTabChanged,
           ),
           Expanded(
             child: loading
