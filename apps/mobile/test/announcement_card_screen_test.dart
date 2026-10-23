@@ -64,7 +64,7 @@ void main() {
           Provider<HomeRepository>.value(
             value: _RoleHomeRepository('follower'),
           ),
-          Provider<AnnouncementRepository>.value(
+          ChangeNotifierProvider<AnnouncementRepository>.value(
             value: _NullAnnouncementRepository(),
           ),
         ],
@@ -112,7 +112,7 @@ void main() {
       MultiProvider(
         providers: [
           Provider<HomeRepository>.value(value: _RoleHomeRepository('owner')),
-          Provider<AnnouncementRepository>.value(
+          ChangeNotifierProvider<AnnouncementRepository>.value(
             value: _NullAnnouncementRepository(),
           ),
         ],
