@@ -107,17 +107,6 @@ class _FollowersScreenState extends State<FollowersScreen> {
     return inv.emailDeliveryStatus?.label(l10n) ?? inv.email;
   }
 
-  void _patchInvite(
-    String invitationId,
-    InvitationRow Function(InvitationRow current) patch,
-  ) {
-    setState(() {
-      _invites = _invites
-          .map((inv) => inv.id == invitationId ? patch(inv) : inv)
-          .toList();
-    });
-  }
-
   String? _acceptedLabel(MemberRow member) {
     final raw = member.joinedAt;
     if (raw == null || raw.isEmpty) return null;
@@ -323,15 +312,6 @@ class _FollowersScreenState extends State<FollowersScreen> {
                                                   ),
                                             );
                                             if (!sent || !mounted) return;
-                                            _patchInvite(
-                                              inv.id,
-                                              (current) => current.copyWith(
-                                                emailDeliveryStatus:
-                                                    InviteEmailDeliveryStatus
-                                                        .pending,
-                                                emailSentAt: null,
-                                              ),
-                                            );
                                             AppSnackBar.showInfo(
                                               context,
                                               AppLocalizations.of(context)!.accountInviteEmailQueued,

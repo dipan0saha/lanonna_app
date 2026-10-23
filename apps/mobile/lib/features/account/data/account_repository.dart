@@ -172,7 +172,7 @@ class MemberRow {
 }
 
 class InvitationRow {
-  InvitationRow({
+  const InvitationRow({
     required this.id,
     required this.email,
     required this.status,
@@ -188,24 +188,12 @@ class InvitationRow {
   final InviteEmailDeliveryStatus? emailDeliveryStatus;
   final String? emailSentAt;
 
+  /// Mirrors the API resend rule: pending and never delivered
+  /// (`email_sent_at` unset), else `409 invite_already_delivered`.
   bool get canResendEmail =>
       status == InvitationStatus.pending &&
       emailSentAt == null &&
       emailDeliveryStatus != InviteEmailDeliveryStatus.sent;
-
-  InvitationRow copyWith({
-    InviteEmailDeliveryStatus? emailDeliveryStatus,
-    String? emailSentAt,
-  }) {
-    return InvitationRow(
-      id: id,
-      email: email,
-      status: status,
-      relationshipLabel: relationshipLabel,
-      emailDeliveryStatus: emailDeliveryStatus ?? this.emailDeliveryStatus,
-      emailSentAt: emailSentAt ?? this.emailSentAt,
-    );
-  }
 
   factory InvitationRow.fromJson(Map<String, dynamic> json) {
     return InvitationRow(

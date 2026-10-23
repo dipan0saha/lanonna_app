@@ -46,9 +46,18 @@ class _FakeAccountRepository extends AccountRepository {
     revokeCalls++;
   }
 
+  /// Like the API: resend re-arms the row (`email_delivery_status: pending`).
   @override
   Future<void> resendInvitation(String babyId, String invitationId) async {
     resendCalls++;
+    final i = invites.indexWhere((inv) => inv.id == invitationId);
+    invites[i] = InvitationRow(
+      id: invites[i].id,
+      email: invites[i].email,
+      status: invites[i].status,
+      relationshipLabel: invites[i].relationshipLabel,
+      emailDeliveryStatus: InviteEmailDeliveryStatus.pending,
+    );
   }
 }
 
@@ -143,7 +152,7 @@ void main() {
     expect(repo.revokeCalls, 1);
   });
 
-  testWidgets('resend invite updates delivery label immediately', (tester) async {
+  testWidgets('resend invite reloads and shows the re-armed delivery label', (tester) async {
     final repo = _FakeAccountRepository(
       invites: [
         InvitationRow(
@@ -158,8 +167,7 @@ void main() {
 
     expect(find.text('Email failed to send'), findsOneWidget);
     await tester.tap(find.text('Resend'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
 
     expect(repo.resendCalls, 1);
     expect(find.text('Pending — email sending'), findsOneWidget);

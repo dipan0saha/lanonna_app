@@ -19,7 +19,6 @@ from lanonna_api.schemas.invitations import InviteRowStatus
 from lanonna_api.repositories.invitations import (
     accept_invitation_by_token,
     fetch_invitation_preview_row,
-    invitation_resend_blocked_reason,
     list_invitations_for_baby,
     load_invite_targets,
     prepare_invitation_for_resend,
@@ -93,21 +92,20 @@ def resend_invitation_for_owner(
     invitation_id: uuid.UUID,
 ) -> None:
     require_owner_baby(firebase_uid, baby_profile_id)
-    prepared_id = prepare_invitation_for_resend(baby_profile_id, invitation_id)
-    if prepared_id is None:
-        blocked = invitation_resend_blocked_reason(baby_profile_id, invitation_id)
-        if blocked == "already_delivered":
-            raise ConflictError(
-                ErrorCode.INVITE_ALREADY_DELIVERED,
-                "Invite email was already delivered",
-            )
+    prep = prepare_invitation_for_resend(baby_profile_id, invitation_id)
+    if prep == "already_delivered":
+        raise ConflictError(
+            ErrorCode.INVITE_ALREADY_DELIVERED,
+            "Invite email was already delivered",
+        )
+    if prep == "not_found":
         raise NotFoundError(ErrorCode.NOT_FOUND, "Invitation not found")
     try:
-        _enqueue_invite_email(prepared_id)
+        _enqueue_invite_email(invitation_id)
     except Exception:
         logger.exception(
             "invite_email_enqueue_failed invitation_id=%s resend=true",
-            prepared_id,
+            invitation_id,
         )
         raise ServiceUnavailableError(ErrorCode.EMAIL_QUEUE_FAILED, EMAIL_QUEUE_FAILED_MESSAGE) from None
 

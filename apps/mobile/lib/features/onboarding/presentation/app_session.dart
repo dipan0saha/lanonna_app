@@ -337,28 +337,41 @@ class AppSession extends ChangeNotifier {
     return _onboardingResumePath(status);
   }
 
-  /// Signed-out resume for a stored invite token (cold start lands on
-  /// [OnboardingRoutes.ownerCarousel] by default). Login and sign-up stay
-  /// reachable; invite landing routes are already correct.
+  /// Signed-out resume for a stored invite token. Runs before the public
+  /// allowlist because a cold start without a link lands on
+  /// [OnboardingRoutes.ownerCarousel] (#388). Login, sign-up and the invite
+  /// landing routes are left alone so the user can always sign in or create
+  /// an account; a stale token is cleared from the landing's problem state
+  /// (`leaveInvitationFlow`), which is the way out to the carousel.
   String? _signedOutPendingInviteRedirect(String path) {
     if (_coordinator.pendingInviteToken == null) return null;
-    if (path == OnboardingRoutes.login || path == OnboardingRoutes.signup) {
+    if (path == OnboardingRoutes.login ||
+        path == OnboardingRoutes.signup ||
+        _invitePublic.contains(path)) {
       return null;
     }
-    if (path == OnboardingRoutes.ownerCarousel || !_invitePublic.contains(path)) {
-      return _inviteResumePath();
+    final resume = _inviteResumePath();
+    // Steps past sign-up (verify email, complete profile) need a session;
+    // signed out, the invite landing is the resume point.
+    if (resume == OnboardingRoutes.login ||
+        resume == OnboardingRoutes.signup ||
+        _invitePublic.contains(resume)) {
+      return resume;
     }
-    return null;
+    return _inviteLandingPath();
   }
+
+  String _inviteLandingPath() =>
+      _coordinator.onboardingPath == OnboardingPath.coOwner
+          ? OnboardingRoutes.coOwnerInvite
+          : OnboardingRoutes.followerInvite;
 
   String _inviteResumePath() {
     final step = _coordinator.activeStep;
     if (step != null) {
       return OnboardingRoutes.pathForStep(step);
     }
-    return _coordinator.onboardingPath == OnboardingPath.coOwner
-        ? OnboardingRoutes.coOwnerInvite
-        : OnboardingRoutes.followerInvite;
+    return _inviteLandingPath();
   }
 
   String _resumePathForOwnerOnboardingStep() {

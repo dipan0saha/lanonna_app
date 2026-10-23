@@ -148,7 +148,7 @@ enum ApiErrorCode {
         eventEndBeforeStart => l10n.errorEventEndBeforeStart,
         biometricCredentialInvalid => l10n.errorBiometricCredentialInvalid,
         biometricChallengeExpired => l10n.errorBiometricChallengeExpired,
-        inviteAlreadyDelivered => l10n.inviteResendAlreadyDelivered,
+        inviteAlreadyDelivered => l10n.errorInviteAlreadyDelivered,
         emailQueueFailed => l10n.errorEmailQueueFailed,
         exportQueueFailed => l10n.errorExportQueueFailed,
         networkUnavailable => l10n.errorOffline,

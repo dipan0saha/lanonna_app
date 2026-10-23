@@ -581,6 +581,56 @@ void main() {
   );
 
   test(
+    'signed-out pending invite past sign-up resumes on the invite landing',
+    () async {
+      final f = await _fixtures(path: OnboardingPath.coOwner);
+      await f.storage.savePendingInviteToken('invite-token-abc');
+      await f.coordinator.setStep(OnboardingStep.emailVerify);
+      final redirect = f.session.redirectFor(
+        isSignedIn: false,
+        emailVerified: false,
+        location: OnboardingRoutes.ownerCarousel,
+      );
+      expect(redirect, OnboardingRoutes.coOwnerInvite);
+    },
+  );
+
+  test(
+    'signed-out pending invite leaves the invite landing alone (no loop)',
+    () async {
+      final f = await _fixtures(path: OnboardingPath.follower);
+      await f.storage.savePendingInviteToken('invite-token-abc');
+      await f.coordinator.hydrate();
+      expect(
+        f.session.redirectFor(
+          isSignedIn: false,
+          emailVerified: false,
+          location: OnboardingRoutes.followerInvite,
+        ),
+        isNull,
+      );
+    },
+  );
+
+  test(
+    'signed out with the invite cleared, the owner carousel is reachable',
+    () async {
+      final f = await _fixtures(path: OnboardingPath.follower);
+      await f.storage.savePendingInviteToken('invite-token-abc');
+      await f.coordinator.hydrate();
+      await f.coordinator.clearPendingInvite();
+      expect(
+        f.session.redirectFor(
+          isSignedIn: false,
+          emailVerified: false,
+          location: OnboardingRoutes.ownerCarousel,
+        ),
+        isNull,
+      );
+    },
+  );
+
+  test(
     'owner with baby resume path returns create-baby for createBaby step',
     () async {
       final f = await _fixtures();

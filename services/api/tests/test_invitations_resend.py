@@ -76,3 +76,37 @@ def test_resend_invitation_not_found_returns_404():
             f"/v1/babies/{baby_id}/invitations/{inv_id}/resend",
         )
     assert response.status_code == 404
+
+
+def _resend_domain(prep: str):
+    from lanonna_api.domain import invitations as domain
+
+    with (
+        patch.object(domain, "require_owner_baby"),
+        patch.object(domain, "prepare_invitation_for_resend", return_value=prep),
+        patch.object(domain, "_enqueue_invite_email") as enqueue,
+    ):
+        try:
+            domain.resend_invitation_for_owner("owner-1", uuid.uuid4(), uuid.uuid4())
+        except Exception as exc:  # noqa: BLE001 - returned for assertions
+            return exc, enqueue
+    return None, enqueue
+
+
+def test_resend_domain_prepared_enqueues_send():
+    exc, enqueue = _resend_domain("prepared")
+    assert exc is None
+    enqueue.assert_called_once()
+
+
+def test_resend_domain_already_delivered_is_conflict():
+    exc, enqueue = _resend_domain("already_delivered")
+    assert isinstance(exc, ConflictError)
+    assert exc.code == ErrorCode.INVITE_ALREADY_DELIVERED
+    enqueue.assert_not_called()
+
+
+def test_resend_domain_missing_is_not_found():
+    exc, enqueue = _resend_domain("not_found")
+    assert isinstance(exc, NotFoundError)
+    enqueue.assert_not_called()

@@ -3010,11 +3010,11 @@ abstract class AppLocalizations {
   /// **'Email failed to send'**
   String get inviteEmailFailed;
 
-  /// No description provided for @inviteResendAlreadyDelivered.
+  /// No description provided for @errorInviteAlreadyDelivered.
   ///
   /// In en, this message translates to:
   /// **'This invite was already delivered and cannot be sent again.'**
-  String get inviteResendAlreadyDelivered;
+  String get errorInviteAlreadyDelivered;
 
   /// No description provided for @settingsCouldNotOpenEmailTo.
   ///

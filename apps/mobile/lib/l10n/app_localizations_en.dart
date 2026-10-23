@@ -1674,7 +1674,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inviteEmailFailed => 'Email failed to send';
 
   @override
-  String get inviteResendAlreadyDelivered =>
+  String get errorInviteAlreadyDelivered =>
       'This invite was already delivered and cannot be sent again.';
 
   @override

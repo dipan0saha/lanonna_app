@@ -35,6 +35,16 @@ void main() {
     expect(msg, isNot(contains('api.example.com')));
   });
 
+  test('resend of a delivered invite (409) maps to its own copy', () {
+    final msg = apiErrorMessage(
+      l10n,
+      ApiException('invite_already_delivered',
+          statusCode: 409, detail: {'error': 'invite_already_delivered'}),
+    );
+    expect(msg, l10n.errorInviteAlreadyDelivered);
+    expect(msg, isNot(contains('invite_already_delivered')));
+  });
+
   test('error codes map to copy, never the raw code', () {
     final msg = apiErrorMessage(
       l10n,
