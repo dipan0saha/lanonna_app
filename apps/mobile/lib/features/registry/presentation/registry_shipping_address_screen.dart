@@ -158,7 +158,7 @@ class _RegistryShippingAddressScreenState
       ),
     );
     if (mounted) setState(() => _saving = false);
-    if (ok && mounted) context.pop(true);
+    if (ok && mounted) context.pop();
   }
 
   Future<void> _clear() async {
@@ -183,7 +183,7 @@ class _RegistryShippingAddressScreenState
       ),
     );
     if (mounted) setState(() => _saving = false);
-    if (ok && mounted) context.pop(true);
+    if (ok && mounted) context.pop();
   }
 
   @override

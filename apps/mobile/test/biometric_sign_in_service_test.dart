@@ -210,6 +210,37 @@ void main() {
     expect(service.enrollment, isNotNull);
   });
 
+  group('isUnlockActiveForSignedInUser', () {
+    bool active({required bool server}) =>
+        service.isUnlockActiveForSignedInUser(
+          serverBiometricUnlockEnabled: server,
+        );
+    Future<void> enrollAs(String uid) => store.save(
+      BiometricSignInEnrollment(credentialId: 'cred', firebaseUid: uid),
+    );
+
+    test('needs the server flag and this account\'s enrollment', () async {
+      auth.user = _FakeUser('uid-a');
+      // #375: flag still on after another account cleared the slot.
+      expect(active(server: true), isFalse);
+      await enrollAs('uid-a');
+      expect(active(server: true), isTrue);
+      expect(active(server: false), isFalse);
+    });
+
+    test('another account\'s enrollment does not count', () async {
+      await enrollAs('uid-a');
+      auth.user = _FakeUser('uid-b');
+      expect(active(server: true), isFalse);
+    });
+
+    test('signed out is never active', () async {
+      await enrollAs('uid-a');
+      auth.user = null;
+      expect(active(server: true), isFalse);
+    });
+  });
+
   test(
     'another account signing in clears the enrollment; the same keeps it',
     () async {

@@ -8,9 +8,13 @@ import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/auth/auth_repository.dart';
 import 'package:lanonna/config/app_config.dart';
 import 'package:lanonna/core/auth/biometric_app_lock.dart';
+import 'package:lanonna/core/auth/biometric_credential_repository.dart';
+import 'package:lanonna/core/auth/biometric_sign_in_service.dart';
+import 'package:lanonna/core/auth/biometric_sign_in_store.dart';
 import 'package:lanonna/core/auth/biometric_unlock_service.dart';
 import 'package:lanonna/core/time/monotonic_clock.dart';
 import 'support/fake_monotonic_clock.dart';
+import 'package:lanonna/core/auth/auth_session_service.dart';
 import 'package:lanonna/core/auth/session_cleanup.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/features/account/data/account_repository.dart';
@@ -29,7 +33,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class _FakeFirebaseAuth extends Fake implements FirebaseAuth {}
 
-class _FakeUser extends Fake implements User {}
+class _FakeUser extends Fake implements User {
+  @override
+  String get uid => 'test-uid';
+}
 
 class _FakeAuth extends AuthRepository {
   _FakeAuth({this.signedIn = true}) : super(firebaseAuth: _FakeFirebaseAuth());
@@ -142,6 +149,7 @@ _pumpLockHarness(
   required String initialLocation,
   bool signedIn = true,
   bool biometricUnlockEnabled = true,
+  bool localBiometricEnrollment = true,
   bool accountLoaded = true,
   OnboardingStatus? status,
   _FakeAuth? auth,
@@ -172,6 +180,24 @@ _pumpLockHarness(
         ? _account(biometricUnlockEnabled: biometricUnlockEnabled)
         : null,
   );
+  final signInStore = BiometricSignInStore(prefs);
+  // This install's key exists independently of the profile (it is created
+  // before the flag is saved and survives cold start).
+  if (localBiometricEnrollment) {
+    await signInStore.save(
+      const BiometricSignInEnrollment(
+        credentialId: 'test-cred',
+        firebaseUid: 'test-uid',
+      ),
+    );
+  }
+  final biometricSignIn = BiometricSignInService(
+    credentials: BiometricCredentialRepository(
+      ApiClient(idTokenProvider: () async => null),
+    ),
+    store: signInStore,
+    authRepository: fakeAuth,
+  );
 
   final router = GoRouter(
     initialLocation: initialLocation,
@@ -197,8 +223,15 @@ _pumpLockHarness(
       providers: [
         ChangeNotifierProvider<AppSession>.value(value: session),
         Provider<AuthRepository>.value(value: fakeAuth),
+        Provider<BiometricSignInService>.value(value: biometricSignIn),
         Provider<AccountRepository>.value(value: accounts),
         Provider<SessionCleanup>.value(value: cleanup),
+        Provider<AuthSessionService>.value(
+          value: AuthSessionService(
+            authRepository: fakeAuth,
+            sessionCleanup: cleanup,
+          ),
+        ),
       ],
       child: MaterialApp.router(
         theme: AppTheme.light,
@@ -502,6 +535,25 @@ void main() {
     expect(find.text('Locked'), findsNothing);
     expect(harness.biometric.authenticateCalls, 0);
   });
+
+  testWidgets(
+    'does not engage when server flag is on but local enrollment is gone (#375)',
+    (tester) async {
+      final harness = await _pumpLockHarness(
+        tester,
+        initialLocation: '/home',
+        biometricUnlockEnabled: true,
+        localBiometricEnrollment: false,
+      );
+      await tester.pump();
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+
+      expect(find.text('Locked'), findsNothing);
+      expect(harness.biometric.authenticateCalls, 0);
+    },
+  );
 
   testWidgets('does not engage when biometric unlock is disabled', (
     tester,
