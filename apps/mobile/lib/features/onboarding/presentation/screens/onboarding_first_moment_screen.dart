@@ -16,6 +16,7 @@ import '../../../../core/constants/first_moment_presets.dart';
 import '../../../../core/l10n/first_moment_preset_labels.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_chip.dart';
+import '../../../../core/widgets/baby_gender_chip_bar.dart';
 import '../../data/create_baby_draft.dart';
 import '../../data/onboarding_repository.dart';
 import 'package:lanonna/core/domain/baby_gender.dart';
@@ -239,9 +240,7 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
             .map(
               (d) => AppRemovableChip(
                 label: d.name,
-                accent: d.gender == BabyGender.female
-                    ? AppChipAccent.peach
-                    : AppChipAccent.sage,
+                accent: d.gender.chipAccent,
                 onRemove: _busy
                     ? null
                     : () {
@@ -301,7 +300,7 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  PrototypeMiniGenderToggle(
+                  BabyGenderChipBar(
                     selected: _nameGender,
                     onSelected: _setNameSuggestionGender,
                   ),
