@@ -985,7 +985,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get labelBirthdateGuesses => 'Birthdate guesses';
 
   @override
-  String get presetBottles => 'Bottles';
+  String get presetBottleSterilizer => 'Bottle Sterilizer';
 
   @override
   String get labelBoyGirl2 => 'Boy or Girl?';
@@ -1046,7 +1046,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get eventDetailsHeading => 'Details';
 
   @override
-  String get presetDiapers => 'Diapers';
+  String get presetDiaperPail => 'Diaper Pail';
+
+  @override
+  String get presetDiaperStockpile => 'Diapers (newborn)';
 
   @override
   String get actionDownloadJsonCopy =>
@@ -1102,7 +1105,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Family will see this item as taken so no one buys it again.';
 
   @override
-  String get presetFirstCheckup => 'First Checkup';
+  String get presetFirstPediatricVisit => 'First pediatric visit';
 
   @override
   String get presetFirstHolidays => 'First Holidays';
@@ -1398,7 +1401,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get labelSuggestName2 => 'Suggest a name…';
 
   @override
-  String get presetSwaddles => 'Swaddles';
+  String get presetSwaddleBlankets => 'Swaddle Blankets (set of 3)';
 
   @override
   String get actionSwitchBabyProfile => 'Switch baby profile';

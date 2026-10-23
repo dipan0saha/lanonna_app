@@ -55,8 +55,4 @@ Calendar AI availability (`event_suggestion_availability.dart`) hides catalog ro
 
 The calendar AI catalog (`assets/calendar/event_suggestions.json`) and its titles live in the app, and availability is already computed in the app (`availableEventSuggestions`), so the title fallback belongs there, not in the API. The API's job stays the hard rule: one event per `catalog_suggestion_id` per baby. Matching is exact after trim, lower-case and whitespace collapse, and only for events with no `catalog_suggestion_id`. That covers legacy seeds ("Gender Reveal" vs catalog "Gender reveal") and hand-typed identical titles, without fuzzy matching. No backfill.
 
-Known gaps, out of scope here:
-
-- Born preset `first_checkup` ("First Checkup") does not match catalog `first_pediatric_visit` by id or title.
-- Registry first-moment seeds (`swaddles`, `crib`, `diapers`) store no `catalog_suggestion_id`, and their titles differ from the registry catalog ("Crib & Mattress", …), so registry AI still offers them.
-- Born presets count forward from the birth date without clamping, so an older baby's seeded events can be in the past.
+Follow-up: [#412](https://github.com/dipan0saha/lanonna_app/issues/412) / [RCA](issue-412-first-moment-catalog-parity.md) (born clamping, `first_pediatric_visit`, registry catalog ids).

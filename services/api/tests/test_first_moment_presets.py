@@ -1,8 +1,10 @@
 from datetime import date, datetime, timezone
 
 from lanonna_api.first_moment_presets import (
+    event_date_for_born_preset,
     event_date_for_expecting_preset,
     event_starts_at,
+    event_starts_at_born,
     event_starts_at_expecting,
 )
 
@@ -41,6 +43,18 @@ def test_born_preset_still_counts_forward_from_birth_date():
     birth = date(2026, 5, 1)
     assert event_starts_at(birth, 0) == datetime(2026, 5, 1, 12, 0, tzinfo=timezone.utc)
     assert event_starts_at(birth, 7) == datetime(2026, 5, 8, 12, 0, tzinfo=timezone.utc)
+
+
+def test_born_preset_clamps_to_today_when_birth_was_long_ago():
+    birth = date(2026, 5, 1)
+    today = date(2026, 10, 23)
+
+    for offset in (0, 7, 14):
+        assert event_date_for_born_preset(birth, offset, today=today) == today
+
+    assert event_starts_at_born(birth, 14, today=today) == datetime(
+        2026, 10, 23, 12, 0, tzinfo=timezone.utc
+    )
 
 
 def test_expecting_preset_between_one_and_two_weeks_out_clamps_only_gender_reveal():

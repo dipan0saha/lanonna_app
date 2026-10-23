@@ -58,6 +58,33 @@ void main() {
     expect(available.map((s) => s.id), ['baby_shower']);
   });
 
+  test('availableEventSuggestions hides first pediatric visit after born seed', () {
+    final catalog = [
+      EventSuggestion(
+        id: 'first_pediatric_visit',
+        title: 'First pediatric visit',
+        description: 'Well-baby checkup',
+      ),
+      EventSuggestion(
+        id: 'family_meet_greet',
+        title: 'Family meet & greet',
+        description: 'Introduce baby',
+      ),
+    ];
+    final events = [
+      CalendarEvent(
+        id: '1',
+        title: 'First pediatric visit',
+        startsAt: DateTime.utc(2026, 10, 23),
+        catalogSuggestionId: 'first_pediatric_visit',
+      ),
+    ];
+
+    final available = availableEventSuggestions(catalog, events);
+
+    expect(available.map((s) => s.id), ['family_meet_greet']);
+  });
+
   test('availableEventSuggestions hides catalog row when event title matches without id',
       () {
     final catalog = [

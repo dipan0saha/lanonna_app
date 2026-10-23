@@ -13,7 +13,7 @@ from lanonna_api.domain.name_suggestions import (
 )
 from lanonna_api.first_moment_presets import (
     event_preset,
-    event_starts_at,
+    event_starts_at_born,
     event_starts_at_expecting,
     registry_preset,
 )
@@ -36,14 +36,14 @@ from lanonna_api.repositories.users import (
 def _first_moment_event_starts_at(baby: dict[str, Any], day_offset: int) -> datetime:
     """Start of a seeded first-moment event (#403).
 
-    Born babies count forward from the birth date. Otherwise the anchor is the
-    due date (or 90 days out when unknown), expecting offsets count back from
-    it, and dates are clamped to no earlier than the UTC calendar day.
+    Born babies count forward from the birth date (clamped to today). Otherwise
+    the anchor is the due date (or 90 days out when unknown), expecting offsets
+    count back from it, and dates are clamped to no earlier than the UTC day.
     """
     lifecycle = baby.get("lifecycle_status") or "expecting"
     actual = baby.get("actual_birth_date")
     if lifecycle == "born" and actual is not None:
-        return event_starts_at(actual, day_offset)
+        return event_starts_at_born(actual, day_offset)
     due = baby.get("expected_birth_date") or utc_today() + timedelta(days=90)
     return event_starts_at_expecting(due, day_offset)
 
@@ -177,7 +177,12 @@ def seed_first_moment(
         preset = registry_preset(preset_id)
         if preset is None:
             continue
-        insert_seed_registry_item(baby_profile_id, firebase_uid, preset.label)
+        insert_seed_registry_item(
+            baby_profile_id,
+            firebase_uid,
+            preset.label,
+            catalog_suggestion_id=preset.resolved_catalog_suggestion_id(),
+        )
         registry_created += 1
 
     names_created += seed_expecting_profile_name_suggestions(

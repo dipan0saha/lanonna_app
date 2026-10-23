@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime
 
 from lanonna_api.db import get_connection
+from lanonna_api.domain.catalog_suggestion_ids import normalize_catalog_suggestion_id
 
 
 def insert_seed_event(
@@ -37,16 +38,20 @@ def insert_seed_registry_item(
     baby_profile_id: uuid.UUID,
     firebase_uid: str,
     name: str,
+    *,
+    catalog_suggestion_id: str | None = None,
 ) -> None:
+    catalog_id = normalize_catalog_suggestion_id(catalog_suggestion_id)
     with get_connection() as conn:
         conn.execute(
             """
             INSERT INTO registry_items (
-                baby_profile_id, created_by_firebase_uid, name, priority
+                baby_profile_id, created_by_firebase_uid, name, priority,
+                catalog_suggestion_id
             )
-            VALUES (%s, %s, %s, 3)
+            VALUES (%s, %s, %s, 3, %s)
             """,
-            (baby_profile_id, firebase_uid, name),
+            (baby_profile_id, firebase_uid, name, catalog_id),
         )
 
 

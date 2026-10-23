@@ -17,6 +17,10 @@ class EventPreset:
 class RegistryPreset:
     id: str
     label: str
+    catalog_suggestion_id: str | None
+
+    def resolved_catalog_suggestion_id(self) -> str | None:
+        return self.catalog_suggestion_id
 
 
 EXPECTING_EVENTS: tuple[EventPreset, ...] = (
@@ -26,21 +30,25 @@ EXPECTING_EVENTS: tuple[EventPreset, ...] = (
 )
 
 EXPECTING_REGISTRY: tuple[RegistryPreset, ...] = (
-    RegistryPreset("swaddles", "Swaddles"),
-    RegistryPreset("crib", "Crib"),
-    RegistryPreset("diapers", "Diapers"),
+    RegistryPreset(
+        "swaddle_blankets",
+        "Swaddle Blankets (set of 3)",
+        "swaddle_blankets",
+    ),
+    RegistryPreset("crib_mattress", "Crib & Mattress", "crib_mattress"),
+    RegistryPreset("diaper_stockpile", "Diapers (newborn)", "diaper_stockpile"),
 )
 
 BORN_EVENTS: tuple[EventPreset, ...] = (
-    EventPreset("first_checkup", "First Checkup", 0),
+    EventPreset("first_pediatric_visit", "First pediatric visit", 0),
     EventPreset("baptism", "Baptism", 7),
     EventPreset("first_holidays", "First Holidays", 14),
 )
 
 BORN_REGISTRY: tuple[RegistryPreset, ...] = (
-    RegistryPreset("diapers", "Diapers"),
-    RegistryPreset("onesies", "Onesies"),
-    RegistryPreset("bottles", "Bottles"),
+    RegistryPreset("diaper_pail", "Diaper Pail", "diaper_pail"),
+    RegistryPreset("onesies", "Onesies", None),
+    RegistryPreset("bottle_sterilizer", "Bottle Sterilizer", "bottle_sterilizer"),
 )
 
 _EVENT_MAP: dict[str, EventPreset] = {
@@ -87,6 +95,29 @@ def event_starts_at_expecting(
 ) -> datetime:
     return anchor_midday_utc(
         event_date_for_expecting_preset(due_date, day_offset, today=today)
+    )
+
+
+def event_date_for_born_preset(
+    birth_date: date,
+    day_offset: int,
+    *,
+    today: date | None = None,
+) -> date:
+    """Calendar date for a born first-moment preset, never before [today] (#412)."""
+    reference = today if today is not None else utc_today()
+    computed = birth_date + timedelta(days=day_offset)
+    return computed if computed >= reference else reference
+
+
+def event_starts_at_born(
+    birth_date: date,
+    day_offset: int,
+    *,
+    today: date | None = None,
+) -> datetime:
+    return anchor_midday_utc(
+        event_date_for_born_preset(birth_date, day_offset, today=today)
     )
 
 

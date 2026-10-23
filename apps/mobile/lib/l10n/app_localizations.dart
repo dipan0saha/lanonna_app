@@ -1744,11 +1744,11 @@ abstract class AppLocalizations {
   /// **'Birthdate guesses'**
   String get labelBirthdateGuesses;
 
-  /// No description provided for @presetBottles.
+  /// No description provided for @presetBottleSterilizer.
   ///
   /// In en, this message translates to:
-  /// **'Bottles'**
-  String get presetBottles;
+  /// **'Bottle Sterilizer'**
+  String get presetBottleSterilizer;
 
   /// No description provided for @labelBoyGirl2.
   ///
@@ -1864,11 +1864,17 @@ abstract class AppLocalizations {
   /// **'Details'**
   String get eventDetailsHeading;
 
-  /// No description provided for @presetDiapers.
+  /// No description provided for @presetDiaperPail.
   ///
   /// In en, this message translates to:
-  /// **'Diapers'**
-  String get presetDiapers;
+  /// **'Diaper Pail'**
+  String get presetDiaperPail;
+
+  /// No description provided for @presetDiaperStockpile.
+  ///
+  /// In en, this message translates to:
+  /// **'Diapers (newborn)'**
+  String get presetDiaperStockpile;
 
   /// No description provided for @actionDownloadJsonCopy.
   ///
@@ -1972,11 +1978,11 @@ abstract class AppLocalizations {
   /// **'Family will see this item as taken so no one buys it again.'**
   String get messageItem;
 
-  /// No description provided for @presetFirstCheckup.
+  /// No description provided for @presetFirstPediatricVisit.
   ///
   /// In en, this message translates to:
-  /// **'First Checkup'**
-  String get presetFirstCheckup;
+  /// **'First pediatric visit'**
+  String get presetFirstPediatricVisit;
 
   /// No description provided for @presetFirstHolidays.
   ///
@@ -2536,11 +2542,11 @@ abstract class AppLocalizations {
   /// **'Suggest a name…'**
   String get labelSuggestName2;
 
-  /// No description provided for @presetSwaddles.
+  /// No description provided for @presetSwaddleBlankets.
   ///
   /// In en, this message translates to:
-  /// **'Swaddles'**
-  String get presetSwaddles;
+  /// **'Swaddle Blankets (set of 3)'**
+  String get presetSwaddleBlankets;
 
   /// No description provided for @actionSwitchBabyProfile.
   ///
