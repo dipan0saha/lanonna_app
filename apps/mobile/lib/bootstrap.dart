@@ -213,13 +213,17 @@ Future<Widget> bootstrapLaNonnaApp({
       ChangeNotifierProvider<CalendarRepository>.value(
         value: calendarRepository,
       ),
-      Provider<RegistryRepository>.value(value: registryRepository),
+      ChangeNotifierProvider<RegistryRepository>.value(
+        value: registryRepository,
+      ),
       Provider<FunRepository>.value(value: funRepository),
       Provider<AccountRepository>.value(value: accountRepository),
       ChangeNotifierProvider<NotificationsRepository>.value(
         value: notificationsRepository,
       ),
-      Provider<AnnouncementRepository>.value(value: announcementRepository),
+      ChangeNotifierProvider<AnnouncementRepository>.value(
+        value: announcementRepository,
+      ),
       Provider<InvitationsRepository>.value(value: invitationsRepository),
       ChangeNotifierProvider<SelectedBabyStore>.value(value: selectedBabyStore),
       Provider<HomeRefreshSignal>.value(value: homeRefreshSignal),

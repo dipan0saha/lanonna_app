@@ -18,7 +18,7 @@ void showAnnouncementCardAfterSave(BuildContext context, String babyId) {
   final matches =
       GoRouter.of(context).routerDelegate.currentConfiguration.matches;
   if (matches.length >= 2 && matches[matches.length - 2].matchedLocation == card) {
-    context.pop(true);
+    context.pop();
     return;
   }
   context.pushReplacement(card);

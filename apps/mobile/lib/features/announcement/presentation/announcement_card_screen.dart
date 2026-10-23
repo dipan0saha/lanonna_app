@@ -36,17 +36,26 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
   final _comment = TextEditingController();
   var _loading = true;
   var _isOwner = false;
+  AnnouncementRepository? _announcementRepo;
 
   @override
   void initState() {
     super.initState();
+    _announcementRepo = context.read<AnnouncementRepository>()
+      ..addListener(_onAnnouncementChanged);
     _load();
   }
 
   @override
   void dispose() {
+    _announcementRepo?.removeListener(_onAnnouncementChanged);
     _comment.dispose();
     super.dispose();
+  }
+
+  /// Edit, squish and comments all reload through the repository.
+  void _onAnnouncementChanged() {
+    if (mounted) _load();
   }
 
   /// The full-screen spinner shows only until the card first loads; later
@@ -77,7 +86,6 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
   Future<void> _squish() async {
     try {
       await context.read<AnnouncementRepository>().squish(widget.babyId);
-      await _load();
     } catch (e) {
       if (mounted) {
         AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
@@ -97,7 +105,6 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
         text,
       );
       _comment.clear();
-      await _load();
     } catch (e) {
       if (mounted) {
         AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
@@ -135,12 +142,8 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
             semanticsId: 'announcement_edit',
             label: l10n.actionEditAnnouncement,
             icon: const Icon(Icons.edit_outlined, size: 20),
-            onPressed: () async {
-              final saved = await context.push<bool>(
-                announcementCreateLocation(widget.babyId),
-              );
-              if (saved == true && mounted) await _load();
-            },
+            onPressed: () =>
+                context.push(announcementCreateLocation(widget.babyId)),
           ),
       ],
       body: Column(
