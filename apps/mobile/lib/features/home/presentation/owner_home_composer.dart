@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../data/models/home_summary.dart';
 import '../domain/app_routes.dart';
+import '../domain/home_composition.dart';
 import 'widgets/home_birth_welcome_card.dart';
 import 'widgets/home_family_insight_gender_card.dart';
 import 'widgets/home_insight_card.dart';
@@ -66,7 +67,7 @@ class OwnerHomeComposer extends StatelessWidget {
             ),
             const SizedBox(height: 18),
           ],
-          if (s?.nextUpEvent != null && s!.nextUpEvent!.id.isNotEmpty)
+          if (s != null && HomeComposition.showNextUpCard(s))
             HomeNextUpSection(event: s.nextUpEvent!),
           if (s != null && s.showRichInsight)
             HomeFamilyInsightGenderCard(

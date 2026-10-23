@@ -6,6 +6,8 @@ import '../../../core/domain/baby_summary.dart';
 import '../../../core/time/app_date_time.dart';
 import '../data/models/home_summary.dart';
 import '../domain/app_routes.dart';
+import '../domain/home_composition.dart';
+import 'widgets/home_next_up_section.dart';
 import 'widgets/home_birth_welcome_card.dart';
 import 'widgets/home_family_insight_gender_card.dart';
 import 'widgets/home_follower_quick_actions.dart';
@@ -74,6 +76,8 @@ class FollowerHomeComposer extends StatelessWidget {
               onViewGallery: onViewGallery,
             ),
           ),
+          if (s != null && HomeComposition.showNextUpCard(s))
+            HomeNextUpSection(event: s.nextUpEvent!),
           if (s != null && s.showRichInsight)
             HomeFamilyInsightGenderCard(
               summary: s,

@@ -93,4 +93,61 @@ void main() {
     expect(find.text('Gender Reveal Party'), findsOneWidget);
     expect(find.text('UPCOMING EVENTS'), findsOneWidget);
   });
+
+  testWidgets('follower expecting with next_up_event shows NEXT UP card', (
+    tester,
+  ) async {
+    const baby = BabySummary(
+      id: 'b1',
+      name: 'Parker',
+      lifecycle: BabyLifecycle.expecting,
+      expectedBirthDate: '2026-10-08',
+      role: 'follower',
+    );
+    final summary = HomeSummary(
+      lifecycle: BabyLifecycle.expecting,
+      nameSuggestionCount: 0,
+      voteCount: 0,
+      recentActivity: const [],
+      nextUpEvent: NextUpEvent(
+        id: 'e1',
+        title: 'QA363 Nursery Tour',
+        startsAt: DateTime.parse('2026-11-05T18:00:00Z').toLocal(),
+      ),
+      teasers: HomeTeasers(
+        recentPhotos: const [],
+        upcomingEvents: [
+          NextUpEvent(
+            id: 'e1',
+            title: 'QA363 Nursery Tour',
+            startsAt: DateTime.parse('2026-11-05T18:00:00Z').toLocal(),
+          ),
+        ],
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: FollowerHomeComposer(
+              baby: baby,
+              summary: summary,
+              daysToDueDate: 14,
+              onRefresh: () {},
+              onVoteInFun: () {},
+              onViewGallery: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('QA363 Nursery Tour'), findsOneWidget);
+    expect(find.text('NEXT UP'), findsOneWidget);
+    expect(find.text('UPCOMING EVENTS'), findsNothing);
+  });
 }
