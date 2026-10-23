@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../presentation/detail_screen_load.dart';
+import 'app_load_error_pane.dart';
 
 /// Standard loading / error / content switch for tab screens (offline and API errors).
 class AsyncTabBody extends StatelessWidget {
@@ -23,7 +23,7 @@ class AsyncTabBody extends StatelessWidget {
       return const Center(child: CircularProgressIndicator());
     }
     if (error != null && error!.isNotEmpty) {
-      return DetailLoadErrorPane(
+      return AppLoadErrorPane(
         message: error!,
         onRetry: onRetry,
         retryButtonKey: const Key('async_tab_retry'),

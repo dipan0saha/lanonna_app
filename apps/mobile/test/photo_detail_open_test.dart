@@ -133,7 +133,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.text('Photo not found'), findsNothing);
-    expect(find.byKey(const Key('detail_load_retry')), findsOneWidget);
+    expect(find.byKey(const Key('load_error_retry')), findsOneWidget);
   });
 }
 

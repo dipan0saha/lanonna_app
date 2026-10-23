@@ -11,7 +11,8 @@ void main() {
       MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: Builder(
+        home: Scaffold(
+          body: Builder(
           builder: (context) {
             return ElevatedButton(
               onPressed: () {
@@ -25,6 +26,7 @@ void main() {
               child: const Text('fail'),
             );
           },
+        ),
         ),
       ),
     );
@@ -42,7 +44,8 @@ void main() {
       MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: Builder(
+        home: Scaffold(
+          body: Builder(
           builder: (context) {
             return ElevatedButton(
               onPressed: () {
@@ -57,6 +60,7 @@ void main() {
             );
           },
         ),
+        ),
       ),
     );
     await tester.tap(find.text('fail'));
@@ -64,4 +68,34 @@ void main() {
     expect(blocked, isFalse);
     expect(find.byType(SnackBar), findsOneWidget);
   });
+
+  for (final withHandler in [true, false]) {
+    testWidgets('404 is not-found only when the screen handles it '
+        '(handler: $withHandler)', (tester) async {
+      var notFound = false;
+      String? blocking;
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () => reportDetailLoadFailure(
+                context,
+                ApiException('gone', statusCode: 404),
+                hasContent: false,
+                onNotFound: withHandler ? () => notFound = true : null,
+                onBlockingError: (m) => blocking = m,
+              ),
+              child: const Text('fail'),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('fail'));
+      await tester.pump();
+      expect(notFound, withHandler);
+      expect(blocking == null, withHandler);
+    });
+  }
 }

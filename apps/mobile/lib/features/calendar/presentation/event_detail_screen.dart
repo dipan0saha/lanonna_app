@@ -17,6 +17,7 @@ import '../../../core/widgets/app_modal_sheet.dart';
 import '../../../core/widgets/app_section_caps_label.dart';
 import '../../../core/widgets/avatar_stack.dart';
 import '../../../core/widgets/app_icon_button.dart';
+import '../../../core/widgets/app_load_error_pane.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/detail_comment_composer.dart';
 
@@ -62,6 +63,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   late final CommentComposerController _comments;
   final _scrollController = ScrollController();
   var _initialLoadInFlight = true;
+  String? _loadError;
   CalendarRepository? _calendarRepo;
 
   @override
@@ -111,7 +113,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   }
 
   Future<void> _loadInitial() async {
-    setState(() => _initialLoadInFlight = true);
+    setState(() {
+      _initialLoadInFlight = true;
+      _loadError = null;
+    });
     try {
       final homeRepo = context.read<HomeRepository>();
       final store = context.read<SelectedBabyStore>();
@@ -129,13 +134,21 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       setState(() {
         _baby = baby;
         _detail = detail;
+        _loadError = null;
         _initialLoadInFlight = false;
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() => _initialLoadInFlight = false);
-      AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
-      popOrGo(context, CalendarRoutes.calendar);
+      reportDetailLoadFailure(
+        context,
+        e,
+        hasContent: _detail != null,
+        onNotFound: _leaveNotFound,
+        onBlockingError: (message) => setState(() {
+          _loadError = message;
+          _initialLoadInFlight = false;
+        }),
+      );
     }
   }
 
@@ -163,8 +176,22 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         });
       }
     } catch (e) {
-      _showApiError(e);
+      if (!mounted) return;
+      reportDetailLoadFailure(
+        context,
+        e,
+        hasContent: _detail != null,
+        onNotFound: _leaveNotFound,
+        onBlockingError: (message) => setState(() => _loadError = message),
+      );
     }
+  }
+
+  /// The event was deleted (or never existed): say so and leave.
+  void _leaveNotFound() {
+    setState(() => _initialLoadInFlight = false);
+    AppSnackBar.showAlert(context, AppLocalizations.of(context)!.eventNotFound);
+    popOrGo(context, CalendarRoutes.calendar);
   }
 
   void _showApiError(Object e) {
@@ -289,10 +316,15 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     }
     final detail = _detail;
     if (detail == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) popOrGo(context, CalendarRoutes.calendar);
-      });
-      return Scaffold(body: Center(child: Text(AppLocalizations.of(context)!.eventNotFound)));
+      final error = _loadError;
+      if (error != null) {
+        return PrototypeSubpageScaffold(
+          title: l10n.eventTitle,
+          body: AppLoadErrorPane(message: error, onRetry: _loadInitial),
+        );
+      }
+      // Not found or no baby: the load is already leaving the screen.
+      return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     return PrototypeSubpageScaffold(
       title: l10n.eventTitle,

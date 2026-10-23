@@ -8,7 +8,6 @@ import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
-import '../../../core/api/api_exception.dart';
 import '../../../core/comments/comment_actions.dart';
 import '../../../core/widgets/app_confirm_dialog.dart';
 import '../../../core/comments/comment_composer_controller.dart';
@@ -19,6 +18,7 @@ import '../../../core/widgets/app_chip.dart';
 import '../../../core/widgets/app_engagement_pill.dart';
 import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/media/cached_signed_image.dart';
+import '../../../core/widgets/app_load_error_pane.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/app_semantics.dart';
@@ -173,19 +173,11 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       unawaited(_ensurePhotoIdsForSwipe().then((_) => _prefetchNeighbours()));
     } catch (e) {
       if (!mounted || photoId != widget.photoId) return;
-      if (e is ApiException && e.statusCode == 404) {
-        setState(() => _initialLoadInFlight = false);
-        AppSnackBar.showAlert(
-          context,
-          AppLocalizations.of(context)!.galleryThisPhotoIsNoLonger,
-        );
-        popOrGo(context, GalleryRoutes.gallery);
-        return;
-      }
       reportDetailLoadFailure(
         context,
         e,
         hasContent: _detail != null,
+        onNotFound: _leaveNotFound,
         onBlockingError: (message) => setState(() {
           _loadError = message;
           _initialLoadInFlight = false;
@@ -296,8 +288,25 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
         _scrollToBottom();
       }
     } catch (e) {
-      _showApiError(e);
+      if (!mounted) return;
+      reportDetailLoadFailure(
+        context,
+        e,
+        hasContent: _detail != null,
+        onNotFound: _leaveNotFound,
+        onBlockingError: (message) => setState(() => _loadError = message),
+      );
     }
+  }
+
+  /// The photo was deleted (or never existed): say so and leave.
+  void _leaveNotFound() {
+    setState(() => _initialLoadInFlight = false);
+    AppSnackBar.showAlert(
+      context,
+      AppLocalizations.of(context)!.galleryThisPhotoIsNoLonger,
+    );
+    popOrGo(context, GalleryRoutes.gallery);
   }
 
   void _scrollToBottom() {
@@ -504,9 +513,9 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     if (_loadError != null && _detail == null) {
-      return Scaffold(
-        appBar: AppBar(),
-        body: DetailLoadErrorPane(message: _loadError!, onRetry: _loadInitial),
+      return PrototypeSubpageScaffold(
+        title: l10n.eventPhotoLabel,
+        body: AppLoadErrorPane(message: _loadError!, onRetry: _loadInitial),
       );
     }
     final detail = _detail;

@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../../core/api/api_error_message.dart';
 import '../../../core/domain/person_display_label.dart';
 import '../../../core/input/app_text_input_kind.dart';
+import '../../../core/widgets/app_load_error_pane.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
@@ -127,8 +128,9 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
       return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     if (_loadError != null && _detail == null) {
-      return Scaffold(
-        body: DetailLoadErrorPane(message: _loadError!, onRetry: _load),
+      return PrototypeSubpageScaffold(
+        title: l10n.announcementTitle,
+        body: AppLoadErrorPane(message: _loadError!, onRetry: _load),
       );
     }
     final d = _detail;
