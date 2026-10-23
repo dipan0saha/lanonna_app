@@ -1,61 +1,60 @@
-# RCA: Signed-in cold start serializes Home APIs behind `/v1/app/version`
+# RCA: Signed-in cold start gap before authorized API requests
 
 ## Symptom
 
-On a signed-in Android cold launch against dev, API logs show **`GET /v1/app/version?platform=android` first**, then the **six Home/startup reads** (`/v1/onboarding/status`, `/v1/babies`, `/v1/babies/{id}/home-summary`, `/v1/me/account`, `/v1/me/notifications/unread-count`, plus any second baby-list read from title resolve) **only begin ~0.75–0.9 s later** — roughly the version round-trip. Home feels slow to populate even though the version gate is non-blocking for supported builds.
+On a signed-in Android cold launch against dev, authorized Home/startup reads (`/v1/onboarding/status`, `/v1/babies`, `/v1/babies/{id}/home-summary`, `/v1/me/account`, `/v1/me/notifications/unread-count`, etc.) often begin **~0.75–0.9 s after** process start. Logs may show `GET /v1/app/version?platform=android` slightly earlier, which can look like the version check is serializing everything behind it. Home feels slow to populate even though the version gate is non-blocking for supported builds.
 
 ## What we traced
 
 | Layer | File | Role on cold start |
 |-------|------|-------------------|
-| Entry | [`main.dart`](../../apps/mobile/lib/main.dart) | Firebase + parallel `bootstrapLaNonnaApp` + App Check activation; no HTTP yet. |
-| Graph | [`bootstrap.dart`](../../apps/mobile/lib/bootstrap.dart) | Builds `ApiClient`, repos, `AppSession`; `appCheck.prefetch()` when signed in; **no network** before `runApp` (by design since #241). |
-| First frame | [`app.dart`](../../apps/mobile/lib/app.dart) | Post-frame `AppSession.refreshFromApi()` for signed-in users (removed by this fix). |
-| Version | [`app_version_gate.dart`](../../apps/mobile/lib/core/version/app_version_gate.dart) | **`didChangeDependencies`** started `PackageInfo` + `getJsonPublic('/v1/app/version')` — historically the **only** request kicked off during the first `MaterialApp` build. |
-| Router | [`app_router.dart`](../../apps/mobile/lib/core/router/app_router.dart) | `redirectFor` can send `/home` immediately when cached onboarding status exists; does **not** await version. |
-| Session | [`app_session.dart`](../../apps/mobile/lib/features/onboarding/presentation/app_session.dart) | `refreshFromApi` → `GET /v1/onboarding/status`; was **not** started until after first frame (#241 deferral). |
-| Shell | [`shell_chrome_sync.dart`](../../apps/mobile/lib/features/shell/presentation/shell_chrome_sync.dart) | `resolveSelectedBaby` + `refreshUnreadCount` + `ensureAccountLoaded` when `MainShellScreen` mounts. |
-| Home | [`home_screen.dart`](../../apps/mobile/lib/features/home/home_screen.dart) | `_load()` → speculative `home-summary` + `resolveSelectedBaby` when the Home tab widget mounts. |
-| Tokens | [`api_client.dart`](../../apps/mobile/lib/core/api/api_client.dart) | Authorized GETs await Firebase **ID token** + **App Check** header in parallel; version uses **`getJsonPublic`** (no tokens). |
-| App Check | [`app_check_token_source.dart`](../../apps/mobile/lib/core/app_check/app_check_token_source.dart) | Single-flight `getToken`; prefetch in bootstrap overlaps attestation — **not** the version serializer. |
-| Biometric lock | [`biometric_app_lock.dart`](../../apps/mobile/lib/core/auth/biometric_app_lock.dart) | May `ensureAccountLoaded` post-frame for lock policy; shares account single-flight; **does not** gate other startup GETs. |
+| Entry | [`main.dart`](../../../apps/mobile/lib/main.dart) | Firebase + parallel `bootstrapLaNonnaApp` + App Check activation; signed-in [`prefetch`](../../../apps/mobile/lib/core/app_check/app_check_token_source.dart) overlaps bootstrap. |
+| Graph | [`bootstrap.dart`](../../../apps/mobile/lib/bootstrap.dart) | Builds `ApiClient`, repos, `AppSession`; `startSignedInStartupPrefetch` when signed in; **no HTTP** before `runApp` (by design since #241). |
+| Version | [`app_version_service.dart`](../../../apps/mobile/lib/core/version/app_version_service.dart) | Version check started once from bootstrap; ~**15 ms** server, ~**0.2 s** client RTT — **not** the ~0.9 s gap. |
+| Tokens | [`api_client.dart`](../../../apps/mobile/lib/core/api/api_client.dart) | Authorized GETs await Firebase **ID token** + **App Check** header in parallel; version uses **`getJsonPublic`** (no tokens). |
+| App Check | [`app_check_bootstrap.dart`](../../../apps/mobile/lib/core/app_check/app_check_bootstrap.dart), [`app_check_token_source.dart`](../../../apps/mobile/lib/core/app_check/app_check_token_source.dart) | **Primary cold-start blocker** when attestation runs (see [app-check-dev-release-play-integrity.md](app-check-dev-release-play-integrity.md)). |
+| Router / shell / home | [`app_router.dart`](../../../apps/mobile/lib/core/router/app_router.dart), [`shell_chrome_sync.dart`](../../../apps/mobile/lib/features/shell/presentation/shell_chrome_sync.dart), [`home_screen.dart`](../../../apps/mobile/lib/features/home/home_screen.dart) | Mount-time reads deduped via caches / `*FreshFor` helpers after #361 prefetch. |
 
-## Root cause
+## Root cause (measured on emulator, dev release APK, main @ b0f7b3e)
 
-**Startup network work was scheduled from the widget tree in sequence after the version check had already claimed the connection window**, not from one coordinated launch point.
+The ~0.9 s gap is **Firebase App Check attestation**, not `/v1/app/version` and not the Firebase ID token.
 
-1. **`AppVersionGate`** (outer `MaterialApp.builder` wrapper) began the public version GET in **`didChangeDependencies` on the first frame** — the earliest HTTP in the app UI.
-2. **Signed-in data loading** was split across **later hooks**:
-   - `LaNonnaApp` → post-frame `refreshFromApi` (onboarding status),
-   - `ShellChromeSync` / `HomeScreen` → baby list, account, unread, home-summary **only after** the router built `MainShellScreen` and the Home branch.
-3. Those layers are **correct for UX** (show carousel/shell immediately, use cached routing offline) but they **start authorized GETs tens to hundreds of milliseconds after** the version call, and on dev emulators the **~0.8 s version RTT** matches the gap before the burst of six calls in logs.
-4. **Not** the cause: App Check single-flight (version does not use App Check), router redirect waiting on version (it does not), or biometric lock blocking API (overlay only; prefetch is separate).
+| Phase | Duration |
+|-------|----------|
+| To Play Integrity request | ~150–190 ms |
+| Play Integrity | ~480–635 ms |
+| Token exchange (Firebase) | ~170–240 ms → **403** `App attestation failed` |
 
-So the ~0.8 s is primarily **version wall time plus deferred scheduling of signed-in prefetch**, not ID-token work blocking the public endpoint.
+**Why dev release hit Play Integrity:** `app_check_bootstrap.dart` previously chose the debug provider only for `kDebugMode` or `MAESTRO_SEMANTICS`, so **dev release** APKs (`APP_ENV=dev`) used **Play Integrity**, which cannot succeed for sideloaded dev builds. Nothing was cached after failure, so **every cold launch** (and every authorized request after SDK backoff cleared, e.g. opening Fun tab ~**820 ms** later) re-attested.
+
+**Not the cause:** version wall time (~0.2 s), deferred widget-tree scheduling alone (#361 moved prefetch to bootstrap but did not remove the App Check wait), or ID-token latency.
 
 ## Fix (architecture)
 
-- **`AppVersionService`** — the version check runs **once per process** (a latch, not a re-running single-flight), started in **`bootstrapLaNonnaApp`** for every launch. `AppVersionGate` only watches it and renders the block; it never starts a check (re-starting from the gate looped `/v1/app/version` whenever the block notified).
-- **`startSignedInStartupPrefetch`** — when `currentUser != null`, start **onboarding status, account, unread, baby resolve, and speculative home-summary** from bootstrap **in parallel with** the version check. It is the **only cold-start owner** of `AppSession.refreshFromApi` (the old post-frame refresh in `LaNonnaApp` is gone). `refreshFromApi` is deliberately **not** single-flight: callers after a mutation must not join a request that started before it.
-- **No duplicate reads when the UI mounts:** account and baby list are cached single-flights; `ShellChromeSync` reads the unread count with `NotificationsRepository.unreadFreshFor` and `HomeScreen`'s first load reads the summary with `HomeRepository.summaryFreshFor`; speculative home-summary reads share one in-flight request per baby (non-speculative, post-mutation reads never join).
+### Startup prefetch (#361 / main @ 8bcf6a5)
 
-**Semantics preserved**
+- **`AppVersionService`** — version check runs **once per process** from **`bootstrapLaNonnaApp`**. `AppVersionGate` only watches it.
+- **`startSignedInStartupPrefetch`** — when `currentUser != null`, start onboarding status, account, unread, baby resolve, and speculative home-summary **in parallel with** the version check. Removed duplicate post-frame `refreshFromApi` and the force-update notify loop.
+- **Does not remove the App Check wait** on dev release until the provider selection fix lands ([#366](https://github.com/dipan0saha/lanonna_app/issues/366)).
 
-- **Force-update:** when the installed build is below minimum, `AppVersionGate` still replaces the tree with `AppVersionBlockScreen` (full-screen; only store action). Prefetched home data is discarded visually; user cannot interact with Home.
-- **Offline cold start:** `ApiClient` still throws offline for network reads; session restores cached onboarding status; identity/baby selection stores unchanged (PR #346 / offline routing).
-- **App Check:** still one in-flight SDK read; prefetch at bootstrap unchanged.
+### App Check ([#366](https://github.com/dipan0saha/lanonna_app/issues/366))
+
+- Select provider by **`APP_ENV`**: non-prod → debug provider + registered debug token; prod → Play Integrity / App Attest (never debug fallback).
+- **`AppCheckTokenSource`**: cool down after failed attestation so requests do not each trigger a new Play Integrity round trip.
 
 ## How to verify (emulator + dev API logs)
 
 1. Signed-in user with main-app access; kill app.
-2. `adb shell am start -W -n com.lanonna.app.dev/com.lanonna.app.MainActivity` (or your dev application id).
-3. In API request logs, **`/v1/app/version` and the signed-in GETs should start in the same second** (overlapping), not ~0.8 s apart.
+2. `adb shell am start -W -n com.lanonna.lanonna/com.lanonna.lanonna.MainActivity` (dev release uses the same application id with debug signing).
+3. With App Check fixed for dev release: authorized GETs should not wait ~0.9 s for a failing Play Integrity exchange; `/v1/app/version` and signed-in GETs overlap within a few hundred ms.
 4. Optional: temporarily set a high `minimum_version` in `app_versions` — app shows update block, no Home interaction.
 5. Airplane mode cold start — cached shell/home/offline banner behavior unchanged.
 
 ## Related
 
+- [app-check-dev-release-play-integrity.md](app-check-dev-release-play-integrity.md) — App Check RCA and prod checklist pointers
 - [perf-audit-2026-10.md](../perf-audit-2026-10.md) — PERF-MOB startup notes
 - [development.md](../development.md) — cold-start table
-- [#336](https://github.com/lanonna/lanonna_app/pull/336) — parallel bootstrap + App Check prefetch
-- [#346](https://github.com/lanonna/lanonna_app/pull/346) — biometric cold-start lock settlement
+- [#336](https://github.com/dipan0saha/lanonna_app/pull/336) — parallel bootstrap + App Check prefetch
+- [#346](https://github.com/dipan0saha/lanonna_app/pull/346) — biometric cold-start lock settlement
+- [#361](https://github.com/dipan0saha/lanonna_app/pull/361) — signed-in startup prefetch; removed duplicate requests, not the App Check gap

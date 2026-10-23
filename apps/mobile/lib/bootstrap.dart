@@ -50,6 +50,11 @@ import 'app.dart';
 Future<Widget> bootstrapLaNonnaApp({
   required AppCheckTokenSource appCheck,
 }) async {
+  // First, before any await: a signed-in launch makes authorized requests right
+  // away, so the App Check read starts while start-up runs (main calls this
+  // synchronously after activating App Check).
+  final authRepository = AuthRepository();
+  if (authRepository.currentUser != null) appCheck.prefetch();
   if (kDebugMode) {
     const email = String.fromEnvironment('DEV_AUTO_SIGN_IN_EMAIL');
     const password = String.fromEnvironment('DEV_AUTO_SIGN_IN_PASSWORD');
@@ -64,12 +69,8 @@ Future<Widget> bootstrapLaNonnaApp({
     }
   }
 
-  final authRepository = AuthRepository();
   await startCrashReporting(authRepository: authRepository);
   scheduleCrashlyticsTestCrashOnStartIfRequested();
-  // A signed-in launch makes authorized requests right away; start the
-  // App Check read now so a first-launch attestation overlaps start-up.
-  if (authRepository.currentUser != null) appCheck.prefetch();
   final connectivityService = ConnectivityService();
   final (onboardingStorage, _, coldStartUri) = await waitAll3(
     OnboardingStorage.create(),

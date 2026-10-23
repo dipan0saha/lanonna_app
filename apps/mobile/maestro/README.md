@@ -9,7 +9,7 @@ UI tests for the La Nonna Flutter app on an Android emulator or device. Selector
 - `apps/mobile/flavors/dev.json` (API URL, not committed if local-only)
 - Firebase **App Check** debug token registered for the emulator ([pre-beta-qa.md](../../../docs/engineering/pre-beta-qa.md)) — required for onboarding/API calls during cold-start flows
 - Cloud SQL Auth Proxy on `127.0.0.1:5433` (same as `infra/db/clear_dev_test_data.py`); `provision-smoke-user.sh` loads `DB_PASSWORD` from Secret Manager when `gcloud` is available
-- **Stable Android debug token (recommended):** set `APP_CHECK_DEBUG_TOKEN` in `maestro/local.env`, run `./maestro/scripts/register-app-check-debug.sh` once, then rebuild. Debug APKs seed that UUID on startup (survives `pm clear` / reinstall). Without a pin, register from logcat after cold start:
+- **Stable Android debug token (recommended):** set `APP_CHECK_DEBUG_TOKEN` in `maestro/local.env`, run `./maestro/scripts/register-app-check-debug.sh` once, then rebuild. Non-prod builds (`APP_ENV≠prod`, including dev release) seed that UUID on startup (survives `pm clear` / reinstall). Without a pin, register from logcat after cold start:
 
 ```bash
 firebase appcheck:debugtokens:create YOUR_TOKEN \

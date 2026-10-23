@@ -103,6 +103,7 @@ void main() {
         () async {
       var calls = 0;
       final first = Completer<String?>();
+      var now = DateTime(2026, 1, 1);
       final source = AppCheckTokenSource(
         activation: Future.value(),
         fetchToken: () {
@@ -110,14 +111,71 @@ void main() {
           return calls == 1 ? first.future : Future.value('fresh');
         },
         maxWait: const Duration(milliseconds: 20),
+        failureCooldown: const Duration(milliseconds: 5),
+        clock: () => now,
       );
 
       expect(await source.token(), isNull);
       first.complete(null);
       await Future<void>.delayed(const Duration(milliseconds: 1));
 
+      // Still in failure cool-down.
+      expect(await source.token(), isNull);
+      expect(calls, 1);
+
+      now = now.add(const Duration(milliseconds: 10));
       expect(await source.token(), 'fresh');
       expect(calls, 2);
+    });
+
+    test('failed attestation enters cool-down; reads skip the SDK', () async {
+      var calls = 0;
+      var now = DateTime(2026, 1, 1);
+      final source = AppCheckTokenSource(
+        activation: Future.value(),
+        fetchToken: () async {
+          calls += 1;
+          return null;
+        },
+        failureCooldown: const Duration(minutes: 1),
+        clock: () => now,
+      );
+
+      expect(await source.token(), isNull);
+      expect(calls, 1);
+
+      final watch = Stopwatch()..start();
+      expect(await source.token(), isNull);
+      expect(watch.elapsedMilliseconds, lessThan(30));
+      expect(calls, 1);
+
+      now = now.add(const Duration(minutes: 2));
+      expect(await source.token(), isNull);
+      expect(calls, 2);
+    });
+
+    test('an auto-refreshed token ends the cool-down', () async {
+      var calls = 0;
+      final changes = StreamController<String?>();
+      final source = AppCheckTokenSource(
+        activation: Future.value(),
+        fetchToken: () async {
+          calls += 1;
+          return calls == 1 ? null : 'refreshed';
+        },
+        failureCooldown: const Duration(hours: 1),
+        tokenChanges: changes.stream,
+      );
+
+      expect(await source.token(), isNull);
+      expect(await source.token(), isNull);
+      expect(calls, 1);
+
+      changes.add('refreshed');
+      await Future<void>.delayed(Duration.zero);
+      expect(await source.token(), 'refreshed');
+      expect(calls, 2);
+      await changes.close();
     });
 
     test('prefetch starts the read; the first request joins it', () async {
