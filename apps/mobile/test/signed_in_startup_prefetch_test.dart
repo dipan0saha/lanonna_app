@@ -1,0 +1,201 @@
+import 'dart:async';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/core/api/api_client.dart';
+import 'package:lanonna/core/startup/signed_in_startup_prefetch.dart';
+import 'package:lanonna/core/version/app_version_service.dart';
+import 'package:lanonna/features/account/data/account_repository.dart';
+import 'package:lanonna/features/account/data/notifications_repository.dart';
+import 'package:lanonna/features/home/data/home_repository.dart';
+import 'package:lanonna/features/home/data/selected_baby_store.dart';
+import 'package:lanonna/features/onboarding/data/models/onboarding_status.dart';
+import 'package:lanonna/features/onboarding/data/onboarding_repository.dart';
+import 'package:lanonna/features/onboarding/data/onboarding_storage.dart';
+import 'package:lanonna/features/onboarding/presentation/app_session.dart';
+import 'package:lanonna/features/onboarding/presentation/onboarding_coordinator.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class _TrackingApi extends ApiClient {
+  _TrackingApi({this.offline = false})
+    : super(
+        idTokenProvider: () async => 'token',
+        isOffline: () => offline,
+      );
+
+  final bool offline;
+  final startedAt = <String, int>{};
+  var versionDelay = Duration.zero;
+  var authorizedDelay = Duration.zero;
+
+  void _mark(String key) {
+    startedAt.putIfAbsent(key, () => DateTime.now().microsecondsSinceEpoch);
+  }
+
+  @override
+  Future<Map<String, dynamic>> getJsonPublic(
+    String path, {
+    Duration? timeout,
+  }) async {
+    _mark('version');
+    await Future<void>.delayed(versionDelay);
+    return {'minimum_version': '0.0.1', 'store_url': 'https://example.com'};
+  }
+
+  @override
+  Future<Map<String, dynamic>> getJson(
+    String path, {
+    bool notifyMembershipEnded = true,
+  }) async {
+    _mark(path);
+    await Future<void>.delayed(authorizedDelay);
+    if (path == '/v1/onboarding/status') {
+      return {
+        'email_verified': true,
+        'profile_complete': true,
+        'has_owner_baby': true,
+        'has_baby_membership': true,
+        'owner_onboarding_completed': true,
+        'needs_owner_onboarding': false,
+        'can_access_main_app': true,
+      };
+    }
+    if (path == '/v1/babies') {
+      return {
+        'items': [
+          {
+            'id': 'baby-1',
+            'name': 'Test',
+            'role': 'owner',
+            'lifecycle_status': 'expecting',
+          },
+        ],
+        'offset': 0,
+        'limit': 100,
+        'has_more': false,
+      };
+    }
+    if (path.startsWith('/v1/babies/') && path.endsWith('/home-summary')) {
+      return {
+        'lifecycle_status': 'expecting',
+        'family_insight': {
+          'name_suggestion_count': 0,
+          'vote_count': 0,
+          'gender_totals': {'male': 0, 'female': 0},
+        },
+        'teasers': {'recent_photos': [], 'upcoming_events': []},
+        'recent_activity': [],
+      };
+    }
+    if (path == '/v1/me/account') {
+      return {
+        'profile': {'display_name': 'A'},
+        'babies': [],
+      };
+    }
+    if (path == '/v1/me/notifications/unread-count') {
+      return {'count': 0};
+    }
+    throw UnimplementedError(path);
+  }
+}
+
+Future<
+  ({
+    AppSession session,
+    OnboardingCoordinator coordinator,
+    OnboardingStorage storage,
+  })
+>
+_sessionFixture(ApiClient api, SharedPreferences prefs) async {
+  final storage = OnboardingStorage(prefs);
+  final coordinator = OnboardingCoordinator(
+    storage: storage,
+    repository: OnboardingRepository(api),
+  );
+  await coordinator.hydrate();
+  final session = AppSession(
+    repository: OnboardingRepository(api),
+    storage: storage,
+    coordinator: coordinator,
+    currentUserId: () => 'user-1',
+  );
+  return (session: session, coordinator: coordinator, storage: storage);
+}
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  group('signed-in startup prefetch', () {
+    late SharedPreferences prefs;
+
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({'selected_baby_id': 'baby-1'});
+      prefs = await SharedPreferences.getInstance();
+    });
+
+    test('version check and authorized reads start together', () async {
+      final api = _TrackingApi();
+      api.versionDelay = const Duration(milliseconds: 50);
+      api.authorizedDelay = const Duration(milliseconds: 50);
+
+      final f = await _sessionFixture(api, prefs);
+      final homeRepo = HomeRepository(api);
+      final store = SelectedBabyStore(prefs);
+      final accountRepo = AccountRepository(api);
+      final notificationsRepo = NotificationsRepository(api);
+      final versionService = AppVersionService();
+
+      versionService.ensureStarted(api);
+      startSignedInStartupPrefetch(
+        session: f.session,
+        homeRepository: homeRepo,
+        selectedBabyStore: store,
+        accountRepository: accountRepo,
+        notificationsRepository: notificationsRepo,
+      );
+
+      await Future.wait([
+        versionService.ensureStarted(api),
+        f.session.refreshFromApi(),
+      ]);
+
+      final versionAt = api.startedAt['version'];
+      final statusAt = api.startedAt['/v1/onboarding/status'];
+      expect(versionAt, isNotNull);
+      expect(statusAt, isNotNull);
+      expect(
+        (statusAt! - versionAt!).abs(),
+        lessThan(100 * 1000),
+        reason: 'status and version should start within 100ms',
+      );
+    });
+
+    test('offline keeps cached onboarding; version does not hard-block', () async {
+      final api = _TrackingApi(offline: true);
+      final f = await _sessionFixture(api, prefs);
+      const cached = OnboardingStatus(
+        emailVerified: true,
+        profileComplete: true,
+        hasOwnerBaby: true,
+        hasBabyMembership: true,
+        ownerOnboardingCompleted: true,
+        needsOwnerOnboarding: false,
+        canAccessMainApp: true,
+      );
+      await f.storage.saveCachedOnboardingStatus('user-1', cached);
+      final versionService = AppVersionService();
+      versionService.ensureStarted(api);
+      startSignedInStartupPrefetch(
+        session: f.session,
+        homeRepository: HomeRepository(api),
+        selectedBabyStore: SelectedBabyStore(prefs),
+        accountRepository: AccountRepository(api),
+        notificationsRepository: NotificationsRepository(api),
+      );
+      await f.session.refreshFromApi();
+      expect(f.session.statusPhase, OnboardingStatusPhase.loaded);
+      expect(f.session.statusStale, isTrue);
+      expect(versionService.blockRequirement, isNull);
+    });
+  });
+}

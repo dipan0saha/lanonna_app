@@ -1,7 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import '../api/api_client.dart';
+import 'app_version_service.dart';
 import '../platform/external_link_launcher.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_metrics.dart';
@@ -118,42 +120,39 @@ class AppVersionGate extends StatefulWidget {
 }
 
 class _AppVersionGateState extends State<AppVersionGate> {
-  AppVersionRequirement? _block;
-  String? _installedVersion;
-
-  var _started = false;
+  AppVersionService? _versionService;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_started) return;
-    _started = true;
-    _check();
+    final service = context.read<AppVersionService>();
+    if (_versionService != service) {
+      _versionService?.removeListener(_onVersionServiceChanged);
+      _versionService = service;
+      service.addListener(_onVersionServiceChanged);
+    }
+    unawaited(service.ensureStarted(context.read<ApiClient>()));
   }
 
-  Future<void> _check() async {
-    final info = await PackageInfo.fromPlatform();
-    if (!mounted) return;
-    final installed = info.version;
-    final client = context.read<ApiClient>();
-    final requirement = await fetchAppVersionRequirement(client);
-    if (!mounted) return;
-    if (requirement != null &&
-        isAppVersionBelowMinimum(installed, requirement.minimumVersion)) {
-      setState(() {
-        _block = requirement;
-        _installedVersion = installed;
-      });
-    }
+  @override
+  void dispose() {
+    _versionService?.removeListener(_onVersionServiceChanged);
+    super.dispose();
+  }
+
+  void _onVersionServiceChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    final block = _block;
-    if (block != null && _installedVersion != null) {
+    final service = context.watch<AppVersionService>();
+    final block = service.blockRequirement;
+    final installed = service.installedVersion;
+    if (block != null && installed != null) {
       return AppVersionBlockScreen(
         storeUrl: block.storeUrl,
-        installedVersion: _installedVersion!,
+        installedVersion: installed,
         minimumVersion: block.minimumVersion,
       );
     }

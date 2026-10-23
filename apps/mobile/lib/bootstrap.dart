@@ -21,6 +21,8 @@ import 'core/network/connectivity_service.dart';
 import 'core/observability/crash_reporting_bootstrap.dart';
 import 'core/observability/crashlytics_dev_tools.dart';
 import 'core/router/router_refresh.dart';
+import 'core/startup/signed_in_startup_prefetch.dart';
+import 'core/version/app_version_service.dart';
 import 'features/account/data/account_identity_store.dart';
 import 'features/account/data/account_repository.dart';
 import 'features/account/data/notifications_repository.dart';
@@ -156,6 +158,18 @@ Future<Widget> bootstrapLaNonnaApp({
     session: session,
   );
 
+  final appVersionService = AppVersionService();
+  appVersionService.ensureStarted(apiClient);
+  if (authRepository.currentUser != null) {
+    startSignedInStartupPrefetch(
+      session: session,
+      homeRepository: homeRepository,
+      selectedBabyStore: selectedBabyStore,
+      accountRepository: accountRepository,
+      notificationsRepository: notificationsRepository,
+    );
+  }
+
   final initialInviteLocation = coldStartUri != null
       ? inviteAppLinkToRouterLocation(coldStartUri)
       : null;
@@ -174,6 +188,7 @@ Future<Widget> bootstrapLaNonnaApp({
       Provider<BiometricSignInService>.value(value: biometricSignInService),
       Provider<SessionCleanup>.value(value: sessionCleanup),
       Provider<ApiClient>.value(value: apiClient),
+      ChangeNotifierProvider<AppVersionService>.value(value: appVersionService),
       Provider<EventCoverUploader>.value(value: eventCoverUploader),
       Provider<OnboardingRepository>.value(value: onboardingRepository),
       Provider<HomeRepository>.value(value: homeRepository),
