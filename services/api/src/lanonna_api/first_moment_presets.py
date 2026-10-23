@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 
+from lanonna_api.domain.date_validation import utc_today
+
 
 @dataclass(frozen=True)
 class EventPreset:
@@ -72,7 +74,7 @@ def event_date_for_expecting_preset(
     today: date | None = None,
 ) -> date:
     """Calendar date for an expecting first-moment preset, never before [today]."""
-    reference = today if today is not None else date.today()
+    reference = today if today is not None else utc_today()
     computed = due_date + timedelta(days=day_offset)
     return computed if computed >= reference else reference
 

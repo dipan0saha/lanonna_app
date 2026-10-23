@@ -22,22 +22,27 @@ The mobile mirror in `first_moment_presets.dart` duplicated the same wrong offse
 
 **Clamping:** When the due date is soon, raw offsets can land before today. Seeded onboarding events should not appear in the past; clamp each event date to `max(computed_date, today)` in the domain layer when seeding expecting presets.
 
+**“Today” for clamping:** Use `utc_today()` from `domain/date_validation.py` (UTC calendar date from `datetime.now(timezone.utc).date()`), same as home “days to due”, birth-date validation, and other API calendar-day logic. Do not use `date.today()` (server local timezone).
+
 ## Root cause — AI suggestion dedupe
 
 Calendar AI availability (`event_suggestion_availability.dart`) hides catalog rows whose `catalog_suggestion_id` is already claimed on an event.
 
 `insert_seed_event()` inserted title and `starts_at` only — no `catalog_suggestion_id`. First-moment preset ids (`gender_reveal`, `baby_shower`, …) align with `assets/calendar/event_suggestions.json` ids, but seeded rows never set the column, so the client could not suppress matching suggestions.
 
-**Decision:** set `catalog_suggestion_id` to the **preset id** when seeding first-moment events (same pattern as manual event create and registry AI seeds). Dedupe stays catalog-id based; no title matching heuristics.
+**Decision (new seeds):** set `catalog_suggestion_id` to the **preset id** when seeding first-moment events (same pattern as manual event create and registry AI seeds).
+
+**Legacy rows (no backfill):** Events created before this fix still have `catalog_suggestion_id` null. Calendar AI dedupe in `event_suggestion_availability.dart` also treats an existing event as claiming a catalog row when its **title** matches a catalog suggestion title (case- and whitespace-insensitive), via shared `claimedCatalogIdsWithTitleFallback` in `core/catalog/suggestion_availability.dart`. That covers seeded “Gender Reveal” vs catalog “Gender reveal” without migrating old rows.
 
 ## Fix
 
 | Layer | Change |
 |-------|--------|
-| `first_moment_presets.py` | Expecting `day_offset` values −14 / −7 / 0; add `event_date_for_preset(anchor, offset, today)` with past clamping for expecting seeds. |
+| `first_moment_presets.py` | Expecting `day_offset` values −14 / −7 / 0; `event_date_for_expecting_preset` clamps with `utc_today()`. |
 | `domain/onboarding.py` | Use clamped date helper when lifecycle is expecting; born path unchanged. |
 | `repositories/first_moment.py` | `insert_seed_event(..., catalog_suggestion_id=...)`. |
 | `first_moment_presets.dart` | Mirror expecting offsets for consistency. |
+| `event_suggestion_availability.dart` | Title fallback dedupe for events missing `catalog_suggestion_id`. |
 
 ## Test plan
 

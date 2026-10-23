@@ -27,7 +27,9 @@ The domain already calls `find_name_suggestion_case_insensitive` and returns `du
 | `core/validation/form_reset_after_submit.dart` | Shared helper to reset a controlled form field after success: disable deferred autovalidate, clear the controller, then `FormState.reset()` on the next frame so `initialValue` matches empty text without firing interaction validation. |
 | `names_tab.dart` | Use the helper in `_resetSuggestForm`. |
 
-No other screens use the same submit-and-clear controlled-field pattern today; future add-and-clear forms should call the same helper.
+**Audit (add-and-clear):** Only `NamesTab` combines deferred `FormState` autovalidate, a persistent `TextEditingController`, and clear-after-success. Onboarding first-moment name ideas, comment composers, and announcement comments call `TextEditingController.clear()` without `FormState.reset()` (no #402 interaction). Full-form screens (login, registry item, shipping address) enable validation on submit but navigate away or keep the saved values—they do not clear a single inline add field.
+
+Future add-and-clear **form** fields should use the same helper.
 
 ## Test plan
 

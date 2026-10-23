@@ -3,7 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/validation/form_reset_after_submit.dart';
 
 class _Harness extends StatefulWidget {
-  const _Harness({required this.formKey, required this.controller});
+  const _Harness({
+    super.key,
+    required this.formKey,
+    required this.controller,
+  });
 
   final GlobalKey<FormState> formKey;
   final TextEditingController controller;

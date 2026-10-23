@@ -114,10 +114,10 @@ def test_seed_first_moment_expecting_events_use_due_date_offsets_and_catalog_ids
         patch("lanonna_api.domain.onboarding.insert_seed_registry_item"),
         patch("lanonna_api.domain.onboarding.insert_seed_name_suggestion"),
         patch(
-            "lanonna_api.first_moment_presets.date",
-        ) as mock_date,
+            "lanonna_api.first_moment_presets.utc_today",
+            return_value=date(2026, 10, 23),
+        ),
     ):
-        mock_date.today.return_value = date(2026, 10, 23)
         seed_first_moment(
             "owner",
             baby_id,
