@@ -10,6 +10,7 @@ import '../api/localized_failure.dart';
 import 'auth_repository.dart';
 import 'biometric_credential_repository.dart';
 import 'biometric_sign_in_store.dart';
+import 'biometric_unlock_state.dart';
 
 /// Biometric sign-in after Log out (design:
 /// docs/engineering/rca/biometric-signin-after-logout.md).
@@ -40,6 +41,20 @@ class BiometricSignInService {
 
   /// This install's enrollment, or `null` when biometric sign-in is not set up.
   BiometricSignInEnrollment? get enrollment => _store.read();
+
+  /// Full on-device activation for the signed-in account (server flag + local
+  /// key for this uid). Single source of truth for Settings and app lock.
+  bool isUnlockActiveForSignedInUser({
+    required bool serverBiometricUnlockEnabled,
+  }) {
+    final uid = _authRepository.currentUser?.uid;
+    if (uid == null) return false;
+    return biometricUnlockActiveOnDevice(
+      serverBiometricUnlockEnabled: serverBiometricUnlockEnabled,
+      localEnrollment: enrollment,
+      signedInFirebaseUid: uid,
+    );
+  }
 
   /// Drops the enrollment as soon as a different account is signed in here, by
   /// any route (email, Google, sign-up, invite), so the login screen never

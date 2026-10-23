@@ -210,6 +210,28 @@ void main() {
     expect(service.enrollment, isNotNull);
   });
 
+  test('unlock active only with server flag and matching local enrollment', () async {
+    auth.user = _FakeUser('uid-a');
+    expect(
+      service.isUnlockActiveForSignedInUser(
+        serverBiometricUnlockEnabled: true,
+      ),
+      isFalse,
+    );
+    await store.save(
+      const BiometricSignInEnrollment(
+        credentialId: 'cred',
+        firebaseUid: 'uid-a',
+      ),
+    );
+    expect(
+      service.isUnlockActiveForSignedInUser(
+        serverBiometricUnlockEnabled: true,
+      ),
+      isTrue,
+    );
+  });
+
   test(
     'another account signing in clears the enrollment; the same keeps it',
     () async {
