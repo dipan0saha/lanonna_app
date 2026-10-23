@@ -11,6 +11,7 @@ import '../../../core/widgets/async_tab_body.dart';
 import '../../../core/api/run_mutation.dart';
 import '../../../core/widgets/app_confirm_dialog.dart';
 import '../../../core/input/app_text_input_kind.dart';
+import '../../../core/validation/form_reset_after_submit.dart';
 import '../../../core/validation/form_validators.dart';
 import '../../../core/widgets/app_text_form_field.dart';
 import '../../../core/theme/app_colors.dart';
@@ -125,13 +126,13 @@ class _NamesTabState extends State<NamesTab> {
     await _load();
   }
 
-  /// After a successful suggest (#397). Clearing the controller alone counts
-  /// as an edit, so with validation on it flagged the now-empty field as
-  /// "Name is required". [FormState.reset] empties the field and forgets that
-  /// interaction, and validation waits for the next submit again.
+  /// After a successful suggest (#397, #402).
   void _resetSuggestForm() {
-    _suggestFormKey.currentState?.reset();
     setState(() => _validateSuggestOnInteraction = false);
+    resetControlledFormAfterSuccessfulSubmit(
+      formKey: _suggestFormKey,
+      controller: _input,
+    );
   }
 
   Future<void> _like(NameSuggestion s) async {

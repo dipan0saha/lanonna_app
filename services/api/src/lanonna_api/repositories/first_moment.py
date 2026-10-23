@@ -11,17 +11,25 @@ def insert_seed_event(
     firebase_uid: str,
     title: str,
     starts_at: datetime,
+    *,
+    catalog_suggestion_id: str | None = None,
 ) -> None:
     with get_connection() as conn:
         conn.execute(
             """
             INSERT INTO events (
                 baby_profile_id, created_by_firebase_uid,
-                title, starts_at
+                title, starts_at, catalog_suggestion_id
             )
-            VALUES (%s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s)
             """,
-            (baby_profile_id, firebase_uid, title, starts_at),
+            (
+                baby_profile_id,
+                firebase_uid,
+                title,
+                starts_at,
+                catalog_suggestion_id,
+            ),
         )
 
 

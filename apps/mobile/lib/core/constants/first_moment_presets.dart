@@ -18,9 +18,9 @@ class FirstMomentRegistryPreset {
 
 abstract final class FirstMomentPresets {
   static const List<FirstMomentEventPreset> expectingEvents = [
-    FirstMomentEventPreset(id: 'gender_reveal', dayOffset: 0),
-    FirstMomentEventPreset(id: 'baby_shower', dayOffset: 7),
-    FirstMomentEventPreset(id: 'due_date', dayOffset: 14),
+    FirstMomentEventPreset(id: 'gender_reveal', dayOffset: -14),
+    FirstMomentEventPreset(id: 'baby_shower', dayOffset: -7),
+    FirstMomentEventPreset(id: 'due_date', dayOffset: 0),
   ];
 
   static const List<FirstMomentRegistryPreset> expectingRegistry = [

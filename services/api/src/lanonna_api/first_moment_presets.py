@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 
 @dataclass(frozen=True)
@@ -18,9 +18,9 @@ class RegistryPreset:
 
 
 EXPECTING_EVENTS: tuple[EventPreset, ...] = (
-    EventPreset("gender_reveal", "Gender Reveal", 0),
-    EventPreset("baby_shower", "Baby Shower", 7),
-    EventPreset("due_date", "Due Date", 14),
+    EventPreset("gender_reveal", "Gender Reveal", -14),
+    EventPreset("baby_shower", "Baby Shower", -7),
+    EventPreset("due_date", "Due Date", 0),
 )
 
 EXPECTING_REGISTRY: tuple[RegistryPreset, ...] = (
@@ -63,6 +63,29 @@ def anchor_midday_utc(anchor_date) -> datetime:
 
 def event_starts_at(anchor_date, day_offset: int) -> datetime:
     return anchor_midday_utc(anchor_date) + timedelta(days=day_offset)
+
+
+def event_date_for_expecting_preset(
+    due_date: date,
+    day_offset: int,
+    *,
+    today: date | None = None,
+) -> date:
+    """Calendar date for an expecting first-moment preset, never before [today]."""
+    reference = today if today is not None else date.today()
+    computed = due_date + timedelta(days=day_offset)
+    return computed if computed >= reference else reference
+
+
+def event_starts_at_expecting(
+    due_date: date,
+    day_offset: int,
+    *,
+    today: date | None = None,
+) -> datetime:
+    return anchor_midday_utc(
+        event_date_for_expecting_preset(due_date, day_offset, today=today)
+    )
 
 
 def event_preset(preset_id: str) -> EventPreset | None:

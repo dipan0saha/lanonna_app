@@ -13,6 +13,7 @@ from lanonna_api.domain.name_suggestions import (
 from lanonna_api.first_moment_presets import (
     event_preset,
     event_starts_at,
+    event_starts_at_expecting,
     registry_preset,
 )
 from lanonna_api.repositories.first_moment import (
@@ -152,6 +153,7 @@ def seed_first_moment(
 ) -> dict[str, int]:
     baby = require_owner_baby(firebase_uid, baby_profile_id)
     anchor = _anchor_date(baby)
+    lifecycle = baby.get("lifecycle_status") or "expecting"
     events_created = 0
     registry_created = 0
     names_created = 0
@@ -160,8 +162,17 @@ def seed_first_moment(
         preset = event_preset(preset_id)
         if preset is None:
             continue
-        starts = event_starts_at(anchor, preset.day_offset)
-        insert_seed_event(baby_profile_id, firebase_uid, preset.label, starts)
+        if lifecycle == "expecting":
+            starts = event_starts_at_expecting(anchor, preset.day_offset)
+        else:
+            starts = event_starts_at(anchor, preset.day_offset)
+        insert_seed_event(
+            baby_profile_id,
+            firebase_uid,
+            preset.label,
+            starts,
+            catalog_suggestion_id=preset.id,
+        )
         events_created += 1
 
     for preset_id in registry_preset_ids:
