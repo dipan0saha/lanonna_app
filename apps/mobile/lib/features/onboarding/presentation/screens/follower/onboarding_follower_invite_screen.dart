@@ -92,7 +92,10 @@ class _OnboardingFollowerInviteScreenState
 
     final preview = context.watch<OnboardingCoordinator>().cachedInvitePreview;
     if (preview == null || !preview.canContinueInviteFlow) {
-      return const InviteLandingLoading();
+      return InviteLandingProblem(
+        message: AppLocalizations.of(context)!.inviteErrorNotFound,
+        onContinue: () => leaveInvitationFlow(context),
+      );
     }
 
     return OnboardingScaffold(

@@ -8,6 +8,7 @@ class _Api extends ApiClient {
   _Api() : super(idTokenProvider: () async => 't');
 
   var offline = false;
+  var displayName = 'Dana Lee';
 
   @override
   Future<Map<String, dynamic>> getJson(
@@ -18,7 +19,7 @@ class _Api extends ApiClient {
     if (path == '/v1/me/account') {
       return {
         'profile': {
-          'display_name': 'Dana Lee',
+          'display_name': displayName,
           'email': 'dana@test.invalid',
           'avatar_url': 'https://example.invalid/a.jpg',
         },
@@ -72,6 +73,16 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     expect(r.identity, isNull);
     expect(repo(_Api()..offline = true).identity, isNull);
+  });
+
+  test('syncProfileFromServer refreshes cached account for the shell avatar', () async {
+    final api = _Api();
+    final r = repo(api);
+    await r.ensureAccountLoaded();
+    api.displayName = 'Nora QA';
+    await r.syncProfileFromServer();
+    expect(r.cachedAccount?.displayName, 'Nora QA');
+    expect(r.identity?.displayName, 'Nora QA');
   });
 
   test('the loaded profile wins over the stored one', () async {

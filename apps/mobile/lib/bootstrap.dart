@@ -245,6 +245,7 @@ Future<Widget> bootstrapLaNonnaApp({
       routerRefresh: routerRefresh,
       initialInviteLocation: initialInviteLocation,
       initialEmailVerifyUri: initialEmailVerifyUri,
+      signedInOnLaunch: authRepository.currentUser != null,
     ),
   );
 }

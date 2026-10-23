@@ -19,6 +19,7 @@ class InviteFlowState extends ChangeNotifier {
   String? _signupPrefillEmail;
   String? _resumeInviteToken;
   OnboardingPath? _resumeOnboardingPath;
+  String? _resumeInvitePreviewJson;
 
   InviteEmailMismatch? get emailMismatch => _emailMismatch;
 
@@ -68,19 +69,23 @@ class InviteFlowState extends ChangeNotifier {
   void setInviteResume({
     required String token,
     required OnboardingPath path,
+    String? previewJson,
   }) {
     _resumeInviteToken = token.trim();
     _resumeOnboardingPath = path;
+    _resumeInvitePreviewJson = previewJson;
     notifyListeners();
   }
 
-  ({String token, OnboardingPath path})? takeInviteResume() {
+  ({String token, OnboardingPath path, String? previewJson})? takeInviteResume() {
     final token = _resumeInviteToken;
     final path = _resumeOnboardingPath;
+    final previewJson = _resumeInvitePreviewJson;
     _resumeInviteToken = null;
     _resumeOnboardingPath = null;
+    _resumeInvitePreviewJson = null;
     if (token == null || token.isEmpty || path == null) return null;
-    return (token: token, path: path);
+    return (token: token, path: path, previewJson: previewJson);
   }
 
   void clear() {
@@ -89,6 +94,7 @@ class InviteFlowState extends ChangeNotifier {
     _signupPrefillEmail = null;
     _resumeInviteToken = null;
     _resumeOnboardingPath = null;
+    _resumeInvitePreviewJson = null;
     notifyListeners();
   }
 }

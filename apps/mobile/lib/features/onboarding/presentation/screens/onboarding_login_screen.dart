@@ -71,8 +71,11 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
       final flow = context.read<InviteFlowState>();
       final resume = flow.takeInviteResume();
       if (resume != null) {
-        await coordinator.setPendingInviteToken(resume.token);
-        await coordinator.saveOnboardingPath(resume.path);
+        await coordinator.restoreInviteHandoff(
+          token: resume.token,
+          path: resume.path,
+          previewJson: resume.previewJson,
+        );
       }
       if (!mounted) return;
       final prefill = flow.takeLoginPrefillEmail();

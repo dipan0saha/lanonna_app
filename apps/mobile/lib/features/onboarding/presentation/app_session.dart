@@ -126,11 +126,49 @@ class AppSession extends ChangeNotifier {
       await _coordinator.syncCompletedFromServer(
         status.ownerOnboardingCompleted,
       );
+      await _coordinator.abandonStaleInvitePathIfNeeded(
+        hasOwnerBaby: status.hasOwnerBaby,
+        hasBabyMembership: status.hasBabyMembership,
+      );
     }
     final ownerBabyId = status.ownerOnboardingBabyProfileId;
     if (ownerBabyId != null && ownerBabyId.isNotEmpty) {
       await _coordinator.setCreatedBabyId(ownerBabyId);
     }
+  }
+
+  /// Canonical signed-in destination from server status and local coordinator
+  /// state (#409). Used by [redirectFor] and invite exit navigation.
+  @visibleForTesting
+  String signedInResumeLocation({
+    required bool emailVerified,
+    OnboardingStatus? status,
+  }) {
+    final resolved = status ?? _status;
+    if (!_coordinator.skipEmailVerify && !emailVerified) {
+      return OnboardingRoutes.emailVerify;
+    }
+    if (resolved == null) return OnboardingRoutes.completeProfile;
+    if (!resolved.profileComplete) return OnboardingRoutes.completeProfile;
+    if (resolved.canAccessMainApp) return '/home';
+    if (_coordinator.shouldResumeInviteFlow(
+      hasBabyMembership: resolved.hasBabyMembership,
+    )) {
+      return _inviteResumePath();
+    }
+    if (!resolved.hasOwnerBaby && !resolved.hasBabyMembership) {
+      return OnboardingRoutes.ownerCreateBaby;
+    }
+    if (resolved.needsOwnerOnboarding) {
+      return _onboardingResumePath(resolved);
+    }
+    return '/home';
+  }
+
+  static bool _isSignedOutEntryRoute(String path) {
+    return path == OnboardingRoutes.ownerCarousel ||
+        path == OnboardingRoutes.signup ||
+        path == OnboardingRoutes.login;
   }
 
   Future<void> refreshFromApi() async {
@@ -256,14 +294,26 @@ class AppSession extends ChangeNotifier {
       return OnboardingRoutes.sessionOffline;
     }
 
+    if (!_coordinator.isHydrated) {
+      return null;
+    }
+
+    final status = _status;
+    final resume = signedInResumeLocation(
+      emailVerified: emailVerified,
+      status: status,
+    );
+
+    // The welcome carousel is the signed-out entry (and the default cold-start
+    // location). No signed-in session may remain on it (#400, #409).
+    if (path == OnboardingRoutes.ownerCarousel) {
+      return resume;
+    }
+
     if (canAccessMainApp) {
-      // The welcome carousel is the signed-out entry (and the router's cold
-      // start location). A user who may use Home never stays on it, whatever
-      // owner onboarding is still open (#400).
-      if (path == OnboardingRoutes.ownerCarousel) return '/home';
       // Both flags can be true: a follower who also created a baby
       // (joined_via = created) may use Home and still finish owner onboarding.
-      final keepOwnerOnboarding = _status?.needsOwnerOnboarding == true;
+      final keepOwnerOnboarding = status?.needsOwnerOnboarding == true;
       if (!keepOwnerOnboarding &&
           OnboardingRoutes.isOnboardingPath(path) &&
           path != OnboardingRoutes.inviteAccept &&
@@ -273,16 +323,20 @@ class AppSession extends ChangeNotifier {
       return null;
     }
 
-    if (!_coordinator.isHydrated) {
-      return null;
+    if (status != null &&
+        status.profileComplete &&
+        _isSignedOutEntryRoute(path) &&
+        path != OnboardingRoutes.ownerCarousel) {
+      return resume;
     }
 
-    if (_coordinator.isInvitePath) {
+    if (_coordinator.shouldResumeInviteFlow(
+      hasBabyMembership: status?.hasBabyMembership ?? false,
+    )) {
       if (!_coordinator.skipEmailVerify && !emailVerified) {
         if (_inviteSignedIn.contains(path)) return null;
         return OnboardingRoutes.emailVerify;
       }
-      final status = _status;
       if (status != null && !status.profileComplete) {
         if (_inviteSignedIn.contains(path)) return null;
         return OnboardingRoutes.completeProfile;
@@ -303,11 +357,9 @@ class AppSession extends ChangeNotifier {
       return OnboardingRoutes.emailVerify;
     }
 
-    final status = _status;
     if (status != null) {
       if (!status.profileComplete) {
         const allowed = {
-          OnboardingRoutes.ownerCarousel,
           OnboardingRoutes.signup,
           OnboardingRoutes.login,
           OnboardingRoutes.emailVerify,
@@ -319,9 +371,6 @@ class AppSession extends ChangeNotifier {
       }
       if (!status.hasOwnerBaby && !status.hasBabyMembership) {
         const allowed = {
-          OnboardingRoutes.ownerCarousel,
-          OnboardingRoutes.signup,
-          OnboardingRoutes.login,
           OnboardingRoutes.emailVerify,
           OnboardingRoutes.completeProfile,
           OnboardingRoutes.ownerCreateBaby,
@@ -349,9 +398,6 @@ class AppSession extends ChangeNotifier {
 
     if (path == OnboardingRoutes.signup || path == OnboardingRoutes.login) {
       return null;
-    }
-    if (path == OnboardingRoutes.ownerCarousel) {
-      return _onboardingResumePath(status);
     }
 
     if (OnboardingRoutes.isOnboardingPath(path)) {

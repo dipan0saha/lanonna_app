@@ -148,5 +148,7 @@ void main() {
     );
     expect(coordinator.pendingInviteToken, 'handoff-token');
     expect(coordinator.isInvitePath, isTrue);
+    expect(coordinator.cachedInvitePreview?.babyName, 'Liam');
+    expect(coordinator.cachedInvitePreview?.relationshipLabel, 'Grandma');
   });
 }

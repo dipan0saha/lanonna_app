@@ -58,6 +58,10 @@ class OnboardingStorage {
     await _prefs.setString(OnboardingStorageKeys.step, step.storageKey);
   }
 
+  Future<void> clearSavedStep() async {
+    await _prefs.remove(OnboardingStorageKeys.step);
+  }
+
   String? get createdBabyId =>
       _prefs.getString(OnboardingStorageKeys.createdBabyId);
 

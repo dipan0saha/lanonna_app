@@ -291,6 +291,104 @@ void main() {
   });
 
   test(
+    'signed-in user with no baby leaves the carousel for create-baby (#409)',
+    () async {
+      final f = await _fixtures();
+      f.session.debugSetStatus(
+        const OnboardingStatus(
+          emailVerified: true,
+          profileComplete: true,
+          hasOwnerBaby: false,
+          hasBabyMembership: false,
+          ownerOnboardingCompleted: false,
+          needsOwnerOnboarding: false,
+          canAccessMainApp: false,
+        ),
+      );
+      expect(
+        f.session.redirectFor(
+          isSignedIn: true,
+          emailVerified: true,
+          location: OnboardingRoutes.ownerCarousel,
+        ),
+        OnboardingRoutes.ownerCreateBaby,
+      );
+      expect(
+        f.session.redirectFor(
+          isSignedIn: true,
+          emailVerified: true,
+          location: OnboardingRoutes.signup,
+        ),
+        OnboardingRoutes.ownerCreateBaby,
+      );
+    },
+  );
+
+  test(
+    'former follower with stale invite path resumes at create-baby (#408)',
+    () async {
+      final f = await _fixtures(
+        path: OnboardingPath.follower,
+        inviteOnboardingCompleted: true,
+      );
+      await f.coordinator.setStep(OnboardingStep.followerInvite);
+      f.session.debugSetStatus(
+        const OnboardingStatus(
+          emailVerified: true,
+          profileComplete: true,
+          hasOwnerBaby: false,
+          hasBabyMembership: false,
+          ownerOnboardingCompleted: false,
+          needsOwnerOnboarding: false,
+          canAccessMainApp: false,
+        ),
+      );
+      expect(
+        f.session.redirectFor(
+          isSignedIn: true,
+          emailVerified: true,
+          location: OnboardingRoutes.followerInvite,
+        ),
+        OnboardingRoutes.ownerCreateBaby,
+      );
+    },
+  );
+
+  test('signedInResumeLocation covers main session states', () async {
+    final f = await _fixtures();
+    f.session.debugSetStatus(
+      const OnboardingStatus(
+        emailVerified: true,
+        profileComplete: false,
+        hasOwnerBaby: false,
+        hasBabyMembership: false,
+        ownerOnboardingCompleted: false,
+        needsOwnerOnboarding: false,
+        canAccessMainApp: false,
+      ),
+    );
+    expect(
+      f.session.signedInResumeLocation(emailVerified: true),
+      OnboardingRoutes.completeProfile,
+    );
+    f.session.debugSetStatus(
+      const OnboardingStatus(
+        emailVerified: true,
+        profileComplete: true,
+        hasOwnerBaby: false,
+        hasBabyMembership: true,
+        ownerOnboardingCompleted: true,
+        needsOwnerOnboarding: false,
+        canAccessMainApp: true,
+      ),
+    );
+    expect(
+      f.session.signedInResumeLocation(emailVerified: true),
+      '/home',
+    );
+  });
+
+  test(
     'follower who also created a baby leaves the signed-out carousel on cold start',
     () async {
       final f = await _fixtures();

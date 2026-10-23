@@ -32,11 +32,13 @@ class LaNonnaApp extends StatefulWidget {
     required this.routerRefresh,
     this.initialInviteLocation,
     this.initialEmailVerifyUri,
+    this.signedInOnLaunch = false,
   });
 
   final RouterRefreshListenable routerRefresh;
   final String? initialInviteLocation;
   final Uri? initialEmailVerifyUri;
+  final bool signedInOnLaunch;
 
   @override
   State<LaNonnaApp> createState() => _LaNonnaAppState();
@@ -46,6 +48,7 @@ class _LaNonnaAppState extends State<LaNonnaApp> {
   late final GoRouter _router = createAppRouter(
     widget.routerRefresh,
     initialLocation: widget.initialInviteLocation,
+    signedInOnLaunch: widget.signedInOnLaunch,
   );
   var _pushStarted = false;
   PushNotificationService? _pushService;

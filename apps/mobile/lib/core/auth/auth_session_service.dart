@@ -54,7 +54,7 @@ class AuthSessionService {
       boundUid = uid;
       if (previousUid == null || uid == null || previousUid == uid) return;
       try {
-        await _sessionCleanup.clearLocalUserData();
+        await _clearLocalSession();
         await onUserSwitched();
       } catch (e) {
         debugPrint('account_switch_cleanup_failed: $e');
@@ -89,8 +89,10 @@ class AuthSessionService {
     await _endLocalSession();
   }
 
+  Future<void> _clearLocalSession() => _sessionCleanup.clearLocalUserData();
+
   Future<void> _endLocalSession() async {
-    await _sessionCleanup.clearLocalUserData();
+    await _clearLocalSession();
     await _authRepository.signOut();
   }
 

@@ -10,12 +10,17 @@ void main() {
     expect(state.takeLoginPrefillEmail(), isNull);
   });
 
-  test('takeInviteResume returns token and path once', () {
+  test('takeInviteResume returns token, path, and preview once', () {
     final state = InviteFlowState();
-    state.setInviteResume(token: 'tok', path: OnboardingPath.follower);
+    state.setInviteResume(
+      token: 'tok',
+      path: OnboardingPath.follower,
+      previewJson: '{"status":"pending"}',
+    );
     final resume = state.takeInviteResume();
     expect(resume?.token, 'tok');
     expect(resume?.path, OnboardingPath.follower);
+    expect(resume?.previewJson, '{"status":"pending"}');
     expect(state.takeInviteResume(), isNull);
   });
 

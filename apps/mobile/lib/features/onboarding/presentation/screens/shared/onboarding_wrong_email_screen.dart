@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../../core/auth/auth_session_service.dart';
 import '../../../../invitations/presentation/invite_flow_state.dart';
+import '../../../../invitations/presentation/invite_landing_helpers.dart';
 import '../../../domain/onboarding_path.dart';
 import '../../../domain/onboarding_routes.dart';
 import '../../onboarding_coordinator.dart';
@@ -31,6 +32,7 @@ class _OnboardingWrongEmailScreenState extends State<OnboardingWrongEmailScreen>
     required String inviteeEmail,
     required String? resumeToken,
     required OnboardingPath resumePath,
+    required String? previewJson,
   }) async {
     _redirected = true;
     final flow = context.read<InviteFlowState>();
@@ -43,7 +45,11 @@ class _OnboardingWrongEmailScreenState extends State<OnboardingWrongEmailScreen>
       router.go(OnboardingRoutes.ownerCarousel);
       return;
     }
-    flow.setInviteResume(token: resumeToken, path: resumePath);
+    flow.setInviteResume(
+      token: resumeToken,
+      path: resumePath,
+      previewJson: previewJson,
+    );
     router.go(OnboardingRoutes.login);
   }
 
@@ -74,6 +80,7 @@ class _OnboardingWrongEmailScreenState extends State<OnboardingWrongEmailScreen>
     final signedIn = mismatch.signedInEmail;
     final coordinator = context.read<OnboardingCoordinator>();
     final token = coordinator.pendingInviteToken;
+    final previewJson = coordinator.invitePreviewJsonForHandoff;
 
     return OnboardingScaffold(
       pinBottomCta: false,
@@ -94,6 +101,7 @@ class _OnboardingWrongEmailScreenState extends State<OnboardingWrongEmailScreen>
               inviteeEmail: mismatch.inviteeEmail,
               resumeToken: token?.trim(),
               resumePath: coordinator.onboardingPath,
+              previewJson: previewJson,
             ),
           ),
           const SizedBox(height: 12),
@@ -101,8 +109,7 @@ class _OnboardingWrongEmailScreenState extends State<OnboardingWrongEmailScreen>
             child: TextButton(
               onPressed: () async {
                 context.read<InviteFlowState>().clearEmailMismatch();
-                await context.read<OnboardingCoordinator>().clearPendingInvite();
-                if (context.mounted) context.go(OnboardingRoutes.ownerCarousel);
+                if (context.mounted) await leaveInvitationFlow(context);
               },
               child: Text(l10n.wrongEmailLeaveInvitation),
             ),

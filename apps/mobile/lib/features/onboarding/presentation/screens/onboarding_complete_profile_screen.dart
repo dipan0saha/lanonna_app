@@ -26,6 +26,7 @@ import '../../domain/onboarding_path.dart';
 import '../../domain/onboarding_routes.dart';
 import '../../domain/onboarding_step.dart';
 import '../app_session.dart';
+import '../../../account/data/account_repository.dart';
 import '../onboarding_coordinator.dart';
 import '../widgets/onboarding_buttons.dart';
 import '../widgets/onboarding_fields.dart';
@@ -304,6 +305,8 @@ class _OnboardingCompleteProfileScreenState
         postalCode: _postalController.text.trim(),
         acceptTerms: true,
       );
+      if (!mounted) return;
+      await context.read<AccountRepository>().syncProfileFromServer();
       if (!mounted) return;
       await context.read<AppSession>().refreshFromApi();
       if (!mounted) return;

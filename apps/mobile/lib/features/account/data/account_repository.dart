@@ -316,6 +316,14 @@ class AccountRepository {
     profileUpdates.publish(profileUpdates.account);
   }
 
+  /// Refetch profile after onboarding save so shell avatar initials update (#407).
+  Future<void> syncProfileFromServer() async {
+    final epoch = _accountEpoch;
+    await _accountLoad.run(fetchAccount);
+    if (epoch != _accountEpoch) return;
+    profileUpdates.publish(profileUpdates.account);
+  }
+
   /// Sign-out / account deletion: the next account starts with no profile.
   void clearCachedAccount() {
     _accountEpoch += 1;
