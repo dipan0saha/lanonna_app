@@ -428,7 +428,7 @@ Minimum path if time-boxed (≈2–3 hours): **ENV-001–003**, **AUTH-004**, **
 | ONB-012 | P1 | Co-owner invite screen | Co-owner token path | `/onboarding/coowner/invite` | Co-owner specific copy | `onboarding_coowner_invite_screen.dart` |
 | ONB-013 | P1 | Confirm relationship | Follower accept | `/onboarding/follower/confirm-relationship` | Relationship label saved | `onboarding_confirm_relationship_screen.dart` |
 | NOT-010 | P1 | Weekly digest (backend) | User with `notification_digest=weekly` | Run BE-005 cron | Inbox/push digest rows (`notification_type=digest`) | `process_weekly_notification_digest`, migration `014` |
-| ACC-010 | P1 | Sign out clears biometrics local | BIO-006 | Sign out after biometric sign-in | Local keys cleared; must enroll again after password login | `session_cleanup.dart`, `delete_account_screen.dart` (revoke) |
+| ACC-010 | P1 | Log out keeps biometric sign-in; turning it off removes it | BIO-006 | 1) Log out after biometric sign-in. 2) Settings → turn **Biometric sign-in & unlock** off, then log out | 1) Login screen still offers **Sign in with biometrics** and it signs in (enrollment kept by design). 2) No biometric option on login; after password login the switch is off and must be enrolled again | `biometric_sign_in_service.dart` (`clearLocalEnrollment`), `auth_session_service.dart`, `settings_screen.dart` |
 
 ---
 
