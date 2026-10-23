@@ -54,6 +54,7 @@ import '../../features/registry/presentation/registry_shipping_address_screen.da
 import '../../features/registry/presentation/registry_screen.dart';
 import '../../features/shell/main_shell_screen.dart';
 import '../auth/auth_repository.dart';
+import 'owner_only_gate.dart';
 import 'router_refresh.dart';
 
 final appRootNavigatorKey = GlobalKey<NavigatorState>();
@@ -79,6 +80,10 @@ GoRouter createAppRouter(
     routes: buildAppRoutes(),
   );
 }
+
+/// Owner-only page inside a tab: the role is checked for the selected baby.
+Widget _ownerOnlyTab(String tabLocation, Widget child) =>
+    OwnerOnlyGate(fallbackLocation: tabLocation, child: child);
 
 /// The app's route tree ([createAppRouter]); exposed so tests can check where
 /// each location renders (tab branch or root navigator).
@@ -211,14 +216,20 @@ List<RouteBase> buildAppRoutes() {
     GoRoute(
       path: '/baby/:babyId/edit',
       parentNavigatorKey: appRootNavigatorKey,
-      builder: (context, state) =>
-          BabyEditScreen(babyId: state.pathParameters['babyId']!),
+      builder: (context, state) => OwnerOnlyGate(
+        babyId: state.pathParameters['babyId'],
+        fallbackLocation: AppRoutes.home,
+        child: BabyEditScreen(babyId: state.pathParameters['babyId']!),
+      ),
     ),
     GoRoute(
       path: '/baby/:babyId/followers',
       parentNavigatorKey: appRootNavigatorKey,
-      builder: (context, state) =>
-          FollowersScreen(babyId: state.pathParameters['babyId']!),
+      builder: (context, state) => OwnerOnlyGate(
+        babyId: state.pathParameters['babyId'],
+        fallbackLocation: AppRoutes.home,
+        child: FollowersScreen(babyId: state.pathParameters['babyId']!),
+      ),
     ),
     GoRoute(
       path: '/baby/:babyId/announcement',
@@ -229,8 +240,13 @@ List<RouteBase> buildAppRoutes() {
     GoRoute(
       path: '/baby/:babyId/announcement/create',
       parentNavigatorKey: appRootNavigatorKey,
-      builder: (context, state) =>
-          AnnouncementCreateScreen(babyId: state.pathParameters['babyId']!),
+      builder: (context, state) => OwnerOnlyGate(
+        babyId: state.pathParameters['babyId'],
+        fallbackLocation:
+            '/baby/${state.pathParameters['babyId']}/announcement',
+        child:
+            AnnouncementCreateScreen(babyId: state.pathParameters['babyId']!),
+      ),
     ),
     GoRoute(
       path: AppRoutes.inviteFamily,
@@ -300,15 +316,18 @@ List<RouteBase> buildAppRoutes() {
                   path: 'event/create',
                   builder: (context, state) {
                     final prefill = state.extra;
-                    if (prefill is EventFormPrefill) {
-                      return EventFormScreen(
-                        initialTitle: prefill.title,
-                        initialDescription: prefill.description,
-                        initialCatalogSuggestionId: prefill.catalogSuggestionId,
-                        initialDate: prefill.initialDate,
-                      );
-                    }
-                    return const EventFormScreen();
+                    return _ownerOnlyTab(
+                      CalendarRoutes.calendar,
+                      prefill is EventFormPrefill
+                          ? EventFormScreen(
+                              initialTitle: prefill.title,
+                              initialDescription: prefill.description,
+                              initialCatalogSuggestionId:
+                                  prefill.catalogSuggestionId,
+                              initialDate: prefill.initialDate,
+                            )
+                          : const EventFormScreen(),
+                    );
                   },
                 ),
                 // Root navigator: see `photo/:photoId`.
@@ -322,15 +341,21 @@ List<RouteBase> buildAppRoutes() {
                     GoRoute(
                       path: 'edit',
                       parentNavigatorKey: appRootNavigatorKey,
-                      builder: (context, state) => EventFormScreen(
-                        eventId: state.pathParameters['eventId'],
+                      builder: (context, state) => _ownerOnlyTab(
+                        CalendarRoutes.calendar,
+                        EventFormScreen(
+                          eventId: state.pathParameters['eventId'],
+                        ),
                       ),
                     ),
                   ],
                 ),
                 GoRoute(
                   path: 'ai-suggestions',
-                  builder: (context, state) => const EventAiSuggestionsScreen(),
+                  builder: (context, state) => _ownerOnlyTab(
+                    CalendarRoutes.calendar,
+                    const EventAiSuggestionsScreen(),
+                  ),
                 ),
                 GoRoute(
                   path: 'upcoming',
@@ -350,14 +375,17 @@ List<RouteBase> buildAppRoutes() {
                   path: 'item/create',
                   builder: (context, state) {
                     final prefill = state.extra;
-                    if (prefill is RegistryItemFormPrefill) {
-                      return RegistryItemFormScreen(
-                        initialName: prefill.name,
-                        initialDescription: prefill.description,
-                        initialCatalogSuggestionId: prefill.catalogSuggestionId,
-                      );
-                    }
-                    return const RegistryItemFormScreen();
+                    return _ownerOnlyTab(
+                      RegistryRoutes.registry,
+                      prefill is RegistryItemFormPrefill
+                          ? RegistryItemFormScreen(
+                              initialName: prefill.name,
+                              initialDescription: prefill.description,
+                              initialCatalogSuggestionId:
+                                  prefill.catalogSuggestionId,
+                            )
+                          : const RegistryItemFormScreen(),
+                    );
                   },
                 ),
                 GoRoute(
@@ -367,19 +395,26 @@ List<RouteBase> buildAppRoutes() {
                 ),
                 GoRoute(
                   path: 'item/:itemId/edit',
-                  builder: (context, state) => RegistryItemFormScreen(
-                    itemId: state.pathParameters['itemId'],
+                  builder: (context, state) => _ownerOnlyTab(
+                    RegistryRoutes.registry,
+                    RegistryItemFormScreen(
+                      itemId: state.pathParameters['itemId'],
+                    ),
                   ),
                 ),
                 GoRoute(
                   path: 'ai-suggestions',
-                  builder: (context, state) =>
-                      const RegistryAiSuggestionsScreen(),
+                  builder: (context, state) => _ownerOnlyTab(
+                    RegistryRoutes.registry,
+                    const RegistryAiSuggestionsScreen(),
+                  ),
                 ),
                 GoRoute(
                   path: 'shipping-address',
-                  builder: (context, state) =>
-                      const RegistryShippingAddressScreen(),
+                  builder: (context, state) => _ownerOnlyTab(
+                    RegistryRoutes.registry,
+                    const RegistryShippingAddressScreen(),
+                  ),
                 ),
               ],
             ),

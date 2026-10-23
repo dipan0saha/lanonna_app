@@ -217,9 +217,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           : l10n.rsvpResponseCount(detail.rsvpAttendees.length),
       bodyBuilder: (ctx) {
         final l10n = AppLocalizations.of(ctx)!;
-        return ListView(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
+        return AppModalSheetListBody(
           children: [
             if (detail.rsvpAttendees.isEmpty)
               Text(AppLocalizations.of(context)!.eventNoRsvps)

@@ -1593,7 +1593,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String inviteCoOwnerAccessBody(String babyName, String inviterName) {
-    return 'You now have full access to edit $babyName\'\'s profile, add events, manage the registry, and invite others, just like $inviterName.';
+    return 'You now have full access to edit $babyName\'s profile, add events, manage the registry, and invite others, just like $inviterName.';
   }
 
   @override
@@ -1715,10 +1715,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get calendarOnlyOwnersCanCreateOr =>
-      'Only owners can create or edit calendar events.';
-
-  @override
   String get calendarBabyProfileIsStillLoading =>
       'Baby profile is still loading. Try again.';
 
@@ -1744,6 +1740,9 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get calendarNothingOnTheCalendarYet =>
       'Nothing on the calendar yet — check back soon.';
+
+  @override
+  String get ownerOnlyPageBlocked => 'Only owners can do that.';
 
   @override
   String get calendarAddEventCta => '+ Add Event';
@@ -1857,10 +1856,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String funLove(String suggestedName) {
     return 'Love $suggestedName';
   }
-
-  @override
-  String get registryOnlyOwnersCanEditThe =>
-      'Only owners can edit the shipping address.';
 
   @override
   String registryCouldNotLoadShippingAddress(String e) {

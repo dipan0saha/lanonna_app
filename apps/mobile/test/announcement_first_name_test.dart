@@ -22,7 +22,7 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(800, 2400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
-      Provider<AnnouncementRepository>.value(
+      ChangeNotifierProvider<AnnouncementRepository>.value(
         value: _EmptyAnnouncementRepository(),
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,

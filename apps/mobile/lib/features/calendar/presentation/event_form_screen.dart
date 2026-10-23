@@ -28,8 +28,6 @@ import '../../../core/domain/baby_summary.dart';
 import '../../onboarding/presentation/widgets/onboarding_prototype_widgets.dart';
 import '../data/calendar_repository.dart';
 import 'calendar_display.dart';
-import '../../../core/router/subpage_navigation.dart';
-import '../domain/calendar_routes.dart';
 import 'widgets/event_form_widgets.dart';
 import '../../../l10n/app_localizations.dart';
 
@@ -118,14 +116,6 @@ class _EventFormScreenState extends State<EventFormScreen> {
     final store = context.read<SelectedBabyStore>();
     final baby = await homeRepo.resolveSelectedBaby(store);
     if (!mounted) return;
-    if (baby != null && baby.role != 'owner') {
-      AppSnackBar.showAlert(
-        context,
-        l10n.calendarOnlyOwnersCanCreateOr,
-      );
-      popOrGo(context, CalendarRoutes.calendar);
-      return;
-    }
     setState(() => _baby = baby);
   }
 

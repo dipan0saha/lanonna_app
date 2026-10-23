@@ -81,16 +81,6 @@ class _RegistryShippingAddressScreenState
         if (mounted) context.pop();
         return;
       }
-      if (baby.role != 'owner') {
-        if (mounted) {
-          AppSnackBar.showAlert(
-            context,
-            AppLocalizations.of(context)!.registryOnlyOwnersCanEditThe,
-          );
-          context.pop();
-        }
-        return;
-      }
       final countries = await IsoCountries.load();
       final address = await regRepo.getShippingAddress(baby.id);
       if (!mounted) return;
@@ -158,7 +148,7 @@ class _RegistryShippingAddressScreenState
       ),
     );
     if (mounted) setState(() => _saving = false);
-    if (ok && mounted) context.pop(true);
+    if (ok && mounted) context.pop();
   }
 
   Future<void> _clear() async {
@@ -183,7 +173,7 @@ class _RegistryShippingAddressScreenState
       ),
     );
     if (mounted) setState(() => _saving = false);
-    if (ok && mounted) context.pop(true);
+    if (ok && mounted) context.pop();
   }
 
   @override
