@@ -12,6 +12,7 @@ import '../../../core/api/api_error_message.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
+import '../../../core/widgets/app_chip.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../home/data/home_refresh_signal.dart';
@@ -451,12 +452,14 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
           ),
           const SizedBox(height: 20),
         ],
-        OnboardingSegmentedControl(
-          leftLabel: l10n.stageExpecting,
-          rightLabel: l10n.babyAlreadyBorn,
-          isLeftSelected: _babyStatus == BabyLifecycle.expecting,
-          onLeftTap: () => _setBabyStatus(BabyLifecycle.expecting),
-          onRightTap: () => _setBabyStatus(BabyLifecycle.born),
+        AppToggleChipBar<BabyLifecycle>(
+          padding: EdgeInsets.zero,
+          options: [
+            AppToggleChipOption(BabyLifecycle.expecting, l10n.stageExpecting),
+            AppToggleChipOption(BabyLifecycle.born, l10n.babyAlreadyBorn),
+          ],
+          selected: _babyStatus,
+          onSelected: _setBabyStatus,
         ),
         const SizedBox(height: 18),
         PrototypeDateField(

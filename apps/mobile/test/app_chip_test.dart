@@ -80,6 +80,68 @@ theme: AppTheme.light,
     expect(liam.style?.color, AppColors.primaryDark);
   });
 
+  testWidgets('AppToggleChipBar selects one option and reports changes', (
+    tester,
+  ) async {
+    var selected = 'a';
+    var calls = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: AppTheme.light,
+        home: Scaffold(
+          body: StatefulBuilder(
+            builder: (context, setState) {
+              return AppToggleChipBar<String>(
+                padding: EdgeInsets.zero,
+                options: const [
+                  AppToggleChipOption('a', 'Alpha'),
+                  AppToggleChipOption(
+                    'b',
+                    'Beta',
+                    selectedAccent: AppChipAccent.peach,
+                  ),
+                ],
+                selected: selected,
+                onSelected: (v) {
+                  calls++;
+                  setState(() => selected = v);
+                },
+              );
+            },
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      tester.widget<AppToggleChip>(find.widgetWithText(AppToggleChip, 'Alpha'))
+          .selected,
+      isTrue,
+    );
+
+    expect(
+      tester.widget<AppToggleChip>(find.widgetWithText(AppToggleChip, 'Alpha'))
+          .selectedAccent,
+      AppChipAccent.sage,
+    );
+
+    await tester.tap(find.text('Beta'));
+    await tester.pump();
+    expect(selected, 'b');
+    expect(calls, 1);
+    final beta =
+        tester.widget<AppToggleChip>(find.widgetWithText(AppToggleChip, 'Beta'));
+    expect(beta.selected, isTrue);
+    expect(beta.selectedAccent, AppChipAccent.peach);
+
+    // Re-selecting the current option is a no-op.
+    await tester.tap(find.text('Beta'));
+    await tester.pump();
+    expect(calls, 1);
+  });
+
   testWidgets('AppRemovableChip onRemove fires from close control', (
     tester,
   ) async {

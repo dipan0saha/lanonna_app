@@ -13,7 +13,7 @@ import '../../home/data/selected_baby_store.dart';
 import '../../home/presentation/baby_context_reload.dart';
 import '../../shell/presentation/shell_tab_layout.dart';
 import '../../../core/domain/baby_summary.dart';
-import '../../onboarding/presentation/widgets/onboarding_fields.dart';
+import '../../../core/widgets/app_chip.dart';
 import 'names_tab.dart';
 import 'predictions_tab.dart';
 import '../../../l10n/app_localizations.dart';
@@ -25,9 +25,12 @@ class FunScreen extends StatefulWidget {
   State<FunScreen> createState() => _FunScreenState();
 }
 
+/// Fun hub sections switched by the chip bar under the title.
+enum _FunSection { names, predictions }
+
 class _FunScreenState extends State<FunScreen>
     with BabyContextReload, TabLoadGenerationCache {
-  var _segment = 0;
+  var _section = _FunSection.names;
   BabySummary? _baby;
   var _loading = true;
   String? _error;
@@ -120,9 +123,11 @@ class _FunScreenState extends State<FunScreen>
         // After birth both tabs stay visible but read-only; the API also
         // rejects prediction writes with predictions_closed.
         final baby = _baby!;
-        return _segment == 0
-            ? NamesTab(baby: baby, readOnly: baby.namesClosed)
-            : PredictionsTab(baby: baby);
+        return switch (_section) {
+          _FunSection.names =>
+            NamesTab(baby: baby, readOnly: baby.namesClosed),
+          _FunSection.predictions => PredictionsTab(baby: baby),
+        };
     }
   }
 
@@ -150,16 +155,22 @@ class _FunScreenState extends State<FunScreen>
                   style: context.textStyles.headlineSmall,
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-                child: OnboardingSegmentedControl(
-                  style: OnboardingSegmentedControlStyle.mini,
-                  leftLabel: AppLocalizations.of(context)!.searchSectionNames,
-                  rightLabel: AppLocalizations.of(context)!.funPredictions,
-                  isLeftSelected: _segment == 0,
-                  onLeftTap: () => setState(() => _segment = 0),
-                  onRightTap: () => setState(() => _segment = 1),
+              AppToggleChipBar<_FunSection>(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppMetrics.horizontalPadding,
                 ),
+                options: [
+                  AppToggleChipOption(
+                    _FunSection.names,
+                    AppLocalizations.of(context)!.searchSectionNames,
+                  ),
+                  AppToggleChipOption(
+                    _FunSection.predictions,
+                    AppLocalizations.of(context)!.funPredictions,
+                  ),
+                ],
+                selected: _section,
+                onSelected: (section) => setState(() => _section = section),
               ),
               const SizedBox(height: 8),
               Expanded(child: _funBody()),

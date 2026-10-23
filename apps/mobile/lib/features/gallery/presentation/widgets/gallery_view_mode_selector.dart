@@ -37,9 +37,7 @@ class GalleryViewModeSelector extends StatelessWidget {
         AppToggleChipOption(GalleryViewMode.favorites, l10n.galleryFavorites),
       ],
       selected: selected,
-      onSelected: (mode) {
-        if (mode != selected) context.go(routeFor(mode));
-      },
+      onSelected: (mode) => context.go(routeFor(mode)),
     );
   }
 }

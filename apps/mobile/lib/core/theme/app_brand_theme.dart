@@ -15,7 +15,6 @@ class AppBrandTheme extends ThemeExtension<AppBrandTheme> {
     required this.shellIconMuted,
     required this.ownerBadgeText,
     required this.fieldPlaceholder,
-    required this.segmentUnselectedLabel,
   });
 
   final Color sageTint;
@@ -25,7 +24,6 @@ class AppBrandTheme extends ThemeExtension<AppBrandTheme> {
   final Color shellIconMuted;
   final Color ownerBadgeText;
   final Color fieldPlaceholder;
-  final Color segmentUnselectedLabel;
 
   static const AppBrandTheme light = AppBrandTheme(
     sageTint: AppColors.sageTint,
@@ -35,7 +33,6 @@ class AppBrandTheme extends ThemeExtension<AppBrandTheme> {
     shellIconMuted: Color(0xFF6B6B6B),
     ownerBadgeText: Color(0xFF8A4A24),
     fieldPlaceholder: Color(0xFFB8B8BA),
-    segmentUnselectedLabel: Color(0xFF8B8B8D),
   );
 
   @override
@@ -47,7 +44,6 @@ class AppBrandTheme extends ThemeExtension<AppBrandTheme> {
     Color? shellIconMuted,
     Color? ownerBadgeText,
     Color? fieldPlaceholder,
-    Color? segmentUnselectedLabel,
   }) {
     return AppBrandTheme(
       sageTint: sageTint ?? this.sageTint,
@@ -57,8 +53,6 @@ class AppBrandTheme extends ThemeExtension<AppBrandTheme> {
       shellIconMuted: shellIconMuted ?? this.shellIconMuted,
       ownerBadgeText: ownerBadgeText ?? this.ownerBadgeText,
       fieldPlaceholder: fieldPlaceholder ?? this.fieldPlaceholder,
-      segmentUnselectedLabel:
-          segmentUnselectedLabel ?? this.segmentUnselectedLabel,
     );
   }
 
@@ -73,8 +67,6 @@ class AppBrandTheme extends ThemeExtension<AppBrandTheme> {
       shellIconMuted: Color.lerp(shellIconMuted, other.shellIconMuted, t)!,
       ownerBadgeText: Color.lerp(ownerBadgeText, other.ownerBadgeText, t)!,
       fieldPlaceholder: Color.lerp(fieldPlaceholder, other.fieldPlaceholder, t)!,
-      segmentUnselectedLabel:
-          Color.lerp(segmentUnselectedLabel, other.segmentUnselectedLabel, t)!,
     );
   }
 }
