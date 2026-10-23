@@ -1593,7 +1593,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String inviteCoOwnerAccessBody(String babyName, String inviterName) {
-    return 'You now have full access to edit $babyName\'\'s profile, add events, manage the registry, and invite others, just like $inviterName.';
+    return 'You now have full access to edit $babyName\'s profile, add events, manage the registry, and invite others, just like $inviterName.';
   }
 
   @override
