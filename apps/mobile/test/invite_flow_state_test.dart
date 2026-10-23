@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/features/invitations/data/models/invitation_preview.dart';
+import 'package:lanonna/features/invitations/domain/invitation_status.dart';
 import 'package:lanonna/features/invitations/presentation/invite_flow_state.dart';
 import 'package:lanonna/features/onboarding/domain/onboarding_path.dart';
 
@@ -15,12 +17,26 @@ void main() {
     state.setInviteResume(
       token: 'tok',
       path: OnboardingPath.follower,
-      previewJson: '{"status":"pending"}',
+      preview: const InvitationPreview(
+        status: InvitationStatus.pending,
+        babyName: 'Liam',
+      ),
     );
     final resume = state.takeInviteResume();
     expect(resume?.token, 'tok');
     expect(resume?.path, OnboardingPath.follower);
-    expect(resume?.previewJson, '{"status":"pending"}');
+    expect(resume?.preview?.babyName, 'Liam');
+    expect(state.takeInviteResume(), isNull);
+  });
+
+  test('clear drops a pending invite resume and its preview', () {
+    final state = InviteFlowState();
+    state.setInviteResume(
+      token: 'tok',
+      path: OnboardingPath.follower,
+      preview: const InvitationPreview(status: InvitationStatus.pending),
+    );
+    state.clear();
     expect(state.takeInviteResume(), isNull);
   });
 

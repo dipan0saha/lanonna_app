@@ -111,6 +111,35 @@ void main() {
     expect(find.text('Add a photo'), findsOneWidget);
   });
 
+  testWidgets('signed-in no-baby step explains joining by invite (#409)', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(800, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final fx = await _fixtures();
+    await tester.pumpWidget(
+      _wrap(
+        const OnboardingCreateBabyScreen(),
+        coordinator: fx.coordinator,
+        storage: fx.storage,
+        repository: fx.repository,
+        babyStore: fx.babyStore,
+        api: fx.api,
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(
+      find.byKey(const Key('onboarding_create_baby_invite_note')),
+      findsOneWidget,
+    );
+    expect(find.text("Joining a family's baby instead?"), findsOneWidget);
+    expect(
+      find.textContaining('If your invite was revoked or has expired'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('gallery opt-in shown when draft has photo', (tester) async {
     final fx = await _fixtures();
     await fx.coordinator.saveCreateBabyDraft(

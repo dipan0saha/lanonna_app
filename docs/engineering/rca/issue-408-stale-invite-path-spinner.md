@@ -16,7 +16,8 @@ That screen renders `InviteLandingLoading` forever when `cachedInvitePreview` is
 |-------|--------|
 | `OnboardingCoordinator.shouldResumeInviteFlow` | True only when there is an active handoff: pending token, cached preview, or an in-progress invite step **before** invite onboarding completed. False when invite onboarding completed or server says no membership and no handoff. |
 | `AppSession` | Invite redirect branch uses `shouldResumeInviteFlow`; otherwise fall through to no-baby / owner resume. On fresh status load, `abandonStaleInvitePath` resets path to owner when handoff is gone. |
-| Invite landing screens | Missing preview/token → problem state + `leaveInvitationFlow`, never infinite loading. |
+| `AppSession.redirectFor` | A signed-in user on a follower/co-owner invite landing with no token and no preview is sent to `signedInResumeLocation` directly (nothing to land on). |
+| Invite landing screens | Missing preview/token → problem state + `leaveInvitationFlow`, never infinite loading (the signed-out case, and any race before the redirect). |
 | `ensureInvitePreviewLoaded` | No token → problem/leave path instead of silent `go(carousel)` for signed-in users. |
 
 ## References

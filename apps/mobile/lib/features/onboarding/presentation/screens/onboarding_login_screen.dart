@@ -74,7 +74,7 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
         await coordinator.restoreInviteHandoff(
           token: resume.token,
           path: resume.path,
-          previewJson: resume.previewJson,
+          preview: resume.preview,
         );
       }
       if (!mounted) return;

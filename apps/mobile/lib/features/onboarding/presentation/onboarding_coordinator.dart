@@ -60,17 +60,18 @@ class OnboardingCoordinator extends ChangeNotifier {
     };
   }
 
-  String? get invitePreviewJsonForHandoff => _storage.invitePreviewJson;
-
+  /// Re-binds the invite after an account switch (#406). The preview is
+  /// stored through [_previewToJson], the same field allowlist as
+  /// [bindInviteFromPreview], so the invitee email is never persisted.
   Future<void> restoreInviteHandoff({
     required String token,
     required OnboardingPath path,
-    String? previewJson,
+    InvitationPreview? preview,
   }) async {
     await setPendingInviteToken(token);
     await saveOnboardingPath(path);
-    if (previewJson != null && previewJson.isNotEmpty) {
-      await _storage.saveInvitePreviewJson(previewJson);
+    if (preview != null) {
+      await _storage.saveInvitePreviewJson(jsonEncode(_previewToJson(preview)));
     }
     notifyListeners();
   }

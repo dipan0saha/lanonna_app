@@ -53,5 +53,10 @@ theme: AppTheme.light,
     expect(find.text('Create Baby'), findsOneWidget);
     expect(find.text('Continue'), findsNothing);
     expect(find.text('Also share this photo in the gallery'), findsNothing);
+    // The join-by-invite note belongs to the no-baby onboarding step only.
+    expect(
+      find.byKey(const Key('onboarding_create_baby_invite_note')),
+      findsNothing,
+    );
   });
 }

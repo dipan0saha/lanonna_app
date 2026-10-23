@@ -28,6 +28,17 @@ class _Api extends ApiClient {
     }
     throw UnimplementedError(path);
   }
+
+  Map<String, dynamic>? lastPatch;
+
+  @override
+  Future<Map<String, dynamic>> patchJson(
+    String path, {
+    Map<String, dynamic>? body,
+  }) async {
+    lastPatch = body;
+    return {'display_name': body?['display_name']};
+  }
 }
 
 void main() {
@@ -75,14 +86,22 @@ void main() {
     expect(repo(_Api()..offline = true).identity, isNull);
   });
 
-  test('syncProfileFromServer refreshes cached account for the shell avatar', () async {
+  test('onboarding profile save updates the cached account (#407)', () async {
+    final api = _Api()..displayName = '';
+    final r = repo(api);
+    await r.ensureAccountLoaded();
+    await r.updateProfile(displayName: 'Nora QA', acceptTerms: true);
+    expect(api.lastPatch?['accept_terms'], isTrue);
+    expect(r.cachedAccount?.displayName, 'Nora QA');
+    expect(r.identity?.displayName, 'Nora QA');
+  });
+
+  test('a plain profile edit never sends accept_terms', () async {
     final api = _Api();
     final r = repo(api);
     await r.ensureAccountLoaded();
-    api.displayName = 'Nora QA';
-    await r.syncProfileFromServer();
-    expect(r.cachedAccount?.displayName, 'Nora QA');
-    expect(r.identity?.displayName, 'Nora QA');
+    await r.updateProfile(displayName: 'Dana L');
+    expect(api.lastPatch?.containsKey('accept_terms'), isFalse);
   });
 
   test('the loaded profile wins over the stored one', () async {

@@ -30,6 +30,7 @@ import '../../onboarding/presentation/utils/onboarding_baby_helpers.dart';
 import '../../onboarding/presentation/utils/onboarding_back_navigation.dart';
 import '../../onboarding/presentation/widgets/onboarding_buttons.dart';
 import '../../onboarding/presentation/widgets/onboarding_fields.dart';
+import '../../onboarding/presentation/widgets/onboarding_note_card.dart';
 import '../../onboarding/presentation/widgets/onboarding_prototype_widgets.dart';
 import '../../onboarding/presentation/widgets/onboarding_scaffold.dart';
 import '../../onboarding/presentation/widgets/onboarding_typography.dart';
@@ -502,6 +503,16 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
           onPressed: _busy ? null : _submit,
         ),
         const SizedBox(height: 26),
+        // Signed in with no baby (a new owner, or a follower who left or was
+        // removed): joining is by invite link only, so say so here rather
+        // than a separate empty state (#409).
+        if (_isOnboarding && !_isReviseOnboarding)
+          OnboardingNoteCard(
+            key: const Key('onboarding_create_baby_invite_note'),
+            icon: Icons.mail_outline,
+            title: l10n.onboardingInviteNoteTitle,
+            message: l10n.onboardingInviteNoteBody,
+          ),
         if (_error != null) ...[
           const SizedBox(height: 16),
           Text(

@@ -3436,6 +3436,18 @@ abstract class AppLocalizations {
   /// **'You can always add or change these details later.'**
   String get babyYouCanAlwaysAddOr;
 
+  /// Create-baby onboarding step: title of the note for people waiting for, or holding, an invite to someone else's baby.
+  ///
+  /// In en, this message translates to:
+  /// **'Joining a family\'s baby instead?'**
+  String get onboardingInviteNoteTitle;
+
+  /// Create-baby onboarding step: how to join by invite instead of creating a baby.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the invite link from their email on this phone to join. If your invite was revoked or has expired, ask them to send a new one.'**
+  String get onboardingInviteNoteBody;
+
   /// No description provided for @babyAlreadyBorn.
   ///
   /// In en, this message translates to:

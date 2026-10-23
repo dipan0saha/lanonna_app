@@ -14,9 +14,14 @@
 
 | Layer | Change |
 |-------|--------|
-| `AccountRepository.syncProfileFromServer` | Refetch `/v1/me/account` and publish `profileUpdates` even when cache exists (after onboarding profile save). |
-| `OnboardingCompleteProfileScreen` | Calls `syncProfileFromServer` after successful `updateProfile`. |
+| `AccountRepository.updateProfile` | The one profile write. Gains `acceptTerms` (sent only when true; acceptance is one-way on the server). Its PATCH response already updates the cached account and stored identity. |
+| `OnboardingRepository.updateProfile` | **Deleted.** It duplicated the PATCH and bypassed the account cache, which was the root cause of **A**. |
+| `OnboardingCompleteProfileScreen` | Saves through `AccountRepository.updateProfile(acceptTerms: true)`; no extra `/v1/me/account` GET. |
 | `AuthSessionService` | Private `_clearLocalSession()` shared by `signOut` and account-switch listener (same `SessionCleanup.clearLocalUserData()` — no duplicated logic). |
+
+## Review decision (PR #405)
+
+The first version added `AccountRepository.syncProfileFromServer` (a forced refetch after the onboarding save). It was replaced: it kept two PATCH implementations, cost an extra GET, and could join an `ensureAccountLoaded` request that was already in flight from before the save, which would publish the old name again. Routing the write through the account layer fixes the cause, not the symptom. Tests: `account_identity_test.dart`.
 
 ## References
 

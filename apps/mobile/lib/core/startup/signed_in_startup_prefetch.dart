@@ -26,11 +26,17 @@ Future<void> startSignedInStartupPrefetch({
   required NotificationsRepository notificationsRepository,
 }) async {
   final storedBabyId = selectedBabyStore.selectedBabyId;
+  // Home is only speculated for a session that may open it: a cached status
+  // that says otherwise (no baby left, onboarding still open) routes the
+  // cold start elsewhere, so no Home read is started for it (#409).
+  session.restoreCachedStatus();
+  final cached = session.status;
+  final mayOpenHome = cached == null || cached.canAccessMainApp;
   await Future.wait<void>([
     _logged('onboarding_status', session.refreshFromApi),
     _logged('account', accountRepository.ensureAccountLoaded),
     _logged('unread', notificationsRepository.refreshUnreadCount),
-    if (storedBabyId != null)
+    if (storedBabyId != null && mayOpenHome)
       _logged(
         'home_summary',
         () => homeRepository.fetchHomeSummary(storedBabyId, speculative: true),

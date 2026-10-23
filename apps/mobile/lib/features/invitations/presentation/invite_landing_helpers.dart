@@ -11,6 +11,7 @@ import '../../onboarding/presentation/onboarding_coordinator.dart';
 import '../data/invitations_repository.dart';
 import '../data/models/invitation_preview.dart';
 import 'invite_accept_messages.dart';
+import 'invite_flow_state.dart';
 
 class InvitePreviewLoadResult {
   const InvitePreviewLoadResult._({
@@ -71,7 +72,11 @@ Future<InvitePreviewLoadResult> ensureInvitePreviewLoaded(BuildContext context) 
   }
 }
 
+/// Ends the invite flow: drops the stored token and preview and every
+/// in-memory handoff (mismatch, prefills, switch-account resume), then goes to
+/// the signed-out entry or the canonical signed-in destination (#409).
 Future<void> leaveInvitationFlow(BuildContext context) async {
+  context.read<InviteFlowState>().clear();
   await context.read<OnboardingCoordinator>().clearPendingInvite();
   if (!context.mounted) return;
   final auth = context.read<AuthRepository>();

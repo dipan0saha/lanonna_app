@@ -952,6 +952,14 @@
   "babyUpdateYourBabysProfile": "Update your baby's profile",
   "babyCreateYourBabysProfile": "Create your baby's profile",
   "babyYouCanAlwaysAddOr": "You can always add or change these details later.",
+  "onboardingInviteNoteTitle": "Joining a family's baby instead?",
+  "@onboardingInviteNoteTitle": {
+    "description": "Create-baby onboarding step: title of the note for people waiting for, or holding, an invite to someone else's baby."
+  },
+  "onboardingInviteNoteBody": "Open the invite link from their email on this phone to join. If your invite was revoked or has expired, ask them to send a new one.",
+  "@onboardingInviteNoteBody": {
+    "description": "Create-baby onboarding step: how to join by invite instead of creating a baby."
+  },
   "babyAlreadyBorn": "Already Born",
   "babyGender": "Gender",
   "babyTapContinueToTryAgain": "Tap Continue to try again.",
