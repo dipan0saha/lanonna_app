@@ -291,6 +291,40 @@ void main() {
   });
 
   test(
+    'follower who also created a baby leaves the signed-out carousel on cold start',
+    () async {
+      final f = await _fixtures();
+      f.session.debugSetStatus(
+        const OnboardingStatus(
+          emailVerified: true,
+          profileComplete: true,
+          hasOwnerBaby: true,
+          hasBabyMembership: true,
+          ownerOnboardingCompleted: false,
+          needsOwnerOnboarding: true,
+          canAccessMainApp: true,
+        ),
+      );
+      expect(
+        f.session.redirectFor(
+          isSignedIn: true,
+          emailVerified: true,
+          location: OnboardingRoutes.ownerCarousel,
+        ),
+        '/home',
+      );
+      expect(
+        f.session.redirectFor(
+          isSignedIn: true,
+          emailVerified: true,
+          location: OnboardingRoutes.login,
+        ),
+        '/home',
+      );
+    },
+  );
+
+  test(
     'follower who also created a baby keeps home and owner onboarding',
     () async {
       final f = await _fixtures();

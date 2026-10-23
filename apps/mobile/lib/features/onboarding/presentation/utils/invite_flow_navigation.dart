@@ -40,6 +40,17 @@ Future<void> _selectJoinedBaby(BuildContext context, String babyId) async {
   );
 }
 
+/// Whether the signed-in user already belongs to the baby on this invite.
+Future<bool> viewerBelongsToInviteBaby(
+  BuildContext context,
+  InvitationPreview preview,
+) async {
+  final babyId = preview.babyProfileId;
+  if (babyId == null || babyId.isEmpty) return false;
+  final baby = await context.read<HomeRepository>().babyById(babyId);
+  return baby != null;
+}
+
 Future<void> navigateAfterCompleteProfile(BuildContext context) async {
   final coordinator = context.read<OnboardingCoordinator>();
   final token = coordinator.pendingInviteToken;
@@ -115,8 +126,8 @@ Future<void> continueToJoinedBabyHome(
 
 /// Preview status `accepted` means this invite was already used.
 ///
-/// Signed-out visitors go to login. Signed-in visitors call accept, which
-/// returns `already_member` when they still belong to the baby.
+/// Signed-out visitors go to login. Signed-in visitors who already belong to
+/// the baby go Home with no accept call. Everyone else sees `already_used`.
 Future<void> openAcceptedInvitePreview(BuildContext context) async {
   final auth = context.read<AuthRepository>();
   if (auth.currentUser == null) {
@@ -124,17 +135,16 @@ Future<void> openAcceptedInvitePreview(BuildContext context) async {
     return;
   }
   final coordinator = context.read<OnboardingCoordinator>();
-  final token = coordinator.pendingInviteToken;
-  if (token != null && token.isNotEmpty) {
-    await acceptSignedInInviteAndContinue(context, token);
-    return;
-  }
   final preview = coordinator.cachedInvitePreview;
-  if (preview != null && preview.isAccepted) {
+  if (preview == null || !preview.isAccepted) {
+    throw const InviteAcceptException('not_found');
+  }
+  if (!context.mounted) return;
+  if (await viewerBelongsToInviteBaby(context, preview)) {
     await continueToJoinedBabyHome(context);
     return;
   }
-  throw const InviteAcceptException('not_found');
+  throw const InviteAcceptException('already_used');
 }
 
 /// Primary CTA of both invite landing screens (follower and co-owner): Open

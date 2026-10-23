@@ -339,9 +339,6 @@ def accept_invitation_by_token(
 
         inv = dict(inv)
         invitee_email = str(inv["invitee_email"]).strip().lower()
-        if normalized_user_email != invitee_email:
-            raise _email_mismatch(invitee_email, normalized_user_email)
-
         baby_profile_id = inv["baby_profile_id"]
         existing = conn.execute(
             """
@@ -370,6 +367,9 @@ def accept_invitation_by_token(
                 "role": existing["role"],
                 "baby_name": baby_name,
             }
+
+        if normalized_user_email != invitee_email:
+            raise _email_mismatch(invitee_email, normalized_user_email)
 
         invite_status = inv["status"]
         if invite_status == "revoked":

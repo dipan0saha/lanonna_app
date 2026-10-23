@@ -107,7 +107,12 @@ Future<Widget> bootstrapLaNonnaApp({
     apiClient,
     babyList: babyList,
   );
-  final homeRepository = HomeRepository(apiClient, babyList: babyList);
+  final selectedBabyStore = SelectedBabyStore(prefs);
+  final homeRepository = HomeRepository(
+    apiClient,
+    babyList: babyList,
+    selectedBabyStore: selectedBabyStore,
+  );
   final galleryRepository = GalleryRepository(apiClient);
   final eventCoverUploader = ApiEventCoverUploader(apiClient);
   final calendarRepository = CalendarRepository(apiClient);
@@ -138,7 +143,6 @@ Future<Widget> bootstrapLaNonnaApp({
     currentUserId: () => authRepository.currentUser?.uid,
   );
   session.bindConnectivity(connectivityService);
-  final selectedBabyStore = SelectedBabyStore(prefs);
   sessionCleanup = SessionCleanup(
     coordinator: coordinator,
     homeRepository: homeRepository,
@@ -155,6 +159,30 @@ Future<Widget> bootstrapLaNonnaApp({
     sessionCleanup: sessionCleanup,
     biometricSignInService: biometricSignInService,
     pushNotificationService: pushNotificationService,
+  );
+  authSessionService.bindUserScopedSession(
+    authStateChanges: authRepository.authStateChanges(),
+    onSignedIn: () async {
+      await session.refreshFromApi();
+      await startSignedInStartupPrefetch(
+        session: session,
+        homeRepository: homeRepository,
+        selectedBabyStore: selectedBabyStore,
+        accountRepository: accountRepository,
+        notificationsRepository: notificationsRepository,
+      );
+    },
+    onUserSwitched: () async {
+      await sessionCleanup.clearLocalUserData();
+      await session.refreshFromApi();
+      await startSignedInStartupPrefetch(
+        session: session,
+        homeRepository: homeRepository,
+        selectedBabyStore: selectedBabyStore,
+        accountRepository: accountRepository,
+        notificationsRepository: notificationsRepository,
+      );
+    },
   );
   final homeRefreshSignal = HomeRefreshSignal();
   apiClient.registerMembershipEndedHandler(

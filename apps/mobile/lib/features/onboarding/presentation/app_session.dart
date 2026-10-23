@@ -187,6 +187,14 @@ class AppSession extends ChangeNotifier {
     ..._invitePublic,
   };
 
+  /// Signed-out entry screens that must never show for a signed-in user who
+  /// may already use the main app (#400).
+  static const _signedOutEntryOnboarding = {
+    OnboardingRoutes.ownerCarousel,
+    OnboardingRoutes.signup,
+    OnboardingRoutes.login,
+  };
+
   String? redirectFor({
     required bool isSignedIn,
     required bool emailVerified,
@@ -240,6 +248,9 @@ class AppSession extends ChangeNotifier {
       // Both flags can be true: a follower who also created a baby
       // (joined_via = created) may use Home and still finish owner onboarding.
       final keepOwnerOnboarding = _status?.needsOwnerOnboarding == true;
+      if (keepOwnerOnboarding && _signedOutEntryOnboarding.contains(path)) {
+        return '/home';
+      }
       if (!keepOwnerOnboarding &&
           OnboardingRoutes.isOnboardingPath(path) &&
           path != OnboardingRoutes.inviteAccept &&

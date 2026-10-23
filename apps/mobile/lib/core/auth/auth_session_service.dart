@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 import '../notifications/push_notification_service.dart';
@@ -30,6 +31,39 @@ class AuthSessionService {
   final BiometricSignInService? _biometricSignInService;
   final PushNotificationService? _pushNotificationService;
   final Duration _pushUnregisterTimeout;
+  StreamSubscription<User?>? _userScopeSub;
+  String? _boundUid;
+
+  /// Clears user-scoped caches when Firebase [uid] changes without a normal
+  /// [signOut] (e.g. signing in as another account from the onboarding carousel
+  /// while a session is still valid — #400).
+  void bindUserScopedSession({
+    required Stream<User?> authStateChanges,
+    required Future<void> Function() onSignedIn,
+    required Future<void> Function() onUserSwitched,
+  }) {
+    _userScopeSub?.cancel();
+    _boundUid = _authRepository.currentUser?.uid;
+    _userScopeSub = authStateChanges.listen((user) async {
+      final uid = user?.uid;
+      if (_boundUid == uid) return;
+      try {
+        if (_boundUid != null && uid != null) {
+          await onUserSwitched();
+        } else if (_boundUid == null && uid != null) {
+          await onSignedIn();
+        }
+      } catch (e, st) {
+        debugPrint('user_scoped_session_refresh_failed: $e\n$st');
+      }
+      _boundUid = uid;
+    });
+  }
+
+  void disposeUserScopedSession() {
+    _userScopeSub?.cancel();
+    _userScopeSub = null;
+  }
 
   /// Normal logout (account screen, app lock, account switch).
   ///
