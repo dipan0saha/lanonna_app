@@ -231,7 +231,7 @@ Clears babies and related rows for that user and clears `owner_onboarding_comple
 | `ship_release_apk_to_drive.sh`, `ship_release_apk_x86_64_to_drive.sh`, `copy_release_apk_to_drive.sh` | Build the release APK (universal / x86_64 emulator) and copy it to Drive; the copy script takes an optional destination file name |
 | `setup-schedulers.sh` | Create/update Cloud Scheduler jobs (weekly digest, expired-invite cleanup) |
 | `sync-email-templates.sh`, `sync-firebase-auth-templates.sh`, `configure-firebase-auth-email-project.sh`, `deploy-invite-hosting.sh` | Mailjet template mirror check/apply; Firebase auth email templates (`check` / `check-remote` / `apply`) and public-facing name; HTTPS invite landing on Firebase Hosting |
-| `hard_delete_user.sh <email>` | Hard-delete a dev user (SQL + GCS + Firebase); use `--dry-run` first |
+| `delete_dev_account.sh <email>` | Delete a dev account through the product delete path (`domain.account_delete.delete_account`: SQL transaction, GCS cleanup job, Firebase); use `--dry-run` first |
 | `provision_qa_validation_accounts.sh`, `seed_qa_gallery_photo.sh` | Provision QA owner/follower accounts and seed a gallery photo for Maestro/manual QA |
 | `mark_firebase_email_verified.py <email>` | Mark a dev Firebase user email-verified when the inbox cannot receive mail (`@test.com`) |
 | `configure-android-google-sign-in.sh` | One-time dev setup: Android debug SHA + refresh `google-services.json` for Google Sign-In |
@@ -267,7 +267,7 @@ Dev API base URL: `apps/mobile/flavors/dev.json` → `API_BASE_URL` (sync steps:
 | POST | `/v1/me/notifications/read-all` | Mark all inbox notifications read for the current user (`updated` count) |
 | PUT, DELETE | `/v1/me/device-tokens` | Register or remove FCM device token (`platform`: `ios` \| `android`) |
 | GET | `/v1/me/delete-account/preview` | What deleting the account will remove: `sole_owned_babies` (`{id, name}`). Deletion is never blocked (FR-SET-005), so there is no allowed/blockers contract |
-| POST | `/v1/me/delete-account` | SQL first in one transaction: **hard-deletes** babies the user is the only active owner of (decided under the baby row lock), ends other memberships, purges authored photos on shared babies, tombstones `app_users`, enqueue `storage_cleanup_jobs` + Pub/Sub worker GCS purge, then Firebase `delete_user` (#H-03). If Firebase fails after SQL, retry POST (skips SQL when already tombstoned; republishes cleanup if needed). Stuck jobs are re-run by the `sweep-storage-cleanup-jobs` scheduler (`./scripts/setup-schedulers.sh`). See [rca/account-deletion-storage-cleanup.md](rca/account-deletion-storage-cleanup.md). |
+| POST | `/v1/me/delete-account` | SQL first in one transaction: **hard-deletes** babies the user is the only active owner of (decided under the baby row lock), ends other memberships, purges authored photos on shared babies, removes personal rows (inbox and others' inbox rows about the user, device tokens, biometric keys, banner dismissals, settled invites to their email) and tombstones `app_users` clearing all profile PII (see [rca/account-deletion-user-data-audit.md](rca/account-deletion-user-data-audit.md)), enqueue `storage_cleanup_jobs` + Pub/Sub worker GCS purge, then Firebase `delete_user` (#H-03). If Firebase fails after SQL, retry POST (skips SQL when already tombstoned; republishes cleanup if needed). Stuck jobs are re-run by the `sweep-storage-cleanup-jobs` scheduler (`./scripts/setup-schedulers.sh`). See [rca/account-deletion-storage-cleanup.md](rca/account-deletion-storage-cleanup.md). |
 | POST | `/v1/babies/{baby_profile_id}/data-export` | Queue baby JSON export (owner); the worker runs it with Pub/Sub retry semantics ([worker README](../../services/worker/README.md)) |
 | GET | `/v1/babies/{baby_profile_id}/data-export/latest` | Export job status (`pending` / `running` / `ready` / `failed`) + signed download URL |
 | PATCH | `/v1/profile` | Firebase Bearer JWT; `display_name` (trimmed, min length 1), optional `avatar_url`, `phone` (normalized or 422), `birth_date`, `country_code`, `postal_code`, `accept_terms` (sets `terms_accepted_at`), `biometric_unlock_enabled` (optional bool). Read profile via `GET /v1/me/account`. |
@@ -378,7 +378,7 @@ Apply every SQL file in `infra/db/migrations/` in lexicographic order (the [migr
 |--------|---------|
 | `apply_migrations.py` | Runs every `migrations/*.sql` in lexicographic order (DDL is idempotent; safe to re-run on dev) |
 | `clear_dev_test_data.py` | Delete baby-domain rows for a test user; optional `--reset-onboarding` |
-| `scripts/hard_delete_user.sh` | One-liner hard delete by email (SQL + GCS + Firebase); uses `infra/db/.venv` |
+| `scripts/delete_dev_account.sh` | Delete an account by email through the product delete path; uses `infra/db/.venv` |
 
 Set `DB_HOST`, `DB_PORT` (e.g. `5433` if 5432 is in use), `DB_PASSWORD`, and `DB_USER` / `DB_NAME` as needed (defaults match dev Cloud SQL via proxy).
 
