@@ -10,7 +10,6 @@ import '../api/localized_failure.dart';
 import 'auth_repository.dart';
 import 'biometric_credential_repository.dart';
 import 'biometric_sign_in_store.dart';
-import 'biometric_unlock_state.dart';
 
 /// Biometric sign-in after Log out (design:
 /// docs/engineering/rca/biometric-signin-after-logout.md).
@@ -42,18 +41,21 @@ class BiometricSignInService {
   /// This install's enrollment, or `null` when biometric sign-in is not set up.
   BiometricSignInEnrollment? get enrollment => _store.read();
 
-  /// Full on-device activation for the signed-in account (server flag + local
-  /// key for this uid). Single source of truth for Settings and app lock.
+  /// Whether **Biometric sign-in & unlock** is on for the signed-in account on
+  /// this install: the account's server flag **and** this install's enrollment
+  /// belongs to that account. The one answer for the Settings switch and the
+  /// app lock (docs/engineering/rca/biometric-toggle-after-other-account-sign-in.md).
+  ///
+  /// The server flag alone is not enough: another account signing in here
+  /// clears the enrollment (single key slot) but cannot change the previous
+  /// account's flag, which other devices still rely on.
   bool isUnlockActiveForSignedInUser({
     required bool serverBiometricUnlockEnabled,
   }) {
     final uid = _authRepository.currentUser?.uid;
-    if (uid == null) return false;
-    return biometricUnlockActiveOnDevice(
-      serverBiometricUnlockEnabled: serverBiometricUnlockEnabled,
-      localEnrollment: enrollment,
-      signedInFirebaseUid: uid,
-    );
+    return serverBiometricUnlockEnabled &&
+        uid != null &&
+        enrollment?.firebaseUid == uid;
   }
 
   /// Drops the enrollment as soon as a different account is signed in here, by
