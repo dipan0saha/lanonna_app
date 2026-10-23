@@ -7,6 +7,7 @@ import '../../core/domain/baby_summary.dart';
 import '../../core/presentation/tab_load_failure.dart';
 import '../../core/presentation/tab_load_kind.dart';
 import '../../core/theme/app_metrics.dart';
+import '../../core/widgets/app_banner.dart';
 import '../../core/widgets/app_confirm_dialog.dart';
 import '../../core/widgets/app_snackbar.dart';
 import '../../core/widgets/async_tab_body.dart';
@@ -317,8 +318,8 @@ class _HomeScreenState extends State<HomeScreen>
                       AppMetrics.horizontalPadding,
                       0,
                     ),
-                    child: MaterialBanner(
-                      content: Text(_summaryError!),
+                    child: AppBanner(
+                      message: _summaryError!,
                       actions: [
                         TextButton(onPressed: _load, child: Text(AppLocalizations.of(context)!.actionRetry)),
                       ],
