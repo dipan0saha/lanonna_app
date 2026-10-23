@@ -313,16 +313,78 @@ void main() {
         ),
         '/home',
       );
-      expect(
-        f.session.redirectFor(
-          isSignedIn: true,
-          emailVerified: true,
-          location: OnboardingRoutes.login,
-        ),
-        '/home',
-      );
     },
   );
+
+  test('a main-app user never stays on the signed-out carousel', () async {
+    final f = await _fixtures();
+    f.session.debugSetStatus(
+      const OnboardingStatus(
+        emailVerified: true,
+        profileComplete: true,
+        hasOwnerBaby: false,
+        hasBabyMembership: true,
+        ownerOnboardingCompleted: false,
+        needsOwnerOnboarding: false,
+        canAccessMainApp: true,
+      ),
+    );
+    expect(
+      f.session.redirectFor(
+        isSignedIn: true,
+        emailVerified: true,
+        location: OnboardingRoutes.ownerCarousel,
+      ),
+      '/home',
+    );
+  });
+
+  test("another account's status is never used for routing", () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final storage = OnboardingStorage(prefs);
+    final repository = OnboardingRepository(
+      ApiClient(idTokenProvider: () async => null),
+    );
+    final coordinator = OnboardingCoordinator(
+      storage: storage,
+      repository: repository,
+    );
+    await coordinator.hydrate();
+    var uid = 'uid-a';
+    final session = AppSession(
+      repository: repository,
+      storage: storage,
+      coordinator: coordinator,
+      currentUserId: () => uid,
+    );
+    session.debugSetStatus(
+      const OnboardingStatus(
+        emailVerified: true,
+        profileComplete: true,
+        hasOwnerBaby: true,
+        hasBabyMembership: true,
+        ownerOnboardingCompleted: true,
+        needsOwnerOnboarding: false,
+        canAccessMainApp: true,
+      ),
+    );
+    expect(session.canAccessMainApp, isTrue);
+
+    uid = 'uid-b';
+
+    expect(session.status, isNull);
+    expect(session.canAccessMainApp, isFalse);
+    expect(
+      session.redirectFor(
+        isSignedIn: true,
+        emailVerified: true,
+        location: '/home',
+      ),
+      isNot('/home'),
+    );
+    expect(session.statusPhase, OnboardingStatusPhase.unknown);
+  });
 
   test(
     'follower who also created a baby keeps home and owner onboarding',

@@ -160,29 +160,16 @@ Future<Widget> bootstrapLaNonnaApp({
     biometricSignInService: biometricSignInService,
     pushNotificationService: pushNotificationService,
   );
+  Future<void> prefetchSignedInSession() => startSignedInStartupPrefetch(
+    session: session,
+    homeRepository: homeRepository,
+    selectedBabyStore: selectedBabyStore,
+    accountRepository: accountRepository,
+    notificationsRepository: notificationsRepository,
+  );
   authSessionService.bindUserScopedSession(
     authStateChanges: authRepository.authStateChanges(),
-    onSignedIn: () async {
-      await session.refreshFromApi();
-      await startSignedInStartupPrefetch(
-        session: session,
-        homeRepository: homeRepository,
-        selectedBabyStore: selectedBabyStore,
-        accountRepository: accountRepository,
-        notificationsRepository: notificationsRepository,
-      );
-    },
-    onUserSwitched: () async {
-      await sessionCleanup.clearLocalUserData();
-      await session.refreshFromApi();
-      await startSignedInStartupPrefetch(
-        session: session,
-        homeRepository: homeRepository,
-        selectedBabyStore: selectedBabyStore,
-        accountRepository: accountRepository,
-        notificationsRepository: notificationsRepository,
-      );
-    },
+    onUserSwitched: prefetchSignedInSession,
   );
   final homeRefreshSignal = HomeRefreshSignal();
   apiClient.registerMembershipEndedHandler(
@@ -202,15 +189,7 @@ Future<Widget> bootstrapLaNonnaApp({
   final appVersionService = AppVersionService(apiClient);
   unawaited(appVersionService.start());
   if (authRepository.currentUser != null) {
-    unawaited(
-      startSignedInStartupPrefetch(
-        session: session,
-        homeRepository: homeRepository,
-        selectedBabyStore: selectedBabyStore,
-        accountRepository: accountRepository,
-        notificationsRepository: notificationsRepository,
-      ),
-    );
+    unawaited(prefetchSignedInSession());
   }
 
   final initialInviteLocation = coldStartUri != null

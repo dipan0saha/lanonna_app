@@ -190,32 +190,41 @@ void main() {
     expect(calls, ['clearLocal', 'firebaseSignOut']);
   });
 
-  test('switching Firebase user clears local session without signOut', () async {
+  test('switching Firebase user runs the sign-out local cleanup, then the '
+      'new account\'s startup reads; no server call, no Firebase sign-out', () async {
     final calls = <String>[];
     final f = await _service(calls);
-    var switched = false;
     f.session.bindUserScopedSession(
       authStateChanges: f.authEvents.stream,
-      onSignedIn: () async => calls.add('signedIn'),
-      onUserSwitched: () async {
-        switched = true;
-        calls.add('switched');
-        await f.cleanup.clearLocalUserData();
-      },
+      onUserSwitched: () async => calls.add('prefetch'),
     );
-    f.auth.debugSetUser(_User('uid-a'));
+
     f.authEvents.add(_User('uid-a'));
     await Future<void>.delayed(Duration.zero);
     expect(calls, isEmpty);
 
-    f.auth.debugSetUser(_User('uid-b'));
     f.authEvents.add(_User('uid-b'));
     await Future<void>.delayed(Duration.zero);
-    expect(switched, isTrue);
-    expect(calls, contains('switched'));
-    expect(calls, contains('clearLocal'));
+    expect(calls, ['clearLocal', 'prefetch']);
 
-    f.session.disposeUserScopedSession();
+    await f.authEvents.close();
+  });
+
+  test('sign-out then sign-in is not a switch: signOut already cleaned up', () async {
+    final calls = <String>[];
+    final f = await _service(calls, withPush: false);
+    f.session.bindUserScopedSession(
+      authStateChanges: f.authEvents.stream,
+      onUserSwitched: () async => calls.add('prefetch'),
+    );
+
+    await f.session.signOut();
+    f.authEvents
+      ..add(null)
+      ..add(_User('uid-b'));
+    await Future<void>.delayed(Duration.zero);
+
+    expect(calls, ['clearLocal', 'firebaseSignOut']);
     await f.authEvents.close();
   });
 }

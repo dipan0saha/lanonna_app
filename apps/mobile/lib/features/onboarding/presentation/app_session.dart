@@ -39,13 +39,19 @@ class AppSession extends ChangeNotifier {
   final String? Function()? _currentUserId;
 
   OnboardingStatus? _status;
+
+  /// Firebase uid [_status] was loaded for. A status is never used for
+  /// another signed-in account (account switch without sign-out, #400).
+  String? _statusUid;
   var _phase = OnboardingStatusPhase.unknown;
   var _statusStale = false;
   bool _loading = false;
   ConnectivityService? _connectivity;
   var _wasOffline = false;
 
-  OnboardingStatus? get status => _status;
+  OnboardingStatus? get status => _ownsStatus ? _status : null;
+
+  bool get _ownsStatus => _statusUid == _currentUserId?.call();
   OnboardingStatusPhase get statusPhase => _phase;
 
   /// Cached server status used because the latest fetch failed.
@@ -53,17 +59,18 @@ class AppSession extends ChangeNotifier {
   bool get isLoading => _loading;
 
   bool get ownerOnboardingComplete =>
-      _storage.isCompleted || (_status?.ownerOnboardingCompleted ?? false);
+      _storage.isCompleted || (status?.ownerOnboardingCompleted ?? false);
 
   /// Server contract only. Device-local onboarding completion must not
   /// admit a co-owner or follower, or skip owner onboarding the server
   /// still requires.
-  bool get canAccessMainApp => _status?.canAccessMainApp == true;
+  bool get canAccessMainApp => status?.canAccessMainApp == true;
 
   /// Test-only hook to set onboarding status without calling the API.
   @visibleForTesting
   void debugSetStatus(OnboardingStatus? status) {
     _status = status;
+    _statusUid = _currentUserId?.call();
     _statusStale = false;
     _phase = status == null
         ? OnboardingStatusPhase.unknown
@@ -93,12 +100,20 @@ class AppSession extends ChangeNotifier {
   }
 
   void _restoreCachedStatus() {
-    if (_status != null) return;
+    if (_status != null && _ownsStatus) return;
+    if (_status != null) {
+      // Loaded for the previous account: forget it before routing this one.
+      _status = null;
+      _statusUid = null;
+      _phase = OnboardingStatusPhase.unknown;
+      _statusStale = false;
+    }
     final uid = _currentUserId?.call();
     if (uid == null || uid.isEmpty) return;
     final cached = _storage.readCachedOnboardingStatus(uid);
     if (cached == null) return;
     _status = cached;
+    _statusUid = uid;
     _phase = OnboardingStatusPhase.loaded;
     _statusStale = true;
   }
@@ -120,20 +135,25 @@ class AppSession extends ChangeNotifier {
 
   Future<void> refreshFromApi() async {
     _loading = true;
-    if (_status == null) _restoreCachedStatus();
+    _restoreCachedStatus();
     notifyListeners();
+    final uid = _currentUserId?.call();
     try {
       final fresh = await _repository.fetchStatus();
+      // The account changed while this was in flight: the payload is not
+      // the current user's.
+      if (_currentUserId?.call() != uid) return;
       _status = fresh;
+      _statusUid = uid;
       _phase = OnboardingStatusPhase.loaded;
       _statusStale = false;
-      final uid = _currentUserId?.call();
       if (uid != null && uid.isNotEmpty) {
         await _storage.saveCachedOnboardingStatus(uid, fresh);
       }
       await _applyLoadedStatus(fresh, fresh: true);
     } catch (_) {
-      if (_status == null) _restoreCachedStatus();
+      if (_currentUserId?.call() != uid) return;
+      _restoreCachedStatus();
       if (_status == null) {
         _phase = OnboardingStatusPhase.unavailable;
         _statusStale = false;
@@ -187,14 +207,6 @@ class AppSession extends ChangeNotifier {
     ..._invitePublic,
   };
 
-  /// Signed-out entry screens that must never show for a signed-in user who
-  /// may already use the main app (#400).
-  static const _signedOutEntryOnboarding = {
-    OnboardingRoutes.ownerCarousel,
-    OnboardingRoutes.signup,
-    OnboardingRoutes.login,
-  };
-
   String? redirectFor({
     required bool isSignedIn,
     required bool emailVerified,
@@ -245,12 +257,13 @@ class AppSession extends ChangeNotifier {
     }
 
     if (canAccessMainApp) {
+      // The welcome carousel is the signed-out entry (and the router's cold
+      // start location). A user who may use Home never stays on it, whatever
+      // owner onboarding is still open (#400).
+      if (path == OnboardingRoutes.ownerCarousel) return '/home';
       // Both flags can be true: a follower who also created a baby
       // (joined_via = created) may use Home and still finish owner onboarding.
       final keepOwnerOnboarding = _status?.needsOwnerOnboarding == true;
-      if (keepOwnerOnboarding && _signedOutEntryOnboarding.contains(path)) {
-        return '/home';
-      }
       if (!keepOwnerOnboarding &&
           OnboardingRoutes.isOnboardingPath(path) &&
           path != OnboardingRoutes.inviteAccept &&

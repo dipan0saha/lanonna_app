@@ -139,8 +139,9 @@ Future<void> openAcceptedInvitePreview(BuildContext context) async {
   if (preview == null || !preview.isAccepted) {
     throw const InviteAcceptException('not_found');
   }
+  final isMember = await viewerBelongsToInviteBaby(context, preview);
   if (!context.mounted) return;
-  if (await viewerBelongsToInviteBaby(context, preview)) {
+  if (isMember) {
     await continueToJoinedBabyHome(context);
     return;
   }

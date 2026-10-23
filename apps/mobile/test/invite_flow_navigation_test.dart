@@ -300,15 +300,20 @@ void main() {
     expect(h.lastMessage, 'This invitation link is invalid or was revoked.');
   });
 
+  // Only Accept on a pending invite calls the API; Open on an accepted one
+  // decides from membership alone (see the tests above).
   testWidgets('a refused accept returns the mapped message', (tester) async {
     final h = await _pump(
       tester,
-      preview: _preview(InvitationStatus.accepted),
+      preview: _preview(InvitationStatus.pending),
       token: 'invite-token',
       acceptResult: const InvitationAcceptResult(error: 'revoked'),
     );
     expect(find.text('Home reached'), findsNothing);
-    expect(h.lastMessage, isNotNull);
-    expect(h.lastMessage, isNotEmpty);
+    expect(h.invitations.acceptedTokens, ['invite-token']);
+    expect(
+      h.lastMessage,
+      'This invitation was revoked. Ask the family to send a new invite.',
+    );
   });
 }

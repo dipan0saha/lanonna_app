@@ -33,7 +33,19 @@ The correct product rule is: **if the viewer already belongs to the baby, Open g
 |-------|--------|
 | Mobile `invite_flow_navigation.dart` | For accepted previews: if the signed-in viewer belongs to `preview.babyProfileId`, finish invite onboarding and go Home **without** accept. If the invite is accepted and the viewer is **not** a member, surface `already_used` (invitation consumed by someone else). Pending invites unchanged: accept when appropriate. |
 | API `accept_invitation_by_token` | After loading the invitation row, resolve existing membership **before** email mismatch. Existing members always get `already_member` + `baby_profile_id` idempotently. Email mismatch applies only to non-members who are not allowed to accept. |
-| Tests | Flutter widget tests: accepted + token + membership → no accept, Home. API pytest: member with non-invitee email → `already_member`, not 403. |
+| Tests | Flutter widget tests: accepted + token + membership → no accept, Home. API pytest: member with non-invitee email → `already_member`, not 403, nothing written (see the security review). |
+
+## Security review: membership before email (review)
+
+Moving the membership check ahead of the email check lets a token holder who is **already a member** of the baby get `already_member` for an invite addressed to someone else. That branch is read-only:
+
+- It returns before any write: no `UPDATE invitations`, no membership insert or reactivation, no role change, no owner-slot lock, and no `invite_accepted` notification (`domain/invitations.accept_invitation` skips it for `already_member`).
+- A **pending** invite stays `pending` with the same `updated_at`, so the real invitee can still accept it afterwards. A member's own role is never changed by someone else's invite (e.g. a follower opening a co-owner invite stays a follower).
+- It reveals only the baby name and the caller's own role, both of which a member already sees.
+- **Removed** members (`removed_at IS NOT NULL`) are not members here; they go through the email and status checks as before.
+- Non-members keep the previous order: `email_mismatch` first, then `revoked` (410), `accepted` → `already_used` (409), `expired` status or past `expires_at` → `expired` (410).
+
+Coverage: `tests/test_invitation_accept_membership.py` (every status, no write statement executed, no notification) and `tests/integration/test_invitation_accept_membership_postgres.py` (real Postgres: invite row and memberships unchanged for a member; the real invitee can still accept; revoked / expired / past-expiry / accepted refusals and `email_mismatch` for non-members, with nothing written).
 
 ## Resume consistency (#388 / #391)
 
