@@ -186,9 +186,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
       subtitle: voters.isEmpty
           ? AppLocalizations.of(context)!.funNoVotesYet
           : l10n.predictionVoteCount(voters.length),
-      bodyBuilder: (context) => ListView(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
+      bodyBuilder: (context) => AppModalSheetListBody(
         children: [
           for (final v in voters)
             ListTile(
