@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../../../core/api/api_client.dart';
 import 'package:lanonna/core/domain/baby_gender.dart';
 import '../../../core/api/api_exception.dart';
@@ -58,7 +60,9 @@ class AnnouncementDetail {
   }
 }
 
-class AnnouncementRepository {
+/// A baby's birth announcement. Notifies listeners after every successful
+/// mutation, so the keepsake card reloads whichever screen made the change.
+class AnnouncementRepository extends ChangeNotifier {
   AnnouncementRepository(this._api);
 
   final ApiClient _api;
@@ -97,11 +101,13 @@ class AnnouncementRepository {
         if (photoId != null) 'photo_id': photoId,
       },
     );
+    notifyListeners();
     return AnnouncementDetail.fromJson(json);
   }
 
   Future<void> squish(String babyId) async {
     await _api.postJson('/v1/babies/$babyId/announcement/squish');
+    notifyListeners();
   }
 
   Future<void> addComment(String babyId, String body) async {
@@ -109,5 +115,6 @@ class AnnouncementRepository {
       '/v1/babies/$babyId/announcement/comments',
       body: {'body': body},
     );
+    notifyListeners();
   }
 }

@@ -117,9 +117,7 @@ class _CalendarPastEventsBodyState extends State<_CalendarPastEventsBody> {
     if (_events.isEmpty) {
       return Text(l10n.calendarPastEventsEmpty);
     }
-    return ListView(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+    return AppModalSheetListBody(
       children: [
         for (final e in _events) CalendarEventListTile(event: e),
         if (_hasMore)

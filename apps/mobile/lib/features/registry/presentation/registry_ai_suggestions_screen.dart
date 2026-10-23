@@ -34,13 +34,27 @@ class _RegistryAiSuggestionsScreenState extends State<RegistryAiSuggestionsScree
   List<RegistrySuggestion> _items = [];
   var _loading = true;
   var _didInit = false;
+  RegistryRepository? _registryRepo;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_didInit) return;
     _didInit = true;
+    _registryRepo = context.read<RegistryRepository>()
+      ..addListener(_onRegistryChanged);
     _initAndLoad();
+  }
+
+  @override
+  void dispose() {
+    _registryRepo?.removeListener(_onRegistryChanged);
+    super.dispose();
+  }
+
+  /// An item added from a suggestion (or anywhere else) marks it as added.
+  void _onRegistryChanged() {
+    if (mounted) _load();
   }
 
   Future<void> _initAndLoad() async {
@@ -88,8 +102,8 @@ class _RegistryAiSuggestionsScreenState extends State<RegistryAiSuggestionsScree
     }
   }
 
-  Future<void> _addSuggestion(RegistrySuggestion item) async {
-    final added = await context.push<bool>(
+  void _addSuggestion(RegistrySuggestion item) {
+    context.push(
       RegistryRoutes.createItem,
       extra: RegistryItemFormPrefill(
         name: item.name,
@@ -97,9 +111,6 @@ class _RegistryAiSuggestionsScreenState extends State<RegistryAiSuggestionsScree
         catalogSuggestionId: item.id,
       ),
     );
-    if (added == true) {
-      await _load();
-    }
   }
 
   @override
