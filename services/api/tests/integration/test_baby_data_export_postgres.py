@@ -85,10 +85,10 @@ def test_export_includes_family_content_without_uids_or_member_emails():
                 registry_shipping_postal_code, registry_shipping_country_code
             )
             VALUES (%s, 'R2Baby Alpha', '2026-08-01', 'unknown', 'expecting',
-                    %s, 'avatars/babies/alpha.jpg',
+                    %s, 'avatars/babies/' || %s || '/alpha.jpg',
                     '1 Main', 'Boston', '02101', 'US')
             """,
-            (baby_id, _OWNER),
+            (baby_id, _OWNER, str(baby_id)),
         )
         conn.execute(
             """

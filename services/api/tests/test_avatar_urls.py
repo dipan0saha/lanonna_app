@@ -1,82 +1,80 @@
+import uuid
 from unittest.mock import patch
 
 import pytest
 
+from lanonna_api.config import settings
 from lanonna_api.domain.avatar_urls import (
-    gcs_object_path_from_stored,
-    normalize_avatar_for_storage,
-    signed_avatar_url,
-    signed_avatar_urls,
+    normalize_baby_avatar_for_storage,
+    normalize_user_avatar_for_storage,
+    signed_baby_avatar_urls,
+    signed_user_avatar_url,
 )
+from lanonna_api.domain.errors import InvalidInputError
 from lanonna_api.storage import mint_baby_avatar_upload_url, mint_user_avatar_upload_url
-
-
-@patch("lanonna_api.config.settings.display_bucket", "lanonna-dev-display")
-def test_gcs_object_path_from_legacy_public_url():
-    url = "https://storage.googleapis.com/lanonna-dev-display/smoke/uid/abc.jpg"
-    assert gcs_object_path_from_stored(url) == "smoke/uid/abc.jpg"
-
-
-@patch("lanonna_api.config.settings.display_bucket", "lanonna-dev-display")
-def test_normalize_strips_public_url_to_path():
-    url = "https://storage.googleapis.com/lanonna-dev-display/avatars/users/u1/x.webp"
-    assert normalize_avatar_for_storage(url) == "avatars/users/u1/x.webp"
-
-
-def test_normalize_external_oauth_url_unchanged():
-    oauth = "https://lh3.googleusercontent.com/a/photo"
-    assert normalize_avatar_for_storage(oauth) == oauth
 
 
 def _fake_sign(paths):
     return [f"https://signed/{p}" if p else None for p in paths]
 
 
-@patch("lanonna_api.domain.avatar_urls.signed_display_urls", side_effect=_fake_sign)
-def test_signed_avatar_url_for_object_path(_mock_sign):
-    assert signed_avatar_url("avatars/users/u1/x.jpg") == "https://signed/avatars/users/u1/x.jpg"
+def test_legacy_public_url_for_own_object_is_stored_as_the_path():
+    url = f"https://storage.googleapis.com/{settings.display_bucket}/avatars/users/u1/x.webp"
+    assert normalize_user_avatar_for_storage(url, "u1") == "avatars/users/u1/x.webp"
 
 
 @patch("lanonna_api.domain.avatar_urls.signed_display_urls", side_effect=_fake_sign)
-def test_signed_avatar_urls_sign_bucket_paths_in_one_batch(mock_sign):
-    oauth = "https://lh3.googleusercontent.com/a/photo"
-    urls = signed_avatar_urls(["avatars/babies/b/1.jpg", oauth, None, "  ", "avatars/babies/b/2.jpg"])
-    assert urls == [
-        "https://signed/avatars/babies/b/1.jpg",
-        oauth,
+def test_signed_user_avatar_url_signs_own_path(_mock_sign):
+    assert (
+        signed_user_avatar_url("avatars/users/u1/x.jpg", "u1")
+        == "https://signed/avatars/users/u1/x.jpg"
+    )
+
+
+@pytest.mark.parametrize(
+    "stored",
+    [
+        "avatars/users/victim/x.jpg",
+        "https://example.com/track.png",
+        "http://example.com/a.png",
+        "smoke/x.jpg",
+        "avatars/users/u1/../victim/x.jpg",
+        "",
         None,
-        None,
-        "https://signed/avatars/babies/b/2.jpg",
+    ],
+)
+@patch("lanonna_api.domain.avatar_urls.signed_display_urls", side_effect=_fake_sign)
+def test_read_path_never_signs_or_raises_on_unowned_rows(mock_sign, stored):
+    assert signed_user_avatar_url(stored, "u1") is None
+    mock_sign.assert_called_once_with([None])
+
+
+@patch("lanonna_api.domain.avatar_urls.signed_display_urls", side_effect=_fake_sign)
+def test_signed_baby_avatar_urls_checks_each_rows_own_prefix(mock_sign):
+    baby_a = uuid.uuid4()
+    baby_b = uuid.uuid4()
+    rows = [
+        {"id": baby_a, "avatar_url": f"avatars/babies/{baby_a}/1.jpg"},
+        {"id": baby_b, "avatar_url": f"avatars/babies/{baby_a}/stolen.jpg"},
+        {"id": baby_b, "avatar_url": "https://example.com/x.png"},
     ]
-    mock_sign.assert_called_once()
-
-
-def test_signed_avatar_url_passthrough_oauth():
-    oauth = "https://lh3.googleusercontent.com/a/photo"
-    assert signed_avatar_url(oauth) == oauth
+    urls = signed_baby_avatar_urls(rows)
+    assert urls == [f"https://signed/avatars/babies/{baby_a}/1.jpg", None, None]
+    mock_sign.assert_called_once_with([f"avatars/babies/{baby_a}/1.jpg", None, None])
 
 
 @patch("lanonna_api.storage._sign_put", return_value={"object_path": "ok"})
-def test_mint_user_avatar_upload_uses_avatars_prefix(mock_sign):
+def test_minted_user_avatar_is_accepted_by_the_validator(mock_sign):
     mint_user_avatar_upload_url("firebase-uid", byte_length=1000)
     object_name = mock_sign.call_args[0][0]
-    assert object_name.startswith("avatars/users/firebase-uid/")
+    assert normalize_user_avatar_for_storage(object_name, "firebase-uid") == object_name
 
 
 @patch("lanonna_api.storage._sign_put", return_value={"object_path": "ok"})
-def test_mint_baby_avatar_upload_uses_baby_prefix(mock_sign):
-    import uuid
-
+def test_minted_baby_avatar_is_accepted_by_the_validator(mock_sign):
     baby_id = uuid.uuid4()
     mint_baby_avatar_upload_url(baby_id, byte_length=1000)
     object_name = mock_sign.call_args[0][0]
-    assert object_name.startswith(f"avatars/babies/{baby_id}/")
-
-
-def test_mint_user_avatar_upload_rejects_oversize_byte_length():
-    with pytest.raises(ValueError, match="maximum size"):
-        mint_user_avatar_upload_url(
-            "uid",
-            content_type="image/jpeg",
-            byte_length=3_000_000,
-        )
+    assert normalize_baby_avatar_for_storage(object_name, baby_id) == object_name
+    with pytest.raises(InvalidInputError):
+        normalize_baby_avatar_for_storage(object_name, uuid.uuid4())

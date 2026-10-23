@@ -13,9 +13,8 @@ In-app **Delete account** (FR-SET-005) tombstones `app_users`, soft-deletes sole
 | User avatar | `DISPLAY_BUCKET` | `avatars/users/{firebase_uid}/{uuid}.jpg\|webp` | `app_users.avatar_url` stores object path |
 | Baby avatar | `DISPLAY_BUCKET` | `avatars/babies/{baby_profile_id}/{uuid}.jpg\|webp` | `baby_profiles.avatar_url` |
 | Baby data export | `DISPLAY_BUCKET` | `exports/{baby_profile_id}/{job_id}/export.json` | `baby_data_export_jobs.object_path` |
-| Legacy smoke paths | `DISPLAY_BUCKET` | `smoke/...` | Dev only; same signer rules as avatars |
 
-Upload init: `POST /v1/photos/init` → signed PUT to `display/{photo_id}.*` only. Avatars: `POST /v1/uploads/display/signed-url` under `avatars/`.
+Upload init: `POST /v1/photos/init` → signed PUT to `display/{photo_id}.*` only. Avatars: `POST /v1/uploads/display/signed-url` under `avatars/users/{firebase_uid}/` or `avatars/babies/{baby_profile_id}/`; the API and the `049` CHECK constraints only allow a row to store its own prefix (#415).
 
 **IAM:** Cloud Run API and worker service accounts already have `roles/storage.objectAdmin` on display and thumbnails buckets (`infra/terraform/modules/platform/iam.tf`). No new bucket role was required; cleanup runs in the **worker** via Pub/Sub (same as exports and thumbnails).
 

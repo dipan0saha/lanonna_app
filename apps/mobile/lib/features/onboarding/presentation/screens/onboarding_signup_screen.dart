@@ -95,7 +95,6 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
       if (!mounted) return;
       await navigateAfterOnboardingAuth(
         context,
-        isSignUp: true,
         usedOAuth: false,
       );
     } on FirebaseAuthException catch (e) {
@@ -117,7 +116,6 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
       if (!mounted) return;
       await navigateAfterOnboardingAuth(
         context,
-        isSignUp: true,
         usedOAuth: true,
       );
     } on FirebaseAuthException catch (e) {

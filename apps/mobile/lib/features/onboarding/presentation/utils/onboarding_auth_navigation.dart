@@ -1,39 +1,30 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../domain/onboarding_routes.dart';
-import '../../domain/onboarding_step.dart';
+import '../../../../core/auth/auth_repository.dart';
 import '../app_session.dart';
 import '../onboarding_coordinator.dart';
 
+/// After sign-up or sign-in: the same destination as a signed-in cold start
+/// ([AppSession.signedInResumeLocation], #417), never a per-screen guess.
 Future<void> navigateAfterOnboardingAuth(
   BuildContext context, {
-  required bool isSignUp,
   required bool usedOAuth,
 }) async {
   final coordinator = context.read<OnboardingCoordinator>();
   final session = context.read<AppSession>();
+  final auth = context.read<AuthRepository>();
 
   if (usedOAuth) {
     await coordinator.markOAuthSignIn();
   }
 
   await session.refreshFromApi();
-  final status = session.status;
-  if (status?.canAccessMainApp == true) {
-    if (context.mounted) context.go('/home');
-    return;
-  }
-  final user = FirebaseAuth.instance.currentUser;
-
-  if (user != null && !usedOAuth && isSignUp && !user.emailVerified) {
-    await coordinator.setStep(OnboardingStep.emailVerify);
-    if (context.mounted) context.go(OnboardingRoutes.emailVerify);
-    return;
-  }
-
-  await coordinator.setStep(OnboardingStep.completeProfile);
-  if (context.mounted) context.go(OnboardingRoutes.completeProfile);
+  if (!context.mounted) return;
+  context.go(
+    session.signedInResumeLocation(
+      emailVerified: auth.currentUser?.emailVerified ?? false,
+    ),
+  );
 }

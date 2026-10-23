@@ -48,13 +48,14 @@ def seed_family(*, lifecycle: str = "expecting", born_days_ago: int = 2) -> dict
                 created_by_firebase_uid, avatar_url
             )
             VALUES (%s, 'Parker', %s, current_date + 40, %s, %s,
-                    'avatars/babies/seed/a.webp')
+                    'avatars/babies/' || %s || '/a.webp')
             """,
             (
                 baby_id,
                 lifecycle,
                 (date.today() - timedelta(days=born_days_ago)) if lifecycle == "born" else None,
                 OWNER,
+                str(baby_id),
             ),
         )
         conn.execute(
