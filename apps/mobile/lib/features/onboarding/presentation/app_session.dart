@@ -210,6 +210,8 @@ class AppSession extends ChangeNotifier {
     }
 
     if (!isSignedIn) {
+      final pendingInvite = _signedOutPendingInviteRedirect(path);
+      if (pendingInvite != null) return pendingInvite;
       const public = {
         OnboardingRoutes.ownerCarousel,
         OnboardingRoutes.signup,
@@ -217,11 +219,6 @@ class AppSession extends ChangeNotifier {
         ..._invitePublic,
       };
       if (public.contains(path)) return null;
-      if (_coordinator.pendingInviteToken != null) {
-        return _coordinator.onboardingPath == OnboardingPath.coOwner
-            ? OnboardingRoutes.coOwnerInvite
-            : OnboardingRoutes.followerInvite;
-      }
       return OnboardingRoutes.ownerCarousel;
     }
 
@@ -338,6 +335,20 @@ class AppSession extends ChangeNotifier {
     }
 
     return _onboardingResumePath(status);
+  }
+
+  /// Signed-out resume for a stored invite token (cold start lands on
+  /// [OnboardingRoutes.ownerCarousel] by default). Login and sign-up stay
+  /// reachable; invite landing routes are already correct.
+  String? _signedOutPendingInviteRedirect(String path) {
+    if (_coordinator.pendingInviteToken == null) return null;
+    if (path == OnboardingRoutes.login || path == OnboardingRoutes.signup) {
+      return null;
+    }
+    if (path == OnboardingRoutes.ownerCarousel || !_invitePublic.contains(path)) {
+      return _inviteResumePath();
+    }
+    return null;
   }
 
   String _inviteResumePath() {

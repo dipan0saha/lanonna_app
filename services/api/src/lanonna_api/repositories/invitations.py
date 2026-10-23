@@ -154,10 +154,38 @@ def prepare_invitation_for_resend(
     baby_profile_id: uuid.UUID,
     invitation_id: uuid.UUID,
 ) -> uuid.UUID | None:
-    """Allow another delivery attempt for one undelivered pending invite."""
+    """Allow another delivery attempt for one undelivered pending invite.
+
+    Returns ``None`` when the row is missing or no longer pending. Callers
+    distinguish an already-delivered pending row via
+    [invitation_resend_blocked_reason].
+    """
     with get_connection() as conn:
         prepared = _prepare_for_resend(conn, baby_profile_id, [invitation_id])
     return invitation_id if invitation_id in prepared else None
+
+
+def invitation_resend_blocked_reason(
+    baby_profile_id: uuid.UUID,
+    invitation_id: uuid.UUID,
+) -> str | None:
+    """Why [prepare_invitation_for_resend] returned ``None``, if the row exists."""
+    with get_connection() as conn:
+        row = conn.execute(
+            """
+            SELECT status, email_sent_at
+            FROM invitations
+            WHERE id = %s AND baby_profile_id = %s
+            """,
+            (invitation_id, baby_profile_id),
+        ).fetchone()
+    if row is None:
+        return "not_found"
+    if row["status"] != "pending":
+        return "not_found"
+    if row["email_sent_at"] is not None:
+        return "already_delivered"
+    return None
 
 
 def _count_reserved_owner_slots(conn: Any, baby_profile_id: uuid.UUID) -> tuple[int, int]:

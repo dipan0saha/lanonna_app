@@ -178,6 +178,7 @@ class InvitationRow {
     required this.status,
     this.relationshipLabel,
     this.emailDeliveryStatus,
+    this.emailSentAt,
   });
 
   final String id;
@@ -185,10 +186,26 @@ class InvitationRow {
   final InvitationStatus status;
   final String? relationshipLabel;
   final InviteEmailDeliveryStatus? emailDeliveryStatus;
+  final String? emailSentAt;
 
   bool get canResendEmail =>
       status == InvitationStatus.pending &&
+      emailSentAt == null &&
       emailDeliveryStatus != InviteEmailDeliveryStatus.sent;
+
+  InvitationRow copyWith({
+    InviteEmailDeliveryStatus? emailDeliveryStatus,
+    String? emailSentAt,
+  }) {
+    return InvitationRow(
+      id: id,
+      email: email,
+      status: status,
+      relationshipLabel: relationshipLabel,
+      emailDeliveryStatus: emailDeliveryStatus ?? this.emailDeliveryStatus,
+      emailSentAt: emailSentAt ?? this.emailSentAt,
+    );
+  }
 
   factory InvitationRow.fromJson(Map<String, dynamic> json) {
     return InvitationRow(
@@ -199,6 +216,7 @@ class InvitationRow {
       emailDeliveryStatus: InviteEmailDeliveryStatus.fromApi(
         json['email_delivery_status'] as String?,
       ),
+      emailSentAt: json['email_sent_at'] as String?,
     );
   }
 }

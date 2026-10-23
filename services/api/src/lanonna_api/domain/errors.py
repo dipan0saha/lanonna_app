@@ -83,6 +83,8 @@ class ErrorCode(StrEnum):
     # which (missing, revoked, deleted or disabled account, revoked sessions).
     BIOMETRIC_CREDENTIAL_INVALID = "biometric_credential_invalid"
     BIOMETRIC_CHALLENGE_EXPIRED = "biometric_challenge_expired"
+    # Invite management (``POST …/invitations/{id}/resend``).
+    INVITE_ALREADY_DELIVERED = "invite_already_delivered"
     # Async work the API queues.
     EMAIL_QUEUE_FAILED = "email_queue_failed"
     EXPORT_QUEUE_FAILED = "export_queue_failed"

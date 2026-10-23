@@ -43,6 +43,12 @@ def _invitation_json(r: dict[str, Any]) -> dict[str, Any]:
         "email_delivery_status": r.get("email_delivery_status"),
         "email_last_error": r.get("email_last_error"),
         "email_send_attempts": r.get("email_send_attempts"),
+        "email_sent_at": r["email_sent_at"].isoformat()
+        if r.get("email_sent_at") is not None
+        and hasattr(r["email_sent_at"], "isoformat")
+        else (
+            str(r["email_sent_at"]) if r.get("email_sent_at") is not None else None
+        ),
     }
 
 

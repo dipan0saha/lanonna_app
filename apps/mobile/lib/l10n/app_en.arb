@@ -794,6 +794,7 @@
   "inviteEmailPending": "Pending — email sending",
   "inviteEmailSent": "Invite email sent",
   "inviteEmailFailed": "Email failed to send",
+  "inviteResendAlreadyDelivered": "This invite was already delivered and cannot be sent again.",
   "settingsCouldNotOpenEmailTo": "Could not open email to {supportEmail}. Copy link?",
   "@settingsCouldNotOpenEmailTo": {
     "placeholders": {

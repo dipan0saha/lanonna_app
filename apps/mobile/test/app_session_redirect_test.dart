@@ -526,6 +526,61 @@ void main() {
   );
 
   test(
+    'signed-out cold start resumes pending invite from owner carousel',
+    () async {
+      final f = await _fixtures(path: OnboardingPath.follower);
+      await f.storage.savePendingInviteToken('invite-token-abc');
+      await f.coordinator.hydrate();
+      final redirect = f.session.redirectFor(
+        isSignedIn: false,
+        emailVerified: false,
+        location: OnboardingRoutes.ownerCarousel,
+      );
+      expect(redirect, OnboardingRoutes.followerInvite);
+    },
+  );
+
+  test(
+    'signed-out pending invite keeps explicit login and signup routes',
+    () async {
+      final f = await _fixtures(path: OnboardingPath.follower);
+      await f.storage.savePendingInviteToken('invite-token-abc');
+      await f.coordinator.hydrate();
+      expect(
+        f.session.redirectFor(
+          isSignedIn: false,
+          emailVerified: false,
+          location: OnboardingRoutes.login,
+        ),
+        isNull,
+      );
+      expect(
+        f.session.redirectFor(
+          isSignedIn: false,
+          emailVerified: false,
+          location: OnboardingRoutes.signup,
+        ),
+        isNull,
+      );
+    },
+  );
+
+  test(
+    'signed-out pending invite resumes signup step after accept',
+    () async {
+      final f = await _fixtures(path: OnboardingPath.follower);
+      await f.storage.savePendingInviteToken('invite-token-abc');
+      await f.coordinator.setStep(OnboardingStep.signup);
+      final redirect = f.session.redirectFor(
+        isSignedIn: false,
+        emailVerified: false,
+        location: OnboardingRoutes.ownerCarousel,
+      );
+      expect(redirect, OnboardingRoutes.signup);
+    },
+  );
+
+  test(
     'owner with baby resume path returns create-baby for createBaby step',
     () async {
       final f = await _fixtures();

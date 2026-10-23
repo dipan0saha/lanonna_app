@@ -1674,6 +1674,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inviteEmailFailed => 'Email failed to send';
 
   @override
+  String get inviteResendAlreadyDelivered =>
+      'This invite was already delivered and cannot be sent again.';
+
+  @override
   String settingsCouldNotOpenEmailTo(String supportEmail) {
     return 'Could not open email to $supportEmail. Copy link?';
   }

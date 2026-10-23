@@ -340,7 +340,7 @@ Covers gallery/calendar/registry/fun domain rules (`services/api/tests/`).
 - Android (https, the link in the email): `adb shell am start -a android.intent.action.VIEW -d 'https://lanonna-dev.firebaseapp.com/invite?token=TOKEN'`
 - Android (custom scheme, still accepted): `adb shell am start -a android.intent.action.VIEW -d 'lanonna://app/invite-accept?token=TOKEN'`
 - iOS Simulator: `xcrun simctl openurl booted 'https://lanonna-dev.firebaseapp.com/invite?token=TOKEN'`
-- Expect `/invite-accept` → preview API → follower or co-owner onboarding. Mid-flow kill + relaunch without link should resume via stored `pendingInviteToken` (`AppSession.redirectFor`).
+- Expect `/invite-accept` → preview API → follower or co-owner onboarding. Mid-flow kill + relaunch without link should resume via stored `pendingInviteToken` (`AppSession.redirectFor`, pending invite checked before the signed-out owner-carousel allowlist; see [issue-388-invite-resume-after-kill.md](rca/issue-388-invite-resume-after-kill.md)).
 - Disable `DEV_AUTO_SIGN_IN_*` dart-defines when testing unsigned invite UX.
 
 **GCS finalize:** display bucket events publish to **`photo-upload-finalized`** only (worker thumbnails).
