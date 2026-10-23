@@ -98,6 +98,9 @@ String? validateOptionalHttpUrl(AppLocalizations l10n, String? value) =>
 
 /// Normalizes empty to null; bare domains get `https://`.
 ///
+/// Mirrors the API (`url_validation.py`): links are `https` on a real host in
+/// every environment, since every member opens them (#415).
+///
 /// Callers validate first with [validateOptionalHttpUrl]; an invalid value
 /// here is a programming error and throws [FormatException].
 String? normalizeOptionalHttpUrl(String? value) {
@@ -121,8 +124,6 @@ bool _isValidOptionalHttpUrl(String? value) {
   final withScheme = raw.contains('://') ? raw : 'https://$raw';
   final uri = Uri.tryParse(withScheme);
   if (uri == null || !uri.hasScheme) return false;
-  if (uri.scheme != 'http' && uri.scheme != 'https') return false;
-  final host = uri.host;
-  if (host.isEmpty) return false;
-  return host == 'localhost' || host.contains('.');
+  if (uri.scheme != 'https') return false;
+  return uri.host.contains('.');
 }

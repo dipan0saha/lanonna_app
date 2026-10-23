@@ -27,6 +27,15 @@ void main() {
     expect(validateOptionalHttpUrl(l10n, 'not-a-url'), isNotNull);
     expect(validateOptionalHttpUrl(l10n, 'https://example.com'), isNull);
     expect(normalizeOptionalHttpUrl('amazon.com/x'), 'https://amazon.com/x');
+    // Same rule as the API: https on a real host, in every environment.
+    for (final link in [
+      'http://example.com',
+      'http://localhost/shop',
+      'https://localhost/shop',
+      'localhost:8080',
+    ]) {
+      expect(validateOptionalHttpUrl(l10n, link), isNotNull, reason: link);
+    }
   });
 
   test('registry item and fun name validators', () {

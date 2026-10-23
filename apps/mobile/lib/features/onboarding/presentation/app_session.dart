@@ -236,13 +236,23 @@ class AppSession extends ChangeNotifier {
   };
 
   static const _ownerPostBabyAllowed = {
-    OnboardingRoutes.emailVerify,
     OnboardingRoutes.completeProfile,
     OnboardingRoutes.ownerCreateBaby,
     OnboardingRoutes.ownerFirstMoment,
     OnboardingRoutes.ownerInvite,
     ..._invitePublic,
   };
+
+  /// Whether [redirectFor] keeps a signed-in user on [location]. Setup screens
+  /// offer Back only to a step this allows, so Back never lands on a screen
+  /// the table sends away (#418).
+  bool allowsSignedInLocation(String location, {required bool emailVerified}) =>
+      redirectFor(
+        isSignedIn: true,
+        emailVerified: emailVerified,
+        location: location,
+      ) ==
+      null;
 
   String? redirectFor({
     required bool isSignedIn,
@@ -302,6 +312,14 @@ class AppSession extends ChangeNotifier {
     // The welcome carousel is the signed-out entry (and the default cold-start
     // location). No signed-in session may remain on it (#400, #409).
     if (path == OnboardingRoutes.ownerCarousel) {
+      return resume;
+    }
+
+    // Email verify is a destination only while the email is unverified. Once
+    // verified (or skipped for OAuth) Back or a stale step never shows it
+    // again, so it cannot flash before bouncing away (#418).
+    if (path == OnboardingRoutes.emailVerify &&
+        (_coordinator.skipEmailVerify || emailVerified)) {
       return resume;
     }
 
@@ -366,7 +384,6 @@ class AppSession extends ChangeNotifier {
         const allowed = {
           OnboardingRoutes.signup,
           OnboardingRoutes.login,
-          OnboardingRoutes.emailVerify,
           OnboardingRoutes.completeProfile,
           ..._invitePublic,
         };
@@ -375,7 +392,6 @@ class AppSession extends ChangeNotifier {
       }
       if (!status.hasOwnerBaby && !status.hasBabyMembership) {
         const allowed = {
-          OnboardingRoutes.emailVerify,
           OnboardingRoutes.completeProfile,
           OnboardingRoutes.ownerCreateBaby,
           OnboardingRoutes.ownerFirstMoment,

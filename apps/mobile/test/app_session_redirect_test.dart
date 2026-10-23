@@ -596,6 +596,67 @@ void main() {
       expectRow(f.session, OnboardingRoutes.ownerCreateBaby);
     });
 
+    // #418: email verify is a destination only while the email is
+    // unverified, in every state, so Back or a stale step never flashes it.
+    for (final (name, status, resume) in [
+      ('profile incomplete', profileIncomplete, OnboardingRoutes.completeProfile),
+      ('no baby', noBaby, OnboardingRoutes.ownerCreateBaby),
+      ('main app', mainApp, '/home'),
+    ]) {
+      test('verified $name user never stays on email verify', () async {
+        final f = await _fixtures();
+        f.session.debugSetStatus(status);
+        expect(
+          f.session.redirectFor(
+            isSignedIn: true,
+            emailVerified: true,
+            location: OnboardingRoutes.emailVerify,
+          ),
+          resume,
+        );
+        expect(
+          f.session.allowsSignedInLocation(
+            OnboardingRoutes.emailVerify,
+            emailVerified: true,
+          ),
+          isFalse,
+        );
+      });
+    }
+
+    test('unverified user stays on email verify', () async {
+      final f = await _fixtures();
+      f.session.debugSetStatus(profileIncomplete);
+      expect(
+        f.session.allowsSignedInLocation(
+          OnboardingRoutes.emailVerify,
+          emailVerified: false,
+        ),
+        isTrue,
+      );
+    });
+
+    test('setup Back targets follow the table', () async {
+      final f = await _fixtures();
+      f.session.debugSetStatus(noBaby);
+      // Create baby -> complete profile stays allowed.
+      expect(
+        f.session.allowsSignedInLocation(
+          OnboardingRoutes.completeProfile,
+          emailVerified: true,
+        ),
+        isTrue,
+      );
+      // Complete profile -> sign-up is a signed-out entry once complete.
+      expect(
+        f.session.allowsSignedInLocation(
+          OnboardingRoutes.signup,
+          emailVerified: true,
+        ),
+        isFalse,
+      );
+    });
+
     test('owner onboarding open without main app -> resume step', () async {
       final f = await _fixtures();
       f.session.debugSetStatus(_ownerMidOnboarding());

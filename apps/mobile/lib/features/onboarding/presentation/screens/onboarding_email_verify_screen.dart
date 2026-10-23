@@ -11,7 +11,8 @@ import '../../../../core/auth/auth_repository.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/onboarding_routes.dart';
 import '../../domain/onboarding_step.dart';
-import '../onboarding_coordinator.dart';
+import '../app_session.dart';
+import '../widgets/onboarding_sign_out_button.dart';
 import '../widgets/onboarding_buttons.dart';
 import '../widgets/onboarding_prototype_widgets.dart';
 import '../widgets/onboarding_scaffold.dart';
@@ -34,6 +35,7 @@ class _OnboardingEmailVerifyScreenState
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkVerified(silent: true));
     _pollTimer = Timer.periodic(
       const Duration(seconds: 3),
       (_) => _checkVerified(silent: true),
@@ -56,9 +58,10 @@ class _OnboardingEmailVerifyScreenState
       _pollTimer?.cancel();
       await authRepo.refreshSessionClaims();
       if (!mounted) return;
-      final coordinator = context.read<OnboardingCoordinator>();
-      await coordinator.setStep(OnboardingStep.completeProfile);
-      if (mounted) context.go(OnboardingRoutes.completeProfile);
+      final session = context.read<AppSession>();
+      await session.refreshFromApi();
+      if (!mounted) return;
+      context.go(session.signedInResumeLocation(emailVerified: true));
       return;
     }
     if (!silent && mounted) {
@@ -88,7 +91,7 @@ class _OnboardingEmailVerifyScreenState
         email.endsWith('@test.com') || email.contains('.smoke@');
     return OnboardingScaffold(
       pinBottomCta: false,
-      showBack: true,
+      showBack: onboardingBackAllowed(context, OnboardingRoutes.signup),
       onBack: () => goOnboardingBack(
         context,
         step: OnboardingStep.signup,
@@ -153,6 +156,7 @@ class _OnboardingEmailVerifyScreenState
             const SizedBox(height: 16),
             Text(_message!, textAlign: TextAlign.center),
           ],
+          const OnboardingSignOutButton(),
           const SizedBox(height: 26),
         ],
       ),

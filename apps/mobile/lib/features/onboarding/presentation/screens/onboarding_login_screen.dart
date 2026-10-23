@@ -115,7 +115,6 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
       if (!mounted) return;
       await navigateAfterOnboardingAuth(
         context,
-        isSignUp: false,
         usedOAuth: false,
       );
     } on FirebaseAuthException catch (e) {
@@ -166,7 +165,6 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
       if (!mounted) return;
       await navigateAfterOnboardingAuth(
         context,
-        isSignUp: false,
         usedOAuth: true,
       );
     } on FirebaseAuthException catch (e) {
@@ -202,7 +200,6 @@ class _OnboardingLoginScreenState extends State<OnboardingLoginScreen> {
       if (!mounted) return;
       await navigateAfterOnboardingAuth(
         context,
-        isSignUp: false,
         usedOAuth: false,
       );
     } on BiometricSignInFailure catch (e) {

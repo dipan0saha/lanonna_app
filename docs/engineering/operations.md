@@ -107,9 +107,22 @@ terraform apply               # when plan looks safe
 3. `cd infra/terraform/environments/prod` → `cp terraform.tfvars.example terraform.tfvars` → set **`monitoring_notification_emails`** (gitignored tfvars; no addresses in git).
 4. `terraform init && terraform apply` (fresh apply, no import). Creates Cloud SQL (small dedicated tier), Secret Manager containers, writes **`db-lanonna-app-password`** (`manage_sql_app_password = true`), enables prod bucket lifecycle rules and alert policies (uptime check waits until step 8).
 5. Bootstrap remaining secrets (`mailjet-*`, `admin-api-key`, `db-postgres-root-password` as needed) via `gcloud secrets versions add`.
-6. Cloud SQL Auth Proxy + `infra/db/apply_migrations.py` with `DB_PASSWORD` from **`db-lanonna-app-password`** — migrations **`001`–`041`** on empty DB. Confirm with `./scripts/verify-migrations.sh` (`GCP_PROJECT_ID=lanonna-prod`, proxy + `PGPASSWORD`).
+6. Cloud SQL Auth Proxy + `infra/db/apply_migrations.py` with `DB_PASSWORD` from **`db-lanonna-app-password`** — the full chain (currently **`001`–`049`**) on the empty DB. On a fresh database no older API is serving, so `048` and `049` are safe here; the ordering rules below apply once prod has a running API. Confirm with `./scripts/verify-migrations.sh` (`GCP_PROJECT_ID=lanonna-prod`, proxy + `PGPASSWORD`).
 7. Set real values in [`infra/env/prod.worker.env`](../../infra/env/prod.worker.env) (`MAILJET_FROM_EMAIL`) and review [`infra/env/prod.api.env`](../../infra/env/prod.api.env).
-8. Deploy **worker** (`GCP_PROJECT_ID=lanonna-prod`) → `./scripts/apply-run-iam.sh` → enable push subscriptions (two-phase Terraform below) → deploy **API** → set **`monitoring_api_host`** in `terraform.tfvars` from `gcloud run services describe api --format='value(status.uri)'` (hostname only) → `terraform apply` for uptime alerts → `./scripts/setup-schedulers.sh` → invite hosting with release `ANDROID_SHA256`.
+8. Deploy **worker** (`GCP_PROJECT_ID=lanonna-prod`) → `./scripts/apply-run-iam.sh` → enable push subscriptions (two-phase Terraform below) → deploy **API** → set **`monitoring_api_host`** in `terraform.tfvars` from `gcloud run services describe api --format='value(status.uri)'` (hostname only) → `terraform apply` for uptime alerts → `GCP_PROJECT_ID=lanonna-prod ./scripts/setup-schedulers.sh` → invite hosting with release `ANDROID_SHA256`.
+9. Confirm the schedulers: `gcloud scheduler jobs list --project=lanonna-prod --location=us-central1` must list `weekly-notification-digest`, `expire-pending-invitations`, `sweep-storage-cleanup-jobs` and **`purge-stale-event-covers`** (`0 4 * * *` UTC, added in #416), all `ENABLED`.
+
+#### Rolling out #416 and #420 to a running prod
+
+When prod already serves an older API, ship these PRs in this order (all commands with `GCP_PROJECT_ID=lanonna-prod`):
+
+1. **Migration `047`** (first-moment catalog backfill, #412): apply any time; it only fills data the old and new API both read.
+2. **Deploy the worker** (`./services/worker/scripts/deploy.sh`, then `./scripts/apply-run-iam.sh`). #416 moved stale event-cover purging into the worker.
+3. **`./scripts/setup-schedulers.sh`** to create `purge-stale-event-covers` (it upserts, so re-running is safe). Check it with `gcloud scheduler jobs describe purge-stale-event-covers --project=lanonna-prod --location=us-central1`.
+4. **Deploy the API** (`./services/api/scripts/deploy.sh`); confirm the new revision serves 100% and `/health` is ok.
+5. **Migrations `048` and `049`, only after step 4.** `048` drops `app_users.email_digest_enabled`, which the old API still reads. `049` clears avatars a row does not own and adds the `*_avatar_url_owned` CHECK constraints, which the old API's writes could violate. Then run `./scripts/verify-migrations.sh` (expect `49/49`).
+
+Users whose stored avatar was an external link (for example an OAuth provider photo) see initials after `049` until they pick a photo again.
 
 **Legacy `database-url` secret:** removed from the module in `e25c3fd` and intentionally deleted from `lanonna-dev` by the next apply. Cloud Run uses `DB_*` + `db-lanonna-app-password`; do not recreate it.
 

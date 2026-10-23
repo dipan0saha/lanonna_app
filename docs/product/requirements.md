@@ -315,7 +315,7 @@ Each requirement has an ID for traceability. **Implementation note** describes t
 | FR-CAL-005 | Event comments | Same moderation rules as FR-GAL-007 on event detail; comment field does not steal focus after returning from event edit (#17) | `event_comments`; `POST` / `PATCH` / `DELETE` on `…/events/{id}/comments` |
 | FR-CAL-006 | Upcoming list | View all from home teaser (E2E-018); same Today + Upcoming grouping as Calendar tab | `/calendar/upcoming` |
 | FR-CAL-007 | AI event suggestions | Static catalog by expecting/age tabs; shared “AI Suggestions” UX with registry; hide rows already added (`catalog_suggestion_id` on event); after add, brief info snackbar confirms save (`#398`) | `/calendar/ai-suggestions`; `event_suggestions.json` |
-| FR-CAL-008 | Optional video call URL (#13) | Empty allowed; non-empty must be http(s) (bare domains normalized to `https://`); junk schemes rejected on save with user-visible message; API returns **400** on invalid URL | `url_validation.py`; `EventFormScreen`; `form_validators.dart` |
+| FR-CAL-008 | Optional video call URL (#13) | Empty allowed; non-empty must be `https://` in every environment (bare domains normalized to `https://`; `http://`, `localhost` and dotless hosts rejected, #415); junk schemes rejected on save with user-visible message; API returns **400** on invalid URL | `url_validation.py`; `EventFormScreen`; `form_validators.dart` |
 
 ### 7.8 Registry — FR-REG
 

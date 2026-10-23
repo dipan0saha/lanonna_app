@@ -33,6 +33,7 @@ import '../../onboarding/presentation/widgets/onboarding_fields.dart';
 import '../../onboarding/presentation/widgets/onboarding_note_card.dart';
 import '../../onboarding/presentation/widgets/onboarding_prototype_widgets.dart';
 import '../../onboarding/presentation/widgets/onboarding_scaffold.dart';
+import '../../onboarding/presentation/widgets/onboarding_sign_out_button.dart';
 import '../../onboarding/presentation/widgets/onboarding_typography.dart';
 import '../domain/create_baby_form_hydration.dart';
 import '../domain/create_baby_mode.dart';
@@ -502,6 +503,7 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
           isLoading: _busy,
           onPressed: _busy ? null : _submit,
         ),
+        if (_isOnboarding) const OnboardingSignOutButton(),
         const SizedBox(height: 26),
         // Signed in with no baby (a new owner, or a follower who left or was
         // removed): joining is by invite link only, so say so here rather
@@ -538,7 +540,10 @@ class _CreateBabyScreenState extends State<CreateBabyScreen> {
     if (_isOnboarding) {
       return OnboardingScaffold(
         pinBottomCta: false,
-        showBack: true,
+        showBack: onboardingBackAllowed(
+          context,
+          OnboardingRoutes.completeProfile,
+        ),
         onBack: () => goOnboardingBack(
           context,
           step: OnboardingStep.completeProfile,
