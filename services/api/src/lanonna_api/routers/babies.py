@@ -5,9 +5,9 @@ from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, Query, Response, status
 
-from lanonna_api.domain.errors import ErrorCode
+from lanonna_api.domain.errors import DomainError, ErrorCode
 from lanonna_api.auth import AppUser, current_app_user
-from lanonna_api.domain.avatar_urls import normalize_avatar_for_storage
+from lanonna_api.domain.avatar_urls import normalize_baby_avatar_for_storage
 from lanonna_api.http_errors import api_error, map_domain_errors
 from lanonna_api.domain.baby_delete import delete_baby_profile
 from lanonna_api.domain.baby_update import update_baby_profile
@@ -97,8 +97,10 @@ def patch_baby(
         fields["lifecycle_status"] = body.lifecycle_status
     if body.avatar_url is not None:
         try:
-            fields["avatar_url"] = normalize_avatar_for_storage(body.avatar_url)
-        except ValueError as exc:
+            fields["avatar_url"] = normalize_baby_avatar_for_storage(
+                body.avatar_url, baby_profile_id
+            )
+        except (ValueError, DomainError) as exc:
             raise map_domain_errors(exc) from exc
 
     suggestions = body.profile_name_suggestions

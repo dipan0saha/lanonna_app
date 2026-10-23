@@ -16,6 +16,23 @@ class DisplayPhotoUpload {
   Future<String> uploadProfileAvatar({required XFile imageFile}) =>
       _uploadAvatar(imageFile: imageFile);
 
+  /// Downloads an OAuth (or other remote) image and uploads it as the user's avatar.
+  Future<String> uploadProfileAvatarFromRemoteUrl(String url) async {
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ApiException(
+        'avatar_remote_fetch_${response.statusCode}',
+        statusCode: response.statusCode,
+      );
+    }
+    final contentType = response.headers['content-type'] ?? 'image/jpeg';
+    final file = XFile.fromData(
+      response.bodyBytes,
+      mimeType: contentType.split(';').first.trim(),
+    );
+    return uploadProfileAvatar(imageFile: file);
+  }
+
   /// Uploads a baby profile avatar; returns the GCS object path to persist as `avatar_url`.
   Future<String> uploadBabyAvatar({
     required String babyProfileId,

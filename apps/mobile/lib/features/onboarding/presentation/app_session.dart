@@ -374,14 +374,16 @@ class AppSession extends ChangeNotifier {
         return OnboardingRoutes.completeProfile;
       }
       if (!status.hasOwnerBaby && !status.hasBabyMembership) {
-        const allowed = {
-          OnboardingRoutes.emailVerify,
+        final allowed = <String>{
           OnboardingRoutes.completeProfile,
           OnboardingRoutes.ownerCreateBaby,
           OnboardingRoutes.ownerFirstMoment,
           OnboardingRoutes.ownerInvite,
           ..._invitePublic,
         };
+        if (!status.profileComplete) {
+          allowed.add(OnboardingRoutes.emailVerify);
+        }
         if (allowed.contains(path)) return null;
         return OnboardingRoutes.ownerCreateBaby;
       }

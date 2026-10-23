@@ -33,7 +33,13 @@ import '../widgets/onboarding_scaffold.dart';
 import '../utils/invite_flow_navigation.dart';
 import '../utils/onboarding_back_navigation.dart';
 import '../widgets/onboarding_typography.dart';
+import '../widgets/onboarding_sign_out_button.dart';
 import '../../../../l10n/app_localizations.dart';
+
+bool _isOwnedAvatarObjectPath(String? value) {
+  final trimmed = value?.trim();
+  return trimmed != null && trimmed.startsWith('avatars/');
+}
 
 class OnboardingCompleteProfileScreen extends StatefulWidget {
   const OnboardingCompleteProfileScreen({super.key});
@@ -288,10 +294,11 @@ class _OnboardingCompleteProfileScreenState
     try {
       String? avatarUrl = _networkPhotoUrl;
       final file = _photoFile;
+      final upload = DisplayPhotoUpload(context.read<ApiClient>());
       if (file != null) {
-        avatarUrl = await DisplayPhotoUpload(
-          context.read<ApiClient>(),
-        ).uploadProfileAvatar(imageFile: file);
+        avatarUrl = await upload.uploadProfileAvatar(imageFile: file);
+      } else if (avatarUrl != null && !_isOwnedAvatarObjectPath(avatarUrl)) {
+        avatarUrl = await upload.uploadProfileAvatarFromRemoteUrl(avatarUrl);
       }
       if (!mounted) return;
       await context.read<AccountRepository>().updateProfile(
@@ -316,21 +323,33 @@ class _OnboardingCompleteProfileScreenState
 
   Future<void> _onBack() async {
     final coordinator = context.read<OnboardingCoordinator>();
-    if (coordinator.skipEmailVerify) {
-      await goOnboardingBack(
-        context,
-        step: OnboardingStep.signup,
-        route: OnboardingRoutes.signup,
-        persist: _persistDraft,
-      );
-    } else {
-      await goOnboardingBack(
-        context,
-        step: OnboardingStep.emailVerify,
-        route: OnboardingRoutes.emailVerify,
-        persist: _persistDraft,
-      );
+    final user = FirebaseAuth.instance.currentUser;
+    final emailVerified =
+        coordinator.skipEmailVerify || (user?.emailVerified ?? false);
+    if (!emailVerified) {
+      if (coordinator.skipEmailVerify) {
+        await goOnboardingBack(
+          context,
+          step: OnboardingStep.signup,
+          route: OnboardingRoutes.signup,
+          persist: _persistDraft,
+        );
+      } else {
+        await goOnboardingBack(
+          context,
+          step: OnboardingStep.emailVerify,
+          route: OnboardingRoutes.emailVerify,
+          persist: _persistDraft,
+        );
+      }
+      return;
     }
+    await goOnboardingBack(
+      context,
+      step: OnboardingStep.login,
+      route: OnboardingRoutes.login,
+      persist: _persistDraft,
+    );
   }
 
   @override
@@ -508,6 +527,7 @@ class _OnboardingCompleteProfileScreenState
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             ],
+            const OnboardingSignOutButton(),
             const SizedBox(height: 26),
           ],
         ),

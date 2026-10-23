@@ -1,3 +1,4 @@
+import uuid
 from contextlib import contextmanager
 from datetime import date, datetime, timezone
 from unittest.mock import patch
@@ -156,3 +157,45 @@ def test_turning_biometrics_on_keeps_device_credentials(mock_patch, mock_revoke)
         response = client.patch("/v1/profile", json={"biometric_unlock_enabled": True})
     assert response.status_code == 200
     mock_revoke.assert_not_called()
+
+
+def test_patch_profile_rejects_other_users_avatar_path():
+    with _auth_as("user-1"):
+        response = client.patch(
+            "/v1/profile",
+            json={"avatar_url": "avatars/users/other-user/secret.jpg"},
+        )
+    assert response.status_code == 422
+    assert response.json()["detail"]["error"] == "invalid_storage_reference"
+
+
+def test_patch_profile_rejects_external_avatar_url():
+    with _auth_as():
+        response = client.patch(
+            "/v1/profile",
+            json={"avatar_url": "https://example.com/track.png"},
+        )
+    assert response.status_code == 422
+    assert response.json()["detail"]["error"] == "invalid_storage_reference"
+
+
+@patch("lanonna_api.routers.profile.patch_profile_fields")
+def test_patch_profile_accepts_own_avatar_path(mock_patch):
+    own_path = "avatars/users/user-1/photo.webp"
+    mock_patch.return_value = _profile_row(avatar_url=own_path)
+    with _auth_as("user-1"):
+        response = client.patch("/v1/profile", json={"avatar_url": own_path})
+    assert response.status_code == 200
+    assert mock_patch.call_args[0][1]["avatar_url"] == own_path
+
+
+def test_patch_baby_rejects_other_babys_avatar_path():
+    baby_id = uuid.uuid4()
+    other = uuid.uuid4()
+    with _auth_as():
+        response = client.patch(
+            f"/v1/babies/{baby_id}",
+            json={"avatar_url": f"avatars/babies/{other}/pic.jpg"},
+        )
+    assert response.status_code == 422
+    assert response.json()["detail"]["error"] == "invalid_storage_reference"

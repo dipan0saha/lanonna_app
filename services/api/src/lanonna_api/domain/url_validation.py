@@ -27,6 +27,8 @@ def normalize_optional_http_url(raw: str | None) -> str | None:
     parsed = urlparse(value)
     if parsed.scheme not in ("http", "https"):
         raise InvalidInputError(ErrorCode.INVALID_URL, INVALID_HTTP_URL)
+    if parsed.scheme == "http" and parsed.hostname not in ("localhost", "127.0.0.1"):
+        raise InvalidInputError(ErrorCode.INVALID_URL, INVALID_HTTP_URL)
 
     host = parsed.netloc
     if not host:

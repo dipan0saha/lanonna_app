@@ -58,6 +58,7 @@ class ErrorCode(StrEnum):
     INVALID_BIRTH_DATE = "invalid_birth_date"
     BIRTH_DATE_IN_FUTURE = "birth_date_in_future"
     INVALID_URL = "invalid_url"
+    INVALID_STORAGE_REFERENCE = "invalid_storage_reference"
     TEXT_TOO_LONG = "text_too_long"
     INVALID_BIRTH_TIME = "invalid_birth_time"
     COMMENT_REQUIRED = "comment_required"
@@ -128,6 +129,10 @@ class DomainError(Exception):
 # ``except ValueError`` / ``except PermissionError`` paths keep working.
 class InvalidInputError(DomainError, ValueError):
     status_code = 400
+
+
+class UnprocessableInputError(DomainError, ValueError):
+    status_code = 422
 
 
 class UnauthenticatedError(DomainError):

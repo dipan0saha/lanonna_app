@@ -1,82 +1,80 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from urllib.parse import unquote, urlparse
+from typing import Any
+import uuid
 
-from lanonna_api.config import settings
 from lanonna_api.domain.media_urls import signed_display_urls
-
-_BUCKET_OBJECT_PREFIXES = ("avatars/", "smoke/")
+from lanonna_api.domain.storage_references import (
+    avatar_object_path_authorized,
+    display_object_path_from_client_value,
+    normalize_owned_avatar_for_storage,
+)
 
 
 def gcs_object_path_from_stored(stored: str) -> str | None:
     """Resolve a display-bucket object path from DB value or legacy public GCS URL."""
-    s = stored.strip()
-    if not s:
-        return None
-    if s.startswith(_BUCKET_OBJECT_PREFIXES):
-        return s
-
-    if not (s.startswith("http://") or s.startswith("https://")):
-        return None
-
-    bucket = settings.display_bucket
-    parsed = urlparse(s)
-    path = unquote(parsed.path.lstrip("/"))
-
-    if parsed.netloc == "storage.googleapis.com":
-        if path.startswith(f"{bucket}/"):
-            return path[len(bucket) + 1 :]
-        parts = path.split("/", 1)
-        if len(parts) == 2 and parts[0] == bucket:
-            return parts[1]
-
-    if parsed.netloc == f"{bucket}.storage.googleapis.com":
-        return path
-
-    return None
+    return display_object_path_from_client_value(stored)
 
 
-def normalize_avatar_for_storage(value: str | None) -> str | None:
-    """Persist object paths (not signed URLs). Allow external HTTPS (e.g. OAuth)."""
-    if value is None:
-        return None
-    s = value.strip()
-    if not s:
-        return None
+def normalize_user_avatar_for_storage(value: str | None, firebase_uid: str) -> str | None:
+    return normalize_owned_avatar_for_storage(
+        value, owner_kind="user", owner_id=firebase_uid
+    )
 
-    path = gcs_object_path_from_stored(s)
-    if path is not None:
-        if not path.startswith(_BUCKET_OBJECT_PREFIXES):
-            raise ValueError("Avatar object path must be under avatars/ or smoke/")
-        return path
 
-    if s.startswith("http://") or s.startswith("https://"):
-        return s
+def normalize_baby_avatar_for_storage(
+    value: str | None, baby_profile_id: uuid.UUID
+) -> str | None:
+    return normalize_owned_avatar_for_storage(
+        value, owner_kind="baby", owner_id=str(baby_profile_id)
+    )
 
-    raise ValueError("avatar_url must be a GCS object path or HTTPS URL")
+
+def signed_user_avatar_url(stored: str | None, firebase_uid: str) -> str | None:
+    return signed_avatar_urls_for_owners(
+        [(stored, "user", firebase_uid)],
+    )[0]
+
+
+def signed_baby_avatar_urls_from_rows(rows: Sequence[dict[str, Any]]) -> list[str | None]:
+    owners: list[tuple[str | None, str, str]] = []
+    for row in rows:
+        owners.append(
+            (row.get("avatar_url"), "baby", str(row["id"])),
+        )
+    return signed_avatar_urls_for_owners(owners)
+
+
+def signed_avatar_urls_for_owners(
+    entries: Sequence[tuple[str | None, str, str]],
+) -> list[str | None]:
+    """Sign bucket avatars only when the stored path matches the row owner."""
+    paths: list[str | None] = []
+    for stored, owner_kind, owner_id in entries:
+        paths.append(
+            avatar_object_path_authorized(
+                stored,
+                owner_kind=owner_kind,  # type: ignore[arg-type]
+                owner_id=owner_id,
+            )
+        )
+    return signed_display_urls(paths)
 
 
 def signed_avatar_urls(stored_values: Sequence[str | None]) -> list[str | None]:
-    """Read URLs for stored avatars, bucket objects signed as one batch.
-
-    Bucket paths (and legacy public GCS URLs) get a short-lived signed URL;
-    external HTTPS URLs (e.g. OAuth) pass through; anything else is ``None``.
-    """
+    """Legacy batch sign without ownership — signs any avatars/ path (tests only)."""
     paths: list[str | None] = []
-    passthrough: list[str | None] = []
     for stored in stored_values:
         s = (stored or "").strip()
-        path = gcs_object_path_from_stored(s) if s else None
-        paths.append(path)
-        if path is None and (s.startswith("http://") or s.startswith("https://")):
-            passthrough.append(s)
+        path = display_object_path_from_client_value(s) if s else None
+        if path is not None and path.startswith("avatars/"):
+            paths.append(path)
         else:
-            passthrough.append(None)
-    signed = signed_display_urls(paths)
-    return [url if url is not None else ext for url, ext in zip(signed, passthrough)]
+            paths.append(None)
+    return signed_display_urls(paths)
 
 
 def signed_avatar_url(stored: str | None) -> str | None:
-    """Short-lived read URL for bucket avatars; pass through external HTTPS URLs."""
+    """Sign without ownership check — prefer signed_user_avatar_url at call sites."""
     return signed_avatar_urls([stored])[0]

@@ -3,8 +3,6 @@ import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../domain/onboarding_routes.dart';
-import '../../domain/onboarding_step.dart';
 import '../app_session.dart';
 import '../onboarding_coordinator.dart';
 
@@ -21,19 +19,9 @@ Future<void> navigateAfterOnboardingAuth(
   }
 
   await session.refreshFromApi();
-  final status = session.status;
-  if (status?.canAccessMainApp == true) {
-    if (context.mounted) context.go('/home');
-    return;
-  }
   final user = FirebaseAuth.instance.currentUser;
-
-  if (user != null && !usedOAuth && isSignUp && !user.emailVerified) {
-    await coordinator.setStep(OnboardingStep.emailVerify);
-    if (context.mounted) context.go(OnboardingRoutes.emailVerify);
-    return;
-  }
-
-  await coordinator.setStep(OnboardingStep.completeProfile);
-  if (context.mounted) context.go(OnboardingRoutes.completeProfile);
+  final emailVerified =
+      coordinator.skipEmailVerify || (user?.emailVerified ?? false);
+  if (!context.mounted) return;
+  context.go(session.signedInResumeLocation(emailVerified: emailVerified));
 }

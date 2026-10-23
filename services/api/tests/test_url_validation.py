@@ -12,12 +12,17 @@ def test_empty_optional_url():
     assert normalize_optional_http_url("   ") is None
 
 
-def test_accepts_https_and_http():
+def test_accepts_https():
     assert (
         normalize_optional_http_url("https://example.com/item")
         == "https://example.com/item"
     )
-    assert normalize_optional_http_url("http://example.com") == "http://example.com"
+
+
+def test_rejects_plain_http_except_localhost():
+    with pytest.raises(ValueError, match=INVALID_HTTP_URL):
+        normalize_optional_http_url("http://example.com")
+    assert normalize_optional_http_url("http://localhost/shop") == "http://localhost/shop"
 
 
 def test_bare_domain_gets_https_prefix():

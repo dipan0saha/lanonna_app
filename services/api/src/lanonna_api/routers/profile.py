@@ -2,11 +2,14 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, status
 
-from lanonna_api.domain.errors import ErrorCode
+from lanonna_api.domain.errors import DomainError, ErrorCode
 from lanonna_api.auth import AppUser, current_app_user, current_user
 from lanonna_api.db import read_scope
 from lanonna_api.domain.date_validation import validate_user_birth_date
-from lanonna_api.domain.avatar_urls import normalize_avatar_for_storage, signed_avatar_url
+from lanonna_api.domain.avatar_urls import (
+    normalize_user_avatar_for_storage,
+    signed_user_avatar_url,
+)
 from lanonna_api.http_errors import api_error, map_domain_errors
 from lanonna_api.domain.account import build_account_extensions
 from lanonna_api.domain.account_delete import delete_account, delete_account_preview
@@ -30,7 +33,7 @@ def _to_profile_response(row: dict[str, Any]) -> ProfileResponse:
         firebase_uid=row["firebase_uid"],
         email=row.get("email"),
         display_name=row.get("display_name"),
-        avatar_url=signed_avatar_url(row.get("avatar_url")),
+        avatar_url=signed_user_avatar_url(row.get("avatar_url"), row["firebase_uid"]),
         phone=row.get("phone"),
         birth_date=birth,
         country_code=row.get("country_code"),
@@ -73,8 +76,10 @@ def patch_profile(
             raise map_domain_errors(exc) from exc
     if "avatar_url" in changes and changes["avatar_url"] is not None:
         try:
-            changes["avatar_url"] = normalize_avatar_for_storage(changes["avatar_url"])
-        except ValueError as exc:
+            changes["avatar_url"] = normalize_user_avatar_for_storage(
+                changes["avatar_url"], user.uid
+            )
+        except (ValueError, DomainError) as exc:
             raise map_domain_errors(exc) from exc
     try:
         row = patch_profile_fields(user.uid, changes)

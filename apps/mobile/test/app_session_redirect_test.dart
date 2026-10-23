@@ -596,6 +596,19 @@ void main() {
       expectRow(f.session, OnboardingRoutes.ownerCreateBaby);
     });
 
+    test('profile-complete no-baby user cannot stay on email verify', () async {
+      final f = await _fixtures();
+      f.session.debugSetStatus(noBaby);
+      expect(
+        f.session.redirectFor(
+          isSignedIn: true,
+          emailVerified: true,
+          location: OnboardingRoutes.emailVerify,
+        ),
+        OnboardingRoutes.ownerCreateBaby,
+      );
+    });
+
     test('owner onboarding open without main app -> resume step', () async {
       final f = await _fixtures();
       f.session.debugSetStatus(_ownerMidOnboarding());
