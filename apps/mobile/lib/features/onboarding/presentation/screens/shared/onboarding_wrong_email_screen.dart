@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../../../../core/auth/auth_repository.dart';
 import '../../../../../core/auth/session_cleanup.dart';
 import '../../../../invitations/presentation/invite_flow_state.dart';
+import '../../../domain/onboarding_path.dart';
 import '../../../domain/onboarding_routes.dart';
 import '../../onboarding_coordinator.dart';
 import '../../widgets/onboarding_buttons.dart';
@@ -22,6 +23,32 @@ class OnboardingWrongEmailScreen extends StatefulWidget {
 
 class _OnboardingWrongEmailScreenState extends State<OnboardingWrongEmailScreen> {
   var _redirected = false;
+
+  /// Switch account wipes the session (including [InviteFlowState]) before it
+  /// re-applies the invite handoff. Everything is captured up front and the
+  /// empty-mismatch redirect is suppressed, so neither the cleared state nor a
+  /// router redirect on sign-out can drop the handoff mid-flight.
+  Future<void> _switchAccount({
+    required String inviteeEmail,
+    required String? resumeToken,
+    required OnboardingPath resumePath,
+  }) async {
+    _redirected = true;
+    final flow = context.read<InviteFlowState>();
+    final cleanup = context.read<SessionCleanup>();
+    final auth = context.read<AuthRepository>();
+    final router = GoRouter.of(context);
+    await cleanup.clearLocalUserData();
+    await auth.signOut();
+    flow.setLoginPrefillEmail(inviteeEmail);
+    flow.setSignupPrefillEmail(inviteeEmail);
+    if (resumeToken == null || resumeToken.isEmpty) {
+      router.go(OnboardingRoutes.ownerCarousel);
+      return;
+    }
+    flow.setInviteResume(token: resumeToken, path: resumePath);
+    router.go(OnboardingRoutes.login);
+  }
 
   @override
   void didChangeDependencies() {
@@ -66,26 +93,11 @@ class _OnboardingWrongEmailScreenState extends State<OnboardingWrongEmailScreen>
           const SizedBox(height: 28),
           OnboardingPrimaryButton(
             label: l10n.wrongEmailSwitchAccount,
-            onPressed: () async {
-              final flow = context.read<InviteFlowState>();
-              final inviteeEmail = mismatch.inviteeEmail;
-              final resumeToken = token?.trim();
-              final resumePath = coordinator.onboardingPath;
-              await context.read<SessionCleanup>().clearLocalUserData();
-              if (!context.mounted) return;
-              await context.read<AuthRepository>().signOut();
-              if (!context.mounted) return;
-              flow.setLoginPrefillEmail(inviteeEmail);
-              flow.setSignupPrefillEmail(inviteeEmail);
-              if (resumeToken != null && resumeToken.isNotEmpty) {
-                flow.setInviteResume(token: resumeToken, path: resumePath);
-              }
-              if (resumeToken == null || resumeToken.isEmpty) {
-                context.go(OnboardingRoutes.ownerCarousel);
-                return;
-              }
-              context.go(OnboardingRoutes.login);
-            },
+            onPressed: () => _switchAccount(
+              inviteeEmail: mismatch.inviteeEmail,
+              resumeToken: token?.trim(),
+              resumePath: coordinator.onboardingPath,
+            ),
           ),
           const SizedBox(height: 12),
           Center(

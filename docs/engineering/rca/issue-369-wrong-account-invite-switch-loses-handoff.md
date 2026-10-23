@@ -20,6 +20,10 @@ Instead, login opens with an empty email, generic owner copy, and no pending inv
 
 Order of operations is wrong: handoff must be applied **after** session cleanup (or cleanup must exempt account-switch handoff fields).
 
+### Second failure mode (found in review)
+
+Reordering alone is not enough. The screen `watch`es `InviteFlowState`; `clearLocalUserData()` nulls `emailMismatch`, which re-runs `didChangeDependencies`, and its "no mismatch → go to owner carousel" redirect fires on the next frame while `signOut()` is still awaited. The screen then unmounts, the `context.mounted` guards return early, and the handoff is dropped again. The fix sets the redirect guard before cleanup and captures the router and providers up front, so the re-applied handoff and the `go(login)` do not depend on the screen still being mounted.
+
 ### Not the root cause
 
 - Login URL query params (product intentionally avoids tokens in URLs).
@@ -34,13 +38,18 @@ Order of operations is wrong: handoff must be applied **after** session cleanup 
 | `onboarding_login_screen.dart` | Consumer of `takeInviteResume` / `takeLoginPrefillEmail` |
 | `onboarding_signup_screen.dart` | `takeSignupPrefillEmail` — should receive same email when user taps Sign up from login |
 
-Other sign-out flows should continue to clear `InviteFlowState` fully.
+Other sign-out flows should continue to clear `InviteFlowState` fully. Audited callers of `clearLocalUserData()` + `signOut()` (account logout, app-lock logout, delete account, user-deleted session handler) set no handoff state beforehand, so none has this ordering problem.
+
+### Token storage
+
+The resume token lives only in memory on `InviteFlowState` (never in a URL). The login screen moves it into `OnboardingCoordinator`'s pending invite (SharedPreferences, the existing invite-flow store), which is cleared on invite completion and on every sign-out.
 
 ## Fix direction
 
 | Layer | Change |
 |-------|--------|
-| `onboarding_wrong_email_screen.dart` | Capture invitee email, token, and path; run `clearLocalUserData()` and `signOut()` first; then `setLoginPrefillEmail`, `setSignupPrefillEmail`, and `setInviteResume` |
+| `onboarding_wrong_email_screen.dart` | `_switchAccount`: suppress the empty-mismatch redirect; capture invitee email, token, path, router and providers; run `clearLocalUserData()` and `signOut()` first; then `setLoginPrefillEmail`, `setSignupPrefillEmail`, and `setInviteResume` |
+| `session_cleanup.dart` | Image-cache eviction is injectable (`evictImageCaches`) so widget tests can run the real cleanup without platform plugins |
 | Tests | Widget test: tap Switch account → navigate to login → email field prefilled; invite resume restores token/path |
 
 ## Expected behaviour after fix
