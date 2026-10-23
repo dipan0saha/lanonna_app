@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/auth/auth_repository.dart';
 import 'package:lanonna/core/auth/biometric_sign_in_service.dart';
+import 'package:lanonna/core/auth/biometric_sign_in_store.dart';
 import 'package:lanonna/core/auth/auth_session_service.dart';
 import 'package:lanonna/core/auth/session_cleanup.dart';
 import 'package:lanonna/features/account/data/account_repository.dart';
@@ -23,8 +24,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class _FakeFirebaseAuth extends Fake implements FirebaseAuth {}
 
+class _User extends Fake implements User {
+  @override
+  String get uid => 'uid-deleted';
+}
+
 class _Biometric extends Fake implements BiometricSignInService {
   var cleared = 0;
+
+  @override
+  BiometricSignInEnrollment? get enrollment => const BiometricSignInEnrollment(
+    credentialId: 'cred-1',
+    firebaseUid: 'uid-deleted',
+  );
 
   @override
   Future<void> clearLocalEnrollment() async => cleared++;
@@ -39,6 +51,9 @@ class _Auth extends AuthRepository {
   var signOuts = 0;
   String? reauthPassword;
   var googleReauths = 0;
+
+  @override
+  User? get currentUser => _User();
 
   @override
   bool get usesPasswordProvider => password;
@@ -104,10 +119,15 @@ class _Cleanup extends SessionCleanup {
   }
 }
 
-AuthSessionService _sessionService(_Auth auth, _Cleanup cleanup) {
+AuthSessionService _sessionService(
+  _Auth auth,
+  _Cleanup cleanup,
+  _Biometric biometric,
+) {
   return AuthSessionService(
     authRepository: auth,
     sessionCleanup: cleanup,
+    biometricSignInService: biometric,
   );
 }
 
@@ -118,6 +138,7 @@ Future<void> _pump(
   required _Cleanup cleanup,
   _Biometric? biometric,
 }) async {
+  final bio = biometric ?? _Biometric();
   final router = GoRouter(
     initialLocation: '/account/delete',
     routes: [
@@ -139,10 +160,9 @@ Future<void> _pump(
         Provider<AuthRepository>.value(value: auth),
         Provider<SessionCleanup>.value(value: cleanup),
         Provider<AuthSessionService>.value(
-          value: _sessionService(auth, cleanup),
+          value: _sessionService(auth, cleanup, bio),
         ),
-        Provider<BiometricSignInService>.value(value: biometric ?? _Biometric()),
-      ],
+              ],
       child: MaterialApp.router(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,

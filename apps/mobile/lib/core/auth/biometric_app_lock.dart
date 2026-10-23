@@ -12,6 +12,7 @@ import '../time/monotonic_clock.dart';
 import 'auth_repository.dart';
 import 'auth_session_service.dart';
 import 'biometric_app_lock_policy.dart';
+import 'biometric_sign_in_service.dart';
 import 'biometric_unlock_service.dart';
 
 /// Full-screen lock when the user returns with biometric unlock enabled.
@@ -150,13 +151,19 @@ class _BiometricAppLockState extends State<BiometricAppLock>
   bool _wouldEngageLock() {
     final auth = context.read<AuthRepository>();
     final session = context.read<AppSession>();
-    final account = context.read<AccountRepository>().cachedAccount;
+    final accountRepo = context.read<AccountRepository>();
+    final account = accountRepo.cachedAccount;
     final location = _currentPath();
+    final unlockActive = account != null
+        ? context.read<BiometricSignInService>().isUnlockActiveForSignedInUser(
+            serverBiometricUnlockEnabled: account.biometricUnlockEnabled,
+          )
+        : false;
     return biometricAppLockShouldEngage(
       isSignedIn: auth.currentUser != null,
       canAccessMainApp: session.canAccessMainApp,
       isOnboardingPath: OnboardingRoutes.isOnboardingPath(location),
-      biometricUnlockEnabled: account?.biometricUnlockEnabled ?? false,
+      biometricUnlockEnabled: unlockActive,
     );
   }
 

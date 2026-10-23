@@ -153,6 +153,7 @@ Future<Widget> bootstrapLaNonnaApp({
   authSessionService = AuthSessionService(
     authRepository: authRepository,
     sessionCleanup: sessionCleanup,
+    biometricSignInService: biometricSignInService,
     pushNotificationService: pushNotificationService,
   );
   final homeRefreshSignal = HomeRefreshSignal();

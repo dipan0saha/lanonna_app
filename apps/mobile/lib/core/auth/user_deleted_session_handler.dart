@@ -15,7 +15,7 @@ Future<void> handleUserDeletedSession({
   if (_handlingUserDeleted) return;
   _handlingUserDeleted = true;
   try {
-    await authSessionService.signOut();
+    await authSessionService.signOutDeletedAccount();
     final context = appRootNavigatorKey.currentContext;
     if (context != null && context.mounted) {
       AppSnackBar.showAlert(

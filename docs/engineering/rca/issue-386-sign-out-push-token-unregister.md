@@ -36,20 +36,28 @@ No other production call sites invoked `AuthRepository.signOut()` directly.
 
 ## Fix
 
-Introduce **`AuthSessionService.signOut()`** as the single ordered sequence:
+**`AuthSessionService`** is the only place a session ends on this device. It has two entry points with one ordering:
 
-1. **Unregister push on the server** while Firebase still has a session — `PushNotificationService.unregisterBeforeSignOut()`, best-effort with a **3s** timeout.
-2. **`SessionCleanup.clearLocalUserData()`** — caches, onboarding flags, invite flow (callers that need invite handoff across switch-account, per PR #382, re-apply `InviteFlowState` **after** this step).
-3. **`AuthRepository.signOut()`** — Google + Firebase.
+**`signOut()`** for a normal logout (account screen, app-lock overlay, wrong-account Switch account):
 
-`PushNotificationService` auth listener on `user == null` now only performs **local** FCM `deleteToken()` as a fallback (no authenticated DELETE).
+1. **Unregister push on the server** while Firebase still has a session: `PushNotificationService.unregisterFromServer()`. This is best-effort and bounded by a **3 s** timeout, so a slow or offline network never holds sign-out longer than that (offline fails immediately in `ApiClient`).
+2. **`SessionCleanup.clearLocalUserData()`** clears caches, onboarding flags and invite flow. Switch account re-applies its `InviteFlowState` handoff **after** this step (#369).
+3. **`AuthRepository.signOut()`** signs out of Google and Firebase.
 
-`PushNotificationService` is constructed in `bootstrap.dart` and provided to the widget tree so `AuthSessionService` and `LaNonnaApp` share one instance.
+The biometric sign-in enrollment is **kept**: biometric sign-in survives logout. It is dropped only when another account signs in (`BiometricSignInService.bindAuthState`, #375), when the setting is turned off, or when the account is deleted.
+
+**`signOutDeletedAccount()`** for delete account and the API `user_deleted` 401 handler:
+
+- **No** server unregister. Account deletion already removed the user's `device_tokens` and biometric credentials (#365). An authenticated DELETE would fail with `user_deleted`, which re-enters `handleUserDeletedSession` (the delete-account flow would then sign out twice and show the "account deleted" alert).
+- Clears this install's biometric enrollment **only if it belongs to the deleted account**, then runs steps 2 and 3.
+
+The `PushNotificationService` auth listener on `user == null` performs the **local** FCM `deleteToken()` for every path (no authenticated call). `PushNotificationService` is constructed in `bootstrap.dart` and provided to the widget tree, so `AuthSessionService` and `LaNonnaApp` share one instance.
 
 ## Tests
 
-- `auth_session_service_test.dart` — ordering and push timeout best-effort.
-- Existing widget tests updated to provide `AuthSessionService` (delete account, biometric lock, wrong-email switch account).
+- `auth_session_service_test.dart`: order (unregister → local cleanup → Firebase), a slow unregister abandoned at the timeout, enrollment kept on logout, and deleted-account sign-out making no server call while clearing only that account's enrollment.
+- `delete_account_screen_test.dart`: delete goes through `signOutDeletedAccount` (enrollment cleared once, single sign-out).
+- Existing widget tests provide `AuthSessionService` (biometric lock, wrong-email switch account).
 
 ## Impact if unfixed
 

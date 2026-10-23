@@ -36,6 +36,8 @@ class PushNotificationService {
 
     _authSub = authStateChanges.listen((user) async {
       if (user == null) {
+        // Every sign-out path ends here; the server row was already removed
+        // by AuthSessionService (or by account deletion).
         await _deleteLocalFcmTokenOnly();
         return;
       }
@@ -92,8 +94,19 @@ class PushNotificationService {
     await _tokenRefreshSub?.cancel();
   }
 
-  /// Server DELETE while the Firebase session is still valid; then local FCM cleanup.
-  Future<void> unregisterBeforeSignOut() => _unregisterFromServerAndLocal();
+  /// Removes this device's token from the server. Call while the Firebase
+  /// session is still valid (the DELETE is authenticated); the local FCM token
+  /// is dropped by the auth listener once the session ends.
+  Future<void> unregisterFromServer() async {
+    final token =
+        _lastRegisteredToken ?? await FirebaseMessaging.instance.getToken();
+    if (token == null || token.isEmpty) return;
+    try {
+      await _notificationsRepo.unregisterDeviceToken(token);
+    } catch (e) {
+      debugPrint('push_token_unregister_failed: $e');
+    }
+  }
 
   Future<void> _registerCurrentToken() async {
     try {
@@ -125,19 +138,6 @@ class PushNotificationService {
     } catch (e) {
       debugPrint('push_token_register_failed: $e');
     }
-  }
-
-  Future<void> _unregisterFromServerAndLocal() async {
-    final token =
-        _lastRegisteredToken ?? await FirebaseMessaging.instance.getToken();
-    if (token != null && token.isNotEmpty) {
-      try {
-        await _notificationsRepo.unregisterDeviceToken(token);
-      } catch (e) {
-        debugPrint('push_token_unregister_failed: $e');
-      }
-    }
-    await _deleteLocalFcmTokenOnly();
   }
 
   Future<void> _deleteLocalFcmTokenOnly() async {

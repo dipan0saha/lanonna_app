@@ -151,7 +151,10 @@ class _GalleryScreenState extends State<GalleryScreen>
 
   Future<void> _load() async {
     final store = context.read<SelectedBabyStore>();
-    if (shouldShowTabLoadSpinner(store, hasDisplayedPayload: _baby != null)) {
+    if (shouldShowTabLoadSpinner(
+      store,
+      hasDisplayedPayload: hasCurrentTabPayload(store, _baby?.id),
+    )) {
       setState(() {
         _loading = true;
         _error = null;
@@ -192,11 +195,18 @@ class _GalleryScreenState extends State<GalleryScreen>
       onGalleryFullLoadSettled();
     } catch (e) {
       if (!mounted) return;
-      final hadBaby = _baby != null;
+      final hasPayload = hasCurrentTabPayload(store, _baby?.id);
+      if (!hasPayload) {
+        setState(() {
+          _baby = null;
+          _photos = [];
+          _activity = [];
+        });
+      }
       reportTabLoadFailure(
         context,
         e,
-        hasPayload: hadBaby,
+        hasPayload: hasPayload,
         onBlockingError: (message) {
           setState(() {
             _error = message;
@@ -204,7 +214,7 @@ class _GalleryScreenState extends State<GalleryScreen>
           });
         },
       );
-      if (hadBaby && mounted) {
+      if (hasPayload && mounted) {
         setState(() => _loading = false);
       }
     }
@@ -319,10 +329,11 @@ class _GalleryScreenState extends State<GalleryScreen>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final headline = context.textStyles.headlineSmall;
+    final store = context.read<SelectedBabyStore>();
     final kind = resolveTabLoadKind(
       loading: _loading,
       hasError: _error != null,
-      hasPayload: _baby != null,
+      hasPayload: hasCurrentTabPayload(store, _baby?.id),
     );
     return Scaffold(
       backgroundColor: AppColors.background,

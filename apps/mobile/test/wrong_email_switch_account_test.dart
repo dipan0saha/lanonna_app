@@ -5,13 +5,15 @@ import 'package:go_router/go_router.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/auth/auth_repository.dart';
 import 'package:lanonna/core/auth/auth_session_service.dart';
+import 'package:lanonna/core/auth/biometric_sign_in_service.dart';
+import 'package:lanonna/core/auth/biometric_sign_in_store.dart';
 import 'package:lanonna/core/auth/session_cleanup.dart';
-import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/features/home/data/home_repository.dart';
 import 'package:lanonna/features/home/data/selected_baby_store.dart';
-import 'package:lanonna/features/invitations/data/models/invitation_preview.dart';
 import 'package:lanonna/features/invitations/domain/invitation_status.dart';
+import 'package:lanonna/core/domain/baby_lifecycle.dart';
+import 'package:lanonna/features/invitations/data/models/invitation_preview.dart';
 import 'package:lanonna/features/invitations/presentation/invite_flow_state.dart';
 import 'package:lanonna/features/onboarding/data/onboarding_repository.dart';
 import 'package:lanonna/features/onboarding/data/onboarding_storage.dart';
@@ -34,6 +36,12 @@ class _FakeAuth extends AuthRepository {
   Future<void> signOut() async {
     signOutCalls++;
   }
+}
+
+/// No biometric enrollment on this device.
+class _NoBiometric extends Fake implements BiometricSignInService {
+  @override
+  BiometricSignInEnrollment? get enrollment => null;
 }
 
 void main() {
@@ -78,10 +86,7 @@ void main() {
       ),
       selectedBabyStore: SelectedBabyStore(prefs),
       inviteFlowState: inviteFlowState,
-    );
-    final authSession = AuthSessionService(
-      authRepository: auth,
-      sessionCleanup: cleanup,
+      evictImageCaches: () async {},
     );
 
     final router = GoRouter(
@@ -89,11 +94,11 @@ void main() {
       routes: [
         GoRoute(
           path: OnboardingRoutes.wrongEmail,
-          builder: (_, __) => const OnboardingWrongEmailScreen(),
+          builder: (_, _) => const OnboardingWrongEmailScreen(),
         ),
         GoRoute(
           path: OnboardingRoutes.login,
-          builder: (_, __) => const OnboardingLoginScreen(),
+          builder: (_, _) => const OnboardingLoginScreen(),
         ),
       ],
     );
@@ -104,8 +109,13 @@ void main() {
           ChangeNotifierProvider.value(value: coordinator),
           ChangeNotifierProvider.value(value: inviteFlowState),
           Provider<AuthRepository>.value(value: auth),
-          Provider<SessionCleanup>.value(value: cleanup),
-          Provider<AuthSessionService>.value(value: authSession),
+          Provider<AuthSessionService>.value(
+            value: AuthSessionService(
+              authRepository: auth,
+              sessionCleanup: cleanup,
+            ),
+          ),
+          Provider<BiometricSignInService>.value(value: _NoBiometric()),
         ],
         child: MaterialApp.router(
           theme: AppTheme.light,
@@ -125,10 +135,13 @@ void main() {
       find.byKey(const Key('onboarding_login_email')),
       findsOneWidget,
     );
-    final emailField = tester.widget<TextFormField>(
-      find.byKey(const Key('onboarding_login_email')),
+    final emailField = tester.widget<EditableText>(
+      find.descendant(
+        of: find.byKey(const Key('onboarding_login_email')),
+        matching: find.byType(EditableText),
+      ),
     );
-    expect(emailField.controller?.text, 'grandma@test.com');
+    expect(emailField.controller.text, 'grandma@test.com');
     expect(
       find.text('Sign in to accept your invitation and continue.'),
       findsOneWidget,
