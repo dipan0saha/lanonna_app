@@ -230,9 +230,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String notificationPreferencesIntro(String babyName) {
-    return 'Choose how often you\'d like updates from $babyName.';
-  }
+  String get notificationPreferencesIntro =>
+      'Choose how often you\'d like updates across every baby you follow on this account.';
 
   @override
   String get aiSuggestionsSubtitle =>
@@ -647,13 +646,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notificationPrefsPushSubtitle => 'Get alerts on your phone';
 
   @override
-  String get notificationPrefsDigestTitle => 'Weekly email digest';
-
-  @override
-  String get notificationPrefsDigestSubtitle =>
-      'Photos, events and registry updates';
-
-  @override
   String get actionEdit => 'Edit';
 
   @override
@@ -1047,7 +1039,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get eventDetailsHeading => 'Details';
 
   @override
-  String get presetDiapers => 'Diapers';
+  String get presetDiaperStockpile => 'Diapers (newborn)';
 
   @override
   String get actionDownloadJsonCopy =>
@@ -1103,7 +1095,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Family will see this item as taken so no one buys it again.';
 
   @override
-  String get presetFirstCheckup => 'First Checkup';
+  String get presetFirstPediatricVisit => 'First pediatric visit';
 
   @override
   String get presetFirstHolidays => 'First Holidays';
@@ -1399,7 +1391,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get labelSuggestName2 => 'Suggest a name…';
 
   @override
-  String get presetSwaddles => 'Swaddles';
+  String get presetSwaddleBlankets => 'Swaddle Blankets (set of 3)';
 
   @override
   String get actionSwitchBabyProfile => 'Switch baby profile';
@@ -1552,9 +1544,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String notificationPrefsFrequencyTitle(String babyLabel) {
-    return 'How often would you like updates for $babyLabel?';
-  }
+  String get notificationPrefsFrequencyTitle =>
+      'How often would you like updates?';
 
   @override
   String accountStorageUsed(String used, String quota) {
@@ -1638,19 +1629,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get digestRealtime => 'Real-time';
 
   @override
-  String get digestDaily => 'Daily digest';
+  String get digestDaily => 'In-app only';
 
   @override
   String get digestWeekly => 'Weekly digest';
 
   @override
-  String get digestSummaryRealtime => 'Real-time updates';
+  String get digestSummaryRealtime => 'A push for each update';
 
   @override
-  String get digestSummaryDaily => 'Daily email summary';
+  String get digestSummaryDaily => 'Inbox only, no push';
 
   @override
-  String get digestSummaryWeekly => 'Weekly email summary';
+  String get digestSummaryWeekly => 'Weekly push summary';
 
   @override
   String get invitationStatusPending => 'Pending';
@@ -1675,7 +1666,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorInviteAlreadyDelivered =>
-      'This invite was already delivered and cannot be sent again.';
+      'This invite email was already delivered. To send a new link, revoke it and invite them again.';
+
+  @override
+  String get errorBirthdateVoteOutOfRange =>
+      'Pick a date within the allowed window around the due date.';
 
   @override
   String settingsCouldNotOpenEmailTo(String supportEmail) {
@@ -2108,7 +2103,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingChooseHowOftenYouHear =>
-      'Choose how often you hear from us: real-time, daily, or a weekly digest. You can change this anytime.';
+      'Choose how often you hear from us: real-time push, in-app only, or a weekly push summary. You can change this anytime.';
 
   @override
   String get onboardingFollowerGetStarted => 'Get Started';

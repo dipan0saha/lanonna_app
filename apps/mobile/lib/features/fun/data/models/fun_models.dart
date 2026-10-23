@@ -120,6 +120,8 @@ class PredictionsPayload {
     required this.femaleVotes,
     this.viewerGenderVote,
     this.viewerBirthdateVote,
+    this.birthdateVoteMin,
+    this.birthdateVoteMax,
     required this.birthdateHistogram,
     required this.genderVoters,
     this.predictionsClosed = false,
@@ -130,6 +132,8 @@ class PredictionsPayload {
   /// `null` until the viewer votes; otherwise male or female.
   final BabyGender? viewerGenderVote;
   final String? viewerBirthdateVote;
+  final String? birthdateVoteMin;
+  final String? birthdateVoteMax;
   final List<BirthdateVoteCount> birthdateHistogram;
   final List<GenderVoterRow> genderVoters;
 
@@ -153,6 +157,8 @@ class PredictionsPayload {
       femaleVotes: adjust(femaleVotes, BabyGender.female),
       viewerGenderVote: gender,
       viewerBirthdateVote: viewerBirthdateVote,
+      birthdateVoteMin: birthdateVoteMin,
+      birthdateVoteMax: birthdateVoteMax,
       birthdateHistogram: birthdateHistogram,
       genderVoters: genderVoters,
       predictionsClosed: predictionsClosed,
@@ -168,6 +174,8 @@ class PredictionsPayload {
       femaleVotes: readInt(totals[BabyGender.female.apiValue]),
       viewerGenderVote: BabyGender.tryFromApi(json['viewer_gender_vote'] as String?),
       viewerBirthdateVote: json['viewer_birthdate_vote'] as String?,
+      birthdateVoteMin: json['birthdate_vote_min'] as String?,
+      birthdateVoteMax: json['birthdate_vote_max'] as String?,
       birthdateHistogram: hist
           .whereType<Map<String, dynamic>>()
           .map(BirthdateVoteCount.fromJson)

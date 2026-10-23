@@ -38,6 +38,8 @@ void main() {
   final emptyVotes = PredictionsPayload(
     maleVotes: 0,
     femaleVotes: 0,
+    birthdateVoteMin: '2026-12-01',
+    birthdateVoteMax: '2027-03-01',
     birthdateHistogram: const [],
     genderVoters: const [],
   );

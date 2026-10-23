@@ -32,6 +32,34 @@ void main() {
     expect(available.map((s) => s.id), ['diaper_pail']);
   });
 
+  test('availableSuggestions hides crib mattress after first-moment seed', () {
+    final catalog = [
+      RegistrySuggestion(
+        id: 'crib_mattress',
+        name: 'Crib & Mattress',
+        description: 'Safe sleep',
+      ),
+      RegistrySuggestion(
+        id: 'diaper_stockpile',
+        name: 'Diapers (newborn)',
+        description: 'Stock up',
+      ),
+    ];
+    final items = [
+      RegistryItem(
+        id: '1',
+        name: 'Crib & Mattress',
+        priority: 3,
+        isPurchased: false,
+        catalogSuggestionId: 'crib_mattress',
+      ),
+    ];
+
+    final available = availableSuggestions(catalog, items);
+
+    expect(available.map((s) => s.id), ['diaper_stockpile']);
+  });
+
   test('claimedCatalogSuggestionIds ignores null ids', () {
     final items = [
       RegistryItem(

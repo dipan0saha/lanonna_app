@@ -5,14 +5,24 @@ from typing import Any
 
 from lanonna_api.db import get_connection
 from lanonna_api.domain.photo_purpose import PhotoPurpose
+from lanonna_api.domain.birthdate_vote_window import BirthdateVoteWindow
 from lanonna_api.repositories.active_participants import active_participant_join
+from lanonna_api.repositories.birthdate_votes import (
+    BIRTHDATE_WINDOW_SQL,
+    birthdate_window_params,
+)
 
 
-def home_summary_counts(baby_profile_id: uuid.UUID) -> dict[str, Any]:
+def home_summary_counts(
+    baby_profile_id: uuid.UUID,
+    *,
+    birthdate_window: BirthdateVoteWindow,
+) -> dict[str, Any]:
     """Every count and flag the home summary shows, in one round trip.
 
     Family insight: name idea count, gender votes (total and per side) and the
-    most-guessed birth date, counting active participants only. Getting
+    most-guessed birth date inside [birthdate_window] (#413), counting active
+    participants only. Getting
     started: whether the baby has any registry item, invitation, follower,
     photo or event (``EXISTS``, so nothing is counted that is only tested).
     """
@@ -32,6 +42,7 @@ def home_summary_counts(baby_profile_id: uuid.UUID) -> dict[str, Any]:
                     WHERE v.baby_profile_id = %(baby)s
                       AND v.vote_type = 'birthdate'
                       AND v.predicted_birth_date IS NOT NULL
+                      {BIRTHDATE_WINDOW_SQL}
                     GROUP BY v.predicted_birth_date
                     ORDER BY COUNT(*) DESC, v.predicted_birth_date ASC
                     LIMIT 1
@@ -59,7 +70,11 @@ def home_summary_counts(baby_profile_id: uuid.UUID) -> dict[str, Any]:
                 WHERE v.baby_profile_id = %(baby)s AND v.vote_type = 'gender'
             ) g
             """,
-            {"baby": baby_profile_id, "gallery": PhotoPurpose.GALLERY.value},
+            {
+                "baby": baby_profile_id,
+                "gallery": PhotoPurpose.GALLERY.value,
+                **birthdate_window_params(birthdate_window),
+            },
         ).fetchone()
     return dict(row)
 

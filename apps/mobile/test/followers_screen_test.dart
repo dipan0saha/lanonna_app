@@ -7,18 +7,22 @@ import 'package:lanonna/features/account/data/account_repository.dart';
 import 'package:lanonna/features/account/presentation/followers_screen.dart';
 import 'package:lanonna/features/home/data/home_repository.dart';
 import 'package:lanonna/core/domain/baby_summary.dart';
+import 'package:lanonna/core/api/api_exception.dart';
 import 'package:lanonna/features/invitations/domain/invitation_status.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 class _FakeAccountRepository extends AccountRepository {
-  _FakeAccountRepository({this.invites = const []})
-    : super(ApiClient(idTokenProvider: () async => null));
+  _FakeAccountRepository({List<InvitationRow>? invites})
+    : invites = invites ?? [],
+      super(ApiClient(idTokenProvider: () async => null));
 
-  final List<InvitationRow> invites;
+  List<InvitationRow> invites;
   int removeCalls = 0;
   int revokeCalls = 0;
   int resendCalls = 0;
+  int listCalls = 0;
+  ApiException? resendError;
 
   @override
   Future<List<MemberRow>> listMembers(String babyId) async {
@@ -33,8 +37,10 @@ class _FakeAccountRepository extends AccountRepository {
   }
 
   @override
-  Future<List<InvitationRow>> listInvitations(String babyId) async =>
-      invites;
+  Future<List<InvitationRow>> listInvitations(String babyId) async {
+    listCalls++;
+    return invites;
+  }
 
   @override
   Future<void> removeMember(String babyId, String firebaseUid) async {
@@ -50,6 +56,7 @@ class _FakeAccountRepository extends AccountRepository {
   @override
   Future<void> resendInvitation(String babyId, String invitationId) async {
     resendCalls++;
+    if (resendError != null) throw resendError!;
     final i = invites.indexWhere((inv) => inv.id == invitationId);
     invites[i] = InvitationRow(
       id: invites[i].id,
@@ -160,6 +167,7 @@ void main() {
           email: 'friend@example.com',
           status: InvitationStatus.pending,
           emailDeliveryStatus: InviteEmailDeliveryStatus.failed,
+          canResendEmail: true,
         ),
       ],
     );
@@ -172,6 +180,109 @@ void main() {
     expect(repo.resendCalls, 1);
     expect(find.text('Pending — email sending'), findsOneWidget);
     expect(find.text('Email failed to send'), findsNothing);
+    expect(find.text('Resend'), findsNothing);
+  });
+
+  testWidgets('polling updates row when delivery completes', (tester) async {
+    final repo = _FakeAccountRepository(
+      invites: [
+        InvitationRow(
+          id: 'inv-1',
+          email: 'friend@example.com',
+          status: InvitationStatus.pending,
+          emailDeliveryStatus: InviteEmailDeliveryStatus.pending,
+        ),
+      ],
+    );
+    await _pumpFollowers(tester, repo);
+    final initialLists = repo.listCalls;
+
+    repo.invites = [
+      InvitationRow(
+        id: 'inv-1',
+        email: 'friend@example.com',
+        status: InvitationStatus.pending,
+        emailDeliveryStatus: InviteEmailDeliveryStatus.sent,
+      ),
+    ];
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpAndSettle();
+
+    expect(repo.listCalls, greaterThan(initialLists));
+    expect(find.text('Invite email sent'), findsOneWidget);
+  });
+
+  testWidgets('polling stops after its window while a send stays in flight', (
+    tester,
+  ) async {
+    final repo = _FakeAccountRepository(
+      invites: [
+        InvitationRow(
+          id: 'inv-1',
+          email: 'friend@example.com',
+          status: InvitationStatus.pending,
+          emailDeliveryStatus: InviteEmailDeliveryStatus.pending,
+        ),
+      ],
+    );
+    await _pumpFollowers(tester, repo);
+    final first = repo.listCalls;
+
+    for (var i = 0; i < 40; i++) {
+      await tester.pump(const Duration(seconds: 2));
+    }
+    expect(repo.listCalls - first, 30);
+
+    await tester.pump(const Duration(minutes: 5));
+    expect(repo.listCalls - first, 30);
+  });
+
+  testWidgets('stuck send shows Resend from the server and stops polling', (
+    tester,
+  ) async {
+    final repo = _FakeAccountRepository(
+      invites: [
+        InvitationRow(
+          id: 'inv-1',
+          email: 'friend@example.com',
+          status: InvitationStatus.pending,
+          emailDeliveryStatus: InviteEmailDeliveryStatus.pending,
+          canResendEmail: true,
+        ),
+      ],
+    );
+    await _pumpFollowers(tester, repo);
+    final first = repo.listCalls;
+
+    expect(find.text('Resend'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 10));
+    expect(repo.listCalls, first);
+  });
+
+  testWidgets('invite_already_delivered reloads the list', (tester) async {
+    final repo = _FakeAccountRepository(
+      invites: [
+        InvitationRow(
+          id: 'inv-1',
+          email: 'friend@example.com',
+          status: InvitationStatus.pending,
+          emailDeliveryStatus: InviteEmailDeliveryStatus.failed,
+          canResendEmail: true,
+        ),
+      ],
+    );
+    repo.resendError = ApiException(
+      'already delivered',
+      statusCode: 409,
+      detail: {'error': 'invite_already_delivered'},
+    );
+    await _pumpFollowers(tester, repo);
+    final listsBefore = repo.listCalls;
+
+    await tester.tap(find.text('Resend'));
+    await tester.pumpAndSettle();
+
+    expect(repo.listCalls, greaterThan(listsBefore));
   });
 
   testWidgets('cancel revoke invite confirm does not revoke', (tester) async {

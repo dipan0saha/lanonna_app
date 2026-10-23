@@ -421,8 +421,8 @@ abstract class AppLocalizations {
   /// No description provided for @notificationPreferencesIntro.
   ///
   /// In en, this message translates to:
-  /// **'Choose how often you\'d like updates from {babyName}.'**
-  String notificationPreferencesIntro(String babyName);
+  /// **'Choose how often you\'d like updates across every baby you follow on this account.'**
+  String get notificationPreferencesIntro;
 
   /// Subtitle under AI Suggestions app bar (calendar + registry).
   ///
@@ -1095,18 +1095,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Get alerts on your phone'**
   String get notificationPrefsPushSubtitle;
-
-  /// No description provided for @notificationPrefsDigestTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Weekly email digest'**
-  String get notificationPrefsDigestTitle;
-
-  /// No description provided for @notificationPrefsDigestSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Photos, events and registry updates'**
-  String get notificationPrefsDigestSubtitle;
 
   /// No description provided for @actionEdit.
   ///
@@ -1864,11 +1852,11 @@ abstract class AppLocalizations {
   /// **'Details'**
   String get eventDetailsHeading;
 
-  /// No description provided for @presetDiapers.
+  /// No description provided for @presetDiaperStockpile.
   ///
   /// In en, this message translates to:
-  /// **'Diapers'**
-  String get presetDiapers;
+  /// **'Diapers (newborn)'**
+  String get presetDiaperStockpile;
 
   /// No description provided for @actionDownloadJsonCopy.
   ///
@@ -1972,11 +1960,11 @@ abstract class AppLocalizations {
   /// **'Family will see this item as taken so no one buys it again.'**
   String get messageItem;
 
-  /// No description provided for @presetFirstCheckup.
+  /// No description provided for @presetFirstPediatricVisit.
   ///
   /// In en, this message translates to:
-  /// **'First Checkup'**
-  String get presetFirstCheckup;
+  /// **'First pediatric visit'**
+  String get presetFirstPediatricVisit;
 
   /// No description provided for @presetFirstHolidays.
   ///
@@ -2536,11 +2524,11 @@ abstract class AppLocalizations {
   /// **'Suggest a name…'**
   String get labelSuggestName2;
 
-  /// No description provided for @presetSwaddles.
+  /// No description provided for @presetSwaddleBlankets.
   ///
   /// In en, this message translates to:
-  /// **'Swaddles'**
-  String get presetSwaddles;
+  /// **'Swaddle Blankets (set of 3)'**
+  String get presetSwaddleBlankets;
 
   /// No description provided for @actionSwitchBabyProfile.
   ///
@@ -2815,8 +2803,8 @@ abstract class AppLocalizations {
   /// No description provided for @notificationPrefsFrequencyTitle.
   ///
   /// In en, this message translates to:
-  /// **'How often would you like updates for {babyLabel}?'**
-  String notificationPrefsFrequencyTitle(String babyLabel);
+  /// **'How often would you like updates?'**
+  String get notificationPrefsFrequencyTitle;
 
   /// No description provided for @accountStorageUsed.
   ///
@@ -2941,7 +2929,7 @@ abstract class AppLocalizations {
   /// No description provided for @digestDaily.
   ///
   /// In en, this message translates to:
-  /// **'Daily digest'**
+  /// **'In-app only'**
   String get digestDaily;
 
   /// No description provided for @digestWeekly.
@@ -2953,19 +2941,19 @@ abstract class AppLocalizations {
   /// No description provided for @digestSummaryRealtime.
   ///
   /// In en, this message translates to:
-  /// **'Real-time updates'**
+  /// **'A push for each update'**
   String get digestSummaryRealtime;
 
   /// No description provided for @digestSummaryDaily.
   ///
   /// In en, this message translates to:
-  /// **'Daily email summary'**
+  /// **'Inbox only, no push'**
   String get digestSummaryDaily;
 
   /// No description provided for @digestSummaryWeekly.
   ///
   /// In en, this message translates to:
-  /// **'Weekly email summary'**
+  /// **'Weekly push summary'**
   String get digestSummaryWeekly;
 
   /// No description provided for @invitationStatusPending.
@@ -3013,8 +3001,14 @@ abstract class AppLocalizations {
   /// No description provided for @errorInviteAlreadyDelivered.
   ///
   /// In en, this message translates to:
-  /// **'This invite was already delivered and cannot be sent again.'**
+  /// **'This invite email was already delivered. To send a new link, revoke it and invite them again.'**
   String get errorInviteAlreadyDelivered;
+
+  /// No description provided for @errorBirthdateVoteOutOfRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a date within the allowed window around the due date.'**
+  String get errorBirthdateVoteOutOfRange;
 
   /// No description provided for @settingsCouldNotOpenEmailTo.
   ///
@@ -3745,7 +3739,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingChooseHowOftenYouHear.
   ///
   /// In en, this message translates to:
-  /// **'Choose how often you hear from us: real-time, daily, or a weekly digest. You can change this anytime.'**
+  /// **'Choose how often you hear from us: real-time push, in-app only, or a weekly push summary. You can change this anytime.'**
   String get onboardingChooseHowOftenYouHear;
 
   /// No description provided for @onboardingFollowerGetStarted.

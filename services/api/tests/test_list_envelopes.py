@@ -107,3 +107,12 @@ def test_list_babies_envelope_builds_summaries_from_list_rows_only():
 def test_list_limit_is_capped():
     with as_user():
         assert client.get("/v1/babies?limit=101").status_code == 422
+
+
+def test_invitation_list_passes_server_resend_state():
+    rows = [{**_invitation(0), "can_resend_email": True}]
+    with as_user(), patch(
+        "lanonna_api.routers.invitations.list_invitations_for_owner", return_value=rows
+    ):
+        body = client.get(f"/v1/babies/{BABY}/invitations").json()
+    assert body["items"][0]["can_resend_email"] is True

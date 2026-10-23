@@ -90,7 +90,6 @@ def patch_profile(
 class NotificationPreferencesUpdate(BaseModel):
     notification_digest: str | None = None
     push_notifications_enabled: bool | None = None
-    email_digest_enabled: bool | None = None
     notify_gallery_enabled: bool | None = None
     notify_calendar_enabled: bool | None = None
     notify_registry_enabled: bool | None = None
@@ -101,7 +100,6 @@ def _notification_preferences_payload(row: dict[str, Any]) -> dict[str, Any]:
     return {
         "notification_digest": row.get("notification_digest") or "realtime",
         "push_notifications_enabled": bool(row.get("push_notifications_enabled", True)),
-        "email_digest_enabled": bool(row.get("email_digest_enabled", True)),
         "notify_gallery_enabled": bool(row.get("notify_gallery_enabled", True)),
         "notify_calendar_enabled": bool(row.get("notify_calendar_enabled", True)),
         "notify_registry_enabled": bool(row.get("notify_registry_enabled", True)),
@@ -131,7 +129,6 @@ def patch_notification_preferences(
         user.uid,
         notification_digest=body.notification_digest,
         push_notifications_enabled=body.push_notifications_enabled,
-        email_digest_enabled=body.email_digest_enabled,
         notify_gallery_enabled=body.notify_gallery_enabled,
         notify_calendar_enabled=body.notify_calendar_enabled,
         notify_registry_enabled=body.notify_registry_enabled,

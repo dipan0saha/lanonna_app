@@ -73,7 +73,9 @@ void main() {
     expectLocalized(NotificationDigest.values, (v) => v.apiValue,
         NotificationDigest.fromApi, (v) => v.summaryLabel(l10n));
     expect(NotificationDigest.fromApi('unknown'), NotificationDigest.realtime);
-    expect(NotificationDigest.weekly.summaryLabel(l10n), 'Weekly email summary');
+    expect(NotificationDigest.weekly.summaryLabel(l10n), 'Weekly push summary');
+    // Daily has no scheduled send (FR-NOTIF-002); the copy must not promise one.
+    expect(NotificationDigest.daily.summaryLabel(l10n), 'Inbox only, no push');
   });
 
   test('relationship presets store canonical labels and show localized ones', () {

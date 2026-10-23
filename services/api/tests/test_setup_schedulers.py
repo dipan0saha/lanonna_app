@@ -34,8 +34,8 @@ def test_updates_existing_jobs_with_dev_config(tmp_path: Path):
     result, lines = _run(tmp_path, existing=True)
     assert result.returncode == 0, result.stderr
     updates = [line for line in lines if "jobs update pubsub" in line]
-    assert len(updates) == 3
-    weekly, expire, sweep = updates
+    assert len(updates) == 4
+    weekly, expire, sweep, event_covers = updates
     assert "weekly-notification-digest" in weekly
     assert "--schedule=0 14 * * 0" in weekly
     assert '--message-body={"type":"weekly_notification_digest"}' in weekly
@@ -47,6 +47,9 @@ def test_updates_existing_jobs_with_dev_config(tmp_path: Path):
     assert "sweep-storage-cleanup-jobs" in sweep
     assert "--schedule=*/15 * * * *" in sweep
     assert '--message-body={"type":"sweep_storage_cleanup_jobs"}' in sweep
+    assert "purge-stale-event-covers" in event_covers
+    assert "--schedule=0 4 * * *" in event_covers
+    assert '--message-body={"type":"purge_stale_event_covers"}' in event_covers
     for line in updates:
         assert "--project=lanonna-dev" in line
         assert "--time-zone=UTC" in line
@@ -57,7 +60,7 @@ def test_updates_existing_jobs_with_dev_config(tmp_path: Path):
 def test_creates_missing_jobs(tmp_path: Path):
     result, lines = _run(tmp_path, existing=False)
     assert result.returncode == 0, result.stderr
-    assert len([line for line in lines if "jobs create pubsub" in line]) == 3
+    assert len([line for line in lines if "jobs create pubsub" in line]) == 4
 
 
 def test_unknown_project_fails_before_gcloud(tmp_path: Path):

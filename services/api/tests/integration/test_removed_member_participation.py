@@ -10,6 +10,7 @@ import psycopg
 import pytest
 
 from lanonna_api.db import get_connection
+from lanonna_api.domain.birthdate_vote_window import UNBOUNDED_BIRTHDATE_WINDOW
 from lanonna_api.repositories.announcements import get_announcement
 from lanonna_api.repositories.events import (
     list_event_comments,
@@ -300,13 +301,13 @@ def _assert_former_excluded(ids: dict, active: str) -> None:
     assert [row["firebase_uid"] for row in attendees] == [active]
     assert attendees[0]["display_name"] == "Aunt May"
 
-    counts = home_summary_counts(ids["baby_id"])
+    counts = home_summary_counts(ids["baby_id"], birthdate_window=UNBOUNDED_BIRTHDATE_WINDOW)
     assert (counts["vote_count"], counts["male_votes"], counts["female_votes"]) == (1, 0, 1)
     assert counts["top_birthdate_guess"] == date(2026, 9, 1)
     assert gender_vote_totals(ids["baby_id"]) == {"male": 0, "female": 1}
     voters = list_gender_voters(ids["baby_id"])
     assert [row["firebase_uid"] for row in voters] == [active]
-    histogram = birthdate_vote_histogram(ids["baby_id"])
+    histogram = birthdate_vote_histogram(ids["baby_id"], UNBOUNDED_BIRTHDATE_WINDOW)
     assert [row["predicted_birth_date"] for row in histogram] == [date(2026, 9, 1)]
 
     names = {row["suggested_name"]: row for row in list_name_suggestions(ids["baby_id"])}

@@ -9,8 +9,8 @@ extension FirstMomentPresetLabels on AppLocalizations {
         return labelBabyShower;
       case 'due_date':
         return presetDueDate;
-      case 'first_checkup':
-        return presetFirstCheckup;
+      case 'first_pediatric_visit':
+        return presetFirstPediatricVisit;
       case 'baptism':
         return presetBaptism;
       case 'first_holidays':
@@ -22,12 +22,12 @@ extension FirstMomentPresetLabels on AppLocalizations {
 
   String firstMomentRegistryLabel(String id) {
     switch (id) {
-      case 'swaddles':
-        return presetSwaddles;
-      case 'crib':
+      case 'swaddle_blankets':
+        return presetSwaddleBlankets;
+      case 'crib_mattress':
         return presetCribMattress;
-      case 'diapers':
-        return presetDiapers;
+      case 'diaper_stockpile':
+        return presetDiaperStockpile;
       case 'onesies':
         return presetOnesies;
       case 'bottles':

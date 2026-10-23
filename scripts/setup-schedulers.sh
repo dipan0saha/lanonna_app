@@ -52,3 +52,7 @@ upsert_pubsub_job "${EXPIRE_JOB}" "0 6 * * *" '{"type":"expire_pending_invitatio
 STORAGE_SWEEP_JOB="${STORAGE_CLEANUP_SWEEP_JOB_NAME:-sweep-storage-cleanup-jobs}"
 upsert_pubsub_job "${STORAGE_SWEEP_JOB}" "*/15 * * * *" '{"type":"sweep_storage_cleanup_jobs"}' \
   "Re-run storage cleanup jobs left pending, stuck running, or failed after account/baby delete"
+
+EVENT_COVER_JOB="${PURGE_STALE_EVENT_COVERS_JOB_NAME:-purge-stale-event-covers}"
+upsert_pubsub_job "${EVENT_COVER_JOB}" "0 4 * * *" '{"type":"purge_stale_event_covers"}' \
+  "Delete unattached event_cover photos older than 24h"

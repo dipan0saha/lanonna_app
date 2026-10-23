@@ -151,15 +151,83 @@ def test_seed_first_moment_born_events_use_forward_offsets():
         patch("lanonna_api.domain.onboarding.insert_seed_event") as ev,
         patch("lanonna_api.domain.onboarding.insert_seed_registry_item"),
         patch("lanonna_api.domain.onboarding.insert_seed_name_suggestion"),
+        patch(
+            "lanonna_api.first_moment_presets.utc_today",
+            return_value=date(2026, 4, 1),
+        ),
     ):
         seed_first_moment(
             "owner",
             baby_id,
-            ["first_checkup"],
+            ["first_pediatric_visit"],
             [],
             [],
         )
 
     ev.assert_called_once()
-    assert ev.call_args.kwargs["catalog_suggestion_id"] == "first_checkup"
+    assert ev.call_args.kwargs["catalog_suggestion_id"] == "first_pediatric_visit"
+    assert ev.call_args.args[2] == "First pediatric visit"
     assert ev.call_args.args[3] == datetime(2026, 5, 1, 12, 0, tzinfo=timezone.utc)
+
+
+def test_seed_first_moment_born_events_clamp_when_birth_was_long_ago():
+    baby_id = uuid.uuid4()
+    birth = date(2026, 5, 1)
+    today = date(2026, 10, 23)
+    with (
+        patch(
+            "lanonna_api.domain.onboarding.require_owner_baby",
+            return_value={
+                "lifecycle_status": "born",
+                "expected_birth_date": None,
+                "actual_birth_date": birth,
+            },
+        ),
+        patch("lanonna_api.domain.onboarding.insert_seed_event") as ev,
+        patch("lanonna_api.domain.onboarding.insert_seed_registry_item"),
+        patch("lanonna_api.domain.onboarding.insert_seed_name_suggestion"),
+        patch(
+            "lanonna_api.first_moment_presets.utc_today",
+            return_value=today,
+        ),
+    ):
+        seed_first_moment(
+            "owner",
+            baby_id,
+            ["first_pediatric_visit", "baptism", "first_holidays"],
+            [],
+            [],
+        )
+
+    assert ev.call_count == 3
+    for call in ev.call_args_list:
+        assert call.args[3] == datetime(2026, 10, 23, 12, 0, tzinfo=timezone.utc)
+
+
+def test_seed_first_moment_registry_stores_catalog_ids():
+    baby_id = uuid.uuid4()
+    with (
+        patch(
+            "lanonna_api.domain.onboarding.require_owner_baby",
+            return_value={
+                "lifecycle_status": "expecting",
+                "expected_birth_date": date(2027, 1, 1),
+                "actual_birth_date": None,
+            },
+        ),
+        patch("lanonna_api.domain.onboarding.insert_seed_event"),
+        patch("lanonna_api.domain.onboarding.insert_seed_registry_item") as reg,
+        patch("lanonna_api.domain.onboarding.insert_seed_name_suggestion"),
+    ):
+        seed_first_moment(
+            "owner",
+            baby_id,
+            [],
+            ["crib_mattress", "onesies"],
+            [],
+        )
+
+    assert reg.call_count == 2
+    assert reg.call_args_list[0].kwargs["catalog_suggestion_id"] == "crib_mattress"
+    assert reg.call_args_list[0].args[2] == "Crib & Mattress"
+    assert reg.call_args_list[1].kwargs["catalog_suggestion_id"] is None

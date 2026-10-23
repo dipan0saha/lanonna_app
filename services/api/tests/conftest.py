@@ -20,7 +20,6 @@ def _stub_row(firebase_uid: str, email: str | None) -> dict:
         "owner_onboarding_completed_at": None,
         "notification_digest": "realtime",
         "push_notifications_enabled": True,
-        "email_digest_enabled": True,
         "notify_gallery_enabled": True,
         "notify_calendar_enabled": True,
         "notify_registry_enabled": True,

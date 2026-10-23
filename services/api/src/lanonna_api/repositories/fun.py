@@ -6,7 +6,12 @@ from typing import Any
 
 from lanonna_api.db import get_connection
 from lanonna_api.repositories._paging import limit_offset_clause
+from lanonna_api.domain.birthdate_vote_window import BirthdateVoteWindow
 from lanonna_api.repositories.active_participants import active_participant_join
+from lanonna_api.repositories.birthdate_votes import (
+    BIRTHDATE_WINDOW_SQL,
+    birthdate_window_params,
+)
 
 
 def list_name_suggestions(
@@ -345,19 +350,24 @@ def list_gender_voters(baby_profile_id: uuid.UUID) -> list[dict[str, Any]]:
     return [dict(r) for r in rows]
 
 
-def birthdate_vote_histogram(baby_profile_id: uuid.UUID) -> list[dict[str, Any]]:
+def birthdate_vote_histogram(
+    baby_profile_id: uuid.UUID,
+    window: BirthdateVoteWindow,
+) -> list[dict[str, Any]]:
+    """Votes per guessed date inside [window] (#413), most-guessed first."""
     with get_connection() as conn:
         rows = conn.execute(
             f"""
             SELECT v.predicted_birth_date, COUNT(*)::int AS count
             FROM votes v
             {active_participant_join("v.firebase_uid", "v.baby_profile_id")}
-            WHERE v.baby_profile_id = %s
+            WHERE v.baby_profile_id = %(baby)s
               AND v.vote_type = 'birthdate'
               AND v.predicted_birth_date IS NOT NULL
+              {BIRTHDATE_WINDOW_SQL}
             GROUP BY v.predicted_birth_date
             ORDER BY count DESC, predicted_birth_date ASC
             """,
-            (baby_profile_id,),
+            {"baby": baby_profile_id, **birthdate_window_params(window)},
         ).fetchall()
     return [dict(r) for r in rows]

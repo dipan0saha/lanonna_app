@@ -1,5 +1,6 @@
 import uuid
 from contextlib import contextmanager
+from datetime import date
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
@@ -58,6 +59,28 @@ def test_put_birthdate_vote_when_born_returns_409():
         )
     assert response.status_code == 409
     assert response.json()["detail"]["error"] == "predictions_closed"
+    upsert.assert_not_called()
+
+
+def test_put_birthdate_vote_out_of_range_returns_400():
+    with (
+        _auth_as(),
+        patch(
+            "lanonna_api.domain.fun.require_membership",
+            return_value={
+                "role": "follower",
+                "lifecycle_status": "expecting",
+                "expected_birth_date": date(2027, 1, 15),
+            },
+        ),
+        patch("lanonna_api.domain.fun.upsert_birthdate_vote") as upsert,
+    ):
+        response = client.put(
+            f"/v1/babies/{_BABY}/fun/predictions/birthdate",
+            json={"predicted_birth_date": "2099-12-31"},
+        )
+    assert response.status_code == 400
+    assert response.json()["detail"]["error"] == "birthdate_vote_out_of_range"
     upsert.assert_not_called()
 
 

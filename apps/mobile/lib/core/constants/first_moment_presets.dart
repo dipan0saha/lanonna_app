@@ -18,19 +18,19 @@ abstract final class FirstMomentPresets {
   ];
 
   static const List<FirstMomentPreset> expectingRegistry = [
-    FirstMomentPreset('swaddles'),
-    FirstMomentPreset('crib'),
-    FirstMomentPreset('diapers'),
+    FirstMomentPreset('swaddle_blankets'),
+    FirstMomentPreset('crib_mattress'),
+    FirstMomentPreset('diaper_stockpile'),
   ];
 
   static const List<FirstMomentPreset> bornEvents = [
-    FirstMomentPreset('first_checkup'),
+    FirstMomentPreset('first_pediatric_visit'),
     FirstMomentPreset('baptism'),
     FirstMomentPreset('first_holidays'),
   ];
 
   static const List<FirstMomentPreset> bornRegistry = [
-    FirstMomentPreset('diapers'),
+    FirstMomentPreset('diaper_stockpile'),
     FirstMomentPreset('onesies'),
     FirstMomentPreset('bottles'),
   ];

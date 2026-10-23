@@ -67,6 +67,7 @@ class ErrorCode(StrEnum):
     # Fun hub.
     FUN_CLOSED = "fun_closed"
     PREDICTIONS_CLOSED = "predictions_closed"
+    BIRTHDATE_VOTE_OUT_OF_RANGE = "birthdate_vote_out_of_range"
     NAME_REQUIRED = "name_required"
     DUPLICATE_NAME_SUGGESTION = "duplicate_name_suggestion"
     NAME_ALREADY_SUGGESTED = "name_already_suggested"

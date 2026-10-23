@@ -26,15 +26,40 @@ bool birthdateGuessSubmitEnabled({
   return birthdateGuessIso(pendingSelection) != savedVoteIso;
 }
 
+/// Days a guess can be saved on (#413). The API owns the rule and sends it as
+/// `birthdate_vote_min` / `birthdate_vote_max` (never empty); null until the
+/// predictions payload has loaded.
+typedef BirthdateGuessWindow = ({DateTime first, DateTime last});
+
+BirthdateGuessWindow? birthdateGuessWindow({
+  required String? voteMinIso,
+  required String? voteMaxIso,
+}) {
+  final first = tryParseApiCalendarDate(voteMinIso);
+  final last = tryParseApiCalendarDate(voteMaxIso);
+  if (first == null || last == null || first.isAfter(last)) return null;
+  return (first: calendarDay(first), last: calendarDay(last));
+}
+
+/// Day the picker opens on: the pending pick, saved guess, due date or today,
+/// moved into [window] (a saved guess can fall outside it once days pass).
 DateTime birthdatePickerInitialDate({
+  required BirthdateGuessWindow window,
   DateTime? pendingSelection,
   String? savedVoteIso,
   DateTime? dueDate,
+  DateTime? now,
 }) {
-  return pendingSelection ??
-      parseBirthdateGuessIso(savedVoteIso) ??
-      dueDate ??
-      DateTime.now();
+  final wanted = calendarDay(
+    pendingSelection ??
+        parseBirthdateGuessIso(savedVoteIso) ??
+        dueDate ??
+        now ??
+        DateTime.now(),
+  );
+  if (wanted.isBefore(window.first)) return window.first;
+  if (wanted.isAfter(window.last)) return window.last;
+  return wanted;
 }
 
 DateTime visibleMonthForBirthdateGuess({

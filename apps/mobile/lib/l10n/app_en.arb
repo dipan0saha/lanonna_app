@@ -104,14 +104,7 @@
       }
     }
   },
-  "notificationPreferencesIntro": "Choose how often you'd like updates from {babyName}.",
-  "@notificationPreferencesIntro": {
-    "placeholders": {
-      "babyName": {
-        "type": "String"
-      }
-    }
-  },
+  "notificationPreferencesIntro": "Choose how often you'd like updates across every baby you follow on this account.",
   "aiSuggestionsSubtitle": "Pick a stage, then add suggestions to your calendar or registry.",
   "@aiSuggestionsSubtitle": {
     "description": "Subtitle under AI Suggestions app bar (calendar + registry)."
@@ -334,8 +327,6 @@
   "actionResend": "Resend",
   "notificationPrefsPushTitle": "Push notifications",
   "notificationPrefsPushSubtitle": "Get alerts on your phone",
-  "notificationPrefsDigestTitle": "Weekly email digest",
-  "notificationPrefsDigestSubtitle": "Photos, events and registry updates",
   "actionEdit": "Edit",
   "accountLogOut": "Log Out",
   "announcementDateOfBirth": "Date of birth",
@@ -493,7 +484,7 @@
   "actionDeletePhoto": "Delete photo",
   "fieldDescriptionOptional": "Description (optional)",
   "eventDetailsHeading": "Details",
-  "presetDiapers": "Diapers",
+  "presetDiaperStockpile": "Diapers (newborn)",
   "actionDownloadJsonCopy": "Download a JSON copy of this baby's profile, members, photos and comments, calendar and RSVPs, registry and purchases, name ideas, predictions, the birth announcement, and recent activity.",
   "presetDueDate": "Due Date",
   "actionEditBaby": "Edit Baby",
@@ -511,7 +502,7 @@
   "messageFun": "Family Fun",
   "messageInsight": "Family Insight",
   "messageItem": "Family will see this item as taken so no one buys it again.",
-  "presetFirstCheckup": "First Checkup",
+  "presetFirstPediatricVisit": "First pediatric visit",
   "presetFirstHolidays": "First Holidays",
   "fieldFirstName": "First name",
   "messageFollowersLonger": "Followers will no longer see where to send gifts.",
@@ -605,7 +596,7 @@
   "fieldStreetAddress": "Street address",
   "labelSuggestName": "Suggest a name",
   "labelSuggestName2": "Suggest a name…",
-  "presetSwaddles": "Swaddles",
+  "presetSwaddleBlankets": "Swaddle Blankets (set of 3)",
   "actionSwitchBabyProfile": "Switch baby profile",
   "babySwitcherSwitchProfile": "Switch profile",
   "labelTopGuessDate": "TOP GUESS DATE",
@@ -675,14 +666,7 @@
       }
     }
   },
-  "notificationPrefsFrequencyTitle": "How often would you like updates for {babyLabel}?",
-  "@notificationPrefsFrequencyTitle": {
-    "placeholders": {
-      "babyLabel": {
-        "type": "String"
-      }
-    }
-  },
+  "notificationPrefsFrequencyTitle": "How often would you like updates?",
   "accountStorageUsed": "{used} of {quota} used",
   "@accountStorageUsed": {
     "placeholders": {
@@ -782,11 +766,11 @@
   "exportStatusReady": "Ready",
   "exportStatusFailed": "Failed",
   "digestRealtime": "Real-time",
-  "digestDaily": "Daily digest",
+  "digestDaily": "In-app only",
   "digestWeekly": "Weekly digest",
-  "digestSummaryRealtime": "Real-time updates",
-  "digestSummaryDaily": "Daily email summary",
-  "digestSummaryWeekly": "Weekly email summary",
+  "digestSummaryRealtime": "A push for each update",
+  "digestSummaryDaily": "Inbox only, no push",
+  "digestSummaryWeekly": "Weekly push summary",
   "invitationStatusPending": "Pending",
   "invitationStatusAccepted": "Accepted",
   "invitationStatusExpired": "Expired",
@@ -794,7 +778,8 @@
   "inviteEmailPending": "Pending — email sending",
   "inviteEmailSent": "Invite email sent",
   "inviteEmailFailed": "Email failed to send",
-  "errorInviteAlreadyDelivered": "This invite was already delivered and cannot be sent again.",
+  "errorInviteAlreadyDelivered": "This invite email was already delivered. To send a new link, revoke it and invite them again.",
+  "errorBirthdateVoteOutOfRange": "Pick a date within the allowed window around the due date.",
   "settingsCouldNotOpenEmailTo": "Could not open email to {supportEmail}. Copy link?",
   "@settingsCouldNotOpenEmailTo": {
     "placeholders": {
@@ -1044,7 +1029,7 @@
   "onboardingNeverMissWhatsNext": "Never miss what's next",
   "onboardingSeeUpcomingEventsLikeGender": "See upcoming events, like gender reveals and baby showers, and RSVP right from the app.",
   "onboardingGetUpdatesYourWay": "Get updates your way",
-  "onboardingChooseHowOftenYouHear": "Choose how often you hear from us: real-time, daily, or a weekly digest. You can change this anytime.",
+  "onboardingChooseHowOftenYouHear": "Choose how often you hear from us: real-time push, in-app only, or a weekly push summary. You can change this anytime.",
   "onboardingFollowerGetStarted": "Get Started",
   "onboardingAcceptJoinAsOwner": "Accept & Join as Owner",
   "onboardingYourCoParent": "your co-parent",

@@ -179,6 +179,7 @@ class InvitationRow {
     this.relationshipLabel,
     this.emailDeliveryStatus,
     this.emailSentAt,
+    this.canResendEmail = false,
   });
 
   final String id;
@@ -188,12 +189,16 @@ class InvitationRow {
   final InviteEmailDeliveryStatus? emailDeliveryStatus;
   final String? emailSentAt;
 
-  /// Mirrors the API resend rule: pending and never delivered
-  /// (`email_sent_at` unset), else `409 invite_already_delivered`.
-  bool get canResendEmail =>
+  /// Server-computed (`can_resend_email`, #410): the email was never sent and
+  /// is not being sent now (failed, never tried, or stuck). Shown as is.
+  final bool canResendEmail;
+
+  /// The worker is sending the email now; the list refreshes until it settles.
+  bool get emailDeliveryInFlight =>
       status == InvitationStatus.pending &&
       emailSentAt == null &&
-      emailDeliveryStatus != InviteEmailDeliveryStatus.sent;
+      emailDeliveryStatus == InviteEmailDeliveryStatus.pending &&
+      !canResendEmail;
 
   factory InvitationRow.fromJson(Map<String, dynamic> json) {
     return InvitationRow(
@@ -205,6 +210,7 @@ class InvitationRow {
         json['email_delivery_status'] as String?,
       ),
       emailSentAt: json['email_sent_at'] as String?,
+      canResendEmail: json['can_resend_email'] == true,
     );
   }
 }

@@ -22,7 +22,7 @@ enum NotificationDigest {
         NotificationDigest.weekly => l10n.digestWeekly,
       };
 
-  /// One-line summary on the account screen.
+  /// What the cadence delivers (FR-NOTIF-002): account row and option subtitle.
   String summaryLabel(AppLocalizations l10n) => switch (this) {
         NotificationDigest.realtime => l10n.digestSummaryRealtime,
         NotificationDigest.daily => l10n.digestSummaryDaily,

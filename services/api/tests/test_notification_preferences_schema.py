@@ -5,7 +5,6 @@ def test_notification_preferences_payload_includes_channels():
     row = {
         "notification_digest": "weekly",
         "push_notifications_enabled": False,
-        "email_digest_enabled": True,
         "notify_gallery_enabled": True,
         "notify_calendar_enabled": False,
         "notify_registry_enabled": True,

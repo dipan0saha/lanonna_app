@@ -33,7 +33,6 @@ def _profile_row(**overrides):
         "owner_onboarding_completed_at": None,
         "notification_digest": None,
         "push_notifications_enabled": True,
-        "email_digest_enabled": True,
         "notify_gallery_enabled": True,
         "notify_calendar_enabled": True,
         "notify_registry_enabled": True,

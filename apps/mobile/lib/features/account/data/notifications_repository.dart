@@ -17,7 +17,6 @@ class NotificationPreferences {
   NotificationPreferences({
     required this.digest,
     required this.pushEnabled,
-    required this.emailDigestEnabled,
     required this.notifyGalleryEnabled,
     required this.notifyCalendarEnabled,
     required this.notifyRegistryEnabled,
@@ -26,7 +25,6 @@ class NotificationPreferences {
 
   final NotificationDigest digest;
   final bool pushEnabled;
-  final bool emailDigestEnabled;
   final bool notifyGalleryEnabled;
   final bool notifyCalendarEnabled;
   final bool notifyRegistryEnabled;
@@ -35,7 +33,6 @@ class NotificationPreferences {
   NotificationPreferences copyWith({
     NotificationDigest? digest,
     bool? pushEnabled,
-    bool? emailDigestEnabled,
     bool? notifyGalleryEnabled,
     bool? notifyCalendarEnabled,
     bool? notifyRegistryEnabled,
@@ -44,7 +41,6 @@ class NotificationPreferences {
     return NotificationPreferences(
       digest: digest ?? this.digest,
       pushEnabled: pushEnabled ?? this.pushEnabled,
-      emailDigestEnabled: emailDigestEnabled ?? this.emailDigestEnabled,
       notifyGalleryEnabled: notifyGalleryEnabled ?? this.notifyGalleryEnabled,
       notifyCalendarEnabled:
           notifyCalendarEnabled ?? this.notifyCalendarEnabled,
@@ -59,7 +55,6 @@ class NotificationPreferences {
     return NotificationPreferences(
       digest: NotificationDigest.fromApi(json['notification_digest'] as String?),
       pushEnabled: json['push_notifications_enabled'] as bool? ?? true,
-      emailDigestEnabled: json['email_digest_enabled'] as bool? ?? true,
       notifyGalleryEnabled: json['notify_gallery_enabled'] as bool? ?? true,
       notifyCalendarEnabled: json['notify_calendar_enabled'] as bool? ?? true,
       notifyRegistryEnabled: json['notify_registry_enabled'] as bool? ?? true,
@@ -255,7 +250,6 @@ class NotificationsRepository extends ChangeNotifier {
   Future<NotificationPreferences> updatePreferences({
     NotificationDigest? digest,
     bool? pushEnabled,
-    bool? emailDigestEnabled,
     bool? notifyGalleryEnabled,
     bool? notifyCalendarEnabled,
     bool? notifyRegistryEnabled,
@@ -264,9 +258,6 @@ class NotificationsRepository extends ChangeNotifier {
     final body = <String, dynamic>{};
     if (digest != null) body['notification_digest'] = digest.apiValue;
     if (pushEnabled != null) body['push_notifications_enabled'] = pushEnabled;
-    if (emailDigestEnabled != null) {
-      body['email_digest_enabled'] = emailDigestEnabled;
-    }
     if (notifyGalleryEnabled != null) {
       body['notify_gallery_enabled'] = notifyGalleryEnabled;
     }
