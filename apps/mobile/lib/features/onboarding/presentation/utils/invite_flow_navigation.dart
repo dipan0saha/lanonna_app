@@ -2,13 +2,14 @@ import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/api/api_error_message.dart';
 import '../../../../core/auth/auth_repository.dart';
-import '../../../../core/widgets/app_snackbar.dart';
 import '../../../home/data/home_repository.dart';
 import '../../../home/data/selected_baby_store.dart';
 import '../../../invitations/presentation/invite_accept_messages.dart';
 import '../../../invitations/presentation/invite_flow_state.dart';
 import '../../../invitations/data/invitations_repository.dart';
+import '../../../invitations/data/models/invitation_preview.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../../domain/onboarding_path.dart';
@@ -104,18 +105,7 @@ Future<void> continueToJoinedBabyHome(
     invitedBabyId: coordinator.invitedBabyId,
     previewBabyId: coordinator.cachedInvitePreview?.babyProfileId,
   );
-  if (babyId == null) {
-    if (context.mounted) {
-      AppSnackBar.showAlert(
-        context,
-        inviteAcceptUserMessage(
-          AppLocalizations.of(context)!,
-          'not_found',
-        ),
-      );
-    }
-    return;
-  }
+  if (babyId == null) throw const InviteAcceptException('not_found');
   await coordinator.setInvitedBabyId(babyId);
   if (!context.mounted) return;
   await _selectJoinedBaby(context, babyId);
@@ -144,11 +134,45 @@ Future<void> openAcceptedInvitePreview(BuildContext context) async {
     await continueToJoinedBabyHome(context);
     return;
   }
-  if (!context.mounted) return;
-  AppSnackBar.showAlert(
-    context,
-    inviteAcceptUserMessage(AppLocalizations.of(context)!, 'not_found'),
-  );
+  throw const InviteAcceptException('not_found');
+}
+
+/// Primary CTA of both invite landing screens (follower and co-owner): Open
+/// for an accepted invite, Accept for a pending one.
+///
+/// Never a silent no-op: every path navigates, or returns the user message
+/// for the landing problem state (`null` when it navigated).
+Future<String?> runInviteLandingPrimaryAction(
+  BuildContext context,
+  InvitationPreview preview,
+) async {
+  final l10n = AppLocalizations.of(context)!;
+  try {
+    if (preview.isAccepted) {
+      await openAcceptedInvitePreview(context);
+    } else {
+      await _acceptPendingInvite(context, preview);
+    }
+    return null;
+  } catch (e) {
+    return apiErrorMessage(l10n, e);
+  }
+}
+
+Future<void> _acceptPendingInvite(
+  BuildContext context,
+  InvitationPreview preview,
+) async {
+  final token = context.read<OnboardingCoordinator>().pendingInviteToken;
+  if (token == null || token.isEmpty) {
+    throw const InviteAcceptException('not_found');
+  }
+  if (context.read<AuthRepository>().currentUser == null) {
+    context.read<InviteFlowState>().setSignupPrefillEmail(preview.inviteeEmail);
+    context.go(OnboardingRoutes.signup);
+    return;
+  }
+  await acceptSignedInInviteAndContinue(context, token);
 }
 
 /// Signed-in accept from invite landing screens (H-07): honor API result, not only throws.
@@ -156,7 +180,6 @@ Future<void> acceptSignedInInviteAndContinue(
   BuildContext context,
   String token,
 ) async {
-  final coordinator = context.read<OnboardingCoordinator>();
   final result = await context.read<InvitationsRepository>().accept(token);
   if (!context.mounted) return;
 
