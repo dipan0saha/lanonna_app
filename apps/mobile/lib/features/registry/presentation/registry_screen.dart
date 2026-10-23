@@ -138,6 +138,11 @@ class _RegistryScreenState extends State<RegistryScreen>
     if (changed == true) await _load();
   }
 
+  Future<void> _openItemForm(String location) async {
+    final saved = await context.push<bool>(location);
+    if (saved == true && mounted) await _load();
+  }
+
   Widget _shippingSection() {
     final shipping = _shipping;
     final hasAddress = shipping != null && !shipping.isEmpty;
@@ -294,7 +299,7 @@ class _RegistryScreenState extends State<RegistryScreen>
                   child: RegistryEmptyState(
                     isOwner: _isOwner,
                     onAddItem: _isOwner
-                        ? () => context.push(RegistryRoutes.createItem)
+                        ? () => _openItemForm(RegistryRoutes.createItem)
                         : null,
                   ),
                 )
@@ -336,7 +341,7 @@ class _RegistryScreenState extends State<RegistryScreen>
                                     isOwner: _isOwner,
                                     currentUid: uid,
                                     onClaim: () => _claim(item),
-                                    onEdit: () => context.push(
+                                    onEdit: () => _openItemForm(
                                       RegistryRoutes.itemEdit(item.id),
                                     ),
                                     onDelete: () => _deleteItem(item),
@@ -398,7 +403,7 @@ class _RegistryScreenState extends State<RegistryScreen>
               'registry_create_fab',
               FloatingActionButton(
                 tooltip: l10n.registryAddItem,
-                onPressed: () => context.push(RegistryRoutes.createItem),
+                onPressed: () => _openItemForm(RegistryRoutes.createItem),
                 child: const ExcludeSemantics(child: Icon(Icons.add)),
               ),
               label: l10n.registryAddItem,
