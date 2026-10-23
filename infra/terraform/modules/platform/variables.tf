@@ -177,6 +177,12 @@ variable "monitoring_cloud_run_5xx_rate_threshold" {
   description = "Alert when 5xx responses exceed this fraction of request count (over alignment window)."
 }
 
+variable "monitoring_worker_mailjet_failures_threshold" {
+  type        = number
+  default     = 5
+  description = "Alert when the worker logs more than this many failed Mailjet sends in 15 minutes (#428)."
+}
+
 variable "monitoring_cloud_run_p95_latency_ms" {
   type        = number
   default     = 2000
