@@ -832,7 +832,6 @@
       }
     }
   },
-  "calendarOnlyOwnersCanCreateOr": "Only owners can create or edit calendar events.",
   "calendarBabyProfileIsStillLoading": "Baby profile is still loading. Try again.",
   "calendarEnterAnEventTitleTo": "Enter an event title to continue.",
   "calendarSaveChanges": "Save Changes",
@@ -841,6 +840,7 @@
   "calendarNewEvent": "New Event",
   "calendarAddUltrasoundsShowersOrThe": "Add ultrasounds, showers, or the gender reveal so family knows when to celebrate.",
   "calendarNothingOnTheCalendarYet": "Nothing on the calendar yet — check back soon.",
+  "ownerOnlyPageBlocked": "Only owners can do that.",
   "calendarAddEventCta": "+ Add Event",
   "calendarCouldNotLoadEventsPull": "Could not load events. Pull to refresh or try again.",
   "calendarWhen": "When",
@@ -908,7 +908,6 @@
       }
     }
   },
-  "registryOnlyOwnersCanEditThe": "Only owners can edit the shipping address.",
   "registryCouldNotLoadShippingAddress": "Could not load shipping address: {e}",
   "@registryCouldNotLoadShippingAddress": {
     "placeholders": {
