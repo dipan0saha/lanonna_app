@@ -334,6 +334,14 @@ class AppSession extends ChangeNotifier {
     }
 
     if (canAccessMainApp) {
+      // Accept tapped before sign-in for the current invite: the routing
+      // table sends a member back to that invite landing, also from a cold
+      // start at /home (#427). Invite and auth screens are left alone.
+      if (_coordinator.acceptRequestedBeforeSignIn &&
+          !_inviteSignedIn.contains(path) &&
+          !_invitePublic.contains(path)) {
+        return resume;
+      }
       // Both flags can be true: a follower who also created a baby
       // (joined_via = created) may use Home and still finish owner onboarding.
       final keepOwnerOnboarding = status?.needsOwnerOnboarding == true;

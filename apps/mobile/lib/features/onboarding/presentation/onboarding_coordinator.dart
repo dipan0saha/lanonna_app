@@ -23,7 +23,6 @@ class OnboardingCoordinator extends ChangeNotifier {
   OnboardingStep? _activeStep;
   String? _createdBabyId;
   bool _hydrated = false;
-  String? _acceptRequestedToken;
 
   OnboardingStep? get activeStep => _activeStep;
   String? get createdBabyId => _createdBabyId ?? _storage.createdBabyId;
@@ -185,29 +184,40 @@ class OnboardingCoordinator extends ChangeNotifier {
   }
 
   /// The user tapped Accept on the invite landing and had to sign in (or
-  /// switch account) first (#427). [AppSession.signedInResumeLocation] sends
-  /// them back to the landing, which continues that Accept once. In memory
-  /// only: after a cold start the landing waits for a fresh tap.
+  /// switch account) first (#427). Persisted beside the pending invite so a
+  /// process kill before sign-in does not drop it. [AppSession.signedInResumeLocation]
+  /// sends them back to the landing, which continues that Accept once.
   bool get acceptRequestedBeforeSignIn {
-    final requested = _acceptRequestedToken;
-    return requested != null && requested == pendingInviteToken?.trim();
+    final requested = _storage.acceptRequestedInviteToken?.trim();
+    final pending = pendingInviteToken?.trim();
+    return requested != null &&
+        requested.isNotEmpty &&
+        pending != null &&
+        pending.isNotEmpty &&
+        requested == pending;
   }
 
-  void requestAcceptAfterSignIn(String token) {
+  Future<void> requestAcceptAfterSignIn(String token) async {
     final trimmed = token.trim();
-    _acceptRequestedToken = trimmed.isEmpty ? null : trimmed;
+    await _storage.saveAcceptRequestedInviteToken(
+      trimmed.isEmpty ? null : trimmed,
+    );
+    notifyListeners();
   }
 
   /// Consumes the request from [requestAcceptAfterSignIn]; true when it was
   /// for the current invite.
-  bool takeAcceptRequestedBeforeSignIn() {
+  Future<bool> takeAcceptRequestedBeforeSignIn() async {
     final requested = acceptRequestedBeforeSignIn;
-    _acceptRequestedToken = null;
+    if (requested) {
+      await _storage.saveAcceptRequestedInviteToken(null);
+      notifyListeners();
+    }
     return requested;
   }
 
   Future<void> clearPendingInvite() async {
-    _acceptRequestedToken = null;
+    await _storage.saveAcceptRequestedInviteToken(null);
     await _storage.savePendingInviteToken(null);
     await _storage.saveOnboardingPath(null);
     await _storage.saveInvitePreviewJson(null);

@@ -45,6 +45,13 @@ class _OnboardingCoOwnerInviteScreenState
     if (!mounted) return;
     final result = await ensureInvitePreviewLoaded(context);
     if (!mounted) return;
+    // Once the invite is resolved (anything but a retryable fetch error) an
+    // Accept tapped before sign-in is taken, so it runs at most once and
+    // never pins routing to a landing that cannot continue (#427).
+    final retryable = result.fetchErrorMessage != null && result.canRetryFetch;
+    final continueAccept =
+        !retryable && await takeInviteAcceptRequestedBeforeSignIn(context);
+    if (!mounted) return;
     if (result.fetchErrorMessage != null) {
       setState(() {
         _loading = false;
@@ -69,7 +76,7 @@ class _OnboardingCoOwnerInviteScreenState
       });
       return;
     }
-    if (takeInviteAcceptRequestedBeforeSignIn(context)) {
+    if (continueAccept) {
       await _onPrimary(preview);
       if (mounted) setState(() => _loading = false);
       return;
