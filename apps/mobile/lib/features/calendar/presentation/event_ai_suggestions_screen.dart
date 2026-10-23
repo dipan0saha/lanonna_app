@@ -34,13 +34,27 @@ class _EventAiSuggestionsScreenState extends State<EventAiSuggestionsScreen> {
   List<EventSuggestion> _items = [];
   var _loading = true;
   var _didInit = false;
+  CalendarRepository? _calendarRepo;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_didInit) return;
     _didInit = true;
+    _calendarRepo = context.read<CalendarRepository>()
+      ..addListener(_onEventsChanged);
     _initAndLoad();
+  }
+
+  @override
+  void dispose() {
+    _calendarRepo?.removeListener(_onEventsChanged);
+    super.dispose();
+  }
+
+  /// An event created from a suggestion (or anywhere else) marks it as added.
+  void _onEventsChanged() {
+    if (mounted) _load();
   }
 
   Future<void> _initAndLoad() async {
@@ -97,9 +111,9 @@ class _EventAiSuggestionsScreenState extends State<EventAiSuggestionsScreen> {
         catalogSuggestionId: item.id,
       ),
     );
-    if (added == true) {
-      await _load();
-      if (!mounted) return;
+    // The pop result only drives the confirmation; the list reloads through
+    // the repository listener.
+    if (added == true && mounted) {
       AppSnackBar.showInfo(context, AppLocalizations.of(context)!.calendarEventAddedToCalendar);
     }
   }

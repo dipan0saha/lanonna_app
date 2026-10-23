@@ -21,11 +21,15 @@ class HomeBirthWelcomeCard extends StatelessWidget {
     required this.welcome,
     required this.babyId,
     this.showShareToInstagram = true,
+    this.showViewAnnouncement = true,
   });
 
   final BirthWelcomeSummary welcome;
   final String babyId;
   final bool showShareToInstagram;
+
+  /// When false, hides the view-announcement CTA (e.g. followers with no post yet).
+  final bool showViewAnnouncement;
 
   @override
   Widget build(BuildContext context) {
@@ -69,39 +73,13 @@ class HomeBirthWelcomeCard extends StatelessWidget {
             ),
           ],
           SizedBox(height: AppSpacing.lg),
-          AppResponsiveButtonPair(
-            start: AppSemantics.button(
-              'home_view_announcement',
-              FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.surface,
-                  foregroundColor: AppColors.textPrimary,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppMetrics.buttonHorizontalPadding,
-                    vertical: AppMetrics.buttonVerticalPadding,
-                  ),
-                ),
-                onPressed: () => context.push('/baby/$babyId/announcement'),
-                child: AppButtonLabel(AppLocalizations.of(context)!.homeViewAnnouncement),
-              ),
-              label: l10n.actionViewAnnouncement,
+          if (showViewAnnouncement || showShareToInstagram)
+            _BirthWelcomeActions(
+              babyId: babyId,
+              l10n: l10n,
+              showViewAnnouncement: showViewAnnouncement,
+              showShareToInstagram: showShareToInstagram,
             ),
-            end: showShareToInstagram
-                ? AppSemantics.button(
-                    'home_share_announcement',
-                    OutlinedButton(
-                      style: AppButtonStyles.outlinedAccent,
-                      onPressed: () => AnnouncementShare.shareBabyAnnouncement(
-                        context,
-                        babyId,
-                      ),
-                      child: AppButtonLabel(AppLocalizations.of(context)!.homeShareToInstagram),
-                    ),
-                    label: l10n.actionShareAnnouncementInstagram,
-                  )
-                : null,
-          ),
         ],
       ),
     );
@@ -130,5 +108,65 @@ class HomeBirthWelcomeCard extends StatelessWidget {
           : AppLocalizations.of(context)!.homeInvitesNotifiedWithLine(line);
     }
     return line.isEmpty ? null : line;
+  }
+}
+
+class _BirthWelcomeActions extends StatelessWidget {
+  const _BirthWelcomeActions({
+    required this.babyId,
+    required this.l10n,
+    required this.showViewAnnouncement,
+    required this.showShareToInstagram,
+  });
+
+  final String babyId;
+  final AppLocalizations l10n;
+  final bool showViewAnnouncement;
+  final bool showShareToInstagram;
+
+  Widget _viewButton(BuildContext context) {
+    return AppSemantics.button(
+      'home_view_announcement',
+      FilledButton(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.surface,
+          foregroundColor: AppColors.textPrimary,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppMetrics.buttonHorizontalPadding,
+            vertical: AppMetrics.buttonVerticalPadding,
+          ),
+        ),
+        onPressed: () => context.push('/baby/$babyId/announcement'),
+        child: AppButtonLabel(l10n.homeViewAnnouncement),
+      ),
+      label: l10n.actionViewAnnouncement,
+    );
+  }
+
+  Widget _shareButton(BuildContext context) {
+    return AppSemantics.button(
+      'home_share_announcement',
+      OutlinedButton(
+        style: AppButtonStyles.outlinedAccent,
+        onPressed: () => AnnouncementShare.shareBabyAnnouncement(context, babyId),
+        child: AppButtonLabel(l10n.homeShareToInstagram),
+      ),
+      label: l10n.actionShareAnnouncementInstagram,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (showViewAnnouncement && showShareToInstagram) {
+      return AppResponsiveButtonPair(
+        start: _viewButton(context),
+        end: _shareButton(context),
+      );
+    }
+    if (showViewAnnouncement) {
+      return _viewButton(context);
+    }
+    return _shareButton(context);
   }
 }

@@ -92,7 +92,7 @@ Future<void> _pumpRegistryScreen(
         ChangeNotifierProvider<ConnectivityService>.value(
           value: ConnectivityService.forTesting(),
         ),
-        Provider<RegistryRepository>.value(value: registry),
+        ChangeNotifierProvider<RegistryRepository>.value(value: registry),
         Provider<AuthRepository>.value(value: _FakeAuthRepository()),
         Provider<AccountRepository>(
           create: (_) => FakeShellAccountRepository(),
