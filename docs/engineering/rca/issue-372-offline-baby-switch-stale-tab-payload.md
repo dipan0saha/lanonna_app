@@ -36,9 +36,13 @@ Fun tab sub-tabs only misbehave if `fun_screen` keeps showing a stale `BabySumma
 
 | Layer | Change |
 |-------|--------|
-| `baby_context_reload.dart` | Add `tabDisplayedPayloadIsCurrent(...)` shared with `tabLoadShouldShowSpinner`; extend `TabLoadGenerationCache` with `hasCurrentTabPayload(store, displayedBabyId)` |
+| `baby_context_reload.dart` | `tabDisplayedPayloadIsCurrent`: the displayed baby id equals `SelectedBabyStore.selectedBabyId` (no generation check, so the selected baby's data survives an A → B → A round trip and a failed reload keeps it); `TabLoadGenerationCache.hasCurrentTabPayload(store, displayedBabyId)` |
 | Tab screens | Use `hasCurrentTabPayload` for `reportTabLoadFailure`, `resolveTabLoadKind`, and `shouldShowTabLoadSpinner`'s `hasDisplayedPayload`; on failure when not current, clear local baby + content state before blocking error |
-| Tests | Unit tests for payload matching; widget test for registry offline switch with stale in-memory state |
+| Tests | `baby_context_tab_payload_test.dart` (matching rule); `registry_screen_load_error_test.dart` (offline switch blocks with Try again, never shows the previous baby's items) |
+
+## Caches
+
+Per-baby caches live in the repositories, keyed by baby id: calendar lists (served stale on network errors), home summary, photo detail. When the newly selected baby has a cache, the load succeeds from it and the tab shows it; the blocking error appears only when nothing for that baby exists. Fun sub-tabs (`names_tab`, `predictions_tab`) reset on `baby.id` change; `calendar_upcoming_screen` shows its error state instead of old buckets. Inbox-linked detail screens load by the route's baby id, not the selection, so they are not affected.
 
 ## Expected behaviour after fix
 

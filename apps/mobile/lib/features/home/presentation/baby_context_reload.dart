@@ -21,23 +21,18 @@ bool tabLoadShouldShowSpinner({
   return false;
 }
 
-/// Whether on-screen baby tab data belongs to the current [SelectedBabyStore] selection.
+/// Whether the tab's on-screen data belongs to the selected baby (#372).
 ///
-/// Stale payload from a previous baby (e.g. offline switch before load completes)
-/// must not count as displayable content for snackbar-only load failures.
+/// Another baby's data is never shown or kept as the "cached payload" of a
+/// failed load: the tab blocks with Try again instead. Data for the selected
+/// baby counts even if it was loaded before a round trip (A → B → A), so a
+/// failed reload keeps it on screen. Per-baby repository caches (calendar
+/// lists, home summary) are served by the load itself, not by this check.
 bool tabDisplayedPayloadIsCurrent({
   required SelectedBabyStore store,
   required String? displayedBabyId,
-  required String? loadedBabyId,
-  required int loadedSelectionGeneration,
-}) {
-  final selectedId = store.selectedBabyId;
-  if (selectedId == null || displayedBabyId == null) return false;
-  if (displayedBabyId != selectedId) return false;
-  if (loadedBabyId != selectedId) return false;
-  if (loadedSelectionGeneration != store.selectionGeneration) return false;
-  return true;
-}
+}) =>
+    displayedBabyId != null && displayedBabyId == store.selectedBabyId;
 
 /// Reload baby-scoped shell tabs when [HomeRefreshSignal.babyContext] fires
 /// or connectivity returns after being offline.
@@ -142,12 +137,6 @@ mixin TabLoadGenerationCache<T extends StatefulWidget> on State<T> {
     );
   }
 
-  bool hasCurrentTabPayload(SelectedBabyStore store, String? displayedBabyId) {
-    return tabDisplayedPayloadIsCurrent(
-      store: store,
-      displayedBabyId: displayedBabyId,
-      loadedBabyId: cachedLoadedBabyId,
-      loadedSelectionGeneration: cachedSelectionGeneration,
-    );
-  }
+  bool hasCurrentTabPayload(SelectedBabyStore store, String? displayedBabyId) =>
+      tabDisplayedPayloadIsCurrent(store: store, displayedBabyId: displayedBabyId);
 }

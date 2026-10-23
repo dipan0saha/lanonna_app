@@ -4,53 +4,33 @@ import 'package:lanonna/features/home/presentation/baby_context_reload.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  test('tabDisplayedPayloadIsCurrent is false when selection moved to another baby', () async {
-    SharedPreferences.setMockInitialValues({'selected_baby_id': 'milo'});
-    final store = SelectedBabyStore(await SharedPreferences.getInstance());
-    store.selectBaby('milo');
+  Future<SelectedBabyStore> storeWith(String id) async {
+    SharedPreferences.setMockInitialValues({'selected_baby_id': id});
+    return SelectedBabyStore(await SharedPreferences.getInstance());
+  }
 
+  test('another baby\'s data is not current (#372)', () async {
+    final store = await storeWith('milo');
     expect(
-      tabDisplayedPayloadIsCurrent(
-        store: store,
-        displayedBabyId: 'luna',
-        loadedBabyId: 'luna',
-        loadedSelectionGeneration: 0,
-      ),
+      tabDisplayedPayloadIsCurrent(store: store, displayedBabyId: 'luna'),
       isFalse,
     );
   });
 
-  test('tabDisplayedPayloadIsCurrent is false when selection generation advanced', () async {
-    SharedPreferences.setMockInitialValues({'selected_baby_id': 'luna'});
-    final store = SelectedBabyStore(await SharedPreferences.getInstance());
-    store.selectBaby('luna');
-    final generation = store.selectionGeneration;
-    store.selectBaby('milo');
-
+  test('nothing displayed is not current', () async {
+    final store = await storeWith('luna');
     expect(
-      tabDisplayedPayloadIsCurrent(
-        store: store,
-        displayedBabyId: 'luna',
-        loadedBabyId: 'luna',
-        loadedSelectionGeneration: generation,
-      ),
+      tabDisplayedPayloadIsCurrent(store: store, displayedBabyId: null),
       isFalse,
     );
   });
 
-  test('tabDisplayedPayloadIsCurrent is true for matching baby and generation', () async {
-    SharedPreferences.setMockInitialValues({'selected_baby_id': 'luna'});
-    final store = SelectedBabyStore(await SharedPreferences.getInstance());
-    store.selectBaby('luna');
-    final generation = store.selectionGeneration;
-
+  test('the selected baby\'s data stays current after A -> B -> A', () async {
+    final store = await storeWith('luna');
+    await store.setSelectedBabyId('milo');
+    await store.setSelectedBabyId('luna');
     expect(
-      tabDisplayedPayloadIsCurrent(
-        store: store,
-        displayedBabyId: 'luna',
-        loadedBabyId: 'luna',
-        loadedSelectionGeneration: generation,
-      ),
+      tabDisplayedPayloadIsCurrent(store: store, displayedBabyId: 'luna'),
       isTrue,
     );
   });
