@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 
-import '../../../core/data/single_flight.dart';
 import '../../../core/network/connectivity_service.dart';
 import '../data/models/onboarding_status.dart';
 import '../data/onboarding_repository.dart';
@@ -45,7 +44,6 @@ class AppSession extends ChangeNotifier {
   bool _loading = false;
   ConnectivityService? _connectivity;
   var _wasOffline = false;
-  final _refresh = SingleFlight<void>();
 
   OnboardingStatus? get status => _status;
   OnboardingStatusPhase get statusPhase => _phase;
@@ -120,11 +118,7 @@ class AppSession extends ChangeNotifier {
     }
   }
 
-  Future<void> refreshFromApi() {
-    return _refresh.run(_refreshFromApiOnce);
-  }
-
-  Future<void> _refreshFromApiOnce() async {
+  Future<void> refreshFromApi() async {
     _loading = true;
     if (_status == null) _restoreCachedStatus();
     notifyListeners();

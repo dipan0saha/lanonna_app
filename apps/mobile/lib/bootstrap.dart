@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -158,15 +160,17 @@ Future<Widget> bootstrapLaNonnaApp({
     session: session,
   );
 
-  final appVersionService = AppVersionService();
-  appVersionService.ensureStarted(apiClient);
+  final appVersionService = AppVersionService(apiClient);
+  unawaited(appVersionService.start());
   if (authRepository.currentUser != null) {
-    startSignedInStartupPrefetch(
-      session: session,
-      homeRepository: homeRepository,
-      selectedBabyStore: selectedBabyStore,
-      accountRepository: accountRepository,
-      notificationsRepository: notificationsRepository,
+    unawaited(
+      startSignedInStartupPrefetch(
+        session: session,
+        homeRepository: homeRepository,
+        selectedBabyStore: selectedBabyStore,
+        accountRepository: accountRepository,
+        notificationsRepository: notificationsRepository,
+      ),
     );
   }
 

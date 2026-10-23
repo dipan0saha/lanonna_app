@@ -1,55 +1,80 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/api/api_client.dart';
-import 'package:lanonna/core/theme/app_theme.dart';
-import 'package:lanonna/core/version/app_version_gate.dart';
 import 'package:lanonna/core/version/app_version_service.dart';
-import 'package:lanonna/l10n/app_localizations.dart';
-import 'package:provider/provider.dart';
 
-class _BlockingVersionApi extends ApiClient {
-  _BlockingVersionApi()
-    : super(idTokenProvider: () async => null);
+class _VersionApi extends ApiClient {
+  _VersionApi(this.minimum) : super(idTokenProvider: () async => null);
+
+  final String? minimum;
+  var requests = 0;
 
   @override
   Future<Map<String, dynamic>> getJsonPublic(
     String path, {
     Duration? timeout,
   }) async {
+    requests++;
+    final minimum = this.minimum;
+    if (minimum == null) throw Exception('offline');
     return {
-      'minimum_version': '99.0.0',
+      'minimum_version': minimum,
       'store_url': 'https://example.com/store',
     };
   }
 }
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
+  test('below the minimum: blocks and notifies once', () async {
+    final api = _VersionApi('99.0.0');
+    final service = AppVersionService(
+      api,
+      installedVersion: () async => '1.0.0',
+    );
+    var notified = 0;
+    service.addListener(() => notified++);
 
-  testWidgets('required update replaces child with block screen', (
-    tester,
-  ) async {
-    final service = AppVersionService();
-    await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          Provider<ApiClient>(create: (_) => _BlockingVersionApi()),
-          ChangeNotifierProvider<AppVersionService>.value(value: service),
-        ],
-        child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          theme: AppTheme.light,
-          home: AppVersionGate(
-            child: const Scaffold(body: Text('Home content')),
-          ),
-        ),
-      ),
+    await service.start();
+
+    expect(service.blockRequirement?.minimumVersion, '99.0.0');
+    expect(service.installedVersion, '1.0.0');
+    expect(notified, 1);
+  });
+
+  test('checks once per process however often it is started', () async {
+    final api = _VersionApi('99.0.0');
+    final service = AppVersionService(
+      api,
+      installedVersion: () async => '1.0.0',
     );
 
-    expect(find.text('Home content'), findsOneWidget);
-    await tester.pumpAndSettle();
-    expect(find.text('Home content'), findsNothing);
-    expect(find.byType(AppVersionBlockScreen), findsOneWidget);
+    await Future.wait([service.start(), service.start()]);
+    await service.start();
+
+    expect(api.requests, 1);
+  });
+
+  test('at or above the minimum: no block', () async {
+    final service = AppVersionService(
+      _VersionApi('1.0.0'),
+      installedVersion: () async => '1.0.0',
+    );
+    await service.start();
+    expect(service.blockRequirement, isNull);
+  });
+
+  test('unreachable API or unreadable version: no block, no throw', () async {
+    final offline = AppVersionService(
+      _VersionApi(null),
+      installedVersion: () async => '1.0.0',
+    );
+    await offline.start();
+    expect(offline.blockRequirement, isNull);
+
+    final noPackageInfo = AppVersionService(
+      _VersionApi('99.0.0'),
+      installedVersion: () async => throw Exception('no package info'),
+    );
+    await noPackageInfo.start();
+    expect(noPackageInfo.blockRequirement, isNull);
   });
 }

@@ -17,17 +17,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class _TrackingApi extends ApiClient {
   _TrackingApi({this.offline = false})
-    : super(
-        idTokenProvider: () async => 'token',
-        isOffline: () => offline,
-      );
+    : super(idTokenProvider: () async => 'token', isOffline: () => offline);
 
   final bool offline;
   final startedAt = <String, int>{};
+  final calls = <String, int>{};
   var versionDelay = Duration.zero;
   var authorizedDelay = Duration.zero;
 
   void _mark(String key) {
+    calls[key] = (calls[key] ?? 0) + 1;
     startedAt.putIfAbsent(key, () => DateTime.now().microsecondsSinceEpoch);
   }
 
@@ -134,68 +133,138 @@ void main() {
     });
 
     test('version check and authorized reads start together', () async {
-      final api = _TrackingApi();
-      api.versionDelay = const Duration(milliseconds: 50);
-      api.authorizedDelay = const Duration(milliseconds: 50);
-
+      final api = _TrackingApi()
+        ..versionDelay = const Duration(milliseconds: 50)
+        ..authorizedDelay = const Duration(milliseconds: 50);
       final f = await _sessionFixture(api, prefs);
-      final homeRepo = HomeRepository(api);
-      final store = SelectedBabyStore(prefs);
-      final accountRepo = AccountRepository(api);
-      final notificationsRepo = NotificationsRepository(api);
-      final versionService = AppVersionService();
-
-      versionService.ensureStarted(api);
-      startSignedInStartupPrefetch(
-        session: f.session,
-        homeRepository: homeRepo,
-        selectedBabyStore: store,
-        accountRepository: accountRepo,
-        notificationsRepository: notificationsRepo,
+      final versionService = AppVersionService(
+        api,
+        installedVersion: () async => '1.0.0',
       );
 
-      await Future.wait([
-        versionService.ensureStarted(api),
-        f.session.refreshFromApi(),
-      ]);
-
-      final versionAt = api.startedAt['version'];
-      final statusAt = api.startedAt['/v1/onboarding/status'];
-      expect(versionAt, isNotNull);
-      expect(statusAt, isNotNull);
-      expect(
-        (statusAt! - versionAt!).abs(),
-        lessThan(100 * 1000),
-        reason: 'status and version should start within 100ms',
-      );
-    });
-
-    test('offline keeps cached onboarding; version does not hard-block', () async {
-      final api = _TrackingApi(offline: true);
-      final f = await _sessionFixture(api, prefs);
-      const cached = OnboardingStatus(
-        emailVerified: true,
-        profileComplete: true,
-        hasOwnerBaby: true,
-        hasBabyMembership: true,
-        ownerOnboardingCompleted: true,
-        needsOwnerOnboarding: false,
-        canAccessMainApp: true,
-      );
-      await f.storage.saveCachedOnboardingStatus('user-1', cached);
-      final versionService = AppVersionService();
-      versionService.ensureStarted(api);
-      startSignedInStartupPrefetch(
+      final version = versionService.start();
+      final prefetch = startSignedInStartupPrefetch(
         session: f.session,
         homeRepository: HomeRepository(api),
         selectedBabyStore: SelectedBabyStore(prefs),
         accountRepository: AccountRepository(api),
         notificationsRepository: NotificationsRepository(api),
       );
-      await f.session.refreshFromApi();
+      await Future.wait([version, prefetch]);
+
+      final versionAt = api.startedAt['version']!;
+      for (final path in [
+        '/v1/onboarding/status',
+        '/v1/me/account',
+        '/v1/me/notifications/unread-count',
+        '/v1/babies/baby-1/home-summary',
+      ]) {
+        expect(
+          (api.startedAt[path]! - versionAt).abs(),
+          lessThan(40 * 1000),
+          reason: '$path should start while the version check is in flight',
+        );
+      }
       expect(f.session.statusPhase, OnboardingStatusPhase.loaded);
-      expect(f.session.statusStale, isTrue);
-      expect(versionService.blockRequirement, isNull);
     });
+
+    test('readers that mount afterwards reuse the prefetched data', () async {
+      final api = _TrackingApi();
+      final f = await _sessionFixture(api, prefs);
+      final homeRepo = HomeRepository(api);
+      final store = SelectedBabyStore(prefs);
+      final accountRepo = AccountRepository(api);
+      final notificationsRepo = NotificationsRepository(api);
+
+      await startSignedInStartupPrefetch(
+        session: f.session,
+        homeRepository: homeRepo,
+        selectedBabyStore: store,
+        accountRepository: accountRepo,
+        notificationsRepository: notificationsRepo,
+      );
+      // What ShellChromeSync and HomeScreen read when they first mount.
+      await Future.wait([
+        accountRepo.ensureAccountLoaded(),
+        notificationsRepo.refreshUnreadCount(
+          maxAge: NotificationsRepository.unreadFreshFor,
+        ),
+        homeRepo.resolveSelectedBaby(store),
+        homeRepo.fetchHomeSummary(
+          'baby-1',
+          maxAge: HomeRepository.summaryFreshFor,
+          speculative: true,
+        ),
+      ]);
+
+      expect(api.calls, {
+        '/v1/onboarding/status': 1,
+        '/v1/me/account': 1,
+        '/v1/me/notifications/unread-count': 1,
+        '/v1/babies': 1,
+        '/v1/babies/baby-1/home-summary': 1,
+      });
+    });
+
+    test(
+      'an early Home load joins the in-flight speculative summary',
+      () async {
+        final api = _TrackingApi()
+          ..authorizedDelay = const Duration(milliseconds: 20);
+        final homeRepo = HomeRepository(api);
+
+        await Future.wait([
+          homeRepo.fetchHomeSummary('baby-1', speculative: true),
+          homeRepo.fetchHomeSummary(
+            'baby-1',
+            maxAge: HomeRepository.summaryFreshFor,
+            speculative: true,
+          ),
+        ]);
+        expect(api.calls['/v1/babies/baby-1/home-summary'], 1);
+
+        // A refresh after a mutation never joins an older request.
+        await Future.wait([
+          homeRepo.fetchHomeSummary('baby-1', speculative: true),
+          homeRepo.fetchHomeSummary('baby-1'),
+        ]);
+        expect(api.calls['/v1/babies/baby-1/home-summary'], 3);
+      },
+    );
+
+    test(
+      'offline keeps cached onboarding; version does not hard-block',
+      () async {
+        final api = _TrackingApi(offline: true);
+        final f = await _sessionFixture(api, prefs);
+        const cached = OnboardingStatus(
+          emailVerified: true,
+          profileComplete: true,
+          hasOwnerBaby: true,
+          hasBabyMembership: true,
+          ownerOnboardingCompleted: true,
+          needsOwnerOnboarding: false,
+          canAccessMainApp: true,
+        );
+        await f.storage.saveCachedOnboardingStatus('user-1', cached);
+        final versionService = AppVersionService(
+          api,
+          installedVersion: () async => '1.0.0',
+        );
+        await Future.wait([
+          versionService.start(),
+          startSignedInStartupPrefetch(
+            session: f.session,
+            homeRepository: HomeRepository(api),
+            selectedBabyStore: SelectedBabyStore(prefs),
+            accountRepository: AccountRepository(api),
+            notificationsRepository: NotificationsRepository(api),
+          ),
+        ]);
+        expect(f.session.statusPhase, OnboardingStatusPhase.loaded);
+        expect(f.session.statusStale, isTrue);
+        expect(versionService.blockRequirement, isNull);
+      },
+    );
   });
 }

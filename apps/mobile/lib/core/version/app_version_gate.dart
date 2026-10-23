@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../api/api_client.dart';
@@ -108,41 +106,13 @@ class AppVersionBlockScreen extends StatelessWidget {
   }
 }
 
-/// Runs version check once in the background; shows [child] immediately.
-/// Replaces UI with a hard block only when the installed build is below minimum.
-class AppVersionGate extends StatefulWidget {
+/// Shows [child] immediately while [AppVersionService] checks in the
+/// background; replaces the whole app with a hard block only when the
+/// installed build is below the API minimum.
+class AppVersionGate extends StatelessWidget {
   const AppVersionGate({super.key, required this.child});
 
   final Widget child;
-
-  @override
-  State<AppVersionGate> createState() => _AppVersionGateState();
-}
-
-class _AppVersionGateState extends State<AppVersionGate> {
-  AppVersionService? _versionService;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final service = context.read<AppVersionService>();
-    if (_versionService != service) {
-      _versionService?.removeListener(_onVersionServiceChanged);
-      _versionService = service;
-      service.addListener(_onVersionServiceChanged);
-    }
-    unawaited(service.ensureStarted(context.read<ApiClient>()));
-  }
-
-  @override
-  void dispose() {
-    _versionService?.removeListener(_onVersionServiceChanged);
-    super.dispose();
-  }
-
-  void _onVersionServiceChanged() {
-    if (mounted) setState(() {});
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -156,6 +126,6 @@ class _AppVersionGateState extends State<AppVersionGate> {
         minimumVersion: block.minimumVersion,
       );
     }
-    return widget.child;
+    return child;
   }
 }
