@@ -24,9 +24,10 @@ Sign-in keeps one routing table and one accept entry point. Post-auth navigation
 
 | Layer | Change |
 |-------|--------|
-| `OnboardingStorage` / `OnboardingCoordinator` | Token-bound "Accept requested before sign-in" intent persisted beside the pending invite (`saveAcceptRequestedInviteToken`), hydrated on `hydrate()`. Cleared by `clearPendingInvite` (accept, decline, sign-out). |
-| `AppSession.signedInResumeLocation` / `redirectFor` | Intent set → invite landing, checked before `canAccessMainApp` so existing members are not dropped on `/home` (including cold start at `/home`). `_inviteResumePath(signedIn: true)` never resumes a signed-in user to the `login`/`signup` steps. |
-| Invite landing (follower + co-owner) | After loading the preview, if the intent is set and a user is signed in, consume it and run `runInviteLandingPrimaryAction` — the same path as tapping Accept (keeps the #374 already-member no-op and email-mismatch handling). |
+| `OnboardingStorage` / `OnboardingCoordinator` | Token-bound "Accept requested before sign-in" intent persisted beside the pending invite (`saveAcceptRequestedInviteToken`) and read from storage. It applies only while it equals the current pending token. Cleared with the invite by `clearPendingInvite` (accept, decline, leave, sign-out and account switch via `SessionCleanup.clearLocalUserData`) and by invite completion. |
+| `AppSession.signedInResumeLocation` | Intent set → invite landing, after email verification and profile completion and before `canAccessMainApp`. `_inviteResumePath(signedIn: true)` never resumes a signed-in user to the `login`/`signup` steps. |
+| `AppSession.redirectFor` | Inside the `canAccessMainApp` branch only: a member on a main-app route (e.g. a cold start at `/home`) with a matching intent is sent to the routing table's destination. Invite and auth screens are left alone, and new accounts still verify email and complete their profile first. |
+| Invite landing (follower + co-owner) | Once the invite is resolved (anything but a retryable fetch error) the intent is consumed, so it runs at most once and a revoked or expired invite cannot pin routing to the landing. If the invite can continue, run `runInviteLandingPrimaryAction` — the same path as tapping Accept (keeps the #374 already-member no-op and email-mismatch handling). |
 | `_acceptPendingInvite` / wrong-email switch | Record the intent before routing to sign-in, including after the #406 account switch. `navigateAfterCompleteProfile` consumes it for new accounts. |
 | `OnboardingStorage.clearProgress` | No longer removes the invite token; the invite handoff is cleared as a unit by `clearPendingInvite` or invite completion. |
 | `navigateAfterOnboardingAuth` | Unchanged from main: `context.go(signedInResumeLocation(...))`. |
@@ -52,7 +53,9 @@ Without a persisted intent, existing members are treated like a normal sign-in t
 
 ### Fix (cold start)
 
-Persist the accept intent **in the same storage layer** as the pending invite (`OnboardingStorage`), keyed to the invite token. Hydrate it with the coordinator; clear it only with `clearPendingInvite` (accept, decline, sign-out) or when the stored token no longer matches the pending invite. Keep **invite-resume / accept intent ahead of** `canAccessMainApp` in both `signedInResumeLocation` and `redirectFor`.
+Persist the accept intent **in the same storage layer** as the pending invite (`OnboardingStorage`), keyed to the invite token. Hydrate it with the coordinator; it is ignored when it does not match the pending token and cleared with the invite by `clearPendingInvite`. `redirectFor` applies it only to members on main-app routes, by deferring to `signedInResumeLocation`.
+
+Review of PR #432 found that the first version checked the intent in `redirectFor` before every other signed-in rule. That sent a brand-new account from email verification or complete profile to the landing (accepting before the profile existed) and pulled users off the wrong-email screen. A landing that could not continue also kept the intent, pinning the user away from Home. Both are covered by tests in `app_session_redirect_test.dart` and `invite_landing_accept_after_sign_in_test.dart`.
 
 ## References
 

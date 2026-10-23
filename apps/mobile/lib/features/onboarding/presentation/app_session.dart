@@ -325,14 +325,6 @@ class AppSession extends ChangeNotifier {
       return resume;
     }
 
-    // Accept-before-sign-in beats main-app access so a cold start at /home
-    // still returns to the invite landing (#427).
-    if (_coordinator.acceptRequestedBeforeSignIn) {
-      final landing = _inviteLandingPath();
-      if (path == landing) return null;
-      return landing;
-    }
-
     // An invite landing with nothing to land on (no token, no preview) is a
     // stale path, e.g. a follower who left or was removed (#408).
     if ((path == OnboardingRoutes.followerInvite ||
@@ -342,6 +334,14 @@ class AppSession extends ChangeNotifier {
     }
 
     if (canAccessMainApp) {
+      // Accept tapped before sign-in for the current invite: the routing
+      // table sends a member back to that invite landing, also from a cold
+      // start at /home (#427). Invite and auth screens are left alone.
+      if (_coordinator.acceptRequestedBeforeSignIn &&
+          !_inviteSignedIn.contains(path) &&
+          !_invitePublic.contains(path)) {
+        return resume;
+      }
       // Both flags can be true: a follower who also created a baby
       // (joined_via = created) may use Home and still finish owner onboarding.
       final keepOwnerOnboarding = status?.needsOwnerOnboarding == true;

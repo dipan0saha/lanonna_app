@@ -57,8 +57,9 @@ Future<void> navigateAfterCompleteProfile(BuildContext context) async {
 
   if (coordinator.isInvitePath && token != null && token.isNotEmpty) {
     // New account: the Accept tapped before sign-up runs here, not on the landing.
+    final invitations = context.read<InvitationsRepository>();
     await coordinator.takeAcceptRequestedBeforeSignIn();
-    final result = await context.read<InvitationsRepository>().accept(token);
+    final result = await invitations.accept(token);
     if (!context.mounted) return;
 
     if (result.error == 'email_mismatch') {
@@ -194,8 +195,9 @@ Future<void> _acceptPendingInvite(
     throw const InviteAcceptException('not_found');
   }
   if (context.read<AuthRepository>().currentUser == null) {
-    await coordinator.requestAcceptAfterSignIn(token);
     context.read<InviteFlowState>().setSignupPrefillEmail(preview.inviteeEmail);
+    await coordinator.requestAcceptAfterSignIn(token);
+    if (!context.mounted) return;
     context.go(OnboardingRoutes.signup);
     return;
   }

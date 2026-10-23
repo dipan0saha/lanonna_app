@@ -282,4 +282,18 @@ void main() {
       expect(find.byKey(const Key('home')), findsOneWidget);
     },
   );
+
+  testWidgets(
+    'an invite that cannot continue drops the intent so Home is reachable',
+    (tester) async {
+      final r = await _pumpLanding(
+        tester,
+        status: InvitationStatus.revoked,
+        acceptRequested: true,
+      );
+
+      expect(r.invitations.acceptedTokens, isEmpty);
+      expect(r.coordinator.acceptRequestedBeforeSignIn, isFalse);
+    },
+  );
 }
