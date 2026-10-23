@@ -2863,7 +2863,7 @@ abstract class AppLocalizations {
   /// No description provided for @inviteCoOwnerAccessBody.
   ///
   /// In en, this message translates to:
-  /// **'You now have full access to edit {babyName}\'\'s profile, add events, manage the registry, and invite others, just like {inviterName}.'**
+  /// **'You now have full access to edit {babyName}\'s profile, add events, manage the registry, and invite others, just like {inviterName}.'**
   String inviteCoOwnerAccessBody(String babyName, String inviterName);
 
   /// No description provided for @emailVerifyDevAddressHint.
