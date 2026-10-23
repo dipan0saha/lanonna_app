@@ -34,4 +34,13 @@ void main() {
       isTrue,
     );
   });
+
+  test('with no stored selection the resolved baby is current', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = SelectedBabyStore(await SharedPreferences.getInstance());
+    expect(
+      tabDisplayedPayloadIsCurrent(store: store, displayedBabyId: 'luna'),
+      isTrue,
+    );
+  });
 }

@@ -26,13 +26,17 @@ bool tabLoadShouldShowSpinner({
 /// Another baby's data is never shown or kept as the "cached payload" of a
 /// failed load: the tab blocks with Try again instead. Data for the selected
 /// baby counts even if it was loaded before a round trip (A → B → A), so a
-/// failed reload keeps it on screen. Per-baby repository caches (calendar
-/// lists, home summary) are served by the load itself, not by this check.
+/// failed reload keeps it on screen. With no stored selection the loaded baby
+/// is the one the shell resolved, so it counts. Per-baby repository caches
+/// (calendar lists, home summary) are served by the load itself.
 bool tabDisplayedPayloadIsCurrent({
   required SelectedBabyStore store,
   required String? displayedBabyId,
-}) =>
-    displayedBabyId != null && displayedBabyId == store.selectedBabyId;
+}) {
+  if (displayedBabyId == null) return false;
+  final selected = store.selectedBabyId;
+  return selected == null || selected == displayedBabyId;
+}
 
 /// Reload baby-scoped shell tabs when [HomeRefreshSignal.babyContext] fires
 /// or connectivity returns after being offline.
