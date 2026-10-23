@@ -176,6 +176,7 @@ class _FakeHomeRepository extends HomeRepository {
     String babyId, {
     Duration? maxAge,
     bool speculative = false,
+    bool allowStaleOnError = true,
   }) async {
     if (babyId == 'baby-2') {
       return HomeSummaryLoaded(

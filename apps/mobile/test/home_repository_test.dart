@@ -110,7 +110,26 @@ void main() {
     api.failRequests = true;
     final offline = await repo.fetchHomeSummary('baby-1');
     expect(offline, isA<HomeSummaryLoaded>());
+    expect((offline as HomeSummaryLoaded).staleRefreshError, isNull);
   });
+
+  test(
+    'fetchHomeSummary reports stale refresh error when allowStaleOnError is false',
+    () async {
+      final api = _FlakySummaryApi();
+      final repo = HomeRepository(api);
+      await repo.fetchHomeSummary('baby-1');
+      api.failRequests = true;
+      final result = await repo.fetchHomeSummary(
+        'baby-1',
+        allowStaleOnError: false,
+      );
+      expect(result, isA<HomeSummaryLoaded>());
+      final loaded = result as HomeSummaryLoaded;
+      expect(loaded.summary.lifecycle, BabyLifecycle.expecting);
+      expect(loaded.staleRefreshError, isA<SocketException>());
+    },
+  );
 
   test('summary cache survives switching to another baby', () async {
     final repo = HomeRepository(_SuccessApi());

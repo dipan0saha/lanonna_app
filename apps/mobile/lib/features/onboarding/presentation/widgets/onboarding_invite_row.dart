@@ -19,6 +19,7 @@ class OnboardingInviteRow extends StatelessWidget {
     this.onFieldChanged,
     this.onEmailEditingComplete,
     this.membershipHint,
+    this.emailError,
     this.relationshipOptions = RelationshipPreset.onboardingOptions,
   });
 
@@ -31,6 +32,7 @@ class OnboardingInviteRow extends StatelessWidget {
   final VoidCallback? onFieldChanged;
   final VoidCallback? onEmailEditingComplete;
   final String? membershipHint;
+  final String? emailError;
   final List<RelationshipPreset> relationshipOptions;
 
   @override
@@ -100,6 +102,7 @@ class OnboardingInviteRow extends StatelessWidget {
             decoration: InputDecoration(
               hintText: l10n.labelEmailPhone,
               isDense: true,
+              errorText: emailError,
               contentPadding: EdgeInsets.symmetric(
                 horizontal: 12,
                 vertical: 10,

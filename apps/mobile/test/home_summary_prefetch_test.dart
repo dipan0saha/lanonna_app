@@ -61,6 +61,7 @@ class _RecordingHomeRepository extends HomeRepository {
     String babyId, {
     Duration? maxAge,
     bool speculative = false,
+    bool allowStaleOnError = true,
   }) async {
     events.add('summary:$babyId${speculative ? ':speculative' : ''}');
     if (speculative && failSpeculative) {

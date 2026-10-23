@@ -9,6 +9,7 @@ import '../../../core/presentation/tab_load_failure.dart';
 import '../../../core/router/deep_link_navigation.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_empty_state.dart';
+import '../../../core/widgets/app_refresh_indicator.dart';
 import '../../../core/widgets/app_load_more_button.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/theme/app_metrics.dart';
@@ -231,7 +232,7 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
                 title: l10n.notificationsInboxEmptyTitle,
                 message: l10n.notificationsInboxEmptyMessage,
               )
-            : RefreshIndicator(
+            : AppRefreshIndicator(
                 onRefresh: () => _loadFirstPage(forceRefresh: true),
                 child: ListView.builder(
                   controller: _scrollController,

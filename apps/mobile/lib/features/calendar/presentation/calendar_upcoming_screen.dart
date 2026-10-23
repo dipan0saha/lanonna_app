@@ -7,6 +7,7 @@ import '../../home/presentation/baby_context_reload.dart';
 import '../data/calendar_repository.dart';
 import '../domain/calendar_event_lists.dart';
 import 'widgets/calendar_today_upcoming_sections.dart';
+import '../../../core/widgets/app_refresh_indicator.dart';
 import '../../../l10n/app_localizations.dart';
 
 class CalendarUpcomingScreen extends StatefulWidget {
@@ -104,7 +105,7 @@ class _CalendarUpcomingScreenState extends State<CalendarUpcomingScreen>
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(title: Text(AppLocalizations.of(context)!.calendarUpcomingTitle)),
-      body: RefreshIndicator(
+      body: AppRefreshIndicator(
         onRefresh: _load,
         child: _loading
             ? ListView(

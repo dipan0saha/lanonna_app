@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../config/app_config.dart';
 import '../../../core/platform/external_link_launcher.dart';
+import '../../../core/platform/mailto_uri.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/widgets/app_semantics.dart';
@@ -15,10 +16,9 @@ class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   Future<void> _openHelp(BuildContext context) async {
-    final uri = Uri(
-      scheme: 'mailto',
-      path: AppConfig.supportEmail,
-      queryParameters: const {'subject': 'La Nonna support'},
+    final uri = buildMailtoUri(
+      address: AppConfig.supportEmail,
+      subject: 'La Nonna support',
     );
     await openExternalLink(
       context,

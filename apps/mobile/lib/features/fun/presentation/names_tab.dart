@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/presentation/tab_load_failure.dart';
 import '../../../core/widgets/app_empty_state.dart';
+import '../../../core/widgets/app_refresh_indicator.dart';
 import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/async_tab_body.dart';
 import '../../../core/api/run_mutation.dart';
@@ -193,7 +194,7 @@ class _NamesTabState extends State<NamesTab> {
     final payload = _payload;
     final suggestions = payload?.suggestions ?? [];
     if (suggestions.isEmpty) {
-      return RefreshIndicator(
+      return AppRefreshIndicator(
         onRefresh: _load,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -215,7 +216,7 @@ class _NamesTabState extends State<NamesTab> {
         suggestions.where((s) => s.gender == BabyGender.male).toList();
     final girls =
         suggestions.where((s) => s.gender == BabyGender.female).toList();
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: _load,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(

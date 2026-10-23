@@ -9,6 +9,7 @@ import '../../../core/auth/auth_session_service.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_bordered_surface.dart';
+import '../../../core/widgets/app_refresh_indicator.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_semantics.dart';
 import '../../../core/widgets/app_section_title.dart';
@@ -178,7 +179,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 ),
               ),
             )
-          : RefreshIndicator(
+          : AppRefreshIndicator(
               onRefresh: _load,
               child: ListView(
                 padding: AppMetrics.subpageScrollPadding,

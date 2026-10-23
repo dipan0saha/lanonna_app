@@ -43,6 +43,7 @@ class _ConnectivityHomeRepository extends HomeRepository {
     String babyId, {
     Duration? maxAge,
     bool speculative = false,
+    bool allowStaleOnError = true,
   }) async {
     return HomeSummaryLoaded(
       HomeSummary(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/widgets/app_refresh_indicator.dart';
 import '../../home/data/home_repository.dart';
 
 import 'shell_top_bar.dart';
@@ -23,7 +24,7 @@ class ShellTabLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     final refresh = onRefresh;
     final scrollable = refresh != null
-        ? RefreshIndicator(
+        ? AppRefreshIndicator(
             onRefresh: () {
               context.read<HomeRepository>().refreshBabiesOnNextRead();
               return refresh();

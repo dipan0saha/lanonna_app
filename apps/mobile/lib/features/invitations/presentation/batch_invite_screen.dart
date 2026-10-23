@@ -45,6 +45,7 @@ class _InviteRowState {
   final TextEditingController emailController;
   RelationshipPreset relationship;
   InviteMembershipHint? membershipHint;
+  String? emailError;
 
   void dispose() {
     nameController.dispose();
@@ -198,12 +199,40 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
     }
   }
 
+  bool _rowIsBlank(_InviteRowState row) {
+    return row.nameController.text.trim().isEmpty &&
+        row.emailController.text.trim().isEmpty;
+  }
+
+  /// Validates every non-blank row. Sets per-row [emailError] and returns
+  /// whether at least one invite is ready to send.
+  bool _validateRowsForSend(AppLocalizations l10n) {
+    var readyCount = 0;
+    var sawActiveRow = false;
+    for (final row in _rows) {
+      row.emailError = null;
+      if (_rowIsBlank(row)) continue;
+      sawActiveRow = true;
+      final email = row.emailController.text.trim();
+      final emailProblem = email.isEmpty
+          ? l10n.validationEmailRequired
+          : validateEmail(l10n, email);
+      if (emailProblem != null) {
+        row.emailError = emailProblem;
+        continue;
+      }
+      if (row.membershipHint != null) continue;
+      readyCount++;
+    }
+    return sawActiveRow && readyCount > 0 && _rows.every((r) => r.emailError == null);
+  }
+
   List<Map<String, dynamic>> _collectInvitesToSend() {
     final invites = <Map<String, dynamic>>[];
     for (final row in _rows) {
+      if (_rowIsBlank(row)) continue;
       final email = row.emailController.text.trim();
-      if (email.isEmpty) continue;
-      if (validateEmail(AppLocalizations.of(context)!, email) != null) continue;
+      if (row.emailError != null) continue;
       if (row.membershipHint != null) continue;
       invites.add({
         'email': email,
@@ -214,27 +243,28 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
     return invites;
   }
 
-  String? _validateBeforeSend(AppLocalizations l10n) {
-    var sawEmail = false;
-    var sawInvalid = false;
+  String? _formLevelSendError(AppLocalizations l10n) {
+    var sawActiveRow = false;
+    var sawInvalidEmail = false;
+    var sawValidReady = false;
     for (final row in _rows) {
-      final email = row.emailController.text.trim();
-      if (email.isEmpty) continue;
-      sawEmail = true;
-      if (validateEmail(AppLocalizations.of(context)!, email) != null) {
-        sawInvalid = true;
+      if (_rowIsBlank(row)) continue;
+      sawActiveRow = true;
+      if (row.emailError != null) {
+        sawInvalidEmail = true;
         continue;
       }
-      if (row.membershipHint != null) continue;
-      return null;
+      final email = row.emailController.text.trim();
+      if (email.isNotEmpty &&
+          validateEmail(l10n, email) == null &&
+          row.membershipHint == null) {
+        sawValidReady = true;
+      }
     }
-    if (!sawEmail) {
-      return l10n.batchInviteAddEmailToSend;
-    }
-    if (sawInvalid) {
-      return l10n.batchInviteInvalidEmails;
-    }
-    return l10n.batchInviteNoNewInvites;
+    if (!sawActiveRow) return l10n.batchInviteAddEmailToSend;
+    if (sawInvalidEmail) return l10n.batchInviteInvalidEmails;
+    if (!sawValidReady) return l10n.batchInviteNoNewInvites;
+    return l10n.batchInviteInvalidEmails;
   }
 
   Future<void> _finish({required bool sendInvites}) async {
@@ -256,12 +286,16 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
     });
     try {
       if (sendInvites) {
-        final validationError = _validateBeforeSend(l10n);
+        final canSend = _validateRowsForSend(l10n);
+        if (!canSend) {
+          setState(() {
+            _error = _formLevelSendError(l10n);
+          });
+          return;
+        }
         final invites = _collectInvitesToSend();
         if (invites.isEmpty) {
-          setState(
-            () => _error = validationError ?? l10n.batchInviteNoInvitesToSend,
-          );
+          setState(() => _error = l10n.batchInviteNoInvitesToSend);
           return;
         }
       }
@@ -335,7 +369,11 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
               _persistDraft();
             },
             onRemove: _rows.length > 1 ? () => _removeRow(i) : null,
-            onFieldChanged: _persistDraft,
+            emailError: _rows[i].emailError,
+            onFieldChanged: () {
+              _rows[i].emailError = null;
+              _persistDraft();
+            },
             onEmailEditingComplete: () => _checkMembershipForRow(i),
           ),
         PrototypeAddAnotherButton(

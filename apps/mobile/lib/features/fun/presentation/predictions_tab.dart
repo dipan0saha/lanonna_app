@@ -8,6 +8,7 @@ import '../../../core/api/api_error_message.dart';
 import '../../../core/api/run_mutation.dart';
 import '../../../core/widgets/app_confirm_dialog.dart';
 import '../../../core/presentation/tab_load_failure.dart';
+import '../../../core/widgets/app_refresh_indicator.dart';
 import '../../../core/widgets/async_tab_body.dart';
 import '../../../core/time/app_date_time.dart';
 import '../../../core/widgets/app_snackbar.dart';
@@ -256,7 +257,7 @@ class _PredictionsTabState extends State<PredictionsTab> {
           savedVoteIso: savedBirthdate,
         );
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: _load,
       child: ListView(
         padding: EdgeInsets.fromLTRB(
