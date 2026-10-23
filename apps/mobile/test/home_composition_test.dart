@@ -3,53 +3,41 @@ import 'package:lanonna/core/domain/baby_lifecycle.dart';
 import 'package:lanonna/features/home/data/models/home_summary.dart';
 import 'package:lanonna/features/home/domain/home_composition.dart';
 
-void main() {
-  test('includeUpcomingEventsTeaser is false when next up is set', () {
-    final summary = HomeSummary(
-      lifecycle: BabyLifecycle.expecting,
-      nameSuggestionCount: 0,
-      voteCount: 0,
-      recentActivity: const [],
-      nextUpEvent: const NextUpEvent(
-        id: 'e1',
-        title: 'Shower',
-        startsAt: DateTime(2026, 1, 1),
-      ),
-      teasers: HomeTeasers(
-        upcomingEvents: [
-          NextUpEvent(
-            id: 'e2',
-            title: 'Tour',
-            startsAt: DateTime(2026, 2, 1),
-          ),
-        ],
-        recentPhotos: const [],
-      ),
-    );
+HomeSummary _summary({
+  required BabyLifecycle lifecycle,
+  required bool withNextUp,
+}) {
+  final event = NextUpEvent(
+    id: 'e1',
+    title: 'Shower',
+    startsAt: DateTime(2026, 1, 1),
+  );
+  return HomeSummary(
+    lifecycle: lifecycle,
+    nameSuggestionCount: 0,
+    voteCount: 0,
+    recentActivity: const [],
+    nextUpEvent: withNextUp ? event : null,
+    teasers: HomeTeasers(upcomingEvents: [event], recentPhotos: const []),
+  );
+}
 
-    expect(HomeComposition.showNextUpCard(summary), isTrue);
-    expect(HomeComposition.includeUpcomingEventsTeaser(summary), isFalse);
+void main() {
+  test('expecting with next up: NEXT UP card, no duplicate teaser strip', () {
+    final s = _summary(lifecycle: BabyLifecycle.expecting, withNextUp: true);
+    expect(HomeComposition.showNextUpCard(s), isTrue);
+    expect(HomeComposition.includeUpcomingEventsTeaser(s), isFalse);
   });
 
-  test('includeUpcomingEventsTeaser is true without next up', () {
-    final summary = HomeSummary(
-      lifecycle: BabyLifecycle.expecting,
-      nameSuggestionCount: 0,
-      voteCount: 0,
-      recentActivity: const [],
-      teasers: HomeTeasers(
-        upcomingEvents: [
-          NextUpEvent(
-            id: 'e1',
-            title: 'Tour',
-            startsAt: DateTime(2026, 2, 1),
-          ),
-        ],
-        recentPhotos: const [],
-      ),
-    );
+  test('expecting without next up: teaser strip only', () {
+    final s = _summary(lifecycle: BabyLifecycle.expecting, withNextUp: false);
+    expect(HomeComposition.showNextUpCard(s), isFalse);
+    expect(HomeComposition.includeUpcomingEventsTeaser(s), isTrue);
+  });
 
-    expect(HomeComposition.showNextUpCard(summary), isFalse);
-    expect(HomeComposition.includeUpcomingEventsTeaser(summary), isTrue);
+  test('born with next up keeps the teaser strip (no NEXT UP on born Home)', () {
+    final s = _summary(lifecycle: BabyLifecycle.born, withNextUp: true);
+    expect(HomeComposition.showNextUpCard(s), isFalse);
+    expect(HomeComposition.includeUpcomingEventsTeaser(s), isTrue);
   });
 }
