@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import '../api/api_client.dart';
+import 'app_version_service.dart';
 import '../platform/external_link_launcher.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_metrics.dart';
@@ -106,57 +106,26 @@ class AppVersionBlockScreen extends StatelessWidget {
   }
 }
 
-/// Runs version check once in the background; shows [child] immediately.
-/// Replaces UI with a hard block only when the installed build is below minimum.
-class AppVersionGate extends StatefulWidget {
+/// Shows [child] immediately while [AppVersionService] checks in the
+/// background; replaces the whole app with a hard block only when the
+/// installed build is below the API minimum.
+class AppVersionGate extends StatelessWidget {
   const AppVersionGate({super.key, required this.child});
 
   final Widget child;
 
   @override
-  State<AppVersionGate> createState() => _AppVersionGateState();
-}
-
-class _AppVersionGateState extends State<AppVersionGate> {
-  AppVersionRequirement? _block;
-  String? _installedVersion;
-
-  var _started = false;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_started) return;
-    _started = true;
-    _check();
-  }
-
-  Future<void> _check() async {
-    final info = await PackageInfo.fromPlatform();
-    if (!mounted) return;
-    final installed = info.version;
-    final client = context.read<ApiClient>();
-    final requirement = await fetchAppVersionRequirement(client);
-    if (!mounted) return;
-    if (requirement != null &&
-        isAppVersionBelowMinimum(installed, requirement.minimumVersion)) {
-      setState(() {
-        _block = requirement;
-        _installedVersion = installed;
-      });
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final block = _block;
-    if (block != null && _installedVersion != null) {
+    final service = context.watch<AppVersionService>();
+    final block = service.blockRequirement;
+    final installed = service.installedVersion;
+    if (block != null && installed != null) {
       return AppVersionBlockScreen(
         storeUrl: block.storeUrl,
-        installedVersion: _installedVersion!,
+        installedVersion: installed,
         minimumVersion: block.minimumVersion,
       );
     }
-    return widget.child;
+    return child;
   }
 }

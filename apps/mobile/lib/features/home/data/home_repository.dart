@@ -6,6 +6,7 @@ import '../../../core/api/offset_page.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../../../core/data/baby_list_cache.dart';
+import '../../../core/data/single_flight.dart';
 import 'home_summary_result.dart';
 import 'models/home_summary.dart';
 import 'selected_baby_store.dart';
@@ -35,9 +36,15 @@ class HomeRepository {
   final Map<String, HomeSummary> _summaryByBaby = {};
   final Map<String, DateTime> _summaryFetchedAt = {};
 
+  /// Speculative summary reads (startup prefetch and Home's early load) share
+  /// one request per baby. Non-speculative reads never join one: they follow
+  /// mutations and must not get a response from before the change.
+  final _speculativeSummary = KeyedSingleFlight<String, HomeSummaryResult>();
+
   /// Sign-out / account deletion: forget every user-scoped list.
   void clearCachedBabies() {
     _babies.invalidate();
+    _speculativeSummary.cancelAll();
     _summaryByBaby.clear();
     _summaryFetchedAt.clear();
   }
@@ -182,6 +189,19 @@ class HomeRepository {
         _clock().difference(cachedAt) < maxAge) {
       return HomeSummaryLoaded(cachedSummary);
     }
+    if (speculative) {
+      return _speculativeSummary.run(
+        babyId,
+        () => _requestHomeSummary(babyId, speculative: true),
+      );
+    }
+    return _requestHomeSummary(babyId, speculative: false);
+  }
+
+  Future<HomeSummaryResult> _requestHomeSummary(
+    String babyId, {
+    required bool speculative,
+  }) async {
     try {
       final json = await _api.getJson(
         '/v1/babies/$babyId/home-summary',

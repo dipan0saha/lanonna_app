@@ -173,6 +173,11 @@ class NotificationsRepository extends ChangeNotifier {
   static const inboxFreshFor = Duration(minutes: 2);
   static const inboxPageSize = 50;
 
+  /// How long an unread count counts as current for a passive reader that
+  /// mounts (the shell after the cold-start prefetch). Inbox changes still
+  /// refetch at once ([notifyInboxMayHaveChanged]).
+  static const unreadFreshFor = Duration(minutes: 1);
+
   /// Shared unread badge; refreshed through [refreshUnreadCount].
   final unread = UnreadInboxCount();
   final _unreadRequest = SingleFlight<int>();
