@@ -182,16 +182,15 @@ class _CalendarScreenState extends State<CalendarScreen>
     }
   }
 
-  Future<void> _openCreateEvent({DateTime? onDate}) async {
-    final created = await context.push<bool>(
+  /// The list reloads through the [CalendarRepository] listener once the
+  /// event is saved.
+  void _openCreateEvent({DateTime? onDate}) {
+    context.push(
       CalendarRoutes.createEvent,
       extra: onDate != null
           ? EventFormPrefill(title: '', description: '', initialDate: onDate)
           : null,
     );
-    if (created == true && mounted) {
-      await _load();
-    }
   }
 
   void _onMonthDayTap(int day) {

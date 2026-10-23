@@ -37,7 +37,7 @@ void main() {
       MultiProvider(
         providers: [
           Provider<HomeRepository>.value(value: homeRepo),
-          Provider<RegistryRepository>.value(value: regRepo),
+          ChangeNotifierProvider<RegistryRepository>.value(value: regRepo),
           ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
         ],
         child: const MaterialApp(

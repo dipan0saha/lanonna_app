@@ -21,7 +21,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      Provider<AnnouncementRepository>(
+      ChangeNotifierProvider<AnnouncementRepository>(
         create: (_) => AnnouncementRepository(_FakeApi()),
         child: MaterialApp.router(
           localizationsDelegates: AppLocalizations.localizationsDelegates,

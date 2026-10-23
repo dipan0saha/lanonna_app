@@ -97,7 +97,7 @@ void main() {
             ChangeNotifierProvider<ConnectivityService>.value(
               value: ConnectivityService.forTesting(isOnline: true),
             ),
-            Provider<RegistryRepository>.value(
+            ChangeNotifierProvider<RegistryRepository>.value(
               value: _LunaRegistryRepository(),
             ),
             Provider<AuthRepository>.value(value: _FakeAuthRepository()),
@@ -146,7 +146,7 @@ void main() {
           ChangeNotifierProvider<ConnectivityService>.value(
             value: connectivity,
           ),
-          Provider<RegistryRepository>.value(value: registryRepo),
+          ChangeNotifierProvider<RegistryRepository>.value(value: registryRepo),
           Provider<AuthRepository>.value(value: _FakeAuthRepository()),
         ],
         child: MaterialApp(
