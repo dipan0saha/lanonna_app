@@ -67,9 +67,6 @@ Future<Widget> bootstrapLaNonnaApp({
   final authRepository = AuthRepository();
   await startCrashReporting(authRepository: authRepository);
   scheduleCrashlyticsTestCrashOnStartIfRequested();
-  // A signed-in launch makes authorized requests right away; start the
-  // App Check read now so a first-launch attestation overlaps start-up.
-  if (authRepository.currentUser != null) appCheck.prefetch();
   final connectivityService = ConnectivityService();
   final (onboardingStorage, _, coldStartUri) = await waitAll3(
     OnboardingStorage.create(),

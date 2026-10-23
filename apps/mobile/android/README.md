@@ -2,7 +2,7 @@
 
 ## Upload keystore (Play release)
 
-Prod release builds (`APP_ENV=prod` via `flavors/prod.json`) **require** `android/key.properties` and sign with the upload keystore. Dev release builds (`flavors/dev.json`) **always** sign with the debug keystore; Gradle ignores `key.properties` for dev so a local upload keystore does not break Google Sign-In against **lanonna-dev**. A prod release also refuses a `google-services.json` that is missing or belongs to `lanonna-dev`.
+Prod release builds (`APP_ENV=prod` via `flavors/prod.json`) **require** `android/key.properties` and sign with the upload keystore. Dev release builds (`flavors/dev.json`) **always** sign with the debug keystore; Gradle ignores `key.properties` for dev so a local upload keystore does not break Google Sign-In against **lanonna-dev**. Non-prod release APKs embed optional `APP_CHECK_DEBUG_TOKEN` from `maestro/local.env` (same as debug) for the App Check debug provider. A prod release also refuses a `google-services.json` that is missing or belongs to `lanonna-dev`.
 
 1. Create an upload keystore (once per app signing identity):
 

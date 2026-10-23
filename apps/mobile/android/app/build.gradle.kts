@@ -141,6 +141,14 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            // Non-prod release uses the App Check debug provider; pin the UUID when set.
+            if (!isProdBuild) {
+                buildConfigField(
+                    "String",
+                    "APP_CHECK_DEBUG_TOKEN",
+                    "\"${escapeBuildConfigString(appCheckDebugToken)}\"",
+                )
+            }
             // Non-prod release always uses the debug keystore (ignores key.properties).
             // Prod without key.properties gets no signing config; the release-task check fails loudly.
             signingConfig = when {
