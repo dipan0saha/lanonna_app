@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:lanonna/core/api/api_error_message.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../../core/auth/auth_repository.dart';
 import '../../../../invitations/data/models/invitation_preview.dart';
 import '../../../../invitations/presentation/invite_accept_messages.dart';
-import '../../../../invitations/presentation/invite_flow_state.dart';
 import '../../../../invitations/presentation/invite_landing_helpers.dart';
 import '../../../../invitations/presentation/widgets/invite_landing_state_views.dart';
 import '../../../../invitations/presentation/widgets/invite_landing_widgets.dart';
-import '../../../domain/onboarding_routes.dart';
 import '../../../domain/onboarding_step.dart';
 import '../../onboarding_coordinator.dart';
 import '../../utils/invite_flow_navigation.dart';
@@ -77,25 +72,11 @@ class _OnboardingCoOwnerInviteScreenState
     setState(() => _loading = false);
   }
 
-  Future<void> _accept(InvitationPreview preview) async {
-    final coordinator = context.read<OnboardingCoordinator>();
-    final token = coordinator.pendingInviteToken;
-    if (token == null) return;
-    final auth = context.read<AuthRepository>();
-    if (auth.currentUser != null) {
-      try {
-        await acceptSignedInInviteAndContinue(context, token);
-      } catch (e) {
-        if (mounted) {
-          setState(() {
-            _problemMessage = apiErrorMessage(AppLocalizations.of(context)!, e);
-          });
-        }
-      }
-      return;
+  Future<void> _onPrimary(InvitationPreview preview) async {
+    final message = await runInviteLandingPrimaryAction(context, preview);
+    if (message != null && mounted) {
+      setState(() => _problemMessage = message);
     }
-    context.read<InviteFlowState>().setSignupPrefillEmail(preview.inviteeEmail);
-    context.go(OnboardingRoutes.signup);
   }
 
   @override
@@ -128,9 +109,7 @@ class _OnboardingCoOwnerInviteScreenState
             padding: const EdgeInsets.symmetric(horizontal: 22),
             child: OnboardingPrimaryButton(
               label: preview.isAccepted ? AppLocalizations.of(context)!.onboardingOpen : AppLocalizations.of(context)!.onboardingAcceptJoinAsOwner,
-              onPressed: () => preview.isAccepted
-                  ? openAcceptedInvitePreview(context)
-                  : _accept(preview),
+              onPressed: () => _onPrimary(preview),
             ),
           ),
           InviteNotForYouLink(onTap: () => leaveInvitationFlow(context)),
