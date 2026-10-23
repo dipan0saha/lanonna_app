@@ -41,6 +41,23 @@ class BiometricSignInService {
   /// This install's enrollment, or `null` when biometric sign-in is not set up.
   BiometricSignInEnrollment? get enrollment => _store.read();
 
+  /// Whether **Biometric sign-in & unlock** is on for the signed-in account on
+  /// this install: the account's server flag **and** this install's enrollment
+  /// belongs to that account. The one answer for the Settings switch and the
+  /// app lock (docs/engineering/rca/biometric-toggle-after-other-account-sign-in.md).
+  ///
+  /// The server flag alone is not enough: another account signing in here
+  /// clears the enrollment (single key slot) but cannot change the previous
+  /// account's flag, which other devices still rely on.
+  bool isUnlockActiveForSignedInUser({
+    required bool serverBiometricUnlockEnabled,
+  }) {
+    final uid = _authRepository.currentUser?.uid;
+    return serverBiometricUnlockEnabled &&
+        uid != null &&
+        enrollment?.firebaseUid == uid;
+  }
+
   /// Drops the enrollment as soon as a different account is signed in here, by
   /// any route (email, Google, sign-up, invite), so the login screen never
   /// offers to sign in as the previous account.
