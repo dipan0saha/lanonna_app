@@ -22,7 +22,6 @@ import 'core/theme/app_theme.dart';
 import 'core/version/app_version_gate.dart';
 import 'core/widgets/app_offline_wrapper.dart';
 import 'core/widgets/app_snackbar.dart';
-import 'features/account/data/notifications_repository.dart';
 import 'features/onboarding/domain/onboarding_routes.dart';
 import 'features/onboarding/domain/onboarding_step.dart';
 import 'features/onboarding/presentation/onboarding_coordinator.dart';
@@ -48,8 +47,8 @@ class _LaNonnaAppState extends State<LaNonnaApp> {
     widget.routerRefresh,
     initialLocation: widget.initialInviteLocation,
   );
-  PushNotificationService? _pushService;
   var _pushStarted = false;
+  PushNotificationService? _pushService;
   StreamSubscription<Uri>? _appLinkSub;
 
   @override
@@ -138,9 +137,7 @@ class _LaNonnaAppState extends State<LaNonnaApp> {
   void _ensurePush(BuildContext context) {
     if (_pushStarted || kIsWeb) return;
     _pushStarted = true;
-    _pushService = PushNotificationService(
-      context.read<NotificationsRepository>(),
-    );
+    _pushService = context.read<PushNotificationService>();
     _pushService!.start(
       authStateChanges: context.read<AuthRepository>().authStateChanges(),
       onDeepLink: (link, babyProfileId) {

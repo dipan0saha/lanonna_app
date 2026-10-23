@@ -15,8 +15,10 @@ import 'core/auth/biometric_credential_repository.dart';
 import 'core/auth/biometric_sign_in_service.dart';
 import 'core/auth/biometric_sign_in_store.dart';
 import 'core/auth/membership_access_handler.dart';
+import 'core/auth/auth_session_service.dart';
 import 'core/auth/session_cleanup.dart';
 import 'core/auth/user_deleted_session_handler.dart';
+import 'core/notifications/push_notification_service.dart';
 import 'core/data/baby_list_cache.dart';
 import 'core/data/parallel_requests.dart';
 import 'core/network/connectivity_service.dart';
@@ -80,13 +82,14 @@ Future<Widget> bootstrapLaNonnaApp({
   final prefs = onboardingStorage.sharedPreferences;
   late final OnboardingCoordinator coordinator;
   late final SessionCleanup sessionCleanup;
+  late final PushNotificationService pushNotificationService;
+  late final AuthSessionService authSessionService;
   final apiClient = ApiClient(
     idTokenProvider: authRepository.getIdToken,
     appCheckTokenProvider: appCheck.token,
     isOffline: () => !connectivityService.isOnline,
     onSessionInvalidated: (_) => handleUserDeletedSession(
-      authRepository: authRepository,
-      sessionCleanup: sessionCleanup,
+      authSessionService: authSessionService,
     ),
   );
   final biometricSignInService = BiometricSignInService(
@@ -146,6 +149,13 @@ Future<Widget> bootstrapLaNonnaApp({
     galleryRepository: galleryRepository,
     calendarRepository: calendarRepository,
   );
+  pushNotificationService = PushNotificationService(notificationsRepository);
+  authSessionService = AuthSessionService(
+    authRepository: authRepository,
+    sessionCleanup: sessionCleanup,
+    biometricSignInService: biometricSignInService,
+    pushNotificationService: pushNotificationService,
+  );
   final homeRefreshSignal = HomeRefreshSignal();
   apiClient.registerMembershipEndedHandler(
     (exception) => handleMembershipEnded(
@@ -192,6 +202,8 @@ Future<Widget> bootstrapLaNonnaApp({
       Provider<AuthRepository>.value(value: authRepository),
       Provider<BiometricSignInService>.value(value: biometricSignInService),
       Provider<SessionCleanup>.value(value: sessionCleanup),
+      Provider<AuthSessionService>.value(value: authSessionService),
+      Provider<PushNotificationService>.value(value: pushNotificationService),
       Provider<ApiClient>.value(value: apiClient),
       ChangeNotifierProvider<AppVersionService>.value(value: appVersionService),
       Provider<EventCoverUploader>.value(value: eventCoverUploader),
