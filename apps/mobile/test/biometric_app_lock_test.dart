@@ -180,7 +180,9 @@ _pumpLockHarness(
         : null,
   );
   final signInStore = BiometricSignInStore(prefs);
-  if (localBiometricEnrollment && biometricUnlockEnabled && accountLoaded) {
+  // This install's key exists independently of the profile (it is created
+  // before the flag is saved and survives cold start).
+  if (localBiometricEnrollment) {
     await signInStore.save(
       const BiometricSignInEnrollment(
         credentialId: 'test-cred',
