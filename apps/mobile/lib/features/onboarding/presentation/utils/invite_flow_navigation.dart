@@ -3,11 +3,14 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/auth/auth_repository.dart';
+import '../../../../core/widgets/app_snackbar.dart';
 import '../../../home/data/home_repository.dart';
 import '../../../home/data/selected_baby_store.dart';
 import '../../../invitations/presentation/invite_accept_messages.dart';
 import '../../../invitations/presentation/invite_flow_state.dart';
 import '../../../invitations/data/invitations_repository.dart';
+import 'package:lanonna/l10n/app_localizations.dart';
+
 import '../../domain/onboarding_path.dart';
 import '../../domain/onboarding_routes.dart';
 import '../../domain/onboarding_step.dart';
@@ -90,6 +93,36 @@ Future<void> finishInviteOnboardingAndGoHome(BuildContext context) async {
   if (context.mounted) context.go('/home');
 }
 
+/// Selects the joined baby from accept/preview ids and finishes invite onboarding.
+Future<void> continueToJoinedBabyHome(
+  BuildContext context, {
+  String? acceptedBabyId,
+}) async {
+  final coordinator = context.read<OnboardingCoordinator>();
+  final babyId = joinedBabyIdFromAccept(
+    acceptedBabyId: acceptedBabyId,
+    invitedBabyId: coordinator.invitedBabyId,
+    previewBabyId: coordinator.cachedInvitePreview?.babyProfileId,
+  );
+  if (babyId == null) {
+    if (context.mounted) {
+      AppSnackBar.showAlert(
+        context,
+        inviteAcceptUserMessage(
+          AppLocalizations.of(context)!,
+          'not_found',
+        ),
+      );
+    }
+    return;
+  }
+  await coordinator.setInvitedBabyId(babyId);
+  if (!context.mounted) return;
+  await _selectJoinedBaby(context, babyId);
+  if (!context.mounted) return;
+  await finishInviteOnboardingAndGoHome(context);
+}
+
 /// Preview status `accepted` means this invite was already used.
 ///
 /// Signed-out visitors go to login. Signed-in visitors call accept, which
@@ -100,9 +133,22 @@ Future<void> openAcceptedInvitePreview(BuildContext context) async {
     context.go(OnboardingRoutes.login);
     return;
   }
-  final token = context.read<OnboardingCoordinator>().pendingInviteToken;
-  if (token == null || token.isEmpty) return;
-  await acceptSignedInInviteAndContinue(context, token);
+  final coordinator = context.read<OnboardingCoordinator>();
+  final token = coordinator.pendingInviteToken;
+  if (token != null && token.isNotEmpty) {
+    await acceptSignedInInviteAndContinue(context, token);
+    return;
+  }
+  final preview = coordinator.cachedInvitePreview;
+  if (preview != null && preview.isAccepted) {
+    await continueToJoinedBabyHome(context);
+    return;
+  }
+  if (!context.mounted) return;
+  AppSnackBar.showAlert(
+    context,
+    inviteAcceptUserMessage(AppLocalizations.of(context)!, 'not_found'),
+  );
 }
 
 /// Signed-in accept from invite landing screens (H-07): honor API result, not only throws.
@@ -126,17 +172,8 @@ Future<void> acceptSignedInInviteAndContinue(
     throw InviteAcceptException(result.error!);
   }
 
-  final babyId = joinedBabyIdFromAccept(
+  await continueToJoinedBabyHome(
+    context,
     acceptedBabyId: result.babyProfileId,
-    invitedBabyId: coordinator.invitedBabyId,
-    previewBabyId: coordinator.cachedInvitePreview?.babyProfileId,
   );
-  if (babyId != null) {
-    await coordinator.setInvitedBabyId(babyId);
-    if (!context.mounted) return;
-    await _selectJoinedBaby(context, babyId);
-  }
-
-  if (!context.mounted) return;
-  await finishInviteOnboardingAndGoHome(context);
 }
