@@ -65,6 +65,9 @@ val dartDefines = decodeDartDefines()
 val appEnv = dartDefines["APP_ENV"] ?: "dev"
 val appLinkHost = dartDefines["APP_LINK_HOST"] ?: "lanonna-dev.firebaseapp.com"
 val isProdBuild = appEnv == "prod"
+// App Check debug secret (maestro/local.env): non-prod only. Prod builds of every
+// build type get an empty BuildConfig field, so the token cannot ship in a prod APK.
+val embeddedAppCheckDebugToken = if (isProdBuild) "" else appCheckDebugToken
 
 // Prod must not ship with the dev Firebase app baked into native resources
 // (Crashlytics, FCM and Analytics read google-services.json before Dart runs).
@@ -122,16 +125,15 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         manifestPlaceholders["applicationName"] = "com.lanonna.lanonna.LanonnaApplication"
         manifestPlaceholders["appLinkHost"] = appLinkHost
-        buildConfigField("String", "APP_CHECK_DEBUG_TOKEN", "\"\"")
+        buildConfigField(
+            "String",
+            "APP_CHECK_DEBUG_TOKEN",
+            "\"${escapeBuildConfigString(embeddedAppCheckDebugToken)}\"",
+        )
     }
 
     buildTypes {
         debug {
-            buildConfigField(
-                "String",
-                "APP_CHECK_DEBUG_TOKEN",
-                "\"${escapeBuildConfigString(appCheckDebugToken)}\"",
-            )
             signingConfig = signingConfigs.getByName("debug")
         }
         release {
@@ -141,14 +143,6 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            // Non-prod release uses the App Check debug provider; pin the UUID when set.
-            if (!isProdBuild) {
-                buildConfigField(
-                    "String",
-                    "APP_CHECK_DEBUG_TOKEN",
-                    "\"${escapeBuildConfigString(appCheckDebugToken)}\"",
-                )
-            }
             // Non-prod release always uses the debug keystore (ignores key.properties).
             // Prod without key.properties gets no signing config; the release-task check fails loudly.
             signingConfig = when {

@@ -5,7 +5,8 @@ import com.google.firebase.FirebaseApp
 
 /**
  * Pins the Firebase App Check Android debug secret so reinstall / pm clear does not
- * rotate the UUID. Empty on prod release; set for debug and non-prod release builds.
+ * rotate the UUID. Set only for non-prod builds (from maestro/local.env); always empty
+ * in prod, see build.gradle.kts.
  */
 object AppCheckDebugSecretSeeder {
     private const val PREFS_TEMPLATE = "com.google.firebase.appcheck.debug.store.%s"

@@ -154,6 +154,30 @@ void main() {
       expect(calls, 2);
     });
 
+    test('an auto-refreshed token ends the cool-down', () async {
+      var calls = 0;
+      final changes = StreamController<String?>();
+      final source = AppCheckTokenSource(
+        activation: Future.value(),
+        fetchToken: () async {
+          calls += 1;
+          return calls == 1 ? null : 'refreshed';
+        },
+        failureCooldown: const Duration(hours: 1),
+        tokenChanges: changes.stream,
+      );
+
+      expect(await source.token(), isNull);
+      expect(await source.token(), isNull);
+      expect(calls, 1);
+
+      changes.add('refreshed');
+      await Future<void>.delayed(Duration.zero);
+      expect(await source.token(), 'refreshed');
+      expect(calls, 2);
+      await changes.close();
+    });
+
     test('prefetch starts the read; the first request joins it', () async {
       var calls = 0;
       final sdk = Completer<String?>();

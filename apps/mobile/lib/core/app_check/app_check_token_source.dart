@@ -25,26 +25,35 @@ typedef AppCheckTokenFetch = Future<String?> Function();
 ///   attempt has run past [maxWait], later requests stop waiting for it until
 ///   it finishes and the next one starts.
 /// * **Failure cool-down.** After a failed read (SDK error or empty token),
-///   further reads return `null` immediately until [failureCooldown] elapses,
-///   so a bad attestation is not repeated on every authorized request while
-///   the SDK is in backoff.
+///   no new SDK read starts until [failureCooldown] elapses, so a failing
+///   attestation is not retried on every authorized request (each retry can
+///   take seconds and spends Play Integrity quota). Requests in the cool-down
+///   are sent without the header, as they would be after the failed read.
+///   The cool-down only starts when no read is in flight (reads are single
+///   flight), and a token from the SDK's auto-refresh ([tokenChanges]) ends
+///   it, so it never hides a valid token.
 class AppCheckTokenSource {
   AppCheckTokenSource({
     required Future<void> activation,
     required AppCheckTokenFetch fetchToken,
     this.maxWait = defaultMaxWait,
     this.failureCooldown = defaultFailureCooldown,
+    Stream<String?>? tokenChanges,
     DateTime Function()? clock,
   }) : activated = activation,
        _fetchToken = fetchToken,
-       _clock = clock ?? DateTime.now;
+       _clock = clock ?? DateTime.now {
+    tokenChanges?.listen((token) {
+      if (token != null && token.isNotEmpty) _failureCooldownUntil = null;
+    });
+  }
 
   /// Longer than a normal attestation (0.6 to 5 s measured on an emulator),
   /// shorter than `apiRequestTimeout` (20 s), so a hung attestation cannot hold every
   /// request until it times out.
   static const defaultMaxWait = Duration(seconds: 10);
 
-  /// After a failed attestation, skip new SDK reads until this elapses.
+  /// After a failed read, no new SDK read starts until this elapses.
   static const defaultFailureCooldown = Duration(seconds: 30);
 
   /// Completes once the provider is installed (`FirebaseAppCheck.activate`).

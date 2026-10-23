@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -24,9 +23,8 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 ///    manifest, so no orientation request is needed here.
 /// 2. App Check activation, together with [bootstrapLaNonnaApp] (local
 ///    storage, connectivity, cold-start link) and the bundled brand fonts
-///    ([AppFonts.preload]). Signed-in users start an App Check prefetch here
-///    so attestation overlaps bootstrap. API requests wait for activation
-///    through the token source.
+///    ([AppFonts.preload]). None of them makes a network call; API requests
+///    wait for activation through the token source.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   AppFonts.configure();
@@ -40,9 +38,6 @@ Future<void> main() async {
   await Firebase.initializeApp(options: resolveFirebaseOptions());
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   final appCheck = startFirebaseAppCheck();
-  if (FirebaseAuth.instance.currentUser != null) {
-    appCheck.prefetch();
-  }
   final (_, app, _) = await waitAll3(
     appCheck.activated,
     bootstrapLaNonnaApp(appCheck: appCheck),
