@@ -55,6 +55,7 @@ enum ApiErrorCode {
   eventEndBeforeStart('event_end_before_start'),
   biometricCredentialInvalid('biometric_credential_invalid'),
   biometricChallengeExpired('biometric_challenge_expired'),
+  inviteAlreadyDelivered('invite_already_delivered'),
   emailQueueFailed('email_queue_failed'),
   exportQueueFailed('export_queue_failed'),
   // Client-side codes for failures that never reached the API.
@@ -147,6 +148,7 @@ enum ApiErrorCode {
         eventEndBeforeStart => l10n.errorEventEndBeforeStart,
         biometricCredentialInvalid => l10n.errorBiometricCredentialInvalid,
         biometricChallengeExpired => l10n.errorBiometricChallengeExpired,
+        inviteAlreadyDelivered => l10n.errorInviteAlreadyDelivered,
         emailQueueFailed => l10n.errorEmailQueueFailed,
         exportQueueFailed => l10n.errorExportQueueFailed,
         networkUnavailable => l10n.errorOffline,

@@ -27,6 +27,12 @@ from lanonna_api.schemas.invitations import (
 router = APIRouter(prefix="/v1/babies", tags=["invitations"])
 
 
+def _iso(value: Any) -> str | None:
+    if value is None:
+        return None
+    return value.isoformat() if hasattr(value, "isoformat") else str(value)
+
+
 def _invitation_json(r: dict[str, Any]) -> dict[str, Any]:
     return {
         "id": r["id"],
@@ -34,15 +40,12 @@ def _invitation_json(r: dict[str, Any]) -> dict[str, Any]:
         "role": r["role"],
         "relationship_label": r.get("relationship_label"),
         "status": r["status"],
-        "expires_at": r["expires_at"].isoformat()
-        if hasattr(r["expires_at"], "isoformat")
-        else str(r["expires_at"]),
-        "created_at": r["created_at"].isoformat()
-        if hasattr(r["created_at"], "isoformat")
-        else str(r["created_at"]),
+        "expires_at": _iso(r["expires_at"]),
+        "created_at": _iso(r["created_at"]),
         "email_delivery_status": r.get("email_delivery_status"),
         "email_last_error": r.get("email_last_error"),
         "email_send_attempts": r.get("email_send_attempts"),
+        "email_sent_at": _iso(r.get("email_sent_at")),
     }
 
 

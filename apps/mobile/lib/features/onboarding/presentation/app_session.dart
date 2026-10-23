@@ -210,6 +210,8 @@ class AppSession extends ChangeNotifier {
     }
 
     if (!isSignedIn) {
+      final pendingInvite = _signedOutPendingInviteRedirect(path);
+      if (pendingInvite != null) return pendingInvite;
       const public = {
         OnboardingRoutes.ownerCarousel,
         OnboardingRoutes.signup,
@@ -217,11 +219,6 @@ class AppSession extends ChangeNotifier {
         ..._invitePublic,
       };
       if (public.contains(path)) return null;
-      if (_coordinator.pendingInviteToken != null) {
-        return _coordinator.onboardingPath == OnboardingPath.coOwner
-            ? OnboardingRoutes.coOwnerInvite
-            : OnboardingRoutes.followerInvite;
-      }
       return OnboardingRoutes.ownerCarousel;
     }
 
@@ -340,14 +337,41 @@ class AppSession extends ChangeNotifier {
     return _onboardingResumePath(status);
   }
 
+  /// Signed-out resume for a stored invite token. Runs before the public
+  /// allowlist because a cold start without a link lands on
+  /// [OnboardingRoutes.ownerCarousel] (#388). Login, sign-up and the invite
+  /// landing routes are left alone so the user can always sign in or create
+  /// an account; a stale token is cleared from the landing's problem state
+  /// (`leaveInvitationFlow`), which is the way out to the carousel.
+  String? _signedOutPendingInviteRedirect(String path) {
+    if (_coordinator.pendingInviteToken == null) return null;
+    if (path == OnboardingRoutes.login ||
+        path == OnboardingRoutes.signup ||
+        _invitePublic.contains(path)) {
+      return null;
+    }
+    final resume = _inviteResumePath();
+    // Steps past sign-up (verify email, complete profile) need a session;
+    // signed out, the invite landing is the resume point.
+    if (resume == OnboardingRoutes.login ||
+        resume == OnboardingRoutes.signup ||
+        _invitePublic.contains(resume)) {
+      return resume;
+    }
+    return _inviteLandingPath();
+  }
+
+  String _inviteLandingPath() =>
+      _coordinator.onboardingPath == OnboardingPath.coOwner
+          ? OnboardingRoutes.coOwnerInvite
+          : OnboardingRoutes.followerInvite;
+
   String _inviteResumePath() {
     final step = _coordinator.activeStep;
     if (step != null) {
       return OnboardingRoutes.pathForStep(step);
     }
-    return _coordinator.onboardingPath == OnboardingPath.coOwner
-        ? OnboardingRoutes.coOwnerInvite
-        : OnboardingRoutes.followerInvite;
+    return _inviteLandingPath();
   }
 
   String _resumePathForOwnerOnboardingStep() {

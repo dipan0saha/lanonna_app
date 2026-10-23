@@ -4,7 +4,7 @@ import hashlib
 import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, Literal
 
 from lanonna_api.db import get_connection
 from lanonna_api.domain.errors import (
@@ -150,14 +150,33 @@ def _prepare_for_resend(
     return {row["id"] for row in rows}
 
 
+ResendPrep = Literal["prepared", "already_delivered", "not_found"]
+
+
 def prepare_invitation_for_resend(
     baby_profile_id: uuid.UUID,
     invitation_id: uuid.UUID,
-) -> uuid.UUID | None:
-    """Allow another delivery attempt for one undelivered pending invite."""
+) -> ResendPrep:
+    """Arm another delivery attempt for one undelivered pending invite.
+
+    ``already_delivered``: the row is pending but its email was sent
+    (``email_sent_at`` set), so a resend is refused. ``not_found``: no such row
+    on this baby, or it is no longer pending.
+    """
     with get_connection() as conn:
-        prepared = _prepare_for_resend(conn, baby_profile_id, [invitation_id])
-    return invitation_id if invitation_id in prepared else None
+        if invitation_id in _prepare_for_resend(conn, baby_profile_id, [invitation_id]):
+            return "prepared"
+        row = conn.execute(
+            """
+            SELECT email_sent_at
+            FROM invitations
+            WHERE id = %s AND baby_profile_id = %s AND status = 'pending'
+            """,
+            (invitation_id, baby_profile_id),
+        ).fetchone()
+    if row is not None and row["email_sent_at"] is not None:
+        return "already_delivered"
+    return "not_found"
 
 
 def _count_reserved_owner_slots(conn: Any, baby_profile_id: uuid.UUID) -> tuple[int, int]:

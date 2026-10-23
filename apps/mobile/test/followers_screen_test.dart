@@ -18,6 +18,7 @@ class _FakeAccountRepository extends AccountRepository {
   final List<InvitationRow> invites;
   int removeCalls = 0;
   int revokeCalls = 0;
+  int resendCalls = 0;
 
   @override
   Future<List<MemberRow>> listMembers(String babyId) async {
@@ -43,6 +44,20 @@ class _FakeAccountRepository extends AccountRepository {
   @override
   Future<void> revokeInvitation(String babyId, String invitationId) async {
     revokeCalls++;
+  }
+
+  /// Like the API: resend re-arms the row (`email_delivery_status: pending`).
+  @override
+  Future<void> resendInvitation(String babyId, String invitationId) async {
+    resendCalls++;
+    final i = invites.indexWhere((inv) => inv.id == invitationId);
+    invites[i] = InvitationRow(
+      id: invites[i].id,
+      email: invites[i].email,
+      status: invites[i].status,
+      relationshipLabel: invites[i].relationshipLabel,
+      emailDeliveryStatus: InviteEmailDeliveryStatus.pending,
+    );
   }
 }
 
@@ -135,6 +150,28 @@ void main() {
     await tester.tap(find.widgetWithText(ElevatedButton, 'Revoke'));
     await tester.pumpAndSettle();
     expect(repo.revokeCalls, 1);
+  });
+
+  testWidgets('resend invite reloads and shows the re-armed delivery label', (tester) async {
+    final repo = _FakeAccountRepository(
+      invites: [
+        InvitationRow(
+          id: 'inv-1',
+          email: 'friend@example.com',
+          status: InvitationStatus.pending,
+          emailDeliveryStatus: InviteEmailDeliveryStatus.failed,
+        ),
+      ],
+    );
+    await _pumpFollowers(tester, repo);
+
+    expect(find.text('Email failed to send'), findsOneWidget);
+    await tester.tap(find.text('Resend'));
+    await tester.pumpAndSettle();
+
+    expect(repo.resendCalls, 1);
+    expect(find.text('Pending — email sending'), findsOneWidget);
+    expect(find.text('Email failed to send'), findsNothing);
   });
 
   testWidgets('cancel revoke invite confirm does not revoke', (tester) async {

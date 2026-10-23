@@ -5,7 +5,12 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from lanonna_api.domain.errors import ErrorCode, ServiceUnavailableError
+from lanonna_api.domain.errors import (
+    ConflictError,
+    ErrorCode,
+    NotFoundError,
+    ServiceUnavailableError,
+)
 from lanonna_api.domain.membership import require_owner_baby
 from lanonna_activity_copy import NotificationKind, baby_name_params
 from lanonna_api.domain.notifications import NotifyUserSpec, safe_enqueue_notify_user
@@ -87,15 +92,20 @@ def resend_invitation_for_owner(
     invitation_id: uuid.UUID,
 ) -> None:
     require_owner_baby(firebase_uid, baby_profile_id)
-    prepared_id = prepare_invitation_for_resend(baby_profile_id, invitation_id)
-    if prepared_id is None:
-        raise LookupError("Invitation not found")
+    prep = prepare_invitation_for_resend(baby_profile_id, invitation_id)
+    if prep == "already_delivered":
+        raise ConflictError(
+            ErrorCode.INVITE_ALREADY_DELIVERED,
+            "Invite email was already delivered",
+        )
+    if prep == "not_found":
+        raise NotFoundError(ErrorCode.NOT_FOUND, "Invitation not found")
     try:
-        _enqueue_invite_email(prepared_id)
+        _enqueue_invite_email(invitation_id)
     except Exception:
         logger.exception(
             "invite_email_enqueue_failed invitation_id=%s resend=true",
-            prepared_id,
+            invitation_id,
         )
         raise ServiceUnavailableError(ErrorCode.EMAIL_QUEUE_FAILED, EMAIL_QUEUE_FAILED_MESSAGE) from None
 
