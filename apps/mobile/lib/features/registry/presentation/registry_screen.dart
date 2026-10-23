@@ -49,10 +49,13 @@ class _RegistryScreenState extends State<RegistryScreen>
   var _loading = true;
   String? _loadError;
   RegistryItemSort _neededSort = RegistryItemSort.priorityHighFirst;
+  RegistryRepository? _registryRepo;
 
   @override
   void initState() {
     super.initState();
+    _registryRepo = context.read<RegistryRepository>()
+      ..addListener(_onRegistryChanged);
     _load();
   }
 
@@ -65,11 +68,18 @@ class _RegistryScreenState extends State<RegistryScreen>
   @override
   void dispose() {
     disposeBabyContextListeners();
+    _registryRepo?.removeListener(_onRegistryChanged);
     super.dispose();
   }
 
   @override
   void onBabyContextReload() => _load();
+
+  /// Any registry mutation, from this tab or another screen (item form, Home
+  /// quick action, AI suggestions, shipping address).
+  void _onRegistryChanged() {
+    if (mounted) _load();
+  }
 
   Future<void> _load() async {
     final store = context.read<SelectedBabyStore>();
@@ -143,16 +153,6 @@ class _RegistryScreenState extends State<RegistryScreen>
   List<RegistryItem> get _purchased =>
       _items.where((i) => i.isPurchased).toList();
 
-  Future<void> _openShippingEditor() async {
-    final changed = await context.push<bool>(RegistryRoutes.shippingAddress);
-    if (changed == true) await _load();
-  }
-
-  Future<void> _openItemForm(String location) async {
-    final saved = await context.push<bool>(location);
-    if (saved == true && mounted) await _load();
-  }
-
   Widget _shippingSection() {
     final shipping = _shipping;
     final hasAddress = shipping != null && !shipping.isEmpty;
@@ -174,7 +174,7 @@ class _RegistryScreenState extends State<RegistryScreen>
               const Spacer(),
               if (_isOwner)
                 TextButton(
-                  onPressed: _openShippingEditor,
+                  onPressed: () => context.push(RegistryRoutes.shippingAddress),
                   child: Text(hasAddress ? l10n.actionEdit : l10n.actionAdd),
                 ),
             ],
@@ -216,35 +216,29 @@ class _RegistryScreenState extends State<RegistryScreen>
       if (confirmed != true) return;
     }
     if (!mounted) return;
-    final ok = await runMutation(
+    await runMutation(
       context,
       () => context.read<RegistryRepository>().claimPurchase(baby.id, item.id),
     );
-    if (!ok || !mounted) return;
-    await _load();
   }
 
   Future<void> _deleteItem(RegistryItem item) async {
     final baby = _baby;
     if (baby == null) return;
-    final deleted = await deleteRegistryItemWithConfirmation(
+    await deleteRegistryItemWithConfirmation(
       context,
       babyId: baby.id,
       itemId: item.id,
     );
-    if (!deleted || !mounted) return;
-    await _load();
   }
 
   Future<void> _undo(RegistryItem item) async {
     final baby = _baby;
     if (baby == null) return;
-    final ok = await runMutation(
+    await runMutation(
       context,
       () => context.read<RegistryRepository>().undoPurchase(baby.id, item.id),
     );
-    if (!ok || !mounted) return;
-    await _load();
   }
 
   @override
@@ -310,7 +304,7 @@ class _RegistryScreenState extends State<RegistryScreen>
                   child: RegistryEmptyState(
                     isOwner: _isOwner,
                     onAddItem: _isOwner
-                        ? () => _openItemForm(RegistryRoutes.createItem)
+                        ? () => context.push(RegistryRoutes.createItem)
                         : null,
                   ),
                 )
@@ -352,7 +346,7 @@ class _RegistryScreenState extends State<RegistryScreen>
                                     isOwner: _isOwner,
                                     currentUid: uid,
                                     onClaim: () => _claim(item),
-                                    onEdit: () => _openItemForm(
+                                    onEdit: () => context.push(
                                       RegistryRoutes.itemEdit(item.id),
                                     ),
                                     onDelete: () => _deleteItem(item),
@@ -414,7 +408,7 @@ class _RegistryScreenState extends State<RegistryScreen>
               'registry_create_fab',
               FloatingActionButton(
                 tooltip: l10n.registryAddItem,
-                onPressed: () => _openItemForm(RegistryRoutes.createItem),
+                onPressed: () => context.push(RegistryRoutes.createItem),
                 child: const ExcludeSemantics(child: Icon(Icons.add)),
               ),
               label: l10n.registryAddItem,

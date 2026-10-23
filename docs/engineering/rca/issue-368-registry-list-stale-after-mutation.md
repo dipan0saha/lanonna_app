@@ -28,13 +28,31 @@ On success the form calls `HomeRefreshSignal.notifyHomeShouldRefresh()` (home ta
 
 No in-flight cache on `RegistryRepository` — stale UI is purely missing `_load()`.
 
-## Fix direction
+## Fix
+
+The right layer is the repository, not the route. A route result reaches only the screen that pushed the form. Home's **Add registry item** quick action and AI suggestions also create items while the Registry tab stays mounted in the shell, and they could never refresh it that way. `CalendarRepository`, `GalleryRepository` and `NotificationsRepository` already notify on change.
 
 | Layer | Change |
 |-------|--------|
-| `registry_item_form_screen.dart` | Pop `true` on successful create **and** edit (match event form) |
-| `registry_screen.dart` | Shared `_openItemForm` / edit helper: `await context.push<bool>(…)` then `_load()` when `true` |
-| Tests | Widget test: fake registry repo counts `listItems` before/after simulated form return |
+| `RegistryRepository` | `ChangeNotifier`; `notifyListeners()` after every successful create, update, delete, claim, undo and shipping-address update. Provided with `ChangeNotifierProvider`. |
+| `RegistryScreen` | Listens to the repository and reloads. All `push<bool>` result handling (item form, shipping editor) and the explicit reloads after claim/delete/undo are removed. |
+| `RegistryAiSuggestionsScreen` | Listens instead of awaiting the form's pop result, so "added" marks update for any change. |
+| `RegistryItemFormScreen`, `RegistryShippingAddressScreen` | `pop()` with no result. |
+
+### Same approach app-wide (audit of create/edit forms)
+
+| Form | Before | Now |
+|------|--------|-----|
+| Calendar event create/edit | `CalendarScreen` listened **and** reloaded on `push<bool>` (double load) | Listener only. `EventAiSuggestionsScreen` reloads via the listener; its pop result drives only the "added to calendar" confirmation. |
+| Announcement create/edit | Card awaited `push<bool>`; squish/comment reloaded by hand | `AnnouncementRepository` is a `ChangeNotifier` (save, squish, comment); the card listens; `showAnnouncementCardAfterSave` pops with no result. |
+| Baby profile create/edit, account edit | `HomeRefreshSignal` / `AccountRepository` notifier | Unchanged (already signal-based). |
+| Gallery upload, comments | `GalleryRepository` notifier | Unchanged. |
+
+**Rule:** data freshness comes from repository change notifications. A route result may only drive one-off UI feedback (a snackbar), never a reload.
+
+## Tests
+
+`registry_screen_mutation_refresh_test.dart` uses the real repository mutation methods over a stubbed HTTP client. Saving from the create and edit routes (popped with no result) reloads the tab, and so does a delete made outside the tab.
 
 ## References
 

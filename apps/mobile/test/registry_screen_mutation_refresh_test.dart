@@ -1,7 +1,11 @@
+import 'dart:convert';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/auth/auth_repository.dart';
 import 'package:lanonna/core/domain/baby_lifecycle.dart';
@@ -45,8 +49,22 @@ class _FakeHomeRepository extends HomeRepository {
       baby;
 }
 
+/// Real mutation methods over a stubbed HTTP client, so the test exercises
+/// the repository's own change notifications.
 class _CountingRegistryRepository extends RegistryRepository {
-  _CountingRegistryRepository() : super(ApiClient(idTokenProvider: () async => 't'));
+  _CountingRegistryRepository()
+    : super(
+        ApiClient(
+          idTokenProvider: () async => 't',
+          httpClient: MockClient(
+            (request) async => http.Response(
+              jsonEncode({'id': 'item-1', 'name': 'Bottle', 'priority': 2}),
+              200,
+              headers: {'content-type': 'application/json'},
+            ),
+          ),
+        ),
+      );
 
   int listItemsCalls = 0;
   final items = <RegistryItem>[
@@ -71,12 +89,26 @@ class _CountingRegistryRepository extends RegistryRepository {
 }
 
 void main() {
-  testWidgets('Registry reloads list when item form returns saved=true', (
+  testWidgets('Registry reloads after a mutation made on another screen', (
     tester,
   ) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final registry = _CountingRegistryRepository();
+    // Stand-ins for the item form: save through the repository, then pop
+    // with no result.
+    Widget savingForm(Future<void> Function(RegistryRepository) save) {
+      return Builder(
+        builder: (context) {
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            await save(context.read<RegistryRepository>());
+            if (context.mounted) context.pop();
+          });
+          return const Scaffold(body: SizedBox());
+        },
+      );
+    }
+
     final router = GoRouter(
       routes: [
         GoRoute(
@@ -85,21 +117,15 @@ void main() {
         ),
         GoRoute(
           path: RegistryRoutes.createItem,
-          builder: (context, state) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (context.mounted) context.pop(true);
-            });
-            return const Scaffold(body: SizedBox());
-          },
+          builder: (context, state) => savingForm(
+            (repo) => repo.createItem('baby-1', name: 'Bib', priority: 3),
+          ),
         ),
         GoRoute(
           path: '/registry/item/:itemId/edit',
-          builder: (context, state) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (context.mounted) context.pop(true);
-            });
-            return const Scaffold(body: SizedBox());
-          },
+          builder: (context, state) => savingForm(
+            (repo) => repo.updateItem('baby-1', 'item-1', name: 'Bottle 2'),
+          ),
         ),
       ],
       initialLocation: RegistryRoutes.registry,
@@ -120,7 +146,7 @@ void main() {
           ChangeNotifierProvider<ConnectivityService>.value(
             value: ConnectivityService.forTesting(),
           ),
-          Provider<RegistryRepository>.value(value: registry),
+          ChangeNotifierProvider<RegistryRepository>.value(value: registry),
           Provider<AuthRepository>.value(value: _FakeAuthRepository()),
         ],
         child: MaterialApp.router(
@@ -145,5 +171,11 @@ void main() {
     await tester.tap(find.bySemanticsIdentifier('registry_item_edit_item-1'));
     await tester.pumpAndSettle();
     expect(registry.listItemsCalls, 3);
+
+    // A change from outside the tab (e.g. Home's Add registry item, or AI
+    // suggestions) reloads it too.
+    await registry.deleteItem('baby-1', 'item-1');
+    await tester.pumpAndSettle();
+    expect(registry.listItemsCalls, 4);
   });
 }
