@@ -27,7 +27,7 @@ def _auth_as(uid: str = "user-1"):
 
 
 @patch("lanonna_api.routers.notifications.list_notifications_for_user")
-def test_list_notifications_returns_offset_page(mock_list):
+def test_list_notifications_returns_cursor_page(mock_list):
     now = datetime.now(timezone.utc)
     mock_list.return_value = [
         {
@@ -37,6 +37,8 @@ def test_list_notifications_returns_offset_page(mock_list):
             "body": "There",
             "deep_link": "/home",
             "notification_type": "generic",
+            "notification_kind": None,
+            "params": {},
             "actor_firebase_uid": None,
             "actor_display_name": None,
             "read_at": None,
@@ -44,10 +46,14 @@ def test_list_notifications_returns_offset_page(mock_list):
         }
     ]
     with _auth_as():
-        response = client.get("/v1/me/notifications?limit=50&offset=0")
+        response = client.get("/v1/me/notifications?limit=50")
     assert response.status_code == 200
     payload = response.json()
-    assert set(payload.keys()) == {"items", "offset", "limit", "has_more"}
+    assert set(payload.keys()) == {"items", "limit", "has_more", "next_cursor"}
     assert len(payload["items"]) == 1
     assert payload["has_more"] is False
-    mock_list.assert_called_once_with("user-1", limit=51, offset=0)
+    mock_list.assert_called_once()
+    args, kwargs = mock_list.call_args
+    assert args[0] == "user-1"
+    assert kwargs["limit"] == 51
+    assert kwargs["after"] is None

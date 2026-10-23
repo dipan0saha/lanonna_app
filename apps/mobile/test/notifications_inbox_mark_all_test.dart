@@ -20,21 +20,24 @@ class _InboxRepo extends NotificationsRepository {
   }
 
   @override
-  Future<List<InboxNotification>> listInbox() async {
-    return [
-      InboxNotification(
-        id: 'n1',
-        title: 'New photo',
-        body: 'Alex added a photo',
-        readAt: allRead ? '2026-01-01T00:00:00Z' : null,
-      ),
-      InboxNotification(
-        id: 'n2',
-        title: 'Event reminder',
-        body: 'Tomorrow',
-        readAt: '2026-01-01T00:00:00Z',
-      ),
-    ];
+  Future<InboxListWindow> ensureInboxFirstPage({bool forceRefresh = false}) async {
+    return InboxListWindow(
+      items: [
+        InboxNotification(
+          id: 'n1',
+          title: 'New photo',
+          body: 'Alex added a photo',
+          readAt: allRead ? '2026-01-01T00:00:00Z' : null,
+        ),
+        InboxNotification(
+          id: 'n2',
+          title: 'Event reminder',
+          body: 'Tomorrow',
+          readAt: '2026-01-01T00:00:00Z',
+        ),
+      ],
+      hasMore: false,
+    );
   }
 
   @override

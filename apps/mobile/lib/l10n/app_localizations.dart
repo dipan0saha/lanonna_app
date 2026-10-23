@@ -988,12 +988,6 @@ abstract class AppLocalizations {
   /// **'No past events yet.'**
   String get calendarPastEventsEmpty;
 
-  /// No description provided for @calendarLoadMore.
-  ///
-  /// In en, this message translates to:
-  /// **'Load more'**
-  String get calendarLoadMore;
-
   /// No description provided for @registrySortPriorityHighFirst.
   ///
   /// In en, this message translates to:

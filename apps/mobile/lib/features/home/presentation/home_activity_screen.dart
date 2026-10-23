@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
 import '../../../core/widgets/activity/activity_feed_card.dart';
+import '../../../core/widgets/app_load_more_button.dart';
 import '../data/home_repository.dart';
 import '../data/models/home_summary.dart';
 import '../../../l10n/app_localizations.dart';
@@ -77,18 +78,7 @@ class _HomeActivityScreenState extends State<HomeActivityScreen> {
               children: [
                 ActivityFeedCard(items: _items),
                 if (_hasMore)
-                  Center(
-                    child: TextButton(
-                      onPressed: _fetchMore,
-                      child: _loading
-                          ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Text(AppLocalizations.of(context)!.actionLoadMore),
-                    ),
-                  ),
+                  AppLoadMoreButton(loading: _loading, onPressed: _fetchMore),
               ],
             ),
     );

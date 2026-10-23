@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/api/api_error_message.dart';
 import '../../../../core/theme/app_metrics.dart';
+import '../../../../core/widgets/app_load_more_button.dart';
 import '../../../../core/widgets/app_modal_sheet.dart';
 import '../../data/calendar_repository.dart';
 import '../../data/models/calendar_models.dart';
@@ -122,19 +123,7 @@ class _CalendarPastEventsBodyState extends State<_CalendarPastEventsBody> {
       children: [
         for (final e in _events) CalendarEventListTile(event: e),
         if (_hasMore)
-          Padding(
-            padding: const EdgeInsets.only(top: AppMetrics.listRowBottomGap),
-            child: TextButton(
-              onPressed: _loadingMore ? null : _loadMore,
-              child: _loadingMore
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text(l10n.calendarLoadMore),
-            ),
-          ),
+          AppLoadMoreButton(loading: _loadingMore, onPressed: _loadMore),
       ],
     );
   }
