@@ -110,26 +110,17 @@ void main() {
     api.failRequests = true;
     final offline = await repo.fetchHomeSummary('baby-1');
     expect(offline, isA<HomeSummaryLoaded>());
-    expect((offline as HomeSummaryLoaded).staleRefreshError, isNull);
+    final loaded = offline as HomeSummaryLoaded;
+    expect(loaded.summary.lifecycle, BabyLifecycle.expecting);
+    // The cache is served, but the caller is told the request failed (#421).
+    expect(loaded.refreshError, isA<SocketException>());
   });
 
-  test(
-    'fetchHomeSummary reports stale refresh error when allowStaleOnError is false',
-    () async {
-      final api = _FlakySummaryApi();
-      final repo = HomeRepository(api);
-      await repo.fetchHomeSummary('baby-1');
-      api.failRequests = true;
-      final result = await repo.fetchHomeSummary(
-        'baby-1',
-        allowStaleOnError: false,
-      );
-      expect(result, isA<HomeSummaryLoaded>());
-      final loaded = result as HomeSummaryLoaded;
-      expect(loaded.summary.lifecycle, BabyLifecycle.expecting);
-      expect(loaded.staleRefreshError, isA<SocketException>());
-    },
-  );
+  test('fetchHomeSummary success carries no refresh error', () async {
+    final repo = HomeRepository(_FlakySummaryApi());
+    final result = await repo.fetchHomeSummary('baby-1');
+    expect((result as HomeSummaryLoaded).refreshError, isNull);
+  });
 
   test('summary cache survives switching to another baby', () async {
     final repo = HomeRepository(_SuccessApi());

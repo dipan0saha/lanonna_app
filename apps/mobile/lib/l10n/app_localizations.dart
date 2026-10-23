@@ -118,6 +118,12 @@ abstract class AppLocalizations {
   /// **'Help & support'**
   String get settingsHelpSupport;
 
+  /// No description provided for @settingsSupportEmailSubject.
+  ///
+  /// In en, this message translates to:
+  /// **'La Nonna support'**
+  String get settingsSupportEmailSubject;
+
   /// No description provided for @settingsSendTestCrash.
   ///
   /// In en, this message translates to:
@@ -795,12 +801,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'💡 Selecting \"Mother\" or \"Father\" makes that person a co-owner of this baby profile, with the same edit access as you.'**
   String get batchInviteCoOwnerHintManage;
-
-  /// No description provided for @batchInviteNoInvitesToSend.
-  ///
-  /// In en, this message translates to:
-  /// **'No invites to send.'**
-  String get batchInviteNoInvitesToSend;
 
   /// No description provided for @batchInviteAddEmailToSend.
   ///

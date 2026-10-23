@@ -12,13 +12,15 @@ On `/invite-family` (and owner onboarding batch invite), sending a batch where o
 
 ## Fix
 
+Batch invite now uses the app's shared form-validation pattern instead of its own error state.
+
 | Layer | Change |
 |-------|--------|
-| `_InviteRowState` | Per-row `emailError` set during send validation. |
-| `OnboardingInviteRow` | Optional `emailError` shown on the email field (same pattern as onboarding form fields). |
-| `BatchInviteScreen` | `_validateRowsForSend`: every non-blank row (name or email) must have a valid email before send; blank rows are ignored. Block send and `setState` field errors instead of silently dropping rows. |
-| `_collectInvitesToSend` | Only called after validation passes; no silent `continue` on invalid input. |
-| Tests | Widget test: valid + invalid row blocks send and shows inline email error. |
+| `OnboardingInviteRow` | The email field is an `AppTextFormField` with `validator` and `autovalidateMode` parameters, instead of a hand-set `errorText`. |
+| `BatchInviteScreen` | Rows are wrapped in a `Form` (`GlobalKey<FormState>`, `_validateOnInteraction`, and an `_autovalidateMode` getter), like the other forms. `_validateRowEmail` ignores blank rows and runs `validateEmail` on every row with a name or an email. When `validate()` fails on send, nothing is sent, the fields show their errors, and `batchInviteInvalidEmails` appears. Errors clear as the user fixes them. If every row is blank, `batchInviteAddEmailToSend` appears. |
+| `_collectInvitesToSend` | Runs only after validation passes. It skips only blank rows and rows that already have a membership hint. |
+| Dead code | Removed `_InviteRowState.emailError`, `_validateRowsForSend`, `_formLevelSendError`, and the `batchInviteNoInvitesToSend` string. |
+| Tests | `batch_invite_validation_test.dart` uses a recording repository. It checks that an invalid or missing email blocks the whole send with nothing posted, that a fixed typo clears its error, that untouched rows are ignored while every filled row is sent, and that all-blank rows ask for an email. |
 
 ## References
 

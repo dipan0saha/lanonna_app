@@ -14,9 +14,11 @@ No shared mailto builder existed; any future mailto link would repeat the same m
 
 | Layer | Change |
 |-------|--------|
-| `core/platform/mailto_uri.dart` | Shared `buildMailtoUri` that builds the `query` string with `Uri.encodeComponent` per RFC 6068. |
-| `settings_screen.dart` | Use `buildMailtoUri` for Help & support. |
-| Tests | Unit tests assert the serialized URI uses `%20`, not `+`, in the subject. |
+| `core/platform/mailto_uri.dart` | `buildMailtoUri({address, subject})` is the only mailto builder in `lib/`. It builds `query` with `Uri.encodeComponent` (RFC 6068), so a space becomes `%20` and reserved characters such as `&` and `?` are escaped. An empty subject leaves the query out. |
+| `settings_screen.dart` | Help & support calls `buildMailtoUri`. The subject comes from l10n (`settingsSupportEmailSubject`) instead of a hardcoded string. |
+| Tests | `mailto_uri_test.dart` checks the serialized URI: `%20` rather than `+`, reserved characters escaped, and no query when there is no subject. |
+
+An unused `body` parameter in the first draft was removed. Add it back only when a caller needs it.
 
 ## References
 

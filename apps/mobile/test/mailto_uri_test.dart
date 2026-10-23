@@ -10,21 +10,25 @@ void main() {
     expect(uri.scheme, 'mailto');
     expect(uri.path, 'support@example.com');
     expect(uri.query, 'subject=La%20Nonna%20support');
-    expect(uri.toString(), isNot(contains('+')));
+    expect(uri.toString(), 'mailto:support@example.com?subject=La%20Nonna%20support');
   });
 
-  test('buildMailtoUri omits query when subject and body are empty', () {
-    final uri = buildMailtoUri(address: 'help@example.com');
-    expect(uri.query, isNull);
-  });
-
-  test('buildMailtoUri encodes subject and body', () {
+  test('buildMailtoUri encodes reserved characters in the subject', () {
     final uri = buildMailtoUri(
-      address: 'help@example.com',
-      subject: 'Hello',
-      body: 'Line one\nLine two',
+      address: 'support@example.com',
+      subject: 'Help & support?',
     );
-    expect(uri.query, contains('subject=Hello'));
-    expect(uri.query, contains('body=Line%20one%0ALine%20two'));
+    expect(uri.query, 'subject=Help%20%26%20support%3F');
+  });
+
+  test('buildMailtoUri omits the query without a subject', () {
+    expect(
+      buildMailtoUri(address: 'help@example.com').toString(),
+      'mailto:help@example.com',
+    );
+    expect(
+      buildMailtoUri(address: 'help@example.com', subject: '').toString(),
+      'mailto:help@example.com',
+    );
   });
 }

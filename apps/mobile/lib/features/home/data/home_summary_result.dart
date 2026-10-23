@@ -5,14 +5,14 @@ sealed class HomeSummaryResult {
 }
 
 final class HomeSummaryLoaded extends HomeSummaryResult {
-  const HomeSummaryLoaded(this.summary, {this.staleRefreshError});
+  const HomeSummaryLoaded(this.summary, {this.refreshError});
 
   final HomeSummary summary;
 
-  /// Non-null when [summary] is served from cache after a failed explicit
-  /// refresh (pull-to-refresh, baby switch). UI should snackbar and keep
-  /// showing [summary].
-  final Object? staleRefreshError;
+  /// Non-null when the request failed and [summary] is the cached copy. The
+  /// caller decides whether the user asked for fresh data (pull-to-refresh,
+  /// baby switch) and must hear about the failure (#421).
+  final Object? refreshError;
 }
 
 final class HomeSummaryFailed extends HomeSummaryResult {

@@ -18,7 +18,7 @@ class SettingsScreen extends StatelessWidget {
   Future<void> _openHelp(BuildContext context) async {
     final uri = buildMailtoUri(
       address: AppConfig.supportEmail,
-      subject: 'La Nonna support',
+      subject: AppLocalizations.of(context)!.settingsSupportEmailSubject,
     );
     await openExternalLink(
       context,

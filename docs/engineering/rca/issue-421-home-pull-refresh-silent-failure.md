@@ -14,13 +14,19 @@ Other shell tabs already surface reload failures via `reportTabLoadFailure` when
 
 ## Fix
 
+The repository reports what happened, and the screen decides whether the user should see it.
+
 | Layer | Change |
 |-------|--------|
-| `HomeSummaryLoaded` | Optional `staleRefreshError` when cache is served but the network request failed on an explicit refresh. |
-| `HomeRepository.fetchHomeSummary` | `allowStaleOnError` (default `true`). When `false`, failed requests set `staleRefreshError` on the loaded cache instead of pretending the fetch succeeded. |
-| `HomeScreen._load` | Pass `allowStaleOnError: summaryMaxAge != null` so pull-to-refresh and baby-context reloads require a fresh summary or report failure. On `staleRefreshError`, call `reportRefreshFailure` (snackbar) while keeping cached content. Preserve `_summary` on hard `HomeSummaryFailed` when content is already on screen. |
-| `core/widgets/app_refresh_indicator.dart` | Shared `AppRefreshIndicator` wrapper used everywhere `RefreshIndicator` appeared (shell tabs, account, calendar, fun, AI scaffolds). |
-| `tab_load_failure.dart` | `reportRefreshFailure` documents the pull-to-refresh snackbar contract (delegates to `reportTabLoadFailure` with `hasPayload: true`). |
+| `HomeSummaryLoaded` | `refreshError` is set whenever the cached summary is served because the request failed. The repository no longer takes a flag that changes this. |
+| `HomeScreen._load` | An explicit refresh (`summaryMaxAge == null`: pull-to-refresh or a baby-context reload) with a `refreshError` calls `reportRefreshFailure` and keeps the cached content. Passive loads such as tab revisits stay quiet. `HomeSummaryFailed` (nothing cached) keeps the existing inline error, so one failure never shows both a banner and a snackbar. A failed switch to another baby never shows the previous baby's summary. |
+| `core/presentation/tab_load_failure.dart` | `reportRefreshFailure(context, error)` is the single refresh-failure snackbar (`AppSnackBar.showAlert` + `apiErrorMessage`). `reportTabLoadFailure` uses it when content is on screen. |
+| `core/widgets/app_refresh_indicator.dart` | `AppRefreshIndicator(onRefresh, child)` is the shared pull-to-refresh. If `onRefresh` throws, it calls `reportRefreshFailure`, so no screen can fail a pull silently. All pull-to-refresh sites use it (shell tabs, account, calendar, fun, AI scaffolds). |
+| `scripts/check-no-raw-refresh-indicator.sh` | A CI guard (also in `verify-dev-prerequisites.sh`) that fails when `lib/` uses a raw `RefreshIndicator` outside the wrapper. |
+| `account_screen.dart`, `calendar_upcoming_screen.dart` | These screens swallowed refresh errors or blanked loaded content. They now use `reportTabLoadFailure(hasPayload: ...)` like the other tabs: a snackbar when content is on screen, the inline error otherwise. |
+| Tests | `home_repository_test` (`refreshError` is set on a stale serve and null on success), `home_pull_refresh_failure_test`, and `app_refresh_indicator_test` (a throwing refresh shows the snackbar and keeps the content). |
+
+Follow-up, not in this fix: the AI suggestion screens already show a snackbar on refresh failure, but they replace the list with a spinner while refreshing.
 
 ## References
 

@@ -3,9 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/api/api_error_message.dart';
 import '../../../core/auth/auth_repository.dart';
 import '../../../core/auth/auth_session_service.dart';
+import '../../../core/presentation/tab_load_failure.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_bordered_surface.dart';
@@ -79,10 +79,13 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _loadError = null;
-    });
+    // Pull-to-refresh keeps the account on screen; only the first load spins.
+    if (_payload == null) {
+      setState(() {
+        _loading = true;
+        _loadError = null;
+      });
+    }
     // The digest row's preferences load alongside the account, not after it.
     final prefsFuture = context
         .read<NotificationsRepository>()
@@ -97,10 +100,15 @@ class _AccountScreenState extends State<AccountScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _loadError = apiErrorMessage(AppLocalizations.of(context)!, e);
-        _loading = false;
-      });
+      reportTabLoadFailure(
+        context,
+        e,
+        hasPayload: _payload != null,
+        onBlockingError: (message) => setState(() {
+          _loadError = message;
+          _loading = false;
+        }),
+      );
       return;
     }
     await _showDigestSummary(prefsFuture);

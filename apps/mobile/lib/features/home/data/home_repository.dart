@@ -188,7 +188,6 @@ class HomeRepository {
     String babyId, {
     Duration? maxAge,
     bool speculative = false,
-    bool allowStaleOnError = true,
   }) async {
     final cachedAt = _summaryFetchedAt[babyId];
     final cachedSummary = _summaryByBaby[babyId];
@@ -201,24 +200,15 @@ class HomeRepository {
     if (speculative) {
       return _speculativeSummary.run(
         babyId,
-        () => _requestHomeSummary(
-          babyId,
-          speculative: true,
-          allowStaleOnError: allowStaleOnError,
-        ),
+        () => _requestHomeSummary(babyId, speculative: true),
       );
     }
-    return _requestHomeSummary(
-      babyId,
-      speculative: false,
-      allowStaleOnError: allowStaleOnError,
-    );
+    return _requestHomeSummary(babyId, speculative: false);
   }
 
   Future<HomeSummaryResult> _requestHomeSummary(
     String babyId, {
     required bool speculative,
-    required bool allowStaleOnError,
   }) async {
     try {
       final json = await _api.getJson(
@@ -232,10 +222,7 @@ class HomeRepository {
     } catch (e) {
       final cached = _summaryByBaby[babyId];
       if (cached != null && _shouldServeStaleSummary(e)) {
-        if (!allowStaleOnError) {
-          return HomeSummaryLoaded(cached, staleRefreshError: e);
-        }
-        return HomeSummaryLoaded(cached);
+        return HomeSummaryLoaded(cached, refreshError: e);
       }
       return HomeSummaryFailed(e);
     }

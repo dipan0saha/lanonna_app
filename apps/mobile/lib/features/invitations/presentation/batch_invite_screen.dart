@@ -45,7 +45,6 @@ class _InviteRowState {
   final TextEditingController emailController;
   RelationshipPreset relationship;
   InviteMembershipHint? membershipHint;
-  String? emailError;
 
   void dispose() {
     nameController.dispose();
@@ -90,6 +89,12 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
   var _synced = false;
   var _busy = false;
   String? _error;
+  final _formKey = GlobalKey<FormState>();
+  var _validateOnInteraction = false;
+
+  AutovalidateMode get _autovalidateMode => _validateOnInteraction
+      ? AutovalidateMode.onUserInteraction
+      : AutovalidateMode.disabled;
 
   bool get _isOnboarding => widget.mode == BatchInviteMode.onboarding;
 
@@ -204,36 +209,19 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
         row.emailController.text.trim().isEmpty;
   }
 
-  /// Validates every non-blank row. Sets per-row [emailError] and returns
-  /// whether at least one invite is ready to send.
-  bool _validateRowsForSend(AppLocalizations l10n) {
-    var readyCount = 0;
-    var sawActiveRow = false;
-    for (final row in _rows) {
-      row.emailError = null;
-      if (_rowIsBlank(row)) continue;
-      sawActiveRow = true;
-      final email = row.emailController.text.trim();
-      final emailProblem = email.isEmpty
-          ? l10n.validationEmailRequired
-          : validateEmail(l10n, email);
-      if (emailProblem != null) {
-        row.emailError = emailProblem;
-        continue;
-      }
-      if (row.membershipHint != null) continue;
-      readyCount++;
-    }
-    return sawActiveRow && readyCount > 0 && _rows.every((r) => r.emailError == null);
+  /// A row the user left empty is ignored; any other row needs a valid email,
+  /// so a typo is never dropped silently (#422).
+  String? _validateRowEmail(_InviteRowState row) {
+    if (_rowIsBlank(row)) return null;
+    return validateEmail(l10n, row.emailController.text);
   }
 
   List<Map<String, dynamic>> _collectInvitesToSend() {
     final invites = <Map<String, dynamic>>[];
     for (final row in _rows) {
       if (_rowIsBlank(row)) continue;
-      final email = row.emailController.text.trim();
-      if (row.emailError != null) continue;
       if (row.membershipHint != null) continue;
+      final email = row.emailController.text.trim();
       invites.add({
         'email': email,
         'role': row.showOwnerBadge ? 'owner' : 'follower',
@@ -243,28 +231,11 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
     return invites;
   }
 
-  String? _formLevelSendError(AppLocalizations l10n) {
-    var sawActiveRow = false;
-    var sawInvalidEmail = false;
-    var sawValidReady = false;
-    for (final row in _rows) {
-      if (_rowIsBlank(row)) continue;
-      sawActiveRow = true;
-      if (row.emailError != null) {
-        sawInvalidEmail = true;
-        continue;
-      }
-      final email = row.emailController.text.trim();
-      if (email.isNotEmpty &&
-          validateEmail(l10n, email) == null &&
-          row.membershipHint == null) {
-        sawValidReady = true;
-      }
-    }
-    if (!sawActiveRow) return l10n.batchInviteAddEmailToSend;
-    if (sawInvalidEmail) return l10n.batchInviteInvalidEmails;
-    if (!sawValidReady) return l10n.batchInviteNoNewInvites;
-    return l10n.batchInviteInvalidEmails;
+  /// Why there is nothing to send once every row is valid.
+  String _nothingToSendMessage() {
+    return _rows.every(_rowIsBlank)
+        ? l10n.batchInviteAddEmailToSend
+        : l10n.batchInviteNoNewInvites;
   }
 
   Future<void> _finish({required bool sendInvites}) async {
@@ -286,16 +257,15 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
     });
     try {
       if (sendInvites) {
-        final canSend = _validateRowsForSend(l10n);
-        if (!canSend) {
+        if (_formKey.currentState?.validate() != true) {
           setState(() {
-            _error = _formLevelSendError(l10n);
+            _validateOnInteraction = true;
+            _error = l10n.batchInviteInvalidEmails;
           });
           return;
         }
-        final invites = _collectInvitesToSend();
-        if (invites.isEmpty) {
-          setState(() => _error = l10n.batchInviteNoInvitesToSend);
+        if (_collectInvitesToSend().isEmpty) {
+          setState(() => _error = _nothingToSendMessage());
           return;
         }
       }
@@ -353,7 +323,9 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
   }
 
   Widget _inviteRows() {
-    return Column(
+    return Form(
+      key: _formKey,
+      child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (var i = 0; i < _rows.length; i++)
@@ -369,11 +341,9 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
               _persistDraft();
             },
             onRemove: _rows.length > 1 ? () => _removeRow(i) : null,
-            emailError: _rows[i].emailError,
-            onFieldChanged: () {
-              _rows[i].emailError = null;
-              _persistDraft();
-            },
+            emailValidator: (_) => _validateRowEmail(_rows[i]),
+            autovalidateMode: _autovalidateMode,
+            onFieldChanged: _persistDraft,
             onEmailEditingComplete: () => _checkMembershipForRow(i),
           ),
         PrototypeAddAnotherButton(
@@ -418,6 +388,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
           ),
         const SizedBox(height: 20),
       ],
+      ),
     );
   }
 

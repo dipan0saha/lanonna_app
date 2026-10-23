@@ -115,14 +115,15 @@ class _HomeScreenState extends State<HomeScreen>
       // list instead of after it; it is used only if the list confirms that
       // baby.
       final storedBabyId = store.selectedBabyId;
-      final allowStaleOnError = summaryMaxAge != null;
+      // No max age means the user asked for fresh data (pull-to-refresh,
+      // baby switch), so serving the cache after a failure must be reported.
+      final explicitRefresh = summaryMaxAge == null;
       final early = storedBabyId == null
           ? null
           : repository.fetchHomeSummary(
               storedBabyId,
               maxAge: summaryMaxAge,
               speculative: true,
-              allowStaleOnError: allowStaleOnError,
             );
       final baby = await repository.resolveSelectedBaby(store);
       if (baby != null) {
@@ -152,27 +153,22 @@ class _HomeScreenState extends State<HomeScreen>
             : await repository.fetchHomeSummary(
                 baby.id,
                 maxAge: summaryMaxAge,
-                allowStaleOnError: allowStaleOnError,
               );
         switch (result) {
           case HomeSummaryLoaded loaded:
             summary = loaded.summary;
-            final stale = loaded.staleRefreshError;
-            if (stale != null && mounted) {
-              reportRefreshFailure(context, stale);
+            final refreshError = loaded.refreshError;
+            if (explicitRefresh && refreshError != null && mounted) {
+              reportRefreshFailure(context, refreshError);
             }
           case HomeSummaryFailed failed:
             summaryError = apiErrorMessage(AppLocalizations.of(context)!, failed.error);
-            summary = _summary;
-            if (_summary != null && mounted) {
-              reportRefreshFailure(context, failed.error);
-            }
         }
       }
       if (!mounted) return;
       setState(() {
         _baby = baby;
-        _summary = summary ?? _summary;
+        _summary = summary;
         _summaryError = summaryError;
         _loadError = null;
         _loading = false;
