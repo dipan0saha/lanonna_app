@@ -32,6 +32,7 @@ import 'sheets/photo_source_sheet.dart';
 import 'gallery_list_reload.dart';
 import 'widgets/gallery_empty_state.dart';
 import 'widgets/gallery_photo_grid.dart';
+import 'widgets/gallery_view_mode_selector.dart';
 import '../../../l10n/app_localizations.dart';
 
 enum GalleryViewMode { all, recent, favorites }
@@ -353,6 +354,9 @@ class _GalleryScreenState extends State<GalleryScreen>
                 ),
                 child: Text(_pageTitle, style: headline),
               ),
+            ),
+            SliverToBoxAdapter(
+              child: GalleryViewModeSelector(selected: widget.mode),
             ),
             if (kind == TabLoadKind.loading)
               const SliverFillRemaining(
