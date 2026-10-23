@@ -264,3 +264,60 @@ resource "google_monitoring_alert_policy" "cloud_sql_disk" {
     }
   }
 }
+
+# Invite email sends failing on the worker (#428). The worker answers Pub/Sub with 500
+# and retries, so delivery problems never reach the API 5xx alert. Count the worker's
+# own failure line instead.
+resource "google_logging_metric" "worker_mailjet_send_failed" {
+  count = var.enable_platform_monitoring ? 1 : 0
+
+  project     = var.project_id
+  name        = "worker_mailjet_send_failed"
+  description = "Worker log lines for failed Mailjet sends (mailjet_send_failed)."
+  filter      = <<-EOT
+    resource.type = "cloud_run_revision"
+    AND resource.labels.service_name = "${var.worker_cloud_run_service_name}"
+    AND textPayload:"mailjet_send_failed"
+  EOT
+
+  metric_descriptor {
+    metric_kind = "DELTA"
+    value_type  = "INT64"
+  }
+}
+
+resource "google_monitoring_alert_policy" "worker_mailjet_send_failed" {
+  count = var.enable_platform_monitoring ? 1 : 0
+
+  project      = var.project_id
+  display_name = "Worker invite email sends failing (${var.environment})"
+  combiner     = "OR"
+  enabled      = true
+
+  notification_channels = local.monitoring_notification_channel_ids
+
+  conditions {
+    display_name = "mailjet_send_failed on ${var.worker_cloud_run_service_name}"
+
+    condition_threshold {
+      filter = <<-EOT
+        resource.type = "cloud_run_revision"
+        AND metric.type = "logging.googleapis.com/user/${google_logging_metric.worker_mailjet_send_failed[0].name}"
+      EOT
+
+      comparison      = "COMPARISON_GT"
+      threshold_value = var.monitoring_worker_mailjet_failures_threshold
+      duration        = "0s"
+
+      aggregations {
+        alignment_period     = "900s"
+        per_series_aligner   = "ALIGN_SUM"
+        cross_series_reducer = "REDUCE_SUM"
+      }
+    }
+  }
+
+  documentation {
+    content = "Invite emails are failing to send. Check the worker logs for mailjet_send_failed and egress_unhealthy, then check invitation email_delivery_status. Runbook: docs/engineering/rca/issue-428-worker-mailjet-connection-reset.md."
+  }
+}

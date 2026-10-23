@@ -21,6 +21,7 @@ from lanonna_worker.notifications import (
 )
 from lanonna_worker.invite_cleanup import expire_stale_pending_invitations
 from lanonna_worker.event_cover_cleanup import purge_stale_unreferenced_event_covers
+from lanonna_worker.mailjet_send import mailjet_egress
 from lanonna_worker.pubsub_payload import (
     decode_pubsub_data,
     parse_uuid_field,
@@ -65,6 +66,21 @@ def _delivery_attempt(body: dict[str, Any]) -> int | None:
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "environment": settings.environment}
+
+
+@app.get("/health/live")
+def health_live() -> Response:
+    """Cloud Run liveness probe (#428).
+
+    Returns 503 when this instance has sustained connect-stage failures to Mailjet,
+    so Cloud Run replaces it. Cloud Run reserves some paths ending in `z`
+    (such as `/healthz`), so this path doesn't end in one.
+    """
+    reason = mailjet_egress.unhealthy_reason()
+    if reason is None:
+        return Response(status_code=200)
+    logger.error("egress_unhealthy %s", reason)
+    return Response(status_code=503)
 
 
 @app.post("/cron/expire-pending-invitations")
