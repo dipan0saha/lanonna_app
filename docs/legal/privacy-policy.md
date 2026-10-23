@@ -56,7 +56,7 @@ We use personal information to:
 - Maintain, secure, and improve the service (including crash reporting).
 - Comply with law and enforce our terms.
 
-We use **Mailjet** to deliver invitation emails. We use **Google Cloud** (including Cloud SQL, Cloud Run, Cloud Storage, Pub/Sub) and **Firebase** (Authentication, App Check, Cloud Messaging, Crashlytics) to run the service.
+We use **Mailjet** to deliver invitation emails. For those messages we **do not enable Mailjet click or open tracking**; links in the email point directly to our invite pages (not third-party tracker redirects). Email **verification** and **password reset** are sent by **Firebase Authentication** (Google), not Mailjet. We use **Google Cloud** (including Cloud SQL, Cloud Run, Cloud Storage, Pub/Sub) and **Firebase** (Authentication, App Check, Cloud Messaging, Crashlytics) to run the service.
 
 ---
 

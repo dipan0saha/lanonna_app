@@ -72,7 +72,7 @@ The app stores information **about babies/children** entered by adult account ho
 | Activity feed entries | In-app history | `activity_events` | `006_home_activity.sql`; `038_structured_notification_activity_params.sql` |
 | In-app notifications | User inbox | `notifications` | `011_notifications_and_prefs.sql`; `036`, `038` |
 
-Invite emails are sent via **Mailjet** with template copy from `packages/email-templates/` (`invite_v1.txt`, `invite_v1.html`). Worker: `services/worker/src/lanonna_worker/invite_email.py`.
+Invite emails are sent via **Mailjet** with template copy from `packages/email-templates/` (`invite_v1.txt`, `invite_v1.html`). Worker: `invite_email.py` → shared `mailjet_send.py`, which sets **`TrackClicks` / `TrackOpens` to `disabled`** on every message so invite URLs (including plain-text fallbacks) are not rewritten through Mailjet click/open trackers (#389).
 
 Firebase Hosting serves invite landing pages (`hosting/public/invite/index.html`; `hosting/firebase.json`).
 
@@ -126,7 +126,8 @@ No `flutter_secure_storage` usage found. Android manifest: `android:allowBackup=
 |----------|------|---------------|-------------------------|
 | **Google Firebase** | Auth, App Check, FCM, Crashlytics | Email, UID, tokens, crash data | Mobile `pubspec.yaml`; API Firebase Admin delete on account delete |
 | **Google Cloud Platform** | Cloud Run (API, worker), Cloud SQL, GCS, Pub/Sub, Secret Manager | All backend-stored data; logs | `infra/terraform/`; worker `main.py` |
-| **Mailjet** | Transactional invite email | Invitee email, invite link, inviter copy | `invite_email.py` |
+| **Mailjet** | Transactional product email (invites today; future export/notification mail should use the same send layer) | Invitee email, invite link, inviter copy; **no** per-message click/open tracking (`TrackClicks`/`TrackOpens` disabled in API payload) | `mailjet_send.py`, `invite_email.py` |
+| **Google Firebase Auth** | Verification and password-reset email (not Mailjet) | Email, action links (`__/auth/action` OOB codes) | `packages/firebase-auth-email-templates`; `scripts/sync-firebase-auth-templates.sh`; mobile `AuthRepository` |
 | **Google Sign-In** | OAuth for Firebase | Email/profile per Google account settings | `auth_repository.dart` |
 
 **Owner/lawyer review:** Subprocessor list, DPA/SCCs, and region of Cloud SQL / GCS (`infra/terraform/modules/platform/sql.tf`, `storage.tf`).
