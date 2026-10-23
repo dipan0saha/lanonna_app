@@ -956,6 +956,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionAnnounceArrival2 => 'Announce arrival';
 
   @override
+  String get announcementOnlyOwnersCanCreate =>
+      'Only owners can create or edit the birth announcement.';
+
   String get announcementTitle => 'Announcement';
 
   @override

@@ -11,9 +11,9 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-                localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-theme: AppTheme.light,
+        theme: AppTheme.light,
         home: Scaffold(
           body: HomeBirthWelcomeCard(
             babyId: 'baby-1',
@@ -33,5 +33,31 @@ theme: AppTheme.light,
     expect(find.textContaining('Share to Instagram'), findsOneWidget);
     expect(find.textContaining('Born'), findsOneWidget);
     expect(find.bySemanticsIdentifier('home_share_announcement'), findsOneWidget);
+  });
+
+  testWidgets('follower without announcement hides view button', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: AppTheme.light,
+        home: Scaffold(
+          body: HomeBirthWelcomeCard(
+            babyId: 'baby-1',
+            showShareToInstagram: false,
+            showViewAnnouncement: false,
+            welcome: const BirthWelcomeSummary(
+              babyName: 'Luna',
+              daysSinceBirth: 1,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.textContaining('View Announcement'), findsNothing);
+    expect(find.bySemanticsIdentifier('home_view_announcement'), findsNothing);
   });
 }

@@ -1688,6 +1688,8 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Announcement'**
+  String get announcementOnlyOwnersCanCreate;
+
   String get announcementTitle;
 
   /// No description provided for @fieldApt4b.

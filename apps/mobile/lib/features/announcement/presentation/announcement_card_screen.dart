@@ -64,7 +64,7 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
         _isOwner = routeBaby?.role == 'owner';
         _loading = false;
       });
-      if (detail == null && mounted) {
+      if (detail == null && _isOwner && mounted) {
         context.replace('/baby/${widget.babyId}/announcement/create');
       }
     } catch (e) {

@@ -1,6 +1,7 @@
 import 'package:lanonna/core/domain/baby_gender.dart';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
@@ -21,6 +22,7 @@ import '../../onboarding/presentation/widgets/onboarding_prototype_widgets.dart'
 import '../../onboarding/presentation/widgets/onboarding_typography.dart';
 import '../../gallery/data/gallery_repository.dart';
 import '../../gallery/domain/gallery_refresh.dart';
+import '../../home/data/home_repository.dart';
 import '../data/announcement_repository.dart';
 import '../domain/announcement_navigation.dart';
 import '../../../l10n/app_localizations.dart';
@@ -67,6 +69,16 @@ class _AnnouncementCreateScreenState extends State<AnnouncementCreateScreen> {
 
   Future<void> _prefill() async {
     try {
+      final baby = await context.read<HomeRepository>().babyById(widget.babyId);
+      if (!mounted) return;
+      if (baby == null || baby.role != 'owner') {
+        AppSnackBar.showAlert(
+          context,
+          AppLocalizations.of(context)!.announcementOnlyOwnersCanCreate,
+        );
+        context.pop();
+        return;
+      }
       final detail = await context.read<AnnouncementRepository>().fetch(
         widget.babyId,
       );

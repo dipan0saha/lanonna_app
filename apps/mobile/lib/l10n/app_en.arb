@@ -463,6 +463,7 @@
   "hintSharePhoto": "Also share this photo in the gallery",
   "actionAnnounceArrival": "Announce Arrival",
   "actionAnnounceArrival2": "Announce arrival",
+  "announcementOnlyOwnersCanCreate": "Only owners can create or edit the birth announcement.",
   "announcementTitle": "Announcement",
   "fieldApt4b": "Apt 4B",
   "fieldAptSuiteEtcOptional": "Apt, suite, etc. (optional)",
