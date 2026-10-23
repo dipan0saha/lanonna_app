@@ -148,7 +148,7 @@ def test_send_invite_email_skips_when_not_claimable(mock_settings):
     conn.execute.return_value.fetchone.return_value = None
     with patch(
         "lanonna_worker.invite_email.get_connection"
-    ) as mock_conn_ctx, patch("lanonna_worker.invite_email.httpx.post") as post:
+    ) as mock_conn_ctx, patch("lanonna_worker.mailjet_send.httpx.post") as post:
         mock_conn_ctx.return_value.__enter__.return_value = conn
         outcome = send_invite_email(uuid.uuid4())
     post.assert_not_called()
@@ -196,7 +196,7 @@ def test_send_invite_email_sends_and_marks_sent(mock_settings):
     mock_response.status_code = 200
     mock_response.json.return_value = {"Messages": [{"Status": "success"}]}
     with patch(
-        "lanonna_worker.invite_email.httpx.post",
+        "lanonna_worker.mailjet_send.httpx.post",
         return_value=mock_response,
     ) as post, patch(
         "lanonna_worker.invite_email.get_connection"
@@ -207,7 +207,10 @@ def test_send_invite_email_sends_and_marks_sent(mock_settings):
         outcome = send_invite_email(inv_id)
     assert outcome == InviteSendOutcome.SENT
     sent = post.call_args.kwargs["json"]
-    html = sent["Messages"][0]["HTMLPart"]
+    message = sent["Messages"][0]
+    assert message["TrackClicks"] == "disabled"
+    assert message["TrackOpens"] == "disabled"
+    html = message["HTMLPart"]
     assert "https://lanonna-dev.firebaseapp.com/invite?token=invite-token" in html
     assert "lanonna://" not in html
     logged = " ".join(str(call) for call in log.method_calls)
@@ -257,7 +260,7 @@ def test_send_invite_email_connect_error_returns_retry_for_pubsub_backoff(mock_s
     ok_response.status_code = 200
     ok_response.json.return_value = {"Messages": [{"Status": "success"}]}
     with patch(
-        "lanonna_worker.invite_email.httpx.post",
+        "lanonna_worker.mailjet_send.httpx.post",
         side_effect=[httpx.ConnectError("reset"), ok_response],
     ) as post, patch(
         "lanonna_worker.invite_email.get_connection"
@@ -303,7 +306,7 @@ def test_send_invite_email_permanent_http_400_marks_failed(mock_settings):
     bad_response.status_code = 400
     bad_response.text = "bad request"
     with patch(
-        "lanonna_worker.invite_email.httpx.post",
+        "lanonna_worker.mailjet_send.httpx.post",
         return_value=bad_response,
     ), patch(
         "lanonna_worker.invite_email.get_connection"
@@ -367,7 +370,7 @@ def test_send_invite_email_raises_on_mailjet_message_error(mock_settings):
         ]
     }
     with patch(
-        "lanonna_worker.invite_email.httpx.post",
+        "lanonna_worker.mailjet_send.httpx.post",
         return_value=mock_response,
     ), patch(
         "lanonna_worker.invite_email.get_connection"
