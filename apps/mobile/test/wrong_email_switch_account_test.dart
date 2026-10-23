@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/auth/auth_repository.dart';
+import 'package:lanonna/core/auth/auth_session_service.dart';
 import 'package:lanonna/core/auth/biometric_sign_in_service.dart';
 import 'package:lanonna/core/auth/biometric_sign_in_store.dart';
 import 'package:lanonna/core/auth/session_cleanup.dart';
@@ -108,7 +109,12 @@ void main() {
           ChangeNotifierProvider.value(value: coordinator),
           ChangeNotifierProvider.value(value: inviteFlowState),
           Provider<AuthRepository>.value(value: auth),
-          Provider<SessionCleanup>.value(value: cleanup),
+          Provider<AuthSessionService>.value(
+            value: AuthSessionService(
+              authRepository: auth,
+              sessionCleanup: cleanup,
+            ),
+          ),
           Provider<BiometricSignInService>.value(value: _NoBiometric()),
         ],
         child: MaterialApp.router(

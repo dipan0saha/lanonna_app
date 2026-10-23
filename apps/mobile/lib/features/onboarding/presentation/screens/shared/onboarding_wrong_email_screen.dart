@@ -3,8 +3,7 @@ import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../../core/auth/auth_repository.dart';
-import '../../../../../core/auth/session_cleanup.dart';
+import '../../../../../core/auth/auth_session_service.dart';
 import '../../../../invitations/presentation/invite_flow_state.dart';
 import '../../../domain/onboarding_path.dart';
 import '../../../domain/onboarding_routes.dart';
@@ -35,11 +34,9 @@ class _OnboardingWrongEmailScreenState extends State<OnboardingWrongEmailScreen>
   }) async {
     _redirected = true;
     final flow = context.read<InviteFlowState>();
-    final cleanup = context.read<SessionCleanup>();
-    final auth = context.read<AuthRepository>();
+    final session = context.read<AuthSessionService>();
     final router = GoRouter.of(context);
-    await cleanup.clearLocalUserData();
-    await auth.signOut();
+    await session.signOut();
     flow.setLoginPrefillEmail(inviteeEmail);
     flow.setSignupPrefillEmail(inviteeEmail);
     if (resumeToken == null || resumeToken.isEmpty) {
