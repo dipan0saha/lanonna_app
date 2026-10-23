@@ -7,6 +7,7 @@ from typing import Any
 import httpx
 
 from lanonna_worker.config import settings
+from lanonna_worker.egress_health import EgressHealth
 
 # Invite tokens, export links, and similar URLs must not pass through Mailjet
 # click/open trackers (account defaults otherwise rewrite hrefs to mjt.lu).
@@ -16,6 +17,13 @@ TRANSACTIONAL_TRACKING_DISABLED: dict[str, str] = {
 }
 
 _MAILJET_SEND_URL = "https://api.mailjet.com/v3.1/send"
+
+# A connect that has not finished in 10 s is not going to finish. Fail it fast so the
+# invite goes back to Pub/Sub backoff, and keep 30 s for the rest of the request.
+MAILJET_TIMEOUT = httpx.Timeout(30.0, connect=10.0)
+
+# This instance's connection health to Mailjet, read by the /health/live probe.
+mailjet_egress = EgressHealth("mailjet")
 
 
 def with_transactional_tracking(message: dict[str, Any]) -> dict[str, Any]:
@@ -28,13 +36,22 @@ def send_messages(messages: list[dict[str, Any]]) -> httpx.Response:
 
     This is the only Mailjet send path in the codebase: callers pass messages,
     never a raw payload, so no sender can skip the tracking defaults.
+
+    Each attempt also updates this instance's Mailjet egress health
+    (``egress_health``), which the liveness probe reads (#428).
     """
-    return httpx.post(
-        _MAILJET_SEND_URL,
-        auth=(settings.mailjet_api_key, settings.mailjet_api_secret),
-        json={"Messages": [with_transactional_tracking(m) for m in messages]},
-        timeout=30.0,
-    )
+    try:
+        response = httpx.post(
+            _MAILJET_SEND_URL,
+            auth=(settings.mailjet_api_key, settings.mailjet_api_secret),
+            json={"Messages": [with_transactional_tracking(m) for m in messages]},
+            timeout=MAILJET_TIMEOUT,
+        )
+    except (httpx.ConnectError, httpx.ConnectTimeout):
+        mailjet_egress.record_connect_failure()
+        raise
+    mailjet_egress.record_reachable()
+    return response
 
 
 def mailjet_message_error(response: httpx.Response) -> str | None:

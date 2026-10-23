@@ -64,6 +64,9 @@ deploy_worker() {
       --quiet
   fi
 
+  # Liveness: /health/live returns 503 when this instance's connections to Mailjet keep
+  # failing at the connect stage (#428), so Cloud Run replaces it instead of letting
+  # one broken instance fail every invite for hours.
   sql_instance="${SQL_INSTANCE_NAME:-lanonna-db}"
   conn="${project_id}:${region}:${sql_instance}"
 
@@ -81,7 +84,8 @@ deploy_worker() {
     --max-instances=5 \
     --memory=512Mi \
     --cpu=1 \
-    --timeout=300
+    --timeout=300 \
+    --liveness-probe=httpGet.path=/health/live,httpGet.port=8080,periodSeconds=30,timeoutSeconds=5,failureThreshold=2
 
   worker_url="$(gcloud run services describe "${service}" --project="${project_id}" --region="${region}" --format='value(status.url)')"
   echo "Worker URL: ${worker_url}"

@@ -50,7 +50,9 @@ def test_send_messages_posts_v31_with_tracking_disabled_on_every_message(
     mock_post.assert_called_once()
     assert mock_post.call_args.args[0] == "https://api.mailjet.com/v3.1/send"
     assert mock_post.call_args.kwargs["auth"] == ("key", "secret")
-    assert mock_post.call_args.kwargs["timeout"] == 30.0
+    timeout = mock_post.call_args.kwargs["timeout"]
+    assert timeout.connect == 10.0
+    assert timeout.read == 30.0
     messages = mock_post.call_args.kwargs["json"]["Messages"]
     assert [m["Subject"] for m in messages] == ["One", "Two"]
     for message in messages:
@@ -69,3 +71,37 @@ def test_no_other_module_calls_the_mailjet_api_directly():
         if p.name != "mailjet_send.py" and "api.mailjet.com" in p.read_text()
     ]
     assert offenders == []
+
+
+@patch("lanonna_worker.mailjet_send.mailjet_egress")
+@patch("lanonna_worker.mailjet_send.httpx.post")
+def test_send_messages_records_connect_failure_and_reraises(mock_post, mock_egress):
+    mock_post.side_effect = httpx.ConnectError("[Errno 104] Connection reset by peer")
+    try:
+        send_messages([{"Subject": "One"}])
+    except httpx.ConnectError:
+        pass
+    else:
+        raise AssertionError("ConnectError must propagate to the caller's retry handling")
+    mock_egress.record_connect_failure.assert_called_once()
+    mock_egress.record_reachable.assert_not_called()
+
+
+@patch("lanonna_worker.mailjet_send.mailjet_egress")
+@patch("lanonna_worker.mailjet_send.httpx.post")
+def test_send_messages_any_http_response_marks_egress_reachable(mock_post, mock_egress):
+    mock_post.return_value = MagicMock(status_code=503)
+    send_messages([{"Subject": "One"}])
+    mock_egress.record_reachable.assert_called_once()
+    mock_egress.record_connect_failure.assert_not_called()
+
+
+@patch("lanonna_worker.mailjet_send.mailjet_egress")
+@patch("lanonna_worker.mailjet_send.httpx.post")
+def test_send_messages_read_timeout_is_not_an_egress_failure(mock_post, mock_egress):
+    mock_post.side_effect = httpx.ReadTimeout("slow")
+    try:
+        send_messages([{"Subject": "One"}])
+    except httpx.ReadTimeout:
+        pass
+    mock_egress.record_connect_failure.assert_not_called()
