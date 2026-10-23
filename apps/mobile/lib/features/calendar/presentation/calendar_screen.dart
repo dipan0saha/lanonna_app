@@ -86,7 +86,10 @@ class _CalendarScreenState extends State<CalendarScreen>
     final store = context.read<SelectedBabyStore>();
     if (isMonthNavigation) {
       setState(() => _monthRefreshing = true);
-    } else if (shouldShowTabLoadSpinner(store, hasDisplayedPayload: _baby != null)) {
+    } else if (shouldShowTabLoadSpinner(
+      store,
+      hasDisplayedPayload: hasCurrentTabPayload(store, _baby?.id),
+    )) {
       setState(() {
         _loading = true;
         _loadError = null;
@@ -150,11 +153,18 @@ class _CalendarScreenState extends State<CalendarScreen>
       rememberTabLoadGeneration(store, baby);
     } catch (e) {
       if (!mounted || generation != _loadGeneration) return;
-      final hadBaby = _baby != null;
+      final hasPayload = hasCurrentTabPayload(store, _baby?.id);
+      if (!hasPayload) {
+        setState(() {
+          _baby = null;
+          _monthEvents = [];
+          _buckets = const CalendarEventBuckets(today: [], upcoming: []);
+        });
+      }
       reportTabLoadFailure(
         context,
         e,
-        hasPayload: hadBaby,
+        hasPayload: hasPayload,
         onBlockingError: (message) {
           setState(() {
             _loadError = message;
@@ -162,7 +172,7 @@ class _CalendarScreenState extends State<CalendarScreen>
           });
         },
       );
-      if (hadBaby && mounted) {
+      if (hasPayload && mounted) {
         setState(() {
           _loadError = null;
           _loading = false;
@@ -225,10 +235,11 @@ class _CalendarScreenState extends State<CalendarScreen>
     final monthLabel =
         formatMonthYear(_visibleMonth, localeNameForFormatting(context));
     final daysWithEvents = _eventDays();
+    final store = context.read<SelectedBabyStore>();
     final kind = resolveTabLoadKind(
       loading: _loading,
       hasError: _loadError != null,
-      hasPayload: _baby != null,
+      hasPayload: hasCurrentTabPayload(store, _baby?.id),
     );
     return Scaffold(
       backgroundColor: AppColors.background,
