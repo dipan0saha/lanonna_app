@@ -23,7 +23,9 @@ class SessionCleanup {
     NotificationsRepository? notificationsRepository,
     GalleryRepository? galleryRepository,
     CalendarRepository? calendarRepository,
-  })  : _coordinator = coordinator,
+    Future<void> Function() evictImageCaches = evictSignedImageCaches,
+  })  : _evictImageCaches = evictImageCaches,
+        _coordinator = coordinator,
         _homeRepository = homeRepository,
         _selectedBabyStore = selectedBabyStore,
         _inviteFlowState = inviteFlowState,
@@ -41,6 +43,10 @@ class SessionCleanup {
   final GalleryRepository? _galleryRepository;
   final CalendarRepository? _calendarRepository;
 
+  /// Drops decoded and on-disk signed image caches. Injectable because the
+  /// on-disk cache needs platform plugins that widget tests do not have.
+  final Future<void> Function() _evictImageCaches;
+
   Future<void> clearLocalUserData() async {
     _inviteFlowState.clear();
     await _coordinator.clearLocalSessionForSignOut();
@@ -50,6 +56,6 @@ class SessionCleanup {
     _galleryRepository?.clearCachedPhotos();
     _calendarRepository?.clearCachedEvents();
     await _selectedBabyStore.clearSelectedBabyId();
-    await evictSignedImageCaches();
+    await _evictImageCaches();
   }
 }

@@ -4,21 +4,18 @@ import 'package:lanonna/l10n/app_localizations.dart';
 import '../../features/onboarding/domain/onboarding_routes.dart';
 import '../router/app_router.dart';
 import '../widgets/app_snackbar.dart';
-import 'auth_repository.dart';
-import 'session_cleanup.dart';
+import 'auth_session_service.dart';
 
 var _handlingUserDeleted = false;
 
 /// Signs out locally and routes to login when the API reports a deleted account.
 Future<void> handleUserDeletedSession({
-  required AuthRepository authRepository,
-  required SessionCleanup sessionCleanup,
+  required AuthSessionService authSessionService,
 }) async {
   if (_handlingUserDeleted) return;
   _handlingUserDeleted = true;
   try {
-    await sessionCleanup.clearLocalUserData();
-    await authRepository.signOut();
+    await authSessionService.signOutDeletedAccount();
     final context = appRootNavigatorKey.currentContext;
     if (context != null && context.mounted) {
       AppSnackBar.showAlert(

@@ -50,9 +50,14 @@ class _BiometricUnlockSettingsTileState
       }
     }
     if (!mounted) return;
+    final signIn = context.read<BiometricSignInService>();
     setState(() {
       _deviceSupported = supported;
-      _enabled = account?.biometricUnlockEnabled ?? false;
+      _enabled = account != null
+          ? signIn.isUnlockActiveForSignedInUser(
+              serverBiometricUnlockEnabled: account.biometricUnlockEnabled,
+            )
+          : false;
       _loading = false;
     });
   }
