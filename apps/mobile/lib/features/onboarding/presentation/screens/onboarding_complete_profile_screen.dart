@@ -21,7 +21,6 @@ import '../../../../core/widgets/app_country_dropdown_field.dart';
 import '../../../legal/domain/legal_routes.dart';
 import '../../../account/data/account_repository.dart';
 import '../../data/onboarding_form_drafts.dart';
-import '../../data/onboarding_repository.dart';
 import '../../domain/onboarding_path.dart';
 import '../../domain/onboarding_routes.dart';
 import '../../domain/onboarding_step.dart';
@@ -295,7 +294,7 @@ class _OnboardingCompleteProfileScreenState
         ).uploadProfileAvatar(imageFile: file);
       }
       if (!mounted) return;
-      await context.read<OnboardingRepository>().updateProfile(
+      await context.read<AccountRepository>().updateProfile(
         displayName: displayName,
         avatarUrl: avatarUrl,
         phone: _phoneController.text.trim(),

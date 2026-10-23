@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../onboarding/domain/onboarding_path.dart';
+import '../data/models/invitation_preview.dart';
 
 /// In-memory invite flow data (M-54). Do not put PII or tokens in GoRouter query strings.
 class InviteEmailMismatch {
@@ -19,6 +20,7 @@ class InviteFlowState extends ChangeNotifier {
   String? _signupPrefillEmail;
   String? _resumeInviteToken;
   OnboardingPath? _resumeOnboardingPath;
+  InvitationPreview? _resumeInvitePreview;
 
   InviteEmailMismatch? get emailMismatch => _emailMismatch;
 
@@ -64,23 +66,31 @@ class InviteFlowState extends ChangeNotifier {
     return value;
   }
 
-  /// Preserves invite context across sign-out when switching accounts (not in URLs).
+  /// Preserves invite context across sign-out when switching accounts (not in
+  /// URLs). In memory only, and only until the login screen takes it; the
+  /// preview is the parsed model, persisted again through the coordinator's
+  /// field allowlist (no invitee email).
   void setInviteResume({
     required String token,
     required OnboardingPath path,
+    InvitationPreview? preview,
   }) {
     _resumeInviteToken = token.trim();
     _resumeOnboardingPath = path;
+    _resumeInvitePreview = preview;
     notifyListeners();
   }
 
-  ({String token, OnboardingPath path})? takeInviteResume() {
+  ({String token, OnboardingPath path, InvitationPreview? preview})?
+  takeInviteResume() {
     final token = _resumeInviteToken;
     final path = _resumeOnboardingPath;
+    final preview = _resumeInvitePreview;
     _resumeInviteToken = null;
     _resumeOnboardingPath = null;
+    _resumeInvitePreview = null;
     if (token == null || token.isEmpty || path == null) return null;
-    return (token: token, path: path);
+    return (token: token, path: path, preview: preview);
   }
 
   void clear() {
@@ -89,6 +99,7 @@ class InviteFlowState extends ChangeNotifier {
     _signupPrefillEmail = null;
     _resumeInviteToken = null;
     _resumeOnboardingPath = null;
+    _resumeInvitePreview = null;
     notifyListeners();
   }
 }

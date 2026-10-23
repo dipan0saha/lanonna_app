@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/auth/auth_repository.dart';
 import 'package:lanonna/core/domain/baby_lifecycle.dart';
+import 'package:lanonna/core/domain/baby_summary.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/features/home/data/home_repository.dart';
 import 'package:lanonna/features/home/data/selected_baby_store.dart';
@@ -34,8 +35,9 @@ class _FakeFirebaseAuth extends Fake implements FirebaseAuth {}
 class _FakeUser extends Fake implements User {}
 
 class _TrackingHome extends HomeRepository {
-  _TrackingHome() : super(ApiClient(idTokenProvider: () async => 't'));
+  _TrackingHome({this.memberBabyId}) : super(ApiClient(idTokenProvider: () async => 't'));
 
+  final String? memberBabyId;
   String? rememberedBabyId;
 
   @override
@@ -45,6 +47,17 @@ class _TrackingHome extends HomeRepository {
   ) async {
     rememberedBabyId = babyId;
     await store.setSelectedBabyId(babyId);
+  }
+
+  @override
+  Future<BabySummary?> babyById(String babyId) async {
+    if (memberBabyId == null || babyId != memberBabyId) return null;
+    return BabySummary(
+      id: babyId,
+      name: 'Luna',
+      lifecycle: BabyLifecycle.born,
+      role: 'owner',
+    );
   }
 }
 
@@ -102,7 +115,11 @@ Future<_Harness> _pump(
   }
   await coordinator.setPendingInviteToken(token);
 
-  final harness = _Harness(coordinator, _TrackingHome(), _Invitations(acceptResult));
+  final harness = _Harness(
+    coordinator,
+    _TrackingHome(memberBabyId: 'luna-baby-id'),
+    _Invitations(acceptResult),
+  );
   final store = SelectedBabyStore(prefs);
   final session = AppSession(
     repository: repo,
@@ -172,16 +189,97 @@ void main() {
     expect(h.invitations.acceptedTokens, isEmpty);
   });
 
-  testWidgets('deep link: Open with the token accepts (already member) and goes '
-      'to the baby', (tester) async {
+  testWidgets('deep link: Open with token skips accept when already a member', (
+    tester,
+  ) async {
     final h = await _pump(
       tester,
       preview: _preview(InvitationStatus.accepted),
       token: 'invite-token',
     );
-    expect(h.invitations.acceptedTokens, ['invite-token']);
+    expect(h.invitations.acceptedTokens, isEmpty);
     expect(find.text('Home reached'), findsOneWidget);
     expect(h.home.rememberedBabyId, 'luna-baby-id');
+  });
+
+  testWidgets('accepted invite for a non-member explains already used', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final storage = OnboardingStorage(prefs);
+    final repo = OnboardingRepository(ApiClient(idTokenProvider: () async => 't'));
+    final coordinator = OnboardingCoordinator(storage: storage, repository: repo);
+    await coordinator.hydrate();
+    await coordinator.bindInviteFromPreview(
+      'invite-token',
+      _preview(InvitationStatus.accepted),
+    );
+    final harness = _Harness(
+      coordinator,
+      _TrackingHome(memberBabyId: null),
+      _Invitations(
+        const InvitationAcceptResult(
+          alreadyMember: true,
+          babyProfileId: 'luna-baby-id',
+        ),
+      ),
+    );
+    final store = SelectedBabyStore(prefs);
+    final session = AppSession(
+      repository: repo,
+      storage: storage,
+      coordinator: coordinator,
+      currentUserId: () => 'user-1',
+    );
+    final router = GoRouter(
+      initialLocation: '/invite',
+      routes: [
+        GoRoute(
+          path: '/invite',
+          builder: (context, state) => Scaffold(
+            body: ElevatedButton(
+              onPressed: () async {
+                harness.lastMessage = await runInviteLandingPrimaryAction(
+                  context,
+                  _preview(InvitationStatus.accepted),
+                );
+              },
+              child: const Text('Primary'),
+            ),
+          ),
+        ),
+        GoRoute(
+          path: '/home',
+          builder: (_, _) => const Scaffold(body: Text('Home reached')),
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          Provider<AuthRepository>.value(value: _SignedInAuth()),
+          ChangeNotifierProvider<OnboardingCoordinator>.value(value: coordinator),
+          Provider<HomeRepository>.value(value: harness.home),
+          Provider<InvitationsRepository>.value(value: harness.invitations),
+          ChangeNotifierProvider<SelectedBabyStore>.value(value: store),
+          ChangeNotifierProvider<AppSession>.value(value: session),
+          ChangeNotifierProvider(create: (_) => InviteFlowState()),
+        ],
+        child: MaterialApp.router(
+          theme: AppTheme.light,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          routerConfig: router,
+        ),
+      ),
+    );
+    await tester.tap(find.text('Primary'));
+    await tester.pumpAndSettle();
+    expect(find.text('Home reached'), findsNothing);
+    expect(harness.invitations.acceptedTokens, isEmpty);
+    expect(harness.lastMessage, isNotNull);
+    expect(harness.lastMessage, isNotEmpty);
   });
 
   testWidgets('Open with neither token nor cached preview explains, not a no-op', (
@@ -202,15 +300,20 @@ void main() {
     expect(h.lastMessage, 'This invitation link is invalid or was revoked.');
   });
 
+  // Only Accept on a pending invite calls the API; Open on an accepted one
+  // decides from membership alone (see the tests above).
   testWidgets('a refused accept returns the mapped message', (tester) async {
     final h = await _pump(
       tester,
-      preview: _preview(InvitationStatus.accepted),
+      preview: _preview(InvitationStatus.pending),
       token: 'invite-token',
       acceptResult: const InvitationAcceptResult(error: 'revoked'),
     );
     expect(find.text('Home reached'), findsNothing);
-    expect(h.lastMessage, isNotNull);
-    expect(h.lastMessage, isNotEmpty);
+    expect(h.invitations.acceptedTokens, ['invite-token']);
+    expect(
+      h.lastMessage,
+      'This invitation was revoked. Ask the family to send a new invite.',
+    );
   });
 }

@@ -107,7 +107,12 @@ Future<Widget> bootstrapLaNonnaApp({
     apiClient,
     babyList: babyList,
   );
-  final homeRepository = HomeRepository(apiClient, babyList: babyList);
+  final selectedBabyStore = SelectedBabyStore(prefs);
+  final homeRepository = HomeRepository(
+    apiClient,
+    babyList: babyList,
+    selectedBabyStore: selectedBabyStore,
+  );
   final galleryRepository = GalleryRepository(apiClient);
   final eventCoverUploader = ApiEventCoverUploader(apiClient);
   final calendarRepository = CalendarRepository(apiClient);
@@ -138,7 +143,6 @@ Future<Widget> bootstrapLaNonnaApp({
     currentUserId: () => authRepository.currentUser?.uid,
   );
   session.bindConnectivity(connectivityService);
-  final selectedBabyStore = SelectedBabyStore(prefs);
   sessionCleanup = SessionCleanup(
     coordinator: coordinator,
     homeRepository: homeRepository,
@@ -155,6 +159,17 @@ Future<Widget> bootstrapLaNonnaApp({
     sessionCleanup: sessionCleanup,
     biometricSignInService: biometricSignInService,
     pushNotificationService: pushNotificationService,
+  );
+  Future<void> prefetchSignedInSession() => startSignedInStartupPrefetch(
+    session: session,
+    homeRepository: homeRepository,
+    selectedBabyStore: selectedBabyStore,
+    accountRepository: accountRepository,
+    notificationsRepository: notificationsRepository,
+  );
+  authSessionService.bindUserScopedSession(
+    authStateChanges: authRepository.authStateChanges(),
+    onUserSwitched: prefetchSignedInSession,
   );
   final homeRefreshSignal = HomeRefreshSignal();
   apiClient.registerMembershipEndedHandler(
@@ -174,15 +189,7 @@ Future<Widget> bootstrapLaNonnaApp({
   final appVersionService = AppVersionService(apiClient);
   unawaited(appVersionService.start());
   if (authRepository.currentUser != null) {
-    unawaited(
-      startSignedInStartupPrefetch(
-        session: session,
-        homeRepository: homeRepository,
-        selectedBabyStore: selectedBabyStore,
-        accountRepository: accountRepository,
-        notificationsRepository: notificationsRepository,
-      ),
-    );
+    unawaited(prefetchSignedInSession());
   }
 
   final initialInviteLocation = coldStartUri != null
@@ -238,6 +245,7 @@ Future<Widget> bootstrapLaNonnaApp({
       routerRefresh: routerRefresh,
       initialInviteLocation: initialInviteLocation,
       initialEmailVerifyUri: initialEmailVerifyUri,
+      signedInOnLaunch: authRepository.currentUser != null,
     ),
   );
 }

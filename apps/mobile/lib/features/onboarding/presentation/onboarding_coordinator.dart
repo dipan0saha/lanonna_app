@@ -35,6 +35,61 @@ class OnboardingCoordinator extends ChangeNotifier {
       onboardingPath == OnboardingPath.follower ||
       onboardingPath == OnboardingPath.coOwner;
 
+  bool get hasInviteHandoff =>
+      (pendingInviteToken != null && pendingInviteToken!.isNotEmpty) ||
+      cachedInvitePreview != null;
+
+  /// True when redirect should send the user back into the invite funnel.
+  /// Landing steps need a token or cached preview; mid-flow steps may resume
+  /// without them until invite onboarding completes (#408).
+  bool shouldResumeInviteFlow({required bool hasBabyMembership}) {
+    if (!isInvitePath) return false;
+    if (hasInviteHandoff) return true;
+    if (inviteOnboardingCompleted) return false;
+    if (hasBabyMembership) return false;
+    return switch (_activeStep) {
+      OnboardingStep.signup ||
+      OnboardingStep.login ||
+      OnboardingStep.emailVerify ||
+      OnboardingStep.completeProfile ||
+      OnboardingStep.confirmRelationship ||
+      OnboardingStep.followerCarousel ||
+      OnboardingStep.coOwnerWelcome =>
+        true,
+      _ => false,
+    };
+  }
+
+  /// Re-binds the invite after an account switch (#406). The preview is
+  /// stored through [_previewToJson], the same field allowlist as
+  /// [bindInviteFromPreview], so the invitee email is never persisted.
+  Future<void> restoreInviteHandoff({
+    required String token,
+    required OnboardingPath path,
+    InvitationPreview? preview,
+  }) async {
+    await setPendingInviteToken(token);
+    await saveOnboardingPath(path);
+    if (preview != null) {
+      await _storage.saveInvitePreviewJson(jsonEncode(_previewToJson(preview)));
+    }
+    notifyListeners();
+  }
+
+  /// Drops a stale follower/co-owner path after the server says no baby and
+  /// there is no invite token or preview to resume (#408).
+  Future<void> abandonStaleInvitePathIfNeeded({
+    required bool hasOwnerBaby,
+    required bool hasBabyMembership,
+  }) async {
+    if (!isInvitePath || hasInviteHandoff) return;
+    if (hasOwnerBaby || hasBabyMembership) return;
+    await saveOnboardingPath(OnboardingPath.owner);
+    _activeStep = null;
+    await _storage.clearSavedStep();
+    notifyListeners();
+  }
+
   bool get inviteOnboardingCompleted => _storage.inviteOnboardingCompleted;
 
   String? get invitedBabyId => _storage.invitedBabyId;

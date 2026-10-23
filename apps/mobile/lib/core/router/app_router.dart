@@ -62,10 +62,12 @@ final appRootNavigatorKey = GlobalKey<NavigatorState>();
 GoRouter createAppRouter(
   RouterRefreshListenable refreshListenable, {
   String? initialLocation,
+  bool signedInOnLaunch = false,
 }) {
   return GoRouter(
     navigatorKey: appRootNavigatorKey,
-    initialLocation: initialLocation ?? OnboardingRoutes.ownerCarousel,
+    initialLocation: initialLocation ??
+        (signedInOnLaunch ? '/home' : OnboardingRoutes.ownerCarousel),
     refreshListenable: refreshListenable,
     redirect: (context, state) {
       final auth = context.read<AuthRepository>();

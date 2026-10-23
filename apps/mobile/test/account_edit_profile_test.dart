@@ -57,6 +57,7 @@ class _Accounts extends AccountRepository {
     String? countryCode,
     String? postalCode,
     bool sendExplicitNulls = false,
+    bool acceptTerms = false,
   }) async {
     updates++;
     name = displayName;

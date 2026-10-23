@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/api/api_exception.dart';
 import 'package:lanonna/core/network/connectivity_service.dart';
@@ -288,6 +290,517 @@ void main() {
       ),
       '/home',
     );
+  });
+
+  test(
+    'signed-in user with no baby leaves the carousel for create-baby (#409)',
+    () async {
+      final f = await _fixtures();
+      f.session.debugSetStatus(
+        const OnboardingStatus(
+          emailVerified: true,
+          profileComplete: true,
+          hasOwnerBaby: false,
+          hasBabyMembership: false,
+          ownerOnboardingCompleted: false,
+          needsOwnerOnboarding: false,
+          canAccessMainApp: false,
+        ),
+      );
+      expect(
+        f.session.redirectFor(
+          isSignedIn: true,
+          emailVerified: true,
+          location: OnboardingRoutes.ownerCarousel,
+        ),
+        OnboardingRoutes.ownerCreateBaby,
+      );
+      expect(
+        f.session.redirectFor(
+          isSignedIn: true,
+          emailVerified: true,
+          location: OnboardingRoutes.signup,
+        ),
+        OnboardingRoutes.ownerCreateBaby,
+      );
+    },
+  );
+
+  test(
+    'former follower with stale invite path resumes at create-baby (#408)',
+    () async {
+      final f = await _fixtures(
+        path: OnboardingPath.follower,
+        inviteOnboardingCompleted: true,
+      );
+      await f.coordinator.setStep(OnboardingStep.followerInvite);
+      f.session.debugSetStatus(
+        const OnboardingStatus(
+          emailVerified: true,
+          profileComplete: true,
+          hasOwnerBaby: false,
+          hasBabyMembership: false,
+          ownerOnboardingCompleted: false,
+          needsOwnerOnboarding: false,
+          canAccessMainApp: false,
+        ),
+      );
+      expect(
+        f.session.redirectFor(
+          isSignedIn: true,
+          emailVerified: true,
+          location: OnboardingRoutes.followerInvite,
+        ),
+        OnboardingRoutes.ownerCreateBaby,
+      );
+    },
+  );
+
+  group('signed-in routing table (signedInResumeLocation)', () {
+    const noBaby = OnboardingStatus(
+      emailVerified: true,
+      profileComplete: true,
+      hasOwnerBaby: false,
+      hasBabyMembership: false,
+      ownerOnboardingCompleted: false,
+      needsOwnerOnboarding: false,
+      canAccessMainApp: false,
+    );
+    const mainApp = OnboardingStatus(
+      emailVerified: true,
+      profileComplete: true,
+      hasOwnerBaby: true,
+      hasBabyMembership: true,
+      ownerOnboardingCompleted: true,
+      needsOwnerOnboarding: false,
+      canAccessMainApp: true,
+    );
+    const mainAppOwnerOnboardingOpen = OnboardingStatus(
+      emailVerified: true,
+      profileComplete: true,
+      hasOwnerBaby: true,
+      hasBabyMembership: true,
+      ownerOnboardingCompleted: false,
+      needsOwnerOnboarding: true,
+      canAccessMainApp: true,
+    );
+    const profileIncomplete = OnboardingStatus(
+      emailVerified: true,
+      profileComplete: false,
+      hasOwnerBaby: false,
+      hasBabyMembership: false,
+      ownerOnboardingCompleted: false,
+      needsOwnerOnboarding: false,
+      canAccessMainApp: false,
+    );
+
+    /// Every row: resume location, and the redirect from the cold-start
+    /// locations (/home signed-in, carousel signed-out default) and the
+    /// signed-out entry screens.
+    void expectRow(
+      AppSession session,
+      String expected, {
+      bool emailVerified = true,
+      String? fromHome,
+      String? fromEntry,
+      bool entryStays = false,
+    }) {
+      expect(
+        session.signedInResumeLocation(emailVerified: emailVerified),
+        expected,
+      );
+      String? go(String location) => session.redirectFor(
+        isSignedIn: true,
+        emailVerified: emailVerified,
+        location: location,
+      );
+      expect(go(OnboardingRoutes.ownerCarousel), expected);
+      expect(go('/home'), expected == '/home' ? null : (fromHome ?? expected));
+      for (final entry in [OnboardingRoutes.signup, OnboardingRoutes.login]) {
+        expect(
+          go(entry),
+          entryStays ? isNull : (fromEntry ?? expected),
+          reason: entry,
+        );
+      }
+    }
+
+    test('email not verified -> email verify', () async {
+      final f = await _fixtures();
+      f.session.debugSetStatus(noBaby);
+      expectRow(
+        f.session,
+        OnboardingRoutes.emailVerify,
+        emailVerified: false,
+        fromEntry: null,
+      );
+    });
+
+    test('no status yet -> session screen, never a guessed step', () async {
+      final f = await _fixtures(userId: 'user-1');
+      expect(f.session.statusPhase, OnboardingStatusPhase.unknown);
+      expect(
+        f.session.signedInResumeLocation(emailVerified: true),
+        OnboardingRoutes.sessionOffline,
+      );
+      for (final location in ['/home', OnboardingRoutes.ownerCarousel]) {
+        expect(
+          f.session.redirectFor(
+            isSignedIn: true,
+            emailVerified: true,
+            location: location,
+          ),
+          OnboardingRoutes.sessionOffline,
+          reason: location,
+        );
+      }
+      // The session screen waits; sign-in screens are left to finish.
+      for (final location in [
+        OnboardingRoutes.sessionOffline,
+        OnboardingRoutes.login,
+        OnboardingRoutes.signup,
+      ]) {
+        expect(
+          f.session.redirectFor(
+            isSignedIn: true,
+            emailVerified: true,
+            location: location,
+          ),
+          isNull,
+          reason: location,
+        );
+      }
+    });
+
+    test('status loaded while on the session screen -> canonical', () async {
+      final f = await _fixtures();
+      f.session.debugSetStatus(noBaby);
+      expect(
+        f.session.redirectFor(
+          isSignedIn: true,
+          emailVerified: true,
+          location: OnboardingRoutes.sessionOffline,
+        ),
+        OnboardingRoutes.ownerCreateBaby,
+      );
+    });
+
+    test('profile incomplete -> complete profile', () async {
+      final f = await _fixtures();
+      f.session.debugSetStatus(profileIncomplete);
+      expect(
+        f.session.signedInResumeLocation(emailVerified: true),
+        OnboardingRoutes.completeProfile,
+      );
+      expect(
+        f.session.redirectFor(
+          isSignedIn: true,
+          emailVerified: true,
+          location: OnboardingRoutes.ownerCarousel,
+        ),
+        OnboardingRoutes.completeProfile,
+      );
+      expect(
+        f.session.redirectFor(
+          isSignedIn: true,
+          emailVerified: true,
+          location: '/home',
+        ),
+        OnboardingRoutes.completeProfile,
+      );
+    });
+
+    test('may use the main app -> /home', () async {
+      final f = await _fixtures();
+      f.session.debugSetStatus(mainApp);
+      // Sign-in screens stay reachable so a member can accept another invite.
+      expectRow(f.session, '/home', entryStays: true);
+    });
+
+    test('main app with owner onboarding still open -> /home', () async {
+      final f = await _fixtures();
+      f.session.debugSetStatus(mainAppOwnerOnboardingOpen);
+      await f.coordinator.setStep(OnboardingStep.firstMoment);
+      expectRow(f.session, '/home', entryStays: true);
+      expect(
+        f.session.redirectFor(
+          isSignedIn: true,
+          emailVerified: true,
+          location: OnboardingRoutes.ownerFirstMoment,
+        ),
+        isNull,
+      );
+    });
+
+    test('invite handoff to resume -> invite landing', () async {
+      final f = await _fixtures(path: OnboardingPath.coOwner);
+      await f.storage.savePendingInviteToken('invite-token');
+      await f.coordinator.hydrate();
+      f.session.debugSetStatus(noBaby);
+      expectRow(
+        f.session,
+        OnboardingRoutes.coOwnerInvite,
+        fromEntry: OnboardingRoutes.coOwnerInvite,
+      );
+    });
+
+    test('stale invite path without a handoff -> create baby', () async {
+      final f = await _fixtures(path: OnboardingPath.follower);
+      f.session.debugSetStatus(noBaby);
+      expectRow(f.session, OnboardingRoutes.ownerCreateBaby);
+      for (final landing in [
+        OnboardingRoutes.followerInvite,
+        OnboardingRoutes.coOwnerInvite,
+      ]) {
+        expect(
+          f.session.redirectFor(
+            isSignedIn: true,
+            emailVerified: true,
+            location: landing,
+          ),
+          OnboardingRoutes.ownerCreateBaby,
+          reason: landing,
+        );
+      }
+    });
+
+    test('a live invite link is never redirected away', () async {
+      final f = await _fixtures();
+      f.session.debugSetStatus(noBaby);
+      expect(
+        f.session.redirectFor(
+          isSignedIn: true,
+          emailVerified: true,
+          location: '${OnboardingRoutes.inviteAccept}?token=abc',
+        ),
+        isNull,
+      );
+    });
+
+    test('already on the canonical location -> no redirect', () async {
+      final f = await _fixtures();
+      f.session.debugSetStatus(noBaby);
+      expect(
+        f.session.redirectFor(
+          isSignedIn: true,
+          emailVerified: true,
+          location: OnboardingRoutes.ownerCreateBaby,
+        ),
+        isNull,
+      );
+    });
+
+    test('no owned baby and no membership -> create baby', () async {
+      final f = await _fixtures();
+      f.session.debugSetStatus(noBaby);
+      expectRow(f.session, OnboardingRoutes.ownerCreateBaby);
+    });
+
+    test('owner onboarding open without main app -> resume step', () async {
+      final f = await _fixtures();
+      f.session.debugSetStatus(_ownerMidOnboarding());
+      await f.coordinator.setStep(OnboardingStep.batchInvite);
+      expectRow(f.session, OnboardingRoutes.ownerInvite);
+    });
+
+    test('status fetch failed with nothing cached -> session screen', () async {
+      final f = await _fixtures(
+        statusRepository: _ThrowingStatusRepository(noBaby),
+        userId: 'user-1',
+      );
+      await f.session.refreshFromApi();
+      for (final location in [
+        '/home',
+        OnboardingRoutes.ownerCarousel,
+        OnboardingRoutes.login,
+      ]) {
+        expect(
+          f.session.redirectFor(
+            isSignedIn: true,
+            emailVerified: true,
+            location: location,
+          ),
+          OnboardingRoutes.sessionOffline,
+          reason: location,
+        );
+      }
+    });
+  });
+
+  testWidgets(
+    'signed-in cold start at /home never builds Home for a no-baby user',
+    (tester) async {
+      final f = await _fixtures(userId: 'user-1');
+      await f.storage.saveCachedOnboardingStatus(
+        'user-1',
+        const OnboardingStatus(
+          emailVerified: true,
+          profileComplete: true,
+          hasOwnerBaby: false,
+          hasBabyMembership: false,
+          ownerOnboardingCompleted: false,
+          needsOwnerOnboarding: false,
+          canAccessMainApp: false,
+        ),
+      );
+      var homeBuilds = 0;
+      final router = GoRouter(
+        initialLocation: '/home',
+        redirect: (_, state) => f.session.redirectFor(
+          isSignedIn: true,
+          emailVerified: true,
+          location: state.uri.toString(),
+        ),
+        routes: [
+          GoRoute(
+            path: '/home',
+            builder: (_, _) {
+              homeBuilds++;
+              return const Text('home');
+            },
+          ),
+          GoRoute(
+            path: OnboardingRoutes.ownerCreateBaby,
+            builder: (_, _) => const Text('create baby'),
+          ),
+        ],
+      );
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      expect(find.text('create baby'), findsOneWidget);
+      await tester.pumpAndSettle();
+      expect(homeBuilds, 0);
+      expect(find.text('create baby'), findsOneWidget);
+    },
+  );
+
+  test('signedInResumeLocation covers main session states', () async {
+    final f = await _fixtures();
+    f.session.debugSetStatus(
+      const OnboardingStatus(
+        emailVerified: true,
+        profileComplete: false,
+        hasOwnerBaby: false,
+        hasBabyMembership: false,
+        ownerOnboardingCompleted: false,
+        needsOwnerOnboarding: false,
+        canAccessMainApp: false,
+      ),
+    );
+    expect(
+      f.session.signedInResumeLocation(emailVerified: true),
+      OnboardingRoutes.completeProfile,
+    );
+    f.session.debugSetStatus(
+      const OnboardingStatus(
+        emailVerified: true,
+        profileComplete: true,
+        hasOwnerBaby: false,
+        hasBabyMembership: true,
+        ownerOnboardingCompleted: true,
+        needsOwnerOnboarding: false,
+        canAccessMainApp: true,
+      ),
+    );
+    expect(
+      f.session.signedInResumeLocation(emailVerified: true),
+      '/home',
+    );
+  });
+
+  test(
+    'follower who also created a baby leaves the signed-out carousel on cold start',
+    () async {
+      final f = await _fixtures();
+      f.session.debugSetStatus(
+        const OnboardingStatus(
+          emailVerified: true,
+          profileComplete: true,
+          hasOwnerBaby: true,
+          hasBabyMembership: true,
+          ownerOnboardingCompleted: false,
+          needsOwnerOnboarding: true,
+          canAccessMainApp: true,
+        ),
+      );
+      expect(
+        f.session.redirectFor(
+          isSignedIn: true,
+          emailVerified: true,
+          location: OnboardingRoutes.ownerCarousel,
+        ),
+        '/home',
+      );
+    },
+  );
+
+  test('a main-app user never stays on the signed-out carousel', () async {
+    final f = await _fixtures();
+    f.session.debugSetStatus(
+      const OnboardingStatus(
+        emailVerified: true,
+        profileComplete: true,
+        hasOwnerBaby: false,
+        hasBabyMembership: true,
+        ownerOnboardingCompleted: false,
+        needsOwnerOnboarding: false,
+        canAccessMainApp: true,
+      ),
+    );
+    expect(
+      f.session.redirectFor(
+        isSignedIn: true,
+        emailVerified: true,
+        location: OnboardingRoutes.ownerCarousel,
+      ),
+      '/home',
+    );
+  });
+
+  test("another account's status is never used for routing", () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final storage = OnboardingStorage(prefs);
+    final repository = OnboardingRepository(
+      ApiClient(idTokenProvider: () async => null),
+    );
+    final coordinator = OnboardingCoordinator(
+      storage: storage,
+      repository: repository,
+    );
+    await coordinator.hydrate();
+    var uid = 'uid-a';
+    final session = AppSession(
+      repository: repository,
+      storage: storage,
+      coordinator: coordinator,
+      currentUserId: () => uid,
+    );
+    session.debugSetStatus(
+      const OnboardingStatus(
+        emailVerified: true,
+        profileComplete: true,
+        hasOwnerBaby: true,
+        hasBabyMembership: true,
+        ownerOnboardingCompleted: true,
+        needsOwnerOnboarding: false,
+        canAccessMainApp: true,
+      ),
+    );
+    expect(session.canAccessMainApp, isTrue);
+
+    uid = 'uid-b';
+
+    expect(session.status, isNull);
+    expect(session.canAccessMainApp, isFalse);
+    expect(
+      session.redirectFor(
+        isSignedIn: true,
+        emailVerified: true,
+        location: '/home',
+      ),
+      isNot('/home'),
+    );
+    expect(session.statusPhase, OnboardingStatusPhase.unknown);
   });
 
   test(

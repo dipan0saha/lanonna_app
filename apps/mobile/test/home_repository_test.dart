@@ -119,6 +119,37 @@ void main() {
     expect(repo.cachedHomeSummary('baby-1'), isNotNull);
     expect(repo.cachedHomeSummary('baby-2'), isNotNull);
   });
+
+  test('updateBaby refreshes the shell title for the selected baby', () async {
+    SharedPreferences.setMockInitialValues({'selected_baby_id': 'baby-a'});
+    final store = SelectedBabyStore(await SharedPreferences.getInstance());
+    await store.rememberResolvedBaby('baby-a', 'Alpha');
+    final repo = HomeRepository(
+      _PatchBabyApi(),
+      selectedBabyStore: store,
+    );
+    final updated = await repo.updateBaby('baby-a', name: 'Renamed');
+    expect(updated.name, 'Renamed');
+    expect(store.selectedBabyName, 'Renamed');
+  });
+}
+
+class _PatchBabyApi extends ApiClient {
+  _PatchBabyApi() : super(idTokenProvider: () async => 'token');
+
+  @override
+  Future<Map<String, dynamic>> patchJson(
+    String path, {
+    Map<String, dynamic>? body,
+    bool notifyMembershipEnded = true,
+  }) async {
+    return {
+      'id': 'baby-a',
+      'name': body?['name'],
+      'role': 'owner',
+      'lifecycle_status': 'expecting',
+    };
+  }
 }
 
 Map<String, dynamic> _babiesEnvelope(List<Map<String, dynamic>> items) => {

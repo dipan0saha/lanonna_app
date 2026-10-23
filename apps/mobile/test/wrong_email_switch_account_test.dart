@@ -32,6 +32,10 @@ class _FakeAuth extends AuthRepository {
 
   var signOutCalls = 0;
 
+  /// Signed out (the switch signs out before login).
+  @override
+  User? get currentUser => null;
+
   @override
   Future<void> signOut() async {
     signOutCalls++;
@@ -44,89 +48,100 @@ class _NoBiometric extends Fake implements BiometricSignInService {
   BiometricSignInEnrollment? get enrollment => null;
 }
 
+Future<
+  ({OnboardingCoordinator coordinator, InviteFlowState flow, _FakeAuth auth})
+>
+_pumpWrongEmail(WidgetTester tester) async {
+  SharedPreferences.setMockInitialValues({});
+  final prefs = await SharedPreferences.getInstance();
+  final coordinator = OnboardingCoordinator(
+    storage: OnboardingStorage(prefs),
+    repository: OnboardingRepository(
+      ApiClient(idTokenProvider: () async => null),
+    ),
+  );
+  await coordinator.hydrate();
+  await coordinator.bindInviteFromPreview(
+    'handoff-token',
+    const InvitationPreview(
+      status: InvitationStatus.pending,
+      babyName: 'Liam',
+      inviterDisplayName: 'Alex',
+      inviteeEmail: 'grandma@test.com',
+      relationshipLabel: 'Grandma',
+      invitedRole: 'follower',
+      lifecycle: BabyLifecycle.expecting,
+      expectedBirthDate: '2026-06-01',
+    ),
+  );
+
+  final inviteFlowState = InviteFlowState();
+  inviteFlowState.setEmailMismatch(
+    inviteeEmail: 'grandma@test.com',
+    signedInEmail: 'owner@test.com',
+  );
+
+  final auth = _FakeAuth();
+  final cleanup = SessionCleanup(
+    coordinator: coordinator,
+    homeRepository: HomeRepository(
+      ApiClient(idTokenProvider: () async => null),
+      currentUserId: () => 'user-a',
+    ),
+    selectedBabyStore: SelectedBabyStore(prefs),
+    inviteFlowState: inviteFlowState,
+    evictImageCaches: () async {},
+  );
+
+  final router = GoRouter(
+    initialLocation: OnboardingRoutes.wrongEmail,
+    routes: [
+      GoRoute(
+        path: OnboardingRoutes.wrongEmail,
+        builder: (_, _) => const OnboardingWrongEmailScreen(),
+      ),
+      GoRoute(
+        path: OnboardingRoutes.login,
+        builder: (_, _) => const OnboardingLoginScreen(),
+      ),
+      GoRoute(
+        path: OnboardingRoutes.ownerCarousel,
+        builder: (_, _) => const Text('carousel'),
+      ),
+    ],
+  );
+
+  await tester.pumpWidget(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: coordinator),
+        ChangeNotifierProvider.value(value: inviteFlowState),
+        Provider<AuthRepository>.value(value: auth),
+        Provider<AuthSessionService>.value(
+          value: AuthSessionService(
+            authRepository: auth,
+            sessionCleanup: cleanup,
+          ),
+        ),
+        Provider<BiometricSignInService>.value(value: _NoBiometric()),
+      ],
+      child: MaterialApp.router(
+        theme: AppTheme.light,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        routerConfig: router,
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+  return (coordinator: coordinator, flow: inviteFlowState, auth: auth);
+}
+
 void main() {
   testWidgets('Switch account prefills login and restores invite path', (
     tester,
   ) async {
-    SharedPreferences.setMockInitialValues({});
-    final prefs = await SharedPreferences.getInstance();
-    final coordinator = OnboardingCoordinator(
-      storage: OnboardingStorage(prefs),
-      repository: OnboardingRepository(
-        ApiClient(idTokenProvider: () async => null),
-      ),
-    );
-    await coordinator.hydrate();
-    await coordinator.bindInviteFromPreview(
-      'handoff-token',
-      const InvitationPreview(
-        status: InvitationStatus.pending,
-        babyName: 'Liam',
-        inviterDisplayName: 'Alex',
-        inviteeEmail: 'grandma@test.com',
-        relationshipLabel: 'Grandma',
-        invitedRole: 'follower',
-        lifecycle: BabyLifecycle.expecting,
-        expectedBirthDate: '2026-06-01',
-      ),
-    );
-
-    final inviteFlowState = InviteFlowState();
-    inviteFlowState.setEmailMismatch(
-      inviteeEmail: 'grandma@test.com',
-      signedInEmail: 'owner@test.com',
-    );
-
-    final auth = _FakeAuth();
-    final cleanup = SessionCleanup(
-      coordinator: coordinator,
-      homeRepository: HomeRepository(
-        ApiClient(idTokenProvider: () async => null),
-        currentUserId: () => 'user-a',
-      ),
-      selectedBabyStore: SelectedBabyStore(prefs),
-      inviteFlowState: inviteFlowState,
-      evictImageCaches: () async {},
-    );
-
-    final router = GoRouter(
-      initialLocation: OnboardingRoutes.wrongEmail,
-      routes: [
-        GoRoute(
-          path: OnboardingRoutes.wrongEmail,
-          builder: (_, _) => const OnboardingWrongEmailScreen(),
-        ),
-        GoRoute(
-          path: OnboardingRoutes.login,
-          builder: (_, _) => const OnboardingLoginScreen(),
-        ),
-      ],
-    );
-
-    await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider.value(value: coordinator),
-          ChangeNotifierProvider.value(value: inviteFlowState),
-          Provider<AuthRepository>.value(value: auth),
-          Provider<AuthSessionService>.value(
-            value: AuthSessionService(
-              authRepository: auth,
-              sessionCleanup: cleanup,
-            ),
-          ),
-          Provider<BiometricSignInService>.value(value: _NoBiometric()),
-        ],
-        child: MaterialApp.router(
-          theme: AppTheme.light,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          routerConfig: router,
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
+    final (:coordinator, :flow, :auth) = await _pumpWrongEmail(tester);
     await tester.tap(find.text('Switch account'));
     await tester.pumpAndSettle();
 
@@ -148,5 +163,32 @@ void main() {
     );
     expect(coordinator.pendingInviteToken, 'handoff-token');
     expect(coordinator.isInvitePath, isTrue);
+    expect(coordinator.cachedInvitePreview?.babyName, 'Liam');
+    expect(coordinator.cachedInvitePreview?.relationshipLabel, 'Grandma');
+    // The handoff is consumed by login and re-stored through the preview
+    // field allowlist: nothing stays in memory, no invitee email on disk.
+    expect(flow.takeInviteResume(), isNull);
+    expect(coordinator.cachedInvitePreview?.inviteeEmail, isNull);
+  });
+
+  testWidgets('Leave invitation ends the flow and clears every handoff', (
+    tester,
+  ) async {
+    final (:coordinator, :flow, :auth) = await _pumpWrongEmail(tester);
+    flow.setInviteResume(
+      token: 'handoff-token',
+      path: coordinator.onboardingPath,
+    );
+
+    await tester.tap(find.text('Leave this invitation'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('carousel'), findsOneWidget);
+    expect(auth.signOutCalls, 0);
+    expect(coordinator.pendingInviteToken, isNull);
+    expect(coordinator.cachedInvitePreview, isNull);
+    expect(coordinator.isInvitePath, isFalse);
+    expect(flow.emailMismatch, isNull);
+    expect(flow.takeInviteResume(), isNull);
   });
 }

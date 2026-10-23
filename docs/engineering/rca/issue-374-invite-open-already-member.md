@@ -1,45 +1,58 @@
-# RCA: Invite "Open" no-op when already a member (#374)
+# RCA: Invite link for a baby you already belong to (#374)
 
 ## Summary
 
-A signed-in user who opens an **already-accepted** follower invite deep link (`lanonna://app/invite-accept?token=…`) sees the landing screen ("You're already a member", baby card, **Open**). Tapping **Open** does nothing: no navigation and no API call.
+A signed-in user who opens an **already-accepted** invite deep link for a baby they already belong to (as owner, co-owner, or follower) sees the landing copy **"You're already a member"** and **Open**. Tapping **Open** must take them to that baby's Home without calling accept and without error.
+
+Pre-prod QA reproduced two failures on main:
+
+1. **Original (#374):** **Open** did nothing — no navigation and no API call.
+2. **After PR #385:** **Open** called `POST /v1/invitations/accept`, returned **403 `email_mismatch`**, and routed to **Wrong account** — even though the signed-in user is an owner of the baby and the landing already implied membership.
+
+## Why PR #385 did not fully fix it
+
+PR #385 removed silent no-ops in `runInviteLandingPrimaryAction` / `openAcceptedInvitePreview` and wired **Open** to always call `acceptSignedInInviteAndContinue` when `pendingInviteToken` was still set (the normal deep-link path). That fixed the dead button when the token had been cleared but a cached accepted preview remained.
+
+It did **not** change the contract for an **accepted** invite (status `accepted` in the preview):
+
+- The landing headline **"You're already a member"** is shown whenever `preview.isAccepted` is true — meaning the invitation row was already consumed, not that the API verified the viewer's membership.
+- With a token present, **Open** still hit **accept**, which enforced **invitee email == signed-in email** before checking **baby membership**. An owner opening a follower invite addressed to someone else therefore got `email_mismatch` instead of idempotent `already_member` or a direct navigation.
+
+The correct product rule is: **if the viewer already belongs to the baby, Open goes Home with no accept**, regardless of invitee email or invitation status display copy.
 
 ## Root cause
 
-The landing screen's primary CTA (`Open` when accepted, `Accept` when pending) had two silent exits and one uncaught path:
-
-1. `openAcceptedInvitePreview` returned silently when `OnboardingCoordinator.pendingInviteToken` was null or empty. The token can be gone while an accepted preview is still on screen (e.g. `setPendingInviteToken(null)` after an earlier accept, while `invitePreviewJson` / `invitedBabyId` remain; `completeInviteOnboarding` only flips the completed flag). `clearPendingInvite` clears token **and** preview together, so it is not the source.
-2. The pending-invite `Accept` path returned silently with no token as well.
-3. Errors thrown by the accept / navigation helpers (API failure, `already_member` with no baby id) were not caught by the screens, so the tap appeared to do nothing.
-
-For a real deep link (`lanonna://app/invite-accept?token=…`) `InviteAcceptBootstrapScreen` binds the token, so Open → `POST /v1/invitations/accept` → `already_member: true` + `baby_profile_id` → baby home. The API already returns that body for members; no API change is needed.
+| Layer | Issue |
+|-------|--------|
+| Mobile | `openAcceptedInvitePreview` treated "token present" as "must POST accept". For `preview.isAccepted`, membership should be resolved first (local baby list / `GET /v1/babies`), then navigate with `continueToJoinedBabyHome` — never accept. |
+| API | `accept_invitation_by_token` ran `_email_mismatch` **before** the `baby_memberships` lookup that returns `already_member: true`. Any member who was not the original invitee got 403 on accept paths that still call the API (pending invite, complete-profile resume, etc.). |
 
 ## Fix
 
 | Layer | Change |
 |-------|--------|
-| `invite_flow_navigation.dart` | New shared `runInviteLandingPrimaryAction(context, preview)` used by both the follower and co-owner landing screens. It runs Open (accepted) or Accept (pending) and returns `null` on success or a user-facing message via `apiErrorMessage` — never a silent return. |
-| `openAcceptedInvitePreview` | Token present → accept API (handles `already_member`). No token → go home with the cached `babyProfileId` / invited id. Neither → throws `InviteAcceptException('not_found')`. |
-| `_acceptPendingInvite` | No token → `not_found`; signed out → signup with the invite email prefilled; else accept. |
-| `continueToJoinedBabyHome` | No baby id → throws `not_found` instead of a local snackbar, so the screen shows one consistent problem state. |
-| Follower / co-owner invite screens | `_onPrimary` sets the existing problem message from the returned string; removed per-screen accept code. |
+| Mobile `invite_flow_navigation.dart` | For accepted previews: if the signed-in viewer belongs to `preview.babyProfileId`, finish invite onboarding and go Home **without** accept. If the invite is accepted and the viewer is **not** a member, surface `already_used` (invitation consumed by someone else). Pending invites unchanged: accept when appropriate. |
+| API `accept_invitation_by_token` | After loading the invitation row, resolve existing membership **before** email mismatch. Existing members always get `already_member` + `baby_profile_id` idempotently. Email mismatch applies only to non-members who are not allowed to accept. |
+| Tests | Flutter widget tests: accepted + token + membership → no accept, Home. API pytest: member with non-invitee email → `already_member`, not 403, nothing written (see the security review). |
 
-## Tests
+## Security review: membership before email (review)
 
-`test/invite_flow_navigation_test.dart`:
+Moving the membership check ahead of the email check lets a token holder who is **already a member** of the baby get `already_member` for an invite addressed to someone else. That branch is read-only:
 
-- Accepted preview, cleared token → Open goes to the baby without an API call.
-- Deep link (token present), accept returns `already_member` → baby home.
-- No token and no cached preview → "This invitation link is invalid or was revoked."
-- Pending preview, no token → same not-found message.
-- Refused accept → mapped message, no navigation.
+- It returns before any write: no `UPDATE invitations`, no membership insert or reactivation, no role change, no owner-slot lock, and no `invite_accepted` notification (`domain/invitations.accept_invitation` skips it for `already_member`).
+- A **pending** invite stays `pending` with the same `updated_at`, so the real invitee can still accept it afterwards. A member's own role is never changed by someone else's invite (e.g. a follower opening a co-owner invite stays a follower).
+- It reveals only the baby name and the caller's own role, both of which a member already sees.
+- **Removed** members (`removed_at IS NOT NULL`) are not members here; they go through the email and status checks as before.
+- Non-members keep the previous order: `email_mismatch` first, then `revoked` (410), `accepted` → `already_used` (409), `expired` status or past `expires_at` → `expired` (410).
 
-## Known gap
+Coverage: `tests/test_invitation_accept_membership.py` (every status, no write statement executed, no notification) and `tests/integration/test_invitation_accept_membership_postgres.py` (real Postgres: invite row and memberships unchanged for a member; the real invitee can still accept; revoked / expired / past-expiry / accepted refusals and `email_mismatch` for non-members, with nothing written).
 
-There is no Inbox entry that opens an invite for the invitee: `invite_accepted` goes to the inviter's owner-gated followers page. The invite deep link / email is the only invitee entry point.
+## Resume consistency (#388 / #391)
+
+Invite resume after kill still hydrates token + cached preview on the landing screens. **Open** on an accepted preview uses the same membership-first navigation, so cold start, warm deep link, and resume-after-kill behave the same.
 
 ## References
 
-- Issue #374
-- `apps/mobile/lib/features/onboarding/data/onboarding_storage.dart`
+- GitHub #374, PR #385
 - `apps/mobile/lib/features/onboarding/presentation/utils/invite_flow_navigation.dart`
+- `services/api/src/lanonna_api/repositories/invitations.py`

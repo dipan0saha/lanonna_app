@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/api/api_client.dart';
@@ -16,7 +18,14 @@ import 'package:lanonna/features/onboarding/data/onboarding_storage.dart';
 import 'package:lanonna/features/onboarding/presentation/onboarding_coordinator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class _FakeFirebaseAuth extends Fake implements FirebaseAuth {}
+class _FakeFirebaseAuth extends Fake implements FirebaseAuth {
+  _FakeFirebaseAuth(this.controller);
+
+  final StreamController<User?> controller;
+
+  @override
+  Stream<User?> authStateChanges() => controller.stream;
+}
 
 class _User extends Fake implements User {
   _User(this.uid);
@@ -30,12 +39,17 @@ class _StubApi extends ApiClient {
 }
 
 class _Auth extends AuthRepository {
-  _Auth(this.calls) : super(firebaseAuth: _FakeFirebaseAuth());
+  _Auth(this.calls, {User? user, required StreamController<User?> authController})
+    : _user = user ?? _User('uid-a'),
+      super(firebaseAuth: _FakeFirebaseAuth(authController));
 
   final List<String> calls;
+  User? _user;
 
   @override
-  User? get currentUser => _User('uid-a');
+  User? get currentUser => _user;
+
+  void debugSetUser(User? user) => _user = user;
 
   @override
   Future<void> signOut() async => calls.add('firebaseSignOut');
@@ -90,7 +104,12 @@ class _Biometric extends Fake implements BiometricSignInService {
   Future<void> clearLocalEnrollment() async => calls.add('clearEnrollment');
 }
 
-Future<AuthSessionService> _service(
+Future<({
+  AuthSessionService session,
+  _Auth auth,
+  StreamController<User?> authEvents,
+  _Cleanup cleanup,
+})> _service(
   List<String> calls, {
   Duration pushDelay = Duration.zero,
   Duration timeout = const Duration(seconds: 3),
@@ -99,22 +118,26 @@ Future<AuthSessionService> _service(
 }) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
-  return AuthSessionService(
-    authRepository: _Auth(calls),
-    sessionCleanup: _Cleanup(calls, prefs),
+  final authEvents = StreamController<User?>();
+  final auth = _Auth(calls, authController: authEvents);
+  final cleanup = _Cleanup(calls, prefs);
+  final session = AuthSessionService(
+    authRepository: auth,
+    sessionCleanup: cleanup,
     biometricSignInService: _Biometric(calls, enrolledUid: enrolledUid),
     pushNotificationService: withPush ? _Push(calls, delay: pushDelay) : null,
     pushUnregisterTimeout: timeout,
   );
+  return (session: session, auth: auth, authEvents: authEvents, cleanup: cleanup);
 }
 
 void main() {
   test('signOut: server unregister, then local cleanup, then Firebase; '
       'biometric enrollment survives', () async {
     final calls = <String>[];
-    final session = await _service(calls);
+    final f = await _service(calls);
 
-    await session.signOut();
+    await f.session.signOut();
 
     expect(calls, [
       'unregisterStarted',
@@ -126,14 +149,14 @@ void main() {
 
   test('a slow unregister is abandoned at the timeout', () async {
     final calls = <String>[];
-    final session = await _service(
+    final f = await _service(
       calls,
       pushDelay: const Duration(seconds: 5),
       timeout: const Duration(milliseconds: 50),
     );
     final watch = Stopwatch()..start();
 
-    await session.signOut();
+    await f.session.signOut();
 
     expect(watch.elapsed, lessThan(const Duration(seconds: 1)));
     expect(calls, ['unregisterStarted', 'clearLocal', 'firebaseSignOut']);
@@ -141,9 +164,9 @@ void main() {
 
   test('signOut works without a push service', () async {
     final calls = <String>[];
-    final session = await _service(calls, withPush: false);
+    final f = await _service(calls, withPush: false);
 
-    await session.signOut();
+    await f.session.signOut();
 
     expect(calls, ['clearLocal', 'firebaseSignOut']);
   });
@@ -151,19 +174,57 @@ void main() {
   test('signOutDeletedAccount makes no server call and forgets this '
       "account's enrollment", () async {
     final calls = <String>[];
-    final session = await _service(calls);
+    final f = await _service(calls);
 
-    await session.signOutDeletedAccount();
+    await f.session.signOutDeletedAccount();
 
     expect(calls, ['clearEnrollment', 'clearLocal', 'firebaseSignOut']);
   });
 
   test("signOutDeletedAccount keeps another account's enrollment", () async {
     final calls = <String>[];
-    final session = await _service(calls, enrolledUid: 'uid-b');
+    final f = await _service(calls, enrolledUid: 'uid-b');
 
-    await session.signOutDeletedAccount();
+    await f.session.signOutDeletedAccount();
 
     expect(calls, ['clearLocal', 'firebaseSignOut']);
+  });
+
+  test('switching Firebase user runs the sign-out local cleanup, then the '
+      'new account\'s startup reads; no server call, no Firebase sign-out', () async {
+    final calls = <String>[];
+    final f = await _service(calls);
+    f.session.bindUserScopedSession(
+      authStateChanges: f.authEvents.stream,
+      onUserSwitched: () async => calls.add('prefetch'),
+    );
+
+    f.authEvents.add(_User('uid-a'));
+    await Future<void>.delayed(Duration.zero);
+    expect(calls, isEmpty);
+
+    f.authEvents.add(_User('uid-b'));
+    await Future<void>.delayed(Duration.zero);
+    expect(calls, ['clearLocal', 'prefetch']);
+
+    await f.authEvents.close();
+  });
+
+  test('sign-out then sign-in is not a switch: signOut already cleaned up', () async {
+    final calls = <String>[];
+    final f = await _service(calls, withPush: false);
+    f.session.bindUserScopedSession(
+      authStateChanges: f.authEvents.stream,
+      onUserSwitched: () async => calls.add('prefetch'),
+    );
+
+    await f.session.signOut();
+    f.authEvents
+      ..add(null)
+      ..add(_User('uid-b'));
+    await Future<void>.delayed(Duration.zero);
+
+    expect(calls, ['clearLocal', 'firebaseSignOut']);
+    await f.authEvents.close();
   });
 }

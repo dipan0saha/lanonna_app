@@ -1930,6 +1930,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'You can always add or change these details later.';
 
   @override
+  String get onboardingInviteNoteTitle => 'Joining a family\'s baby instead?';
+
+  @override
+  String get onboardingInviteNoteBody =>
+      'Open the invite link from their email on this phone to join. If your invite was revoked or has expired, ask them to send a new one.';
+
+  @override
   String get babyAlreadyBorn => 'Already Born';
 
   @override

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 import '../notifications/push_notification_service.dart';
@@ -30,6 +31,36 @@ class AuthSessionService {
   final BiometricSignInService? _biometricSignInService;
   final PushNotificationService? _pushNotificationService;
   final Duration _pushUnregisterTimeout;
+  StreamSubscription<User?>? _userScopeSub;
+
+  /// Account switch without [signOut]: Firebase reports a different signed-in
+  /// uid (signing in from an onboarding screen that a signed-in user can
+  /// still reach, or biometric sign-in into another account, #400).
+  ///
+  /// Runs the same local cleanup as [signOut] (no server call: the previous
+  /// account's ID token is gone, and the push token is re-registered to the
+  /// new account by [PushNotificationService]), then [onUserSwitched] for the
+  /// new account's startup reads. Signing in from signed out needs nothing
+  /// here: [signOut] already cleared local data.
+  void bindUserScopedSession({
+    required Stream<User?> authStateChanges,
+    required Future<void> Function() onUserSwitched,
+  }) {
+    _userScopeSub?.cancel();
+    var boundUid = _authRepository.currentUser?.uid;
+    _userScopeSub = authStateChanges.listen((user) async {
+      final previousUid = boundUid;
+      final uid = user?.uid;
+      boundUid = uid;
+      if (previousUid == null || uid == null || previousUid == uid) return;
+      try {
+        await _clearLocalSession();
+        await onUserSwitched();
+      } catch (e) {
+        debugPrint('account_switch_cleanup_failed: $e');
+      }
+    });
+  }
 
   /// Normal logout (account screen, app lock, account switch).
   ///
@@ -58,8 +89,10 @@ class AuthSessionService {
     await _endLocalSession();
   }
 
+  Future<void> _clearLocalSession() => _sessionCleanup.clearLocalUserData();
+
   Future<void> _endLocalSession() async {
-    await _sessionCleanup.clearLocalUserData();
+    await _clearLocalSession();
     await _authRepository.signOut();
   }
 

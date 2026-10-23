@@ -16,15 +16,18 @@ class HomeRepository {
     ApiClient api, {
     String? Function()? currentUserId,
     BabyListCache? babyList,
+    SelectedBabyStore? selectedBabyStore,
     DateTime Function()? clock,
   }) : _api = api,
        _babies =
            babyList ??
            BabyListCache(api, currentUserId: currentUserId, clock: clock),
+       _selectedBabyStore = selectedBabyStore,
        _clock = clock ?? DateTime.now;
 
   final ApiClient _api;
   final BabyListCache _babies;
+  final SelectedBabyStore? _selectedBabyStore;
   final DateTime Function() _clock;
 
   /// How long a home summary counts as current when the Home tab is shown
@@ -165,7 +168,12 @@ class HomeRepository {
     };
     final json = await _api.patchJson('/v1/babies/$babyId', body: body);
     _babies.invalidate();
-    return BabySummary.fromJson(json);
+    final updated = BabySummary.fromJson(json);
+    final store = _selectedBabyStore;
+    if (store != null && store.selectedBabyId == babyId) {
+      await store.rememberResolvedBaby(babyId, updated.name);
+    }
+    return updated;
   }
 
   /// `GET home-summary`. With [maxAge], a summary fetched within that window

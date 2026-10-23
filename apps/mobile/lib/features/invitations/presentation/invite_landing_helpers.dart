@@ -3,12 +3,15 @@ import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/auth/auth_repository.dart';
 import '../../../core/network/connectivity_service.dart';
 import '../../onboarding/domain/onboarding_routes.dart';
+import '../../onboarding/presentation/app_session.dart';
 import '../../onboarding/presentation/onboarding_coordinator.dart';
 import '../data/invitations_repository.dart';
 import '../data/models/invitation_preview.dart';
 import 'invite_accept_messages.dart';
+import 'invite_flow_state.dart';
 
 class InvitePreviewLoadResult {
   const InvitePreviewLoadResult._({
@@ -35,8 +38,12 @@ Future<InvitePreviewLoadResult> ensureInvitePreviewLoaded(BuildContext context) 
 
   final token = coordinator.pendingInviteToken?.trim();
   if (token == null || token.isEmpty) {
-    if (context.mounted) context.go(OnboardingRoutes.ownerCarousel);
-    return const InvitePreviewLoadResult._();
+    return InvitePreviewLoadResult._(
+      fetchErrorMessage: inviteAcceptUserMessage(
+        AppLocalizations.of(context)!,
+        'not_found',
+      ),
+    );
   }
 
   try {
@@ -65,7 +72,23 @@ Future<InvitePreviewLoadResult> ensureInvitePreviewLoaded(BuildContext context) 
   }
 }
 
+/// Ends the invite flow: drops the stored token and preview and every
+/// in-memory handoff (mismatch, prefills, switch-account resume), then goes to
+/// the signed-out entry or the canonical signed-in destination (#409).
 Future<void> leaveInvitationFlow(BuildContext context) async {
+  context.read<InviteFlowState>().clear();
   await context.read<OnboardingCoordinator>().clearPendingInvite();
-  if (context.mounted) context.go(OnboardingRoutes.ownerCarousel);
+  if (!context.mounted) return;
+  final auth = context.read<AuthRepository>();
+  if (auth.currentUser == null) {
+    context.go(OnboardingRoutes.ownerCarousel);
+    return;
+  }
+  final session = context.read<AppSession>();
+  final user = auth.currentUser;
+  context.go(
+    session.signedInResumeLocation(
+      emailVerified: user?.emailVerified ?? false,
+    ),
+  );
 }

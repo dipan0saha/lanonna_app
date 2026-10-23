@@ -39,13 +39,19 @@ class AppSession extends ChangeNotifier {
   final String? Function()? _currentUserId;
 
   OnboardingStatus? _status;
+
+  /// Firebase uid [_status] was loaded for. A status is never used for
+  /// another signed-in account (account switch without sign-out, #400).
+  String? _statusUid;
   var _phase = OnboardingStatusPhase.unknown;
   var _statusStale = false;
   bool _loading = false;
   ConnectivityService? _connectivity;
   var _wasOffline = false;
 
-  OnboardingStatus? get status => _status;
+  OnboardingStatus? get status => _ownsStatus ? _status : null;
+
+  bool get _ownsStatus => _statusUid == _currentUserId?.call();
   OnboardingStatusPhase get statusPhase => _phase;
 
   /// Cached server status used because the latest fetch failed.
@@ -53,17 +59,18 @@ class AppSession extends ChangeNotifier {
   bool get isLoading => _loading;
 
   bool get ownerOnboardingComplete =>
-      _storage.isCompleted || (_status?.ownerOnboardingCompleted ?? false);
+      _storage.isCompleted || (status?.ownerOnboardingCompleted ?? false);
 
   /// Server contract only. Device-local onboarding completion must not
   /// admit a co-owner or follower, or skip owner onboarding the server
   /// still requires.
-  bool get canAccessMainApp => _status?.canAccessMainApp == true;
+  bool get canAccessMainApp => status?.canAccessMainApp == true;
 
   /// Test-only hook to set onboarding status without calling the API.
   @visibleForTesting
   void debugSetStatus(OnboardingStatus? status) {
     _status = status;
+    _statusUid = _currentUserId?.call();
     _statusStale = false;
     _phase = status == null
         ? OnboardingStatusPhase.unknown
@@ -92,13 +99,24 @@ class AppSession extends ChangeNotifier {
     }
   }
 
-  void _restoreCachedStatus() {
-    if (_status != null) return;
+  /// Loads the signed-in user's cached server status if nothing usable is in
+  /// memory (another account's status is dropped first). Synchronous, so the
+  /// first redirect and the startup prefetch decide from it before any fetch.
+  void restoreCachedStatus() {
+    if (_status != null && _ownsStatus) return;
+    if (_status != null) {
+      // Loaded for the previous account: forget it before routing this one.
+      _status = null;
+      _statusUid = null;
+      _phase = OnboardingStatusPhase.unknown;
+      _statusStale = false;
+    }
     final uid = _currentUserId?.call();
     if (uid == null || uid.isEmpty) return;
     final cached = _storage.readCachedOnboardingStatus(uid);
     if (cached == null) return;
     _status = cached;
+    _statusUid = uid;
     _phase = OnboardingStatusPhase.loaded;
     _statusStale = true;
   }
@@ -111,6 +129,10 @@ class AppSession extends ChangeNotifier {
       await _coordinator.syncCompletedFromServer(
         status.ownerOnboardingCompleted,
       );
+      await _coordinator.abandonStaleInvitePathIfNeeded(
+        hasOwnerBaby: status.hasOwnerBaby,
+        hasBabyMembership: status.hasBabyMembership,
+      );
     }
     final ownerBabyId = status.ownerOnboardingBabyProfileId;
     if (ownerBabyId != null && ownerBabyId.isNotEmpty) {
@@ -118,22 +140,60 @@ class AppSession extends ChangeNotifier {
     }
   }
 
+  /// Canonical signed-in destination from server status and local coordinator
+  /// state (#409). Used by [redirectFor] (carousel, sign-in entry routes,
+  /// leaving the resolving screen, and any main-app route the user may not
+  /// use) and by invite exit navigation.
+  ///
+  /// | state | destination |
+  /// |---|---|
+  /// | email not verified | email verify |
+  /// | no status yet (fetch in flight or failed, nothing cached) | session screen (spinner / offline retry), never a guessed step |
+  /// | profile incomplete | complete profile |
+  /// | may use the main app | /home |
+  /// | invite handoff to resume | invite step |
+  /// | no owned baby and no membership | create baby (with the invite note) |
+  /// | otherwise | owner onboarding resume step |
+  String signedInResumeLocation({required bool emailVerified}) {
+    final resolved = status;
+    if (!_coordinator.skipEmailVerify && !emailVerified) {
+      return OnboardingRoutes.emailVerify;
+    }
+    if (resolved == null) return OnboardingRoutes.sessionOffline;
+    if (!resolved.profileComplete) return OnboardingRoutes.completeProfile;
+    if (resolved.canAccessMainApp) return '/home';
+    if (_coordinator.shouldResumeInviteFlow(
+      hasBabyMembership: resolved.hasBabyMembership,
+    )) {
+      return _inviteResumePath();
+    }
+    if (!resolved.hasOwnerBaby && !resolved.hasBabyMembership) {
+      return OnboardingRoutes.ownerCreateBaby;
+    }
+    return _onboardingResumePath(resolved);
+  }
+
   Future<void> refreshFromApi() async {
     _loading = true;
-    if (_status == null) _restoreCachedStatus();
+    restoreCachedStatus();
     notifyListeners();
+    final uid = _currentUserId?.call();
     try {
       final fresh = await _repository.fetchStatus();
+      // The account changed while this was in flight: the payload is not
+      // the current user's.
+      if (_currentUserId?.call() != uid) return;
       _status = fresh;
+      _statusUid = uid;
       _phase = OnboardingStatusPhase.loaded;
       _statusStale = false;
-      final uid = _currentUserId?.call();
       if (uid != null && uid.isNotEmpty) {
         await _storage.saveCachedOnboardingStatus(uid, fresh);
       }
       await _applyLoadedStatus(fresh, fresh: true);
     } catch (_) {
-      if (_status == null) _restoreCachedStatus();
+      if (_currentUserId?.call() != uid) return;
+      restoreCachedStatus();
       if (_status == null) {
         _phase = OnboardingStatusPhase.unavailable;
         _statusStale = false;
@@ -176,9 +236,6 @@ class AppSession extends ChangeNotifier {
   };
 
   static const _ownerPostBabyAllowed = {
-    OnboardingRoutes.ownerCarousel,
-    OnboardingRoutes.signup,
-    OnboardingRoutes.login,
     OnboardingRoutes.emailVerify,
     OnboardingRoutes.completeProfile,
     OnboardingRoutes.ownerCreateBaby,
@@ -193,7 +250,7 @@ class AppSession extends ChangeNotifier {
     required String location,
   }) {
     if (isSignedIn) {
-      _restoreCachedStatus();
+      restoreCachedStatus();
     }
 
     final path = location.split('?').first;
@@ -222,24 +279,44 @@ class AppSession extends ChangeNotifier {
       return OnboardingRoutes.ownerCarousel;
     }
 
-    // A failed status fetch is not an incomplete profile. Never resume
-    // owner onboarding until a loaded server status says to.
-    if (path == OnboardingRoutes.sessionOffline) {
-      if (_phase == OnboardingStatusPhase.unavailable) return null;
-      if (canAccessMainApp && _status?.needsOwnerOnboarding != true) {
-        return '/home';
-      }
-      if (_status != null) return _onboardingResumePath(_status);
+    if (!_coordinator.isHydrated) {
       return null;
+    }
+
+    final status = this.status;
+    final canonical = signedInResumeLocation(emailVerified: emailVerified);
+    // Already there: no redirect (a redirect to the same location loops).
+    final resume = canonical == path ? null : canonical;
+
+    // A failed or still-running status fetch is not an incomplete profile:
+    // the session screen waits (spinner, or offline retry) and is left only
+    // for the canonical destination once a server status is known.
+    if (path == OnboardingRoutes.sessionOffline) {
+      if (status == null) return null;
+      return resume;
     }
     if (_phase == OnboardingStatusPhase.unavailable) {
       return OnboardingRoutes.sessionOffline;
     }
 
+    // The welcome carousel is the signed-out entry (and the default cold-start
+    // location). No signed-in session may remain on it (#400, #409).
+    if (path == OnboardingRoutes.ownerCarousel) {
+      return resume;
+    }
+
+    // An invite landing with nothing to land on (no token, no preview) is a
+    // stale path, e.g. a follower who left or was removed (#408).
+    if ((path == OnboardingRoutes.followerInvite ||
+            path == OnboardingRoutes.coOwnerInvite) &&
+        !_coordinator.hasInviteHandoff) {
+      return resume;
+    }
+
     if (canAccessMainApp) {
       // Both flags can be true: a follower who also created a baby
       // (joined_via = created) may use Home and still finish owner onboarding.
-      final keepOwnerOnboarding = _status?.needsOwnerOnboarding == true;
+      final keepOwnerOnboarding = status?.needsOwnerOnboarding == true;
       if (!keepOwnerOnboarding &&
           OnboardingRoutes.isOnboardingPath(path) &&
           path != OnboardingRoutes.inviteAccept &&
@@ -249,16 +326,22 @@ class AppSession extends ChangeNotifier {
       return null;
     }
 
-    if (!_coordinator.isHydrated) {
-      return null;
+    // Signed in with a complete profile: sign-up and login are signed-out
+    // entry screens too (#409). Main-app sessions were handled above and keep
+    // them, so an existing member can sign in to accept another invite.
+    if (status != null &&
+        status.profileComplete &&
+        (path == OnboardingRoutes.signup || path == OnboardingRoutes.login)) {
+      return resume;
     }
 
-    if (_coordinator.isInvitePath) {
+    if (_coordinator.shouldResumeInviteFlow(
+      hasBabyMembership: status?.hasBabyMembership ?? false,
+    )) {
       if (!_coordinator.skipEmailVerify && !emailVerified) {
         if (_inviteSignedIn.contains(path)) return null;
         return OnboardingRoutes.emailVerify;
       }
-      final status = _status;
       if (status != null && !status.profileComplete) {
         if (_inviteSignedIn.contains(path)) return null;
         return OnboardingRoutes.completeProfile;
@@ -272,18 +355,15 @@ class AppSession extends ChangeNotifier {
         OnboardingRoutes.emailVerify,
         OnboardingRoutes.signup,
         OnboardingRoutes.login,
-        OnboardingRoutes.ownerCarousel,
         ..._invitePublic,
       };
       if (allowed.contains(path)) return null;
       return OnboardingRoutes.emailVerify;
     }
 
-    final status = _status;
     if (status != null) {
       if (!status.profileComplete) {
         const allowed = {
-          OnboardingRoutes.ownerCarousel,
           OnboardingRoutes.signup,
           OnboardingRoutes.login,
           OnboardingRoutes.emailVerify,
@@ -295,9 +375,6 @@ class AppSession extends ChangeNotifier {
       }
       if (!status.hasOwnerBaby && !status.hasBabyMembership) {
         const allowed = {
-          OnboardingRoutes.ownerCarousel,
-          OnboardingRoutes.signup,
-          OnboardingRoutes.login,
           OnboardingRoutes.emailVerify,
           OnboardingRoutes.completeProfile,
           OnboardingRoutes.ownerCreateBaby,
@@ -309,16 +386,7 @@ class AppSession extends ChangeNotifier {
         return OnboardingRoutes.ownerCreateBaby;
       }
       if (!_coordinator.isInvitePath && status.needsOwnerOnboarding) {
-        if (path == OnboardingRoutes.ownerCarousel) {
-          return _onboardingResumePath(status);
-        }
         if (_ownerPostBabyAllowed.contains(path)) return null;
-        if (path == OnboardingRoutes.ownerCreateBaby) {
-          return _onboardingResumePath(status);
-        }
-        if (OnboardingRoutes.isOnboardingPath(path)) {
-          return _onboardingResumePath(status);
-        }
         return _onboardingResumePath(status);
       }
     }
@@ -326,15 +394,15 @@ class AppSession extends ChangeNotifier {
     if (path == OnboardingRoutes.signup || path == OnboardingRoutes.login) {
       return null;
     }
-    if (path == OnboardingRoutes.ownerCarousel) {
-      return _onboardingResumePath(status);
-    }
 
     if (OnboardingRoutes.isOnboardingPath(path)) {
       return null;
     }
 
-    return _onboardingResumePath(status);
+    // A main-app route (e.g. the signed-in cold start at /home) the user may
+    // not use yet. With no status this is the session screen, so Home never
+    // builds or loads before the server says it may.
+    return resume;
   }
 
   /// Signed-out resume for a stored invite token. Runs before the public

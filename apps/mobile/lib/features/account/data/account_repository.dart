@@ -325,6 +325,9 @@ class AccountRepository {
     if (store != null) unawaited(store.clear());
   }
 
+  /// The one profile write (account edit and onboarding complete profile):
+  /// the response updates the cached account and stored identity, so the
+  /// shell avatar never shows a stale name (#407).
   Future<void> updateProfile({
     required String displayName,
     String? avatarUrl,
@@ -333,6 +336,7 @@ class AccountRepository {
     String? countryCode,
     String? postalCode,
     bool sendExplicitNulls = false,
+    bool acceptTerms = false,
   }) async {
     final Map<String, dynamic> body;
     if (sendExplicitNulls) {
@@ -362,6 +366,8 @@ class AccountRepository {
           'postal_code': postalCode,
       };
     }
+    // Acceptance is one-way on the server; never send false.
+    if (acceptTerms) body['accept_terms'] = true;
     final json = await _api.patchJson('/v1/profile', body: body);
     _rememberProfileResponse(json, fallbackDisplayName: displayName);
   }

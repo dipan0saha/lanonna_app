@@ -235,6 +235,36 @@ void main() {
     );
 
     test(
+      'no Home read when the cached status routes the launch elsewhere',
+      () async {
+        final api = _TrackingApi();
+        final f = await _sessionFixture(api, prefs);
+        // Left their only baby: a stale selected baby id is still stored.
+        await f.storage.saveCachedOnboardingStatus(
+          'user-1',
+          const OnboardingStatus(
+            emailVerified: true,
+            profileComplete: true,
+            hasOwnerBaby: false,
+            hasBabyMembership: false,
+            ownerOnboardingCompleted: false,
+            needsOwnerOnboarding: false,
+            canAccessMainApp: false,
+          ),
+        );
+        await startSignedInStartupPrefetch(
+          session: f.session,
+          homeRepository: HomeRepository(api),
+          selectedBabyStore: SelectedBabyStore(prefs),
+          accountRepository: AccountRepository(api),
+          notificationsRepository: NotificationsRepository(api),
+        );
+        expect(api.calls.containsKey('/v1/babies/baby-1/home-summary'), isFalse);
+        expect(api.calls['/v1/onboarding/status'], 1);
+      },
+    );
+
+    test(
       'offline keeps cached onboarding; version does not hard-block',
       () async {
         final api = _TrackingApi(offline: true);
