@@ -56,6 +56,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
   BabySummary? _baby;
   PhotoDetail? _detail;
   var _initialLoadInFlight = true;
+  String? _loadError;
   final _scrollController = ScrollController();
   var _editingCaption = false;
   final _captionFocus = FocusNode();
@@ -114,6 +115,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
             );
       setState(() {
         _detail = cached;
+        _loadError = null;
         if (cached != null) {
           _captionController.text = cached.caption ?? '';
           _taggedBabyIds = cached.taggedBabies.map((t) => t.id).toSet();
@@ -135,7 +137,12 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
 
   Future<void> _loadInitial() async {
     final photoId = widget.photoId;
-    if (_detail == null) setState(() => _initialLoadInFlight = true);
+    if (_detail == null) {
+      setState(() {
+        _initialLoadInFlight = true;
+        _loadError = null;
+      });
+    }
     try {
       final homeRepo = context.read<HomeRepository>();
       final store = context.read<SelectedBabyStore>();
@@ -157,6 +164,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       setState(() {
         _baby = baby;
         _detail = detail;
+        _loadError = null;
         if (!_editingCaption) _captionController.text = detail.caption ?? '';
         _memberBabies = memberBabies;
         _taggedBabyIds = detail.taggedBabies.map((t) => t.id).toSet();
@@ -165,8 +173,8 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       unawaited(_ensurePhotoIdsForSwipe().then((_) => _prefetchNeighbours()));
     } catch (e) {
       if (!mounted || photoId != widget.photoId) return;
-      setState(() => _initialLoadInFlight = false);
       if (e is ApiException && e.statusCode == 404) {
+        setState(() => _initialLoadInFlight = false);
         AppSnackBar.showAlert(
           context,
           AppLocalizations.of(context)!.galleryThisPhotoIsNoLonger,
@@ -174,9 +182,14 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
         popOrGo(context, GalleryRoutes.gallery);
         return;
       }
-      AppSnackBar.showAlert(
+      reportDetailLoadFailure(
         context,
-        apiErrorMessage(AppLocalizations.of(context)!, e),
+        e,
+        hasContent: _detail != null,
+        onBlockingError: (message) => setState(() {
+          _loadError = message;
+          _initialLoadInFlight = false;
+        }),
       );
     }
   }
@@ -489,6 +502,12 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       initialLoadInFlight: _initialLoadInFlight,
     )) {
       return Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (_loadError != null && _detail == null) {
+      return Scaffold(
+        appBar: AppBar(),
+        body: DetailLoadErrorPane(message: _loadError!, onRetry: _loadInitial),
+      );
     }
     final detail = _detail;
     if (detail == null) {

@@ -20,6 +20,7 @@ import '../data/announcement_repository.dart';
 import '../domain/announcement_navigation.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../core/data/parallel_requests.dart';
+import '../../../core/presentation/detail_screen_load.dart';
 
 class AnnouncementCardScreen extends StatefulWidget {
   const AnnouncementCardScreen({super.key, required this.babyId});
@@ -36,6 +37,7 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
   final _comment = TextEditingController();
   var _loading = true;
   var _isOwner = false;
+  String? _loadError;
 
   @override
   void initState() {
@@ -52,7 +54,12 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
   /// The full-screen spinner shows only until the card first loads; later
   /// reloads (squish, comment, edit) keep it on screen.
   Future<void> _load() async {
-    if (_detail == null) setState(() => _loading = true);
+    if (_detail == null) {
+      setState(() {
+        _loading = true;
+        _loadError = null;
+      });
+    }
     try {
       final (routeBaby, detail) = await waitBoth(
         context.read<HomeRepository>().babyById(widget.babyId),
@@ -62,6 +69,7 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
       setState(() {
         _detail = detail;
         _isOwner = routeBaby?.role == 'owner';
+        _loadError = null;
         _loading = false;
       });
       if (detail == null && mounted) {
@@ -69,8 +77,15 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      setState(() => _loading = false);
-      AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
+      reportDetailLoadFailure(
+        context,
+        e,
+        hasContent: _detail != null,
+        onBlockingError: (message) => setState(() {
+          _loadError = message;
+          _loading = false;
+        }),
+      );
     }
   }
 
@@ -110,6 +125,11 @@ class _AnnouncementCardScreenState extends State<AnnouncementCardScreen> {
     final l10n = AppLocalizations.of(context)!;
     if (_loading) {
       return Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (_loadError != null && _detail == null) {
+      return Scaffold(
+        body: DetailLoadErrorPane(message: _loadError!, onRetry: _load),
+      );
     }
     final d = _detail;
     if (d == null) {
