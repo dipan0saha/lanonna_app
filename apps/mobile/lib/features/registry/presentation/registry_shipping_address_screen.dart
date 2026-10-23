@@ -81,16 +81,6 @@ class _RegistryShippingAddressScreenState
         if (mounted) context.pop();
         return;
       }
-      if (baby.role != 'owner') {
-        if (mounted) {
-          AppSnackBar.showAlert(
-            context,
-            AppLocalizations.of(context)!.registryOnlyOwnersCanEditThe,
-          );
-          context.pop();
-        }
-        return;
-      }
       final countries = await IsoCountries.load();
       final address = await regRepo.getShippingAddress(baby.id);
       if (!mounted) return;

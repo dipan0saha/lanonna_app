@@ -3070,12 +3070,6 @@ abstract class AppLocalizations {
   /// **'Could not update baby: {reason}'**
   String homeCouldNotUpdateBaby(String reason);
 
-  /// No description provided for @calendarOnlyOwnersCanCreateOr.
-  ///
-  /// In en, this message translates to:
-  /// **'Only owners can create or edit calendar events.'**
-  String get calendarOnlyOwnersCanCreateOr;
-
   /// No description provided for @calendarBabyProfileIsStillLoading.
   ///
   /// In en, this message translates to:
@@ -3123,6 +3117,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Nothing on the calendar yet — check back soon.'**
   String get calendarNothingOnTheCalendarYet;
+
+  /// No description provided for @ownerOnlyPageBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Only owners can do that.'**
+  String get ownerOnlyPageBlocked;
 
   /// No description provided for @calendarAddEventCta.
   ///
@@ -3315,12 +3315,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Love {suggestedName}'**
   String funLove(String suggestedName);
-
-  /// No description provided for @registryOnlyOwnersCanEditThe.
-  ///
-  /// In en, this message translates to:
-  /// **'Only owners can edit the shipping address.'**
-  String get registryOnlyOwnersCanEditThe;
 
   /// No description provided for @registryCouldNotLoadShippingAddress.
   ///
