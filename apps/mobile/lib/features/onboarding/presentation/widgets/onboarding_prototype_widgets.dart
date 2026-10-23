@@ -9,9 +9,6 @@ import '../../../../core/input/app_text_input_kind.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
-import 'package:lanonna/core/domain/baby_gender.dart';
-import '../../../../core/widgets/app_chip.dart';
-import 'onboarding_fields.dart';
 import 'onboarding_typography.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -176,44 +173,6 @@ class PrototypeMomentCard extends StatelessWidget {
           child,
         ],
       ),
-    );
-  }
-}
-
-class PrototypeMiniGenderToggle extends StatelessWidget {
-  const PrototypeMiniGenderToggle({
-    super.key,
-    required this.selected,
-    required this.onSelected,
-  });
-
-  final BabyGender selected;
-  final ValueChanged<BabyGender> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    assert(
-      selected == BabyGender.male || selected == BabyGender.female,
-      'Name suggestion gender is Boy or Girl only',
-    );
-    final l10n = AppLocalizations.of(context)!;
-
-    return AppToggleChipBar<BabyGender>(
-      padding: EdgeInsets.zero,
-      options: [
-        AppToggleChipOption(
-          BabyGender.male,
-          BabyGender.male.label(l10n),
-          chipKey: const Key('prototype_mini_gender_boy'),
-        ),
-        AppToggleChipOption(
-          BabyGender.female,
-          BabyGender.female.label(l10n),
-          chipKey: const Key('prototype_mini_gender_girl'),
-        ),
-      ],
-      selected: selected,
-      onSelected: onSelected,
     );
   }
 }

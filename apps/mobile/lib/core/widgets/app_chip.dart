@@ -116,18 +116,28 @@ class AppToggleChip extends StatelessWidget {
 
 /// One option in an [AppToggleChipBar].
 class AppToggleChipOption<T> {
-  const AppToggleChipOption(this.value, this.label, {this.chipKey});
+  const AppToggleChipOption(
+    this.value,
+    this.label, {
+    this.chipKey,
+    this.selectedAccent = AppChipAccent.sage,
+  });
 
   final T value;
   final String label;
 
   /// Optional key on the underlying [AppToggleChip] (tests, scroll targets).
   final Key? chipKey;
+
+  /// Fill used when this option is selected (e.g. peach for Girl).
+  final AppChipAccent selectedAccent;
 }
 
 /// A horizontal, scrollable row of [AppToggleChip]s with one selected value:
 /// the app's view switcher (AI suggestion tabs, gallery All / Recent /
-/// Favorites). Use it instead of Material chips or `SegmentedButton`.
+/// Favorites, Fun Names / Predictions). Use it instead of Material chips or
+/// `SegmentedButton`. Tapping the already-selected option is a no-op, so
+/// callers only see real changes.
 class AppToggleChipBar<T> extends StatelessWidget {
   const AppToggleChipBar({
     super.key,
@@ -161,7 +171,10 @@ class AppToggleChipBar<T> extends StatelessWidget {
                 key: option.chipKey,
                 label: option.label,
                 selected: option.value == selected,
-                onTap: () => onSelected(option.value),
+                selectedAccent: option.selectedAccent,
+                onTap: () {
+                  if (option.value != selected) onSelected(option.value);
+                },
               ),
             ),
         ],

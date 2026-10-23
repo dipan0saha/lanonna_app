@@ -84,6 +84,7 @@ theme: AppTheme.light,
     tester,
   ) async {
     var selected = 'a';
+    var calls = 0;
     await tester.pumpWidget(
       MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -96,10 +97,17 @@ theme: AppTheme.light,
                 padding: EdgeInsets.zero,
                 options: const [
                   AppToggleChipOption('a', 'Alpha'),
-                  AppToggleChipOption('b', 'Beta'),
+                  AppToggleChipOption(
+                    'b',
+                    'Beta',
+                    selectedAccent: AppChipAccent.peach,
+                  ),
                 ],
                 selected: selected,
-                onSelected: (v) => setState(() => selected = v),
+                onSelected: (v) {
+                  calls++;
+                  setState(() => selected = v);
+                },
               );
             },
           ),
@@ -113,14 +121,25 @@ theme: AppTheme.light,
       isTrue,
     );
 
+    expect(
+      tester.widget<AppToggleChip>(find.widgetWithText(AppToggleChip, 'Alpha'))
+          .selectedAccent,
+      AppChipAccent.sage,
+    );
+
     await tester.tap(find.text('Beta'));
     await tester.pump();
     expect(selected, 'b');
-    expect(
-      tester.widget<AppToggleChip>(find.widgetWithText(AppToggleChip, 'Beta'))
-          .selected,
-      isTrue,
-    );
+    expect(calls, 1);
+    final beta =
+        tester.widget<AppToggleChip>(find.widgetWithText(AppToggleChip, 'Beta'));
+    expect(beta.selected, isTrue);
+    expect(beta.selectedAccent, AppChipAccent.peach);
+
+    // Re-selecting the current option is a no-op.
+    await tester.tap(find.text('Beta'));
+    await tester.pump();
+    expect(calls, 1);
   });
 
   testWidgets('AppRemovableChip onRemove fires from close control', (

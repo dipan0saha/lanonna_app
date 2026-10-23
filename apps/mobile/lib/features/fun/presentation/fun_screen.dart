@@ -25,9 +25,12 @@ class FunScreen extends StatefulWidget {
   State<FunScreen> createState() => _FunScreenState();
 }
 
+/// Fun hub sections switched by the chip bar under the title.
+enum _FunSection { names, predictions }
+
 class _FunScreenState extends State<FunScreen>
     with BabyContextReload, TabLoadGenerationCache {
-  var _segment = 0;
+  var _section = _FunSection.names;
   BabySummary? _baby;
   var _loading = true;
   String? _error;
@@ -120,9 +123,11 @@ class _FunScreenState extends State<FunScreen>
         // After birth both tabs stay visible but read-only; the API also
         // rejects prediction writes with predictions_closed.
         final baby = _baby!;
-        return _segment == 0
-            ? NamesTab(baby: baby, readOnly: baby.namesClosed)
-            : PredictionsTab(baby: baby);
+        return switch (_section) {
+          _FunSection.names =>
+            NamesTab(baby: baby, readOnly: baby.namesClosed),
+          _FunSection.predictions => PredictionsTab(baby: baby),
+        };
     }
   }
 
@@ -150,25 +155,22 @@ class _FunScreenState extends State<FunScreen>
                   style: context.textStyles.headlineSmall,
                 ),
               ),
-              AppToggleChipBar<int>(
-                padding: const EdgeInsets.fromLTRB(
-                  AppMetrics.horizontalPadding,
-                  0,
-                  AppMetrics.horizontalPadding,
-                  0,
+              AppToggleChipBar<_FunSection>(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppMetrics.horizontalPadding,
                 ),
                 options: [
                   AppToggleChipOption(
-                    0,
+                    _FunSection.names,
                     AppLocalizations.of(context)!.searchSectionNames,
                   ),
                   AppToggleChipOption(
-                    1,
+                    _FunSection.predictions,
                     AppLocalizations.of(context)!.funPredictions,
                   ),
                 ],
-                selected: _segment,
-                onSelected: (segment) => setState(() => _segment = segment),
+                selected: _section,
+                onSelected: (section) => setState(() => _section = section),
               ),
               const SizedBox(height: 8),
               Expanded(child: _funBody()),
