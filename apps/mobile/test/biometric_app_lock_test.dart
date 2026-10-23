@@ -11,6 +11,7 @@ import 'package:lanonna/core/auth/biometric_app_lock.dart';
 import 'package:lanonna/core/auth/biometric_unlock_service.dart';
 import 'package:lanonna/core/time/monotonic_clock.dart';
 import 'support/fake_monotonic_clock.dart';
+import 'package:lanonna/core/auth/auth_session_service.dart';
 import 'package:lanonna/core/auth/session_cleanup.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
 import 'package:lanonna/features/account/data/account_repository.dart';
@@ -199,6 +200,12 @@ _pumpLockHarness(
         Provider<AuthRepository>.value(value: fakeAuth),
         Provider<AccountRepository>.value(value: accounts),
         Provider<SessionCleanup>.value(value: cleanup),
+        Provider<AuthSessionService>.value(
+          value: AuthSessionService(
+            authRepository: fakeAuth,
+            sessionCleanup: cleanup,
+          ),
+        ),
       ],
       child: MaterialApp.router(
         theme: AppTheme.light,

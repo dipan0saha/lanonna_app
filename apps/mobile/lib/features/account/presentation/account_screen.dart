@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/api/api_error_message.dart';
 import '../../../core/auth/auth_repository.dart';
-import '../../../core/auth/session_cleanup.dart';
+import '../../../core/auth/auth_session_service.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_bordered_surface.dart';
@@ -120,10 +120,7 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Future<void> _signOut() async {
-    // Push token cleanup is handled by PushNotificationService auth listener.
-    await context.read<SessionCleanup>().clearLocalUserData();
-    if (!mounted) return;
-    await context.read<AuthRepository>().signOut();
+    await context.read<AuthSessionService>().signOut();
     if (mounted) context.go(OnboardingRoutes.ownerCarousel);
   }
 

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/auth/auth_repository.dart';
 import 'package:lanonna/core/auth/biometric_sign_in_service.dart';
+import 'package:lanonna/core/auth/auth_session_service.dart';
 import 'package:lanonna/core/auth/session_cleanup.dart';
 import 'package:lanonna/features/account/data/account_repository.dart';
 import 'package:lanonna/features/account/presentation/delete_account_screen.dart';
@@ -103,6 +104,13 @@ class _Cleanup extends SessionCleanup {
   }
 }
 
+AuthSessionService _sessionService(_Auth auth, _Cleanup cleanup) {
+  return AuthSessionService(
+    authRepository: auth,
+    sessionCleanup: cleanup,
+  );
+}
+
 Future<void> _pump(
   WidgetTester tester, {
   required _Accounts accounts,
@@ -130,6 +138,9 @@ Future<void> _pump(
         Provider<AccountRepository>.value(value: accounts),
         Provider<AuthRepository>.value(value: auth),
         Provider<SessionCleanup>.value(value: cleanup),
+        Provider<AuthSessionService>.value(
+          value: _sessionService(auth, cleanup),
+        ),
         Provider<BiometricSignInService>.value(value: biometric ?? _Biometric()),
       ],
       child: MaterialApp.router(
