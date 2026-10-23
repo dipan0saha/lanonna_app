@@ -13,7 +13,7 @@ import '../../home/data/selected_baby_store.dart';
 import '../../home/presentation/baby_context_reload.dart';
 import '../../shell/presentation/shell_tab_layout.dart';
 import '../../../core/domain/baby_summary.dart';
-import '../../onboarding/presentation/widgets/onboarding_fields.dart';
+import '../../../core/widgets/app_chip.dart';
 import 'names_tab.dart';
 import 'predictions_tab.dart';
 import '../../../l10n/app_localizations.dart';
@@ -150,16 +150,25 @@ class _FunScreenState extends State<FunScreen>
                   style: context.textStyles.headlineSmall,
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-                child: OnboardingSegmentedControl(
-                  style: OnboardingSegmentedControlStyle.mini,
-                  leftLabel: AppLocalizations.of(context)!.searchSectionNames,
-                  rightLabel: AppLocalizations.of(context)!.funPredictions,
-                  isLeftSelected: _segment == 0,
-                  onLeftTap: () => setState(() => _segment = 0),
-                  onRightTap: () => setState(() => _segment = 1),
+              AppToggleChipBar<int>(
+                padding: const EdgeInsets.fromLTRB(
+                  AppMetrics.horizontalPadding,
+                  0,
+                  AppMetrics.horizontalPadding,
+                  0,
                 ),
+                options: [
+                  AppToggleChipOption(
+                    0,
+                    AppLocalizations.of(context)!.searchSectionNames,
+                  ),
+                  AppToggleChipOption(
+                    1,
+                    AppLocalizations.of(context)!.funPredictions,
+                  ),
+                ],
+                selected: _segment,
+                onSelected: (segment) => setState(() => _segment = segment),
               ),
               const SizedBox(height: 8),
               Expanded(child: _funBody()),

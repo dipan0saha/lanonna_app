@@ -12,4 +12,11 @@ if rg -n "${PATTERN}" lib/ --glob '!**/app_chip.dart' 2>/dev/null; then
   exit 1
 fi
 
-echo "OK: no Material Chip widgets in lib/"
+SEGMENT_PATTERN='\\b(SegmentedButton|ToggleButtons)\\s*[<(]'
+if rg -n "${SEGMENT_PATTERN}" lib/ 2>/dev/null; then
+  echo ""
+  echo "FAIL: Material segmented controls found. Use AppToggleChipBar from app_chip.dart."
+  exit 1
+fi
+
+echo "OK: no Material Chip or segmented controls in lib/"

@@ -116,10 +116,13 @@ class AppToggleChip extends StatelessWidget {
 
 /// One option in an [AppToggleChipBar].
 class AppToggleChipOption<T> {
-  const AppToggleChipOption(this.value, this.label);
+  const AppToggleChipOption(this.value, this.label, {this.chipKey});
 
   final T value;
   final String label;
+
+  /// Optional key on the underlying [AppToggleChip] (tests, scroll targets).
+  final Key? chipKey;
 }
 
 /// A horizontal, scrollable row of [AppToggleChip]s with one selected value:
@@ -155,6 +158,7 @@ class AppToggleChipBar<T> extends StatelessWidget {
             Padding(
               padding: const EdgeInsetsDirectional.only(end: AppSpacing.sm),
               child: AppToggleChip(
+                key: option.chipKey,
                 label: option.label,
                 selected: option.value == selected,
                 onTap: () => onSelected(option.value),

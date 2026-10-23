@@ -12,6 +12,7 @@ import '../../../core/api/run_mutation.dart';
 import '../../../core/widgets/app_confirm_dialog.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/validation/form_validators.dart';
+import '../../../core/widgets/app_chip.dart';
 import '../../../core/widgets/app_text_form_field.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_metrics.dart';
@@ -267,24 +268,24 @@ class _NamesTabState extends State<NamesTab> {
               Row(
                 children: [
                   Expanded(
-                    child: SegmentedButton<BabyGender>(
-                      segments: [
-                        ButtonSegment(
-                          value: BabyGender.male,
-                          label: Text(
-                            BabyGender.male.label(AppLocalizations.of(context)!),
+                    child: AppToggleChipBar<BabyGender>(
+                      padding: EdgeInsets.zero,
+                      options: [
+                        AppToggleChipOption(
+                          BabyGender.male,
+                          BabyGender.male.label(
+                            AppLocalizations.of(context)!,
                           ),
                         ),
-                        ButtonSegment(
-                          value: BabyGender.female,
-                          label: Text(
-                            BabyGender.female.label(AppLocalizations.of(context)!),
+                        AppToggleChipOption(
+                          BabyGender.female,
+                          BabyGender.female.label(
+                            AppLocalizations.of(context)!,
                           ),
                         ),
                       ],
-                      selected: {_gender},
-                      onSelectionChanged: (s) =>
-                          setState(() => _gender = s.first),
+                      selected: _gender,
+                      onSelected: (g) => setState(() => _gender = g),
                     ),
                   ),
                   const SizedBox(width: 8),
