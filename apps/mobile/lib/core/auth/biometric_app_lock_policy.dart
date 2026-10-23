@@ -1,3 +1,5 @@
+import '../../config/app_config.dart';
+
 /// When the full-screen biometric lock should engage.
 bool biometricAppLockShouldEngage({
   required bool isSignedIn,
@@ -9,4 +11,12 @@ bool biometricAppLockShouldEngage({
       canAccessMainApp &&
       !isOnboardingPath &&
       biometricUnlockEnabled;
+}
+
+/// Whether resume should show the lock after time spent in the background
+/// (measured on a clock that counts device sleep; see `MonotonicClock`).
+bool biometricAppLockShouldEngageOnResume({
+  required Duration timeInBackground,
+}) {
+  return timeInBackground >= biometricAppLockResumeGracePeriod;
 }
