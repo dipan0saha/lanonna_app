@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Privacy Policy — La Nonna</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Inter:wght@400;600;700&display=swap" />
+  <link rel="stylesheet" href="/legal/legal.css" />
+</head>
+<body>
+  <main>
+    <nav class="legal-nav">
+      <a href="/legal/">Legal home</a>
+      <a href="/legal/terms.html">Terms of Service</a>
+    </nav>
+    <p class="brand">La Nonna</p>
+    <h1>Privacy Policy</h1>
+    <p class="notice">
+      <strong>Draft</strong> — requires review by {{COMPANY_OR_DEVELOPER_NAME}} and qualified legal counsel before publication.
+    </p>
+    <p class="meta">
+      Effective: {{EFFECTIVE_DATE}} · Operator: {{COMPANY_OR_DEVELOPER_NAME}} · Contact: <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a>
+    </p>
+
+    <h2>1. Overview</h2>
+    <p>
+      La Nonna helps families share a baby’s journey—photos, calendar, registry, announcements, and invitations—with a trusted circle.
+      This policy describes personal information we process when you use the Android app (<code>com.lanonna.lanonna</code>) and our backend services.
+      The app is intended for <strong>adults</strong>; it stores information <strong>about babies and children</strong> that you add. We do not offer child accounts.
+    </p>
+
+    <h2>2. Information we collect</h2>
+    <p><strong>You provide:</strong> account email and profile fields (name, avatar, optional phone, birth date, country, postal code); baby profile and family content (photos, events, registry, announcements, comments); invitee emails; notification preferences.</p>
+    <p><strong>Automatic:</strong> Firebase user ID; FCM push token when notifications are enabled; throttled last-seen timestamp; Firebase App Check signals; crash logs via Firebase Crashlytics when enabled (may include your Firebase UID).</p>
+    <p>Calendar and registry “AI Suggestions” use <strong>bundled catalogs on your device</strong>, not a third-party generative AI API. Photos may use camera or library access; images are processed on-device before upload.</p>
+
+    <h2>3. How we use information</h2>
+    <p>We use data to authenticate you, operate family sharing, send notifications and invitation emails, fulfill export requests, secure the service, and improve stability. We use Google Cloud and Firebase to host the service and Mailjet to send invitation emails.</p>
+
+    <h2>4. Sharing</h2>
+    <p>We do not sell personal information. We share data with family members you authorize, with service providers (Google/Firebase, Mailjet) under contract, and when required by law. Invite pages may be served from https://{{DOMAIN}}/.</p>
+
+    <h2>5. Retention and deletion</h2>
+    <p>
+      We retain data while your account is active. Pending invites expire per schedule.
+      When you <strong>delete your account</strong>, we tombstone your profile (display name “Deleted user”; email, avatar, phone, birth date, country, postal code, and last-seen cleared on our servers),
+      delete your Firebase login, delete your in-app notifications and notifications other members received about you, delete push tokens and banner-dismissal records, delete biometric sign-in keys on our servers,
+      delete settled invitation history to your email, end memberships, revoke pending invites you sent, remove certain participation data, and re-render activity feed text that named you as “Deleted user”.
+      Baby profiles you <strong>solely</strong> own are <strong>removed from our databases</strong> (including family content on those babies).
+      We <strong>enqueue async removal</strong> of cloud files: your avatar, exports, media for those babies, and photos you uploaded on co-owned babies.
+      On co-owned babies, the profile stays with the other owner; your comments and similar text there may remain under “Deleted user.”
+      Sole owners can delete a baby profile in the app to remove that baby’s data from our systems, with the same async file cleanup.
+      A periodic job retries stuck tasks. Contact {{CONTACT_EMAIL}} for questions.
+    </p>
+
+    <h2>6. Your choices</h2>
+    <ul>
+      <li>Edit profile and notification settings in the app.</li>
+      <li><strong>Delete account:</strong> Account → Delete account → confirm and re-authenticate if prompted.</li>
+      <li><strong>Export baby data (owners):</strong> Account → Export baby data → request export → download when ready.</li>
+    </ul>
+    <p>Depending on your location, you may have additional privacy rights. Contact {{CONTACT_EMAIL}}.</p>
+
+    <h2>7. Children</h2>
+    <p>The Service is not directed at children to use as account holders. Parents and guardians provide information about minors. Consult your lawyer regarding COPPA, GDPR child data, and store audience settings.</p>
+
+    <h2>8. Security and changes</h2>
+    <p>We use HTTPS, access controls, and industry-standard practices. We may update this policy at https://{{DOMAIN}}/legal/privacy with a new effective date.</p>
+
+    <h2>9. Contact</h2>
+    <p>{{COMPANY_OR_DEVELOPER_NAME}} — {{CONTACT_EMAIL}}<br />Governing law: {{JURISDICTION}} (confirm with counsel).</p>
+
+    <footer>Markdown source: docs/legal/privacy-policy.md</footer>
+  </main>
+</body>
+</html>
