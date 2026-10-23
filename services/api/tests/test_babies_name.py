@@ -74,7 +74,7 @@ def test_patch_with_blank_name_clears_it():
     with (
         _auth_as(),
         patch(
-            "lanonna_api.routers.babies.update_baby_for_owner",
+            "lanonna_api.routers.babies.update_baby_profile",
             return_value=_row(baby_id, None),
         ) as update,
     ):
@@ -91,7 +91,7 @@ def test_patch_with_null_or_missing_name_leaves_it_unchanged():
     with (
         _auth_as(),
         patch(
-            "lanonna_api.routers.babies.update_baby_for_owner",
+            "lanonna_api.routers.babies.update_baby_profile",
             return_value=_row(baby_id, "Liam"),
         ) as update,
     ):

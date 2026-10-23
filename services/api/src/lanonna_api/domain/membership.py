@@ -26,13 +26,7 @@ def assert_owner_membership(firebase_uid: str, baby_profile_id: uuid.UUID) -> No
 
 
 def require_owner_baby(firebase_uid: str, baby_profile_id: uuid.UUID) -> dict:
-    """Owner check via baby row (includes profile fields).
-
-    Non-owners (including active followers) raise ``PermissionError`` → HTTP **403**
-    via ``map_domain_errors``. Use at the start of owner-only baby routes (e.g.
-    ``PATCH`` / ``DELETE`` ``/v1/babies/{id}``) instead of inferring forbidden
-    access from an empty SQL ``RETURNING`` row (which produced **404** on PATCH).
-    """
+    """Owner check via baby row (includes profile fields). Raises PermissionError if not owner."""
     _raise_if_membership_ended(firebase_uid, baby_profile_id)
     baby = get_baby_for_owner(firebase_uid, baby_profile_id)
     if baby is None:

@@ -4,20 +4,26 @@
 
 Two low-severity QA findings from the same pre-prod pass as #392–#394.
 
-### (a) Follower `PATCH /v1/babies/{id}` vs `DELETE`
+### (a) Follower `PATCH /v1/babies/{id}` returned 404
 
-- **DELETE** (owner-only) uses `require_owner_baby` → `PermissionError` → **403** `forbidden` (see `test_delete_by_non_owner_returns_403`).
-- **PATCH** relied on `UPDATE … AND m.role = 'owner'` returning no row, then mapped `None` to **404** `not_found` even when the follower is an active member.
+**Root cause:** `DELETE` goes through the domain (`delete_baby_profile` → `require_owner_baby`), so a non-owner gets **403** `forbidden` and an ended membership gets `MEMBERSHIP_ENDED`. `PATCH` skipped the domain on its non-announce path. The router called the owner-scoped repository `UPDATE … AND m.role = 'owner'` directly and turned "no row" into **404** `not_found`, even for an active follower.
 
-**Convention:** Owner-only mutations use `require_owner_baby` / `assert_owner_membership` and return **403** for non-owners (including followers). **404** remains for non-members (`NOT_MEMBER`) on member-scoped routes; baby profile PATCH/DELETE are owner-gated, not membership-discovery endpoints.
+**Fix:** a new domain function, `domain/baby_update.update_baby_profile`, next to `baby_delete`. It applies the same `require_owner_baby` gate and treats an owner-scoped `UPDATE` that matches no row as `PermissionError`. The router calls it, and the dead `row is None → 404` branch is gone. The announce path (`announce_arrival`) already raised `PermissionError` for non-owners.
 
-### (b) Fun names suggest form
+**Compatibility:** the app already sends PATCH only from owner screens. Any 403 goes through the shared error mapping.
 
-After a successful suggest or delete, `_input` was cleared but `_validateSuggestOnInteraction` stayed `true`, so `AutovalidateMode.onUserInteraction` immediately showed **Name is required** on the empty field.
+### (b) Fun names suggest form showed "Name is required" after a successful suggest
 
-**Fix:** After successful mutations, set `_validateSuggestOnInteraction = false` and call `FormState.reset()` (same deferred-validation pattern as account/registry forms).
+**Root cause:** after a successful suggest, `_input.clear()` ran while `_validateSuggestOnInteraction` was `true`. A controller clear counts as an edit to the `TextFormField`, so `AutovalidateMode.onUserInteraction` validated the now-empty field at once.
+
+**Fix:** `_resetSuggestForm()` calls `FormState.reset()`, which empties the field and forgets the interaction, and turns deferred validation back off. Delete doesn't touch the suggest field, so it no longer resets the user's draft (the first version of this PR did).
 
 ## Test plan
 
-- API: `test_patch_baby_non_owner_returns_403` in `test_babies_patch.py`.
-- Mobile: `names_tab_validation_reset_test.dart` — after submit callback, no validation error on empty field.
+- API `test_baby_update_domain.py`:
+  - an owner update returns the row;
+  - a follower is forbidden and nothing is written;
+  - an ended membership raises `MEMBERSHIP_ENDED`;
+  - an `UPDATE` that matches no row is forbidden, not a 404.
+- API `test_babies_patch.py`: a follower's PATCH through the real router and domain gets 403 `forbidden`, and no update runs.
+- Mobile `names_tab_validation_reset_test.dart`: a successful suggest leaves an empty field with no error, and the next empty submit still shows "Name is required". This test fails on main and passes with the fix.

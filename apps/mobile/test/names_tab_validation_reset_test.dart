@@ -14,28 +14,32 @@ import 'package:provider/provider.dart';
 class _SuggestFunRepository extends FunRepository {
   _SuggestFunRepository() : super(ApiClient(idTokenProvider: () async => null));
 
+  final suggested = <String>[];
+
   @override
   Future<NamesPayload> fetchNames(String babyId) async =>
-      const NamesPayload(suggestions: []);
+      NamesPayload(suggestions: const []);
 
   @override
   Future<void> suggestName(
     String babyId,
     String name,
     BabyGender gender,
-  ) async {}
+  ) async {
+    suggested.add(name);
+  }
 }
 
 void main() {
-  testWidgets('NamesTab clears validation after successful suggest', (
-    tester,
-  ) async {
+  testWidgets('a successful suggest clears the field without a required error, '
+      'and the next empty submit still validates', (tester) async {
     const baby = BabySummary(
       id: 'baby-1',
       name: 'Parker',
       lifecycle: BabyLifecycle.expecting,
       role: 'owner',
     );
+    final repo = _SuggestFunRepository();
 
     await tester.pumpWidget(
       MaterialApp(
@@ -44,7 +48,7 @@ void main() {
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: Provider<FunRepository>.value(
-            value: _SuggestFunRepository(),
+            value: repo,
             child: const NamesTab(baby: baby),
           ),
         ),
@@ -54,9 +58,16 @@ void main() {
 
     await tester.enterText(find.byType(TextFormField), 'Ada');
     await tester.tap(find.text('Add'));
-    await tester.pump();
     await tester.pumpAndSettle();
 
+    expect(repo.suggested, ['Ada']);
+    final field = tester.widget<TextFormField>(find.byType(TextFormField));
+    expect(field.controller!.text, isEmpty);
     expect(find.text('Name is required'), findsNothing);
+
+    await tester.tap(find.text('Add'));
+    await tester.pumpAndSettle();
+    expect(find.text('Name is required'), findsOneWidget);
+    expect(repo.suggested, ['Ada']);
   });
 }
