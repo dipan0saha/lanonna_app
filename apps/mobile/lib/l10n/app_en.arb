@@ -214,6 +214,15 @@
   "memberSoleOwnerLeaveBody": "You are the only owner. Add a co-owner and leave, delete the baby profile, or delete your account.",
   "membershipEndedMessage": "You no longer have access to this profile.",
   "memberRemovedSuccess": "Member removed.",
+  "inviteRevokeConfirmTitle": "Revoke invitation?",
+  "inviteRevokeConfirmBody": "{email} will no longer be able to join with this invite.",
+  "@inviteRevokeConfirmBody": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
   "memberLeftSuccess": "You left this baby profile.",
   "deleteBabyProfileAction": "Delete baby profile",
   "deleteBabyProfileConfirmTitle": "Delete this baby profile?",
@@ -307,7 +316,6 @@
   "calendarPastEventsTitle": "Past events",
   "calendarPastEventsSubtitle": "Events that have already happened",
   "calendarPastEventsEmpty": "No past events yet.",
-  "calendarLoadMore": "Load more",
   "registrySortPriorityHighFirst": "Priority: High first",
   "registrySortPriorityLowFirst": "Priority: Low first",
   "versionGateUpdateInStore": "Update in store",
@@ -410,6 +418,7 @@
   "registryPriorityLow": "Nice to have",
   "registryPriorityHigh": "Really need this",
   "registryDeleteItem": "Delete Item",
+  "registryDeleteConfirmTitle": "Delete this item?",
   "registryMarkPurchasedTitle": "Mark as purchased?",
   "registryMarkPurchased": "Mark as purchased",
   "registryAllCaughtUp": "All caught up!",

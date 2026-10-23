@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -5,6 +6,41 @@ import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/features/calendar/data/calendar_repository.dart';
 
 void main() {
+  test('concurrent listEvents for the same key shares one HTTP request', () async {
+    final api = _EventsApi();
+    final repo = CalendarRepository(api);
+    await Future.wait([
+      repo.listEvents('baby-1', month: '2026-03'),
+      repo.listEvents('baby-1', month: '2026-03'),
+    ]);
+    expect(api.calls, 1);
+  });
+
+  test('a fetch started before a mutation is neither cached nor joined', () async {
+    final api = _EventsApi();
+    final repo = CalendarRepository(api);
+    final stale = Completer<void>();
+    api
+      ..gate = stale
+      ..gatedTitle = 'Before edit';
+    final before = repo.listEvents('baby-1', month: '2026-03');
+
+    await repo.createEvent('baby-1', title: 'New', startsAt: DateTime.utc(2026, 3, 10));
+    api
+      ..gate = null
+      ..gatedTitle = 'After edit';
+    final after = await repo.listEvents('baby-1', month: '2026-03');
+    expect(api.calls, 2);
+    expect(after.first.title, 'After edit');
+
+    stale.complete();
+    expect((await before).first.title, 'Before edit');
+    expect(
+      repo.peekCachedEvents('baby-1', month: '2026-03')?.first.title,
+      'After edit',
+    );
+  });
+
   test('listEvents caches by baby and month key', () async {
     final api = _EventsApi();
     final repo = CalendarRepository(api);
@@ -93,6 +129,10 @@ class _EventsApi extends ApiClient {
   var calls = 0;
   String? lastPath;
 
+  /// When set, list responses wait on it (and the title becomes [gatedTitle]).
+  Completer<void>? gate;
+  var gatedTitle = 'March event';
+
   @override
   Future<Map<String, dynamic>> getJson(
     String path, {
@@ -100,13 +140,16 @@ class _EventsApi extends ApiClient {
   }) async {
     lastPath = path;
     calls++;
+    final title = gatedTitle;
+    final pending = gate;
+    if (pending != null) await pending.future;
     if (failRequests) {
       throw const SocketException('offline');
     }
     return _page([
       {
         'id': 'ev-1',
-        'title': 'March event',
+        'title': title,
         'starts_at': '2026-03-10T12:00:00Z',
       },
       ]);

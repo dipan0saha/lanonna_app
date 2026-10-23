@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +23,8 @@ import 'core/network/connectivity_service.dart';
 import 'core/observability/crash_reporting_bootstrap.dart';
 import 'core/observability/crashlytics_dev_tools.dart';
 import 'core/router/router_refresh.dart';
+import 'core/startup/signed_in_startup_prefetch.dart';
+import 'core/version/app_version_service.dart';
 import 'features/account/data/account_identity_store.dart';
 import 'features/account/data/account_repository.dart';
 import 'features/account/data/notifications_repository.dart';
@@ -46,6 +50,11 @@ import 'app.dart';
 Future<Widget> bootstrapLaNonnaApp({
   required AppCheckTokenSource appCheck,
 }) async {
+  // First, before any await: a signed-in launch makes authorized requests right
+  // away, so the App Check read starts while start-up runs (main calls this
+  // synchronously after activating App Check).
+  final authRepository = AuthRepository();
+  if (authRepository.currentUser != null) appCheck.prefetch();
   if (kDebugMode) {
     const email = String.fromEnvironment('DEV_AUTO_SIGN_IN_EMAIL');
     const password = String.fromEnvironment('DEV_AUTO_SIGN_IN_PASSWORD');
@@ -60,12 +69,8 @@ Future<Widget> bootstrapLaNonnaApp({
     }
   }
 
-  final authRepository = AuthRepository();
   await startCrashReporting(authRepository: authRepository);
   scheduleCrashlyticsTestCrashOnStartIfRequested();
-  // A signed-in launch makes authorized requests right away; start the
-  // App Check read now so a first-launch attestation overlaps start-up.
-  if (authRepository.currentUser != null) appCheck.prefetch();
   final connectivityService = ConnectivityService();
   final (onboardingStorage, _, coldStartUri) = await waitAll3(
     OnboardingStorage.create(),
@@ -156,6 +161,20 @@ Future<Widget> bootstrapLaNonnaApp({
     session: session,
   );
 
+  final appVersionService = AppVersionService(apiClient);
+  unawaited(appVersionService.start());
+  if (authRepository.currentUser != null) {
+    unawaited(
+      startSignedInStartupPrefetch(
+        session: session,
+        homeRepository: homeRepository,
+        selectedBabyStore: selectedBabyStore,
+        accountRepository: accountRepository,
+        notificationsRepository: notificationsRepository,
+      ),
+    );
+  }
+
   final initialInviteLocation = coldStartUri != null
       ? inviteAppLinkToRouterLocation(coldStartUri)
       : null;
@@ -174,6 +193,7 @@ Future<Widget> bootstrapLaNonnaApp({
       Provider<BiometricSignInService>.value(value: biometricSignInService),
       Provider<SessionCleanup>.value(value: sessionCleanup),
       Provider<ApiClient>.value(value: apiClient),
+      ChangeNotifierProvider<AppVersionService>.value(value: appVersionService),
       Provider<EventCoverUploader>.value(value: eventCoverUploader),
       Provider<OnboardingRepository>.value(value: onboardingRepository),
       Provider<HomeRepository>.value(value: homeRepository),

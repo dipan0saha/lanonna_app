@@ -98,6 +98,6 @@ def test_revoke_all_and_tombstone_hide_credentials(postgres_database: str):
     assert get_live_credential(tomb_cred) is None
     with get_connection() as conn:
         row = conn.execute(
-            "SELECT revoked_at FROM biometric_credentials WHERE id = %s", (tomb_cred,)
+            "SELECT id FROM biometric_credentials WHERE id = %s", (tomb_cred,)
         ).fetchone()
-    assert row["revoked_at"] is not None
+    assert row is None

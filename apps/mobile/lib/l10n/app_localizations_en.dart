@@ -413,6 +413,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get memberRemovedSuccess => 'Member removed.';
 
   @override
+  String get inviteRevokeConfirmTitle => 'Revoke invitation?';
+
+  @override
+  String inviteRevokeConfirmBody(String email) {
+    return '$email will no longer be able to join with this invite.';
+  }
+
+  @override
   String get memberLeftSuccess => 'You left this baby profile.';
 
   @override
@@ -583,9 +591,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get calendarPastEventsEmpty => 'No past events yet.';
-
-  @override
-  String get calendarLoadMore => 'Load more';
 
   @override
   String get registrySortPriorityHighFirst => 'Priority: High first';
@@ -809,6 +814,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get registryDeleteItem => 'Delete Item';
+
+  @override
+  String get registryDeleteConfirmTitle => 'Delete this item?';
 
   @override
   String get registryMarkPurchasedTitle => 'Mark as purchased?';

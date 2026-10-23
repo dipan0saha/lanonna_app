@@ -24,20 +24,37 @@ typedef AppCheckTokenFetch = Future<String?> Function();
 ///   token means (`APP_CHECK_ENFORCE`), so enforcement is unchanged. Once an
 ///   attempt has run past [maxWait], later requests stop waiting for it until
 ///   it finishes and the next one starts.
+/// * **Failure cool-down.** After a failed read (SDK error or empty token),
+///   no new SDK read starts until [failureCooldown] elapses, so a failing
+///   attestation is not retried on every authorized request (each retry can
+///   take seconds and spends Play Integrity quota). Requests in the cool-down
+///   are sent without the header, as they would be after the failed read.
+///   The cool-down only starts when no read is in flight (reads are single
+///   flight), and a token from the SDK's auto-refresh ([tokenChanges]) ends
+///   it, so it never hides a valid token.
 class AppCheckTokenSource {
   AppCheckTokenSource({
     required Future<void> activation,
     required AppCheckTokenFetch fetchToken,
     this.maxWait = defaultMaxWait,
+    this.failureCooldown = defaultFailureCooldown,
+    Stream<String?>? tokenChanges,
     DateTime Function()? clock,
   }) : activated = activation,
        _fetchToken = fetchToken,
-       _clock = clock ?? DateTime.now;
+       _clock = clock ?? DateTime.now {
+    tokenChanges?.listen((token) {
+      if (token != null && token.isNotEmpty) _failureCooldownUntil = null;
+    });
+  }
 
   /// Longer than a normal attestation (0.6 to 5 s measured on an emulator),
   /// shorter than `apiRequestTimeout` (20 s), so a hung attestation cannot hold every
   /// request until it times out.
   static const defaultMaxWait = Duration(seconds: 10);
+
+  /// After a failed read, no new SDK read starts until this elapses.
+  static const defaultFailureCooldown = Duration(seconds: 30);
 
   /// Completes once the provider is installed (`FirebaseAppCheck.activate`).
   /// Token reads wait for it.
@@ -45,13 +62,30 @@ class AppCheckTokenSource {
   final AppCheckTokenFetch _fetchToken;
   final DateTime Function() _clock;
   final Duration maxWait;
+  final Duration failureCooldown;
 
   final _request = SingleFlight<String?>();
   DateTime? _requestStartedAt;
+  DateTime? _failureCooldownUntil;
+
+  bool _inFailureCooldown() {
+    final until = _failureCooldownUntil;
+    if (until == null) return false;
+    if (!_clock().isBefore(until)) {
+      _failureCooldownUntil = null;
+      return false;
+    }
+    return true;
+  }
+
+  void _markFailure() {
+    _failureCooldownUntil = _clock().add(failureCooldown);
+  }
 
   /// The token, or `null` when the SDK has none within [maxWait].
   /// Never throws.
   Future<String?> token() {
+    if (_inFailureCooldown()) return Future.value(null);
     if (!_request.isInFlight) _requestStartedAt = _clock();
     final request = _request.run(_read);
     final left = maxWait - _clock().difference(_requestStartedAt!);
@@ -66,8 +100,14 @@ class AppCheckTokenSource {
     try {
       await activated;
       final token = await _fetchToken();
-      return token == null || token.isEmpty ? null : token;
+      if (token == null || token.isEmpty) {
+        _markFailure();
+        return null;
+      }
+      _failureCooldownUntil = null;
+      return token;
     } catch (_) {
+      _markFailure();
       return null;
     }
   }

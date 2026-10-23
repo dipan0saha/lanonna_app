@@ -8,6 +8,7 @@ import '../../features/account/data/account_repository.dart';
 import '../../features/onboarding/domain/onboarding_routes.dart';
 import '../../features/onboarding/presentation/app_session.dart';
 import '../theme/app_colors.dart';
+import '../time/monotonic_clock.dart';
 import 'auth_repository.dart';
 import 'biometric_app_lock_policy.dart';
 import 'biometric_unlock_service.dart';
@@ -20,11 +21,13 @@ class BiometricAppLock extends StatefulWidget {
     required this.router,
     required this.child,
     this.biometricService,
+    this.monotonicClock,
   });
 
   final GoRouter router;
   final Widget child;
   final BiometricUnlockService? biometricService;
+  final MonotonicClock? monotonicClock;
 
   @override
   State<BiometricAppLock> createState() => _BiometricAppLockState();
@@ -34,8 +37,13 @@ class _BiometricAppLockState extends State<BiometricAppLock>
     with WidgetsBindingObserver {
   late final BiometricUnlockService _biometricService =
       widget.biometricService ?? BiometricUnlockService();
+  late final MonotonicClock _monotonicClock =
+      widget.monotonicClock ?? SystemMonotonicClock();
   var _locked = false;
-  var _lockOnResume = false;
+
+  /// Monotonic time the app went to the background while a resume lock was
+  /// owed; null when resume must not lock.
+  Duration? _backgroundedAt;
   var _unlockInProgress = false;
   var _coldStartLockCompleted = false;
   AccountProfileUpdates? _profileUpdates;
@@ -121,11 +129,15 @@ class _BiometricAppLockState extends State<BiometricAppLock>
     switch (state) {
       case AppLifecycleState.paused:
         if (!_locked && !_unlockInProgress) {
-          _lockOnResume = _wouldEngageLock();
+          _backgroundedAt = _wouldEngageLock() ? _monotonicClock.elapsed : null;
         }
       case AppLifecycleState.resumed:
-        if (_lockOnResume) {
-          _lockOnResume = false;
+        final backgroundedAt = _backgroundedAt;
+        _backgroundedAt = null;
+        if (backgroundedAt != null &&
+            biometricAppLockShouldEngageOnResume(
+              timeInBackground: _monotonicClock.elapsed - backgroundedAt,
+            )) {
           _engageLock();
         }
       case AppLifecycleState.inactive:

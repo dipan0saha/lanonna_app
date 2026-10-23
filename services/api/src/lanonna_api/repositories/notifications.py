@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 from typing import Any
 
 from lanonna_api.db import get_connection
@@ -10,10 +11,18 @@ def list_notifications_for_user(
     firebase_uid: str,
     *,
     limit: int = 50,
-    offset: int = 0,
-    unread_only: bool = False,
+    after: tuple[datetime, uuid.UUID] | None = None,
 ) -> list[dict[str, Any]]:
-    clause = "AND read_at IS NULL" if unread_only else ""
+    """Newest-first inbox page (``created_at DESC, id DESC``).
+
+    ``after`` is the ``(created_at, id)`` of the last row of the previous page;
+    the row comparison matches ``idx_notifications_user_created_id``, so ties
+    on ``created_at`` page by ``id`` without skips or repeats.
+    """
+    cursor_clause = "AND (created_at, id) < (%(after_at)s, %(after_id)s)" if after else ""
+    params: dict[str, Any] = {"uid": firebase_uid, "limit": limit}
+    if after:
+        params["after_at"], params["after_id"] = after
     with get_connection() as conn:
         rows = conn.execute(
             f"""
@@ -22,12 +31,12 @@ def list_notifications_for_user(
                 notification_type, notification_kind, params,
                 actor_firebase_uid, actor_display_name
             FROM notifications
-            WHERE firebase_uid = %s
-            {clause}
+            WHERE firebase_uid = %(uid)s
+            {cursor_clause}
             ORDER BY created_at DESC, id DESC
-            LIMIT %s OFFSET %s
+            LIMIT %(limit)s
             """,
-            (firebase_uid, limit, offset),
+            params,
         ).fetchall()
     return [dict(row) for row in rows]
 

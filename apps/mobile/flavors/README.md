@@ -26,6 +26,8 @@ Release and profile builds read `API_BASE_URL` from this file. If the key is mis
 
 **Prod:** see [mobile-prod-flavor-and-crashlytics.md](../../../docs/engineering/mobile-prod-flavor-and-crashlytics.md). Prod release APKs require `android/key.properties`. Dev release APKs always use the debug keystore even if `key.properties` exists locally.
 
+**App Check:** `APP_ENV=dev` selects the Firebase **debug** provider (not Play Integrity). Optional `APP_CHECK_DEBUG_TOKEN` in `maestro/local.env` — see [app-check-dev-release-play-integrity.md](../../../docs/engineering/rca/app-check-dev-release-play-integrity.md).
+
 ```bash
 flutter build apk --release --target-platform android-arm64 --dart-define-from-file=flavors/prod.json
 ```

@@ -16,7 +16,11 @@ from lanonna_api.repositories.notifications import (
     mark_notification_read,
 )
 from lanonna_api.repositories.system_announcements import dismiss_announcement
-from lanonna_api.pagination import offset_page_from_extra_row
+from lanonna_api.pagination import (
+    cursor_page_from_extra_row,
+    decode_created_at_id_cursor,
+    encode_created_at_id_cursor,
+)
 from lanonna_api.schemas.device_tokens import DeviceTokenDeleteRequest, DeviceTokenUpsertRequest
 
 router = APIRouter(prefix="/v1/me", tags=["notifications"])
@@ -33,12 +37,26 @@ def unread_notification_count(
 def list_my_notifications(
     user: AppUser = Depends(current_app_user),
     limit: int = Query(default=50, ge=1, le=100),
-    offset: int = Query(default=0, ge=0),
+    cursor: str | None = Query(default=None),
 ) -> dict[str, Any]:
-    rows = list_notifications_for_user(
-        user.uid, limit=limit + 1, offset=offset
+    after = None
+    if cursor is not None:
+        try:
+            after = decode_created_at_id_cursor(cursor)
+        except ValueError:
+            raise api_error(
+                status.HTTP_400_BAD_REQUEST,
+                ErrorCode.INVALID_REQUEST,
+                "Invalid cursor",
+            ) from None
+    rows = list_notifications_for_user(user.uid, limit=limit + 1, after=after)
+    page = cursor_page_from_extra_row(
+        rows,
+        limit=limit,
+        cursor_for_row=lambda r: encode_created_at_id_cursor(
+            r["created_at"], r["id"]
+        ),
     )
-    page = offset_page_from_extra_row(rows, offset=offset, limit=limit)
     page["items"] = [
         {
             "id": str(r["id"]),

@@ -71,7 +71,8 @@ def _point_api_at_postgres(postgres_database: str):
         conn.execute(
             """
             TRUNCATE TABLE
-                app_users
+                app_users,
+                system_announcements
             RESTART IDENTITY CASCADE
             """
         )

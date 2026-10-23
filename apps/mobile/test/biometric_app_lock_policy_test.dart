@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanonna/config/app_config.dart';
 import 'package:lanonna/core/auth/biometric_app_lock_policy.dart';
 
 void main() {
@@ -47,6 +48,26 @@ void main() {
         biometricUnlockEnabled: false,
       ),
       isFalse,
+    );
+  });
+
+  test('resume engages only after the grace period', () {
+    const grace = biometricAppLockResumeGracePeriod;
+    expect(
+      biometricAppLockShouldEngageOnResume(
+        timeInBackground: grace - const Duration(seconds: 1),
+      ),
+      isFalse,
+    );
+    expect(
+      biometricAppLockShouldEngageOnResume(timeInBackground: grace),
+      isTrue,
+    );
+    expect(
+      biometricAppLockShouldEngageOnResume(
+        timeInBackground: grace + const Duration(seconds: 5),
+      ),
+      isTrue,
     );
   });
 }

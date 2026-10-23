@@ -25,7 +25,6 @@ import 'core/widgets/app_snackbar.dart';
 import 'features/account/data/notifications_repository.dart';
 import 'features/onboarding/domain/onboarding_routes.dart';
 import 'features/onboarding/domain/onboarding_step.dart';
-import 'features/onboarding/presentation/app_session.dart';
 import 'features/onboarding/presentation/onboarding_coordinator.dart';
 
 class LaNonnaApp extends StatefulWidget {
@@ -57,22 +56,12 @@ class _LaNonnaAppState extends State<LaNonnaApp> {
   void initState() {
     super.initState();
     _appLinkSub = watchAppLinkUris().listen(_onAppLinkUri);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _refreshOnboardingStatusIfSignedIn();
-    });
     final initialVerify = widget.initialEmailVerifyUri;
     if (initialVerify != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _handleEmailVerificationLink(initialVerify);
       });
     }
-  }
-
-  void _refreshOnboardingStatusIfSignedIn() {
-    if (!mounted) return;
-    final auth = context.read<AuthRepository>();
-    if (auth.currentUser == null) return;
-    unawaited(context.read<AppSession>().refreshFromApi());
   }
 
   void _onAppLinkUri(Uri uri) {

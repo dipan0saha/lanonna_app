@@ -49,6 +49,7 @@ class _CalendarScreenState extends State<CalendarScreen>
   var _monthRefreshing = false;
   String? _loadError;
   CalendarRepository? _calendarRepo;
+  var _loadGeneration = 0;
 
   @override
   void initState() {
@@ -77,6 +78,7 @@ class _CalendarScreenState extends State<CalendarScreen>
   void _onEventsChanged() => _load();
 
   Future<void> _load({DateTime? displayMonth, bool forceRefresh = false}) async {
+    final generation = ++_loadGeneration;
     final targetMonth = displayMonth ?? _visibleMonth;
     final isMonthNavigation = displayMonth != null &&
         (displayMonth.year != _visibleMonth.year ||
@@ -136,7 +138,7 @@ class _CalendarScreenState extends State<CalendarScreen>
         upcomingFromApi: upcomingApi,
         now: now,
       );
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _baby = baby;
         _visibleMonth = targetMonth;
@@ -147,7 +149,7 @@ class _CalendarScreenState extends State<CalendarScreen>
       });
       rememberTabLoadGeneration(store, baby);
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       final hadBaby = _baby != null;
       reportTabLoadFailure(
         context,

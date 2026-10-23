@@ -93,6 +93,12 @@ Document keystore creation in [apps/mobile/android/README.md](../../apps/mobile/
 4. Fill **`flavors/prod.json`** (API URL, invite host, Google Sign-In web client ID).
 5. Firebase console: enable **Crashlytics** for prod (and dev if desired). On **dev** release builds (`flavors/dev.json`), use **Settings → Send test crash (Crashlytics)** or a one-off build with `--dart-define=CRASHLYTICS_TEST_CRASH_ON_START=true` (crashes ~3s after launch; relaunch once to upload).
 6. Play Console / App Store signing and App Links verification with prod `assetlinks` / AASA (hosting deploy — separate infra PR).
+7. <a id="prod-app-check"></a>**App Check before `APP_CHECK_ENFORCE=true`** (prod uses Play Integrity / App Attest only; see [rca/app-check-dev-release-play-integrity.md](rca/app-check-dev-release-play-integrity.md)):
+   - Firebase Console → **lanonna-prod** → App Check → register the Android app with **Play Integrity**, and add the **upload key** and **Play app signing** certificate SHA-256 fingerprints (Play Console → Setup → App signing; `keytool -list -v` for the upload keystore).
+   - Link the Firebase Android app to the Google Play project (Play Integrity provider).
+   - Raise the App Check token TTL (e.g. 12–24 h) under App Check → Apps → Android → Settings, so cold starts reuse the stored token.
+   - iOS: register the prod bundle id with **App Attest** (DeviceCheck fallback per Firebase defaults).
+   - Deploy the API with `APP_CHECK_ENFORCE=true` ([`infra/env/prod.api.env`](../../infra/env/prod.api.env)) and smoke-test a build from Play internal testing.
 
 ## Build commands
 

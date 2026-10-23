@@ -389,13 +389,16 @@ class _Inbox extends NotificationsRepository {
   Future<int> unreadCount() async => 0;
 
   @override
-  Future<List<InboxNotification>> listInbox() async {
-    return [
-      InboxNotification(
-        id: 'n1',
-        title: 'New photo',
-        body: 'Alex added a photo',
-      ),
-    ];
+  Future<InboxListWindow> ensureInboxFirstPage({bool forceRefresh = false}) async {
+    return InboxListWindow(
+      items: [
+        InboxNotification(
+          id: 'n1',
+          title: 'New photo',
+          body: 'Alex added a photo',
+        ),
+      ],
+      hasMore: false,
+    );
   }
 }

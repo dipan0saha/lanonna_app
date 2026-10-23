@@ -27,7 +27,8 @@ class _ShellChromeSyncState extends State<ShellChromeSync>
   @override
   void initState() {
     super.initState();
-    unawaited(_sync());
+    // The cold-start prefetch may already have the unread count.
+    unawaited(_sync(unreadMaxAge: NotificationsRepository.unreadFreshFor));
     unawaited(_loadAccount());
   }
 
@@ -46,7 +47,7 @@ class _ShellChromeSyncState extends State<ShellChromeSync>
   @override
   void onBabyContextReload() => unawaited(_sync());
 
-  Future<void> _sync() async {
+  Future<void> _sync({Duration? unreadMaxAge}) async {
     final homeRepo = context.read<HomeRepository>();
     final store = context.read<SelectedBabyStore>();
     final notificationsRepo = context.read<NotificationsRepository>();
@@ -56,7 +57,7 @@ class _ShellChromeSyncState extends State<ShellChromeSync>
         (_) {},
         onError: (Object e) => debugPrint('shell_title_resolve_failed: $e'),
       ),
-      notificationsRepo.refreshUnreadCount().catchError(
+      notificationsRepo.refreshUnreadCount(maxAge: unreadMaxAge).catchError(
         (Object e) => debugPrint('shell_unread_refresh_failed: $e'),
       ),
     ]);
