@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date, timedelta
+from datetime import datetime, timedelta
 from typing import Any
 
+from lanonna_api.domain.date_validation import utc_today
 from lanonna_api.domain.errors import ErrorCode, InvalidInputError
 from lanonna_api.domain.membership import require_owner_baby
 from lanonna_api.domain.name_suggestions import (
@@ -32,16 +33,19 @@ from lanonna_api.repositories.users import (
 )
 
 
-def _anchor_date(baby: dict[str, Any]) -> date:
+def _first_moment_event_starts_at(baby: dict[str, Any], day_offset: int) -> datetime:
+    """Start of a seeded first-moment event (#403).
+
+    Born babies count forward from the birth date. Otherwise the anchor is the
+    due date (or 90 days out when unknown), expecting offsets count back from
+    it, and dates are clamped to no earlier than the UTC calendar day.
+    """
     lifecycle = baby.get("lifecycle_status") or "expecting"
-    if lifecycle == "born":
-        actual = baby.get("actual_birth_date")
-        if actual is not None:
-            return actual
-    expected = baby.get("expected_birth_date")
-    if expected is not None:
-        return expected
-    return date.today() + timedelta(days=90)
+    actual = baby.get("actual_birth_date")
+    if lifecycle == "born" and actual is not None:
+        return event_starts_at(actual, day_offset)
+    due = baby.get("expected_birth_date") or utc_today() + timedelta(days=90)
+    return event_starts_at_expecting(due, day_offset)
 
 
 def seed_expecting_profile_name_suggestions(
@@ -152,8 +156,6 @@ def seed_first_moment(
     name_suggestions: list[dict[str, str]],
 ) -> dict[str, int]:
     baby = require_owner_baby(firebase_uid, baby_profile_id)
-    anchor = _anchor_date(baby)
-    lifecycle = baby.get("lifecycle_status") or "expecting"
     events_created = 0
     registry_created = 0
     names_created = 0
@@ -162,15 +164,11 @@ def seed_first_moment(
         preset = event_preset(preset_id)
         if preset is None:
             continue
-        if lifecycle == "expecting":
-            starts = event_starts_at_expecting(anchor, preset.day_offset)
-        else:
-            starts = event_starts_at(anchor, preset.day_offset)
         insert_seed_event(
             baby_profile_id,
             firebase_uid,
             preset.label,
-            starts,
+            _first_moment_event_starts_at(baby, preset.day_offset),
             catalog_suggestion_id=preset.id,
         )
         events_created += 1

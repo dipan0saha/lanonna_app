@@ -129,11 +129,13 @@ class _NamesTabState extends State<NamesTab> {
 
   /// After a successful suggest (#397, #402).
   void _resetSuggestForm() {
-    setState(() => _validateSuggestOnInteraction = false);
-    resetControlledFormAfterSuccessfulSubmit(
-      formKey: _suggestFormKey,
-      controller: _input,
-    );
+    setState(() {
+      _validateSuggestOnInteraction = false;
+      resetControlledFormAfterSuccessfulSubmit(
+        formKey: _suggestFormKey,
+        controllers: [_input],
+      );
+    });
   }
 
   Future<void> _like(NameSuggestion s) async {

@@ -18,7 +18,7 @@ Expecting presets were defined with the **same positive offsets** as born preset
 | Baby Shower | Before due | −7 days |
 | Due Date | On due date | 0 |
 
-The mobile mirror in `first_moment_presets.dart` duplicated the same wrong offsets (display-only today; API is authoritative at seed time).
+The mobile `first_moment_presets.dart` duplicated the same wrong offsets, but nothing in the app read `dayOffset`: the app sends preset ids and the API computes dates.
 
 **Clamping:** When the due date is soon, raw offsets can land before today. Seeded onboarding events should not appear in the past; clamp each event date to `max(computed_date, today)` in the domain layer when seeding expecting presets.
 
@@ -41,7 +41,8 @@ Calendar AI availability (`event_suggestion_availability.dart`) hides catalog ro
 | `first_moment_presets.py` | Expecting `day_offset` values −14 / −7 / 0; `event_date_for_expecting_preset` clamps with `utc_today()`. |
 | `domain/onboarding.py` | Use clamped date helper when lifecycle is expecting; born path unchanged. |
 | `repositories/first_moment.py` | `insert_seed_event(..., catalog_suggestion_id=...)`. |
-| `first_moment_presets.dart` | Mirror expecting offsets for consistency. |
+| `first_moment_presets.dart` | Drop the unused `dayOffset` mirror. The API is the one source of truth for titles, dates and catalog ids; the app keeps ids only (`FirstMomentPreset`). `tests/test_first_moment_preset_parity.py` fails if app and API ids drift. |
+| `domain/onboarding.py` (review) | One `_first_moment_event_starts_at(baby, offset)` decides born vs expecting; the unknown-due-date fallback uses `utc_today()` too. |
 | `event_suggestion_availability.dart` | Title fallback dedupe for events missing `catalog_suggestion_id`. |
 
 ## Test plan
@@ -49,3 +50,13 @@ Calendar AI availability (`event_suggestion_availability.dart`) hides catalog ro
 - API `test_first_moment_presets.py` (new): expecting offsets and clamp when due date is near.
 - API `test_onboarding_domain.py`: extend `seed_first_moment` mocks to assert `starts_at` dates and `catalog_suggestion_id` for expecting presets.
 - Mobile `event_suggestion_availability_test.dart`: optional case — events with `catalogSuggestionId` from seed hide catalog rows (if not covered by API-only tests).
+
+## Dedupe layer decision (review)
+
+The calendar AI catalog (`assets/calendar/event_suggestions.json`) and its titles live in the app, and availability is already computed in the app (`availableEventSuggestions`), so the title fallback belongs there, not in the API. The API's job stays the hard rule: one event per `catalog_suggestion_id` per baby. Matching is exact after trim, lower-case and whitespace collapse, and only for events with no `catalog_suggestion_id`. That covers legacy seeds ("Gender Reveal" vs catalog "Gender reveal") and hand-typed identical titles, without fuzzy matching. No backfill.
+
+Known gaps, out of scope here:
+
+- Born preset `first_checkup` ("First Checkup") does not match catalog `first_pediatric_visit` by id or title.
+- Registry first-moment seeds (`swaddles`, `crib`, `diapers`) store no `catalog_suggestion_id`, and their titles differ from the registry catalog ("Crib & Mattress", …), so registry AI still offers them.
+- Born presets count forward from the birth date without clamping, so an older baby's seeded events can be in the past.

@@ -24,8 +24,12 @@ The domain already calls `find_name_suggestion_case_insensitive` and returns `du
 
 | Layer | Change |
 |-------|--------|
-| `core/validation/form_reset_after_submit.dart` | Shared helper to reset a controlled form field after success: disable deferred autovalidate, clear the controller, then `FormState.reset()` on the next frame so `initialValue` matches empty text without firing interaction validation. |
-| `names_tab.dart` | Use the helper in `_resetSuggestForm`. |
+| `core/validation/form_reset_after_submit.dart` | Shared `resetControlledFormAfterSuccessfulSubmit(formKey, controllers)`: `FormState.reset()` first (drops error text and interaction state), then `clear()` each controller (what actually empties the field, since `reset()` restores the stale `initialValue`). Synchronous: no post-frame callback, and it does not depend on the caller rebuilding the form before it runs. |
+| `names_tab.dart` | `_resetSuggestForm` turns deferred validation off and calls the helper in the same `setState`. |
+
+Review note: the first version of the helper cleared the controller and scheduled `reset()` on the next frame. That only worked if the caller had already rebuilt the form with the empty controller; otherwise the post-frame `reset()` put the name back. Reset-then-clear removes that ordering dependency.
+
+**Duplicate copy:** `runMutation` maps `duplicate_name_suggestion` to `errorDuplicateNameSuggestion` ("That name is already on the list.") in a snackbar; the typed text stays so the user can edit it.
 
 **Audit (add-and-clear):** Only `NamesTab` combines deferred `FormState` autovalidate, a persistent `TextEditingController`, and clear-after-success. Onboarding first-moment name ideas, comment composers, and announcement comments call `TextEditingController.clear()` without `FormState.reset()` (no #402 interaction). Full-form screens (login, registry item, shipping address) enable validation on submit but navigate away or keep the saved values—they do not clear a single inline add field.
 
@@ -33,5 +37,6 @@ Future add-and-clear **form** fields should use the same helper.
 
 ## Test plan
 
-- Mobile `names_tab_validation_reset_test.dart`: assert controller text is empty after successful suggest (existing test; fails on main, passes with fix).
+- Mobile `names_tab_validation_reset_test.dart`: the fake `suggestName` now waits on a `Completer` while the test pumps frames, like a real network call, so the form rebuilds with the typed name before success. The earlier version completed in a microtask with no frame in between and passed on `main` too; this one fails on `main` (`Actual: 'Ada'`) and passes with the fix.
+- Mobile `form_reset_after_submit_test.dart`: field is empty synchronously after the helper, with a stale non-empty `initialValue`.
 - No API change required for duplicates; existing `test_fun_domain.py` covers case-insensitive duplicate rejection.

@@ -22,11 +22,13 @@ class _HarnessState extends State<_Harness> {
   void enableValidation() => setState(() => _validateOnInteraction = true);
 
   void disableValidationAndReset() {
-    setState(() => _validateOnInteraction = false);
-    resetControlledFormAfterSuccessfulSubmit(
-      formKey: widget.formKey,
-      controller: widget.controller,
-    );
+    setState(() {
+      _validateOnInteraction = false;
+      resetControlledFormAfterSuccessfulSubmit(
+        formKey: widget.formKey,
+        controllers: [widget.controller],
+      );
+    });
   }
 
   @override
@@ -69,11 +71,15 @@ void main() {
     harnessKey.currentState!.enableValidation();
     await tester.pump();
 
+    // The rebuild above made 'Juniper' the field's initialValue, so a bare
+    // FormState.reset() would restore it.
     harnessKey.currentState!.disableValidationAndReset();
-    await tester.pump();
+    // Synchronous: no frame needed for the field to be empty.
+    expect(controller.text, isEmpty);
     await tester.pump();
 
     expect(controller.text, isEmpty);
+    expect(find.text('Juniper'), findsNothing);
     expect(find.text('Required'), findsNothing);
   });
 }
