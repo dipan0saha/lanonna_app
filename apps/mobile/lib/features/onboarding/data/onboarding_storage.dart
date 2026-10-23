@@ -25,6 +25,7 @@ abstract final class OnboardingStorageKeys {
   static const inviteOnboardingCompleted = 'invite_onboarding_completed';
   static const invitedBabyId = 'invited_baby_id';
   static const invitePreviewJson = 'invite_preview_json';
+  static const acceptRequestedInviteToken = 'invite_accept_requested_token';
   static const cachedOnboardingStatusPrefix = 'cached_onboarding_status_v1_';
 }
 
@@ -159,6 +160,7 @@ class OnboardingStorage {
       await _prefs.remove(OnboardingStorageKeys.step);
       await _prefs.remove(OnboardingStorageKeys.pendingInviteToken);
       await _prefs.remove(OnboardingStorageKeys.invitePreviewJson);
+      await _prefs.remove(OnboardingStorageKeys.acceptRequestedInviteToken);
     }
   }
 
@@ -204,6 +206,21 @@ class OnboardingStorage {
       await _prefs.remove(OnboardingStorageKeys.pendingInviteToken);
     } else {
       await _prefs.setString(OnboardingStorageKeys.pendingInviteToken, token);
+    }
+  }
+
+  /// Accept tapped before sign-in (#427). Must match [pendingInviteToken] to apply.
+  String? get acceptRequestedInviteToken =>
+      _prefs.getString(OnboardingStorageKeys.acceptRequestedInviteToken);
+
+  Future<void> saveAcceptRequestedInviteToken(String? token) async {
+    if (token == null || token.isEmpty) {
+      await _prefs.remove(OnboardingStorageKeys.acceptRequestedInviteToken);
+    } else {
+      await _prefs.setString(
+        OnboardingStorageKeys.acceptRequestedInviteToken,
+        token,
+      );
     }
   }
 

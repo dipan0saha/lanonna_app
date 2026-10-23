@@ -17,6 +17,7 @@ import 'package:lanonna/features/invitations/presentation/invite_flow_state.dart
 import 'package:lanonna/features/onboarding/data/models/onboarding_status.dart';
 import 'package:lanonna/features/onboarding/data/onboarding_repository.dart';
 import 'package:lanonna/features/onboarding/data/onboarding_storage.dart';
+import 'package:lanonna/features/onboarding/domain/onboarding_path.dart';
 import 'package:lanonna/features/onboarding/domain/onboarding_routes.dart';
 import 'package:lanonna/features/onboarding/presentation/app_session.dart';
 import 'package:lanonna/features/onboarding/presentation/onboarding_coordinator.dart';
@@ -132,8 +133,9 @@ _pumpLanding(
   required InvitationStatus status,
   required bool acceptRequested,
   bool isMember = false,
+  Map<String, Object>? initialPrefs,
 }) async {
-  SharedPreferences.setMockInitialValues({});
+  SharedPreferences.setMockInitialValues(initialPrefs ?? {});
   final prefs = await SharedPreferences.getInstance();
   final storage = OnboardingStorage(prefs);
   final repository = _FakeOnboardingRepository();
@@ -143,7 +145,7 @@ _pumpLanding(
   );
   await coordinator.hydrate();
   await coordinator.bindInviteFromPreview(_token, _preview(status));
-  if (acceptRequested) coordinator.requestAcceptAfterSignIn(_token);
+  if (acceptRequested) await coordinator.requestAcceptAfterSignIn(_token);
   final session = AppSession(
     repository: repository,
     storage: storage,
@@ -251,13 +253,33 @@ void main() {
         _preview(InvitationStatus.pending),
       );
 
-      coordinator.requestAcceptAfterSignIn('some-other-invite');
+      await coordinator.requestAcceptAfterSignIn('some-other-invite');
       expect(coordinator.acceptRequestedBeforeSignIn, isFalse);
 
-      coordinator.requestAcceptAfterSignIn(_token);
+      await coordinator.requestAcceptAfterSignIn(_token);
       expect(coordinator.acceptRequestedBeforeSignIn, isTrue);
       await coordinator.clearPendingInvite();
       expect(coordinator.acceptRequestedBeforeSignIn, isFalse);
+    },
+  );
+
+  testWidgets(
+    'cold start with persisted intent continues Accept for a member (#427)',
+    (tester) async {
+      final r = await _pumpLanding(
+        tester,
+        status: InvitationStatus.pending,
+        acceptRequested: false,
+        initialPrefs: {
+          OnboardingStorageKeys.pendingInviteToken: _token,
+          OnboardingStorageKeys.acceptRequestedInviteToken: _token,
+          OnboardingStorageKeys.onboardingPath:
+              OnboardingPath.follower.storageKey,
+        },
+      );
+
+      expect(r.invitations.acceptedTokens, [_token]);
+      expect(find.byKey(const Key('home')), findsOneWidget);
     },
   );
 }

@@ -69,7 +69,7 @@ class _OnboardingFollowerInviteScreenState
       });
       return;
     }
-    if (takeInviteAcceptRequestedBeforeSignIn(context)) {
+    if (await takeInviteAcceptRequestedBeforeSignIn(context)) {
       await _onPrimary(preview);
       if (mounted) setState(() => _loading = false);
       return;

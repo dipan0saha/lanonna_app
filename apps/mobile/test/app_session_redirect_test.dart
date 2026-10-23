@@ -575,7 +575,7 @@ void main() {
         await f.coordinator.hydrate();
         f.session.debugSetStatus(mainApp);
         expect(f.session.signedInResumeLocation(emailVerified: true), '/home');
-        f.coordinator.requestAcceptAfterSignIn('invite-token');
+        await f.coordinator.requestAcceptAfterSignIn('invite-token');
         expect(
           f.session.signedInResumeLocation(emailVerified: true),
           OnboardingRoutes.followerInvite,
@@ -588,8 +588,74 @@ void main() {
           ),
           isNull,
         );
+        expect(
+          f.session.redirectFor(
+            isSignedIn: true,
+            emailVerified: true,
+            location: '/home',
+          ),
+          OnboardingRoutes.followerInvite,
+        );
       },
     );
+
+    group('persisted accept intent survives process kill (#427)', () {
+      const followerMember = OnboardingStatus(
+        emailVerified: true,
+        profileComplete: true,
+        hasOwnerBaby: false,
+        hasBabyMembership: true,
+        ownerOnboardingCompleted: false,
+        needsOwnerOnboarding: false,
+        canAccessMainApp: true,
+      );
+
+      for (final (status, label) in [
+        (noBaby, 'no baby yet'),
+        (followerMember, 'already following another baby'),
+        (mainApp, 'owner of another baby'),
+      ]) {
+        test('cold start routes to invite landing ($label)', () async {
+          final f = await _fixtures(path: OnboardingPath.follower);
+          await f.storage.savePendingInviteToken('invite-token');
+          await f.storage.saveAcceptRequestedInviteToken('invite-token');
+          await f.coordinator.hydrate();
+          f.session.debugSetStatus(status);
+          expect(
+            f.session.signedInResumeLocation(emailVerified: true),
+            OnboardingRoutes.followerInvite,
+          );
+          expect(
+            f.session.redirectFor(
+              isSignedIn: true,
+              emailVerified: true,
+              location: '/home',
+            ),
+            OnboardingRoutes.followerInvite,
+          );
+        });
+      }
+
+      test('intent for a different token does not resume accept', () async {
+        final f = await _fixtures(path: OnboardingPath.follower);
+        await f.storage.savePendingInviteToken('invite-token');
+        await f.storage.saveAcceptRequestedInviteToken('other-token');
+        await f.coordinator.hydrate();
+        f.session.debugSetStatus(mainApp);
+        expect(f.coordinator.acceptRequestedBeforeSignIn, isFalse);
+        expect(f.session.signedInResumeLocation(emailVerified: true), '/home');
+      });
+
+      test('sign-out clears the persisted intent', () async {
+        final f = await _fixtures(path: OnboardingPath.follower);
+        await f.storage.savePendingInviteToken('invite-token');
+        await f.storage.saveAcceptRequestedInviteToken('invite-token');
+        await f.coordinator.hydrate();
+        await f.coordinator.clearLocalSessionForSignOut();
+        expect(f.storage.acceptRequestedInviteToken, isNull);
+        expect(f.coordinator.acceptRequestedBeforeSignIn, isFalse);
+      });
+    });
 
     test('stale invite path without a handoff -> create baby', () async {
       final f = await _fixtures(path: OnboardingPath.follower);

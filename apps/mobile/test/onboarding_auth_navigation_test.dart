@@ -197,7 +197,7 @@ void main() {
           repository: repository,
         );
         await coordinator.hydrate();
-        coordinator.requestAcceptAfterSignIn('invite-token-427');
+        await coordinator.requestAcceptAfterSignIn('invite-token-427');
         await coordinator.setStep(OnboardingStep.login);
         final session = AppSession(
           repository: repository,

@@ -325,6 +325,14 @@ class AppSession extends ChangeNotifier {
       return resume;
     }
 
+    // Accept-before-sign-in beats main-app access so a cold start at /home
+    // still returns to the invite landing (#427).
+    if (_coordinator.acceptRequestedBeforeSignIn) {
+      final landing = _inviteLandingPath();
+      if (path == landing) return null;
+      return landing;
+    }
+
     // An invite landing with nothing to land on (no token, no preview) is a
     // stale path, e.g. a follower who left or was removed (#408).
     if ((path == OnboardingRoutes.followerInvite ||

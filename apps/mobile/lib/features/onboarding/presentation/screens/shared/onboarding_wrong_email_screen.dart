@@ -52,7 +52,7 @@ class _OnboardingWrongEmailScreenState extends State<OnboardingWrongEmailScreen>
       path: resumePath,
       preview: preview,
     );
-    coordinator.requestAcceptAfterSignIn(resumeToken);
+    await coordinator.requestAcceptAfterSignIn(resumeToken);
     router.go(OnboardingRoutes.login);
   }
 
