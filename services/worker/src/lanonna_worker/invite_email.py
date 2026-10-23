@@ -12,6 +12,11 @@ from urllib.parse import quote
 import httpx
 
 from lanonna_worker.config import mailjet_sender_error, settings
+from lanonna_worker.mailjet_send import (
+    build_send_payload,
+    mailjet_message_error,
+    post_mailjet,
+)
 from lanonna_worker.db import get_connection
 from lanonna_worker.invite_email_copy import (
     invite_email_intro_html,
@@ -210,28 +215,6 @@ def _render_invite_email(ctx: dict, invite_url: str) -> tuple[str, str, str]:
     return subject, html, text
 
 
-def _mailjet_message_error(response: httpx.Response) -> str | None:
-    """Mailjet can return HTTP 200 with Messages[0].Status == error (#43)."""
-    try:
-        body = response.json()
-    except Exception:
-        return "Mailjet response was not JSON"
-    messages = body.get("Messages") if isinstance(body, dict) else None
-    if not isinstance(messages, list) or not messages or not isinstance(messages[0], dict):
-        return "Mailjet response missing Messages"
-    status = messages[0].get("Status")
-    if status == "success":
-        return None
-    codes: list[str] = []
-    errors = messages[0].get("Errors") or []
-    if isinstance(errors, list):
-        for err in errors:
-            if isinstance(err, dict) and err.get("ErrorCode"):
-                codes.append(str(err["ErrorCode"]))
-    code = ",".join(codes) if codes else "unknown"
-    return f"Mailjet message status={status} error_code={code}"
-
-
 def _is_transient_http_status(status_code: int) -> bool:
     return status_code == 429 or status_code >= 500
 
@@ -247,15 +230,6 @@ def _is_transient_exception(exc: BaseException) -> bool:
             httpx.PoolTimeout,
             httpx.NetworkError,
         ),
-    )
-
-
-def _post_mailjet(payload: dict[str, Any]) -> httpx.Response:
-    return httpx.post(
-        "https://api.mailjet.com/v3.1/send",
-        auth=(settings.mailjet_api_key, settings.mailjet_api_secret),
-        json=payload,
-        timeout=30.0,
     )
 
 
@@ -315,8 +289,8 @@ def send_invite_email(
     invite_url = build_invite_url(str(invite_token), ctx["role"])
     subject, html, text = _render_invite_email(ctx, invite_url)
 
-    payload = {
-        "Messages": [
+    payload = build_send_payload(
+        [
             {
                 "From": {
                     "Email": settings.mailjet_from_email,
@@ -328,10 +302,10 @@ def send_invite_email(
                 "TextPart": text,
             }
         ]
-    }
+    )
 
     try:
-        response = _post_mailjet(payload)
+        response = post_mailjet(payload)
     except Exception as exc:
         transient = _is_transient_exception(exc)
         message = f"{type(exc).__name__}: {exc}"
@@ -366,7 +340,7 @@ def send_invite_email(
             _mark_invite_email_failed(conn, invitation_id, message)
         return InviteSendOutcome.FAILED
 
-    message_error = _mailjet_message_error(response)
+    message_error = mailjet_message_error(response)
     if message_error:
         logger.error(
             "mailjet_send_failed invitation_id=%s %s",
