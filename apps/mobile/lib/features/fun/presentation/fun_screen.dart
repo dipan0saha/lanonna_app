@@ -55,7 +55,10 @@ class _FunScreenState extends State<FunScreen>
 
   Future<void> _loadBaby() async {
     final store = context.read<SelectedBabyStore>();
-    if (shouldShowTabLoadSpinner(store, hasDisplayedPayload: _baby != null)) {
+    if (shouldShowTabLoadSpinner(
+      store,
+      hasDisplayedPayload: hasCurrentTabPayload(store, _baby?.id),
+    )) {
       setState(() {
         _loading = true;
         _error = null;
@@ -73,11 +76,14 @@ class _FunScreenState extends State<FunScreen>
       rememberTabLoadGeneration(store, baby);
     } catch (e) {
       if (!mounted) return;
-      final hadBaby = _baby != null;
+      final hasPayload = hasCurrentTabPayload(store, _baby?.id);
+      if (!hasPayload) {
+        setState(() => _baby = null);
+      }
       reportTabLoadFailure(
         context,
         e,
-        hasPayload: hadBaby,
+        hasPayload: hasPayload,
         onBlockingError: (message) {
           setState(() {
             _loading = false;
@@ -85,17 +91,18 @@ class _FunScreenState extends State<FunScreen>
           });
         },
       );
-      if (hadBaby && mounted) {
+      if (hasPayload && mounted) {
         setState(() => _loading = false);
       }
     }
   }
 
   Widget _funBody() {
+    final store = context.read<SelectedBabyStore>();
     final kind = resolveTabLoadKind(
       loading: _loading,
       hasError: _error != null,
-      hasPayload: _baby != null,
+      hasPayload: hasCurrentTabPayload(store, _baby?.id),
     );
     switch (kind) {
       case TabLoadKind.loading:

@@ -140,7 +140,7 @@ void main() {
 
   testWidgets('keepsake share and edit are labeled', (tester) async {
     await _pump(tester, const AnnouncementCardScreen(babyId: 'baby-1'), [
-      Provider<AnnouncementRepository>.value(value: _Announcements()),
+      ChangeNotifierProvider<AnnouncementRepository>.value(value: _Announcements()),
     ]);
 
     expect(find.byTooltip('Share announcement'), findsOneWidget);
@@ -193,7 +193,7 @@ void main() {
           ChangeNotifierProvider<ConnectivityService>.value(
             value: ConnectivityService.forTesting(),
           ),
-          Provider<RegistryRepository>.value(value: _Registry()),
+          ChangeNotifierProvider<RegistryRepository>.value(value: _Registry()),
           Provider<AuthRepository>.value(value: _Auth()),
           ChangeNotifierProvider<NotificationsRepository>.value(
             value: _Inbox(),

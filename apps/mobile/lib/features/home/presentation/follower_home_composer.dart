@@ -107,6 +107,8 @@ class FollowerHomeComposer extends StatelessWidget {
             welcome: s!.birthWelcome!,
             babyId: baby.id,
             showShareToInstagram: false,
+            showViewAnnouncement:
+                s.birthWelcome!.announcementId != null,
           ),
         HomeScrollSection(
           title: l10n.labelQuickActions,
