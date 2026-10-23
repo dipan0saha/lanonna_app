@@ -40,8 +40,10 @@ class _BiometricAppLockState extends State<BiometricAppLock>
   late final MonotonicClock _monotonicClock =
       widget.monotonicClock ?? SystemMonotonicClock();
   var _locked = false;
-  var _lockOnResume = false;
-  Duration? _backgroundEnteredAt;
+
+  /// Monotonic time the app went to the background while a resume lock was
+  /// owed; null when resume must not lock.
+  Duration? _backgroundedAt;
   var _unlockInProgress = false;
   var _coldStartLockCompleted = false;
   AccountProfileUpdates? _profileUpdates;
@@ -127,24 +129,16 @@ class _BiometricAppLockState extends State<BiometricAppLock>
     switch (state) {
       case AppLifecycleState.paused:
         if (!_locked && !_unlockInProgress) {
-          if (_wouldEngageLock()) {
-            _backgroundEnteredAt = _monotonicClock.elapsed;
-            _lockOnResume = true;
-          }
+          _backgroundedAt = _wouldEngageLock() ? _monotonicClock.elapsed : null;
         }
       case AppLifecycleState.resumed:
-        if (_lockOnResume) {
-          _lockOnResume = false;
-          final enteredAt = _backgroundEnteredAt;
-          _backgroundEnteredAt = null;
-          final inBackground = enteredAt == null
-              ? Duration.zero
-              : _monotonicClock.elapsed - enteredAt;
-          if (biometricAppLockShouldEngageOnResume(
-            timeInBackground: inBackground,
-          )) {
-            _engageLock();
-          }
+        final backgroundedAt = _backgroundedAt;
+        _backgroundedAt = null;
+        if (backgroundedAt != null &&
+            biometricAppLockShouldEngageOnResume(
+              timeInBackground: _monotonicClock.elapsed - backgroundedAt,
+            )) {
+          _engageLock();
         }
       case AppLifecycleState.inactive:
       case AppLifecycleState.hidden:

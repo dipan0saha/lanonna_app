@@ -13,10 +13,10 @@ bool biometricAppLockShouldEngage({
       biometricUnlockEnabled;
 }
 
-/// Whether resume should show the lock after time spent in the background.
+/// Whether resume should show the lock after time spent in the background
+/// (measured on a clock that counts device sleep; see `MonotonicClock`).
 bool biometricAppLockShouldEngageOnResume({
   required Duration timeInBackground,
-  Duration gracePeriod = biometricAppLockResumeGracePeriod,
 }) {
-  return timeInBackground >= gracePeriod;
+  return timeInBackground >= biometricAppLockResumeGracePeriod;
 }
