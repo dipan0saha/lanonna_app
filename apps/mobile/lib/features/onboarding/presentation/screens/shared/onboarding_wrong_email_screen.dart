@@ -68,18 +68,23 @@ class _OnboardingWrongEmailScreenState extends State<OnboardingWrongEmailScreen>
             label: l10n.wrongEmailSwitchAccount,
             onPressed: () async {
               final flow = context.read<InviteFlowState>();
-              flow.setLoginPrefillEmail(mismatch.inviteeEmail);
-              if (token != null && token.isNotEmpty) {
-                flow.setInviteResume(token: token, path: coordinator.onboardingPath);
-              }
+              final inviteeEmail = mismatch.inviteeEmail;
+              final resumeToken = token?.trim();
+              final resumePath = coordinator.onboardingPath;
               await context.read<SessionCleanup>().clearLocalUserData();
               if (!context.mounted) return;
               await context.read<AuthRepository>().signOut();
-              if (token == null || token.isEmpty) {
-                if (context.mounted) context.go(OnboardingRoutes.ownerCarousel);
+              if (!context.mounted) return;
+              flow.setLoginPrefillEmail(inviteeEmail);
+              flow.setSignupPrefillEmail(inviteeEmail);
+              if (resumeToken != null && resumeToken.isNotEmpty) {
+                flow.setInviteResume(token: resumeToken, path: resumePath);
+              }
+              if (resumeToken == null || resumeToken.isEmpty) {
+                context.go(OnboardingRoutes.ownerCarousel);
                 return;
               }
-              if (context.mounted) context.go(OnboardingRoutes.login);
+              context.go(OnboardingRoutes.login);
             },
           ),
           const SizedBox(height: 12),
