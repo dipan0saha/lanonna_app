@@ -104,12 +104,6 @@ class _GalleryScreenState extends State<GalleryScreen>
     GalleryViewMode.favorites => 'favorites',
   };
 
-  String get _pageTitle => switch (widget.mode) {
-    GalleryViewMode.all => l10n.notificationChannelGallery,
-    GalleryViewMode.recent => l10n.labelRecentPhotos,
-    GalleryViewMode.favorites => l10n.galleryFavorites,
-  };
-
   String get _sectionLabel => switch (widget.mode) {
     GalleryViewMode.all => l10n.galleryAllPhotos,
     GalleryViewMode.recent => l10n.galleryRecentActivity,
@@ -352,12 +346,14 @@ class _GalleryScreenState extends State<GalleryScreen>
                   AppMetrics.horizontalPadding,
                   10,
                 ),
-                child: Text(_pageTitle, style: headline),
+                // One tab title; the selector below names the view (#393).
+                child: Text(l10n.notificationChannelGallery, style: headline),
               ),
             ),
-            SliverToBoxAdapter(
-              child: GalleryViewModeSelector(selected: widget.mode),
-            ),
+            if (kind == TabLoadKind.loading || _baby != null)
+              SliverToBoxAdapter(
+                child: GalleryViewModeSelector(selected: widget.mode),
+              ),
             if (kind == TabLoadKind.loading)
               const SliverFillRemaining(
                 child: Center(child: CircularProgressIndicator()),
