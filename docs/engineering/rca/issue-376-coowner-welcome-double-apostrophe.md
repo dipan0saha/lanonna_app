@@ -26,13 +26,18 @@ Enabling `use-escaping: true` globally would require auditing every ARB string f
 
 No other locale ARB files in the repo.
 
-## Fix direction
+## Fix
 
 | Layer | Change |
 |-------|--------|
 | `app_en.arb` | `{babyName}'s` (single apostrophe in JSON string) |
-| `app_localizations_en.dart` | Regenerated output aligned with ARB (CI runs gen-l10n on Mac) |
-| Tests | Unit/widget assertion that co-owner body contains `Luna's` not `Luna''s` |
+| `lib/l10n/` generated files | Regenerated with `flutter gen-l10n` (the first push hand-edited `app_localizations_en.dart` and left the doc comment in `app_localizations.dart` stale) |
+| CI (`.github/workflows/ci.yml`) | Mobile job runs `flutter gen-l10n` and fails on any diff under `lib/l10n/`, so generated code can no longer drift from the ARB |
+| Tests | `invite_coowner_access_body_l10n_test.dart`: co-owner body contains `Luna's`; no ARB message contains ICU-style `''` |
+
+### ARB audit
+
+No other value contains `''`; no `\u`/HTML-entity escapes; all other possessives use a single `'`. There is one locale (`en`).
 
 Do **not** enable `use-escaping` in this change set unless all ARBs are migrated.
 
