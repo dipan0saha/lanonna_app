@@ -222,7 +222,7 @@ class HomeRepository {
     } catch (e) {
       final cached = _summaryByBaby[babyId];
       if (cached != null && _shouldServeStaleSummary(e)) {
-        return HomeSummaryLoaded(cached);
+        return HomeSummaryLoaded(cached, refreshError: e);
       }
       return HomeSummaryFailed(e);
     }

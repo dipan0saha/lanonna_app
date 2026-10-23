@@ -5,6 +5,7 @@ import '../theme/app_metrics.dart';
 import '../theme/la_nonna_theme.dart';
 import 'ai_suggestion_list_card.dart';
 import 'app_chip.dart';
+import 'app_refresh_indicator.dart';
 import '../../l10n/app_localizations.dart';
 
 export 'ai_suggestion_list_card.dart'
@@ -64,7 +65,7 @@ class AiSuggestionsScaffold extends StatelessWidget {
           Expanded(
             child: loading
                 ? const Center(child: CircularProgressIndicator())
-                : RefreshIndicator(
+                : AppRefreshIndicator(
                     onRefresh: onRefresh,
                     child: items.isEmpty
                         ? ListView(

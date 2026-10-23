@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/presentation/tab_load_failure.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/data/selected_baby_store.dart';
 import '../../home/presentation/baby_context_reload.dart';
 import '../data/calendar_repository.dart';
 import '../domain/calendar_event_lists.dart';
 import 'widgets/calendar_today_upcoming_sections.dart';
+import '../../../core/widgets/app_refresh_indicator.dart';
 import '../../../l10n/app_localizations.dart';
 
 class CalendarUpcomingScreen extends StatefulWidget {
@@ -65,6 +67,7 @@ class _CalendarUpcomingScreenState extends State<CalendarUpcomingScreen>
     try {
       final homeRepo = context.read<HomeRepository>();
       final baby = await homeRepo.resolveSelectedBaby(store);
+      if (!mounted) return;
       if (baby == null) {
         setState(() {
           _buckets = const CalendarEventBuckets(today: [], upcoming: []);
@@ -74,7 +77,6 @@ class _CalendarUpcomingScreenState extends State<CalendarUpcomingScreen>
         cachedSelectionGeneration = -1;
         return;
       }
-      if (!mounted) return;
       final calRepo = context.read<CalendarRepository>();
       final now = DateTime.now();
       final currentKey = calendarMonthKey(now);
@@ -86,16 +88,28 @@ class _CalendarUpcomingScreenState extends State<CalendarUpcomingScreen>
         upcomingFromApi: upcomingApi,
         now: now,
       );
+      if (!mounted) return;
       setState(() {
         _buckets = buckets;
         _loading = false;
+        _error = null;
       });
       rememberTabLoadGeneration(store, baby);
     } catch (e) {
-      setState(() {
-        _loading = false;
-        _error = AppLocalizations.of(context)!.calendarCouldNotLoadEventsPull;
-      });
+      if (!mounted) return;
+      // Events already on screen stay; a failed refresh is a snackbar (#421).
+      final hasPayload = hasCurrentTabPayload(store, cachedLoadedBabyId);
+      reportTabLoadFailure(
+        context,
+        e,
+        hasPayload: hasPayload,
+        onBlockingError: (_) => setState(() {
+          _buckets = const CalendarEventBuckets(today: [], upcoming: []);
+          _loading = false;
+          _error = AppLocalizations.of(context)!.calendarCouldNotLoadEventsPull;
+        }),
+      );
+      if (hasPayload) setState(() => _loading = false);
     }
   }
 
@@ -104,7 +118,7 @@ class _CalendarUpcomingScreenState extends State<CalendarUpcomingScreen>
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(title: Text(AppLocalizations.of(context)!.calendarUpcomingTitle)),
-      body: RefreshIndicator(
+      body: AppRefreshIndicator(
         onRefresh: _load,
         child: _loading
             ? ListView(

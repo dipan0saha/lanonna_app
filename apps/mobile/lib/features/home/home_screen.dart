@@ -115,6 +115,9 @@ class _HomeScreenState extends State<HomeScreen>
       // list instead of after it; it is used only if the list confirms that
       // baby.
       final storedBabyId = store.selectedBabyId;
+      // No max age means the user asked for fresh data (pull-to-refresh,
+      // baby switch), so serving the cache after a failure must be reported.
+      final explicitRefresh = summaryMaxAge == null;
       final early = storedBabyId == null
           ? null
           : repository.fetchHomeSummary(
@@ -154,6 +157,10 @@ class _HomeScreenState extends State<HomeScreen>
         switch (result) {
           case HomeSummaryLoaded loaded:
             summary = loaded.summary;
+            final refreshError = loaded.refreshError;
+            if (explicitRefresh && refreshError != null && mounted) {
+              reportRefreshFailure(context, refreshError);
+            }
           case HomeSummaryFailed failed:
             summaryError = apiErrorMessage(AppLocalizations.of(context)!, failed.error);
         }

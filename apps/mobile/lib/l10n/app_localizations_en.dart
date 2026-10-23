@@ -22,6 +22,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsHelpSupport => 'Help & support';
 
   @override
+  String get settingsSupportEmailSubject => 'La Nonna support';
+
+  @override
   String get settingsSendTestCrash => 'Send test crash (Crashlytics)';
 
   @override
@@ -466,9 +469,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get batchInviteCoOwnerHintManage =>
       '💡 Selecting \"Mother\" or \"Father\" makes that person a co-owner of this baby profile, with the same edit access as you.';
-
-  @override
-  String get batchInviteNoInvitesToSend => 'No invites to send.';
 
   @override
   String get batchInviteAddEmailToSend =>

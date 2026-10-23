@@ -31,6 +31,7 @@ step "Flutter analyze + test"
   cd apps/mobile
   flutter pub get
   bash scripts/check-no-material-chips.sh
+  bash scripts/check-no-raw-refresh-indicator.sh
   flutter analyze
   flutter test
 )

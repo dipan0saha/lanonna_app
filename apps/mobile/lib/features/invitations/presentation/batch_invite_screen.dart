@@ -89,6 +89,12 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
   var _synced = false;
   var _busy = false;
   String? _error;
+  final _formKey = GlobalKey<FormState>();
+  var _validateOnInteraction = false;
+
+  AutovalidateMode get _autovalidateMode => _validateOnInteraction
+      ? AutovalidateMode.onUserInteraction
+      : AutovalidateMode.disabled;
 
   bool get _isOnboarding => widget.mode == BatchInviteMode.onboarding;
 
@@ -198,13 +204,24 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
     }
   }
 
+  bool _rowIsBlank(_InviteRowState row) {
+    return row.nameController.text.trim().isEmpty &&
+        row.emailController.text.trim().isEmpty;
+  }
+
+  /// A row the user left empty is ignored; any other row needs a valid email,
+  /// so a typo is never dropped silently (#422).
+  String? _validateRowEmail(_InviteRowState row) {
+    if (_rowIsBlank(row)) return null;
+    return validateEmail(l10n, row.emailController.text);
+  }
+
   List<Map<String, dynamic>> _collectInvitesToSend() {
     final invites = <Map<String, dynamic>>[];
     for (final row in _rows) {
-      final email = row.emailController.text.trim();
-      if (email.isEmpty) continue;
-      if (validateEmail(AppLocalizations.of(context)!, email) != null) continue;
+      if (_rowIsBlank(row)) continue;
       if (row.membershipHint != null) continue;
+      final email = row.emailController.text.trim();
       invites.add({
         'email': email,
         'role': row.showOwnerBadge ? 'owner' : 'follower',
@@ -214,27 +231,11 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
     return invites;
   }
 
-  String? _validateBeforeSend(AppLocalizations l10n) {
-    var sawEmail = false;
-    var sawInvalid = false;
-    for (final row in _rows) {
-      final email = row.emailController.text.trim();
-      if (email.isEmpty) continue;
-      sawEmail = true;
-      if (validateEmail(AppLocalizations.of(context)!, email) != null) {
-        sawInvalid = true;
-        continue;
-      }
-      if (row.membershipHint != null) continue;
-      return null;
-    }
-    if (!sawEmail) {
-      return l10n.batchInviteAddEmailToSend;
-    }
-    if (sawInvalid) {
-      return l10n.batchInviteInvalidEmails;
-    }
-    return l10n.batchInviteNoNewInvites;
+  /// Why there is nothing to send once every row is valid.
+  String _nothingToSendMessage() {
+    return _rows.every(_rowIsBlank)
+        ? l10n.batchInviteAddEmailToSend
+        : l10n.batchInviteNoNewInvites;
   }
 
   Future<void> _finish({required bool sendInvites}) async {
@@ -256,12 +257,15 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
     });
     try {
       if (sendInvites) {
-        final validationError = _validateBeforeSend(l10n);
-        final invites = _collectInvitesToSend();
-        if (invites.isEmpty) {
-          setState(
-            () => _error = validationError ?? l10n.batchInviteNoInvitesToSend,
-          );
+        if (_formKey.currentState?.validate() != true) {
+          setState(() {
+            _validateOnInteraction = true;
+            _error = l10n.batchInviteInvalidEmails;
+          });
+          return;
+        }
+        if (_collectInvitesToSend().isEmpty) {
+          setState(() => _error = _nothingToSendMessage());
           return;
         }
       }
@@ -319,7 +323,9 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
   }
 
   Widget _inviteRows() {
-    return Column(
+    return Form(
+      key: _formKey,
+      child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (var i = 0; i < _rows.length; i++)
@@ -335,6 +341,8 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
               _persistDraft();
             },
             onRemove: _rows.length > 1 ? () => _removeRow(i) : null,
+            emailValidator: (_) => _validateRowEmail(_rows[i]),
+            autovalidateMode: _autovalidateMode,
             onFieldChanged: _persistDraft,
             onEmailEditingComplete: () => _checkMembershipForRow(i),
           ),
@@ -380,6 +388,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
           ),
         const SizedBox(height: 20),
       ],
+      ),
     );
   }
 

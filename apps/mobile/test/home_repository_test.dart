@@ -110,6 +110,16 @@ void main() {
     api.failRequests = true;
     final offline = await repo.fetchHomeSummary('baby-1');
     expect(offline, isA<HomeSummaryLoaded>());
+    final loaded = offline as HomeSummaryLoaded;
+    expect(loaded.summary.lifecycle, BabyLifecycle.expecting);
+    // The cache is served, but the caller is told the request failed (#421).
+    expect(loaded.refreshError, isA<SocketException>());
+  });
+
+  test('fetchHomeSummary success carries no refresh error', () async {
+    final repo = HomeRepository(_FlakySummaryApi());
+    final result = await repo.fetchHomeSummary('baby-1');
+    expect((result as HomeSummaryLoaded).refreshError, isNull);
   });
 
   test('summary cache survives switching to another baby', () async {

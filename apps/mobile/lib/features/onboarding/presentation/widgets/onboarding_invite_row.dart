@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/input/app_text_input_kind.dart';
 import '../../../../core/widgets/app_icon_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../../core/widgets/app_text_form_field.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
 import '../../../../core/domain/relationship_preset.dart';
@@ -19,6 +20,8 @@ class OnboardingInviteRow extends StatelessWidget {
     this.onFieldChanged,
     this.onEmailEditingComplete,
     this.membershipHint,
+    this.emailValidator,
+    this.autovalidateMode,
     this.relationshipOptions = RelationshipPreset.onboardingOptions,
   });
 
@@ -31,6 +34,9 @@ class OnboardingInviteRow extends StatelessWidget {
   final VoidCallback? onFieldChanged;
   final VoidCallback? onEmailEditingComplete;
   final String? membershipHint;
+  /// Runs inside the parent [Form] (the app's shared validation pattern).
+  final FormFieldValidator<String>? emailValidator;
+  final AutovalidateMode? autovalidateMode;
   final List<RelationshipPreset> relationshipOptions;
 
   @override
@@ -91,10 +97,11 @@ class OnboardingInviteRow extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          AppTextField(
-            kind: AppTextInputKind.none,
+          AppTextFormField(
             controller: emailController,
             keyboardType: TextInputType.emailAddress,
+            validator: emailValidator,
+            autovalidateMode: autovalidateMode,
             onChanged: (_) => onFieldChanged?.call(),
             onEditingComplete: onEmailEditingComplete,
             decoration: InputDecoration(
