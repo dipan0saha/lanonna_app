@@ -25,7 +25,9 @@ class _TrackingApi extends ApiClient {
   var versionDelay = Duration.zero;
   var authorizedDelay = Duration.zero;
 
-  void _mark(String key) {
+  void _mark(String path) {
+    if (offline) throw Exception('offline');
+    final key = path.split('?').first;
     calls[key] = (calls[key] ?? 0) + 1;
     startedAt.putIfAbsent(key, () => DateTime.now().microsecondsSinceEpoch);
   }
@@ -58,7 +60,7 @@ class _TrackingApi extends ApiClient {
         'can_access_main_app': true,
       };
     }
-    if (path == '/v1/babies') {
+    if (path.startsWith('/v1/babies?')) {
       return {
         'items': [
           {

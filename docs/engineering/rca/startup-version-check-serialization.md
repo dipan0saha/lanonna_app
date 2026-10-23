@@ -10,7 +10,7 @@ On a signed-in Android cold launch against dev, API logs show **`GET /v1/app/ver
 |-------|------|-------------------|
 | Entry | [`main.dart`](../../apps/mobile/lib/main.dart) | Firebase + parallel `bootstrapLaNonnaApp` + App Check activation; no HTTP yet. |
 | Graph | [`bootstrap.dart`](../../apps/mobile/lib/bootstrap.dart) | Builds `ApiClient`, repos, `AppSession`; `appCheck.prefetch()` when signed in; **no network** before `runApp` (by design since #241). |
-| First frame | [`app.dart`](../../apps/mobile/lib/app.dart) | Post-frame `AppSession.refreshFromApi()` for signed-in users. |
+| First frame | [`app.dart`](../../apps/mobile/lib/app.dart) | Post-frame `AppSession.refreshFromApi()` for signed-in users (removed by this fix). |
 | Version | [`app_version_gate.dart`](../../apps/mobile/lib/core/version/app_version_gate.dart) | **`didChangeDependencies`** started `PackageInfo` + `getJsonPublic('/v1/app/version')` — historically the **only** request kicked off during the first `MaterialApp` build. |
 | Router | [`app_router.dart`](../../apps/mobile/lib/core/router/app_router.dart) | `redirectFor` can send `/home` immediately when cached onboarding status exists; does **not** await version. |
 | Session | [`app_session.dart`](../../apps/mobile/lib/features/onboarding/presentation/app_session.dart) | `refreshFromApi` → `GET /v1/onboarding/status`; was **not** started until after first frame (#241 deferral). |
@@ -35,10 +35,9 @@ So the ~0.8 s is primarily **version wall time plus deferred scheduling of signe
 
 ## Fix (architecture)
 
-- **`AppVersionService`** — single-flight version check started in **`bootstrapLaNonnaApp`** for every launch (same semantics as the gate; gate only renders the block UI).
-- **`startSignedInStartupPrefetch`** — when `currentUser != null`, start **onboarding status, account, unread, baby resolve, and speculative home-summary** from bootstrap **in parallel with** the version check.
-- **`AppSession.refreshFromApi`** — `SingleFlight` so bootstrap + post-frame + UI retries share **one** status request.
-- Repository-level single-flights (baby list, account, unread) unchanged — **no duplicate requests** when shell/home call the same methods again.
+- **`AppVersionService`** — the version check runs **once per process** (a latch, not a re-running single-flight), started in **`bootstrapLaNonnaApp`** for every launch. `AppVersionGate` only watches it and renders the block; it never starts a check (re-starting from the gate looped `/v1/app/version` whenever the block notified).
+- **`startSignedInStartupPrefetch`** — when `currentUser != null`, start **onboarding status, account, unread, baby resolve, and speculative home-summary** from bootstrap **in parallel with** the version check. It is the **only cold-start owner** of `AppSession.refreshFromApi` (the old post-frame refresh in `LaNonnaApp` is gone). `refreshFromApi` is deliberately **not** single-flight: callers after a mutation must not join a request that started before it.
+- **No duplicate reads when the UI mounts:** account and baby list are cached single-flights; `ShellChromeSync` reads the unread count with `NotificationsRepository.unreadFreshFor` and `HomeScreen`'s first load reads the summary with `HomeRepository.summaryFreshFor`; speculative home-summary reads share one in-flight request per baby (non-speculative, post-mutation reads never join).
 
 **Semantics preserved**
 
