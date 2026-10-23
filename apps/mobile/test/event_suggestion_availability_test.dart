@@ -30,4 +30,58 @@ void main() {
 
     expect(available.map((s) => s.id), ['gender_reveal']);
   });
+
+  test('availableEventSuggestions excludes seeded first-moment gender reveal', () {
+    final catalog = [
+      EventSuggestion(
+        id: 'baby_shower',
+        title: 'Baby shower',
+        description: 'Celebrate',
+      ),
+      EventSuggestion(
+        id: 'gender_reveal',
+        title: 'Gender reveal',
+        description: 'Share news',
+      ),
+    ];
+    final events = [
+      CalendarEvent(
+        id: '1',
+        title: 'Gender Reveal',
+        startsAt: DateTime.utc(2027, 1, 6),
+        catalogSuggestionId: 'gender_reveal',
+      ),
+    ];
+
+    final available = availableEventSuggestions(catalog, events);
+
+    expect(available.map((s) => s.id), ['baby_shower']);
+  });
+
+  test('availableEventSuggestions hides catalog row when event title matches without id',
+      () {
+    final catalog = [
+      EventSuggestion(
+        id: 'gender_reveal',
+        title: 'Gender reveal',
+        description: 'Share news',
+      ),
+      EventSuggestion(
+        id: 'baby_shower',
+        title: 'Baby shower',
+        description: 'Celebrate',
+      ),
+    ];
+    final events = [
+      CalendarEvent(
+        id: '1',
+        title: 'Gender Reveal',
+        startsAt: DateTime.utc(2027, 1, 6),
+      ),
+    ];
+
+    final available = availableEventSuggestions(catalog, events);
+
+    expect(available.map((s) => s.id), ['baby_shower']);
+  });
 }
