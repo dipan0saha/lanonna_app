@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lanonna/l10n/app_localizations.dart';
 
 import '../../data/models/home_summary.dart';
+import '../../domain/home_composition.dart';
 import 'home_activity_feed.dart';
 import 'home_owner_sections.dart';
 import 'home_system_announcements_section.dart';
@@ -49,7 +50,7 @@ class HomePrdSections extends StatelessWidget {
             teasers: teasers,
             onSignedUrlError: onTeaserSignedUrlError ?? onRefresh,
             includeUpcomingEvents:
-                summary.nextUpEvent == null || summary.nextUpEvent!.id.isEmpty,
+                HomeComposition.includeUpcomingEventsTeaser(summary),
           ),
         if (isOwner) ...[
           HomeNewFollowersSection(
