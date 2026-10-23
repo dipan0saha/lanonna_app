@@ -39,3 +39,20 @@ Policy rules ([`biometric_app_lock_policy.dart`](../../apps/mobile/lib/core/auth
 3. Kill the app → relaunch → lock on cold start before using the app.
 4. From the lock overlay, **Sign out** → owner carousel / login; **Sign in with biometrics** still works.
 5. On `/onboarding/login` or with the toggle off, no lock on resume or cold start.
+
+## Related code (resume grace period, 2026-10)
+
+**Symptom:** With the lock working again (PR #346), every return from background triggered the overlay—even a quick app switch under a few seconds—because resume locking armed on `AppLifecycleState.paused` and engaged unconditionally on `resumed`.
+
+**Layers involved:**
+
+| Layer | Role |
+| --- | --- |
+| [`biometric_app_lock.dart`](../../apps/mobile/lib/core/auth/biometric_app_lock.dart) | Lifecycle: records monotonic time at `paused`, compares on `resumed`, calls `_engageLock()` only when grace elapsed. Cold start via `_tryColdStartLock()` unchanged. |
+| [`biometric_app_lock_policy.dart`](../../apps/mobile/lib/core/auth/biometric_app_lock_policy.dart) | Pure rules: `biometricAppLockShouldEngage` (who may lock) and `biometricAppLockShouldEngageOnResume` (background duration vs grace). |
+| [`app_config.dart`](../../apps/mobile/lib/config/app_config.dart) | Single constant [`biometricAppLockResumeGracePeriod`](../../apps/mobile/lib/config/app_config.dart) (30 s). |
+| [`monotonic_clock.dart`](../../apps/mobile/lib/core/time/monotonic_clock.dart) | `SystemMonotonicClock` (`Stopwatch`) for production; injectable `FakeMonotonicClock` in tests. |
+
+**Invariants preserved:** No lock during onboarding or when the flag is off; no lock immediately after unlock (`inactive` / prompt paths); profile save does not engage; cold start and process kill always lock when policy allows; sign-out from overlay unchanged.
+
+**Fix:** On `resumed`, engage only if `biometricAppLockShouldEngageOnResume(timeInBackground: …)` is true (monotonic elapsed since `paused`). Shorter background stays unlocked; longer background or cold start locks as before.
