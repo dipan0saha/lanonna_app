@@ -37,6 +37,7 @@ class _OnboardingWrongEmailScreenState extends State<OnboardingWrongEmailScreen>
   }) async {
     _redirected = true;
     final flow = context.read<InviteFlowState>();
+    final coordinator = context.read<OnboardingCoordinator>();
     final session = context.read<AuthSessionService>();
     final router = GoRouter.of(context);
     await session.signOut();
@@ -51,6 +52,7 @@ class _OnboardingWrongEmailScreenState extends State<OnboardingWrongEmailScreen>
       path: resumePath,
       preview: preview,
     );
+    coordinator.requestAcceptAfterSignIn(resumeToken);
     router.go(OnboardingRoutes.login);
   }
 

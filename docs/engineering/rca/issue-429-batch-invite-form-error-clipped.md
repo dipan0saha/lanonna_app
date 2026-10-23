@@ -18,8 +18,8 @@ On owner onboarding **Invite family & friends**, tapping **Send Invites** with a
 
 | Layer | Change |
 |-------|--------|
-| `BatchInviteScreen` | Show form-level `_error` immediately below **Send Invites** (above Skip). Remove the redundant inner `SingleChildScrollView` in onboarding mode. On validation failure, scroll to the first invalid row. |
-| `OnboardingScaffold` | Add bottom padding to the scroll view (`viewPadding.bottom` + fixed spacing) so onboarding content clears the gesture bar app-wide. |
+| `BatchInviteScreen` | Show form-level `_error` immediately below **Send Invites** (above Skip). Remove the redundant inner `SingleChildScrollView` in onboarding mode. On validation failure, scroll to the first invalid row via a `GlobalKey` owned by each row's state (no parallel index-based key list). |
+| `OnboardingScaffold` | Add a fixed 16 px bottom padding to the scroll view for every onboarding screen. The body is already inside `SafeArea`, so adding `viewPadding.bottom` here would double-pad; no screen adds its own system inset. |
 | Tests | `batch_invite_validation_test.dart`: onboarding mode shows the summary above Skip and scrolls the invalid row into view (widget test with bounded viewport). |
 
 ## References

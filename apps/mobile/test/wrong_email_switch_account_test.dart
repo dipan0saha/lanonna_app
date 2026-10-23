@@ -162,6 +162,8 @@ void main() {
       findsOneWidget,
     );
     expect(coordinator.pendingInviteToken, 'handoff-token');
+    // Signing in with the right account continues the Accept (#427).
+    expect(coordinator.acceptRequestedBeforeSignIn, isTrue);
     expect(coordinator.isInvitePath, isTrue);
     expect(coordinator.cachedInvitePreview?.babyName, 'Liam');
     expect(coordinator.cachedInvitePreview?.relationshipLabel, 'Grandma');

@@ -43,6 +43,9 @@ class _InviteRowState {
 
   final TextEditingController nameController;
   final TextEditingController emailController;
+
+  /// Identifies this row's widget, so a failed send can scroll to it (#429).
+  final GlobalKey rowKey = GlobalKey();
   RelationshipPreset relationship;
   InviteMembershipHint? membershipHint;
 
@@ -90,7 +93,6 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
   var _busy = false;
   String? _error;
   final _formKey = GlobalKey<FormState>();
-  final _rowAnchorKeys = <GlobalKey>[];
   var _validateOnInteraction = false;
 
   AutovalidateMode get _autovalidateMode => _validateOnInteraction
@@ -161,26 +163,16 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
         if (_rows.isEmpty) {
           _rows.add(_InviteRowState());
         }
-        _ensureRowAnchorKeys();
         setState(() {});
       }
     });
-  }
-
-  void _ensureRowAnchorKeys() {
-    while (_rowAnchorKeys.length < _rows.length) {
-      _rowAnchorKeys.add(GlobalKey());
-    }
-    while (_rowAnchorKeys.length > _rows.length) {
-      _rowAnchorKeys.removeLast();
-    }
   }
 
   void _scrollToFirstInvalidRow() {
     if (!mounted) return;
     for (var i = 0; i < _rows.length; i++) {
       if (_validateRowEmail(_rows[i]) != null) {
-        final rowContext = _rowAnchorKeys[i].currentContext;
+        final rowContext = _rows[i].rowKey.currentContext;
         if (rowContext != null) {
           Scrollable.ensureVisible(
             rowContext,
@@ -195,10 +187,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
   }
 
   void _addRow() {
-    setState(() {
-      _rows.add(_InviteRowState());
-      _ensureRowAnchorKeys();
-    });
+    setState(() => _rows.add(_InviteRowState()));
     _persistDraft();
   }
 
@@ -207,7 +196,6 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
     setState(() {
       _rows[index].dispose();
       _rows.removeAt(index);
-      _ensureRowAnchorKeys();
     });
     _persistDraft();
   }
@@ -359,7 +347,6 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
   }
 
   Widget _inviteRows() {
-    _ensureRowAnchorKeys();
     return Form(
       key: _formKey,
       child: Column(
@@ -367,7 +354,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
       children: [
         for (var i = 0; i < _rows.length; i++)
           OnboardingInviteRow(
-            key: _rowAnchorKeys[i],
+            key: _rows[i].rowKey,
             nameController: _rows[i].nameController,
             emailController: _rows[i].emailController,
             relationship: _rows[i].relationship,
