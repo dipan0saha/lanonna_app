@@ -26,14 +26,14 @@ There is no push/event channel for per-invite delivery; the list must **poll** w
 
 | Layer | Change |
 |-------|--------|
-| **API** | `GET …/invitations` returns `can_resend_email`, computed in SQL from server truth: pending invite, no `email_sent_at`, and delivery not `pending` — or `pending` for longer than `INVITE_EMAIL_STUCK_MINUTES` (15, the worker's `_CLAIM_STALE_MINUTES` reclaim window, so a crashed send becomes resendable). A parity test keeps the two constants equal. |
+| **API** | `GET …/invitations` returns `can_resend_email`, computed in SQL from server truth: pending invite, no `email_sent_at`, and delivery `failed` — or `pending` for longer than `INVITE_EMAIL_STUCK_MINUTES` (15, the worker's `_CLAIM_STALE_MINUTES` reclaim window, so a crashed send becomes resendable). A parity test keeps the two constants equal. |
 | **Mobile model** | `InvitationRow.canResendEmail` reads the server flag; there is no client copy of the rule (`invite_email_delivery.dart` deleted). `emailDeliveryInFlight` = pending send the server will not let you resend yet. |
 | **Manage followers** | Loads are serialized (a reload requested mid-load runs once after it). While any row is in flight, a one-shot 2 s timer reloads; at most 30 polls per in-flight window, then it waits for the next manual refresh. Resend always reloads afterwards, including on 409 `invite_already_delivered`. |
 | **Copy** | `errorInviteAlreadyDelivered` gives the next step (revoke and re-invite). |
 
 ## Tests
 
-- `test_invite_resend_state_postgres.py`: `can_resend_email` for failed, queued, in-flight, stuck, sent and revoked invites.
+- `test_invite_resend_state_postgres.py`: `can_resend_email` for failed, in-flight, stuck, sent and revoked invites.
 - `test_invite_email_stuck_parity.py`: API stuck window equals the worker reclaim window.
 - `test_list_envelopes.py`: router passes the server flag through.
 - `invitation_row_test.dart`: flag from JSON; in-flight detection.

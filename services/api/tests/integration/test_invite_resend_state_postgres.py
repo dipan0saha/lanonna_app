@@ -32,7 +32,7 @@ def _invite(
     tag: str,
     *,
     status: str = "pending",
-    delivery: str | None,
+    delivery: str,
     sent: bool = False,
     idle: str = "0 minutes",
 ) -> uuid.UUID:
@@ -69,7 +69,6 @@ def test_resend_offered_only_when_no_email_is_on_its_way():
         _invite(baby, "sending", delivery="pending"): False,
         _invite(baby, "stuck", delivery="pending", idle="20 minutes"): True,
         _invite(baby, "failed", delivery="failed"): True,
-        _invite(baby, "never", delivery=None): True,
         _invite(baby, "sent", delivery="sent", sent=True): False,
         _invite(baby, "revoked", status="revoked", delivery="failed"): False,
     }

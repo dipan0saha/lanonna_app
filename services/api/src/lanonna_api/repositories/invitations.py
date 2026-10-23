@@ -51,8 +51,8 @@ def list_invitations_for_baby(
     """Newest first; ``status`` filters in SQL so paging stays in SQL.
 
     ``can_resend_email`` is the owner's Resend action (#410): a pending invite
-    whose email was never sent and is not being sent right now (failed, never
-    attempted, or stuck in ``pending``). The app shows it as is.
+    whose email was never sent and is not being sent right now (``failed``,
+    or ``pending`` past the worker's reclaim window). The app shows it as is.
     """
     paging, paging_params = limit_offset_clause(limit, offset)
     status_clause = "AND status = %s" if status is not None else ""
@@ -67,7 +67,7 @@ def list_invitations_for_baby(
                        status = 'pending'
                        AND email_sent_at IS NULL
                        AND (
-                           email_delivery_status IS DISTINCT FROM 'pending'
+                           email_delivery_status <> 'pending'
                            OR updated_at < now() - make_interval(mins => %s)
                        )
                    ) AS can_resend_email
