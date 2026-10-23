@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:lanonna/features/account/domain/data_export_status.dart';
 import 'package:lanonna/features/invitations/domain/invitation_status.dart';
-import 'package:lanonna/features/invitations/domain/invite_email_delivery.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exception.dart';
@@ -180,6 +179,7 @@ class InvitationRow {
     this.relationshipLabel,
     this.emailDeliveryStatus,
     this.emailSentAt,
+    this.canResendEmail = false,
   });
 
   final String id;
@@ -189,8 +189,16 @@ class InvitationRow {
   final InviteEmailDeliveryStatus? emailDeliveryStatus;
   final String? emailSentAt;
 
-  /// Mirrors the API resend rule (`invite_email_delivery.dart`).
-  bool get canResendEmail => invitationCanResendEmail(this);
+  /// Server-computed (`can_resend_email`, #410): the email was never sent and
+  /// is not being sent now (failed, never tried, or stuck). Shown as is.
+  final bool canResendEmail;
+
+  /// The worker is sending the email now; the list refreshes until it settles.
+  bool get emailDeliveryInFlight =>
+      status == InvitationStatus.pending &&
+      emailSentAt == null &&
+      emailDeliveryStatus == InviteEmailDeliveryStatus.pending &&
+      !canResendEmail;
 
   factory InvitationRow.fromJson(Map<String, dynamic> json) {
     return InvitationRow(
@@ -202,6 +210,7 @@ class InvitationRow {
         json['email_delivery_status'] as String?,
       ),
       emailSentAt: json['email_sent_at'] as String?,
+      canResendEmail: json['can_resend_email'] == true,
     );
   }
 }

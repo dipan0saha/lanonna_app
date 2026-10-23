@@ -326,6 +326,7 @@ def test_cover_id_is_not_a_gallery_item(baby_and_owner: uuid.UUID):
 
 
 def test_cover_counts_for_storage_but_not_home_checklist(baby_and_owner: uuid.UUID):
+    from lanonna_api.domain.birthdate_vote_window import UNBOUNDED_BIRTHDATE_WINDOW
     from lanonna_api.repositories.home_counts import home_summary_counts
     from lanonna_api.repositories.user_engagement import (
         storage_usage_for_owner_babies,
@@ -333,7 +334,10 @@ def test_cover_counts_for_storage_but_not_home_checklist(baby_and_owner: uuid.UU
 
     baby_id = baby_and_owner
     _ready_photo(baby_id, PhotoPurpose.EVENT_COVER)
-    assert home_summary_counts(baby_id)["has_photo"] is False
+    counts = home_summary_counts(
+        baby_id, birthdate_window=UNBOUNDED_BIRTHDATE_WINDOW
+    )
+    assert counts["has_photo"] is False
     assert storage_usage_for_owner_babies("owner-uid")["used_bytes"] == 500
 
 

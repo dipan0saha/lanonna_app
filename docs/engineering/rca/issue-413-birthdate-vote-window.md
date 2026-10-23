@@ -18,22 +18,24 @@ FR-GAM-002 does not specify a window; product needs a bounded, due-centric range
 
 ## Decision (valid window)
 
-For an **expecting** baby with due date **D** (fallback when missing: today + 90 days, same as onboarding anchor):
+For an **expecting** baby with due date **D**:
 
-- **Earliest:** `max(utc_today(), D − 42 days)` — no past guesses for an unborn baby; up to six weeks before due.
-- **Latest:** `D + 42 days` — six weeks after due for late arrivals.
+- **Open window** (what a vote may be saved as): `max(utc_today(), D − 42)` … `D + 42` — no past guesses for an unborn baby; six weeks either side of due. If today is already past `D + 42`, the window is today only, so an overdue baby can still be guessed.
+- **No due date:** `utc_today()` … `utc_today() + 294` (40 weeks + 2).
+- **Shown window** (what counts in Popular Dates and the home top guess): `D ± 42` with **no** today clamp, so a fair guess does not disappear just because its day has passed. Votes outside it (legacy rows saved before this fix) stay in the DB but are never counted.
 
-Votes outside the window are rejected with **422** and code `birthdate_vote_out_of_range`. **Histograms and home “top guess”** omit out-of-range stored votes (legacy bad rows stay in DB but are not shown).
+Out-of-range writes are rejected with **400** `birthdate_vote_out_of_range` — the same status as every other invalid input.
 
 ## Fix
 
 | Layer | Change |
 |-------|--------|
-| **API** | `domain/birthdate_vote_window.py` — single source for bounds + validation; `UnprocessableEntityError` (422). `get_predictions` returns `birthdate_vote_min` / `birthdate_vote_max` and filters histogram. Home payload filters top guess. |
-| **Mobile** | `birthdate_prediction.dart` uses server bounds from predictions payload for picker `firstDate`/`lastDate`. |
+| **API** | `domain/birthdate_vote_window.py` is the one source: open window, shown window, validation. `get_predictions` returns `birthdate_vote_min` / `birthdate_vote_max` (open window). Popular Dates (`repositories/fun.py`) and the home top guess (`repositories/home_counts.py`) filter in SQL through `repositories/birthdate_votes.py`. |
+| **Mobile** | Picker bounds come only from `birthdate_vote_min` / `birthdate_vote_max` (no client copy of the rule). The picker opens on the pending pick, saved guess or due date moved into that window, so an old saved guess cannot crash `showDatePicker`. |
 
 ## Tests
 
-- `test_birthdate_vote_window.py`: bounds math, 422 on out-of-range, histogram filter.
-- `test_fun_predictions_http.py`: HTTP 422 for 2099.
-- `birthdate_prediction_test.dart`, `predictions_tab_birthdate_test.dart`: picker bounds from payload.
+- `test_birthdate_vote_window.py`: bounds math, overdue and no-due cases, 400 on out-of-range.
+- `test_fun_predictions.py`, `test_fun_predictions_http.py`: payload bounds, histogram uses the shown window, HTTP 400 for 2099.
+- `test_birthdate_vote_window_postgres.py`: out-of-window votes never count; a guess whose day has passed still counts.
+- `birthdate_prediction_test.dart`, `predictions_tab_birthdate_test.dart`: window from the payload; picker initial date clamped into it.

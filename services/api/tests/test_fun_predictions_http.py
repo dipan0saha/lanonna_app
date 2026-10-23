@@ -62,7 +62,7 @@ def test_put_birthdate_vote_when_born_returns_409():
     upsert.assert_not_called()
 
 
-def test_put_birthdate_vote_out_of_range_returns_422():
+def test_put_birthdate_vote_out_of_range_returns_400():
     with (
         _auth_as(),
         patch(
@@ -79,7 +79,7 @@ def test_put_birthdate_vote_out_of_range_returns_422():
             f"/v1/babies/{_BABY}/fun/predictions/birthdate",
             json={"predicted_birth_date": "2099-12-31"},
         )
-    assert response.status_code == 422
+    assert response.status_code == 400
     assert response.json()["detail"]["error"] == "birthdate_vote_out_of_range"
     upsert.assert_not_called()
 

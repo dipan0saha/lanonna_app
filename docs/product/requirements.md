@@ -426,7 +426,7 @@ La Nonna stores domain data in **Cloud SQL**. Migrations live under `infra/db/`;
 | `name_suggestions` | Name ideas | Yes |
 | `name_suggestion_likes` | Likes on names | Yes |
 | `notifications` | In-app alerts | Yes |
-| `notification_preferences` | Digest + push/email toggles on `app_users` | Yes |
+| `notification_preferences` | Digest frequency + push toggle on `app_users` (weekly digest is push-only) | Yes |
 | `device_tokens` | FCM registration per device | Yes |
 | `activity_events` | Full-stream activity recap on home (chronological events) | Yes |
 | `app_versions` | Force-update config | Yes |

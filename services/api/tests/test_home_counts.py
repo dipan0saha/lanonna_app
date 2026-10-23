@@ -2,6 +2,7 @@ import re
 import uuid
 from unittest.mock import MagicMock, patch
 
+from lanonna_api.domain.birthdate_vote_window import UNBOUNDED_BIRTHDATE_WINDOW
 from lanonna_api.repositories.home_counts import home_summary_counts
 
 
@@ -10,7 +11,9 @@ def _run_counts() -> tuple[str, MagicMock]:
     mock_conn.execute.return_value.fetchone.return_value = {"vote_count": 2}
     with patch("lanonna_api.repositories.home_counts.get_connection") as get_conn:
         get_conn.return_value.__enter__.return_value = mock_conn
-        result = home_summary_counts(uuid.uuid4())
+        result = home_summary_counts(
+            uuid.uuid4(), birthdate_window=UNBOUNDED_BIRTHDATE_WINDOW
+        )
     assert result == {"vote_count": 2}
     return mock_conn.execute.call_args[0][0], mock_conn
 

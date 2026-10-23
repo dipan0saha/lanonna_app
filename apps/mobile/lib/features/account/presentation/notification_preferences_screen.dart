@@ -163,6 +163,7 @@ class _NotificationPreferencesScreenState
         color: selected ? AppColors.primaryDark : AppColors.muted,
       ),
       title: Text(value.label(AppLocalizations.of(context)!)),
+      subtitle: Text(value.summaryLabel(AppLocalizations.of(context)!)),
       onTap: () => setState(() => _prefs = prefs.copyWith(digest: value)),
     );
   }

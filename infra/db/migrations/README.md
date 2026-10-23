@@ -52,6 +52,8 @@ Apply in **lexicographic order** (filename prefix):
 | `044_drop_baby_profiles_deleted_at.sql` | Drops `baby_profiles.deleted_at` (unused after 043). **Apply after** deploying the API and worker that no longer read it |
 | `045_notifications_inbox_keyset_index.sql` | Inbox keyset index `(firebase_uid, created_at DESC, id DESC)` for `GET /v1/me/notifications?cursor=`; drops the superseded `idx_notifications_user_created` prefix index. Safe before or after the API deploy |
 | `046_tombstoned_personal_user_data.sql` | For already-tombstoned accounts: deletes their inbox and others' inbox rows about them, device tokens, biometric credentials, banner dismissals; clears remaining profile PII; re-renders feed summaries that named them (#364). 5 s `lock_timeout`; idempotent. Safe before or after the API deploy |
+| `047_first_moment_catalog_ids_backfill.sql` | Links first-moment seeds made before #412 to catalog rows: events `first_checkup` → `first_pediatric_visit`; registry rows named `Swaddles` / `Crib` / `Diapers` with no catalog id → `swaddle_blankets` / `crib_mattress` / `diaper_stockpile` (one per baby, skips babies that already have the id; titles kept). Idempotent; safe before or after the API deploy |
+| `048_drop_app_users_email_digest_enabled.sql` | Drops `app_users.email_digest_enabled` (weekly digest is push-only, #411). **Apply after** deploying the API that no longer reads it |
 
 ## Apply (dev)
 
@@ -66,7 +68,7 @@ cd infra/db
 DB_PASSWORD="$PGPASSWORD" python apply_migrations.py
 ```
 
-`apply_migrations.py` runs every `*.sql` in lexicographic order and **skips** files whose version stem is already in `schema_migrations` (DDL in files remains idempotent for manual re-run). Confirm with `./scripts/verify-migrations.sh` from the repo root (46 files as of `046_tombstoned_personal_user_data`; apply `044` only after the API and worker deploy).
+`apply_migrations.py` runs every `*.sql` in lexicographic order and **skips** files whose version stem is already in `schema_migrations` (DDL in files remains idempotent for manual re-run). Confirm with `./scripts/verify-migrations.sh` from the repo root (48 files as of `048_drop_app_users_email_digest_enabled`; apply `044` and `048` only after the API and worker deploy).
 
 **Manual:** `psql -h 127.0.0.1 -U lanonna_app -d lanonna -f infra/db/migrations/00N_….sql` for each file in order.
 

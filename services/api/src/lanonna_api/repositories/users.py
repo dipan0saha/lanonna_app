@@ -12,7 +12,6 @@ _PROFILE_COLUMNS = """
     phone, birth_date, country_code, postal_code, terms_accepted_at,
     owner_onboarding_completed_at,
     notification_digest, push_notifications_enabled,
-    email_digest_enabled,
     notify_gallery_enabled, notify_calendar_enabled,
     notify_registry_enabled, notify_comments_enabled,
     biometric_unlock_enabled,

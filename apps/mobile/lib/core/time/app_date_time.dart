@@ -98,8 +98,12 @@ DateTime? tryParseApiCalendarDate(String? raw) {
   return DateTime.tryParse(trimmed);
 }
 
+/// The local calendar day of [date] (what a date picker compares). API dates
+/// parse as UTC midnight, so compare days through this, never instants.
+DateTime calendarDay(DateTime date) => DateTime(date.year, date.month, date.day);
+
 String formatApiCalendarDateFromParts(DateTime date, [String? localeName]) {
-  final calendar = DateTime(date.year, date.month, date.day);
+  final calendar = calendarDay(date);
   return DateFormat.yMMMMd(localeName).format(calendar);
 }
 

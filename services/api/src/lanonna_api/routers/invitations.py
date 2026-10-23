@@ -46,6 +46,7 @@ def _invitation_json(r: dict[str, Any]) -> dict[str, Any]:
         "email_last_error": r.get("email_last_error"),
         "email_send_attempts": r.get("email_send_attempts"),
         "email_sent_at": _iso(r.get("email_sent_at")),
+        "can_resend_email": bool(r.get("can_resend_email")),
     }
 
 

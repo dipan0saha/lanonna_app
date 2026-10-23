@@ -86,16 +86,37 @@ void main() {
     );
   });
 
-  test('picker bounds prefer server ISO window', () {
-    final first = birthdatePickerFirstDate(
+  test('guess window comes only from the server', () {
+    final window = birthdateGuessWindow(
       voteMinIso: '2026-12-04',
-      dueDate: DateTime(2027, 1, 15),
-    );
-    final last = birthdatePickerLastDate(
       voteMaxIso: '2027-02-26',
-      dueDate: DateTime(2027, 1, 15),
+    )!;
+    expect(window.first, DateTime(2026, 12, 4));
+    expect(window.last, DateTime(2027, 2, 26));
+    expect(birthdateGuessWindow(voteMinIso: null, voteMaxIso: '2027-02-26'), isNull);
+    expect(
+      birthdateGuessWindow(voteMinIso: '2027-03-01', voteMaxIso: '2027-02-26'),
+      isNull,
     );
-    expect(first, DateTime(2026, 12, 4));
-    expect(last, DateTime(2027, 2, 26));
+  });
+
+  test('picker opens inside the window even for an old saved guess', () {
+    final window = (first: DateTime(2026, 12, 4), last: DateTime(2027, 2, 26));
+    expect(
+      birthdatePickerInitialDate(window: window, savedVoteIso: '2026-11-01'),
+      DateTime(2026, 12, 4),
+    );
+    expect(
+      birthdatePickerInitialDate(window: window, savedVoteIso: '2099-12-31'),
+      DateTime(2027, 2, 26),
+    );
+    expect(
+      birthdatePickerInitialDate(window: window, dueDate: DateTime(2027, 1, 15)),
+      DateTime(2027, 1, 15),
+    );
+    expect(
+      birthdatePickerInitialDate(window: window, now: DateTime(2026, 10, 23, 15)),
+      DateTime(2026, 12, 4),
+    );
   });
 }

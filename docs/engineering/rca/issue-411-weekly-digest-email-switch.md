@@ -20,8 +20,8 @@ The mobile screen and ARB strings were written as if a weekly **email** existed.
 
 **Do not build a weekly email digest.** Align UI and API with requirements:
 
-- Remove the dead **email digest** switch and stop accepting `email_digest_enabled` on notification-preferences PATCH (DB column left in place; unused).
-- Relabel digest summaries: weekly → **push** summary; daily → **in-app** summary (not email).
+- Remove the dead **email digest** switch and stop accepting `email_digest_enabled` on notification-preferences PATCH; migration `048` drops the column.
+- Relabel digest options: weekly → **Weekly push summary**; daily → **In-app only** / “Inbox only, no push”; real-time → “A push for each update”. Each option shows its summary as the subtitle, and onboarding copy says the same.
 - Scope copy: notification preferences apply to **your account** across all babies you follow (not “for {babyName}”).
 
 Weekly delivery still requires `notification_digest = weekly` and `push_notifications_enabled` (unchanged worker behavior).
@@ -31,10 +31,13 @@ Weekly delivery still requires `notification_digest = weekly` and `push_notifica
 | Layer | Change |
 |-------|--------|
 | **Mobile** | Remove email switch from `notification_preferences_screen.dart`; update ARB intro/frequency titles and digest summary strings. |
-| **API** | Drop `email_digest_enabled` from notification-preferences GET/PATCH payload and `update_notification_preferences`. |
+| **API** | Drop `email_digest_enabled` from notification-preferences GET/PATCH payload, `update_notification_preferences` and the profile column list. |
+| **DB** | `048_drop_app_users_email_digest_enabled.sql` (contract step; apply after the API deploy). |
+| **Docs** | `requirements.md` data table: digest frequency + push toggle only. |
 | **Tests** | Update preference schema/router tests; mobile model test without email flag. |
 
 ## Tests
 
 - `test_notification_preferences_schema.py`, `test_profile_router.py`: no `email_digest_enabled` in contract.
 - `notification_preferences_model_test.dart`: parsing without email field.
+- `domain_value_labels_test.dart`, `account_edit_profile_test.dart`: push / in-app summary labels.

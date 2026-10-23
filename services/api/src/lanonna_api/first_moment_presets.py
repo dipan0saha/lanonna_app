@@ -17,10 +17,9 @@ class EventPreset:
 class RegistryPreset:
     id: str
     label: str
+    # Catalog row this seed stands for (registry_suggestions.json), so registry
+    # AI stops offering it; None for presets with no catalog row (#412).
     catalog_suggestion_id: str | None
-
-    def resolved_catalog_suggestion_id(self) -> str | None:
-        return self.catalog_suggestion_id
 
 
 EXPECTING_EVENTS: tuple[EventPreset, ...] = (
@@ -46,9 +45,9 @@ BORN_EVENTS: tuple[EventPreset, ...] = (
 )
 
 BORN_REGISTRY: tuple[RegistryPreset, ...] = (
-    RegistryPreset("diaper_pail", "Diaper Pail", "diaper_pail"),
+    RegistryPreset("diaper_stockpile", "Diapers (newborn)", "diaper_stockpile"),
     RegistryPreset("onesies", "Onesies", None),
-    RegistryPreset("bottle_sterilizer", "Bottle Sterilizer", "bottle_sterilizer"),
+    RegistryPreset("bottles", "Bottles", None),
 )
 
 _EVENT_MAP: dict[str, EventPreset] = {

@@ -646,13 +646,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notificationPrefsPushSubtitle => 'Get alerts on your phone';
 
   @override
-  String get notificationPrefsDigestTitle => 'Weekly email digest';
-
-  @override
-  String get notificationPrefsDigestSubtitle =>
-      'Photos, events and registry updates';
-
-  @override
   String get actionEdit => 'Edit';
 
   @override
@@ -985,7 +978,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get labelBirthdateGuesses => 'Birthdate guesses';
 
   @override
-  String get presetBottleSterilizer => 'Bottle Sterilizer';
+  String get presetBottles => 'Bottles';
 
   @override
   String get labelBoyGirl2 => 'Boy or Girl?';
@@ -1044,9 +1037,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get eventDetailsHeading => 'Details';
-
-  @override
-  String get presetDiaperPail => 'Diaper Pail';
 
   @override
   String get presetDiaperStockpile => 'Diapers (newborn)';
@@ -1639,16 +1629,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get digestRealtime => 'Real-time';
 
   @override
-  String get digestDaily => 'Daily digest';
+  String get digestDaily => 'In-app only';
 
   @override
   String get digestWeekly => 'Weekly digest';
 
   @override
-  String get digestSummaryRealtime => 'Real-time updates';
+  String get digestSummaryRealtime => 'A push for each update';
 
   @override
-  String get digestSummaryDaily => 'Daily in-app summary';
+  String get digestSummaryDaily => 'Inbox only, no push';
 
   @override
   String get digestSummaryWeekly => 'Weekly push summary';
@@ -2113,7 +2103,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingChooseHowOftenYouHear =>
-      'Choose how often you hear from us: real-time, daily, or a weekly digest. You can change this anytime.';
+      'Choose how often you hear from us: real-time push, in-app only, or a weekly push summary. You can change this anytime.';
 
   @override
   String get onboardingFollowerGetStarted => 'Get Started';

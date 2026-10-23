@@ -4,7 +4,10 @@ from unittest.mock import patch
 
 import pytest
 
-from lanonna_api.domain.birthdate_vote_window import birthdate_vote_bounds
+from lanonna_api.domain.birthdate_vote_window import (
+    birthdate_vote_open_window,
+    birthdate_vote_shown_window,
+)
 from lanonna_api.domain.fun import get_predictions, set_birthdate_vote, set_gender_vote
 from lanonna_api.domain.fun_closed import PredictionsClosedError
 
@@ -26,7 +29,10 @@ def test_set_birthdate_vote_always_identified():
     d = date(2026, 10, 15)
     with patch(
         "lanonna_api.domain.fun.require_membership",
-        return_value={"role": "follower"},
+        return_value={"role": "follower", "expected_birth_date": date(2026, 10, 20)},
+    ), patch(
+        "lanonna_api.domain.birthdate_vote_window.utc_today",
+        return_value=date(2026, 10, 1),
     ), patch(
         "lanonna_api.domain.fun.upsert_birthdate_vote"
     ) as upsert:
@@ -73,7 +79,7 @@ def test_get_predictions_masks_legacy_anonymous_voters():
     assert payload["predictions_closed"] is False
 
 
-def test_get_predictions_filters_out_of_range_histogram_rows():
+def test_get_predictions_reads_histogram_inside_shown_window():
     due = date(2027, 1, 15)
     with patch(
         "lanonna_api.domain.fun.require_membership",
@@ -93,16 +99,14 @@ def test_get_predictions_filters_out_of_range_histogram_rows():
         return_value=[],
     ), patch(
         "lanonna_api.domain.fun.birthdate_vote_histogram",
-        return_value=[
-            {"predicted_birth_date": date(2027, 1, 14), "count": 1},
-            {"predicted_birth_date": date(2099, 12, 31), "count": 1},
-        ],
-    ):
+        return_value=[{"predicted_birth_date": date(2027, 1, 14), "count": 1}],
+    ) as histogram:
         payload = get_predictions("uid1", _BABY)
 
-    vote_min, vote_max = birthdate_vote_bounds(due)
-    assert payload["birthdate_vote_min"] == vote_min.isoformat()
-    assert payload["birthdate_vote_max"] == vote_max.isoformat()
+    histogram.assert_called_once_with(_BABY, birthdate_vote_shown_window(due))
+    open_window = birthdate_vote_open_window(due)
+    assert payload["birthdate_vote_min"] == open_window.earliest.isoformat()
+    assert payload["birthdate_vote_max"] == open_window.latest.isoformat()
     assert payload["birthdate_histogram"] == [{"date": "2027-01-14", "count": 1}]
 
 

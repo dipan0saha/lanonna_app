@@ -17,6 +17,10 @@ from lanonna_api.repositories.activity_events import (
     list_recent_for_baby,
 )
 from lanonna_api.domain.announcement import announcement_photo_display_url
+from lanonna_api.domain.birthdate_vote_window import (
+    birthdate_vote_shown_window,
+    expected_due_date,
+)
 from lanonna_api.domain.media_urls import signed_thumb_urls
 from lanonna_api.domain.membership_access import require_active_membership
 from lanonna_api.repositories.babies import (
@@ -226,7 +230,10 @@ def _build_home_summary(
             due_date = date.fromisoformat(str(due))
         days_to_due = (due_date - _utc_today()).days
 
-    counts = home_summary_counts(baby_profile_id)
+    counts = home_summary_counts(
+        baby_profile_id,
+        birthdate_window=birthdate_vote_shown_window(expected_due_date(baby)),
+    )
     suggestion_count = counts["name_suggestion_count"]
     vote_count = counts["vote_count"]
     totals = {"male": counts["male_votes"], "female": counts["female_votes"]}
@@ -243,16 +250,8 @@ def _build_home_summary(
 
     top_birthdate = None
     if counts["top_birthdate_guess"] is not None:
-        from lanonna_api.domain.birthdate_vote_window import birthdate_in_vote_window
-
         d = counts["top_birthdate_guess"]
-        if not isinstance(d, date):
-            d = date.fromisoformat(str(d))
-        due = baby.get("expected_birth_date")
-        if due is not None and not isinstance(due, date):
-            due = date.fromisoformat(str(due))
-        if birthdate_in_vote_window(d, due):
-            top_birthdate = d.isoformat()
+        top_birthdate = d.isoformat() if hasattr(d, "isoformat") else str(d)
 
     # One read feeds both "next up" and the teaser strip.
     upcoming = list_events(

@@ -167,6 +167,7 @@ void main() {
           email: 'friend@example.com',
           status: InvitationStatus.pending,
           emailDeliveryStatus: InviteEmailDeliveryStatus.failed,
+          canResendEmail: true,
         ),
       ],
     );
@@ -211,6 +212,53 @@ void main() {
     expect(find.text('Invite email sent'), findsOneWidget);
   });
 
+  testWidgets('polling stops after its window while a send stays in flight', (
+    tester,
+  ) async {
+    final repo = _FakeAccountRepository(
+      invites: [
+        InvitationRow(
+          id: 'inv-1',
+          email: 'friend@example.com',
+          status: InvitationStatus.pending,
+          emailDeliveryStatus: InviteEmailDeliveryStatus.pending,
+        ),
+      ],
+    );
+    await _pumpFollowers(tester, repo);
+    final first = repo.listCalls;
+
+    for (var i = 0; i < 40; i++) {
+      await tester.pump(const Duration(seconds: 2));
+    }
+    expect(repo.listCalls - first, 30);
+
+    await tester.pump(const Duration(minutes: 5));
+    expect(repo.listCalls - first, 30);
+  });
+
+  testWidgets('stuck send shows Resend from the server and stops polling', (
+    tester,
+  ) async {
+    final repo = _FakeAccountRepository(
+      invites: [
+        InvitationRow(
+          id: 'inv-1',
+          email: 'friend@example.com',
+          status: InvitationStatus.pending,
+          emailDeliveryStatus: InviteEmailDeliveryStatus.pending,
+          canResendEmail: true,
+        ),
+      ],
+    );
+    await _pumpFollowers(tester, repo);
+    final first = repo.listCalls;
+
+    expect(find.text('Resend'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 10));
+    expect(repo.listCalls, first);
+  });
+
   testWidgets('invite_already_delivered reloads the list', (tester) async {
     final repo = _FakeAccountRepository(
       invites: [
@@ -219,6 +267,7 @@ void main() {
           email: 'friend@example.com',
           status: InvitationStatus.pending,
           emailDeliveryStatus: InviteEmailDeliveryStatus.failed,
+          canResendEmail: true,
         ),
       ],
     );

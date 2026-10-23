@@ -164,24 +164,22 @@ class _PredictionsTabState extends State<PredictionsTab> {
     if (_predictionsClosed) return;
     final due = babyExpectedDueDate(widget.baby);
     final payload = _payload;
-    final first = birthdatePickerFirstDate(
+    final window = birthdateGuessWindow(
       voteMinIso: payload?.birthdateVoteMin,
-      dueDate: due,
-    );
-    final last = birthdatePickerLastDate(
       voteMaxIso: payload?.birthdateVoteMax,
-      dueDate: due,
     );
-    if (first.isAfter(last)) return;
+    // The buttons show once predictions load, and the API always sends a window.
+    if (payload == null || window == null) return;
     final picked = await showDatePicker(
       context: context,
       initialDate: birthdatePickerInitialDate(
+        window: window,
         pendingSelection: _pendingGuess,
-        savedVoteIso: payload?.viewerBirthdateVote,
+        savedVoteIso: payload.viewerBirthdateVote,
         dueDate: due,
       ),
-      firstDate: first,
-      lastDate: last,
+      firstDate: window.first,
+      lastDate: window.last,
     );
     if (picked == null || !mounted) return;
     setState(() => _pendingGuess = picked);

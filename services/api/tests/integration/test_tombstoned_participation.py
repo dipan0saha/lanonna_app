@@ -8,6 +8,7 @@ from datetime import date, datetime, timezone
 import pytest
 
 from lanonna_api.db import get_connection
+from lanonna_api.domain.birthdate_vote_window import UNBOUNDED_BIRTHDATE_WINDOW
 from lanonna_api.repositories.account_delete import delete_account_rows
 from lanonna_api.repositories.announcements import get_announcement
 from lanonna_api.repositories.events import (
@@ -240,13 +241,13 @@ def test_reads_skip_tombstoned_participation_and_keep_authored_comments():
     assert [row["firebase_uid"] for row in attendees] == [active]
     assert attendees[0]["display_name"] == "Aunt May"
 
-    counts = home_summary_counts(baby_id)
+    counts = home_summary_counts(baby_id, birthdate_window=UNBOUNDED_BIRTHDATE_WINDOW)
     assert (counts["vote_count"], counts["male_votes"], counts["female_votes"]) == (1, 0, 1)
     assert counts["top_birthdate_guess"] == date(2026, 9, 1)
     assert gender_vote_totals(baby_id) == {"male": 0, "female": 1}
     voters = list_gender_voters(baby_id)
     assert [row["firebase_uid"] for row in voters] == [active]
-    histogram = birthdate_vote_histogram(baby_id)
+    histogram = birthdate_vote_histogram(baby_id, UNBOUNDED_BIRTHDATE_WINDOW)
     assert [row["predicted_birth_date"] for row in histogram] == [date(2026, 9, 1)]
     assert histogram[0]["count"] == 1
 

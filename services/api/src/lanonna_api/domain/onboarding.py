@@ -181,7 +181,7 @@ def seed_first_moment(
             baby_profile_id,
             firebase_uid,
             preset.label,
-            catalog_suggestion_id=preset.resolved_catalog_suggestion_id(),
+            catalog_suggestion_id=preset.catalog_suggestion_id,
         )
         registry_created += 1
 

@@ -28,12 +28,10 @@ extension FirstMomentPresetLabels on AppLocalizations {
         return presetCribMattress;
       case 'diaper_stockpile':
         return presetDiaperStockpile;
-      case 'diaper_pail':
-        return presetDiaperPail;
       case 'onesies':
         return presetOnesies;
-      case 'bottle_sterilizer':
-        return presetBottleSterilizer;
+      case 'bottles':
+        return presetBottles;
       default:
         return id;
     }

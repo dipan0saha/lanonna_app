@@ -132,27 +132,6 @@ def delete_gallery_photo_row(
     return dict(row) if row else None
 
 
-def delete_stale_unreferenced_event_covers(
-    older_than_hours: int,
-) -> list[dict[str, Any]]:
-    """Drop never-attached event covers older than [older_than_hours] (orphan cleanup)."""
-    with get_connection() as conn:
-        rows = conn.execute(
-            """
-            DELETE FROM photos p
-            WHERE p.purpose = %s
-              AND p.created_at < now() - make_interval(hours => %s)
-              AND NOT EXISTS (SELECT 1 FROM events e WHERE e.cover_photo_id = p.id)
-              AND NOT EXISTS (
-                  SELECT 1 FROM birth_announcements a WHERE a.photo_id = p.id
-              )
-            RETURNING display_path, thumb_path
-            """,
-            (PhotoPurpose.EVENT_COVER.value, older_than_hours),
-        ).fetchall()
-    return [dict(r) for r in rows]
-
-
 def delete_unreferenced_event_cover(photo_id: uuid.UUID) -> dict[str, Any] | None:
     """Delete an ``event_cover`` photo that no event or announcement still uses.
 

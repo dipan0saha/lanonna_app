@@ -121,7 +121,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Fxtwo Coown'), findsOneWidget);
-    expect(find.text('Weekly email summary'), findsOneWidget);
+    expect(find.text('Weekly push summary'), findsOneWidget);
     await tester.tap(find.text('Edit'));
     await tester.pumpAndSettle();
 

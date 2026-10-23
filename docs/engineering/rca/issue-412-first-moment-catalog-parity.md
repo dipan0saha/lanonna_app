@@ -25,8 +25,8 @@ Three gaps left out of the #403 fix:
 
 - **One id per catalog-backed preset:** preset id = `catalog_suggestion_id` on seed (same as manual create / #403 expecting events). Titles in `first_moment_presets.py` match catalog JSON names exactly.
 - **Born clamping:** `event_date_for_born_preset` mirrors expecting: `max(birth_date + offset, utc_today())`.
-- **No catalog row:** `onesies` remains a custom registry preset with no `catalog_suggestion_id` (not in catalog).
-- **No backfill** for existing rows.
+- **Born registry keeps its items:** Diapers (newborn) → `diaper_stockpile`; Onesies and Bottles have no catalog row and stay custom (no `catalog_suggestion_id`). Diaper pail / bottle sterilizer are different products, so they are not substitutes.
+- **Existing data — backfill, no alias:** migration `047` links seeds made before this fix: events `first_checkup` → `first_pediatric_visit`; registry rows named `Swaddles` / `Crib` / `Diapers` with no catalog id → `swaddle_blankets` / `crib_mattress` / `diaper_stockpile`. One row per baby, skipped when the baby already has that id; titles are kept. Idempotent. No request alias for `first_checkup` is needed: preset ids are only sent by onboarding, and the server ignores unknown ids (older builds just skip that preset).
 
 ## Fix
 
@@ -36,6 +36,7 @@ Three gaps left out of the #403 fix:
 | `domain/onboarding.py` | Born path uses clamped helper; registry seed passes catalog id. |
 | `repositories/first_moment.py` | `insert_seed_registry_item(..., catalog_suggestion_id=...)`. |
 | Mobile | `first_moment_presets.dart`, labels/ARB aligned to catalog; parity test unchanged contract. |
+| DB | `047_first_moment_catalog_ids_backfill.sql`. |
 | Tests | API born clamp + catalog ids; mobile availability hides seeded catalog rows. |
 
 ## Tests
@@ -44,3 +45,5 @@ Three gaps left out of the #403 fix:
 - `test_onboarding_domain.py`: `first_pediatric_visit` catalog id; registry `catalog_suggestion_id`; born old-baby dates ≥ today.
 - `event_suggestion_availability_test.dart`: seeded `first_pediatric_visit` hides catalog row.
 - `registry_suggestion_availability_test.dart`: seeded `crib_mattress` hides catalog row.
+- `test_first_moment_preset_parity.py`: every catalog-backed preset matches a catalog row (registry names exactly; event titles case-insensitively).
+- `test_first_moment_catalog_backfill_postgres.py`: `047` links old seeds, skips conflicts, and is safe to re-run.

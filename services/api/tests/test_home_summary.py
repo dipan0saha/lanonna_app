@@ -3,6 +3,7 @@ import uuid
 
 from datetime import date, timedelta
 
+from lanonna_api.domain.birthdate_vote_window import birthdate_vote_shown_window
 from lanonna_api.domain.home import _build_birth_welcome, _build_home_teasers, build_home_summary
 
 
@@ -38,7 +39,7 @@ def test_build_home_summary_includes_getting_started_and_next_event():
         patch(
             "lanonna_api.domain.home.home_summary_counts",
             return_value=_counts(name_suggestion_count=2, vote_count=5, male_votes=3, female_votes=2),
-        ),
+        ) as counts,
         patch("lanonna_api.domain.home.list_recent_for_baby", return_value=[]),
         patch("lanonna_api.domain.home.list_name_suggestions", return_value=[{"suggested_name": "Milo", "like_count": 5}]) as names,
         patch(
@@ -59,6 +60,11 @@ def test_build_home_summary_includes_getting_started_and_next_event():
     # Every list is bounded in SQL, and upcoming events are read once for
     # both "next up" and the teaser strip.
     names.assert_called_once_with(baby_id, limit=1)
+    # The top guess is picked in SQL from the same window Popular Dates uses (#413).
+    counts.assert_called_once_with(
+        baby_id,
+        birthdate_window=birthdate_vote_shown_window(date(2026, 10, 8)),
+    )
     events.assert_called_once_with(baby_id, upcoming_only=True, limit=3)
     assert teasers.call_args.args[1] is events.return_value
     invites.assert_called_once_with(baby_id, status="pending", limit=5)

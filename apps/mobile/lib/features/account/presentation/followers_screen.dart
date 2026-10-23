@@ -9,9 +9,6 @@ import 'package:lanonna/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/presentation/tab_load_failure.dart';
-import '../../../core/api/api_error_code.dart';
-import '../../../core/api/api_error_message.dart';
-import '../../../core/api/api_exception.dart';
 import '../../../core/api/run_mutation.dart';
 import '../../../core/widgets/app_confirm_dialog.dart';
 import '../../../core/domain/baby_summary.dart';
@@ -30,7 +27,6 @@ import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../home/data/home_repository.dart';
 import '../../home/domain/app_routes.dart';
 import '../data/account_repository.dart';
-import '../../invitations/domain/invite_email_delivery.dart';
 import '../../invitations/presentation/revoke_invitation_flow.dart';
 import '../../../core/data/parallel_requests.dart';
 
@@ -50,9 +46,13 @@ class _FollowersScreenState extends State<FollowersScreen> {
   var _loading = true;
   var _hasLoaded = false;
   String? _loadError;
+  Future<void>? _loadRun;
+  var _reloadRequested = false;
   Timer? _inviteDeliveryPoll;
+  // Polls left in this delivery window; null when nothing is being sent.
+  int? _invitePollsLeft;
   static const _invitePollInterval = Duration(seconds: 2);
-  static const _invitePollMaxTicks = 30;
+  static const _invitePollMaxCount = 30;
 
   @override
   void initState() {
@@ -66,10 +66,32 @@ class _FollowersScreenState extends State<FollowersScreen> {
     super.dispose();
   }
 
+  /// One load at a time: a reload asked for while one runs (a resend during a
+  /// poll) runs right after it, so the list always ends on fresh server state.
+  Future<void> _load() {
+    final running = _loadRun;
+    if (running != null) {
+      _reloadRequested = true;
+      return running;
+    }
+    return _loadRun = _runLoads();
+  }
+
+  Future<void> _runLoads() async {
+    try {
+      do {
+        _reloadRequested = false;
+        await _fetch();
+      } while (_reloadRequested && mounted);
+    } finally {
+      _loadRun = null;
+    }
+  }
+
   /// The spinner shows only for the first load; reloads after remove,
   /// resend or revoke keep the list and its scroll position, and a failed
   /// reload is a snackbar.
-  Future<void> _load() async {
+  Future<void> _fetch() async {
     if (!_hasLoaded) {
       setState(() {
         _loading = true;
@@ -89,16 +111,14 @@ class _FollowersScreenState extends State<FollowersScreen> {
         ),
       );
       if (!mounted) return;
-      final pendingInvites =
-          invites.where((i) => i.status == InvitationStatus.pending).toList();
       setState(() {
         _members = members;
-        _invites = pendingInvites;
+        _invites = invites.where((i) => i.status == InvitationStatus.pending).toList();
         _baby = baby;
         _loading = false;
         _hasLoaded = true;
       });
-      _syncInviteDeliveryPolling(pendingInvites);
+      _scheduleDeliveryPoll();
     } catch (e) {
       if (!mounted) return;
       reportTabLoadFailure(
@@ -113,39 +133,38 @@ class _FollowersScreenState extends State<FollowersScreen> {
     }
   }
 
-  void _syncInviteDeliveryPolling(List<InvitationRow> invites) {
+  /// While an invite email is being sent, reload once [_invitePollInterval]
+  /// after each load, at most [_invitePollMaxCount] times per window (#410).
+  /// The server's `can_resend_email` ends a stuck send, so this always stops.
+  void _scheduleDeliveryPoll() {
     _inviteDeliveryPoll?.cancel();
-    if (!invitationsNeedDeliveryRefresh(invites)) return;
-    var ticks = 0;
-    _inviteDeliveryPoll = Timer.periodic(_invitePollInterval, (timer) async {
-      ticks++;
-      if (!mounted || ticks > _invitePollMaxTicks) {
-        timer.cancel();
-        return;
-      }
-      await _load();
-      if (!mounted || !invitationsNeedDeliveryRefresh(_invites)) {
-        timer.cancel();
-      }
-    });
+    _inviteDeliveryPoll = null;
+    if (!_invites.any((i) => i.emailDeliveryInFlight)) {
+      _invitePollsLeft = null;
+      return;
+    }
+    final left = _invitePollsLeft ?? _invitePollMaxCount;
+    if (left <= 0) return;
+    _invitePollsLeft = left - 1;
+    _inviteDeliveryPoll = Timer(_invitePollInterval, _load);
   }
 
   Future<void> _resendInvite(InvitationRow inv) async {
-    final l10n = AppLocalizations.of(context)!;
-    try {
-      await context
-          .read<AccountRepository>()
-          .resendInvitation(widget.babyId, inv.id);
-      if (!mounted) return;
-      AppSnackBar.showInfo(context, l10n.accountInviteEmailQueued);
-      await _load();
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      AppSnackBar.showAlert(context, apiErrorMessage(l10n, e));
-      if (e.code == ApiErrorCode.inviteAlreadyDelivered) {
-        await _load();
-      }
+    final queued = await runMutation(
+      context,
+      () => context.read<AccountRepository>().resendInvitation(widget.babyId, inv.id),
+    );
+    if (!mounted) return;
+    if (queued) {
+      AppSnackBar.showInfo(
+        context,
+        AppLocalizations.of(context)!.accountInviteEmailQueued,
+      );
+      // A new send: watch it for a full window.
+      _invitePollsLeft = null;
     }
+    // Queued or refused (already delivered, revoked): show what the server has.
+    await _load();
   }
 
   String _inviteTitle(InvitationRow inv) {

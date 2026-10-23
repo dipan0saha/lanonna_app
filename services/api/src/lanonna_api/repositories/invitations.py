@@ -34,6 +34,13 @@ def lookup_token_hash(token: str) -> str:
     return _hash_token(token.strip())
 
 
+# A delivery still marked ``pending`` with no activity for this long is stuck
+# (worker crashed, retries exhausted). Same as the worker's send-claim timeout
+# (``lanonna_worker.invite_email._CLAIM_STALE_MINUTES``), after which the
+# worker would also re-claim it.
+INVITE_EMAIL_STUCK_MINUTES = 15
+
+
 def list_invitations_for_baby(
     baby_profile_id: uuid.UUID,
     *,
@@ -41,7 +48,12 @@ def list_invitations_for_baby(
     limit: int | None = None,
     offset: int = 0,
 ) -> list[dict[str, Any]]:
-    """Newest first; ``status`` filters in SQL so paging stays in SQL."""
+    """Newest first; ``status`` filters in SQL so paging stays in SQL.
+
+    ``can_resend_email`` is the owner's Resend action (#410): a pending invite
+    whose email was never sent and is not being sent right now (failed, never
+    attempted, or stuck in ``pending``). The app shows it as is.
+    """
     paging, paging_params = limit_offset_clause(limit, offset)
     status_clause = "AND status = %s" if status is not None else ""
     status_params: tuple[Any, ...] = (status,) if status is not None else ()
@@ -50,14 +62,27 @@ def list_invitations_for_baby(
             f"""
             SELECT id, invitee_email, role, relationship_label, status,
                    expires_at, created_at, email_sent_at,
-                   email_delivery_status, email_last_error, email_send_attempts
+                   email_delivery_status, email_last_error, email_send_attempts,
+                   (
+                       status = 'pending'
+                       AND email_sent_at IS NULL
+                       AND (
+                           email_delivery_status IS DISTINCT FROM 'pending'
+                           OR updated_at < now() - make_interval(mins => %s)
+                       )
+                   ) AS can_resend_email
             FROM invitations
             WHERE baby_profile_id = %s
               {status_clause}
             ORDER BY created_at DESC, id DESC
             {paging}
             """,
-            (baby_profile_id, *status_params, *paging_params),
+            (
+                INVITE_EMAIL_STUCK_MINUTES,
+                baby_profile_id,
+                *status_params,
+                *paging_params,
+            ),
         ).fetchall()
     return [dict(r) for r in rows]
 

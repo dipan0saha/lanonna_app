@@ -30,8 +30,8 @@ abstract final class FirstMomentPresets {
   ];
 
   static const List<FirstMomentPreset> bornRegistry = [
-    FirstMomentPreset('diaper_pail'),
+    FirstMomentPreset('diaper_stockpile'),
     FirstMomentPreset('onesies'),
-    FirstMomentPreset('bottle_sterilizer'),
+    FirstMomentPreset('bottles'),
   ];
 }

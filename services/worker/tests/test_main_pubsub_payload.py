@@ -123,3 +123,19 @@ def test_send_invite_permanent_failure_is_acked(client):
             ),
         )
     assert resp.status_code == 204
+
+
+def test_purge_stale_event_covers_dispatch(client):
+    with patch("lanonna_worker.main.purge_stale_unreferenced_event_covers") as purge:
+        resp = client.post("/pubsub/push", json=_push({"type": "purge_stale_event_covers"}))
+    assert resp.status_code == 204
+    purge.assert_called_once_with()
+
+
+def test_purge_stale_event_covers_partial_failure_is_retried(client):
+    with patch(
+        "lanonna_worker.main.purge_stale_unreferenced_event_covers",
+        side_effect=RuntimeError("some covers left"),
+    ):
+        resp = client.post("/pubsub/push", json=_push({"type": "purge_stale_event_covers"}))
+    assert resp.status_code == 500

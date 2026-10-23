@@ -1,23 +1,40 @@
+import uuid
 from unittest.mock import MagicMock, patch
 
-from lanonna_worker.event_cover_cleanup import purge_stale_unreferenced_event_covers
+import pytest
+
+from lanonna_worker.event_cover_cleanup import (
+    EventCoverPurgeIncomplete,
+    purge_stale_unreferenced_event_covers,
+)
 
 
-def test_purge_stale_event_covers_deletes_storage():
-    row = {"display_path": "babies/x/display.jpg", "thumb_path": "babies/x/thumb.jpg"}
-    conn = MagicMock()
-    conn.execute.return_value.fetchall.return_value = [row]
-    ctx = MagicMock()
-    ctx.__enter__.return_value = conn
-
+def test_one_failure_does_not_stop_the_rest_and_fails_the_run():
+    ids = [uuid.uuid4(), uuid.uuid4(), uuid.uuid4()]
     with (
-        patch("lanonna_worker.event_cover_cleanup.get_connection", return_value=ctx),
         patch(
-            "lanonna_worker.event_cover_cleanup.delete_photo_paths",
-            return_value=2,
-        ) as delete_paths,
+            "lanonna_worker.event_cover_cleanup._stale_cover_ids", return_value=ids
+        ),
+        patch(
+            "lanonna_worker.event_cover_cleanup._purge_one",
+            side_effect=[True, RuntimeError("gcs"), False],
+        ) as purge_one,
     ):
-        count = purge_stale_unreferenced_event_covers(24)
+        with pytest.raises(EventCoverPurgeIncomplete):
+            purge_stale_unreferenced_event_covers(24)
+    assert [c.args[0] for c in purge_one.call_args_list] == ids
 
-    assert count == 1
-    delete_paths.assert_called_once_with(row["display_path"], row["thumb_path"])
+
+def test_returns_removed_count():
+    with (
+        patch(
+            "lanonna_worker.event_cover_cleanup._stale_cover_ids",
+            return_value=[uuid.uuid4(), uuid.uuid4()],
+        ) as stale,
+        patch(
+            "lanonna_worker.event_cover_cleanup._purge_one",
+            side_effect=[True, False],
+        ),
+    ):
+        assert purge_stale_unreferenced_event_covers(24, limit=10) == 1
+    stale.assert_called_once_with(24, 10)
