@@ -90,6 +90,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
   var _busy = false;
   String? _error;
   final _formKey = GlobalKey<FormState>();
+  final _rowAnchorKeys = <GlobalKey>[];
   var _validateOnInteraction = false;
 
   AutovalidateMode get _autovalidateMode => _validateOnInteraction
@@ -160,13 +161,44 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
         if (_rows.isEmpty) {
           _rows.add(_InviteRowState());
         }
+        _ensureRowAnchorKeys();
         setState(() {});
       }
     });
   }
 
+  void _ensureRowAnchorKeys() {
+    while (_rowAnchorKeys.length < _rows.length) {
+      _rowAnchorKeys.add(GlobalKey());
+    }
+    while (_rowAnchorKeys.length > _rows.length) {
+      _rowAnchorKeys.removeLast();
+    }
+  }
+
+  void _scrollToFirstInvalidRow() {
+    if (!mounted) return;
+    for (var i = 0; i < _rows.length; i++) {
+      if (_validateRowEmail(_rows[i]) != null) {
+        final rowContext = _rowAnchorKeys[i].currentContext;
+        if (rowContext != null) {
+          Scrollable.ensureVisible(
+            rowContext,
+            alignment: 0.1,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
+          );
+        }
+        return;
+      }
+    }
+  }
+
   void _addRow() {
-    setState(() => _rows.add(_InviteRowState()));
+    setState(() {
+      _rows.add(_InviteRowState());
+      _ensureRowAnchorKeys();
+    });
     _persistDraft();
   }
 
@@ -175,6 +207,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
     setState(() {
       _rows[index].dispose();
       _rows.removeAt(index);
+      _ensureRowAnchorKeys();
     });
     _persistDraft();
   }
@@ -262,6 +295,9 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
             _validateOnInteraction = true;
             _error = l10n.batchInviteInvalidEmails;
           });
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _scrollToFirstInvalidRow();
+          });
           return;
         }
         if (_collectInvitesToSend().isEmpty) {
@@ -323,6 +359,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
   }
 
   Widget _inviteRows() {
+    _ensureRowAnchorKeys();
     return Form(
       key: _formKey,
       child: Column(
@@ -330,6 +367,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
       children: [
         for (var i = 0; i < _rows.length; i++)
           OnboardingInviteRow(
+            key: _rowAnchorKeys[i],
             nameController: _rows[i].nameController,
             emailController: _rows[i].emailController,
             relationship: _rows[i].relationship,
@@ -356,6 +394,14 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
           isLoading: _busy,
           onPressed: _busy ? null : () => _finish(sendInvites: true),
         ),
+        if (_error != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Text(
+              _error!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ),
         if (_isOnboarding)
           Padding(
             padding: const EdgeInsets.only(top: 16),
@@ -378,15 +424,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
           )
         else
           const SizedBox(height: 8),
-        if (_error != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Text(
-              _error!,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-          ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 8),
       ],
       ),
     );
@@ -445,7 +483,7 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
           route: OnboardingRoutes.ownerFirstMoment,
           persist: _persistDraft,
         ),
-        body: SingleChildScrollView(child: _onboardingBody()),
+        body: _onboardingBody(),
       );
     }
     return PrototypeSubpageScaffold(

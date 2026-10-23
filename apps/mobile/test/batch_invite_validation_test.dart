@@ -162,6 +162,68 @@ void main() {
     expect(find.text(l10n.batchInviteAddEmailToSend), findsOneWidget);
     expect(find.text(l10n.validationEmailRequired), findsNothing);
   });
+
+  testWidgets('onboarding summary error is above Skip for now (#429)', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(400, 700));
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final storage = OnboardingStorage(prefs);
+    repository = _RecordingOnboardingRepository();
+    final coordinator = OnboardingCoordinator(
+      storage: storage,
+      repository: repository,
+    );
+    await coordinator.hydrate();
+    await coordinator.setCreatedBabyId('baby-1');
+    final session = AppSession(
+      repository: repository,
+      storage: storage,
+      coordinator: coordinator,
+    );
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          Provider<OnboardingRepository>.value(value: repository),
+          ChangeNotifierProvider<OnboardingCoordinator>.value(
+            value: coordinator,
+          ),
+          ChangeNotifierProvider<AppSession>.value(value: session),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const BatchInviteScreen(mode: BatchInviteMode.onboarding),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final l10n = AppLocalizations.of(
+      tester.element(find.byType(BatchInviteScreen)),
+    )!;
+
+    await tester.enterText(field(1), 'not-an-email');
+    final addAnother = find.text('+ Add another');
+    await tester.ensureVisible(addAnother);
+    await tester.tap(addAnother);
+    await tester.pumpAndSettle();
+    await tester.enterText(field(3), 'valid@example.com');
+
+    await send(tester);
+
+    expect(repository.sent, isEmpty);
+    final summary = find.text(l10n.batchInviteInvalidEmails);
+    expect(summary, findsOneWidget);
+    final skip = find.text(l10n.actionSkipNow);
+    expect(skip, findsOneWidget);
+    expect(
+      tester.getTopLeft(summary).dy,
+      lessThan(tester.getTopLeft(skip).dy),
+    );
+    await tester.binding.setSurfaceSize(null);
+  });
 }
 
 class _RecordingOnboardingRepository extends OnboardingRepository {

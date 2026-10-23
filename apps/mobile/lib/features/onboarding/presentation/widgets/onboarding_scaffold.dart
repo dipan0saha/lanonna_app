@@ -51,8 +51,11 @@ class OnboardingScaffold extends StatelessWidget {
             Expanded(
               child: scrollBody
                   ? SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppMetrics.horizontalPadding,
+                      padding: EdgeInsets.fromLTRB(
+                        AppMetrics.horizontalPadding,
+                        0,
+                        AppMetrics.horizontalPadding,
+                        16 + MediaQuery.viewPaddingOf(context).bottom,
                       ),
                       keyboardDismissBehavior:
                           ScrollViewKeyboardDismissBehavior.onDrag,

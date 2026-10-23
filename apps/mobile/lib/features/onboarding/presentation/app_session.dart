@@ -453,6 +453,14 @@ class AppSession extends ChangeNotifier {
   String _inviteResumePath() {
     final step = _coordinator.activeStep;
     if (step != null) {
+      // Auth entry steps are not destinations once the profile is complete
+      // (#427); resume the invite landing so accept can run.
+      final resolved = status;
+      if (resolved != null &&
+          resolved.profileComplete &&
+          (step == OnboardingStep.login || step == OnboardingStep.signup)) {
+        return _inviteLandingPath();
+      }
       return OnboardingRoutes.pathForStep(step);
     }
     return _inviteLandingPath();
