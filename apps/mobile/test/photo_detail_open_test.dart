@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lanonna/core/api/api_client.dart';
 import 'package:lanonna/core/domain/baby_summary.dart';
 import 'package:lanonna/core/theme/app_theme.dart';
+import 'package:lanonna/core/api/api_exception.dart';
 import 'package:lanonna/features/gallery/data/gallery_repository.dart';
 import 'package:lanonna/features/gallery/data/models/photo_models.dart';
 import 'package:lanonna/features/gallery/presentation/photo_detail_screen.dart';
@@ -104,4 +105,41 @@ void main() {
     expect(gallery.listPhotosAllPagesCalls, 0);
     expect(find.byTooltip('Edit caption'), findsOneWidget);
   });
+
+  testWidgets('photo detail load failure shows retry not photo not found', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final gallery = _FailingGallery();
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          Provider<HomeRepository>.value(value: _Home()),
+          ChangeNotifierProvider<SelectedBabyStore>.value(
+            value: SelectedBabyStore(await SharedPreferences.getInstance()),
+          ),
+          ChangeNotifierProvider<GalleryRepository>.value(value: gallery),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const PhotoDetailScreen(photoId: 'photo-1'),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.text('Photo not found'), findsNothing);
+    expect(find.byKey(const Key('load_error_retry')), findsOneWidget);
+  });
+}
+
+class _FailingGallery extends _Gallery {
+  @override
+  Future<PhotoDetail> fetchPhoto(String babyId, String photoId) async {
+    throw ApiException('unavailable', statusCode: 503);
+  }
 }
