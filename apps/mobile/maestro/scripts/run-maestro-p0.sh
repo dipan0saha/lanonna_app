@@ -1,127 +1,165 @@
 #!/usr/bin/env bash
-# Maestro P0 regression suite (part 1). Run from apps/mobile via premerge_check.sh --e2e
-# or directly after build-install + local.env credentials.
+# Maestro P0 regression suite (part 1; see maestro/flows/p0/COVERAGE.md).
+# Run from repo root via `./scripts/premerge_check.sh --e2e`, or directly from apps/mobile.
+#
+# Needs: Maestro CLI, adb device ${ANDROID_SERIAL:-emulator-5554}, maestro/local.env
+# (SMOKE_TEST_PASSWORD at least), Cloud SQL Auth Proxy on 127.0.0.1:${DB_PORT:-5433}
+# for fixtures, gcloud/Firebase credentials for lanonna-dev.
+#
+# Optional flows (see local.env.example):
+#   P0_DISPOSABLE_EMAIL_TEMPLATE  e.g. you+p0-{ts}@your-test-inbox.example; {ts} becomes a
+#                                 timestamp. Runs sign-up with a new account, marks it
+#                                 verified, then deletes it through the app (self-cleaning).
+#   P0_RUN_BIOMETRIC=1            Biometric enable + biometric sign-in (needs an enrolled
+#                                 fingerprint on the emulator).
+#   P0_SKIP_BUILD=1               Reuse the installed debug APK instead of rebuilding.
+#
+# Exit status: 0 only when every flow that ran passed. Prints "P0 summary: ..." last.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-cd "$ROOT"
+REPO_ROOT="$(cd "${ROOT}/../.." && pwd)"
+cd "${ROOT}"
 
-export PATH="${PATH}:${HOME}/.maestro/bin"
+export PATH="${HOME}/.maestro/bin:${PATH}"
 export MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true
 export MAESTRO_PREPARE_CLEAR=1
 export ANDROID_SERIAL="${ANDROID_SERIAL:-emulator-5554}"
+APP_ID="com.lanonna.lanonna"
+P0="maestro/flows/p0"
 
 # shellcheck disable=SC1091
 source "${ROOT}/maestro/scripts/load-env.sh"
-# shellcheck disable=SC1091
-source "${ROOT}/maestro/scripts/maestro-env-args.sh"
 
-if [[ -z "${SMOKE_TEST_PASSWORD:-}" ]]; then
-  echo "Set SMOKE_TEST_PASSWORD in maestro/local.env" >&2
-  exit 1
+die() { echo "run-maestro-p0: $*" >&2; exit 1; }
+
+[[ -n "${SMOKE_TEST_PASSWORD:-}" ]] || die "set SMOKE_TEST_PASSWORD in maestro/local.env"
+command -v maestro >/dev/null 2>&1 || die "Maestro CLI not found (https://maestro.mobile.dev)"
+adb -s "${ANDROID_SERIAL}" get-state 2>/dev/null | grep -q '^device$' \
+  || die "no adb device ${ANDROID_SERIAL}; start the emulator first"
+DB_PORT="${DB_PORT:-5433}"
+nc -z 127.0.0.1 "${DB_PORT}" >/dev/null 2>&1 \
+  || die "nothing on 127.0.0.1:${DB_PORT}; start the Cloud SQL Auth Proxy for lanonna-dev"
+
+# Fixture scripts need psycopg + firebase-admin.
+if [[ -z "${PYTHON:-}" ]]; then
+  for c in "${REPO_ROOT}/infra/db/.venv/bin/python" "${REPO_ROOT}/services/api/.venv/bin/python" python3; do
+    if command -v "$c" >/dev/null 2>&1 && "$c" -c 'import psycopg, firebase_admin' 2>/dev/null; then
+      PYTHON="$c"; break
+    fi
+  done
 fi
-
-if ! command -v maestro >/dev/null 2>&1; then
-  echo "Maestro CLI not found (https://maestro.mobile.dev)" >&2
-  exit 1
-fi
-
-if ! adb devices | grep -q "${ANDROID_SERIAL}.*device"; then
-  echo "No adb device ${ANDROID_SERIAL}; start the Android emulator first." >&2
-  exit 1
-fi
-
-chmod +x "${ROOT}/maestro/scripts/"*.sh
-
-"${ROOT}/maestro/scripts/provision-smoke-user.sh"
-"${ROOT}/maestro/scripts/build-install.sh"
-"${ROOT}/maestro/scripts/prepare-emulator-for-maestro.sh"
-
-CORE_FLOWS=(
-  maestro/flows/p0/auth_sign_in.yaml
-  maestro/flows/p0/auth_sign_out.yaml
-  maestro/flows/p0/gallery_upload.yaml
-  maestro/flows/p0/invite_send.yaml
-)
-
-"${ROOT}/maestro/scripts/run-maestro-flows-sequential.sh" "${CORE_FLOWS[@]}"
-
-# Optional flows (extra credentials / destructive)
-if [[ -n "${P0_SIGNUP_TEST_EMAIL:-}" && -n "${P0_SIGNUP_TEST_PASSWORD:-}" ]]; then
-  MAESTRO_ENV_ARGS+=(
-    -e "P0_SIGNUP_TEST_EMAIL=${P0_SIGNUP_TEST_EMAIL}"
-    -e "P0_SIGNUP_TEST_PASSWORD=${P0_SIGNUP_TEST_PASSWORD}"
-  )
-  "${ROOT}/maestro/scripts/run-maestro-flows-sequential.sh" \
-    maestro/flows/p0/auth_sign_up.yaml
-else
-  echo "SKIP auth_sign_up (set P0_SIGNUP_TEST_EMAIL and P0_SIGNUP_TEST_PASSWORD in local.env)" >&2
-fi
+[[ -n "${PYTHON:-}" ]] || die "no Python with psycopg + firebase-admin; pip install -r infra/db/requirements.txt into infra/db/.venv or set PYTHON"
+export PYTHON
 
 export ONBOARDING_TEST_EMAIL="${ONBOARDING_TEST_EMAIL:-lanonna.dev.onboard@test.com}"
 export ONBOARDING_TEST_PASSWORD="${ONBOARDING_TEST_PASSWORD:-${SMOKE_TEST_PASSWORD}}"
-MAESTRO_ENV_ARGS=(
-  "${MAESTRO_ENV_ARGS[@]}"
-  -e "SIGN_IN_EMAIL=${ONBOARDING_TEST_EMAIL}"
-  -e "SIGN_IN_PASSWORD=${ONBOARDING_TEST_PASSWORD}"
-)
-REPO_ROOT="$(cd "${ROOT}/../.." && pwd)"
-PYTHON="${PYTHON:-python3}"
-if [[ -x "${REPO_ROOT}/services/api/.venv/bin/python" ]]; then
-  PYTHON="${REPO_ROOT}/services/api/.venv/bin/python"
-fi
-cd "${REPO_ROOT}/infra/db"
-"${PYTHON}" provision_maestro_fixtures.py onboarding_reset
-cd "${ROOT}"
-"${ROOT}/maestro/scripts/run-maestro-flows-sequential.sh" \
-  maestro/flows/p0/owner_onboarding.yaml
 
-# Invite deep link (follower credentials)
-if [[ -f "${ROOT}/maestro/.fixtures.env" ]]; then
-  set -a
-  # shellcheck disable=SC1090
-  source "${ROOT}/maestro/.fixtures.env"
-  set +a
-fi
-if [[ -n "${invite_token:-}" ]]; then
-  export INVITE_TOKEN="${invite_token}"
-  adb shell am force-stop com.lanonna.lanonna || true
-  "${ROOT}/maestro/scripts/open-invite-deep-link.sh"
-  sleep 5
-  MAESTRO_ENV_ARGS=(
-    "${MAESTRO_ENV_ARGS[@]}"
-    -e "SIGN_IN_EMAIL=${FOLLOWER_TEST_EMAIL}"
-    -e "SIGN_IN_PASSWORD=${FOLLOWER_TEST_PASSWORD:-${SMOKE_TEST_PASSWORD}}"
-  )
-  "${ROOT}/maestro/scripts/run-maestro-flows-sequential.sh" \
-    maestro/flows/p0/invite_accept_deep_link.yaml
-else
-  echo "SKIP invite_accept_deep_link (no invite_token in maestro/.fixtures.env)" >&2
-fi
-
-# Biometric flows (emulator-dependent)
-if [[ "${P0_RUN_BIOMETRIC:-0}" == "1" ]]; then
-  MAESTRO_ENV_ARGS=(
-    -e "SMOKE_TEST_EMAIL=${SMOKE_TEST_EMAIL}"
-    -e "SMOKE_TEST_PASSWORD=${SMOKE_TEST_PASSWORD}"
-  )
-  "${ROOT}/maestro/scripts/run-maestro-flows-sequential.sh" \
-    maestro/flows/p0/settings_biometric_enable.yaml \
-    maestro/flows/p0/auth_biometric_sign_in.yaml
-else
-  echo "SKIP biometric P0 (set P0_RUN_BIOMETRIC=1 in local.env to enable)" >&2
-fi
-
-if [[ -n "${P0_ACCOUNT_DELETE_TEST_EMAIL:-}" && -n "${P0_ACCOUNT_DELETE_TEST_PASSWORD:-}" ]]; then
-  MAESTRO_ENV_ARGS=(
-    -e "P0_ACCOUNT_DELETE_TEST_EMAIL=${P0_ACCOUNT_DELETE_TEST_EMAIL}"
-    -e "P0_ACCOUNT_DELETE_TEST_PASSWORD=${P0_ACCOUNT_DELETE_TEST_PASSWORD}"
-  )
-  "${ROOT}/maestro/scripts/run-maestro-flows-sequential.sh" \
-    maestro/flows/p0/account_delete.yaml
-else
-  echo "SKIP account_delete (set P0_ACCOUNT_DELETE_TEST_* in local.env)" >&2
-fi
-
+chmod +x "${ROOT}/maestro/scripts/"*.sh
 "${ROOT}/maestro/scripts/provision-smoke-user.sh"
-echo "Maestro P0 suite finished."
+if [[ "${P0_SKIP_BUILD:-0}" != "1" ]]; then
+  "${ROOT}/maestro/scripts/build-install.sh"
+fi
+"${ROOT}/maestro/scripts/prepare-emulator-for-maestro.sh"
+
+# Sourced (not executed) so the array stays in this shell: bash cannot export arrays
+# to child processes, which is why flows get their -e flags from run_flow below.
+# shellcheck disable=SC1091
+source "${ROOT}/maestro/scripts/maestro-env-args.sh"
+[[ -n "${SECOND_BABY_SWITCHER_ID:-}${second_baby_profile_id:-}" ]] || die "fixtures did not write second_baby_profile_id"
+BASE_ENV=(
+  "${MAESTRO_ENV_ARGS[@]}"
+  -e "ONBOARDING_TEST_EMAIL=${ONBOARDING_TEST_EMAIL}"
+  -e "ONBOARDING_TEST_PASSWORD=${ONBOARDING_TEST_PASSWORD}"
+)
+
+PASSED=()
+FAILED=()
+SKIPPED=()
+
+# run_flow <flow.yaml> [extra maestro -e flags...]
+run_flow() {
+  local flow="$1"; shift
+  echo ""
+  echo "======== Maestro: ${flow} ========"
+  if maestro test "${flow}" "${BASE_ENV[@]}" "$@"; then
+    PASSED+=("$(basename "${flow}" .yaml)")
+  else
+    FAILED+=("$(basename "${flow}" .yaml)")
+    return 1
+  fi
+}
+
+skip_flow() { SKIPPED+=("$1"); echo "SKIP $1: $2" >&2; }
+
+# Core flows: owner smoke account.
+for f in auth_sign_in auth_sign_out gallery_upload invite_send; do
+  run_flow "${P0}/${f}.yaml" || true
+done
+
+# Owner onboarding: reset the dedicated account to "not onboarded" first.
+if (cd "${REPO_ROOT}/infra/db" && "${PYTHON}" provision_maestro_fixtures.py onboarding_reset >/dev/null); then
+  run_flow "${P0}/owner_onboarding.yaml" || true
+else
+  FAILED+=("owner_onboarding (fixture reset)")
+fi
+
+# Invite deep link: provisioning wrote a fresh follower invite for the second baby.
+if [[ -n "${invite_token:-}" ]]; then
+  adb shell pm clear "${APP_ID}" >/dev/null
+  "${ROOT}/maestro/scripts/prepare-emulator-for-maestro.sh" >/dev/null
+  adb shell am force-stop "${APP_ID}" || true
+  INVITE_TOKEN="${invite_token}" "${ROOT}/maestro/scripts/open-invite-deep-link.sh" >/dev/null
+  run_flow "${P0}/invite_accept_deep_link.yaml" || true
+else
+  FAILED+=("invite_accept_deep_link (no invite_token in maestro/.fixtures.env)")
+fi
+
+# Biometric flows (emulator must have an enrolled fingerprint).
+if [[ "${P0_RUN_BIOMETRIC:-0}" == "1" ]]; then
+  run_flow "${P0}/settings_biometric_enable.yaml" \
+    && run_flow "${P0}/auth_biometric_sign_in.yaml" || true
+else
+  skip_flow settings_biometric_enable "set P0_RUN_BIOMETRIC=1"
+  skip_flow auth_biometric_sign_in "set P0_RUN_BIOMETRIC=1"
+fi
+
+# Sign-up + account delete on a brand-new disposable account (cleans up after itself).
+if [[ -n "${P0_DISPOSABLE_EMAIL_TEMPLATE:-}" ]]; then
+  ts="$(date +%Y%m%d%H%M%S)"
+  disposable_email="${P0_DISPOSABLE_EMAIL_TEMPLATE//\{ts\}/${ts}}"
+  [[ "${disposable_email}" != "${P0_DISPOSABLE_EMAIL_TEMPLATE}" ]] \
+    || die "P0_DISPOSABLE_EMAIL_TEMPLATE must contain {ts}"
+  disposable_password="P0a1!$(openssl rand -hex 12)"
+  disposable_env=(
+    -e "P0_DISPOSABLE_EMAIL=${disposable_email}"
+    -e "P0_DISPOSABLE_PASSWORD=${disposable_password}"
+  )
+  if run_flow "${P0}/auth_sign_up.yaml" "${disposable_env[@]}"; then
+    if (cd "${REPO_ROOT}" && \
+        "${PYTHON}" scripts/mark_firebase_email_verified.py "${disposable_email}" >/dev/null); then
+      if ! run_flow "${P0}/account_delete.yaml" "${disposable_env[@]}"; then
+        echo "account_delete failed; remove the disposable account with:" >&2
+        echo "  scripts/delete_dev_account.sh '<the P0_DISPOSABLE_EMAIL_TEMPLATE address for ${ts}>'" >&2
+      fi
+    else
+      FAILED+=("account_delete (could not mark the disposable account verified)")
+    fi
+  else
+    skip_flow account_delete "sign-up failed, nothing to delete"
+  fi
+  unset disposable_password disposable_env
+else
+  skip_flow auth_sign_up "set P0_DISPOSABLE_EMAIL_TEMPLATE"
+  skip_flow account_delete "set P0_DISPOSABLE_EMAIL_TEMPLATE"
+fi
+
+# Put the shared fixtures back (onboarding/invite flows changed them).
+"${ROOT}/maestro/scripts/provision-smoke-user.sh" >/dev/null
+
+echo ""
+echo "Passed: ${PASSED[*]:-none}"
+echo "Failed: ${FAILED[*]:-none}"
+echo "Skipped: ${SKIPPED[*]:-none}"
+echo "P0 summary: ${#PASSED[@]} passed, ${#FAILED[@]} failed, ${#SKIPPED[@]} skipped"
+[[ ${#FAILED[@]} -eq 0 ]]

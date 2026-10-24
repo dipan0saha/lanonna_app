@@ -84,7 +84,7 @@ Single flow: `maestro test maestro/flows/features/foo.yaml "${MAESTRO_ENV_ARGS[@
 
 ### Flutter integration tests (device / emulator)
 
-The repo **pre-merge gate** ([`scripts/premerge_check.sh`](../../../scripts/premerge_check.sh)) runs chip/l10n guards, `flutter analyze`, `flutter test`, API/worker pytest (with Postgres), and optional `--e2e` Maestro P0. Device integration tests live under `integration_test/` and are run manually when you have smoke credentials in `maestro/local.env`:
+The repo **pre-merge gate** ([`scripts/premerge_check.sh`](../../../scripts/premerge_check.sh)) runs chip/l10n guards, `flutter analyze`, `flutter test`, API/worker pytest (with Postgres), diff coverage on changed lines, and optional `--e2e` Maestro P0. Device integration tests live under `integration_test/` and are run manually when you have smoke credentials in `maestro/local.env`:
 
 ```bash
 source maestro/scripts/load-env.sh

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_metrics.dart';
+import '../../../../core/widgets/app_semantics.dart';
 import '../../../../l10n/app_localizations.dart';
 
 /// Shared scaffold for onboarding screens — PRD padding and pinned bottom CTA.
@@ -135,14 +136,17 @@ class _TopRow extends StatelessWidget {
             ),
           const Spacer(),
           if (showSkip)
-            GestureDetector(
-              onTap: onSkip,
-              child: Text(
-                AppLocalizations.of(context)!.actionSkip,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.muted,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
+            AppSemantics.button(
+              'onboarding_skip',
+              GestureDetector(
+                onTap: onSkip,
+                child: Text(
+                  l10n.actionSkip,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.muted,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
                 ),
               ),
             ),

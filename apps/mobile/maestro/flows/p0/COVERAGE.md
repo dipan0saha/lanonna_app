@@ -9,16 +9,18 @@ Run via `./maestro/scripts/run-maestro-p0.sh` or `./scripts/premerge_check.sh --
 |------|----------------|
 | `auth_sign_in.yaml` | AUTH-004, AUTH-008 (partial) |
 | `auth_sign_out.yaml` | AUTH-007 |
-| `auth_sign_up.yaml` | AUTH-001 (optional; needs `P0_SIGNUP_TEST_*` in `local.env`) |
+| `auth_sign_up.yaml` | AUTH-001 (optional; `P0_DISPOSABLE_EMAIL_TEMPLATE` in `local.env`) |
 | `owner_onboarding.yaml` | ONB-002, ONB-003, ONB-004 |
 | `invite_send.yaml` | INV-010 |
-| `invite_accept_deep_link.yaml` | INV-001, INV-004 (needs `invite_token` + follower creds) |
+| `invite_accept_deep_link.yaml` | INV-001, INV-004 (fixtures issue a fresh follower invite for the second baby) |
 | `gallery_upload.yaml` | GAL-001 |
-| `account_delete.yaml` | ACC-* account delete paths (optional; `P0_ACCOUNT_DELETE_TEST_*`) |
-| `settings_biometric_enable.yaml` | BIO-001 (optional; `P0_RUN_BIOMETRIC=1`) |
+| `account_delete.yaml` | Account delete (optional; deletes the account `auth_sign_up.yaml` just created) |
+| `settings_biometric_enable.yaml` | BIO-001 (optional; `P0_RUN_BIOMETRIC=1`, enrolled emulator fingerprint) |
 | `auth_biometric_sign_in.yaml` | BIO-006 (optional; after enable flow) |
 
-Shared subflows: `p0/subflows/` (launch, sign-in owner, sign-out, create baby) delegate to `flows/subflows/`.
+Shared subflows live in `p0/subflows/` (`sign_in_as`, `sign_in_owner`, `to_home`, `open_account`, `sign_out`); they use semantics ids only and reuse `flows/subflows/owner_onboarding_to_home.yaml` and `flows/subflows/ensure_primary_baby.yaml`.
+
+`run-maestro-p0.sh` provisions fixtures, builds and installs the debug APK (`P0_SKIP_BUILD=1` reuses the installed one), runs every flow even after a failure, and ends with `P0 summary: N passed, M failed, K skipped`. It exits non-zero if any flow failed. Optional flows show as skipped when their variables are unset.
 
 ## Full P0 matrix (77 cases)
 

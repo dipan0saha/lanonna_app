@@ -1,35 +1,15 @@
 appId: com.lanonna.lanonna
 ---
-# P0: account deletion — destructive; uses P0_ACCOUNT_DELETE_TEST_* from local.env only.
-- clearState
-- launchApp
-- extendedWaitUntil:
-    visible: "I already have an account"
-    timeout: 45000
-- tapOn: "I already have an account"
-- extendedWaitUntil:
-    visible: "Welcome back"
-    timeout: 20000
-- tapOn:
-    id: auth_login_email
-- eraseText
-- inputText: ${P0_ACCOUNT_DELETE_TEST_EMAIL}
-- tapOn:
-    id: auth_login_password
-- eraseText
-- inputText: ${P0_ACCOUNT_DELETE_TEST_PASSWORD}
-- hideKeyboard
-- tapOn:
-    id: auth_sign_in
-- extendedWaitUntil:
-    visible: ".*Tab 1 of 5.*|Complete your profile"
-    timeout: 90000
-    optional: true
+# P0: ACC delete — a signed-in owner deletes their account through the app and lands
+# signed out. Destructive: run-maestro-p0.sh only points it at the disposable account
+# auth_sign_up.yaml just created (P0_DISPOSABLE_EMAIL / P0_DISPOSABLE_PASSWORD).
 - runFlow:
-    when:
-      visible: "Complete your profile"
-    file: ../../subflows/owner_onboarding_to_home.yaml
-- runFlow: ../../subflows/open_account.yaml
+    file: subflows/sign_in_as.yaml
+    env:
+      SIGN_IN_EMAIL: ${P0_DISPOSABLE_EMAIL}
+      SIGN_IN_PASSWORD: ${P0_DISPOSABLE_PASSWORD}
+- runFlow: subflows/to_home.yaml
+- runFlow: subflows/open_account.yaml
 - scrollUntilVisible:
     element:
       id: account_delete_entry
@@ -38,25 +18,39 @@ appId: com.lanonna.lanonna
 - tapOn:
     id: account_delete_entry
 - extendedWaitUntil:
-    visible: "Delete account"
-    timeout: 15000
+    visible:
+      id: delete_account_submit
+    timeout: 20000
 - tapOn:
     id: delete_account_submit
+# Confirm dialog (shared AppConfirmDialog), then the password re-auth prompt.
 - extendedWaitUntil:
-    visible: "Delete your account permanently|Confirm your password"
-    timeout: 15000
-- tapOn: "Delete account"
+    visible:
+      id: "app_confirm_dialog_confirm|delete_account_reauth_password"
+    timeout: 20000
 - runFlow:
     when:
-      visible: "Confirm your password"
+      visible:
+        id: app_confirm_dialog_confirm
+    commands:
+      - tapOn:
+          id: app_confirm_dialog_confirm
+- extendedWaitUntil:
+    visible:
+      id: "delete_account_reauth_password|onboarding_have_account|onboarding_skip"
+    timeout: 30000
+- runFlow:
+    when:
+      visible:
+        id: delete_account_reauth_password
     commands:
       - tapOn:
           id: delete_account_reauth_password
-      - eraseText
-      - inputText: ${P0_ACCOUNT_DELETE_TEST_PASSWORD}
+      - inputText: ${P0_DISPOSABLE_PASSWORD}
       - hideKeyboard
       - tapOn:
           id: delete_account_reauth_continue
 - extendedWaitUntil:
-    visible: "Skip|I already have an account"
+    visible:
+      id: "onboarding_have_account|onboarding_skip|auth_login_email"
     timeout: 90000

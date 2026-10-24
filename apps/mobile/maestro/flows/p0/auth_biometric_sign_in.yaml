@@ -1,24 +1,32 @@
 appId: com.lanonna.lanonna
 ---
-# P0: BIO-006 — sign in with biometrics after prior enrollment (emulator must have biometrics).
-# Prerequisite: run settings_biometric_enable.yaml once on the same install.
-- clearState
+# P0: BIO-006 — sign in with biometrics after settings_biometric_enable.yaml on the
+# same install (no clearState: that would drop the stored biometric credential).
+- stopApp
 - launchApp
 - extendedWaitUntil:
-    visible: "I already have an account|Welcome back"
+    visible:
+      id: "onboarding_have_account|auth_sign_in_biometric|shell_baby_switcher"
     timeout: 45000
 - runFlow:
     when:
-      visible: "I already have an account"
+      visible:
+        id: onboarding_have_account
     commands:
-      - tapOn: "I already have an account"
+      - tapOn:
+          id: onboarding_have_account
 - extendedWaitUntil:
     visible:
-      id: auth_sign_in_biometric
+      id: "auth_sign_in_biometric|shell_baby_switcher"
     timeout: 30000
-    optional: true
-- tapOn:
-    id: auth_sign_in_biometric
+- runFlow:
+    when:
+      visible:
+        id: auth_sign_in_biometric
+    commands:
+      - tapOn:
+          id: auth_sign_in_biometric
 - extendedWaitUntil:
-    visible: ".*Tab 1 of 5.*|Complete your profile"
+    visible:
+      id: shell_baby_switcher
     timeout: 90000

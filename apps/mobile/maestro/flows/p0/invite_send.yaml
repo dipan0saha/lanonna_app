@@ -1,11 +1,11 @@
 appId: com.lanonna.lanonna
 ---
-# P0: INV-010 / batch invite from home — opens invite UI (send is env-specific).
+# P0: INV-010 — owner opens the batch invite screen from home (sending is covered by API tests).
 - runFlow: subflows/sign_in_owner.yaml
-- runFlow: ../../subflows/ensure_primary_baby.yaml
+- runFlow: ../subflows/ensure_primary_baby.yaml
 - tapOn:
     id: shell_invite_family
 - extendedWaitUntil:
-    visible: "Invite|Family"
+    visible:
+      id: batch_invite_send
     timeout: 30000
-- assertVisible: "Invite"

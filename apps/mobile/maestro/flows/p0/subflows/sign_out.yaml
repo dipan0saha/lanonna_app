@@ -1,6 +1,7 @@
 appId: com.lanonna.lanonna
 ---
-- runFlow: ../../subflows/open_account.yaml
+# From home: My Account -> Sign out -> signed-out entry (carousel or login).
+- runFlow: open_account.yaml
 - scrollUntilVisible:
     element:
       id: account_sign_out
@@ -9,8 +10,8 @@ appId: com.lanonna.lanonna
 - tapOn:
     id: account_sign_out
 - extendedWaitUntil:
-    notVisible: ".*Tab 1 of 5.*"
+    visible:
+      id: "onboarding_have_account|auth_login_email"
     timeout: 45000
-- extendedWaitUntil:
-    visible: "I already have an account|Welcome back|Skip"
-    timeout: 30000
+- assertNotVisible:
+    id: shell_baby_switcher

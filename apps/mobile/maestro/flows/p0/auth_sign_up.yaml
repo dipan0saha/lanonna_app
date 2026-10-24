@@ -1,28 +1,33 @@
 appId: com.lanonna.lanonna
 ---
-# P0: AUTH-001 — email sign-up (requires disposable credentials in local.env).
-# Set P0_SIGNUP_TEST_EMAIL and P0_SIGNUP_TEST_PASSWORD; account must not already exist.
+# P0: AUTH-001 — email sign-up creates a new account and reaches the verify-email step.
+# P0_DISPOSABLE_EMAIL / P0_DISPOSABLE_PASSWORD come from run-maestro-p0.sh, which makes a
+# fresh address per run from P0_DISPOSABLE_EMAIL_TEMPLATE and deletes the account afterwards
+# with account_delete.yaml.
 - clearState
-- runFlow: subflows/launch_app.yaml
+- launchApp
 - extendedWaitUntil:
-    visible: "I already have an account"
+    visible:
+      id: onboarding_skip
     timeout: 60000
-- tapOn: "I already have an account"
+- tapOn:
+    id: onboarding_skip
 - extendedWaitUntil:
-    visible: "Welcome back"
+    visible:
+      id: auth_signup_email
     timeout: 20000
-- tapOn: "Sign up"
 - tapOn:
     id: auth_signup_email
 - eraseText
-- inputText: ${P0_SIGNUP_TEST_EMAIL}
+- inputText: ${P0_DISPOSABLE_EMAIL}
 - tapOn:
     id: auth_signup_password
 - eraseText
-- inputText: ${P0_SIGNUP_TEST_PASSWORD}
+- inputText: ${P0_DISPOSABLE_PASSWORD}
 - hideKeyboard
 - tapOn:
     id: auth_signup_submit
 - extendedWaitUntil:
-    visible: "Check your email|Verify|Complete your profile"
+    notVisible:
+      id: auth_signup_submit
     timeout: 90000

@@ -1,6 +1,13 @@
 appId: com.lanonna.lanonna
 ---
-# P0: AUTH-007 — sign out clears session (partial; full cache wipe is manual).
+# P0: AUTH-007 — sign out returns to the signed-out entry; relaunch stays signed out.
 - runFlow: subflows/sign_in_owner.yaml
-- runFlow: ../../subflows/ensure_primary_baby.yaml
 - runFlow: subflows/sign_out.yaml
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "onboarding_have_account|auth_login_email"
+    timeout: 45000
+- assertNotVisible:
+    id: shell_baby_switcher

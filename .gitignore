@@ -71,6 +71,9 @@ apps/mobile/maestro/.qa-fixtures.env
 /premerge-report.md
 /coverage-api.xml
 /coverage-worker.xml
+/coverage-mobile.lcov
+# premerge_check.sh venv
+/.cache/
 **/tfplan
 apps/mobile/test/failures/
 

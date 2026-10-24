@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/media/display_encode.dart';
 import '../../../../core/media/pick_display_photo.dart';
 import '../../../../core/widgets/app_modal_sheet.dart';
+import '../../../../core/widgets/app_semantics.dart';
 import '../../../../l10n/app_localizations.dart';
 
 /// Camera or library source for a gallery upload. Returns `null` when the
@@ -24,15 +25,21 @@ Future<XFile?> showPhotoSourceSheet(BuildContext context) async {
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          ListTile(
-            leading: const Icon(Icons.photo_camera_outlined),
-            title: Text(l10n.photoSourceCamera),
-            onTap: () => pick(ImageSource.camera),
+          AppSemantics.button(
+            'photo_source_camera',
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: Text(l10n.photoSourceCamera),
+              onTap: () => pick(ImageSource.camera),
+            ),
           ),
-          ListTile(
-            leading: const Icon(Icons.photo_library_outlined),
-            title: Text(l10n.photoSourceLibrary),
-            onTap: () => pick(ImageSource.gallery),
+          AppSemantics.button(
+            'photo_source_library',
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: Text(l10n.photoSourceLibrary),
+              onTap: () => pick(ImageSource.gallery),
+            ),
           ),
         ],
       );

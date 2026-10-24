@@ -1,25 +1,14 @@
 appId: com.lanonna.lanonna
 ---
-# P0: ONB-002 … ONB-004 — complete profile, create baby, first moment (uses ONBOARDING_TEST_*).
-- clearState
-- launchApp
-- extendedWaitUntil:
-    visible: "I already have an account|Welcome back|Skip"
-    timeout: 60000
+# P0: ONB-002 … ONB-004 — complete profile, create baby, first moment, land on home.
+# The runner resets ONBOARDING_TEST_EMAIL to "not onboarded" first (provision_maestro_fixtures.py onboarding_reset).
 - runFlow:
-    when:
-      visible: "I already have an account"
-    commands:
-      - tapOn: "I already have an account"
-      - extendedWaitUntil:
-          visible: "Welcome back"
-          timeout: 20000
-- runFlow:
-    when:
-      visible: "Welcome back"
-    file: ../../subflows/sign_in_form_as.yaml
-- runFlow: subflows/create_baby_onboarding.yaml
-- extendedWaitUntil:
-    visible: ".*Tab 1 of 5.*"
-    timeout: 90000
-- assertVisible: ".*Tab 1 of 5.*"
+    file: subflows/sign_in_as.yaml
+    env:
+      SIGN_IN_EMAIL: ${ONBOARDING_TEST_EMAIL}
+      SIGN_IN_PASSWORD: ${ONBOARDING_TEST_PASSWORD}
+- assertVisible:
+    id: onboarding_complete_profile_continue
+- runFlow: subflows/to_home.yaml
+- assertVisible:
+    id: shell_baby_switcher

@@ -419,7 +419,37 @@ def provision_domain_seeds(
             print("Seeded ready photo.")
         out["photo_id"] = str(photo_id)
 
-    # Pending invite for follower email (new token each seeds run if missing)
+
+    conn.commit()
+    return out
+
+
+def provision_follower_invite(
+    conn: psycopg.Connection,
+    owner_uid: str,
+    baby_id: uuid.UUID,
+    *,
+    follower_uid: str | None = None,
+) -> dict[str, str]:
+    """Pending follower invite for FOLLOWER_TEST_EMAIL on ``baby_id`` (new token each run).
+
+    When ``follower_uid`` is given, the follower's membership on that baby is ended
+    first. Otherwise accepting the invite returns ``already_member`` and the invite
+    flow never exercises a real accept (INV-001 / INV-004).
+    """
+    out: dict[str, str] = {}
+    if follower_uid:
+        conn.execute(
+            """
+            UPDATE baby_memberships
+            SET removed_at = now(), updated_at = now()
+            WHERE baby_profile_id = %s
+              AND firebase_uid = %s
+              AND role <> 'owner'
+              AND removed_at IS NULL
+            """,
+            (baby_id, follower_uid),
+        )
     follower_email = os.environ.get(
         "FOLLOWER_TEST_EMAIL", "lanonna.dev.follower@test.com"
     )
@@ -456,7 +486,7 @@ def provision_domain_seeds(
     out["invitation_id"] = str(invite_id)
     out["invite_token"] = invite_token
     print("Seeded pending invitation.")
-
+    out["invite_baby_profile_id"] = str(baby_id)
     conn.commit()
     return out
 
@@ -697,9 +727,11 @@ def cmd_seeds(_: argparse.Namespace) -> None:
     with connect() as conn:
         baby_id = provision_owner(conn, uid, email)
         out = provision_domain_seeds(conn, uid, baby_id)
+        out.update(provision_follower_invite(conn, uid, baby_id))
     _write_out(out)
     for k, v in out.items():
-        print(f"{k}={v}")
+        if k != "invite_token":
+            print(f"{k}={v}")
 
 
 def cmd_onboarding_reset(_: argparse.Namespace) -> None:
@@ -772,6 +804,14 @@ def cmd_all(_: argparse.Namespace) -> None:
             provision_follower(conn, follower_uid, follower_email, owner_uid, baby_id)
         out = provision_domain_seeds(conn, owner_uid, baby_id)
         out["second_baby_profile_id"] = str(second_baby_id)
+        if follower_uid:
+            # The follower already belongs to the primary baby, so the invite to
+            # accept targets the second baby.
+            out.update(
+                provision_follower_invite(
+                    conn, owner_uid, second_baby_id, follower_uid=follower_uid
+                )
+            )
     _write_out(out)
     print("Maestro fixtures (all) complete.")
 

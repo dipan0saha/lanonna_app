@@ -1,0 +1,37 @@
+appId: com.lanonna.lanonna
+---
+# Cold start from a cleared app, then email/password sign-in as SIGN_IN_EMAIL / SIGN_IN_PASSWORD.
+# Callers pass the account through runFlow `env:`; nothing is hard-coded here.
+# Ends on home (shell_baby_switcher) or on the first owner-onboarding step.
+- clearState
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "onboarding_have_account|auth_login_email"
+    timeout: 60000
+- runFlow:
+    when:
+      visible:
+        id: onboarding_have_account
+    commands:
+      - tapOn:
+          id: onboarding_have_account
+- extendedWaitUntil:
+    visible:
+      id: auth_login_email
+    timeout: 20000
+- tapOn:
+    id: auth_login_email
+- eraseText
+- inputText: ${SIGN_IN_EMAIL}
+- tapOn:
+    id: auth_login_password
+- eraseText
+- inputText: ${SIGN_IN_PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: auth_sign_in
+- extendedWaitUntil:
+    visible:
+      id: "shell_baby_switcher|onboarding_complete_profile_continue|onboarding_create_baby_continue|onboarding_first_moment_continue"
+    timeout: 90000

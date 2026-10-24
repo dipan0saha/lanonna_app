@@ -51,8 +51,9 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
       _previewError = null;
     });
     try {
-      final preview =
-          await context.read<AccountRepository>().fetchDeleteAccountPreview();
+      final preview = await context
+          .read<AccountRepository>()
+          .fetchDeleteAccountPreview();
       if (mounted) {
         setState(() {
           _preview = preview;
@@ -137,23 +138,25 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                 AppSemantics.textField(
                   'delete_account_reauth_password',
                   TextField(
-                  controller: _passwordController,
-                  obscureText: obscure,
-                  autofocus: true,
-                  decoration: InputDecoration(
-                    labelText: l10n.fieldPassword,
-                    suffixIcon: AppIconButton(
-                      semanticsId: 'delete_account_password_visibility',
-                      label: obscure ? AppLocalizations.of(context)!.accountShowPassword : AppLocalizations.of(context)!.accountHidePassword,
-                      onPressed: () => setLocal(() => obscure = !obscure),
-                      icon: Icon(
-                        obscure
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
+                    controller: _passwordController,
+                    obscureText: obscure,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      labelText: l10n.fieldPassword,
+                      suffixIcon: AppIconButton(
+                        semanticsId: 'delete_account_password_visibility',
+                        label: obscure
+                            ? AppLocalizations.of(context)!.accountShowPassword
+                            : AppLocalizations.of(context)!.accountHidePassword,
+                        onPressed: () => setLocal(() => obscure = !obscure),
+                        icon: Icon(
+                          obscure
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                        ),
                       ),
                     ),
                   ),
-                ),
                 ),
               ],
             ),
@@ -165,12 +168,12 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
               AppSemantics.button(
                 'delete_account_reauth_continue',
                 FilledButton(
-                onPressed: () {
-                  if (_passwordController.text.isEmpty) return;
-                  Navigator.pop(ctx, _passwordController.text);
-                },
-                child: Text(l10n.deleteAccountReauthPasswordAction),
-              ),
+                  onPressed: () {
+                    if (_passwordController.text.isEmpty) return;
+                    Navigator.pop(ctx, _passwordController.text);
+                  },
+                  child: Text(l10n.deleteAccountReauthPasswordAction),
+                ),
                 label: l10n.deleteAccountReauthPasswordAction,
               ),
             ],
@@ -193,7 +196,10 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
       if (mounted) context.go(OnboardingRoutes.ownerCarousel);
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showAlert(context, apiErrorMessage(AppLocalizations.of(context)!, e));
+        AppSnackBar.showAlert(
+          context,
+          apiErrorMessage(AppLocalizations.of(context)!, e),
+        );
       }
     } finally {
       if (mounted) setState(() => _deleting = false);

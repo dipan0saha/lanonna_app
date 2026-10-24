@@ -230,16 +230,21 @@ class _AccountScreenState extends State<AccountScreen> {
                   AppBorderedSurface(
                     child: Column(
                       children: [
-                        ListTile(
-                          title: Text(AppLocalizations.of(context)!.settingsTitle),
-                          subtitle: Text(
-                            l10n.labelNotificationsProfileHelp,
+                        AppSemantics.button(
+                          'account_settings',
+                          ListTile(
+                            title: Text(
+                              AppLocalizations.of(context)!.settingsTitle,
+                            ),
+                            subtitle: Text(
+                              l10n.labelNotificationsProfileHelp,
+                            ),
+                            trailing: const Icon(
+                              Icons.chevron_right,
+                              color: AppColors.muted,
+                            ),
+                            onTap: () => context.push('/settings'),
                           ),
-                          trailing: const Icon(
-                            Icons.chevron_right,
-                            color: AppColors.muted,
-                          ),
-                          onTap: () => context.push('/settings'),
                         ),
                         if (_digestSummary != null)
                           AppSemantics.button(

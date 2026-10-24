@@ -1,14 +1,18 @@
 appId: com.lanonna.lanonna
 ---
-# P0: BIO-001 — enable biometric unlock in Settings (device must support biometrics).
+# P0: BIO-001 — enable biometric unlock in Settings.
+# Optional (P0_RUN_BIOMETRIC=1): the emulator needs an enrolled fingerprint, and the
+# system prompt needs `adb -e emu finger touch 1` while this flow waits.
 - runFlow: subflows/sign_in_owner.yaml
-- runFlow: ../../subflows/ensure_primary_baby.yaml
-- runFlow: ../../subflows/open_account.yaml
+- runFlow: ../subflows/ensure_primary_baby.yaml
+- runFlow: subflows/open_account.yaml
 - scrollUntilVisible:
-    element: ".*Settings.*"
+    element:
+      id: account_settings
     direction: DOWN
     timeout: 45000
-- tapOn: ".*Settings.*"
+- tapOn:
+    id: account_settings
 - scrollUntilVisible:
     element:
       id: settings_biometric_unlock

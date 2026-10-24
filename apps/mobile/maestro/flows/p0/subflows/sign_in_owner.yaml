@@ -1,4 +1,9 @@
 appId: com.lanonna.lanonna
 ---
-# Owner smoke credentials from maestro/local.env (SMOKE_TEST_EMAIL / SMOKE_TEST_PASSWORD).
-- runFlow: ../../subflows/ensure_signed_in.yaml
+# Owner smoke account (SMOKE_TEST_EMAIL / SMOKE_TEST_PASSWORD from maestro/local.env), on home.
+- runFlow:
+    file: sign_in_as.yaml
+    env:
+      SIGN_IN_EMAIL: ${SMOKE_TEST_EMAIL}
+      SIGN_IN_PASSWORD: ${SMOKE_TEST_PASSWORD}
+- runFlow: to_home.yaml
