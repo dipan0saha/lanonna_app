@@ -55,6 +55,7 @@ Apply in **lexicographic order** (filename prefix):
 | `047_first_moment_catalog_ids_backfill.sql` | Links first-moment seeds made before #412 to catalog rows: events `first_checkup` → `first_pediatric_visit`; registry rows named `Swaddles` / `Crib` / `Diapers` with no catalog id → `swaddle_blankets` / `crib_mattress` / `diaper_stockpile` (one per baby, skips babies that already have the id; titles kept). Idempotent; safe before or after the API deploy |
 | `048_drop_app_users_email_digest_enabled.sql` | Drops `app_users.email_digest_enabled` (weekly digest is push-only, #411). **Apply after** deploying the API that no longer reads it |
 | `049_owned_avatar_references.sql` | Avatars name only their owner's upload object (#415): legacy GCS URLs become object paths, rows pointing at another account's object or an outside URL are cleared, and CHECK constraints `app_users_avatar_url_owned` / `baby_profiles_avatar_url_owned` enforce `avatars/users/{uid}/<name>` and `avatars/babies/{id}/<name>`. Safe before or after the #415 API deploy |
+| `050_photos_event_cover_purge_index.sql` | Partial index `photos (created_at, id) WHERE purpose = 'event_cover'` for the daily stale event-cover purge (`_stale_cover_ids`, #424). Plain `CREATE INDEX` in the migration transaction, `lock_timeout` 5s; safe before or after the API deploy |
 
 ## Apply (dev)
 
