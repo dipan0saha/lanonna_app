@@ -5,7 +5,7 @@ appId: com.lanonna.lanonna
     when:
       notVisible:
         id: shell_baby_switcher
-    file: ../../subflows/owner_onboarding_to_home.yaml
+    file: complete_owner_onboarding.yaml
 - extendedWaitUntil:
     visible:
       id: shell_baby_switcher

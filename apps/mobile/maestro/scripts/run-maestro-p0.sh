@@ -13,6 +13,8 @@
 #   P0_RUN_BIOMETRIC=1            Biometric enable + biometric sign-in (needs an enrolled
 #                                 fingerprint on the emulator).
 #   P0_SKIP_BUILD=1               Reuse the installed debug APK instead of rebuilding.
+#   MAESTRO_DEVICE_PIN            Emulator screen-lock PIN, used to unlock a cold-booted
+#                                 emulator before the run.
 #
 # Exit status: 0 only when every flow that ran passed. Prints "P0 summary: ..." last.
 set -euo pipefail
@@ -37,6 +39,24 @@ die() { echo "run-maestro-p0: $*" >&2; exit 1; }
 command -v maestro >/dev/null 2>&1 || die "Maestro CLI not found (https://maestro.mobile.dev)"
 adb -s "${ANDROID_SERIAL}" get-state 2>/dev/null | grep -q '^device$' \
   || die "no adb device ${ANDROID_SERIAL}; start the emulator first"
+# A cold-booted emulator with a screen-lock PIN (needed for fingerprint enrollment) stays
+# RUNNING_LOCKED: the app installs but its activities do not resolve and Maestro hangs.
+if adb shell dumpsys user 2>/dev/null | grep -q 'RUNNING_LOCKED'; then
+  [[ -n "${MAESTRO_DEVICE_PIN:-}" ]] \
+    || die "emulator user is locked; unlock it on screen or set MAESTRO_DEVICE_PIN in maestro/local.env"
+  adb shell input keyevent KEYCODE_WAKEUP
+  adb shell wm dismiss-keyguard
+  sleep 1
+  adb shell input text "${MAESTRO_DEVICE_PIN}"
+  adb shell input keyevent KEYCODE_ENTER
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    adb shell dumpsys user 2>/dev/null | grep -q 'RUNNING_LOCKED' || break
+    sleep 1
+  done
+  if adb shell dumpsys user 2>/dev/null | grep -q 'RUNNING_LOCKED'; then
+    die "emulator user still locked after entering MAESTRO_DEVICE_PIN"
+  fi
+fi
 DB_PORT="${DB_PORT:-5433}"
 nc -z 127.0.0.1 "${DB_PORT}" >/dev/null 2>&1 \
   || die "nothing on 127.0.0.1:${DB_PORT}; start the Cloud SQL Auth Proxy for lanonna-dev"
@@ -51,6 +71,15 @@ if [[ -z "${PYTHON:-}" ]]; then
 fi
 [[ -n "${PYTHON:-}" ]] || die "no Python with psycopg + firebase-admin; pip install -r infra/db/requirements.txt into infra/db/.venv or set PYTHON"
 export PYTHON
+
+# Fixture commands below (onboarding_reset, mark verified) connect to Cloud SQL directly;
+# provision-smoke-user.sh runs in a child shell, so fetch the dev DB password here too.
+if [[ -z "${DB_PASSWORD:-}" && -z "${PGPASSWORD:-}" ]] && command -v gcloud >/dev/null 2>&1; then
+  DB_PASSWORD="$(gcloud secrets versions access latest \
+    --secret=db-lanonna-app-password --project=lanonna-dev 2>/dev/null || true)"
+  if [[ -n "${DB_PASSWORD}" ]]; then export DB_PASSWORD PGPASSWORD="${DB_PASSWORD}"; fi
+fi
+export DB_HOST="${DB_HOST:-127.0.0.1}" DB_PORT
 
 export ONBOARDING_TEST_EMAIL="${ONBOARDING_TEST_EMAIL:-lanonna.dev.onboard@test.com}"
 export ONBOARDING_TEST_PASSWORD="${ONBOARDING_TEST_PASSWORD:-${SMOKE_TEST_PASSWORD}}"
@@ -106,11 +135,8 @@ fi
 
 # Invite deep link: provisioning wrote a fresh follower invite for the second baby.
 if [[ -n "${invite_token:-}" ]]; then
-  adb shell pm clear "${APP_ID}" >/dev/null
-  "${ROOT}/maestro/scripts/prepare-emulator-for-maestro.sh" >/dev/null
-  adb shell am force-stop "${APP_ID}" || true
-  INVITE_TOKEN="${invite_token}" "${ROOT}/maestro/scripts/open-invite-deep-link.sh" >/dev/null
-  run_flow "${P0}/invite_accept_deep_link.yaml" || true
+  # The flow opens the link itself (openLink) after Maestro launches the app.
+  run_flow "${P0}/invite_accept_deep_link.yaml" -e "INVITE_TOKEN=${invite_token}" || true
 else
   FAILED+=("invite_accept_deep_link (no invite_token in maestro/.fixtures.env)")
 fi

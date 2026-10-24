@@ -8,7 +8,7 @@ appId: com.lanonna.lanonna
       SIGN_IN_EMAIL: ${ONBOARDING_TEST_EMAIL}
       SIGN_IN_PASSWORD: ${ONBOARDING_TEST_PASSWORD}
 - assertVisible:
-    id: onboarding_complete_profile_continue
+    id: onboarding_first_name
 - runFlow: subflows/to_home.yaml
 - assertVisible:
     id: shell_baby_switcher

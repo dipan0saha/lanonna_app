@@ -1,0 +1,79 @@
+appId: com.lanonna.lanonna
+---
+# Completes owner onboarding (profile, baby, first moment, skip invites) with semantics ids only.
+# Each step runs only when the app is on it, so it also resumes a half-finished onboarding.
+- runFlow:
+    when:
+      visible:
+        id: onboarding_first_name
+    commands:
+      - tapOn:
+          id: onboarding_first_name
+      - eraseText
+      - inputText: "Maestro"
+      - tapOn:
+          id: onboarding_last_name
+      - eraseText
+      - inputText: "Owner"
+      - hideKeyboard
+      - scrollUntilVisible:
+          element:
+            id: onboarding_relationship_mother
+          direction: DOWN
+          timeout: 20000
+      - tapOn:
+          id: onboarding_relationship_mother
+      - scrollUntilVisible:
+          element:
+            id: onboarding_terms_checkbox
+          direction: DOWN
+          timeout: 20000
+      - tapOn:
+          id: onboarding_terms_checkbox
+      - scrollUntilVisible:
+          element:
+            id: onboarding_complete_profile_continue
+          direction: DOWN
+          timeout: 20000
+      - tapOn:
+          id: onboarding_complete_profile_continue
+      - extendedWaitUntil:
+          notVisible:
+            id: onboarding_first_name
+          timeout: 30000
+- scrollUntilVisible:
+    element:
+      id: "onboarding_create_baby_continue|onboarding_first_moment_continue|shell_baby_switcher"
+    direction: DOWN
+    timeout: 30000
+- runFlow:
+    when:
+      visible:
+        id: onboarding_create_baby_continue
+    commands:
+      - tapOn:
+          id: onboarding_create_baby_continue
+      - scrollUntilVisible:
+          element:
+            id: "onboarding_first_moment_continue|shell_baby_switcher"
+          direction: DOWN
+          timeout: 30000
+- runFlow:
+    when:
+      visible:
+        id: onboarding_first_moment_continue
+    commands:
+      - tapOn:
+          id: onboarding_first_moment_continue
+      - scrollUntilVisible:
+          element:
+            id: "onboarding_invite_skip|shell_baby_switcher"
+          direction: DOWN
+          timeout: 30000
+- runFlow:
+    when:
+      visible:
+        id: onboarding_invite_skip
+    commands:
+      - tapOn:
+          id: onboarding_invite_skip

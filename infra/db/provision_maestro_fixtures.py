@@ -147,6 +147,20 @@ def _ensure_firebase_email_verified(uid: str) -> None:
     print("Marked Firebase email verified.")
 
 
+def _ensure_firebase_user_exists(email: str, password: str) -> None:
+    """Create a missing dedicated fixture user in lanonna-dev (never changes an existing one)."""
+    import firebase_admin
+    from firebase_admin import auth as firebase_auth
+
+    if not firebase_admin._apps:
+        firebase_admin.initialize_app(options={"projectId": "lanonna-dev"})
+    try:
+        firebase_auth.get_user_by_email(email)
+    except firebase_auth.UserNotFoundError:
+        firebase_auth.create_user(email=email, password=password, email_verified=True)
+        print("Created missing onboarding fixture user in Firebase.")
+
+
 def connect() -> psycopg.Connection:
     host = os.environ.get("DB_HOST", "127.0.0.1")
     port = int(os.environ.get("DB_PORT", "5433"))
@@ -755,6 +769,7 @@ def cmd_onboarding_reset(_: argparse.Namespace) -> None:
     )
     if not password:
         raise SystemExit("Set ONBOARDING_TEST_PASSWORD or SMOKE_TEST_PASSWORD.")
+    _ensure_firebase_user_exists(email, password)
     _, uid = _firebase_user(email, password)
     with connect() as conn:
         conn.execute(

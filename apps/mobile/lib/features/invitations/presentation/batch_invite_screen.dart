@@ -7,6 +7,7 @@ import 'package:lanonna/l10n/app_localizations.dart';
 import '../../../core/api/run_mutation.dart';
 import '../../../core/auth/auth_repository.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/app_semantics.dart';
 import '../../../core/theme/app_metrics.dart';
 import '../../../core/validation/form_validators.dart';
 import '../../home/data/home_repository.dart';
@@ -393,16 +394,19 @@ class _BatchInviteScreenState extends State<BatchInviteScreen> {
           Padding(
             padding: const EdgeInsets.only(top: 16),
             child: Center(
-              child: GestureDetector(
-                onTap: _busy ? null : () => _finish(sendInvites: false),
-                behavior: HitTestBehavior.opaque,
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                  child: Text(
-                    l10n.actionSkipNow,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primaryDark,
+              child: AppSemantics.button(
+                'onboarding_invite_skip',
+                GestureDetector(
+                  onTap: _busy ? null : () => _finish(sendInvites: false),
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    child: Text(
+                      l10n.actionSkipNow,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryDark,
+                      ),
                     ),
                   ),
                 ),

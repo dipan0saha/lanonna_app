@@ -218,6 +218,8 @@ void main() {
     expect(summary, findsOneWidget);
     final skip = find.text(l10n.actionSkipNow);
     expect(skip, findsOneWidget);
+    // Maestro P0 onboarding flows tap Skip by this id.
+    expect(find.bySemanticsIdentifier('onboarding_invite_skip'), findsOneWidget);
     expect(
       tester.getTopLeft(summary).dy,
       lessThan(tester.getTopLeft(skip).dy),

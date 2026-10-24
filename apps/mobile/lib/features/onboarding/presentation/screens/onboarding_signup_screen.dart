@@ -181,6 +181,7 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
               onPressed: _busy ? null : _submit,
             ),
             OnboardingBottomLink(
+              semanticsId: 'auth_signup_login_link',
               message: l10n.onboardingSignupAuthPrompt,
               actionText: l10n.authLogIn,
               onTap: _busy ? () {} : () => context.go(OnboardingRoutes.login),

@@ -391,6 +391,7 @@ class _OnboardingCompleteProfileScreenState
                 children: [
                   OnboardingTextField(
                     fieldKey: const Key('onboarding_first_name'),
+                    semanticsId: 'onboarding_first_name',
                     controller: _firstNameController,
                     label: l10n.fieldFirstName,
                     hint: l10n.fieldFirstName,
@@ -405,6 +406,7 @@ class _OnboardingCompleteProfileScreenState
                   const SizedBox(height: 12),
                   OnboardingTextField(
                     fieldKey: const Key('onboarding_last_name'),
+                    semanticsId: 'onboarding_last_name',
                     controller: _lastNameController,
                     label: l10n.fieldLastName,
                     hint: l10n.fieldLastName,

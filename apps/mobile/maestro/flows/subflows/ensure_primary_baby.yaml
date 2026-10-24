@@ -1,13 +1,16 @@
 appId: com.lanonna.lanonna
 ---
 # Domain seeds (events, registry, gallery) are on the primary baby profile from fixtures.
+# Waits on the row id rather than sheet text, so copy changes don't break it.
 - tapOn:
     id: shell_baby_switcher
 - extendedWaitUntil:
-    visible: "Switch baby"
+    visible:
+      id: "baby_switcher_${PRIMARY_BABY_SWITCHER_ID}"
     timeout: 15000
 - tapOn:
     id: "baby_switcher_${PRIMARY_BABY_SWITCHER_ID}"
 - extendedWaitUntil:
-    notVisible: "Switch baby"
+    notVisible:
+      id: "baby_switcher_${PRIMARY_BABY_SWITCHER_ID}"
     timeout: 10000

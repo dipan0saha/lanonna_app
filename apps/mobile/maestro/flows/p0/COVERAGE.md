@@ -18,7 +18,7 @@ Run via `./maestro/scripts/run-maestro-p0.sh` or `./scripts/premerge_check.sh --
 | `settings_biometric_enable.yaml` | BIO-001 (optional; `P0_RUN_BIOMETRIC=1`, enrolled emulator fingerprint) |
 | `auth_biometric_sign_in.yaml` | BIO-006 (optional; after enable flow) |
 
-Shared subflows live in `p0/subflows/` (`sign_in_as`, `sign_in_owner`, `to_home`, `open_account`, `sign_out`); they use semantics ids only and reuse `flows/subflows/owner_onboarding_to_home.yaml` and `flows/subflows/ensure_primary_baby.yaml`.
+Shared subflows live in `p0/subflows/` (`sign_in_as`, `sign_in_owner`, `to_home`, `complete_owner_onboarding`, `open_account`, `sign_out`); they use semantics ids only and reuse `flows/subflows/ensure_primary_baby.yaml`.
 
 `run-maestro-p0.sh` provisions fixtures, builds and installs the debug APK (`P0_SKIP_BUILD=1` reuses the installed one), runs every flow even after a failure, and ends with `P0 summary: N passed, M failed, K skipped`. It exits non-zero if any flow failed. Optional flows show as skipped when their variables are unset.
 
@@ -78,7 +78,7 @@ Shared subflows live in `p0/subflows/` (`sign_in_as`, `sign_in_owner`, `to_home`
 | GAL-013 | _Part 2+_ |
 | HOME-001 | _Part 2+_ |
 | HOME-002 | _Part 2+_ |
-| INV-001 | `invite_accept_deep_link.yaml` + `open-invite-deep-link.sh` |
+| INV-001 | `invite_accept_deep_link.yaml` (opens the link with `openLink`, taps `invite_landing_accept`) |
 | INV-002 | _Part 2+_ |
 | INV-003 | _Part 2+_ (API; covered by pytest) |
 | INV-004 | `invite_accept_deep_link.yaml` |

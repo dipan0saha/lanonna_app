@@ -1,11 +1,36 @@
 appId: com.lanonna.lanonna
 ---
-# P0: INV-001 / INV-004 — a signed-out follower opens an invite link, signs in, and the
-# invite is accepted. The runner opens the deep link with adb right after launch (see run-maestro-p0.sh).
+# P0: INV-001 / INV-004 — a signed-out follower opens an invite link, accepts it, signs in,
+# and lands on home with the invited baby. The runner passes INVITE_TOKEN from fixtures.
+- clearState
+- launchApp
 - extendedWaitUntil:
     visible:
-      id: "onboarding_have_account|auth_login_email|shell_baby_switcher"
+      id: "onboarding_have_account|auth_login_email"
     timeout: 60000
+- openLink: "lanonna://app/invite-accept?token=${INVITE_TOKEN}"
+- extendedWaitUntil:
+    visible:
+      id: invite_landing_accept
+    timeout: 60000
+- tapOn:
+    id: invite_landing_accept
+# Signed out, Accept goes to sign-up; the follower already has an account, so switch to login.
+- extendedWaitUntil:
+    visible:
+      id: "auth_signup_login_link|onboarding_have_account|auth_login_email|shell_baby_switcher"
+    timeout: 60000
+- runFlow:
+    when:
+      visible:
+        id: auth_signup_login_link
+    commands:
+      - tapOn:
+          id: auth_signup_login_link
+      - extendedWaitUntil:
+          visible:
+            id: auth_login_email
+          timeout: 20000
 - runFlow:
     when:
       visible:

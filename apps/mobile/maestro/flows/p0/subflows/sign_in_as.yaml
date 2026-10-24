@@ -33,5 +33,5 @@ appId: com.lanonna.lanonna
     id: auth_sign_in
 - extendedWaitUntil:
     visible:
-      id: "shell_baby_switcher|onboarding_complete_profile_continue|onboarding_create_baby_continue|onboarding_first_moment_continue"
+      id: "shell_baby_switcher|onboarding_first_name|onboarding_complete_profile_continue|onboarding_create_baby_continue|onboarding_first_moment_continue"
     timeout: 90000
