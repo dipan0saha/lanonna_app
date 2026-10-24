@@ -7,7 +7,6 @@ from typing import Any
 from lanonna_api.domain.errors import ErrorCode, InvalidInputError
 from lanonna_api.domain import assert_owner_membership
 from lanonna_api.domain.catalog_suggestion_ids import normalize_catalog_suggestion_id
-from lanonna_api.event_suggestions_catalog import resolve_event_title
 from lanonna_api.domain.url_validation import normalize_optional_http_url
 from lanonna_api.domain.content_permissions import (
     member_comment_to_json,
@@ -243,11 +242,10 @@ def create_calendar_event(
     video_call_url = normalize_optional_http_url(video_call_url)
     _require_baby_cover_photo(baby_profile_id, cover_photo_id)
     validate_event_time_range(starts_at, ends_at)
-    stored_title = resolve_event_title(title, catalog_id)
     row = create_event(
         baby_profile_id,
         firebase_uid,
-        title=stored_title,
+        title=title,
         starts_at=starts_at,
         ends_at=ends_at,
         description=description,

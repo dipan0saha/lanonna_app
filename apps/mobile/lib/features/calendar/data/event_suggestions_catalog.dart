@@ -17,26 +17,10 @@ class EventSuggestion {
 
 abstract final class EventSuggestionsCatalog {
   static Map<String, List<EventSuggestion>>? _cache;
-  static Map<String, EventSuggestion>? _byId;
 
   static Future<List<EventSuggestion>> forTab(String key) async {
     _cache ??= await _load();
     return _cache![key] ?? [];
-  }
-
-  /// Canonical title for [id] from `event_suggestions.json` (catalog source of truth).
-  static Future<String?> titleForId(String id) async {
-    _byId ??= await _indexById();
-    return _byId![id]?.title;
-  }
-
-  static Future<Map<String, EventSuggestion>> _indexById() async {
-    _cache ??= await _load();
-    return {
-      for (final list in _cache!.values)
-        for (final item in list)
-          item.id: item,
-    };
   }
 
   static String defaultTabForLifecycle(BabyLifecycle? lifecycle) =>

@@ -16,7 +16,9 @@ String formatProseSentence(String raw) {
   return applySentenceCase(trimmed);
 }
 
-/// Uppercases the first letter and the first letter after `.` `!` `?` boundaries.
+/// Uppercases the first letter of each sentence (text start, after `.` `!` `?`
+/// boundaries, and new lines). A sentence that starts with a digit is already
+/// started, so nothing in it is uppercased ("20-week anatomy scan", "3.5 kg").
 String applySentenceCase(String text) {
   if (text.isEmpty) return text;
 
@@ -32,6 +34,9 @@ String applySentenceCase(String text) {
       capitalizeNext = false;
       i++;
       continue;
+    }
+    if (capitalizeNext && _isDigit(char)) {
+      capitalizeNext = false;
     }
 
     buffer.write(char);
@@ -58,6 +63,9 @@ bool _isLetter(String char) {
   if (char.isEmpty) return false;
   return RegExp(r'[A-Za-z]').hasMatch(char);
 }
+
+bool _isDigit(String char) =>
+    char.isNotEmpty && RegExp(r'[0-9]').hasMatch(char);
 
 bool _isSentenceTerminator(String char) =>
     char == '.' || char == '!' || char == '?';

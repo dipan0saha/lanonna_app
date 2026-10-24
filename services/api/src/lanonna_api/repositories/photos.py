@@ -147,7 +147,7 @@ def delete_unreferenced_event_cover(photo_id: uuid.UUID) -> dict[str, Any] | Non
     """
     with get_connection() as conn:
         locked = conn.execute(
-            f"""
+            """
             SELECT p.id
             FROM photos p
             WHERE p.id = %s AND p.purpose = %s

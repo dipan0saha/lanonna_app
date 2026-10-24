@@ -27,7 +27,6 @@ import '../../home/data/selected_baby_store.dart';
 import '../../../core/domain/baby_summary.dart';
 import '../../onboarding/presentation/widgets/onboarding_prototype_widgets.dart';
 import '../data/calendar_repository.dart';
-import '../data/event_suggestions_catalog.dart';
 import 'calendar_display.dart';
 import 'widgets/event_form_widgets.dart';
 import '../../../l10n/app_localizations.dart';
@@ -249,16 +248,10 @@ class _EventFormScreenState extends State<EventFormScreen> {
 
   Future<void> _save() async {
     final baby = _baby;
-    final catalogId = widget.initialCatalogSuggestionId;
-    final catalogTitle =
-        !widget.isEdit && catalogId != null
-            ? await EventSuggestionsCatalog.titleForId(catalogId)
-            : null;
-    final title = catalogTitle ??
-        AppTextInputPolicy.normalizeForSubmit(
-          AppTextInputKind.prose,
-          _title.text,
-        );
+    final title = AppTextInputPolicy.normalizeForSubmit(
+      AppTextInputKind.prose,
+      _title.text,
+    );
     if (baby == null) {
       AppSnackBar.showAlert(
         context,
