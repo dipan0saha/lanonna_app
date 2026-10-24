@@ -60,10 +60,20 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
   }
 
   @override
+  void initState() {
+    super.initState();
+    _nameInputController.addListener(_onNameInputChanged);
+  }
+
+  @override
   void dispose() {
-    _syncDraft();
+    _nameInputController.removeListener(_onNameInputChanged);
     _nameInputController.dispose();
     super.dispose();
+  }
+
+  void _onNameInputChanged() {
+    _syncDraft();
   }
 
   Future<void> _syncDraft() async {

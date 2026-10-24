@@ -1,4 +1,5 @@
 import 'app_config.dart';
+import 'build_metadata.dart';
 
 /// Prefix for values in [flavors/prod.json] that must be replaced before prod ship.
 const String prodConfigPlaceholderPrefix = '__PROD_';
@@ -35,6 +36,12 @@ void ensureProdConfigReady() {
   );
   if (isProdPlaceholderValue(googleClientId)) {
     errors.add('GOOGLE_SIGN_IN_SERVER_CLIENT_ID');
+  }
+  if (BuildMetadata.gitSha == 'unknown') {
+    errors.add('BUILD_GIT_SHA');
+  }
+  if (BuildMetadata.buildNumber == 'unknown') {
+    errors.add('BUILD_NUMBER');
   }
   if (errors.isEmpty) return;
 

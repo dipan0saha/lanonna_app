@@ -17,6 +17,10 @@ class FirebaseCrashReporter implements CrashReporter {
       _crashlytics.setUserIdentifier(userId ?? '');
 
   @override
+  Future<void> setCustomKey(String key, String value) =>
+      _crashlytics.setCustomKey(key, value);
+
+  @override
   Future<void> recordFlutterFatalError(FlutterErrorDetails details) async {
     await _crashlytics.recordFlutterFatalError(details);
   }

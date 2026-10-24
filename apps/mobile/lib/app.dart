@@ -10,7 +10,7 @@ import 'package:provider/provider.dart';
 
 import 'core/auth/auth_repository.dart';
 import 'core/auth/biometric_app_lock.dart';
-import 'core/auth/email_verify_link_result.dart';
+import 'core/auth/email_verification_link_handler.dart';
 import 'core/deep_links/app_link_bootstrap.dart';
 import 'core/deep_links/auth_action_app_link.dart';
 import 'core/deep_links/invite_app_link.dart';
@@ -20,10 +20,9 @@ import 'core/router/deep_link_navigation.dart';
 import 'core/router/router_refresh.dart';
 import 'core/theme/app_theme.dart';
 import 'core/version/app_version_gate.dart';
+import 'core/shell/app_shell_ui.dart';
 import 'core/widgets/app_offline_wrapper.dart';
-import 'core/widgets/app_snackbar.dart';
 import 'features/onboarding/domain/onboarding_routes.dart';
-import 'features/onboarding/domain/onboarding_step.dart';
 import 'features/onboarding/presentation/onboarding_coordinator.dart';
 
 class LaNonnaApp extends StatefulWidget {
@@ -89,44 +88,12 @@ class _LaNonnaAppState extends State<LaNonnaApp> {
 
   Future<void> _handleEmailVerificationLink(Uri uri) async {
     if (!mounted) return;
-    final authRepo = context.read<AuthRepository>();
-    final result = await authRepo.applyEmailVerificationLink(uri);
-    if (!mounted) return;
-
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    switch (result.outcome) {
-      case EmailVerifyLinkOutcome.success:
-      case EmailVerifyLinkOutcome.alreadyVerified:
-        await authRepo.refreshSessionClaims();
-        if (!mounted) return;
-        final coordinator = context.read<OnboardingCoordinator>();
-        await coordinator.setStep(OnboardingStep.completeProfile);
-        if (!mounted) return;
-        _router.go(OnboardingRoutes.completeProfile);
-        final l10n = AppLocalizations.of(context)!;
-        if (result.promptTapContinue) {
-          AppSnackBar.showInfoWithMessenger(
-            messenger,
-            l10n.messageVerificationCompleteTapContinueProceed,
-          );
-        }
-      case EmailVerifyLinkOutcome.noSignedInUser:
-        _router.go(OnboardingRoutes.login);
-        final l10n = AppLocalizations.of(context)!;
-        AppSnackBar.showAlertWithMessenger(
-          messenger,
-          l10n.appEmailVerifiedSignIn,
-        );
-      case EmailVerifyLinkOutcome.invalidOrExpired:
-      case EmailVerifyLinkOutcome.wrongMode:
-        final l10n = AppLocalizations.of(context)!;
-        AppSnackBar.showAlertWithMessenger(
-          messenger,
-          result.outcome == EmailVerifyLinkOutcome.invalidOrExpired
-              ? userFacingApplyLinkError(l10n, result.firebaseErrorCode)
-              : l10n.appEmailVerifyLinkFailed,
-        );
-    }
+    await handleEmailVerificationLink(
+      authRepository: context.read<AuthRepository>(),
+      coordinator: context.read<OnboardingCoordinator>(),
+      router: _router,
+      uri: uri,
+    );
   }
 
   @override
@@ -156,6 +123,7 @@ class _LaNonnaAppState extends State<LaNonnaApp> {
   Widget build(BuildContext context) {
     _ensurePush(context);
     return MaterialApp.router(
+      scaffoldMessengerKey: rootScaffoldMessengerKey,
       onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
       theme: AppTheme.light,
       themeMode: ThemeMode.light,
