@@ -14,10 +14,11 @@ Push notification deep links already used `appRootNavigatorKey.currentContext` f
 
 | Layer | Change |
 |-------|--------|
-| `app_shell_ui.dart` | Shared `rootScaffoldMessengerKey` on `MaterialApp.router`, plus helpers to read `AppLocalizations` and the messenger from contexts **under** the app shell (`appRootNavigatorKey` / messenger key). |
+| `app_shell_ui.dart` | Shared `rootScaffoldMessengerKey` on `MaterialApp.router`. `AppShellUi.whenReady` hands the messenger and `AppLocalizations` (read from the messenger's own context, which is below `MaterialApp`) to the caller. A cold-start link can run before the first frame, so it waits for the shell, but at most `maxWaitFrames` frames; it never reschedules indefinitely. |
 | `email_verification_link_handler.dart` | Outcome handling (navigation + snackbars) extracted for clarity and testing; `app.dart` delegates here after applying the Firebase link. |
 | `app.dart` | Wire `scaffoldMessengerKey`; use shell helpers instead of the root State `context` for UI feedback. |
-| `email_verification_link_handler_test.dart` | Widget test per outcome: asserts route and snackbar text. |
+| `push_notification_service.dart` | Same class of bug, latent: `start()` accepted the root `State` context (above `MaterialApp`) and fell back to `navigateAppDeepLink` with it. `app.dart` always passed `onDeepLink` (root navigator context), so the fallback and the unused `onOpenDeepLink` were dead; both removed and `onDeepLink` is required. |
+| `email_verification_link_handler_test.dart` | Widget test per outcome: asserts route and snackbar text, plus a link handled before the shell mounts. |
 
 ## References
 

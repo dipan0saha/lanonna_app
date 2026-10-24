@@ -17,8 +17,10 @@ The first-moment screen already synced drafts on chip toggles, name add/remove, 
 | Layer | Change |
 |-------|--------|
 | `onboarding_signup_screen.dart` | Remove `_persistEmail()` from `dispose()`; keep `onChanged` and Back persistence. |
-| `onboarding_first_moment_screen.dart` | Remove `_syncDraft()` from `dispose()`; add a controller listener to persist name input on change (same idea as complete-profile field persistence). |
-| `test/dispose_inherited_lookup_guard_test.dart` | CI guard: no `context.read` / `Provider.of` / `AppLocalizations.of(context)` / `ScaffoldMessenger.*Of(context)` inside `dispose()` bodies under `lib/`. |
+| `onboarding_first_moment_screen.dart` | Remove `_syncDraft()` from `dispose()`; persist the name field from its `onChanged` (user edits only), the same pattern as complete-profile. A controller listener was rejected in review: it also fires when the saved draft is restored (`controller.text = ...` runs before gender and photo are restored), which would overwrite the stored gender and photo with defaults. |
+| `onboarding_prototype_widgets.dart` | `PrototypeInlineNameAdd` exposes `onChanged`. |
+| `test/dispose_inherited_lookup_guard_test.dart` | CI guard over `lib/`: no `context.read/watch/select`, `X.of(context)` / `X.maybeOf(context)` (any inherited widget, including `Provider.of<T>`), `dependOnInheritedWidgetOfExactType` or `findAncestor*` inside `dispose()`, directly or through private helpers in the same file (both #436 crashes went through `_persistEmail()` / `_syncDraft()`). Comments and string literals are ignored. The test has its own positive and negative cases, and it fails on the pre-fix screens. |
+| `test/onboarding_first_moment_draft_test.dart` | Restoring a saved draft keeps gender and name ideas; typing in the name field persists without leaving the screen. |
 
 ## References
 

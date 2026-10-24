@@ -1,34 +1,47 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../l10n/app_localizations.dart';
-import '../router/app_router.dart';
 
-/// [MaterialApp] scaffold messenger — snackbars from shell-level handlers
-/// (deep links, push taps) must use this, not a [State] context above the app.
+/// [MaterialApp] scaffold messenger. Snackbars from shell-level handlers
+/// (App Links, push taps) must use this, not a [State] context above the app.
 final rootScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 /// UI scope below [MaterialApp] for handlers that run outside route widgets.
 abstract final class AppShellUi {
-  static ScaffoldMessengerState? get messenger =>
-      rootScaffoldMessengerKey.currentState;
+  /// Frames to wait for the shell to mount (cold-start links run before the
+  /// first frame) before the message is dropped.
+  static const int maxWaitFrames = 5;
 
-  static AppLocalizations? localizations {
-    final context = appRootNavigatorKey.currentContext;
-    if (context == null) return null;
-    return AppLocalizations.of(context);
+  /// Runs [action] with the root messenger and localizations once
+  /// [MaterialApp] has mounted. Waits at most [maxWaitFrames] frames, so a
+  /// shell that never mounts cannot keep scheduling frames.
+  static void whenReady(
+    void Function(ScaffoldMessengerState messenger, AppLocalizations l10n)
+    action,
+  ) {
+    unawaited(_runWhenReady(action));
   }
 
-  /// Runs [action] once [localizations] and [messenger] are available.
-  static void whenReady(void Function(AppLocalizations l10n) action) {
-    void attempt() {
-      final l10n = localizations;
-      if (l10n != null) {
-        action(l10n);
+  static Future<void> _runWhenReady(
+    void Function(ScaffoldMessengerState messenger, AppLocalizations l10n)
+    action,
+  ) async {
+    for (var frame = 0; ; frame++) {
+      final messenger = rootScaffoldMessengerKey.currentState;
+      final l10n = messenger == null || !messenger.mounted
+          ? null
+          : AppLocalizations.of(messenger.context);
+      if (messenger != null && l10n != null) {
+        action(messenger, l10n);
         return;
       }
-      WidgetsBinding.instance.addPostFrameCallback((_) => attempt());
+      if (frame >= maxWaitFrames) {
+        debugPrint('app_shell_ui_not_ready: message dropped');
+        return;
+      }
+      await WidgetsBinding.instance.endOfFrame;
     }
-
-    attempt();
   }
 }

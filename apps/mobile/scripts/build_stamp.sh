@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-# Emits BUILD_GIT_SHA and BUILD_NUMBER for flutter build (Crashlytics keys + versionCode).
-# Source from release scripts: eval "$(bash scripts/build_stamp.sh)"
+# Prints `export BUILD_GIT_SHA=... BUILD_NUMBER=...` for the build stamp.
+# Build APKs with scripts/flutter_build_apk.sh, which applies it.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-cd "${ROOT}"
 
 GIT_SHA="$(git -C "${ROOT}" rev-parse --short HEAD 2>/dev/null || true)"
 if [[ -z "${GIT_SHA}" ]]; then
@@ -22,7 +21,7 @@ if [[ -z "${NUMBER}" ]]; then
   NUMBER="unknown"
 fi
 
-# Prod release callers must export REQUIRE_BUILD_STAMP=1 to fail fast.
+# flutter_build_apk.sh sets REQUIRE_BUILD_STAMP=1 for the prod flavor.
 if [[ "${REQUIRE_BUILD_STAMP:-}" == "1" ]]; then
   if [[ "${GIT_SHA}" == "unknown" ]]; then
     echo "FAIL: BUILD_GIT_SHA is required for prod release (git not available?)" >&2

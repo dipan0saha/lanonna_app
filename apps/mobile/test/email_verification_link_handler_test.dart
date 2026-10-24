@@ -200,4 +200,39 @@ void main() {
       findsOneWidget,
     );
   });
+
+  group('AppShellUi.whenReady', () {
+    Widget shell() => MaterialApp(
+          scaffoldMessengerKey: rootScaffoldMessengerKey,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const Scaffold(body: Text('home')),
+        );
+
+    testWidgets('waits for a shell that mounts on the next frame',
+        (tester) async {
+      var shown = 0;
+      AppShellUi.whenReady((messenger, l10n) => shown++);
+      expect(shown, 0);
+
+      await tester.pumpWidget(shell());
+      await tester.pump();
+
+      expect(shown, 1);
+    });
+
+    testWidgets('gives up after maxWaitFrames when no shell mounts',
+        (tester) async {
+      var shown = 0;
+      AppShellUi.whenReady((messenger, l10n) => shown++);
+      for (var i = 0; i <= AppShellUi.maxWaitFrames + 1; i++) {
+        await tester.pump();
+      }
+      expect(tester.binding.hasScheduledFrame, isFalse);
+
+      await tester.pumpWidget(shell());
+      await tester.pump();
+      expect(shown, 0);
+    });
+  });
 }

@@ -24,9 +24,9 @@ Future<void> handleEmailVerificationLink({
       await coordinator.setStep(OnboardingStep.completeProfile);
       router.go(OnboardingRoutes.completeProfile);
       if (result.promptTapContinue) {
-        AppShellUi.whenReady((l10n) {
+        AppShellUi.whenReady((messenger, l10n) {
           AppSnackBar.showInfoWithMessenger(
-            AppShellUi.messenger,
+            messenger,
             l10n.messageVerificationCompleteTapContinueProceed,
           );
         });
@@ -34,20 +34,20 @@ Future<void> handleEmailVerificationLink({
       return;
     case EmailVerifyLinkOutcome.noSignedInUser:
       router.go(OnboardingRoutes.login);
-      AppShellUi.whenReady((l10n) {
+      AppShellUi.whenReady((messenger, l10n) {
         AppSnackBar.showAlertWithMessenger(
-          AppShellUi.messenger,
+          messenger,
           l10n.appEmailVerifiedSignIn,
         );
       });
       return;
     case EmailVerifyLinkOutcome.invalidOrExpired:
     case EmailVerifyLinkOutcome.wrongMode:
-      AppShellUi.whenReady((l10n) {
+      AppShellUi.whenReady((messenger, l10n) {
         final message = result.outcome == EmailVerifyLinkOutcome.invalidOrExpired
             ? userFacingApplyLinkError(l10n, result.firebaseErrorCode)
             : l10n.appEmailVerifyLinkFailed;
-        AppSnackBar.showAlertWithMessenger(AppShellUi.messenger, message);
+        AppSnackBar.showAlertWithMessenger(messenger, message);
       });
       return;
   }

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'core/auth/auth_email_verification.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -115,7 +114,6 @@ class _LaNonnaAppState extends State<LaNonnaApp> {
         if (ctx == null) return;
         navigateAppDeepLink(ctx, link, babyProfileId: babyProfileId);
       },
-      context: context,
     );
   }
 
