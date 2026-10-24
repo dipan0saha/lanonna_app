@@ -1,5 +1,6 @@
 import uuid
-from unittest.mock import patch
+from contextlib import contextmanager
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -10,6 +11,15 @@ from lanonna_api.domain.member_lifecycle import (
     list_members_for_owner,
     remove_member,
 )
+
+
+@contextmanager
+def _one_connection():
+    """Leave / remove run membership change + activity in one transaction (#442)."""
+    conn = MagicMock(name="conn")
+    with patch("lanonna_api.domain.member_lifecycle.get_connection") as get_conn:
+        get_conn.return_value.__enter__.return_value = conn
+        yield conn
 
 
 def test_list_members_sets_can_remove_for_follower_not_self():
@@ -98,6 +108,15 @@ def test_remove_follower_records_activity():
                 "display_name": "Alex",
             },
         ),
+        _one_connection() as conn,
+        patch(
+            "lanonna_api.domain.member_lifecycle.lock_baby_profile_for_update",
+            return_value={"name": "Baby"},
+        ) as lock_baby,
+        patch(
+            "lanonna_api.domain.member_lifecycle.lock_membership_for_user_for_update",
+            return_value={"role": "follower"},
+        ),
         patch(
             "lanonna_api.domain.member_lifecycle.soft_remove_membership",
             return_value=True,
@@ -107,8 +126,12 @@ def test_remove_follower_records_activity():
         ) as activity,
     ):
         remove_member("owner-1", baby_id, "follower-1")
-    soft_remove.assert_called_once_with(baby_id, "follower-1")
+    lock_baby.assert_called_once_with(baby_id, conn)
+    soft_remove.assert_called_once_with(baby_id, "follower-1", conn=conn)
     activity.assert_called_once()
+    # Same transaction as the removal, under the baby FOR UPDATE lock.
+    assert activity.call_args.kwargs["conn"] is conn
+    assert activity.call_args.kwargs["row_lock_held"] is True
     assert activity.call_args[0][2] == "member_removed"
     # The removed member is referenced by uid; their name is resolved at read time.
     assert activity.call_args.kwargs["payload"] == {"target_firebase_uid": "follower-1"}
@@ -117,6 +140,7 @@ def test_remove_follower_records_activity():
 def test_leave_sole_owner_blocked():
     baby_id = uuid.uuid4()
     with (
+        _one_connection(),
         patch(
             "lanonna_api.domain.member_lifecycle.soft_remove_own_membership",
             return_value=OwnLeaveOutcome.SOLE_OWNER,
@@ -131,7 +155,7 @@ def test_leave_sole_owner_blocked():
 
 def test_leave_not_member():
     baby_id = uuid.uuid4()
-    with patch(
+    with _one_connection(), patch(
         "lanonna_api.domain.member_lifecycle.soft_remove_own_membership",
         return_value=OwnLeaveOutcome.NOT_MEMBER,
     ):
@@ -143,6 +167,7 @@ def test_leave_not_member():
 def test_leave_follower_succeeds():
     baby_id = uuid.uuid4()
     with (
+        _one_connection() as conn,
         patch(
             "lanonna_api.domain.member_lifecycle.soft_remove_own_membership",
             return_value=OwnLeaveOutcome.LEFT,
@@ -150,5 +175,7 @@ def test_leave_follower_succeeds():
         patch("lanonna_api.domain.member_lifecycle.insert_activity_event") as activity,
     ):
         leave_baby_profile("follower-1", baby_id)
-    leave.assert_called_once_with(baby_id, "follower-1")
+    leave.assert_called_once_with(baby_id, "follower-1", conn=conn)
     activity.assert_called_once()
+    assert activity.call_args.kwargs["conn"] is conn
+    assert activity.call_args.kwargs["row_lock_held"] is True

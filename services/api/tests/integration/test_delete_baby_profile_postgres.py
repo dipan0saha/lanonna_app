@@ -14,7 +14,10 @@ from lanonna_api.domain.membership_access import require_active_membership
 from lanonna_api.repositories.babies import list_babies_for_user
 from lanonna_api.repositories.users import resolve_app_user
 
-pytestmark = pytest.mark.integration
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.filterwarnings("error::pytest.PytestUnhandledThreadExceptionWarning"),
+]
 
 
 @pytest.fixture(autouse=True)
@@ -142,7 +145,7 @@ def test_co_owned_delete_refused():
 
 
 def test_co_owners_deleting_and_leaving_at_once_never_orphan_the_baby():
-    """Delete and leave both take the baby row lock, so the owner count stays true."""
+    """Delete and leave both take the baby row lock; leave must not 500 on activity insert."""
     import threading
 
     from lanonna_api.domain.baby_delete import CannotDeleteSharedBabyError
@@ -153,23 +156,39 @@ def test_co_owners_deleting_and_leaving_at_once_never_orphan_the_baby():
         owner_b = _user("rb")
         baby_id = _baby([(owner_a, "owner"), (owner_b, "owner")])
         barrier = threading.Barrier(2)
-        errors: list[Exception] = []
+        thread_errors: list[BaseException] = []
+        leave_codes: list[str] = []
 
-        def run(fn, uid):
+        def run_delete():
             barrier.wait()
             try:
-                fn(uid, baby_id)
-            except (CannotDeleteSharedBabyError, MemberLifecycleError) as exc:
-                errors.append(exc)
+                delete_baby_profile(owner_a, baby_id)
+            except CannotDeleteSharedBabyError:
+                pass
+            except BaseException as exc:
+                thread_errors.append(exc)
+
+        def run_leave():
+            barrier.wait()
+            try:
+                leave_baby_profile(owner_b, baby_id)
+                leave_codes.append("ok")
+            except MemberLifecycleError as exc:
+                leave_codes.append(exc.code.value)
+            except BaseException as exc:
+                thread_errors.append(exc)
 
         threads = [
-            threading.Thread(target=run, args=(delete_baby_profile, owner_a)),
-            threading.Thread(target=run, args=(leave_baby_profile, owner_b)),
+            threading.Thread(target=run_delete),
+            threading.Thread(target=run_leave),
         ]
         for t in threads:
             t.start()
         for t in threads:
             t.join()
+
+        assert thread_errors == []
+        assert leave_codes and leave_codes[0] in {"ok", "not_member"}
 
         with get_connection() as conn:
             baby = conn.execute(

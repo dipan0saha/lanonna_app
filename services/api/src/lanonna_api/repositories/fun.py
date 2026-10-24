@@ -5,6 +5,7 @@ from datetime import date
 from typing import Any
 
 from lanonna_api.db import get_connection
+from lanonna_api.repositories.child_write_locks import ensure_baby_profile_for_child_write
 from lanonna_api.repositories._paging import limit_offset_clause
 from lanonna_api.domain.birthdate_vote_window import BirthdateVoteWindow
 from lanonna_api.repositories.active_participants import active_participant_join
@@ -72,6 +73,7 @@ def insert_name_suggestion(
     suggestion_id = uuid.uuid4()
 
     def _run(connection):
+        ensure_baby_profile_for_child_write(baby_profile_id, connection)
         return connection.execute(
             """
             INSERT INTO name_suggestions (
@@ -243,6 +245,7 @@ def upsert_gender_vote(
     is_anonymous: bool,
 ) -> dict[str, Any]:
     with get_connection() as conn:
+        ensure_baby_profile_for_child_write(baby_profile_id, conn)
         row = conn.execute(
             """
             INSERT INTO votes (
@@ -270,6 +273,7 @@ def upsert_birthdate_vote(
     is_anonymous: bool,
 ) -> dict[str, Any]:
     with get_connection() as conn:
+        ensure_baby_profile_for_child_write(baby_profile_id, conn)
         row = conn.execute(
             """
             INSERT INTO votes (

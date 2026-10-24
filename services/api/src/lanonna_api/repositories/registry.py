@@ -4,6 +4,11 @@ import uuid
 from typing import Any
 
 from lanonna_api.db import get_connection
+from lanonna_api.repositories.child_write_locks import (
+    ChildWriteParent,
+    ensure_baby_profile_for_child_write,
+    ensure_parent_row_for_child_write,
+)
 from lanonna_api.repositories._paging import limit_offset_clause
 from lanonna_api.repositories.catalog_suggestions import (
     catalog_suggestion_claimed_on_table,
@@ -144,6 +149,7 @@ def create_registry_item(
 ) -> dict[str, Any]:
     item_id = uuid.uuid4()
     with get_connection() as conn:
+        ensure_baby_profile_for_child_write(baby_profile_id, conn)
         row = conn.execute(
             """
             INSERT INTO registry_items (
@@ -220,6 +226,9 @@ def item_has_purchase(item_id: uuid.UUID) -> bool:
 def create_purchase(item_id: uuid.UUID, firebase_uid: str) -> dict[str, Any]:
     purchase_id = uuid.uuid4()
     with get_connection() as conn:
+        ensure_parent_row_for_child_write(
+            ChildWriteParent.REGISTRY_ITEMS, item_id, conn
+        )
         row = conn.execute(
             """
             INSERT INTO registry_purchases (

@@ -47,6 +47,11 @@ from lanonna_api.repositories.fun import (
     upsert_gender_vote,
     user_has_like,
 )
+from lanonna_api.repositories.child_write_locks import (
+    ChildWriteParent,
+    ensure_baby_profile_for_child_write,
+    ensure_parent_row_for_child_write,
+)
 from lanonna_api.repositories.memberships import lock_membership_for_user_for_update
 from lanonna_api.domain.content_permissions import member_content_can_delete
 
@@ -106,6 +111,8 @@ def suggest_name(
         raise InvalidInputError(ErrorCode.DUPLICATE_NAME_SUGGESTION, "That name is already on the list for this gender.")
     if membership and membership["role"] != "owner":
         with get_connection() as conn:
+            # Baby before membership row: same order as leave / remove / delete.
+            ensure_baby_profile_for_child_write(baby_profile_id, conn)
             locked = lock_membership_for_user_for_update(
                 baby_profile_id, firebase_uid, conn
             )
@@ -170,6 +177,9 @@ def toggle_like(
         raise LookupError("Suggestion not found.")
     gender = row["gender"]
     with get_connection() as conn:
+        ensure_parent_row_for_child_write(
+            ChildWriteParent.NAME_SUGGESTIONS, suggestion_id, conn
+        )
         if user_has_like(suggestion_id, firebase_uid, conn):
             remove_like(suggestion_id, firebase_uid, conn)
             return {"liked": False}

@@ -4,6 +4,10 @@ import uuid
 from typing import Any
 
 from lanonna_api.db import get_connection
+from lanonna_api.repositories.child_write_locks import (
+    ChildWriteParent,
+    ensure_parent_row_for_child_write,
+)
 
 
 def list_tagged_babies_for_photo(
@@ -34,6 +38,14 @@ def replace_photo_baby_tags(
     tagged_baby_profile_ids: list[uuid.UUID],
 ) -> None:
     with get_connection() as conn:
+        # Babies (photo's + tagged, ascending id) then the photo, before the
+        # DELETE below touches rows a baby delete would cascade into (#442).
+        ensure_parent_row_for_child_write(
+            ChildWriteParent.PHOTOS,
+            photo_id,
+            conn,
+            also_baby_ids=tagged_baby_profile_ids,
+        )
         conn.execute(
             "DELETE FROM photo_baby_tags WHERE photo_id = %s",
             (photo_id,),

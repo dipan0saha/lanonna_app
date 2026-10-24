@@ -62,6 +62,28 @@ def test_data_export_happy_path():
     assert body["status"] == "pending"
 
 
+def test_data_export_baby_deleted_mid_request_is_404_not_500():
+    """#442: the router only catches PermissionError/RuntimeError; a NotFoundError
+    from the child-write lock still maps to 404 via the app's DomainError handler."""
+    from lanonna_api.domain.errors import ErrorCode, NotFoundError
+
+    baby_id = uuid.uuid4()
+    with (
+        _auth_as(),
+        patch(
+            "lanonna_api.domain.data_export.get_baby_for_owner",
+            return_value={"id": baby_id},
+        ),
+        patch(
+            "lanonna_api.domain.data_export.insert_export_job",
+            side_effect=NotFoundError(ErrorCode.NOT_FOUND, "Baby profile not found."),
+        ),
+    ):
+        response = client.post(f"/v1/babies/{baby_id}/data-export", json={})
+    assert response.status_code == 404
+    assert response.json()["detail"]["error"] == "not_found"
+
+
 def test_data_export_pubsub_failure_marks_failed():
     baby_id = uuid.uuid4()
     job_id = uuid.uuid4()
