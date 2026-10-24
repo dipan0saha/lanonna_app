@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/widgets/app_semantics.dart';
 import '../../domain/onboarding_routes.dart';
 import '../../domain/onboarding_step.dart';
 import '../onboarding_coordinator.dart';
@@ -93,13 +94,20 @@ class _OwnerCarouselScreenState extends State<OwnerCarouselScreen> {
               buttonKey: _isLastSlide
                   ? const Key('owner_carousel_get_started')
                   : const Key('owner_carousel_next'),
-              label: _isLastSlide ? AppLocalizations.of(context)!.onboardingGetStarted : AppLocalizations.of(context)!.onboardingNext,
+              label: _isLastSlide
+                  ? AppLocalizations.of(context)!.onboardingGetStarted
+                  : AppLocalizations.of(context)!.onboardingNext,
               onPressed: _onPrimaryPressed,
             ),
             const SizedBox(height: 12),
-            TextButton(
-              onPressed: () => context.go(OnboardingRoutes.login),
-              child: Text(AppLocalizations.of(context)!.onboardingHaveAccount),
+            AppSemantics.button(
+              'onboarding_have_account',
+              TextButton(
+                onPressed: () => context.go(OnboardingRoutes.login),
+                child: Text(
+                  AppLocalizations.of(context)!.onboardingHaveAccount,
+                ),
+              ),
             ),
           ],
         ),
@@ -107,22 +115,22 @@ class _OwnerCarouselScreenState extends State<OwnerCarouselScreen> {
           children: [
             Expanded(
               child: OnboardingCarousel(
-              itemCount: ownerCarouselSlideCount,
-              currentIndex: _index,
-              controller: _pageController,
-              onPageChanged: (i) => setState(() => _index = i),
-              artBuilder: (context, index) => _slideArt[index](),
-              captionBuilder: (context, index) {
-                final slide = ownerCarouselSlide(
-                  AppLocalizations.of(context)!,
-                  index,
-                );
-                return OnboardingCarouselCaption(
-                  title: slide.$1,
-                  body: slide.$2,
-                );
-              },
-            ),
+                itemCount: ownerCarouselSlideCount,
+                currentIndex: _index,
+                controller: _pageController,
+                onPageChanged: (i) => setState(() => _index = i),
+                artBuilder: (context, index) => _slideArt[index](),
+                captionBuilder: (context, index) {
+                  final slide = ownerCarouselSlide(
+                    AppLocalizations.of(context)!,
+                    index,
+                  );
+                  return OnboardingCarouselCaption(
+                    title: slide.$1,
+                    body: slide.$2,
+                  );
+                },
+              ),
             ),
             const SizedBox(height: 12),
           ],

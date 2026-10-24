@@ -236,6 +236,10 @@ class _OnboardingRelationshipFormFieldState
               options: [
                 for (final p in _ownerRelationshipOptions) p.label(l10n),
               ],
+              semanticsIds: const [
+                'onboarding_relationship_mother',
+                'onboarding_relationship_father',
+              ],
               selectedIndex: selected < 0 ? null : selected,
               selectedStyleForIndex: (_) => const OnboardingPillSelectedStyle(
                 background: AppColors.sageTint,
@@ -300,11 +304,14 @@ class OnboardingTermsAgreementCheckbox extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Checkbox(
-          value: value,
-          onChanged: onChanged,
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          visualDensity: VisualDensity.compact,
+        AppSemantics.container(
+          'onboarding_terms_checkbox',
+          Checkbox(
+            value: value,
+            onChanged: onChanged,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            visualDensity: VisualDensity.compact,
+          ),
         ),
         Expanded(
           child: Padding(
@@ -458,6 +465,7 @@ class OnboardingBottomLink extends StatelessWidget {
     required this.actionText,
     required this.onTap,
     this.actionKey,
+    this.semanticsId,
   });
 
   /// gen-l10n method for the sentence; its `{action}` placeholder becomes the link.
@@ -465,6 +473,9 @@ class OnboardingBottomLink extends StatelessWidget {
   final String actionText;
   final VoidCallback onTap;
   final Key? actionKey;
+
+  /// Optional Maestro id for the whole link row.
+  final String? semanticsId;
 
   @override
   Widget build(BuildContext context) {
@@ -475,19 +486,21 @@ class OnboardingBottomLink extends StatelessWidget {
       color: AppColors.primaryDark,
       fontWeight: FontWeight.w700,
     );
+    final Widget row = GestureDetector(
+      key: actionKey,
+      onTap: onTap,
+      child: PlaceholderRichText(
+        message: (t) => message(t[0]),
+        style: muted,
+        placeholderStyle: link,
+        textAlign: TextAlign.center,
+        placeholders: [MessagePlaceholder(label: actionText, onTap: onTap)],
+      ),
+    );
+    final id = semanticsId;
     return Padding(
       padding: const EdgeInsets.only(top: 18, bottom: 8),
-      child: GestureDetector(
-        key: actionKey,
-        onTap: onTap,
-        child: PlaceholderRichText(
-          message: (t) => message(t[0]),
-          style: muted,
-          placeholderStyle: link,
-          textAlign: TextAlign.center,
-          placeholders: [MessagePlaceholder(label: actionText, onTap: onTap)],
-        ),
-      ),
+      child: id == null ? row : AppSemantics.button(id, row),
     );
   }
 }
@@ -521,9 +534,13 @@ class OnboardingPillSelect extends StatelessWidget {
     required this.onSelected,
     this.layout = OnboardingPillLayout.wrap,
     this.selectedStyleForIndex,
+    this.semanticsIds,
   });
 
   final List<String> options;
+
+  /// Optional Maestro ids, one per option (same order as [options]).
+  final List<String>? semanticsIds;
   final int? selectedIndex;
   final ValueChanged<int> onSelected;
   final OnboardingPillLayout layout;
@@ -536,16 +553,25 @@ class OnboardingPillSelect extends StatelessWidget {
       'equalWidthRow requires at least two options',
     );
 
+    assert(
+      semanticsIds == null || semanticsIds!.length == options.length,
+      'semanticsIds must match options',
+    );
+
     final pills = List.generate(options.length, (index) {
       final selected = selectedIndex == index;
       final override = selected ? selectedStyleForIndex?.call(index) : null;
-      final pill = _OnboardingChoicePill(
+      Widget pill = _OnboardingChoicePill(
         label: options[index],
         selected: selected,
         selectedStyle: override,
         expandWidth: layout == OnboardingPillLayout.equalWidthRow,
         onTap: () => onSelected(index),
       );
+      final ids = semanticsIds;
+      if (ids != null) {
+        pill = AppSemantics.button(ids[index], pill);
+      }
 
       if (layout == OnboardingPillLayout.equalWidthRow) {
         return Expanded(child: pill);

@@ -6,6 +6,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_metrics.dart';
 import '../theme/la_nonna_theme.dart';
 import 'app_modal_sheet.dart';
+import 'app_semantics.dart';
 import 'app_responsive_button_pair.dart';
 
 /// Primary confirm look: standard (sage) or error-filled for irreversible
@@ -166,18 +167,24 @@ class _ConfirmActions extends StatelessWidget {
         return AppResponsiveButtonPair(
           spacing: gap,
           breakpoint: fitsSideBySide ? 0 : double.infinity,
-          start: OutlinedButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(cancelLabel),
+          start: AppSemantics.button(
+            'app_confirm_dialog_cancel',
+            OutlinedButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(cancelLabel),
+            ),
           ),
           // ElevatedButton carries the theme's primary CTA metrics, so both
           // halves of the pair share size, padding and shape.
-          end: ElevatedButton(
-            style: variant == ConfirmDialogVariant.destructive
-                ? AppButtonStyles.primaryDestructive
-                : null,
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(confirmLabel),
+          end: AppSemantics.button(
+            'app_confirm_dialog_confirm',
+            ElevatedButton(
+              style: variant == ConfirmDialogVariant.destructive
+                  ? AppButtonStyles.primaryDestructive
+                  : null,
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(confirmLabel),
+            ),
           ),
         );
       },

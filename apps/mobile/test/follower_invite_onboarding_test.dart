@@ -63,6 +63,7 @@ void main() {
     expect(find.textContaining('Alex invited you to follow'), findsOneWidget);
     expect(find.text('Liam'), findsOneWidget);
     expect(find.text('Accept Invitation'), findsOneWidget);
+    expect(find.bySemanticsIdentifier('invite_landing_accept'), findsOneWidget);
   });
 
   testWidgets('accepted invite preview offers Open instead of Accept', (

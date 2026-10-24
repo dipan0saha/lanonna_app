@@ -1,0 +1,33 @@
+appId: com.lanonna.lanonna
+---
+# P0: AUTH-001 — email sign-up creates a new account and reaches the verify-email step.
+# P0_DISPOSABLE_EMAIL / P0_DISPOSABLE_PASSWORD come from run-maestro-p0.sh, which makes a
+# fresh address per run from P0_DISPOSABLE_EMAIL_TEMPLATE and deletes the account afterwards
+# with account_delete.yaml.
+- clearState
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: onboarding_skip
+    timeout: 60000
+- tapOn:
+    id: onboarding_skip
+- extendedWaitUntil:
+    visible:
+      id: auth_signup_email
+    timeout: 20000
+- tapOn:
+    id: auth_signup_email
+- eraseText
+- inputText: ${P0_DISPOSABLE_EMAIL}
+- tapOn:
+    id: auth_signup_password
+- eraseText
+- inputText: ${P0_DISPOSABLE_PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: auth_signup_submit
+- extendedWaitUntil:
+    notVisible:
+      id: auth_signup_submit
+    timeout: 90000

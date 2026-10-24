@@ -1,0 +1,14 @@
+appId: com.lanonna.lanonna
+---
+# P0: ONB-002 … ONB-004 — complete profile, create baby, first moment, land on home.
+# The runner resets ONBOARDING_TEST_EMAIL to "not onboarded" first (provision_maestro_fixtures.py onboarding_reset).
+- runFlow:
+    file: subflows/sign_in_as.yaml
+    env:
+      SIGN_IN_EMAIL: ${ONBOARDING_TEST_EMAIL}
+      SIGN_IN_PASSWORD: ${ONBOARDING_TEST_PASSWORD}
+- assertVisible:
+    id: onboarding_first_name
+- runFlow: subflows/to_home.yaml
+- assertVisible:
+    id: shell_baby_switcher

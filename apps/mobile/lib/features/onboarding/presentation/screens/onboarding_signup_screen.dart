@@ -151,6 +151,7 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
             OnboardingDivider(),
             OnboardingTextField(
               fieldKey: const Key('onboarding_signup_email'),
+              semanticsId: 'auth_signup_email',
               controller: _emailController,
               label: l10n.authPasswordResetEmailLabel,
               hint: l10n.messageEmailCom,
@@ -162,6 +163,7 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
             const SizedBox(height: 16),
             OnboardingPasswordField(
               fieldKey: const Key('onboarding_signup_password'),
+              semanticsId: 'auth_signup_password',
               controller: _passwordController,
               validator: (v) => validatePassword(AppLocalizations.of(context)!, v),
               autovalidateMode: _autovalidateMode,
@@ -173,11 +175,13 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
             const SizedBox(height: 20),
             OnboardingPrimaryButton(
               buttonKey: const Key('onboarding_signup_submit'),
+              semanticsId: 'auth_signup_submit',
               label: l10n.authCreateAccount,
               isLoading: _busy,
               onPressed: _busy ? null : _submit,
             ),
             OnboardingBottomLink(
+              semanticsId: 'auth_signup_login_link',
               message: l10n.onboardingSignupAuthPrompt,
               actionText: l10n.authLogIn,
               onTap: _busy ? () {} : () => context.go(OnboardingRoutes.login),

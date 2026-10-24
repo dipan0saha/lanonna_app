@@ -9,6 +9,9 @@ chmod +x "${ROOT}/maestro/scripts/register-app-check-debug.sh"
 if [[ "${MAESTRO_PREPARE_CLEAR:-1}" == "1" ]]; then
   echo "Clearing app data and priming App Check debug token…"
   adb shell pm clear com.lanonna.lanonna
+  # pm clear resets runtime permissions; Maestro's launchApp re-grants them, but flows that
+  # start from an adb deep link would sit behind the notification permission dialog.
+  adb shell pm grant com.lanonna.lanonna android.permission.POST_NOTIFICATIONS 2>/dev/null || true
   adb logcat -c
 else
   echo "Priming App Check debug token (keeping app data)…"

@@ -1,0 +1,67 @@
+appId: com.lanonna.lanonna
+---
+# P0: INV-001 / INV-004 — a signed-out follower opens an invite link, accepts it, signs in,
+# and lands on home with the invited baby. The runner passes INVITE_TOKEN from fixtures.
+- clearState
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "onboarding_have_account|auth_login_email"
+    timeout: 60000
+- openLink: "lanonna://app/invite-accept?token=${INVITE_TOKEN}"
+- extendedWaitUntil:
+    visible:
+      id: invite_landing_accept
+    timeout: 60000
+- tapOn:
+    id: invite_landing_accept
+# Signed out, Accept goes to sign-up; the follower already has an account, so switch to login.
+- extendedWaitUntil:
+    visible:
+      id: "auth_signup_login_link|onboarding_have_account|auth_login_email|shell_baby_switcher"
+    timeout: 60000
+- runFlow:
+    when:
+      visible:
+        id: auth_signup_login_link
+    commands:
+      - tapOn:
+          id: auth_signup_login_link
+      - extendedWaitUntil:
+          visible:
+            id: auth_login_email
+          timeout: 20000
+- runFlow:
+    when:
+      visible:
+        id: onboarding_have_account
+    commands:
+      - tapOn:
+          id: onboarding_have_account
+- runFlow:
+    when:
+      visible:
+        id: auth_login_email
+    commands:
+      - tapOn:
+          id: auth_login_email
+      - eraseText
+      - inputText: ${FOLLOWER_TEST_EMAIL}
+      - tapOn:
+          id: auth_login_password
+      - eraseText
+      - inputText: ${FOLLOWER_TEST_PASSWORD}
+      - hideKeyboard
+      - tapOn:
+          id: auth_sign_in
+- extendedWaitUntil:
+    visible:
+      id: shell_baby_switcher
+    timeout: 90000
+# The accepted invite is for the second fixture baby, which the follower did not belong to.
+- tapOn:
+    id: shell_baby_switcher
+- extendedWaitUntil:
+    visible:
+      id: "baby_switcher_${SECOND_BABY_SWITCHER_ID}"
+    timeout: 30000

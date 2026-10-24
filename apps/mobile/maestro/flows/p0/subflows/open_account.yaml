@@ -1,0 +1,9 @@
+appId: com.lanonna.lanonna
+---
+# From home: open My Account through the top-bar avatar.
+- tapOn:
+    id: shell_account
+- extendedWaitUntil:
+    visible:
+      id: account_edit_profile
+    timeout: 20000

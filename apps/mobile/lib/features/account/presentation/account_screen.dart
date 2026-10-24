@@ -230,16 +230,21 @@ class _AccountScreenState extends State<AccountScreen> {
                   AppBorderedSurface(
                     child: Column(
                       children: [
-                        ListTile(
-                          title: Text(AppLocalizations.of(context)!.settingsTitle),
-                          subtitle: Text(
-                            l10n.labelNotificationsProfileHelp,
+                        AppSemantics.button(
+                          'account_settings',
+                          ListTile(
+                            title: Text(
+                              AppLocalizations.of(context)!.settingsTitle,
+                            ),
+                            subtitle: Text(
+                              l10n.labelNotificationsProfileHelp,
+                            ),
+                            trailing: const Icon(
+                              Icons.chevron_right,
+                              color: AppColors.muted,
+                            ),
+                            onTap: () => context.push('/settings'),
                           ),
-                          trailing: const Icon(
-                            Icons.chevron_right,
-                            color: AppColors.muted,
-                          ),
-                          onTap: () => context.push('/settings'),
                         ),
                         if (_digestSummary != null)
                           AppSemantics.button(
@@ -297,16 +302,20 @@ class _AccountScreenState extends State<AccountScreen> {
                   const SizedBox(height: AppMetrics.sectionBlockSpacing),
                   AppSectionTitle(title: l10n.labelAccount),
                   AppBorderedSurface(
-                    child: ListTile(
-                      title: Text(
-                        l10n.deleteAccountConfirmAction,
-                        style: TextStyle(color: AppColors.error),
+                    child: AppSemantics.button(
+                      'account_delete_entry',
+                      ListTile(
+                        title: Text(
+                          l10n.deleteAccountConfirmAction,
+                          style: TextStyle(color: AppColors.error),
+                        ),
+                        trailing: const Icon(
+                          Icons.chevron_right,
+                          color: AppColors.muted,
+                        ),
+                        onTap: () => context.push('/account/delete'),
                       ),
-                      trailing: const Icon(
-                        Icons.chevron_right,
-                        color: AppColors.muted,
-                      ),
-                      onTap: () => context.push('/account/delete'),
+                      label: l10n.deleteAccountConfirmAction,
                     ),
                   ),
                 ],

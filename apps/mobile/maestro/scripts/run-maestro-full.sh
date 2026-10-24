@@ -52,7 +52,7 @@ MAESTRO_ENV_ARGS=(
   -e "SIGN_IN_EMAIL=${FOLLOWER_TEST_EMAIL}"
   -e "SIGN_IN_PASSWORD=${FOLLOWER_TEST_PASSWORD:-${SMOKE_TEST_PASSWORD}}"
 )
-"${ROOT}/maestro/scripts/run-maestro-flows-sequential.sh" \
+"${ROOT}/maestro/scripts/run-maestro-flows-sequential.sh" "${MAESTRO_ENV_ARGS[@]}" -- \
   maestro/flows/roles/follower_permissions.yaml
 
 # Invite deep link (requires token from provisioning)
@@ -68,7 +68,7 @@ if [[ -n "${invite_token:-}" ]]; then
   adb shell am force-stop com.lanonna.lanonna || true
   "${ROOT}/maestro/scripts/open-invite-deep-link.sh"
   sleep 5
-  "${ROOT}/maestro/scripts/run-maestro-flows-sequential.sh" \
+  "${ROOT}/maestro/scripts/run-maestro-flows-sequential.sh" "${MAESTRO_ENV_ARGS[@]}" -- \
     maestro/flows/roles/invite_deep_link.yaml
 else
   echo "Skipping invite_deep_link (no invite_token in .fixtures.env)" >&2
@@ -93,7 +93,7 @@ MAESTRO_ENV_ARGS=(
   -e "SIGN_IN_EMAIL=${ONBOARDING_TEST_EMAIL}"
   -e "SIGN_IN_PASSWORD=${ONBOARDING_TEST_PASSWORD}"
 )
-"${ROOT}/maestro/scripts/run-maestro-flows-sequential.sh" \
+"${ROOT}/maestro/scripts/run-maestro-flows-sequential.sh" "${MAESTRO_ENV_ARGS[@]}" -- \
   maestro/flows/onboarding/onboarding_owner_fresh.yaml
 
 "${ROOT}/maestro/scripts/provision-smoke-user.sh"

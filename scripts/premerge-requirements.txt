@@ -1,0 +1,3 @@
+# Coverage tools for scripts/premerge_check.sh (installed into its venv).
+pytest-cov==7.1.0
+diff-cover==10.6.0

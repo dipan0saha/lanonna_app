@@ -46,6 +46,9 @@ chmod +x maestro/scripts/*.sh
 # Full regression gate (smoke + features + follower + invite deep link + fresh onboarding)
 ./maestro/scripts/run-maestro-full.sh
 
+# P0 suite (part 1; see flows/p0/COVERAGE.md)
+./maestro/scripts/run-maestro-p0.sh
+
 # Sign-in flow only (same App Check prep, then `flows/smoke/auth_sign_in.yaml`)
 ./maestro/scripts/run-auth-sign-in.sh
 ```
@@ -81,7 +84,7 @@ Single flow: `maestro test maestro/flows/features/foo.yaml "${MAESTRO_ENV_ARGS[@
 
 ### Flutter integration tests (device / emulator)
 
-CI ([`ci.yml`](../../../.github/workflows/ci.yml)) runs the chip and l10n guards, `flutter analyze --no-fatal-infos`, and `flutter test --exclude-tags golden` (unit/widget) only — no device or Maestro flows. Device integration tests live under `integration_test/` and are run manually when you have smoke credentials in `maestro/local.env`:
+The repo **pre-merge gate** ([`scripts/premerge_check.sh`](../../../scripts/premerge_check.sh)) runs chip/l10n guards, `flutter analyze`, `flutter test`, API/worker pytest (with Postgres), diff coverage on changed lines, and optional `--e2e` Maestro P0. Device integration tests live under `integration_test/` and are run manually when you have smoke credentials in `maestro/local.env`:
 
 ```bash
 source maestro/scripts/load-env.sh

@@ -32,7 +32,7 @@ No other locale ARB files in the repo.
 |-------|--------|
 | `app_en.arb` | `{babyName}'s` (single apostrophe in JSON string) |
 | `lib/l10n/` generated files | Regenerated with `flutter gen-l10n` (the first push hand-edited `app_localizations_en.dart` and left the doc comment in `app_localizations.dart` stale) |
-| CI (`.github/workflows/ci.yml`) | Mobile job runs `flutter gen-l10n` and fails on any diff under `lib/l10n/`, so generated code can no longer drift from the ARB |
+| Pre-merge gate (`scripts/premerge_check.sh`) | Runs `flutter gen-l10n` and fails on any diff under `lib/l10n/`, so generated code can no longer drift from the ARB |
 | Tests | `invite_coowner_access_body_l10n_test.dart`: co-owner body contains `Luna's`; no ARB message contains ICU-style `''` |
 
 ### ARB audit

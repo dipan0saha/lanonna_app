@@ -32,4 +32,4 @@ uvicorn lanonna_api.main:app --reload --app-dir src
 PYTHONPATH=src pytest -q
 ```
 
-Integration tests (`tests/integration/`) need local Postgres on 5432: `docker compose -f docker-compose.test.yml up -d` from the repo root. CI runs unit + integration tests on every PR ([`ci.yml`](../../.github/workflows/ci.yml)).
+Integration tests (`tests/integration/`) need local Postgres on 5432: `docker compose -f docker-compose.test.yml up -d` from the repo root. The local pre-merge gate runs unit + integration tests ([`scripts/premerge_check.sh`](../../scripts/premerge_check.sh)).

@@ -1,0 +1,12 @@
+appId: com.lanonna.lanonna
+---
+# Finishes owner onboarding when the signed-in account still needs it, then waits for home.
+- runFlow:
+    when:
+      notVisible:
+        id: shell_baby_switcher
+    file: complete_owner_onboarding.yaml
+- extendedWaitUntil:
+    visible:
+      id: shell_baby_switcher
+    timeout: 90000

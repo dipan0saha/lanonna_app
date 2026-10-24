@@ -9,10 +9,11 @@
 | [mobile-prod-flavor-and-crashlytics.md](mobile-prod-flavor-and-crashlytics.md) | Mobile prod flavor, signing, App Links, Crashlytics |
 | [platform-architecture.md](platform-architecture.md) | Stack principles, flows, cost model, security checklist |
 | [pre-beta-qa.md](pre-beta-qa.md) | Manual device QA before widening beta |
+| [change-safety.md](change-safety.md) | Local pre-merge gate, impact analysis, regression-test rules (replaces GitHub Actions CI) |
 | [open-gaps.md](open-gaps.md) | Open pre-beta engineering gaps, test health snapshot, Oct 16 2026 architecture-review outcomes |
 | [intentional-dev-decisions.md](intentional-dev-decisions.md) | Accepted dev-only security/IAM/ops tradeoffs (not open work) |
 | [facebook-login-implementation-plan.md](facebook-login-implementation-plan.md) | Deferred Facebook OAuth plan (not in v1) |
 
 Product scope: [../product/requirements.md](../product/requirements.md).
 
-**Dev snapshot:** `lanonna-dev` on Cloud Run; SQL schema per the [migrations README](../../infra/db/migrations/README.md); local quality gate **`./scripts/verify-dev-prerequisites.sh`**; GitHub Actions CI ([`ci.yml`](../../.github/workflows/ci.yml)) on every PR and push to `main`; pre-beta blockers in [open-gaps.md](open-gaps.md).
+**Dev snapshot:** `lanonna-dev` on Cloud Run; SQL schema per the [migrations README](../../infra/db/migrations/README.md); **pre-merge gate** **`./scripts/premerge_check.sh`** (required before merge); broader readiness **`./scripts/verify-dev-prerequisites.sh`**; pre-beta blockers in [open-gaps.md](open-gaps.md).

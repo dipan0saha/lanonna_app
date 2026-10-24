@@ -1,0 +1,32 @@
+appId: com.lanonna.lanonna
+---
+# P0: GAL-001 — owner opens the upload entry on the primary baby's gallery
+# (the GCS upload pipeline itself is covered by API/worker integration tests).
+- runFlow: subflows/sign_in_owner.yaml
+- runFlow: ../subflows/ensure_primary_baby.yaml
+# nav_* ids sit on the destination icons; NavigationBar can merge them into the tab
+# node, so fall back to the tab's accessibility label.
+- runFlow:
+    when:
+      visible:
+        id: nav_gallery
+    commands:
+      - tapOn:
+          id: nav_gallery
+- runFlow:
+    when:
+      notVisible:
+        id: nav_gallery
+    commands:
+      - tapOn: ".*Tab 2 of 5.*"
+- extendedWaitUntil:
+    visible:
+      id: gallery_upload_fab
+    timeout: 20000
+- tapOn:
+    id: gallery_upload_fab
+- extendedWaitUntil:
+    visible:
+      id: "photo_source_library|photo_source_camera"
+    timeout: 15000
+- back

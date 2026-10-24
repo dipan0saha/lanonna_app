@@ -1,0 +1,17 @@
+appId: com.lanonna.lanonna
+---
+# From home: My Account -> Sign out -> signed-out entry (carousel or login).
+- runFlow: open_account.yaml
+- scrollUntilVisible:
+    element:
+      id: account_sign_out
+    direction: UP
+    timeout: 30000
+- tapOn:
+    id: account_sign_out
+- extendedWaitUntil:
+    visible:
+      id: "onboarding_have_account|auth_login_email"
+    timeout: 45000
+- assertNotVisible:
+    id: shell_baby_switcher
