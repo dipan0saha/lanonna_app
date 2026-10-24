@@ -285,13 +285,16 @@ diff_cover() {
     --fail-under="${DIFF_THRESHOLD}" "$@"
 }
 
-diff_cover_api() { diff_cover "${ROOT}/coverage-api.xml" --include 'services/api/src/*'; }
-diff_cover_worker() { diff_cover "${ROOT}/coverage-worker.xml" --include 'services/worker/src/*'; }
+# diff-cover expands --include with a recursive glob from the repo root, and matches
+# --exclude against the file's basename or absolute path (hence the leading */).
+diff_cover_api() { diff_cover "${ROOT}/coverage-api.xml" --include 'services/api/src/**/*.py'; }
+diff_cover_worker() { diff_cover "${ROOT}/coverage-worker.xml" --include 'services/worker/src/**/*.py'; }
 diff_cover_mobile() {
   # Generated code is excluded: l10n freshness is its own step, codegen is not hand-written.
-  diff_cover "${ROOT}/coverage-mobile.lcov" --format lcov \
-    --include 'apps/mobile/lib/*' \
-    --exclude 'apps/mobile/lib/l10n/*' '*.g.dart' '*.freezed.dart'
+  # Non-.xml reports are read as lcov.
+  diff_cover "${ROOT}/coverage-mobile.lcov" \
+    --include 'apps/mobile/lib/**/*.dart' \
+    --exclude '*/apps/mobile/lib/l10n/*' '*.g.dart' '*.freezed.dart'
 }
 
 maestro_p0() { cd apps/mobile; ./maestro/scripts/run-maestro-p0.sh; }
