@@ -182,11 +182,15 @@ class PrototypeInlineNameAdd extends StatelessWidget {
     super.key,
     required this.controller,
     required this.onAdd,
+    this.onChanged,
     this.hint,
   });
 
   final TextEditingController controller;
   final VoidCallback onAdd;
+
+  /// Called on user edits only (not on programmatic hydration or clear).
+  final ValueChanged<String>? onChanged;
   final String? hint;
 
   @override
@@ -199,6 +203,7 @@ class PrototypeInlineNameAdd extends StatelessWidget {
             kind: AppTextInputKind.personName,
             controller: controller,
             decoration: InputDecoration(hintText: hint ?? l10n.actionAddName),
+            onChanged: onChanged,
             onSubmitted: (_) => onAdd(),
           ),
         ),

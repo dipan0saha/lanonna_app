@@ -1,4 +1,5 @@
 import 'app_config.dart';
+import 'build_metadata.dart';
 
 /// Prefix for values in [flavors/prod.json] that must be replaced before prod ship.
 const String prodConfigPlaceholderPrefix = '__PROD_';
@@ -36,11 +37,18 @@ void ensureProdConfigReady() {
   if (isProdPlaceholderValue(googleClientId)) {
     errors.add('GOOGLE_SIGN_IN_SERVER_CLIENT_ID');
   }
+  if (BuildMetadata.gitSha == BuildMetadata.unknown) {
+    errors.add('BUILD_GIT_SHA');
+  }
+  if (BuildMetadata.buildNumber == BuildMetadata.unknown) {
+    errors.add('BUILD_NUMBER');
+  }
   if (errors.isEmpty) return;
 
   throw StateError(
-    'Prod build still has placeholder values for ${errors.join(', ')}. '
-    'Edit flavors/prod.json (and run flutterfire configure for Firebase) '
-    'before shipping a prod binary.',
+    'Prod build is missing config for ${errors.join(', ')}. '
+    'Replace the __PROD_ placeholders in flavors/prod.json (and run '
+    'flutterfire configure for Firebase), and build with '
+    'apps/mobile/scripts/flutter_build_apk.sh for the build stamp.',
   );
 }

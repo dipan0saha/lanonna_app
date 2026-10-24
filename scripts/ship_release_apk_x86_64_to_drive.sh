@@ -7,7 +7,7 @@ MOBILE="${ROOT}/apps/mobile"
 cd "${MOBILE}"
 
 echo "Building x86_64 release APK..."
-flutter build apk --release \
+scripts/flutter_build_apk.sh --release \
   --target-platform android-x64 \
   --dart-define-from-file=flavors/dev.json
 

@@ -59,9 +59,10 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
     return v == 'born' ? BabyLifecycle.born : BabyLifecycle.expecting;
   }
 
+  /// Drafts persist on every user change (and before Back / Continue), never
+  /// in [dispose]: the coordinator provider may already be gone there (#436).
   @override
   void dispose() {
-    _syncDraft();
     _nameInputController.dispose();
     super.dispose();
   }
@@ -307,6 +308,7 @@ class _OnboardingFirstMomentScreenState extends State<OnboardingFirstMomentScree
                   const SizedBox(height: 10),
                   PrototypeInlineNameAdd(
                     controller: _nameInputController,
+                    onChanged: (_) => _syncDraft(),
                     onAdd: _addNameIdea,
                   ),
                   _nameSuggestionChips(),
