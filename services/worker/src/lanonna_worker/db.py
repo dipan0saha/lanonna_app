@@ -95,6 +95,26 @@ def get_connection() -> Iterator[psycopg.Connection[Any]]:
         yield conn
 
 
+def lock_baby_profile_for_key_share(
+    baby_profile_id: uuid.UUID,
+    conn: Any,
+) -> bool:
+    """``FOR KEY SHARE`` the baby before a baby-scoped INSERT; False if it is gone.
+
+    Same lock and order as the API's ``repositories.child_write_locks`` (#442).
+    """
+    row = conn.execute(
+        """
+        SELECT 1
+        FROM baby_profiles
+        WHERE id = %s
+        FOR KEY SHARE
+        """,
+        (baby_profile_id,),
+    ).fetchone()
+    return row is not None
+
+
 def mark_photo_ready(
     display_path: str,
     thumb_path: str,
@@ -113,6 +133,21 @@ def mark_photo_ready(
             ).fetchone()
             if existing is not None:
                 return None
+
+        # Baby first, before the UPDATE locks the photo row: a baby delete holds
+        # the baby FOR UPDATE and then cascades into photos, so the reverse order
+        # deadlocks (#442). Baby gone means the photo cascaded away too.
+        pending = conn.execute(
+            """
+            SELECT baby_profile_id FROM photos
+            WHERE display_path = %s AND status = 'pending'
+            """,
+            (display_path,),
+        ).fetchone()
+        if pending is None or not lock_baby_profile_for_key_share(
+            pending["baby_profile_id"], conn
+        ):
+            return None
 
         row = conn.execute(
             """

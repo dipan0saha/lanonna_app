@@ -8,6 +8,7 @@ from lanonna_activity_copy import ActivityEventType, activity_summary
 from psycopg.types.json import Json
 
 from lanonna_api.db import get_connection
+from lanonna_api.repositories.child_write_locks import ensure_baby_profile_for_child_write
 
 
 def _display_name(connection: Any, firebase_uid: str | None) -> str | None:
@@ -27,17 +28,25 @@ def insert_activity_event(
     params: dict[str, Any] | None = None,
     payload: dict[str, Any] | None = None,
     conn=None,
+    *,
+    row_lock_held: bool = False,
 ) -> dict[str, Any]:
     """Record a structured feed event.
 
     ``params`` are display values for the app's ARB sentence (see
     ``lanonna_activity_copy.activity``); ``payload`` holds references such as
     ``photo_id``. ``summary`` is filled with the English diagnostic sentence.
+
+    Takes the baby ``FOR KEY SHARE`` in the INSERT's transaction (#442) and raises
+    ``NotFoundError`` if the baby is gone. Pass ``row_lock_held=True`` only with
+    ``conn`` when that transaction already holds the baby ``FOR UPDATE``.
     """
     event_id = uuid.uuid4()
     display_params = params or {}
 
     def _run(connection):
+        if not row_lock_held:
+            ensure_baby_profile_for_child_write(baby_profile_id, connection)
         target_uid = (payload or {}).get("target_firebase_uid")
         summary = activity_summary(
             event_type,

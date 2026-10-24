@@ -6,6 +6,11 @@ from typing import Any
 
 from lanonna_api.db import get_connection
 from lanonna_api.repositories.active_participants import active_participant_join
+from lanonna_api.repositories.child_write_locks import (
+    ChildWriteParent,
+    ensure_baby_profile_for_child_write,
+    ensure_parent_row_for_child_write,
+)
 
 
 def get_announcement(baby_profile_id: uuid.UUID) -> dict[str, Any] | None:
@@ -40,6 +45,7 @@ def upsert_announcement(
     photo_id: uuid.UUID | None,
 ) -> dict[str, Any]:
     with get_connection() as conn:
+        ensure_baby_profile_for_child_write(baby_profile_id, conn)
         row = conn.execute(
             """
             INSERT INTO birth_announcements (
@@ -82,6 +88,9 @@ def upsert_announcement(
 
 def toggle_squish(announcement_id: uuid.UUID, firebase_uid: str) -> bool:
     with get_connection() as conn:
+        ensure_parent_row_for_child_write(
+            ChildWriteParent.BIRTH_ANNOUNCEMENTS, announcement_id, conn
+        )
         existing = conn.execute(
             """
             SELECT 1 FROM announcement_squishes
@@ -131,6 +140,9 @@ def add_comment(
 ) -> dict[str, Any]:
     comment_id = uuid.uuid4()
     with get_connection() as conn:
+        ensure_parent_row_for_child_write(
+            ChildWriteParent.BIRTH_ANNOUNCEMENTS, announcement_id, conn
+        )
         row = conn.execute(
             """
             INSERT INTO announcement_comments (

@@ -8,6 +8,10 @@ PhotoListSort = Literal["default", "recent", "favorites"]
 from lanonna_api.db import get_connection
 from lanonna_api.domain.photo_purpose import PhotoPurpose
 from lanonna_api.repositories.active_participants import active_participant_join
+from lanonna_api.repositories.child_write_locks import (
+    ChildWriteParent,
+    ensure_parent_row_for_child_write,
+)
 
 
 def get_photo_for_baby(
@@ -211,6 +215,7 @@ def get_photo_detail_row(
 def toggle_squish(photo_id: uuid.UUID, firebase_uid: str) -> bool:
     """Returns True if squish is now active."""
     with get_connection() as conn:
+        ensure_parent_row_for_child_write(ChildWriteParent.PHOTOS, photo_id, conn)
         existing = conn.execute(
             """
             SELECT 1 FROM photo_squishes
@@ -261,6 +266,7 @@ def insert_photo_comment(
 ) -> dict[str, Any]:
     comment_id = uuid.uuid4()
     with get_connection() as conn:
+        ensure_parent_row_for_child_write(ChildWriteParent.PHOTOS, photo_id, conn)
         row = conn.execute(
             """
             INSERT INTO photo_comments (id, photo_id, author_firebase_uid, body)
