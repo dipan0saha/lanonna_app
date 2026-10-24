@@ -6,6 +6,8 @@ abstract class CrashReporter {
 
   Future<void> setUserId(String? userId);
 
+  Future<void> setCustomKey(String key, String value);
+
   Future<void> recordFlutterFatalError(FlutterErrorDetails details);
 
   Future<void> recordError(
@@ -31,6 +33,9 @@ class NoOpCrashReporter implements CrashReporter {
   Future<void> setUserId(String? userId) async {
     this.userId = userId;
   }
+
+  @override
+  Future<void> setCustomKey(String key, String value) async {}
 
   @override
   Future<void> recordFlutterFatalError(FlutterErrorDetails details) async {

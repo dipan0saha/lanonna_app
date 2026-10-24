@@ -7,5 +7,10 @@ MOBILE="${ROOT}/apps/mobile"
 cd "${MOBILE}"
 
 echo "Building release APK..."
-flutter build apk --release --dart-define-from-file=flavors/dev.json
+eval "$(bash scripts/build_stamp.sh)"
+flutter build apk --release \
+  --build-number="${BUILD_NUMBER}" \
+  --dart-define=BUILD_GIT_SHA="${BUILD_GIT_SHA}" \
+  --dart-define=BUILD_NUMBER="${BUILD_NUMBER}" \
+  --dart-define-from-file=flavors/dev.json
 "${ROOT}/scripts/copy_release_apk_to_drive.sh"

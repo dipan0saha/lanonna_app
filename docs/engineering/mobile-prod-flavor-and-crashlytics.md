@@ -3,7 +3,7 @@
 | Field | Value |
 |-------|--------|
 | **Status** | Implemented (mobile); prod Firebase project still owner-owned |
-| **Last updated** | 2026-10-21 |
+| **Last updated** | 2026-10-24 |
 | **Related** | [pre-prod-consolidation.md](pre-prod-consolidation.md) §2 / §4, [platform-architecture.md](platform-architecture.md), [operations.md](operations.md), [open-gaps.md](open-gaps.md) H-01 |
 
 ## Goals
@@ -79,6 +79,7 @@ Document keystore creation in [apps/mobile/android/README.md](../../apps/mobile/
 - **Wiring:** `configureAppErrorReporting()` chains `FlutterError.onError` and `PlatformDispatcher.instance.onError` once: it records to Crashlytics, then calls the handler that was already installed (framework default printing, or any earlier app/test handler). Installed only when collection is enabled.
 - **Collection:** `AppConfig.crashlyticsCollectionEnabled` — always true when `APP_ENV=prod`; in dev, `CRASHLYTICS_ENABLED` dart-define (`true`/`false`), default **true** when `dart.vm.product` (release) and unset.
 - **User id:** set/clear on auth state changes using Firebase **uid** only (never email or display name).
+- **Build stamp:** at startup, `startCrashReporting` sets Crashlytics custom keys `build_git_sha`, `build_number`, and `build_env` from dart-defines (`BUILD_GIT_SHA`, `BUILD_NUMBER`, `APP_ENV`). Missing SHA/number in non-prod builds report as `unknown` and never crash. **Prod release/profile** must pass both defines (compile-time `prodBuildStampGuard` in `build_metadata.dart`, runtime `ensureProdConfigReady()`); repo APK scripts source `apps/mobile/scripts/build_stamp.sh` and pass `--build-number` plus the defines.
 
 ### Tests
 
@@ -102,19 +103,35 @@ Document keystore creation in [apps/mobile/android/README.md](../../apps/mobile/
 
 ## Build commands
 
-**Dev (unchanged):**
+**Dev (repo scripts stamp git SHA + monotonic build number):**
 
 ```bash
 cd apps/mobile
-flutter build apk --release --target-platform android-arm64 --dart-define-from-file=flavors/dev.json
+eval "$(bash scripts/build_stamp.sh)"
+flutter build apk --release --target-platform android-arm64 \
+  --build-number="${BUILD_NUMBER}" \
+  --dart-define=BUILD_GIT_SHA="${BUILD_GIT_SHA}" \
+  --dart-define=BUILD_NUMBER="${BUILD_NUMBER}" \
+  --dart-define-from-file=flavors/dev.json
 ```
+
+Or from repo root: `./scripts/ship_release_apk_to_drive.sh` (same flags).
+
+`BUILD_NUMBER` defaults to `git rev-list --count HEAD`, or `GITHUB_RUN_NUMBER` in CI. `BUILD_GIT_SHA` is `git rev-parse --short HEAD` (or `unknown` when git is unavailable). Keep **marketing version** (`version:` in `pubspec.yaml` / `--build-name`) on a sane semver for prod; use `--build-number` for every binary’s unique `versionCode`.
 
 **Prod (after owner fills `flavors/prod.json`, keystore, and `flutterfire configure`):**
 
 ```bash
 cd apps/mobile
-flutter build apk --release --target-platform android-arm64 --dart-define-from-file=flavors/prod.json
-# iOS: same --dart-define-from-file=flavors/prod.json on flutter build ipa / ios
+eval "$(REQUIRE_BUILD_STAMP=1 bash scripts/build_stamp.sh)"
+flutter build apk --release --target-platform android-arm64 \
+  --build-number="${BUILD_NUMBER}" \
+  --dart-define=BUILD_GIT_SHA="${BUILD_GIT_SHA}" \
+  --dart-define=BUILD_NUMBER="${BUILD_NUMBER}" \
+  --dart-define-from-file=flavors/prod.json
+# iOS: same stamp args + --dart-define-from-file=flavors/prod.json on flutter build ipa / ios
 ```
+
+Prod release fails at compile time or at `ensureProdConfigReady()` if `BUILD_GIT_SHA` or `BUILD_NUMBER` is missing.
 
 A prod release APK/AAB fails before any task runs (Gradle task-graph check, so a prod debug `flutter run` still works) without `android/key.properties`, or when `android/app/google-services.json` is missing or still points at `lanonna-dev`. With both in place it still fails at the Dart compile guard until the `__PROD_` placeholders are replaced.

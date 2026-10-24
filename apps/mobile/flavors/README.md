@@ -28,6 +28,15 @@ Release and profile builds read `API_BASE_URL` from this file. If the key is mis
 
 **App Check:** `APP_ENV=dev` selects the Firebase **debug** provider (not Play Integrity). Optional `APP_CHECK_DEBUG_TOKEN` in `maestro/local.env` — see [app-check-dev-release-play-integrity.md](../../../docs/engineering/rca/app-check-dev-release-play-integrity.md).
 
+Release builds should pass a **build stamp** so Crashlytics can distinguish binaries (see `scripts/build_stamp.sh`):
+
 ```bash
-flutter build apk --release --target-platform android-arm64 --dart-define-from-file=flavors/prod.json
+eval "$(bash scripts/build_stamp.sh)"
+flutter build apk --release --target-platform android-arm64 \
+  --build-number="${BUILD_NUMBER}" \
+  --dart-define=BUILD_GIT_SHA="${BUILD_GIT_SHA}" \
+  --dart-define=BUILD_NUMBER="${BUILD_NUMBER}" \
+  --dart-define-from-file=flavors/dev.json
 ```
+
+Prod: set `REQUIRE_BUILD_STAMP=1` before `build_stamp.sh` and use `flavors/prod.json` — [mobile-prod-flavor-and-crashlytics.md](../../../docs/engineering/mobile-prod-flavor-and-crashlytics.md).
