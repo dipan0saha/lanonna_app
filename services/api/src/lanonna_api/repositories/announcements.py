@@ -6,6 +6,7 @@ from typing import Any
 
 from lanonna_api.db import get_connection
 from lanonna_api.repositories.active_participants import active_participant_join
+from lanonna_api.repositories.memberships import ensure_baby_profile_for_child_write
 
 
 def get_announcement(baby_profile_id: uuid.UUID) -> dict[str, Any] | None:
@@ -40,6 +41,7 @@ def upsert_announcement(
     photo_id: uuid.UUID | None,
 ) -> dict[str, Any]:
     with get_connection() as conn:
+        ensure_baby_profile_for_child_write(baby_profile_id, conn)
         row = conn.execute(
             """
             INSERT INTO birth_announcements (

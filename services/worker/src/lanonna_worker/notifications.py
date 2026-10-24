@@ -10,7 +10,7 @@ from typing import Any
 import firebase_admin
 from firebase_admin import messaging
 
-from lanonna_worker.db import get_connection
+from lanonna_worker.db import get_connection, lock_baby_profile_for_key_share
 from lanonna_worker.idempotency import resolve_delivery_key, try_claim_delivery
 from lanonna_activity_copy import (
     NOTIFICATION_TYPE_BY_KIND,
@@ -216,6 +216,10 @@ def _insert_notifications(
     the English push copy for logs.
     """
     if not firebase_uids:
+        return {}
+    if baby_profile_id is not None and not lock_baby_profile_for_key_share(
+        baby_profile_id, conn
+    ):
         return {}
     ids = {uid: uuid.uuid4() for uid in firebase_uids}
     conn.execute(

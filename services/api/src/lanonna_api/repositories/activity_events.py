@@ -8,6 +8,7 @@ from lanonna_activity_copy import ActivityEventType, activity_summary
 from psycopg.types.json import Json
 
 from lanonna_api.db import get_connection
+from lanonna_api.repositories.memberships import ensure_baby_profile_for_child_write
 
 
 def _display_name(connection: Any, firebase_uid: str | None) -> str | None:
@@ -27,7 +28,10 @@ def insert_activity_event(
     params: dict[str, Any] | None = None,
     payload: dict[str, Any] | None = None,
     conn=None,
-) -> dict[str, Any]:
+    *,
+    row_lock_held: bool = False,
+    skip_if_baby_missing: bool = False,
+) -> dict[str, Any] | None:
     """Record a structured feed event.
 
     ``params`` are display values for the app's ARB sentence (see
@@ -38,6 +42,14 @@ def insert_activity_event(
     display_params = params or {}
 
     def _run(connection):
+        try:
+            ensure_baby_profile_for_child_write(
+                baby_profile_id, connection, row_lock_held=row_lock_held
+            )
+        except LookupError:
+            if skip_if_baby_missing:
+                return None
+            raise
         target_uid = (payload or {}).get("target_firebase_uid")
         summary = activity_summary(
             event_type,

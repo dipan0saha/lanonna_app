@@ -9,6 +9,7 @@ from lanonna_api.repositories.active_participants import active_participant_join
 from lanonna_api.repositories.catalog_suggestions import (
     catalog_suggestion_claimed_on_table,
 )
+from lanonna_api.repositories.memberships import ensure_baby_profile_for_child_write
 
 # Safety cap when listing full event history (no month / upcoming filter).
 LIST_EVENTS_MAX_ROWS = 500
@@ -116,6 +117,7 @@ def create_event(
 ) -> dict[str, Any]:
     event_id = uuid.uuid4()
     with get_connection() as conn:
+        ensure_baby_profile_for_child_write(baby_profile_id, conn)
         row = conn.execute(
             """
             INSERT INTO events (

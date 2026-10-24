@@ -4,6 +4,7 @@ import uuid
 from typing import Any
 
 from lanonna_api.db import get_connection
+from lanonna_api.repositories.memberships import ensure_baby_profile_for_child_write
 from lanonna_api.repositories._paging import limit_offset_clause
 from lanonna_api.repositories.catalog_suggestions import (
     catalog_suggestion_claimed_on_table,
@@ -144,6 +145,7 @@ def create_registry_item(
 ) -> dict[str, Any]:
     item_id = uuid.uuid4()
     with get_connection() as conn:
+        ensure_baby_profile_for_child_write(baby_profile_id, conn)
         row = conn.execute(
             """
             INSERT INTO registry_items (

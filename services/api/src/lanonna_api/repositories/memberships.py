@@ -78,7 +78,13 @@ def lock_baby_profile_for_update(
     baby_profile_id: uuid.UUID,
     conn: Any,
 ) -> dict[str, Any] | None:
-    """Serialize membership changes per baby (e.g. co-owner accept race, M-02)."""
+    """Serialize membership changes and baby hard-delete per profile (M-02, #442).
+
+    Writers that insert baby-scoped child rows take ``lock_baby_profile_for_key_share``
+    in the same transaction first. ``FOR UPDATE`` blocks ``FOR KEY SHARE``, so delete
+    waits for in-flight child writes; child writes wait for delete, then see the row
+    gone instead of hitting ``baby_profiles`` FK violations under READ COMMITTED.
+    """
     row = conn.execute(
         """
         SELECT name
@@ -89,6 +95,36 @@ def lock_baby_profile_for_update(
         (baby_profile_id,),
     ).fetchone()
     return dict(row) if row else None
+
+
+def lock_baby_profile_for_key_share(
+    baby_profile_id: uuid.UUID,
+    conn: Any,
+) -> dict[str, Any] | None:
+    """Lock the baby row for a child INSERT/UPDATE (see ``lock_baby_profile_for_update``)."""
+    row = conn.execute(
+        """
+        SELECT id
+        FROM baby_profiles
+        WHERE id = %s
+        FOR KEY SHARE
+        """,
+        (baby_profile_id,),
+    ).fetchone()
+    return dict(row) if row else None
+
+
+def ensure_baby_profile_for_child_write(
+    baby_profile_id: uuid.UUID,
+    conn: Any,
+    *,
+    row_lock_held: bool = False,
+) -> None:
+    """Raise ``LookupError`` when the baby was hard-deleted before the child write."""
+    if row_lock_held:
+        return
+    if lock_baby_profile_for_key_share(baby_profile_id, conn) is None:
+        raise LookupError("Baby profile not found.")
 
 
 def count_active_owners(baby_profile_id: uuid.UUID, conn=None) -> int:
@@ -189,6 +225,7 @@ class OwnLeaveOutcome(StrEnum):
 def soft_remove_own_membership(
     baby_profile_id: uuid.UUID,
     firebase_uid: str,
+    conn: Any | None = None,
 ) -> OwnLeaveOutcome:
     """Leave a baby: check the owner count and end the membership in one transaction.
 
@@ -196,18 +233,30 @@ def soft_remove_own_membership(
     accept), so two co-owners leaving at once cannot both pass the count and
     orphan the profile.
     """
-    with get_connection() as conn:
-        lock_baby_profile_for_update(baby_profile_id, conn)
+
+    def _run(connection: Any) -> OwnLeaveOutcome:
+        if lock_baby_profile_for_update(baby_profile_id, connection) is None:
+            return OwnLeaveOutcome.NOT_MEMBER
         membership = lock_membership_for_user_for_update(
-            baby_profile_id, firebase_uid, conn
+            baby_profile_id, firebase_uid, connection
         )
         if membership is None:
             return OwnLeaveOutcome.NOT_MEMBER
-        if membership["role"] == "owner" and count_active_owners(baby_profile_id, conn) <= 1:
+        if (
+            membership["role"] == "owner"
+            and count_active_owners(baby_profile_id, connection) <= 1
+        ):
             return OwnLeaveOutcome.SOLE_OWNER
-        if not soft_remove_membership(baby_profile_id, firebase_uid, conn=conn):
+        if not soft_remove_membership(
+            baby_profile_id, firebase_uid, conn=connection
+        ):
             return OwnLeaveOutcome.NOT_MEMBER
         return OwnLeaveOutcome.LEFT
+
+    if conn is not None:
+        return _run(conn)
+    with get_connection() as connection:
+        return _run(connection)
 
 
 def soft_remove_all_memberships_for_user(firebase_uid: str, conn=None) -> None:

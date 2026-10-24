@@ -4,6 +4,7 @@ import uuid
 from typing import Any
 
 from lanonna_api.db import get_connection
+from lanonna_api.repositories.memberships import ensure_baby_profile_for_child_write
 
 
 def list_tagged_babies_for_photo(
@@ -39,6 +40,8 @@ def replace_photo_baby_tags(
             (photo_id,),
         )
         if tagged_baby_profile_ids:
+            for baby_id in tagged_baby_profile_ids:
+                ensure_baby_profile_for_child_write(baby_id, conn)
             conn.execute(
                 """
                 INSERT INTO photo_baby_tags (photo_id, tagged_baby_profile_id)

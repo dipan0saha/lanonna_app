@@ -95,6 +95,23 @@ def get_connection() -> Iterator[psycopg.Connection[Any]]:
         yield conn
 
 
+def lock_baby_profile_for_key_share(
+    baby_profile_id: uuid.UUID,
+    conn: Any,
+) -> bool:
+    """Match API ``lock_baby_profile_for_key_share`` (#442)."""
+    row = conn.execute(
+        """
+        SELECT 1
+        FROM baby_profiles
+        WHERE id = %s
+        FOR KEY SHARE
+        """,
+        (baby_profile_id,),
+    ).fetchone()
+    return row is not None
+
+
 def mark_photo_ready(
     display_path: str,
     thumb_path: str,
@@ -146,6 +163,8 @@ def mark_photo_ready(
                 params,
                 actor=(actor_row and actor_row["name"]) or "Someone",
             )
+            if not lock_baby_profile_for_key_share(row["baby_profile_id"], conn):
+                return dict(row)
             conn.execute(
                 """
                 INSERT INTO activity_events (

@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime
 
 from lanonna_api.db import get_connection
+from lanonna_api.repositories.memberships import ensure_baby_profile_for_child_write
 from lanonna_api.domain.catalog_suggestion_ids import normalize_catalog_suggestion_id
 
 
@@ -16,6 +17,7 @@ def insert_seed_event(
     catalog_suggestion_id: str | None = None,
 ) -> None:
     with get_connection() as conn:
+        ensure_baby_profile_for_child_write(baby_profile_id, conn)
         conn.execute(
             """
             INSERT INTO events (
@@ -43,6 +45,7 @@ def insert_seed_registry_item(
 ) -> None:
     catalog_id = normalize_catalog_suggestion_id(catalog_suggestion_id)
     with get_connection() as conn:
+        ensure_baby_profile_for_child_write(baby_profile_id, conn)
         conn.execute(
             """
             INSERT INTO registry_items (
@@ -62,6 +65,7 @@ def insert_seed_name_suggestion(
     gender: str,
 ) -> None:
     with get_connection() as conn:
+        ensure_baby_profile_for_child_write(baby_profile_id, conn)
         conn.execute(
             """
             INSERT INTO name_suggestions (
