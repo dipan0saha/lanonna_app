@@ -1,0 +1,16 @@
+appId: com.lanonna.lanonna
+---
+# P0: AUTH-004 — email/password sign-in to home or onboarding resume.
+- clearState
+- runFlow: subflows/launch_app.yaml
+- extendedWaitUntil:
+    visible: "I already have an account"
+    timeout: 45000
+- tapOn: "I already have an account"
+- extendedWaitUntil:
+    visible: "Welcome back"
+    timeout: 20000
+- runFlow: ../../subflows/sign_in_form.yaml
+- extendedWaitUntil:
+    visible: ".*Tab 1 of 5.*|Complete your profile|Create your baby's profile"
+    timeout: 90000

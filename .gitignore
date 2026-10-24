@@ -68,6 +68,9 @@ apps/mobile/maestro/.qa-fixtures.env
 
 # Test / coverage
 **/coverage/
+/premerge-report.md
+/coverage-api.xml
+/coverage-worker.xml
 **/tfplan
 apps/mobile/test/failures/
 

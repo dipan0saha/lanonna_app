@@ -111,7 +111,9 @@ class OnboardingBiometricButton extends StatelessWidget {
       children: [
         SizedBox(
           width: double.infinity,
-          child: OutlinedButton(
+          child: AppSemantics.button(
+            'auth_sign_in_biometric',
+            OutlinedButton(
             key: const Key('biometric_sign_in_button'),
             onPressed: isLoading ? null : onPressed,
             child: isLoading
@@ -134,6 +136,8 @@ class OnboardingBiometricButton extends StatelessWidget {
                       ),
                     ],
                   ),
+          ),
+            label: l10n.authSignInWithBiometrics,
           ),
         ),
         if (name != null && name.isNotEmpty) ...[

@@ -1,0 +1,6 @@
+appId: com.lanonna.lanonna
+---
+# P0: AUTH-007 — sign out clears session (partial; full cache wipe is manual).
+- runFlow: subflows/sign_in_owner.yaml
+- runFlow: ../../subflows/ensure_primary_baby.yaml
+- runFlow: subflows/sign_out.yaml

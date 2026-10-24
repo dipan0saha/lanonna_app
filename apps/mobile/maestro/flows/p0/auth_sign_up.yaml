@@ -1,0 +1,28 @@
+appId: com.lanonna.lanonna
+---
+# P0: AUTH-001 — email sign-up (requires disposable credentials in local.env).
+# Set P0_SIGNUP_TEST_EMAIL and P0_SIGNUP_TEST_PASSWORD; account must not already exist.
+- clearState
+- runFlow: subflows/launch_app.yaml
+- extendedWaitUntil:
+    visible: "I already have an account"
+    timeout: 60000
+- tapOn: "I already have an account"
+- extendedWaitUntil:
+    visible: "Welcome back"
+    timeout: 20000
+- tapOn: "Sign up"
+- tapOn:
+    id: auth_signup_email
+- eraseText
+- inputText: ${P0_SIGNUP_TEST_EMAIL}
+- tapOn:
+    id: auth_signup_password
+- eraseText
+- inputText: ${P0_SIGNUP_TEST_PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: auth_signup_submit
+- extendedWaitUntil:
+    visible: "Check your email|Verify|Complete your profile"
+    timeout: 90000

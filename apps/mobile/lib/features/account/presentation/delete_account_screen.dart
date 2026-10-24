@@ -13,6 +13,7 @@ import '../../../core/theme/app_metrics.dart';
 import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/app_confirm_dialog.dart';
 import '../../../core/widgets/app_icon_button.dart';
+import '../../../core/widgets/app_semantics.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../onboarding/domain/onboarding_routes.dart';
@@ -133,7 +134,9 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
               children: [
                 Text(l10n.deleteAccountReauthPasswordBody),
                 const SizedBox(height: 12),
-                TextField(
+                AppSemantics.textField(
+                  'delete_account_reauth_password',
+                  TextField(
                   controller: _passwordController,
                   obscureText: obscure,
                   autofocus: true,
@@ -151,6 +154,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                     ),
                   ),
                 ),
+                ),
               ],
             ),
             actions: [
@@ -158,12 +162,16 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                 onPressed: () => Navigator.pop(ctx),
                 child: Text(l10n.authPasswordResetCancel),
               ),
-              FilledButton(
+              AppSemantics.button(
+                'delete_account_reauth_continue',
+                FilledButton(
                 onPressed: () {
                   if (_passwordController.text.isEmpty) return;
                   Navigator.pop(ctx, _passwordController.text);
                 },
                 child: Text(l10n.deleteAccountReauthPasswordAction),
+              ),
+                label: l10n.deleteAccountReauthPasswordAction,
               ),
             ],
           ),
@@ -225,14 +233,18 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
               ),
             ],
             const SizedBox(height: 24),
-            FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-              onPressed: (_deleting || !canDelete) ? null : _delete,
-              child: Text(
-                _deleting
-                    ? l10n.deleteAccountDeleting
-                    : l10n.deleteAccountButton,
+            AppSemantics.button(
+              'delete_account_submit',
+              FilledButton(
+                style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+                onPressed: (_deleting || !canDelete) ? null : _delete,
+                child: Text(
+                  _deleting
+                      ? l10n.deleteAccountDeleting
+                      : l10n.deleteAccountButton,
+                ),
               ),
+              label: l10n.deleteAccountButton,
             ),
           ],
         ),
