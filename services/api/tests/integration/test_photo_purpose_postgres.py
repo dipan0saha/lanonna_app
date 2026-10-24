@@ -370,6 +370,65 @@ def test_replacing_gallery_cover_keeps_gallery_photo(baby_and_owner: uuid.UUID):
     )
 
 
+def test_delete_unreferenced_event_cover_waits_for_in_flight_attach(
+    baby_and_owner: uuid.UUID,
+):
+    """Concurrent attach must win over orphan delete (#424)."""
+    import threading
+    from datetime import datetime, timezone
+
+    import psycopg
+
+    from lanonna_api.config import settings
+    from lanonna_api.repositories.photos import delete_unreferenced_event_cover
+
+    baby_id = baby_and_owner
+    cover_id = _ready_photo(baby_id, PhotoPurpose.EVENT_COVER)
+    deleted: list[dict | None] = []
+
+    attach = psycopg.connect(
+        host=settings.db_host,
+        port=settings.db_port,
+        dbname=settings.db_name,
+        user=settings.db_user,
+        password=settings.db_password,
+    )
+    try:
+        attach.execute("BEGIN")
+        attach.execute(
+            """
+            INSERT INTO events (baby_profile_id, created_by_firebase_uid, title,
+                                starts_at, cover_photo_id)
+            VALUES (%s, %s, 'Shower', %s, %s)
+            """,
+            (
+                baby_id,
+                "owner-uid",
+                datetime(2030, 1, 1, tzinfo=timezone.utc),
+                cover_id,
+            ),
+        )
+
+        def run_delete() -> None:
+            deleted.append(delete_unreferenced_event_cover(cover_id))
+
+        worker = threading.Thread(target=run_delete)
+        worker.start()
+        worker.join(timeout=30)
+        assert not worker.is_alive()
+        attach.commit()
+    finally:
+        attach.close()
+
+    assert deleted == [None]
+    from lanonna_api.db import get_connection
+
+    with get_connection() as conn:
+        assert conn.execute(
+            "SELECT 1 FROM photos WHERE id = %s", (cover_id,)
+        ).fetchone() is not None
+
+
 def test_shared_cover_survives_until_last_event_drops_it(baby_and_owner: uuid.UUID):
     baby_id = baby_and_owner
     cover_id = _ready_photo(baby_id, PhotoPurpose.EVENT_COVER)

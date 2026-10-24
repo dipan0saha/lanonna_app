@@ -23,8 +23,8 @@ class RegistryPreset:
 
 
 EXPECTING_EVENTS: tuple[EventPreset, ...] = (
-    EventPreset("gender_reveal", "Gender Reveal", -14),
-    EventPreset("baby_shower", "Baby Shower", -7),
+    EventPreset("gender_reveal", "Gender reveal", -14),
+    EventPreset("baby_shower", "Baby shower", -7),
     EventPreset("due_date", "Due Date", 0),
 )
 

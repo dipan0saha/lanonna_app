@@ -11,6 +11,7 @@ from lanonna_api.domain.name_suggestions import (
     normalize_gender_for_first_moment_seed,
     normalize_suggested_name,
 )
+from lanonna_api.event_suggestions_catalog import resolve_event_title
 from lanonna_api.first_moment_presets import (
     event_preset,
     event_starts_at_born,
@@ -167,7 +168,7 @@ def seed_first_moment(
         insert_seed_event(
             baby_profile_id,
             firebase_uid,
-            preset.label,
+            resolve_event_title(preset.label, preset.id),
             _first_moment_event_starts_at(baby, preset.day_offset),
             catalog_suggestion_id=preset.id,
         )

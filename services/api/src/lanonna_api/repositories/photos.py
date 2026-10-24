@@ -132,25 +132,43 @@ def delete_gallery_photo_row(
     return dict(row) if row else None
 
 
+_UNREFERENCED_EVENT_COVER = """
+    NOT EXISTS (SELECT 1 FROM events e WHERE e.cover_photo_id = p.id)
+    AND NOT EXISTS (SELECT 1 FROM birth_announcements a WHERE a.photo_id = p.id)
+"""
+
+
 def delete_unreferenced_event_cover(photo_id: uuid.UUID) -> dict[str, Any] | None:
     """Delete an ``event_cover`` photo that no event or announcement still uses.
 
-    One statement, so a concurrent re-use keeps the row. Gallery photos are
-    never touched. Returns the storage paths of the deleted row, else None.
+    Locks the row (`FOR UPDATE`) so an in-flight attach (FK ``FOR KEY SHARE``)
+    finishes before we recheck, then deletes only if still unreferenced. Gallery
+    photos are never touched. Returns the storage paths of the deleted row, else None.
     """
     with get_connection() as conn:
-        row = conn.execute(
-            """
-            DELETE FROM photos p
-            WHERE p.id = %s
-              AND p.purpose = %s
-              AND NOT EXISTS (SELECT 1 FROM events e WHERE e.cover_photo_id = p.id)
-              AND NOT EXISTS (
-                  SELECT 1 FROM birth_announcements a WHERE a.photo_id = p.id
-              )
-            RETURNING display_path, thumb_path
+        locked = conn.execute(
+            f"""
+            SELECT p.id
+            FROM photos p
+            WHERE p.id = %s AND p.purpose = %s
+            FOR UPDATE
             """,
             (photo_id, PhotoPurpose.EVENT_COVER.value),
+        ).fetchone()
+        if locked is None:
+            return None
+        still_free = conn.execute(
+            f"""
+            SELECT 1 FROM photos p
+            WHERE p.id = %s AND {_UNREFERENCED_EVENT_COVER}
+            """,
+            (photo_id,),
+        ).fetchone()
+        if still_free is None:
+            return None
+        row = conn.execute(
+            "DELETE FROM photos WHERE id = %s RETURNING display_path, thumb_path",
+            (photo_id,),
         ).fetchone()
     return dict(row) if row else None
 

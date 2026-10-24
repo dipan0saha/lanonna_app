@@ -963,7 +963,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get labelBabyProfiles => 'Baby Profiles';
 
   @override
-  String get labelBabyShower => 'Baby Shower';
+  String get labelBabyShower => 'Baby shower';
 
   @override
   String get labelBabyName => 'Baby name';
@@ -1111,7 +1111,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navFun => 'Fun';
 
   @override
-  String get labelGenderReveal => 'Gender Reveal';
+  String get labelGenderReveal => 'Gender reveal';
 
   @override
   String get labelGettingStarted => 'Getting Started';
