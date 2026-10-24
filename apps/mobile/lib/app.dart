@@ -51,6 +51,7 @@ class _LaNonnaAppState extends State<LaNonnaApp> {
   var _pushStarted = false;
   PushNotificationService? _pushService;
   StreamSubscription<Uri>? _appLinkSub;
+  final _verifyLinkGate = EmailVerificationLinkGate();
 
   @override
   void initState() {
@@ -86,7 +87,7 @@ class _LaNonnaAppState extends State<LaNonnaApp> {
   }
 
   Future<void> _handleEmailVerificationLink(Uri uri) async {
-    if (!mounted) return;
+    if (!mounted || !_verifyLinkGate.claim(uri)) return;
     await handleEmailVerificationLink(
       authRepository: context.read<AuthRepository>(),
       coordinator: context.read<OnboardingCoordinator>(),

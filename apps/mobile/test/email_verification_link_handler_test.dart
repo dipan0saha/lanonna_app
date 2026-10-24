@@ -39,7 +39,8 @@ final _verifyUri = Uri.parse(
   'https://lanonna-dev.firebaseapp.com/__/auth/action?mode=verifyEmail&oobCode=test',
 );
 
-Future<(OnboardingCoordinator coordinator, GoRouter router)> _pumpHandlerHarness(
+Future<(OnboardingCoordinator coordinator, GoRouter router)>
+_pumpHandlerHarness(
   WidgetTester tester, {
   required _StubAuth auth,
   required String initialLocation,
@@ -94,59 +95,63 @@ Future<(OnboardingCoordinator coordinator, GoRouter router)> _pumpHandlerHarness
 }
 
 void main() {
-  testWidgets('success with tap-continue shows snackbar and opens complete profile',
-      (tester) async {
-    final auth = _StubAuth(
-      const EmailVerifyLinkResult(
-        EmailVerifyLinkOutcome.success,
-        promptTapContinue: true,
-      ),
-    );
-    final (coordinator, router) = await _pumpHandlerHarness(
-      tester,
-      auth: auth,
-      initialLocation: OnboardingRoutes.ownerCarousel,
-    );
-    await handleEmailVerificationLink(
-      authRepository: auth,
-      coordinator: coordinator,
-      router: router,
-      uri: _verifyUri,
-    );
-    await tester.pumpAndSettle();
+  testWidgets(
+    'success with tap-continue shows snackbar and opens complete profile',
+    (tester) async {
+      final auth = _StubAuth(
+        const EmailVerifyLinkResult(
+          EmailVerifyLinkOutcome.success,
+          promptTapContinue: true,
+        ),
+      );
+      final (coordinator, router) = await _pumpHandlerHarness(
+        tester,
+        auth: auth,
+        initialLocation: OnboardingRoutes.ownerCarousel,
+      );
+      await handleEmailVerificationLink(
+        authRepository: auth,
+        coordinator: coordinator,
+        router: router,
+        uri: _verifyUri,
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('complete profile'), findsOneWidget);
-    expect(auth.refreshClaimsCalls, 1);
-    expect(
-      find.text('Verification complete. Tap Continue to proceed.'),
-      findsOneWidget,
-    );
-  });
+      expect(find.text('complete profile'), findsOneWidget);
+      expect(auth.refreshClaimsCalls, 1);
+      expect(
+        find.text('Verification complete. Tap Continue to proceed.'),
+        findsOneWidget,
+      );
+    },
+  );
 
-  testWidgets('no signed-in user navigates to login and shows sign-in message',
-      (tester) async {
-    final auth = _StubAuth(
-      const EmailVerifyLinkResult(EmailVerifyLinkOutcome.noSignedInUser),
-    );
-    final (coordinator, router) = await _pumpHandlerHarness(
-      tester,
-      auth: auth,
-      initialLocation: OnboardingRoutes.ownerCarousel,
-    );
-    await handleEmailVerificationLink(
-      authRepository: auth,
-      coordinator: coordinator,
-      router: router,
-      uri: _verifyUri,
-    );
-    await tester.pumpAndSettle();
+  testWidgets(
+    'no signed-in user navigates to login and shows sign-in message',
+    (tester) async {
+      final auth = _StubAuth(
+        const EmailVerifyLinkResult(EmailVerifyLinkOutcome.noSignedInUser),
+      );
+      final (coordinator, router) = await _pumpHandlerHarness(
+        tester,
+        auth: auth,
+        initialLocation: OnboardingRoutes.ownerCarousel,
+      );
+      await handleEmailVerificationLink(
+        authRepository: auth,
+        coordinator: coordinator,
+        router: router,
+        uri: _verifyUri,
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('login'), findsOneWidget);
-    expect(
-      find.text('Email verified. Sign in with the same address to continue.'),
-      findsOneWidget,
-    );
-  });
+      expect(find.text('login'), findsOneWidget);
+      expect(
+        find.text('Email verified. Sign in with the same address to continue.'),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets('invalid link shows expired message', (tester) async {
     final auth = _StubAuth(
@@ -169,10 +174,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('carousel'), findsOneWidget);
-    expect(
-      find.textContaining('expired or was already used'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('expired or was already used'), findsOneWidget);
   });
 
   testWidgets('expired link shows expired message', (tester) async {
@@ -195,22 +197,20 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(
-      find.textContaining('expired or was already used'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('expired or was already used'), findsOneWidget);
   });
 
   group('AppShellUi.whenReady', () {
     Widget shell() => MaterialApp(
-          scaffoldMessengerKey: rootScaffoldMessengerKey,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: const Scaffold(body: Text('home')),
-        );
+      scaffoldMessengerKey: rootScaffoldMessengerKey,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: const Scaffold(body: Text('home')),
+    );
 
-    testWidgets('waits for a shell that mounts on the next frame',
-        (tester) async {
+    testWidgets('waits for a shell that mounts on the next frame', (
+      tester,
+    ) async {
       var shown = 0;
       AppShellUi.whenReady((messenger, l10n) => shown++);
       expect(shown, 0);
@@ -221,8 +221,9 @@ void main() {
       expect(shown, 1);
     });
 
-    testWidgets('gives up after maxWaitFrames when no shell mounts',
-        (tester) async {
+    testWidgets('gives up after maxWaitFrames when no shell mounts', (
+      tester,
+    ) async {
       var shown = 0;
       AppShellUi.whenReady((messenger, l10n) => shown++);
       for (var i = 0; i <= AppShellUi.maxWaitFrames + 1; i++) {
@@ -233,6 +234,32 @@ void main() {
       await tester.pumpWidget(shell());
       await tester.pump();
       expect(shown, 0);
+    });
+  });
+
+  group('EmailVerificationLinkGate', () {
+    test('lets a verify link through once (cold start delivers it twice)', () {
+      final gate = EmailVerificationLinkGate();
+      expect(gate.claim(_verifyUri), isTrue);
+      expect(gate.claim(Uri.parse(_verifyUri.toString())), isFalse);
+    });
+
+    test('a new code from a resent email still goes through', () {
+      final gate = EmailVerificationLinkGate();
+      expect(gate.claim(_verifyUri), isTrue);
+      final resent = _verifyUri.replace(
+        queryParameters: {..._verifyUri.queryParameters, 'oobCode': 'other'},
+      );
+      expect(gate.claim(resent), isTrue);
+    });
+
+    test('links without a verify code are not swallowed', () {
+      final gate = EmailVerificationLinkGate();
+      final noCode = Uri.parse(
+        'https://lanonna-dev.firebaseapp.com/__/auth/action?mode=verifyEmail',
+      );
+      expect(gate.claim(noCode), isTrue);
+      expect(gate.claim(noCode), isTrue);
     });
   });
 }

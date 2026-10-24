@@ -18,6 +18,7 @@ Push notification deep links already used `appRootNavigatorKey.currentContext` f
 | `email_verification_link_handler.dart` | Outcome handling (navigation + snackbars) extracted for clarity and testing; `app.dart` delegates here after applying the Firebase link. |
 | `app.dart` | Wire `scaffoldMessengerKey`; use shell helpers instead of the root State `context` for UI feedback. |
 | `push_notification_service.dart` | Same class of bug, latent: `start()` accepted the root `State` context (above `MaterialApp`) and fell back to `navigateAppDeepLink` with it. `app.dart` always passed `onDeepLink` (root navigator context), so the fallback and the unused `onOpenDeepLink` were dead; both removed and `onDeepLink` is required. |
+| `EmailVerificationLinkGate` (handler file, used by `app.dart`) | Found on the emulator: a cold-start link arrives twice, from `readColdStartAppLinkUri` and again on `watchAppLinkUris`. The first apply verified the account; the second failed (code already used) and showed "This verification link has expired or was already used" over Complete your profile. Before this fix that second pass is where the #437 crash fired. The gate lets each `oobCode` through once; a resent email's new code still goes through. |
 | `email_verification_link_handler_test.dart` | Widget test per outcome: asserts route and snackbar text, plus a link handled before the shell mounts. |
 
 ## References
