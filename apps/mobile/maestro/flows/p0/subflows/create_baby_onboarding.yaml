@@ -1,0 +1,4 @@
+appId: com.lanonna.lanonna
+---
+# Assumes signed-in user still in owner onboarding (no main app yet).
+- runFlow: ../../subflows/owner_onboarding_to_home.yaml

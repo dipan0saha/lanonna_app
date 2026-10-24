@@ -1,0 +1,25 @@
+appId: com.lanonna.lanonna
+---
+# P0: ONB-002 … ONB-004 — complete profile, create baby, first moment (uses ONBOARDING_TEST_*).
+- clearState
+- launchApp
+- extendedWaitUntil:
+    visible: "I already have an account|Welcome back|Skip"
+    timeout: 60000
+- runFlow:
+    when:
+      visible: "I already have an account"
+    commands:
+      - tapOn: "I already have an account"
+      - extendedWaitUntil:
+          visible: "Welcome back"
+          timeout: 20000
+- runFlow:
+    when:
+      visible: "Welcome back"
+    file: ../../subflows/sign_in_form_as.yaml
+- runFlow: subflows/create_baby_onboarding.yaml
+- extendedWaitUntil:
+    visible: ".*Tab 1 of 5.*"
+    timeout: 90000
+- assertVisible: ".*Tab 1 of 5.*"

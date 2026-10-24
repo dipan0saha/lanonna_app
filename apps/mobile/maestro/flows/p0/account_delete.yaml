@@ -1,0 +1,62 @@
+appId: com.lanonna.lanonna
+---
+# P0: account deletion — destructive; uses P0_ACCOUNT_DELETE_TEST_* from local.env only.
+- clearState
+- launchApp
+- extendedWaitUntil:
+    visible: "I already have an account"
+    timeout: 45000
+- tapOn: "I already have an account"
+- extendedWaitUntil:
+    visible: "Welcome back"
+    timeout: 20000
+- tapOn:
+    id: auth_login_email
+- eraseText
+- inputText: ${P0_ACCOUNT_DELETE_TEST_EMAIL}
+- tapOn:
+    id: auth_login_password
+- eraseText
+- inputText: ${P0_ACCOUNT_DELETE_TEST_PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: auth_sign_in
+- extendedWaitUntil:
+    visible: ".*Tab 1 of 5.*|Complete your profile"
+    timeout: 90000
+    optional: true
+- runFlow:
+    when:
+      visible: "Complete your profile"
+    file: ../../subflows/owner_onboarding_to_home.yaml
+- runFlow: ../../subflows/open_account.yaml
+- scrollUntilVisible:
+    element:
+      id: account_delete_entry
+    direction: DOWN
+    timeout: 45000
+- tapOn:
+    id: account_delete_entry
+- extendedWaitUntil:
+    visible: "Delete account"
+    timeout: 15000
+- tapOn:
+    id: delete_account_submit
+- extendedWaitUntil:
+    visible: "Delete your account permanently|Confirm your password"
+    timeout: 15000
+- tapOn: "Delete account"
+- runFlow:
+    when:
+      visible: "Confirm your password"
+    commands:
+      - tapOn:
+          id: delete_account_reauth_password
+      - eraseText
+      - inputText: ${P0_ACCOUNT_DELETE_TEST_PASSWORD}
+      - hideKeyboard
+      - tapOn:
+          id: delete_account_reauth_continue
+- extendedWaitUntil:
+    visible: "Skip|I already have an account"
+    timeout: 90000

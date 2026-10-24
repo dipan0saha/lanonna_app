@@ -1,0 +1,16 @@
+appId: com.lanonna.lanonna
+---
+# P0: GAL-001 — owner can open upload entry (full GCS pipeline is integration-tested).
+- runFlow: subflows/sign_in_owner.yaml
+- runFlow: ../../subflows/ensure_primary_baby.yaml
+- tapOn: ".*Tab 2 of 5.*"
+- extendedWaitUntil:
+    visible:
+      id: gallery_upload_fab
+    timeout: 15000
+- tapOn:
+    id: gallery_upload_fab
+- extendedWaitUntil:
+    visible: "Choose from gallery|Take photo"
+    timeout: 10000
+- back

@@ -1,0 +1,18 @@
+appId: com.lanonna.lanonna
+---
+# P0: BIO-001 — enable biometric unlock in Settings (device must support biometrics).
+- runFlow: subflows/sign_in_owner.yaml
+- runFlow: ../../subflows/ensure_primary_baby.yaml
+- runFlow: ../../subflows/open_account.yaml
+- scrollUntilVisible:
+    element: ".*Settings.*"
+    direction: DOWN
+    timeout: 45000
+- tapOn: ".*Settings.*"
+- scrollUntilVisible:
+    element:
+      id: settings_biometric_unlock
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: settings_biometric_unlock

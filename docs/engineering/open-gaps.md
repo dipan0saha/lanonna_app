@@ -16,11 +16,11 @@ Related: [pre-beta-qa.md](pre-beta-qa.md), [development.md](development.md), [op
 |-------|--------|
 | API `pytest` (`services/api`, unit + Postgres integration) | 315 passed (plus 9 in `packages/lanonna_activity_copy/tests`) |
 | Worker `pytest` | 97 passed (`tests/test_pubsub_terraform.py` asserts live `pubsub.tf` retry policy) |
-| `flutter test` (`--exclude-tags golden` in CI) | 436 passed |
-| `flutter analyze` | 0 errors, 0 warnings; infos do not fail CI (`--no-fatal-infos`, L-26) |
+| `flutter test` (`--exclude-tags golden` in pre-merge gate) | 436 passed |
+| `flutter analyze` | 0 errors, 0 warnings; infos do not fail the gate (`--no-fatal-infos`, L-26) |
 | l10n guard (`tool/check_hardcoded_user_strings.dart`) | 0 violations; allowlist entries all carry a justification |
 
-Run all three suites before every ship. GitHub Actions CI ([`.github/workflows/ci.yml`](../../.github/workflows/ci.yml)) runs them on every pull request and push to `main` (Flutter 3.38.9 pinned; macOS-rendered goldens excluded on Linux). Merge only with CI green.
+Run all three suites before every ship. The local pre-merge gate ([`scripts/premerge_check.sh`](../../scripts/premerge_check.sh)) runs them before merge (Flutter 3.38.9 pinned; macOS-rendered goldens excluded by default). Merge only with a green full `./scripts/premerge_check.sh` (and `--e2e` when UI flows change). See [change-safety.md](change-safety.md).
 
 ---
 
