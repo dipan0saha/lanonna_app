@@ -56,6 +56,7 @@ Apply in **lexicographic order** (filename prefix):
 | `048_drop_app_users_email_digest_enabled.sql` | Drops `app_users.email_digest_enabled` (weekly digest is push-only, #411). **Apply after** deploying the API that no longer reads it |
 | `049_owned_avatar_references.sql` | Avatars name only their owner's upload object (#415): legacy GCS URLs become object paths, rows pointing at another account's object or an outside URL are cleared, and CHECK constraints `app_users_avatar_url_owned` / `baby_profiles_avatar_url_owned` enforce `avatars/users/{uid}/<name>` and `avatars/babies/{id}/<name>`. Safe before or after the #415 API deploy |
 | `050_photos_event_cover_purge_index.sql` | Partial index `photos (created_at, id) WHERE purpose = 'event_cover'` for the daily stale event-cover purge (`_stale_cover_ids`, #424). Plain `CREATE INDEX` in the migration transaction, `lock_timeout` 5s; safe before or after the API deploy |
+| `051_fk_reference_indexes.sql` | Referencing-side indexes so parent deletes and account delete never seq-scan: FK indexes for hard-deleted parents (`events.cover_photo_id`, `birth_announcements.photo_id`, `notifications.baby_profile_id` as `IS NOT NULL` partials; full `photo_comments.photo_id`, `event_comments.event_id`), and the uid/email columns account delete filters on (`photos`, export jobs, invitations inviter and `lower(invitee_email)`, notification and activity actor, activity target, dismissals, biometric keys, votes, `event_rsvps (firebase_uid, status)` which supersedes `idx_event_rsvps_firebase_uid_going`). CI guard `test_fk_index_coverage_postgres.py`. See [fk-indexes-photo-references.md](../../../docs/engineering/rca/fk-indexes-photo-references.md). Plain `CREATE INDEX` in the migration transaction, `lock_timeout` 5s; safe before or after any deploy |
 
 ## Apply (dev)
 
@@ -70,7 +71,7 @@ cd infra/db
 DB_PASSWORD="$PGPASSWORD" python apply_migrations.py
 ```
 
-`apply_migrations.py` runs every `*.sql` in lexicographic order and **skips** files whose version stem is already in `schema_migrations` (DDL in files remains idempotent for manual re-run). Confirm with `./scripts/verify-migrations.sh` from the repo root (48 files as of `048_drop_app_users_email_digest_enabled`; apply `044` and `048` only after the API and worker deploy).
+`apply_migrations.py` runs every `*.sql` in lexicographic order and **skips** files whose version stem is already in `schema_migrations` (DDL in files remains idempotent for manual re-run). Confirm with `./scripts/verify-migrations.sh` from the repo root (51 files as of `051_fk_reference_indexes`; apply `044` and `048` only after the API and worker deploy).
 
 **Manual:** `psql -h 127.0.0.1 -U lanonna_app -d lanonna -f infra/db/migrations/00N_….sql` for each file in order.
 
