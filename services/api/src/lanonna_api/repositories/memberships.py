@@ -80,10 +80,9 @@ def lock_baby_profile_for_update(
 ) -> dict[str, Any] | None:
     """Serialize membership changes and baby hard-delete per profile (M-02, #442).
 
-    Writers that insert baby-scoped child rows take ``lock_baby_profile_for_key_share``
-    in the same transaction first. ``FOR UPDATE`` blocks ``FOR KEY SHARE``, so delete
-    waits for in-flight child writes; child writes wait for delete, then see the row
-    gone instead of hitting ``baby_profiles`` FK violations under READ COMMITTED.
+    Child-row writers pair with this through ``repositories.child_write_locks``
+    (``FOR KEY SHARE`` in the INSERT's transaction), so a delete and a child
+    INSERT on the same baby serialize instead of hitting a foreign-key 500.
     """
     row = conn.execute(
         """
@@ -95,36 +94,6 @@ def lock_baby_profile_for_update(
         (baby_profile_id,),
     ).fetchone()
     return dict(row) if row else None
-
-
-def lock_baby_profile_for_key_share(
-    baby_profile_id: uuid.UUID,
-    conn: Any,
-) -> dict[str, Any] | None:
-    """Lock the baby row for a child INSERT/UPDATE (see ``lock_baby_profile_for_update``)."""
-    row = conn.execute(
-        """
-        SELECT id
-        FROM baby_profiles
-        WHERE id = %s
-        FOR KEY SHARE
-        """,
-        (baby_profile_id,),
-    ).fetchone()
-    return dict(row) if row else None
-
-
-def ensure_baby_profile_for_child_write(
-    baby_profile_id: uuid.UUID,
-    conn: Any,
-    *,
-    row_lock_held: bool = False,
-) -> None:
-    """Raise ``LookupError`` when the baby was hard-deleted before the child write."""
-    if row_lock_held:
-        return
-    if lock_baby_profile_for_key_share(baby_profile_id, conn) is None:
-        raise LookupError("Baby profile not found.")
 
 
 def count_active_owners(baby_profile_id: uuid.UUID, conn=None) -> int:

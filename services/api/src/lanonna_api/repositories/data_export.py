@@ -4,7 +4,7 @@ import uuid
 from typing import Any
 
 from lanonna_api.db import get_connection
-from lanonna_api.repositories.memberships import ensure_baby_profile_for_child_write
+from lanonna_api.repositories.child_write_locks import ensure_baby_profile_for_child_write
 
 
 def insert_export_job(

@@ -9,7 +9,11 @@ from lanonna_api.repositories.active_participants import active_participant_join
 from lanonna_api.repositories.catalog_suggestions import (
     catalog_suggestion_claimed_on_table,
 )
-from lanonna_api.repositories.memberships import ensure_baby_profile_for_child_write
+from lanonna_api.repositories.child_write_locks import (
+    ChildWriteParent,
+    ensure_baby_profile_for_child_write,
+    ensure_parent_row_for_child_write,
+)
 
 # Safety cap when listing full event history (no month / upcoming filter).
 LIST_EVENTS_MAX_ROWS = 500
@@ -202,6 +206,7 @@ def upsert_rsvp(
     status: str,
 ) -> dict[str, Any]:
     with get_connection() as conn:
+        ensure_parent_row_for_child_write(ChildWriteParent.EVENTS, event_id, conn)
         row = conn.execute(
             """
             INSERT INTO event_rsvps (event_id, firebase_uid, status)
@@ -291,6 +296,7 @@ def insert_event_comment(
 ) -> dict[str, Any]:
     comment_id = uuid.uuid4()
     with get_connection() as conn:
+        ensure_parent_row_for_child_write(ChildWriteParent.EVENTS, event_id, conn)
         row = conn.execute(
             """
             INSERT INTO event_comments (id, event_id, author_firebase_uid, body)

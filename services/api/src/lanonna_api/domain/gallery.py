@@ -6,7 +6,8 @@ from typing import Any
 from lanonna_api.domain.errors import ErrorCode, InvalidInputError
 from lanonna_api.domain.photo_lifecycle import delete_gallery_photo
 from lanonna_api.domain.photo_purpose import PhotoPurpose
-from lanonna_api.domain import assert_owner_membership, create_pending_photo
+from lanonna_api.domain.membership import assert_owner_membership
+from lanonna_api.repositories.pending_photos import create_pending_photo
 from lanonna_api.pagination import offset_page_from_extra_row
 from lanonna_api.db import read_scope
 from lanonna_api.domain.media_urls import sign_media, signed_thumb_urls

@@ -217,10 +217,6 @@ def _insert_notifications(
     """
     if not firebase_uids:
         return {}
-    if baby_profile_id is not None and not lock_baby_profile_for_key_share(
-        baby_profile_id, conn
-    ):
-        return {}
     ids = {uid: uuid.uuid4() for uid in firebase_uids}
     conn.execute(
         """
@@ -335,6 +331,13 @@ def _deliver_to_inbox_and_push(
     baby_profile_id: uuid.UUID | None,
 ) -> None:
     """Shared tail of notify-user and fan-out: inbox rows, then realtime push."""
+    if baby_profile_id is not None and not lock_baby_profile_for_key_share(
+        baby_profile_id, conn
+    ):
+        # Baby hard-deleted after the job was queued (#442): no inbox row
+        # (it would violate the FK) and no push pointing at a deleted baby.
+        logger.info("notify_skip_baby_deleted baby_profile_id=%s", baby_profile_id)
+        return
     opted_in = [r for r in recipients if r.channel_enabled]
     notification_ids = _insert_notifications(
         conn,

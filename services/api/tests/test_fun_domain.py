@@ -4,6 +4,7 @@ from unittest.mock import patch
 import pytest
 
 from lanonna_api.domain.fun import list_names, suggest_name, toggle_like
+from lanonna_api.repositories.child_write_locks import ChildWriteParent
 
 
 def test_follower_name_limit_per_gender():
@@ -17,6 +18,8 @@ def test_follower_name_limit_per_gender():
     ), patch(
         "lanonna_api.domain.fun.get_connection",
     ) as get_conn, patch(
+        "lanonna_api.domain.fun.ensure_baby_profile_for_child_write",
+    ), patch(
         "lanonna_api.domain.fun.lock_membership_for_user_for_update",
         return_value={"role": "follower"},
     ), patch(
@@ -89,10 +92,15 @@ def test_toggle_like_runs_in_single_connection():
         "lanonna_api.domain.fun.remove_likes_for_user_gender",
     ) as remove_gender_mock, patch(
         "lanonna_api.domain.fun.add_like",
-    ) as add_like_mock, cm as get_conn_mock:
+    ) as add_like_mock, patch(
+        "lanonna_api.domain.fun.ensure_parent_row_for_child_write",
+    ) as lock_parent_mock, cm as get_conn_mock:
         get_conn_mock.return_value.__enter__.return_value = conn
         out = toggle_like("uid", baby_id, sid)
     assert out == {"liked": True}
+    lock_parent_mock.assert_called_once_with(
+        ChildWriteParent.NAME_SUGGESTIONS, sid, conn
+    )
     has_like_mock.assert_called_once_with(sid, "uid", conn)
     remove_gender_mock.assert_called_once_with(baby_id, "uid", "male", conn)
     add_like_mock.assert_called_once_with(sid, "uid", conn)
