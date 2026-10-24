@@ -88,6 +88,31 @@ WHERE ic.relam = (SELECT oid FROM pg_am WHERE amname = 'btree')
 GROUP BY i.indrelid, i.indexrelid, i.indpred
 """
 
+_INDEXDEFS_SQL = """
+SELECT
+    i.indrelid::regclass::text AS table_name,
+    ic.relname AS index_name,
+    i.indisunique,
+    pg_get_indexdef(ic.oid) AS indexdef
+FROM pg_index i
+JOIN pg_class ic ON ic.oid = i.indexrelid
+JOIN pg_namespace n ON n.oid = ic.relnamespace AND n.nspname = 'public'
+WHERE ic.relam = (SELECT oid FROM pg_am WHERE amname = 'btree')
+  AND i.indisvalid
+  AND NOT i.indisprimary
+ORDER BY 1, 2
+"""
+
+_INDEXDEF_NAME_RE = re.compile(
+    r"^CREATE (UNIQUE )?INDEX \S+ ON ",
+    re.IGNORECASE,
+)
+
+
+def _normalize_indexdef(indexdef: str) -> str:
+    """``pg_get_indexdef`` with the index name removed for pairwise comparison."""
+    return _INDEXDEF_NAME_RE.sub(r"CREATE \1INDEX ON ", indexdef, count=1)
+
 
 def _not_null_predicate(predicate: str, column: str) -> bool:
     return re.fullmatch(
@@ -121,6 +146,28 @@ def _load():
             (tuple(row["columns"]), row["predicate"])
         )
     return fks, indexes
+
+
+def test_no_duplicate_btree_index_definitions_on_one_table():
+    with get_connection() as conn:
+        rows = conn.execute(_INDEXDEFS_SQL).fetchall()
+    by_table: dict[str, dict[str, list[str]]] = {}
+    for row in rows:
+        table = row["table_name"]
+        normalized = _normalize_indexdef(row["indexdef"])
+        by_table.setdefault(table, {}).setdefault(normalized, []).append(row["index_name"])
+    duplicates = []
+    for table, groups in sorted(by_table.items()):
+        for normalized, names in sorted(groups.items()):
+            if len(names) > 1:
+                duplicates.append(
+                    f"{table}: {', '.join(sorted(names))} -> {normalized}"
+                )
+    assert not duplicates, (
+        "Two or more indexes share the same definition (columns, order, predicate, "
+        "uniqueness). Drop the redundant one in a migration:\n"
+        + "\n".join(f"  - {d}" for d in duplicates)
+    )
 
 
 def test_every_foreign_key_has_an_index_the_fk_check_can_use():
@@ -196,3 +243,13 @@ def test_never_deleted_parents_are_never_deleted_by_production_code():
 )
 def test_fk_covered_rules(indexes, fk, expected):
     assert fk_covered(indexes, fk) is expected
+
+
+def test_normalize_indexdef_strips_name_only():
+    raw = (
+        "CREATE INDEX idx_photos_baby_created ON public.photos "
+        "USING btree (baby_profile_id, created_at DESC)"
+    )
+    assert _normalize_indexdef(raw) == (
+        "CREATE INDEX ON public.photos USING btree (baby_profile_id, created_at DESC)"
+    )
