@@ -1,0 +1,8 @@
+# tags: smoke, home
+appId: com.lanonna.lanonna
+---
+- runFlow: ../subflows/ensure_signed_in.yaml
+- runFlow: ../subflows/ensure_primary_baby.yaml
+- assertVisible:
+    id: home_section_list
+- assertVisible: "Maestro Baby"

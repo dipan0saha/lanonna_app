@@ -1,0 +1,15 @@
+# tags: smoke, refresh
+appId: com.lanonna.lanonna
+---
+- runFlow: ../subflows/ensure_signed_in.yaml
+- runFlow: ../subflows/open_account.yaml
+- extendedWaitUntil:
+    visible:
+      id: account_pull_refresh
+    timeout: 15000
+- swipe:
+    start: 50%, 30%
+    end: 50%, 80%
+- extendedWaitUntil:
+    visible: "My Account"
+    timeout: 20000

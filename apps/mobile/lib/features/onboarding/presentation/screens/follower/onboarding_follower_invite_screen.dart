@@ -123,6 +123,7 @@ class _OnboardingFollowerInviteScreenState
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 22),
             child: OnboardingPrimaryButton(
+              semanticsId: 'invite_landing_accept',
               label: preview.isAccepted ? AppLocalizations.of(context)!.onboardingOpen : AppLocalizations.of(context)!.onboardingAcceptInvitation,
               onPressed: () => _onPrimary(preview),
             ),

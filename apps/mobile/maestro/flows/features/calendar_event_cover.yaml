@@ -1,0 +1,20 @@
+# tags: full, calendar
+# Opens event form cover picker (GCS upload is integration-tested; no image pick in CI).
+appId: com.lanonna.lanonna
+---
+- runFlow: ../subflows/ensure_signed_in.yaml
+- runFlow: ../subflows/ensure_primary_baby.yaml
+- tapOn: ".*Tab 3 of 5.*"
+- tapOn:
+    id: calendar_create_fab
+- extendedWaitUntil:
+    visible: "New Event"
+    timeout: 10000
+- tapOn:
+    id: calendar_event_cover
+- extendedWaitUntil:
+    visible: "Choose from gallery|Take photo|Photo"
+    timeout: 10000
+    optional: true
+- back
+- back

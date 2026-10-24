@@ -1,5 +1,7 @@
 # Maestro E2E (Android)
 
+**Pre-merge runner:** from the repo root, use [`scripts/e2e/run_smoke.sh`](../../../scripts/e2e/run_smoke.sh) (`--smoke` / `--full`). See [`docs/qa/e2e-automation.md`](../../../docs/qa/e2e-automation.md) for P0 coverage mapping and secrets.
+
 UI tests for the La Nonna Flutter app on an Android emulator or device. Selectors use Flutter `Semantics.identifier` values (`tapOn: id: …`) defined in `lib/core/widgets/app_semantics.dart` and feature screens.
 
 ## Prerequisites

@@ -1,0 +1,49 @@
+# tags: full, destructive
+appId: com.lanonna.lanonna
+---
+- clearState
+- launchApp
+- extendedWaitUntil:
+    visible: "I already have an account|Welcome back"
+    timeout: 60000
+- runFlow:
+    when:
+      visible: "I already have an account"
+    commands:
+      - tapOn: "I already have an account"
+- runFlow: ../subflows/sign_in_form_as.yaml
+- extendedWaitUntil:
+    visible: ".*Tab 1 of 5.*|Complete your profile"
+    timeout: 90000
+- runFlow:
+    when:
+      visible: "Complete your profile"
+    file: ../subflows/owner_onboarding_to_home.yaml
+- extendedWaitUntil:
+    visible: ".*Tab 1 of 5.*"
+    timeout: 90000
+- runFlow: ../subflows/open_account.yaml
+- tapOn:
+    text: "Maestro Baby"
+    optional: true
+- extendedWaitUntil:
+    visible: "Edit"
+    timeout: 15000
+    optional: true
+- tapOn:
+    text: "Edit"
+    optional: true
+- scrollUntilVisible:
+    element:
+      id: baby_edit_delete_profile
+    direction: DOWN
+    timeout: 45000
+- tapOn:
+    id: baby_edit_delete_profile
+- tapOn: "Delete profile"
+- tapOn:
+    text: "Delete profile"
+    optional: true
+- extendedWaitUntil:
+    visible: "My Account|Baby profiles"
+    timeout: 60000

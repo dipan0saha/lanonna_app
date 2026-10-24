@@ -1,0 +1,18 @@
+# tags: full, notifications
+appId: com.lanonna.lanonna
+---
+- runFlow: ../subflows/ensure_signed_in.yaml
+- tapOn:
+    id: shell_notifications
+- extendedWaitUntil:
+    visible:
+      id: notifications_inbox
+    timeout: 20000
+- swipe:
+    start: 50%, 40%
+    end: 50%, 20%
+    optional: true
+- tapOn:
+    id: notifications_inbox
+    optional: true
+- back

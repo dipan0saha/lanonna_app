@@ -1,0 +1,22 @@
+# tags: full, auth
+# AUTH-003: unverified user cannot reach home (provisioned via unverified_user).
+appId: com.lanonna.lanonna
+---
+- clearState
+- launchApp
+- extendedWaitUntil:
+    visible: "I already have an account|Welcome back"
+    timeout: 60000
+- runFlow:
+    when:
+      visible: "I already have an account"
+    commands:
+      - tapOn: "I already have an account"
+- extendedWaitUntil:
+    visible: "Welcome back"
+    timeout: 20000
+- runFlow: ../subflows/sign_in_form_as.yaml
+- extendedWaitUntil:
+    visible: "Verify|check your email|email"
+    timeout: 45000
+- assertNotVisible: ".*Tab 1 of 5.*"

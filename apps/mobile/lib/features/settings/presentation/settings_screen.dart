@@ -51,10 +51,13 @@ class SettingsScreen extends StatelessWidget {
             trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
             onTap: () => context.push('/account/edit'),
           ),
-          ListTile(
-            title: Text(l10n.settingsHelpSupport),
-            trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
-            onTap: () => _openHelp(context),
+          AppSemantics.button(
+            'settings_help_support',
+            ListTile(
+              title: Text(l10n.settingsHelpSupport),
+              trailing: const Icon(Icons.chevron_right, color: AppColors.muted),
+              onTap: () => _openHelp(context),
+            ),
           ),
           if (showCrashlyticsDevToolsInSettings)
             ListTile(

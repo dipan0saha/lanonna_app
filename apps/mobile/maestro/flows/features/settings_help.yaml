@@ -1,0 +1,21 @@
+# tags: full, settings
+appId: com.lanonna.lanonna
+---
+- runFlow: ../subflows/ensure_signed_in.yaml
+- runFlow: ../subflows/open_account.yaml
+- scrollUntilVisible:
+    element: ".*Settings.*"
+    direction: DOWN
+    timeout: 45000
+- tapOn: ".*Settings.*"
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 10000
+- tapOn:
+    id: settings_help_support
+- extendedWaitUntil:
+    visible: ".*Gmail.*|.*Email.*|.*Send.*|.*Choose.*"
+    timeout: 8000
+    optional: true
+- back
+- back
