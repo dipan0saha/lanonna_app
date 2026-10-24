@@ -57,7 +57,7 @@ Repo convention encodes sort direction in the index definition, not a `_desc` su
 | Layer | Change |
 |-------|--------|
 | `infra/db/migrations/052_drop_duplicate_photos_baby_created_index.sql` | `DROP INDEX IF EXISTS idx_photos_baby_created_desc`, `lock_timeout` 5s. |
-| `services/api/tests/integration/test_fk_index_coverage_postgres.py` | Guard: fail when two indexes on one table share the same normalized `pg_get_indexdef`. |
+| `services/api/tests/integration/test_fk_index_coverage_postgres.py` | Guard: fail when two valid indexes on one table (any access method, primary keys included) share the same `pg_get_indexdef` minus the name. That text carries uniqueness, method, columns or expressions, opclass, collation, sort order, `INCLUDE` and the partial predicate, so expression indexes and partials with different predicates are never flagged. A probe test builds real indexes in a rolled-back scratch schema to prove it, and the guard fails on the pre-`052` schema. |
 
 ## Deploy notes
 

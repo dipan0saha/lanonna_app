@@ -88,30 +88,47 @@ WHERE ic.relam = (SELECT oid FROM pg_am WHERE amname = 'btree')
 GROUP BY i.indrelid, i.indexrelid, i.indpred
 """
 
+# Every valid index in one schema, any access method, primary keys included:
+# pg_get_indexdef spells out uniqueness, access method, key columns or
+# expressions, opclass, collation, sort order, INCLUDE columns and the partial
+# predicate, so two indexes with the same text minus the name are redundant.
 _INDEXDEFS_SQL = """
 SELECT
     i.indrelid::regclass::text AS table_name,
     ic.relname AS index_name,
-    i.indisunique,
     pg_get_indexdef(ic.oid) AS indexdef
 FROM pg_index i
 JOIN pg_class ic ON ic.oid = i.indexrelid
-JOIN pg_namespace n ON n.oid = ic.relnamespace AND n.nspname = 'public'
-WHERE ic.relam = (SELECT oid FROM pg_am WHERE amname = 'btree')
-  AND i.indisvalid
-  AND NOT i.indisprimary
+JOIN pg_namespace n ON n.oid = ic.relnamespace AND n.nspname = %s
+WHERE i.indisvalid
 ORDER BY 1, 2
 """
 
+# Index name is a plain or double-quoted identifier (quotes doubled inside).
 _INDEXDEF_NAME_RE = re.compile(
-    r"^CREATE (UNIQUE )?INDEX \S+ ON ",
+    r'^CREATE (UNIQUE )?INDEX (?:"(?:[^"]|"")+"|[^\s"]+) ON ',
     re.IGNORECASE,
 )
 
 
 def _normalize_indexdef(indexdef: str) -> str:
     """``pg_get_indexdef`` with the index name removed for pairwise comparison."""
-    return _INDEXDEF_NAME_RE.sub(r"CREATE \1INDEX ON ", indexdef, count=1)
+    normalized, n = _INDEXDEF_NAME_RE.subn(r"CREATE \1INDEX ON ", indexdef, count=1)
+    assert n == 1, f"unexpected pg_get_indexdef shape: {indexdef}"
+    return normalized
+
+
+def find_duplicate_indexes(rows) -> list[str]:
+    """Groups of 2+ indexes on one table whose definitions differ only by name."""
+    groups: dict[tuple[str, str], list[str]] = {}
+    for row in rows:
+        key = (row["table_name"], _normalize_indexdef(row["indexdef"]))
+        groups.setdefault(key, []).append(row["index_name"])
+    return [
+        f"{table}: {', '.join(sorted(names))} -> {normalized}"
+        for (table, normalized), names in sorted(groups.items())
+        if len(names) > 1
+    ]
 
 
 def _not_null_predicate(predicate: str, column: str) -> bool:
@@ -148,26 +165,63 @@ def _load():
     return fks, indexes
 
 
-def test_no_duplicate_btree_index_definitions_on_one_table():
+def test_no_duplicate_index_definitions_on_one_table():
     with get_connection() as conn:
-        rows = conn.execute(_INDEXDEFS_SQL).fetchall()
-    by_table: dict[str, dict[str, list[str]]] = {}
-    for row in rows:
-        table = row["table_name"]
-        normalized = _normalize_indexdef(row["indexdef"])
-        by_table.setdefault(table, {}).setdefault(normalized, []).append(row["index_name"])
-    duplicates = []
-    for table, groups in sorted(by_table.items()):
-        for normalized, names in sorted(groups.items()):
-            if len(names) > 1:
-                duplicates.append(
-                    f"{table}: {', '.join(sorted(names))} -> {normalized}"
-                )
+        rows = conn.execute(_INDEXDEFS_SQL, ("public",)).fetchall()
+    duplicates = find_duplicate_indexes(rows)
     assert not duplicates, (
-        "Two or more indexes share the same definition (columns, order, predicate, "
-        "uniqueness). Drop the redundant one in a migration:\n"
+        "Two or more indexes share the same definition (method, columns or "
+        "expressions, opclass, collation, order, INCLUDE, predicate, uniqueness). "
+        "Drop the redundant one in a migration:\n"
         + "\n".join(f"  - {d}" for d in duplicates)
     )
+
+
+def test_duplicate_guard_on_real_pg_get_indexdef_output():
+    """Only true duplicates are flagged, using Postgres's own rendering."""
+    with get_connection() as conn:
+        with conn.transaction(force_rollback=True):
+            conn.execute("CREATE SCHEMA dup_guard_probe")
+            conn.execute(
+                "CREATE TABLE dup_guard_probe.t "
+                "(a int, b text, c timestamptz, d text, e int)"
+            )
+            conn.execute(
+                "CREATE TABLE dup_guard_probe.u (a int, c timestamptz)"
+            )
+            for ddl in (
+                # True duplicates (one quoted name), and a duplicate of the PK.
+                "CREATE INDEX t_ac_1 ON dup_guard_probe.t (a, c DESC)",
+                'CREATE INDEX "t ac 2" ON dup_guard_probe.t (a, c DESC)',
+                "ALTER TABLE dup_guard_probe.t ADD CONSTRAINT t_pkey PRIMARY KEY (e)",
+                "CREATE UNIQUE INDEX t_e_dup ON dup_guard_probe.t (e)",
+                # Same partial predicate (written differently) is a duplicate.
+                "CREATE INDEX t_pg_1 ON dup_guard_probe.t (a) WHERE d = 'gallery'",
+                "CREATE INDEX t_pg_2 ON dup_guard_probe.t (a) WHERE (d = 'gallery')",
+                # Not duplicates of the above or of each other.
+                "CREATE INDEX t_ac_asc ON dup_guard_probe.t (a, c)",
+                "CREATE UNIQUE INDEX t_ac_uq ON dup_guard_probe.t (a, c DESC)",
+                "CREATE INDEX t_pc ON dup_guard_probe.t (a) WHERE d = 'event_cover'",
+                "CREATE INDEX t_nn ON dup_guard_probe.t (a) WHERE a IS NOT NULL",
+                "CREATE INDEX t_lower_b ON dup_guard_probe.t (lower(b))",
+                "CREATE INDEX t_upper_b ON dup_guard_probe.t (upper(b))",
+                "CREATE INDEX t_b ON dup_guard_probe.t (b)",
+                'CREATE INDEX t_b_c ON dup_guard_probe.t (b COLLATE "C")',
+                "CREATE INDEX t_b_pattern ON dup_guard_probe.t (b text_pattern_ops)",
+                "CREATE INDEX t_b_hash ON dup_guard_probe.t USING hash (b)",
+                "CREATE INDEX t_a_inc ON dup_guard_probe.t (a) INCLUDE (b)",
+                "CREATE INDEX t_a_nf ON dup_guard_probe.t (a NULLS FIRST)",
+                # Same columns on another table.
+                "CREATE INDEX u_ac ON dup_guard_probe.u (a, c DESC)",
+            ):
+                conn.execute(ddl)
+            rows = conn.execute(_INDEXDEFS_SQL, ("dup_guard_probe",)).fetchall()
+            flagged = sorted(d.split(" -> ")[0] for d in find_duplicate_indexes(rows))
+    assert flagged == [
+        "dup_guard_probe.t: t ac 2, t_ac_1",
+        "dup_guard_probe.t: t_e_dup, t_pkey",
+        "dup_guard_probe.t: t_pg_1, t_pg_2",
+    ]
 
 
 def test_every_foreign_key_has_an_index_the_fk_check_can_use():
@@ -245,11 +299,54 @@ def test_fk_covered_rules(indexes, fk, expected):
     assert fk_covered(indexes, fk) is expected
 
 
-def test_normalize_indexdef_strips_name_only():
-    raw = (
-        "CREATE INDEX idx_photos_baby_created ON public.photos "
-        "USING btree (baby_profile_id, created_at DESC)"
-    )
-    assert _normalize_indexdef(raw) == (
-        "CREATE INDEX ON public.photos USING btree (baby_profile_id, created_at DESC)"
-    )
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        (
+            "CREATE INDEX idx_photos_baby_created ON public.photos "
+            "USING btree (baby_profile_id, created_at DESC)",
+            "CREATE INDEX ON public.photos USING btree (baby_profile_id, created_at DESC)",
+        ),
+        (
+            "CREATE UNIQUE INDEX photos_pkey ON public.photos USING btree (id)",
+            "CREATE UNIQUE INDEX ON public.photos USING btree (id)",
+        ),
+        (
+            'CREATE INDEX "odd "" name ON x" ON public.t USING btree (a) '
+            "WHERE (b = 'ON x'::text)",
+            "CREATE INDEX ON public.t USING btree (a) WHERE (b = 'ON x'::text)",
+        ),
+        (
+            "CREATE INDEX i ON ONLY public.p USING btree (a)",
+            "CREATE INDEX ON ONLY public.p USING btree (a)",
+        ),
+    ],
+)
+def test_normalize_indexdef_strips_name_only(raw, expected):
+    assert _normalize_indexdef(raw) == expected
+
+
+def _row(table, name, indexdef):
+    return {"table_name": table, "index_name": name, "indexdef": indexdef}
+
+
+def test_find_duplicate_indexes_grouping():
+    rows = [
+        _row("public.p", "a1", "CREATE INDEX a1 ON public.p USING btree (x, y DESC)"),
+        _row("public.p", "a2", "CREATE INDEX a2 ON public.p USING btree (x, y DESC)"),
+        _row("public.p", "a3", "CREATE INDEX a3 ON public.p USING btree (x, y)"),
+        _row("public.p", "e1", "CREATE INDEX e1 ON public.p USING btree (lower(z))"),
+        _row("public.p", "e2", "CREATE INDEX e2 ON public.p USING btree (z)"),
+        _row(
+            "public.p", "w1",
+            "CREATE INDEX w1 ON public.p USING btree (x) WHERE (k = 'a'::text)",
+        ),
+        _row(
+            "public.p", "w2",
+            "CREATE INDEX w2 ON public.p USING btree (x) WHERE (k = 'b'::text)",
+        ),
+        _row("public.q", "b1", "CREATE INDEX b1 ON public.q USING btree (x, y DESC)"),
+    ]
+    assert find_duplicate_indexes(rows) == [
+        "public.p: a1, a2 -> CREATE INDEX ON public.p USING btree (x, y DESC)"
+    ]
