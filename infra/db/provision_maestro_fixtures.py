@@ -39,12 +39,25 @@ def _repo_root() -> str:
 
 
 def _firebase_api_key() -> str:
-    path = os.path.join(_repo_root(), "apps", "mobile", "lib", "firebase_options.dart")
-    text = open(path, encoding="utf-8").read()
-    match = re.search(r"apiKey: '([^']+)'", text)
-    if not match:
-        raise SystemExit("Could not read Firebase apiKey from firebase_options.dart")
-    return match.group(1)
+    """Web API key of the lanonna-dev Firebase project (fixtures only target dev).
+
+    Since the prod flavor (#348) the dev options live in
+    lib/firebase/firebase_options_dev.dart; lib/firebase_options.dart only dispatches.
+    """
+    mobile_lib = os.path.join(_repo_root(), "apps", "mobile", "lib")
+    for rel in (
+        os.path.join("firebase", "firebase_options_dev.dart"),
+        "firebase_options.dart",
+    ):
+        path = os.path.join(mobile_lib, rel)
+        if not os.path.exists(path):
+            continue
+        match = re.search(r"apiKey: '([^']+)'", open(path, encoding="utf-8").read())
+        if match:
+            return match.group(1)
+    raise SystemExit(
+        "Could not read the dev Firebase apiKey from apps/mobile/lib/firebase/firebase_options_dev.dart"
+    )
 
 
 def _sign_in(email: str, password: str) -> tuple[str, str]:
