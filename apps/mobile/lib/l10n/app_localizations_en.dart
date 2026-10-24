@@ -963,7 +963,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get labelBabyProfiles => 'Baby Profiles';
 
   @override
-  String get labelBabyShower => 'Baby Shower';
+  String get labelBabyShower => 'Baby shower';
 
   @override
   String get labelBabyName => 'Baby name';
@@ -1046,7 +1046,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Download a JSON copy of this baby\'s profile, members, photos and comments, calendar and RSVPs, registry and purchases, name ideas, predictions, the birth announcement, and recent activity.';
 
   @override
-  String get presetDueDate => 'Due Date';
+  String get presetDueDate => 'Due date';
 
   @override
   String get actionEditBaby => 'Edit Baby';
@@ -1098,7 +1098,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get presetFirstPediatricVisit => 'First pediatric visit';
 
   @override
-  String get presetFirstHolidays => 'First Holidays';
+  String get presetFirstHolidays => 'First holidays';
 
   @override
   String get fieldFirstName => 'First name';
@@ -1111,7 +1111,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navFun => 'Fun';
 
   @override
-  String get labelGenderReveal => 'Gender Reveal';
+  String get labelGenderReveal => 'Gender reveal';
 
   @override
   String get labelGettingStarted => 'Getting Started';

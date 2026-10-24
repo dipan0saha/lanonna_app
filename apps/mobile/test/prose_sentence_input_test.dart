@@ -27,6 +27,15 @@ void main() {
       expect(formatProseSentence('line one\nline two'), 'Line one\nLine two');
     });
 
+    test('sentence starting with a digit is not capitalized', () {
+      expect(
+        formatProseSentence('20-week anatomy scan'),
+        '20-week anatomy scan',
+      );
+      expect(formatProseSentence('3.5 kg today'), '3.5 kg today');
+      expect(formatProseSentence('2 visits. then home'), '2 visits. Then home');
+    });
+
     test('preserves mid-word caps', () {
       expect(formatProseSentence('iPhone'), 'IPhone');
     });

@@ -1705,7 +1705,7 @@ abstract class AppLocalizations {
   /// No description provided for @labelBabyShower.
   ///
   /// In en, this message translates to:
-  /// **'Baby Shower'**
+  /// **'Baby shower'**
   String get labelBabyShower;
 
   /// No description provided for @labelBabyName.
@@ -1867,7 +1867,7 @@ abstract class AppLocalizations {
   /// No description provided for @presetDueDate.
   ///
   /// In en, this message translates to:
-  /// **'Due Date'**
+  /// **'Due date'**
   String get presetDueDate;
 
   /// No description provided for @actionEditBaby.
@@ -1969,7 +1969,7 @@ abstract class AppLocalizations {
   /// No description provided for @presetFirstHolidays.
   ///
   /// In en, this message translates to:
-  /// **'First Holidays'**
+  /// **'First holidays'**
   String get presetFirstHolidays;
 
   /// No description provided for @fieldFirstName.
@@ -1993,7 +1993,7 @@ abstract class AppLocalizations {
   /// No description provided for @labelGenderReveal.
   ///
   /// In en, this message translates to:
-  /// **'Gender Reveal'**
+  /// **'Gender reveal'**
   String get labelGenderReveal;
 
   /// No description provided for @labelGettingStarted.

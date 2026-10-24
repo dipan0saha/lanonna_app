@@ -59,5 +59,4 @@ def test_catalog_backed_presets_match_catalog_rows():
     events = _catalog("calendar/event_suggestions.json", "title")
     for preset in presets.EXPECTING_EVENTS + presets.BORN_EVENTS:
         if preset.id in events:
-            # Event titles keep the app's title case ("Baby Shower").
-            assert events[preset.id].casefold() == preset.label.casefold()
+            assert events[preset.id] == preset.label

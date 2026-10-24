@@ -370,6 +370,95 @@ def test_replacing_gallery_cover_keeps_gallery_photo(baby_and_owner: uuid.UUID):
     )
 
 
+def test_delete_unreferenced_event_cover_waits_for_in_flight_attach(
+    baby_and_owner: uuid.UUID,
+):
+    """Concurrent attach must win over orphan delete (#424).
+
+    The attach transaction holds the FK's FOR KEY SHARE on the photo; the
+    delete's FOR UPDATE must block on it, then see the committed reference
+    and keep the row.
+    """
+    import threading
+    import time
+    from datetime import datetime, timezone
+
+    import psycopg
+
+    from lanonna_api.config import settings
+    from lanonna_api.db import get_connection
+    from lanonna_api.repositories.photos import delete_unreferenced_event_cover
+
+    baby_id = baby_and_owner
+    cover_id = _ready_photo(baby_id, PhotoPurpose.EVENT_COVER)
+    deleted: list[dict | None] = []
+    errors: list[BaseException] = []
+
+    def _connect() -> psycopg.Connection:
+        return psycopg.connect(
+            host=settings.db_host,
+            port=settings.db_port,
+            dbname=settings.db_name,
+            user=settings.db_user,
+            password=settings.db_password,
+        )
+
+    def _delete_waiting_on_lock(observer: psycopg.Connection) -> bool:
+        row = observer.execute(
+            """
+            SELECT 1 FROM pg_stat_activity
+            WHERE datname = current_database()
+              AND wait_event_type = 'Lock'
+              AND query ILIKE '%%FOR UPDATE%%'
+            """
+        ).fetchone()
+        return row is not None
+
+    def run_delete() -> None:
+        try:
+            deleted.append(delete_unreferenced_event_cover(cover_id))
+        except BaseException as exc:  # surfaced in the main thread
+            errors.append(exc)
+
+    attach = _connect()
+    observer = _connect()
+    observer.autocommit = True
+    worker = threading.Thread(target=run_delete)
+    try:
+        attach.execute(
+            """
+            INSERT INTO events (baby_profile_id, created_by_firebase_uid, title,
+                                starts_at, cover_photo_id)
+            VALUES (%s, %s, 'Shower', %s, %s)
+            """,
+            (
+                baby_id,
+                "owner-uid",
+                datetime(2030, 1, 1, tzinfo=timezone.utc),
+                cover_id,
+            ),
+        )
+        worker.start()
+        deadline = time.monotonic() + 10
+        while not _delete_waiting_on_lock(observer):
+            assert worker.is_alive(), "delete finished without waiting for attach"
+            assert time.monotonic() < deadline, "delete never blocked on the row lock"
+            time.sleep(0.05)
+        attach.commit()
+        worker.join(timeout=10)
+        assert not worker.is_alive()
+    finally:
+        attach.close()
+        observer.close()
+
+    assert errors == []
+    assert deleted == [None]
+    with get_connection() as conn:
+        assert conn.execute(
+            "SELECT 1 FROM photos WHERE id = %s", (cover_id,)
+        ).fetchone() is not None
+
+
 def test_shared_cover_survives_until_last_event_drops_it(baby_and_owner: uuid.UUID):
     baby_id = baby_and_owner
     cover_id = _ready_photo(baby_id, PhotoPurpose.EVENT_COVER)

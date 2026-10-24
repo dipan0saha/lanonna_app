@@ -23,9 +23,9 @@ class RegistryPreset:
 
 
 EXPECTING_EVENTS: tuple[EventPreset, ...] = (
-    EventPreset("gender_reveal", "Gender Reveal", -14),
-    EventPreset("baby_shower", "Baby Shower", -7),
-    EventPreset("due_date", "Due Date", 0),
+    EventPreset("gender_reveal", "Gender reveal", -14),
+    EventPreset("baby_shower", "Baby shower", -7),
+    EventPreset("due_date", "Due date", 0),
 )
 
 EXPECTING_REGISTRY: tuple[RegistryPreset, ...] = (
@@ -41,7 +41,7 @@ EXPECTING_REGISTRY: tuple[RegistryPreset, ...] = (
 BORN_EVENTS: tuple[EventPreset, ...] = (
     EventPreset("first_pediatric_visit", "First pediatric visit", 0),
     EventPreset("baptism", "Baptism", 7),
-    EventPreset("first_holidays", "First Holidays", 14),
+    EventPreset("first_holidays", "First holidays", 14),
 )
 
 BORN_REGISTRY: tuple[RegistryPreset, ...] = (
