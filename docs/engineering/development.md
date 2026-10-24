@@ -86,7 +86,7 @@ Release and profile builds must pass a non-empty `API_BASE_URL` (see `flavors/*.
 
 `google-services.json` / `GoogleService-Info.plist` are local (gitignored). Dev flavor: `apps/mobile/flavors/dev.json`. iOS: minimum **15.0**, run `cd ios && pod install` once.
 
-**Android release:** `release` builds enable R8 + resource shrinking (`android/app/build.gradle.kts`, `proguard-rules.pro`). Smoke with `flutter build apk --release --dart-define-from-file=flavors/dev.json` after Gradle changes.
+**Android release:** `release` builds enable R8 + resource shrinking (`android/app/build.gradle.kts`, `proguard-rules.pro`). Smoke with `scripts/flutter_build_apk.sh --release --dart-define-from-file=flavors/dev.json` after Gradle changes.
 
 **Android orientation:** the main activity sets `android:screenOrientation="portrait"`, and `main()` calls `SystemChrome.setPreferredOrientations` with `portraitUp` on Android only. iOS orientations are unchanged.
 

@@ -37,7 +37,9 @@ def test_push_data_carries_inbox_row_and_baby_profile_id(_ensure, mock_send):
         baby_profile_id=baby_id,
     )
 
-    insert_params = conn.execute.call_args_list[0].args[1]
+    lock_sql, lock_params = conn.execute.call_args_list[0].args
+    assert "FOR KEY SHARE" in lock_sql and lock_params == (baby_id,)
+    insert_params = conn.execute.call_args_list[1].args[1]
     inserted_ids, inserted_uids = insert_params[7], insert_params[8]
     assert inserted_uids == ["u1"]
     message = mock_send.call_args[0][0]
@@ -47,6 +49,25 @@ def test_push_data_carries_inbox_row_and_baby_profile_id(_ensure, mock_send):
     assert message.data["baby_profile_id"] == str(baby_id)
     assert insert_params[4:6] == ("photo", "photo_shared")
     assert message.notification.title == "T"
+
+
+@patch("lanonna_worker.notifications._send_push")
+def test_baby_deleted_before_insert_skips_inbox_and_push(mock_push):
+    """#442: the baby row is gone (hard-deleted), so no FK error and no push."""
+    conn = MagicMock()
+    conn.execute.return_value.fetchone.return_value = None
+
+    _deliver_to_inbox_and_push(
+        conn,
+        [_recipient("u1")],
+        message=_MESSAGE,
+        deep_link=None,
+        baby_profile_id=uuid.uuid4(),
+    )
+
+    assert conn.execute.call_count == 1
+    assert "FOR KEY SHARE" in conn.execute.call_args.args[0]
+    mock_push.assert_not_called()
 
 
 @patch("lanonna_worker.notifications._send_push")

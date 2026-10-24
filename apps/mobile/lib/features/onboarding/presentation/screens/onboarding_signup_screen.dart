@@ -43,7 +43,6 @@ class _OnboardingSignupScreenState extends State<OnboardingSignupScreen> {
 
   @override
   void dispose() {
-    _persistEmail();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();

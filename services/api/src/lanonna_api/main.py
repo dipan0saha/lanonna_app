@@ -37,7 +37,12 @@ from lanonna_api.routers import (
     profile,
     registry,
 )
-from lanonna_api.domain.errors import ErrorCode, NotFoundError, error_detail
+from lanonna_api.domain.errors import (
+    DomainError,
+    ErrorCode,
+    NotFoundError,
+    error_detail,
+)
 from lanonna_api.http_errors import (
     internal_error_detail,
     map_domain_errors,
@@ -100,6 +105,18 @@ async def http_exception_handler(
         status_code=exc.status_code,
         content={"detail": normalize_error_detail(exc.status_code, exc.detail)},
         headers=getattr(exc, "headers", None),
+    )
+
+
+@app.exception_handler(DomainError)
+async def domain_error_handler(request: Request, exc: DomainError) -> JSONResponse:
+    """A typed domain error keeps its status and code even when a router's narrow
+    ``except`` lets it through (e.g. ``NotFoundError`` from a child-write lock when
+    the baby was deleted mid-request, #442), instead of becoming a 500."""
+    mapped = map_domain_errors(exc)
+    return JSONResponse(
+        status_code=mapped.status_code,
+        content={"detail": mapped.detail},
     )
 
 

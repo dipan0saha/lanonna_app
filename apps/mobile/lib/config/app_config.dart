@@ -15,6 +15,10 @@ const Duration biometricAppLockResumeGracePeriod = Duration(seconds: 30);
 const String releaseApiBaseUrlMissingMessage =
     'Release builds must set API_BASE_URL via --dart-define-from-file=flavors/dev.json';
 
+/// Compiler-facing message when a prod release has no build stamp.
+const String prodBuildStampMissingMessage =
+    'Prod release builds must pass BUILD_GIT_SHA and BUILD_NUMBER: build with apps/mobile/scripts/flutter_build_apk.sh';
+
 /// Compiler-facing message when a prod release still has placeholder defines.
 const String prodPlaceholderConfigMessage =
     'Prod release builds must replace all __PROD_ placeholders in flavors/prod.json';
@@ -50,6 +54,15 @@ const String _crashlyticsEnabledFromEnvironment = String.fromEnvironment(
   'CRASHLYTICS_ENABLED',
 );
 
+/// Build stamp from `scripts/flutter_build_apk.sh` (Crashlytics keys).
+const String buildGitShaFromEnvironment = String.fromEnvironment(
+  'BUILD_GIT_SHA',
+);
+
+const String buildNumberFromEnvironment = String.fromEnvironment(
+  'BUILD_NUMBER',
+);
+
 const String _googleSignInClientIdFromEnvironment = String.fromEnvironment(
   'GOOGLE_SIGN_IN_SERVER_CLIENT_ID',
 );
@@ -83,6 +96,12 @@ const bool _prodReleaseHasPlaceholderConfig =
         _googleSignInClientIdFromEnvironment ==
             prodGoogleSignInClientIdPlaceholder);
 
+/// Prod release/profile without an explicit git SHA and build number.
+const bool _prodReleaseMissingBuildStamp =
+    _releaseOrProfile &&
+    _isProdEnvironment &&
+    (buildGitShaFromEnvironment == '' || buildNumberFromEnvironment == '');
+
 const String _resolvedApiBaseUrl = _apiBaseUrlFromEnvironment != ''
     ? _apiBaseUrlFromEnvironment
     : devApiBaseUrl;
@@ -104,6 +123,7 @@ bool resolveCrashlyticsCollectionEnabled({
 // dart format off
 const int releaseApiBaseUrlGuard = 1 ~/ (_releaseMissingApiBaseUrl ? 0 : 1); // Release builds must set API_BASE_URL via --dart-define-from-file=flavors/dev.json
 const int prodPlaceholderConfigGuard = 1 ~/ (_prodReleaseHasPlaceholderConfig ? 0 : 1); // Prod release builds must replace all __PROD_ placeholders in flavors/prod.json
+const int prodBuildStampGuard = 1 ~/ (_prodReleaseMissingBuildStamp ? 0 : 1); // Prod release builds must pass BUILD_GIT_SHA and BUILD_NUMBER: build with apps/mobile/scripts/flutter_build_apk.sh
 // dart format on
 
 /// Runtime config (dev defaults; override with --dart-define / flavors).
@@ -147,3 +167,6 @@ const Object releaseApiBaseUrlCheck = releaseApiBaseUrlGuard;
 
 @visibleForTesting
 const Object prodPlaceholderConfigCheck = prodPlaceholderConfigGuard;
+
+@visibleForTesting
+const Object prodBuildStampCheck = prodBuildStampGuard;

@@ -4,7 +4,7 @@ import uuid
 from typing import Any
 
 from lanonna_api.domain.errors import ErrorCode, ForbiddenError, InvalidInputError
-from lanonna_api.domain import assert_owner_membership
+from lanonna_api.domain.membership import assert_owner_membership
 from lanonna_api.domain.catalog_suggestion_ids import normalize_catalog_suggestion_id
 from lanonna_api.domain.url_validation import normalize_optional_http_url
 from lanonna_api.domain.gallery import require_membership

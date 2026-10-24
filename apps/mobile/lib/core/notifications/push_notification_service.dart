@@ -4,11 +4,10 @@ import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 import '../../features/account/data/notifications_repository.dart';
 import '../data/single_flight.dart';
-import '../router/deep_link_navigation.dart';
 
 class PushNotificationService {
   PushNotificationService(this._notificationsRepo);
@@ -21,13 +20,10 @@ class PushNotificationService {
 
   Future<void> start({
     required Stream<User?> authStateChanges,
-    void Function(String? deepLink, String? babyProfileId)? onDeepLink,
-    void Function(
-      BuildContext context,
-      String? deepLink,
-      String? babyProfileId,
-    )? onOpenDeepLink,
-    BuildContext? context,
+
+    /// Opens a tapped notification's link. The caller resolves a context
+    /// below [MaterialApp] (the root navigator), never one above it.
+    required void Function(String? deepLink, String? babyProfileId) onDeepLink,
   }) async {
     if (kIsWeb) return;
 
@@ -52,21 +48,7 @@ class PushNotificationService {
     void openDeepLink(Map<String, dynamic> data) {
       final link = data['deep_link'] as String?;
       final babyProfileId = data['baby_profile_id'] as String?;
-      if (onDeepLink != null) {
-        onDeepLink(link, babyProfileId);
-        return;
-      }
-      if (context != null && context.mounted) {
-        if (onOpenDeepLink != null) {
-          onOpenDeepLink(context, link, babyProfileId);
-        } else {
-          navigateAppDeepLink(
-            context,
-            link,
-            babyProfileId: babyProfileId,
-          );
-        }
-      }
+      onDeepLink(link, babyProfileId);
     }
 
     FirebaseMessaging.onMessage.listen((_) {

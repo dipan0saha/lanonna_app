@@ -107,7 +107,7 @@ terraform apply               # when plan looks safe
 3. `cd infra/terraform/environments/prod` → `cp terraform.tfvars.example terraform.tfvars` → set **`monitoring_notification_emails`** (gitignored tfvars; no addresses in git).
 4. `terraform init && terraform apply` (fresh apply, no import). Creates Cloud SQL (small dedicated tier), Secret Manager containers, writes **`db-lanonna-app-password`** (`manage_sql_app_password = true`), enables prod bucket lifecycle rules and alert policies (uptime check waits until step 8).
 5. Bootstrap remaining secrets (`mailjet-*`, `admin-api-key`, `db-postgres-root-password` as needed) via `gcloud secrets versions add`.
-6. Cloud SQL Auth Proxy + `infra/db/apply_migrations.py` with `DB_PASSWORD` from **`db-lanonna-app-password`** — the full chain (currently **`001`–`051`**) on the empty DB. On a fresh database no older API is serving, so `048` and `049` are safe here; the ordering rules below apply once prod has a running API. Confirm with `./scripts/verify-migrations.sh` (`GCP_PROJECT_ID=lanonna-prod`, proxy + `PGPASSWORD`).
+6. Cloud SQL Auth Proxy + `infra/db/apply_migrations.py` with `DB_PASSWORD` from **`db-lanonna-app-password`** — the full chain (currently **`001`–`052`**) on the empty DB. On a fresh database no older API is serving, so `048` and `049` are safe here; the ordering rules below apply once prod has a running API. Confirm with `./scripts/verify-migrations.sh` (`GCP_PROJECT_ID=lanonna-prod`, proxy + `PGPASSWORD`).
 7. Set real values in [`infra/env/prod.worker.env`](../../infra/env/prod.worker.env) (`MAILJET_FROM_EMAIL`) and review [`infra/env/prod.api.env`](../../infra/env/prod.api.env).
 8. Deploy **worker** (`GCP_PROJECT_ID=lanonna-prod`) → `./scripts/apply-run-iam.sh` → enable push subscriptions (two-phase Terraform below) → deploy **API** → set **`monitoring_api_host`** in `terraform.tfvars` from `gcloud run services describe api --format='value(status.uri)'` (hostname only) → `terraform apply` for uptime alerts → `GCP_PROJECT_ID=lanonna-prod ./scripts/setup-schedulers.sh` → invite hosting with release `ANDROID_SHA256`.
 9. Confirm the schedulers: `gcloud scheduler jobs list --project=lanonna-prod --location=us-central1` must list `weekly-notification-digest`, `expire-pending-invitations`, `sweep-storage-cleanup-jobs` and **`purge-stale-event-covers`** (`0 4 * * *` UTC, added in #416), all `ENABLED`.
@@ -291,7 +291,7 @@ After migration `030` is applied, null emails on active users can be restored fr
 - Flavor: `apps/mobile/flavors/dev.json` — **`API_BASE_URL`**, `APP_LINK_HOST`, `APP_ENV=dev`
 - Prod template: `flavors/prod.json` — see [mobile-prod-flavor-and-crashlytics.md](mobile-prod-flavor-and-crashlytics.md)
 - Release signing: dev release always uses the debug keystore; `android/key.properties` (gitignored) is required only for **prod** release ([android/README.md](../../apps/mobile/android/README.md), [rca/release-signing-environment.md](rca/release-signing-environment.md))
-- Crashlytics: enabled for prod; dev release on by default (`CRASHLYTICS_ENABLED` in flavor JSON to opt out)
+- Crashlytics: enabled for prod; dev release on by default (`CRASHLYTICS_ENABLED` in flavor JSON to opt out). Custom keys `build_git_sha`, `build_number`, `build_env` — build APKs with `apps/mobile/scripts/flutter_build_apk.sh`, which passes `BUILD_GIT_SHA` / `BUILD_NUMBER` (see [mobile-prod-flavor-and-crashlytics.md](mobile-prod-flavor-and-crashlytics.md))
 
 ```bash
 cd apps/mobile
@@ -299,16 +299,18 @@ flutter pub get
 flutter run --dart-define-from-file=flavors/dev.json
 ```
 
-**Dev release APK (unchanged):**
+**Dev release APK** (`scripts/flutter_build_apk.sh` adds git SHA + build number; `./scripts/ship_release_apk_to_drive.sh` uses it):
 
 ```bash
-flutter build apk --release --target-platform android-arm64 --dart-define-from-file=flavors/dev.json
+scripts/flutter_build_apk.sh --release --target-platform android-arm64 \
+  --dart-define-from-file=flavors/dev.json
 ```
 
-**Prod release (after owner fills `flavors/prod.json`, keystore, and `flutterfire configure`):**
+**Prod release** (after owner fills `flavors/prod.json`, keystore, and `flutterfire configure`; the wrapper requires a real stamp for prod):
 
 ```bash
-flutter build apk --release --target-platform android-arm64 --dart-define-from-file=flavors/prod.json
+scripts/flutter_build_apk.sh --release --target-platform android-arm64 \
+  --dart-define-from-file=flavors/prod.json
 ```
 
 Create **Email/Password** users in Firebase console (or smoke user `lanonna.dev.smoke@test.com`). iOS: `cd ios && pod install` once.

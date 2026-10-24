@@ -19,16 +19,10 @@ if [[ "${MAESTRO_AUTO_LOGIN:-}" == "1" ]]; then
 fi
 EXTRA_DEFINES+=("--dart-define=MAESTRO_SEMANTICS=true")
 
-if ((${#EXTRA_DEFINES[@]} > 0)); then
-  flutter build apk --debug \
-    --dart-define-from-file=flavors/dev.json \
-    --split-per-abi \
-    "${EXTRA_DEFINES[@]}"
-else
-  flutter build apk --debug \
-    --dart-define-from-file=flavors/dev.json \
-    --split-per-abi
-fi
+"${ROOT}/scripts/flutter_build_apk.sh" --debug \
+  --dart-define-from-file=flavors/dev.json \
+  --split-per-abi \
+  "${EXTRA_DEFINES[@]}"
 
 ABI="$(adb shell getprop ro.product.cpu.abi | tr -d '\r')"
 APK="build/app/outputs/flutter-apk/app-${ABI}-debug.apk"

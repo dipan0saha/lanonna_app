@@ -78,7 +78,12 @@ def lock_baby_profile_for_update(
     baby_profile_id: uuid.UUID,
     conn: Any,
 ) -> dict[str, Any] | None:
-    """Serialize membership changes per baby (e.g. co-owner accept race, M-02)."""
+    """Serialize membership changes and baby hard-delete per profile (M-02, #442).
+
+    Child-row writers pair with this through ``repositories.child_write_locks``
+    (``FOR KEY SHARE`` in the INSERT's transaction), so a delete and a child
+    INSERT on the same baby serialize instead of hitting a foreign-key 500.
+    """
     row = conn.execute(
         """
         SELECT name
@@ -189,6 +194,7 @@ class OwnLeaveOutcome(StrEnum):
 def soft_remove_own_membership(
     baby_profile_id: uuid.UUID,
     firebase_uid: str,
+    conn: Any | None = None,
 ) -> OwnLeaveOutcome:
     """Leave a baby: check the owner count and end the membership in one transaction.
 
@@ -196,18 +202,30 @@ def soft_remove_own_membership(
     accept), so two co-owners leaving at once cannot both pass the count and
     orphan the profile.
     """
-    with get_connection() as conn:
-        lock_baby_profile_for_update(baby_profile_id, conn)
+
+    def _run(connection: Any) -> OwnLeaveOutcome:
+        if lock_baby_profile_for_update(baby_profile_id, connection) is None:
+            return OwnLeaveOutcome.NOT_MEMBER
         membership = lock_membership_for_user_for_update(
-            baby_profile_id, firebase_uid, conn
+            baby_profile_id, firebase_uid, connection
         )
         if membership is None:
             return OwnLeaveOutcome.NOT_MEMBER
-        if membership["role"] == "owner" and count_active_owners(baby_profile_id, conn) <= 1:
+        if (
+            membership["role"] == "owner"
+            and count_active_owners(baby_profile_id, connection) <= 1
+        ):
             return OwnLeaveOutcome.SOLE_OWNER
-        if not soft_remove_membership(baby_profile_id, firebase_uid, conn=conn):
+        if not soft_remove_membership(
+            baby_profile_id, firebase_uid, conn=connection
+        ):
             return OwnLeaveOutcome.NOT_MEMBER
         return OwnLeaveOutcome.LEFT
+
+    if conn is not None:
+        return _run(conn)
+    with get_connection() as connection:
+        return _run(connection)
 
 
 def soft_remove_all_memberships_for_user(firebase_uid: str, conn=None) -> None:
