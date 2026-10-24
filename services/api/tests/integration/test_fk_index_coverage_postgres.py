@@ -1,6 +1,24 @@
-"""Every FK referencing column must have a supporting btree index (051 guard)."""
+"""Every FK must be backed by an index the parent-side FK check can use (051).
+
+Postgres runs ``SELECT 1 FROM child WHERE fk = $1`` on every parent DELETE (and
+key UPDATE), whatever the ON DELETE action. Without an index whose leading
+columns are the FK columns, each parent delete seq-scans the child table.
+
+A partial index serves that probe only when ``fk = $1`` implies its predicate,
+i.e. ``fk IS NOT NULL`` on a single-column FK. Predicates such as
+``deleted_at IS NULL`` or ``status = 'going'`` do not count.
+
+The only exemption is a parent whose rows are never deleted. ``app_users`` is
+tombstoned on account delete (``tombstone_user``), never deleted, so FKs to it
+are indexed only where the account-delete path queries them by uid (see
+docs/engineering/rca/fk-indexes-photo-references.md). The allowlist below names
+those remaining FKs; the tests keep it honest in both directions.
+"""
 
 from __future__ import annotations
+
+import re
+from pathlib import Path
 
 import pytest
 
@@ -8,144 +26,173 @@ from lanonna_api.db import get_connection
 
 pytestmark = pytest.mark.integration
 
-# (table, column): partial indexes, composite PK order, or theoretical parent DELETE
-# only — see docs/engineering/rca/fk-indexes-photo-references.md.
+_REPO_ROOT = Path(__file__).resolve().parents[4]
+
+# Parents whose rows production code never deletes.
+_NEVER_DELETED_PARENTS = frozenset({"app_users"})
+
+# FKs to a never-deleted parent with no FK-usable index: nothing deletes the
+# parent, and no account-delete or hot query filters the child by this column.
 _FK_INDEX_ALLOWLIST: dict[tuple[str, str], str] = {
     ("baby_memberships", "firebase_uid"): (
-        "Hot path uses partial idx_baby_memberships_user (removed_at IS NULL); "
-        "app_users are tombstoned, not deleted."
-    ),
-    ("event_rsvps", "firebase_uid"): (
-        "Engagement uses partial idx_event_rsvps_firebase_uid_going; "
-        "purge_participation table size is moderate."
-    ),
-    ("votes", "firebase_uid"): (
-        "UNIQUE (baby_profile_id, firebase_uid, vote_type) does not lead with "
-        "firebase_uid; few votes per user."
-    ),
-    ("photo_comments", "author_firebase_uid"): (
-        "Partial author index excludes soft-deleted comments; tombstone not "
-        "parent DELETE."
+        "Every query filters removed_at IS NULL, served by partial "
+        "idx_baby_memberships_user."
     ),
     ("event_comments", "author_firebase_uid"): (
-        "Partial author index excludes soft-deleted comments."
+        "Authored content kept on account delete; reads use partial author index."
+    ),
+    ("photo_comments", "author_firebase_uid"): (
+        "Authored content kept on account delete; reads use partial author index."
     ),
     ("announcement_comments", "author_firebase_uid"): (
-        "Partial author index excludes soft-deleted comments."
-    ),
-    ("biometric_credentials", "firebase_uid"): (
-        "Partial unique on (firebase_uid, device_id) WHERE revoked_at IS NULL; "
-        "account delete deletes all credentials in SQL."
+        "Authored content kept on account delete; reads use partial author index."
     ),
     ("storage_cleanup_jobs", "firebase_uid"): (
-        "Partial unique for in-flight account_delete jobs; completed rows kept "
-        "for audit."
+        "Only the in-flight account_delete guard reads by uid (partial unique)."
     ),
-    ("announcement_dismissals", "firebase_uid"): (
-        "PK leads with announcement_id; dismissals per user are tiny."
-    ),
-    ("events", "created_by_firebase_uid"): (
-        "Author metadata only; app_users tombstone, no parent DELETE."
-    ),
-    ("registry_items", "created_by_firebase_uid"): (
-        "Author metadata only."
-    ),
-    ("name_suggestions", "suggested_by_firebase_uid"): (
-        "Author metadata only."
-    ),
-    ("birth_announcements", "created_by_firebase_uid"): (
-        "Author metadata only."
-    ),
-    ("activity_events", "actor_firebase_uid"): (
-        "Nullable actor; feed rerender on tombstone, not FK cascade."
-    ),
-    ("notifications", "actor_firebase_uid"): (
-        "Account delete purges inbox rows in SQL; tombstone not parent DELETE."
-    ),
-    ("baby_profiles", "created_by_firebase_uid"): (
-        "Onboarding metadata only."
-    ),
+    ("events", "created_by_firebase_uid"): "Author attribution only.",
+    ("registry_items", "created_by_firebase_uid"): "Author attribution only.",
+    ("name_suggestions", "suggested_by_firebase_uid"): "Author attribution only.",
+    ("birth_announcements", "created_by_firebase_uid"): "Author attribution only.",
+    ("baby_profiles", "created_by_firebase_uid"): "Creator attribution only.",
 }
 
-_FK_COLUMNS_SQL = """
+_FKS_SQL = """
 SELECT
-    c.oid AS conoid,
-    c.conrelid::regclass::text AS table_name,
     c.conname AS constraint_name,
-    c.conkey AS attnums,
-    array_agg(a.attname ORDER BY u.ord) AS columns
+    c.conrelid::regclass::text AS table_name,
+    c.confrelid::regclass::text AS parent_table,
+    array_agg(a.attname::text ORDER BY u.ord) AS columns
 FROM pg_constraint c
 CROSS JOIN LATERAL unnest(c.conkey) WITH ORDINALITY AS u(attnum, ord)
 JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = u.attnum
 WHERE c.contype = 'f'
   AND c.connamespace = 'public'::regnamespace
-GROUP BY c.oid, c.conrelid, c.conname, c.conkey
-ORDER BY 2, 4
+GROUP BY c.oid, c.conname, c.conrelid, c.confrelid
+ORDER BY 2, 1
+"""
+
+# Expression key columns (attnum 0) map to NULL so they never match an FK column.
+_INDEXES_SQL = """
+SELECT
+    i.indrelid::regclass::text AS table_name,
+    pg_get_expr(i.indpred, i.indrelid) AS predicate,
+    array_agg(a.attname::text ORDER BY k.ord) AS columns
+FROM pg_index i
+JOIN pg_class ic ON ic.oid = i.indexrelid
+JOIN pg_namespace n ON n.oid = ic.relnamespace AND n.nspname = 'public'
+CROSS JOIN LATERAL unnest(i.indkey[0:i.indnkeyatts - 1]) WITH ORDINALITY AS k(attnum, ord)
+LEFT JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = k.attnum
+WHERE ic.relam = (SELECT oid FROM pg_am WHERE amname = 'btree')
+  AND i.indisvalid
+GROUP BY i.indrelid, i.indexrelid, i.indpred
 """
 
 
-def _table_indexes(conn) -> dict[str, list[tuple[tuple[str, ...], bool]]]:
-    rows = conn.execute(
-        """
-        SELECT
-            i.indrelid::regclass::text AS table_name,
-            i.indpred IS NOT NULL AS is_partial,
-            array_agg(a.attname ORDER BY k.ord) AS cols
-        FROM pg_index i
-        JOIN pg_class ic ON ic.oid = i.indexrelid
-        CROSS JOIN LATERAL unnest(i.indkey) WITH ORDINALITY AS k(attnum, ord)
-        JOIN pg_attribute a
-          ON a.attrelid = i.indrelid AND a.attnum = k.attnum AND k.attnum > 0
-        WHERE ic.relam = (SELECT oid FROM pg_am WHERE amname = 'btree')
-        GROUP BY i.indrelid, i.indexrelid, i.indpred
-        """
-    ).fetchall()
-    by_table: dict[str, list[tuple[tuple[str, ...], bool]]] = {}
-    for row in rows:
-        cols = tuple(row["cols"])
-        if not cols:
-            continue
-        by_table.setdefault(row["table_name"], []).append((cols, row["is_partial"]))
-    return by_table
+def _not_null_predicate(predicate: str, column: str) -> bool:
+    return re.fullmatch(
+        rf"\(?\s*{re.escape(column)}\s+IS\s+NOT\s+NULL\s*\)?", predicate, re.I
+    ) is not None
 
 
-def _fk_covered(
-    indexes: list[tuple[tuple[str, ...], bool]],
+def fk_covered(
+    indexes: list[tuple[tuple[str | None, ...], str | None]],
     fk_columns: tuple[str, ...],
 ) -> bool:
-    for idx_cols, is_partial in indexes:
-        if len(idx_cols) < len(fk_columns):
+    """True when some index can serve ``WHERE fk_col_1 = $1 AND ... = $n``."""
+    n = len(fk_columns)
+    for idx_columns, predicate in indexes:
+        if len(idx_columns) < n or set(idx_columns[:n]) != set(fk_columns):
             continue
-        if idx_cols[: len(fk_columns)] != fk_columns:
-            continue
-        if not is_partial:
+        if predicate is None:
             return True
-        # Nullable single-column FKs (e.g. cover_photo_id IS NOT NULL partials in 051).
-        if len(fk_columns) == 1:
+        if n == 1 and _not_null_predicate(predicate, fk_columns[0]):
             return True
     return False
 
 
-def test_every_foreign_key_has_a_covering_btree_index():
+def _load():
     with get_connection() as conn:
-        fks = conn.execute(_FK_COLUMNS_SQL).fetchall()
-        indexes = _table_indexes(conn)
+        fks = conn.execute(_FKS_SQL).fetchall()
+        rows = conn.execute(_INDEXES_SQL).fetchall()
+    indexes: dict[str, list[tuple[tuple[str | None, ...], str | None]]] = {}
+    for row in rows:
+        indexes.setdefault(row["table_name"], []).append(
+            (tuple(row["columns"]), row["predicate"])
+        )
+    return fks, indexes
 
-    missing: list[str] = []
+
+def test_every_foreign_key_has_an_index_the_fk_check_can_use():
+    fks, indexes = _load()
+    missing = []
     for fk in fks:
-        table = fk["table_name"]
         columns = tuple(fk["columns"])
-        if _fk_covered(indexes.get(table, []), columns):
+        if fk_covered(indexes.get(fk["table_name"], []), columns):
             continue
-        allow_key = (table, columns[0]) if len(columns) == 1 else None
-        if allow_key and allow_key in _FK_INDEX_ALLOWLIST:
+        if len(columns) == 1 and (fk["table_name"], columns[0]) in _FK_INDEX_ALLOWLIST:
             continue
         missing.append(
-            f"{table}({', '.join(columns)}) via {fk['constraint_name']}"
+            f"{fk['table_name']}({', '.join(columns)}) -> {fk['parent_table']} "
+            f"via {fk['constraint_name']}"
         )
-
     assert not missing, (
-        "FK column(s) lack a non-partial btree index with the FK as a left prefix. "
-        "Add a migration index or an entry in _FK_INDEX_ALLOWLIST with rationale:\n"
+        "FK column(s) lack an index with the FK as leading column (non-partial, "
+        "or partial on '<fk> IS NOT NULL'). Add one in a migration:\n"
         + "\n".join(f"  - {m}" for m in missing)
     )
+
+
+def test_allowlist_only_exempts_uncovered_fks_to_never_deleted_parents():
+    fks, indexes = _load()
+    by_key = {
+        (fk["table_name"], fk["columns"][0]): fk
+        for fk in fks
+        if len(fk["columns"]) == 1
+    }
+    problems = []
+    for key in _FK_INDEX_ALLOWLIST:
+        fk = by_key.get(key)
+        if fk is None:
+            problems.append(f"{key}: no such single-column FK")
+        elif fk["parent_table"] not in _NEVER_DELETED_PARENTS:
+            problems.append(
+                f"{key}: parent {fk['parent_table']} is deleted; index it instead"
+            )
+        elif fk_covered(indexes.get(key[0], []), (key[1],)):
+            problems.append(f"{key}: now covered by an index; drop the entry")
+    assert not problems, "\n".join(problems)
+
+
+def test_never_deleted_parents_are_never_deleted_by_production_code():
+    pattern = re.compile(
+        r"DELETE\s+FROM\s+(" + "|".join(sorted(_NEVER_DELETED_PARENTS)) + r")\b",
+        re.I,
+    )
+    offenders = []
+    for src in ("services/api/src", "services/worker/src"):
+        for path in (_REPO_ROOT / src).rglob("*.py"):
+            if pattern.search(path.read_text(encoding="utf-8")):
+                offenders.append(str(path.relative_to(_REPO_ROOT)))
+    assert not offenders, (
+        "These delete a parent the FK allowlist assumes is never deleted; index "
+        "its FKs and shrink the allowlist:\n" + "\n".join(offenders)
+    )
+
+
+@pytest.mark.parametrize(
+    ("indexes", "fk", "expected"),
+    [
+        ([(("a",), None)], ("a",), True),
+        ([(("a", "b"), None)], ("a",), True),
+        ([(("b", "a"), None)], ("a",), False),
+        ([(("a",), "(a IS NOT NULL)")], ("a",), True),
+        ([(("a",), "(deleted_at IS NULL)")], ("a",), False),
+        ([(("a",), "(status = 'going'::text)")], ("a",), False),
+        ([(("a", "b"), "(a IS NOT NULL)")], ("a", "b"), False),
+        ([((None, "a"), None)], ("a",), False),
+        ([(("b", "a"), None)], ("a", "b"), True),
+    ],
+)
+def test_fk_covered_rules(indexes, fk, expected):
+    assert fk_covered(indexes, fk) is expected
