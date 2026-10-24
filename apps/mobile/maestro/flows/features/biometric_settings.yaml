@@ -1,0 +1,18 @@
+# tags: full, biometric
+# Emulator must have a fingerprint enrolled (Android Studio Extended Controls).
+appId: com.lanonna.lanonna
+---
+- runFlow: ../subflows/ensure_signed_in.yaml
+- runFlow: ../subflows/open_account.yaml
+- scrollUntilVisible:
+    element: ".*Settings.*"
+    direction: DOWN
+    timeout: 45000
+- tapOn: ".*Settings.*"
+- extendedWaitUntil:
+    visible:
+      id: settings_biometric_unlock
+    timeout: 20000
+- tapOn:
+    id: settings_biometric_unlock
+    optional: true

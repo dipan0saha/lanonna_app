@@ -6,6 +6,7 @@ import '../../../core/api/run_mutation.dart';
 import '../../../core/auth/biometric_sign_in_service.dart';
 import '../../../core/auth/biometric_unlock_service.dart';
 import '../../../core/widgets/app_snackbar.dart';
+import '../../../core/widgets/app_semantics.dart';
 import '../../account/data/account_repository.dart';
 
 /// One setting for biometric sign-in after Log out and the app lock
@@ -116,11 +117,14 @@ class _BiometricUnlockSettingsTileState
         ),
       );
     }
-    return SwitchListTile(
-      title: Text(l10n.settingsBiometricUnlock),
-      subtitle: Text(l10n.settingsBiometricUnlockSubtitle),
-      value: _enabled ?? false,
-      onChanged: _saving ? null : _onChanged,
+    return AppSemantics.container(
+      'settings_biometric_unlock',
+      SwitchListTile(
+        title: Text(l10n.settingsBiometricUnlock),
+        subtitle: Text(l10n.settingsBiometricUnlockSubtitle),
+        value: _enabled ?? false,
+        onChanged: _saving ? null : _onChanged,
+      ),
     );
   }
 }

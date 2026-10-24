@@ -702,6 +702,126 @@ def cmd_seeds(_: argparse.Namespace) -> None:
         print(f"{k}={v}")
 
 
+def _delete_app_user_cascade(conn: psycopg.Connection, uid: str) -> None:
+    """Remove SQL rows for a firebase uid (babies where sole owner)."""
+    baby_ids = conn.execute(
+        """
+        SELECT b.id FROM baby_profiles b
+        JOIN baby_memberships m ON m.baby_profile_id = b.id
+        WHERE m.firebase_uid = %s AND m.role = 'owner' AND m.removed_at IS NULL
+        """,
+        (uid,),
+    ).fetchall()
+    for row in baby_ids:
+        bid = row["id"]
+        conn.execute("DELETE FROM invitations WHERE baby_profile_id = %s", (bid,))
+        conn.execute("DELETE FROM photos WHERE baby_profile_id = %s", (bid,))
+        conn.execute("DELETE FROM events WHERE baby_profile_id = %s", (bid,))
+        conn.execute("DELETE FROM registry_items WHERE baby_profile_id = %s", (bid,))
+        conn.execute("DELETE FROM baby_memberships WHERE baby_profile_id = %s", (bid,))
+        conn.execute("DELETE FROM baby_profiles WHERE id = %s", (bid,))
+    conn.execute("DELETE FROM app_users WHERE firebase_uid = %s", (uid,))
+
+
+def _delete_firebase_user_by_email(email: str) -> None:
+    try:
+        import firebase_admin
+        from firebase_admin import auth as firebase_auth
+    except ImportError:
+        return
+    if not firebase_admin._apps:
+        firebase_admin.initialize_app(options={"projectId": "lanonna-dev"})
+    try:
+        user = firebase_auth.get_user_by_email(email)
+        firebase_auth.delete_user(user.uid)
+    except firebase_auth.UserNotFoundError:
+        pass
+
+
+def cmd_throwaway_sole_owner(_: argparse.Namespace) -> None:
+    """Fresh verified owner + single baby for account/baby delete E2E."""
+    run_id = os.environ.get("E2E_RUN_ID") or str(int(datetime.now(timezone.utc).timestamp()))
+    email = os.environ.get("THROWAWAY_TEST_EMAIL") or (
+        f"lanonna.e2e.throwaway.{run_id}@test.com"
+    )
+    password = os.environ.get("THROWAWAY_TEST_PASSWORD") or os.environ.get(
+        "SMOKE_TEST_PASSWORD"
+    )
+    if not password:
+        raise SystemExit("Set THROWAWAY_TEST_PASSWORD or SMOKE_TEST_PASSWORD.")
+    _delete_firebase_user_by_email(email)
+    uid = _ensure_firebase_user(email, password)
+    _ensure_firebase_email_verified(uid)
+    with connect() as conn:
+        _delete_app_user_cascade(conn, uid)
+        baby_id = provision_owner(conn, uid, email)
+        conn.commit()
+    out = {
+        "throwaway_email": email,
+        "throwaway_password": password,
+        "throwaway_baby_profile_id": str(baby_id),
+        "e2e_run_id": run_id,
+    }
+    _write_out(out)
+    print(f"Throwaway sole owner ready: {email}")
+
+
+def cmd_pending_invite_refresh(_: argparse.Namespace) -> None:
+    """New pending invite token for FOLLOWER_TEST_EMAIL on smoke owner's primary baby."""
+    email = os.environ.get("SMOKE_TEST_EMAIL", "lanonna.dev.smoke@test.com")
+    password = os.environ.get("SMOKE_TEST_PASSWORD")
+    if not password:
+        raise SystemExit("Set SMOKE_TEST_PASSWORD.")
+    _, owner_uid = _firebase_user(email, password)
+    with connect() as conn:
+        baby = _primary_owner_baby(conn, owner_uid)
+        if baby is None:
+            raise SystemExit("Smoke owner has no baby; run provision all first.")
+        baby_id = uuid.UUID(str(baby["id"]))
+        out = provision_domain_seeds(conn, owner_uid, baby_id)
+    _write_out(out)
+    print("Refreshed pending invite token.")
+
+
+def cmd_unverified_user(_: argparse.Namespace) -> None:
+    """Firebase user with email_verified=false for AUTH-003 gate tests."""
+    run_id = os.environ.get("E2E_RUN_ID") or str(int(datetime.now(timezone.utc).timestamp()))
+    email = os.environ.get("UNVERIFIED_TEST_EMAIL") or (
+        f"lanonna.e2e.unverified.{run_id}@test.com"
+    )
+    password = os.environ.get("UNVERIFIED_TEST_PASSWORD") or os.environ.get(
+        "SMOKE_TEST_PASSWORD"
+    )
+    if not password:
+        raise SystemExit("Set UNVERIFIED_TEST_PASSWORD or SMOKE_TEST_PASSWORD.")
+    _delete_firebase_user_by_email(email)
+    try:
+        import firebase_admin
+        from firebase_admin import auth as firebase_auth
+    except ImportError:
+        raise SystemExit("firebase-admin required for unverified_user") from None
+    if not firebase_admin._apps:
+        firebase_admin.initialize_app(options={"projectId": "lanonna-dev"})
+    user = firebase_auth.create_user(
+        email=email, password=password, email_verified=False
+    )
+    with connect() as conn:
+        _delete_app_user_cascade(conn, user.uid)
+        conn.execute(
+            """
+            INSERT INTO app_users (firebase_uid, email)
+            VALUES (%s, %s)
+            ON CONFLICT (firebase_uid) DO UPDATE
+              SET email = EXCLUDED.email, updated_at = now()
+            """,
+            (user.uid, email),
+        )
+        conn.commit()
+    out = {"unverified_test_email": email, "unverified_test_password": password}
+    _write_out(out)
+    print(f"Unverified user ready: {email}")
+
+
 def cmd_onboarding_reset(_: argparse.Namespace) -> None:
     """Reset a dedicated Firebase user for owner onboarding UI tests."""
     email = os.environ.get("ONBOARDING_TEST_EMAIL", "lanonna.dev.onboard@test.com")
@@ -855,6 +975,18 @@ def main() -> None:
         "onboarding_reset",
         help="Reset ONBOARDING_TEST_EMAIL for fresh owner onboarding UI",
     )
+    sub.add_parser(
+        "throwaway_sole_owner",
+        help="Disposable sole-owner account for delete E2E (THROWAWAY_TEST_EMAIL optional)",
+    )
+    sub.add_parser(
+        "pending_invite_refresh",
+        help="New invite token for follower on smoke owner's primary baby",
+    )
+    sub.add_parser(
+        "unverified_user",
+        help="Firebase user with email_verified=false (AUTH-003)",
+    )
     args = parser.parse_args()
     handlers = {
         "qa_cleanup_gallery": cmd_qa_cleanup_gallery,
@@ -865,6 +997,9 @@ def main() -> None:
         "dual_baby": cmd_dual_baby,
         "seeds": cmd_seeds,
         "onboarding_reset": cmd_onboarding_reset,
+        "throwaway_sole_owner": cmd_throwaway_sole_owner,
+        "pending_invite_refresh": cmd_pending_invite_refresh,
+        "unverified_user": cmd_unverified_user,
     }
     handlers[args.cmd](args)
 

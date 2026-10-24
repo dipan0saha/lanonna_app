@@ -1,0 +1,37 @@
+# tags: full, invite
+# MULTI-002: owner signed in opens follower invite → wrong email → switch account.
+appId: com.lanonna.lanonna
+---
+- runFlow: ../subflows/ensure_signed_in.yaml
+- runScript:
+    file: ../../scripts/open-invite-deep-link-warm.sh
+- extendedWaitUntil:
+    visible:
+      id: invite_landing_accept
+    timeout: 45000
+- tapOn:
+    id: invite_landing_accept
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: wrong_email_switch_account
+    timeout: 45000
+- tapOn:
+    id: wrong_email_switch_account
+- extendedWaitUntil:
+    visible: "Welcome back"
+    timeout: 30000
+- tapOn:
+    id: auth_login_email
+- eraseText
+- inputText: ${FOLLOWER_TEST_EMAIL}
+- tapOn:
+    id: auth_login_password
+- eraseText
+- inputText: ${FOLLOWER_TEST_PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: auth_sign_in
+- extendedWaitUntil:
+    visible: ".*Tab 1 of 5.*|Confirm|relationship"
+    timeout: 90000

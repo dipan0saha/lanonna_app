@@ -1,0 +1,14 @@
+# tags: full, invite
+appId: com.lanonna.lanonna
+---
+- clearState
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: invite_landing_decline
+    timeout: 45000
+- tapOn:
+    id: invite_landing_decline
+- extendedWaitUntil:
+    visible: "Skip|I already have an account|Welcome back"
+    timeout: 45000

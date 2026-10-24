@@ -1,0 +1,16 @@
+# tags: smoke, offline
+appId: com.lanonna.lanonna
+---
+- runFlow: ../subflows/ensure_signed_in.yaml
+- runFlow: ../subflows/ensure_primary_baby.yaml
+- toggleAirplaneMode
+- tapOn: ".*Tab 2 of 5.*"
+- extendedWaitUntil:
+    visible:
+      id: offline_banner
+    timeout: 20000
+- toggleAirplaneMode
+- extendedWaitUntil:
+    notVisible:
+      id: offline_banner
+    timeout: 45000

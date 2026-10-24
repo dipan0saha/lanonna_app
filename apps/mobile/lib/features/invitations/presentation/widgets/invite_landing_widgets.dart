@@ -4,6 +4,7 @@ import 'package:lanonna/core/domain/baby_display_label.dart';
 import '../../../../core/time/app_date_time.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/la_nonna_theme.dart';
+import '../../../../core/widgets/app_semantics.dart';
 import '../../data/models/invitation_preview.dart';
 import '../invite_date_subtitle.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -122,15 +123,18 @@ class InviteNotForYouLink extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Center(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.only(top: 14),
-          child: Text(
-            l10n.hintWasMeant,
-            style: context.textStyles.bodyMedium?.copyWith(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
+      child: AppSemantics.button(
+        'invite_landing_decline',
+        GestureDetector(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 14),
+            child: Text(
+              l10n.hintWasMeant,
+              style: context.textStyles.bodyMedium?.copyWith(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ),

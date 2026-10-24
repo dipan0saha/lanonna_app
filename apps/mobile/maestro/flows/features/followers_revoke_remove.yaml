@@ -1,0 +1,26 @@
+# tags: full, invite
+appId: com.lanonna.lanonna
+---
+- runFlow: ../subflows/ensure_signed_in.yaml
+- runFlow: ../subflows/ensure_primary_baby.yaml
+- runFlow: ../subflows/open_account.yaml
+- scrollUntilVisible:
+    element:
+      id: account_manage_followers
+    direction: DOWN
+    timeout: 45000
+- tapOn:
+    id: account_manage_followers
+- extendedWaitUntil:
+    visible:
+      id: followers_screen
+    timeout: 20000
+- scrollUntilVisible:
+    element: "Pending invites"
+    direction: DOWN
+    timeout: 20000
+    optional: true
+- tapOn:
+    id: followers_invite_more
+    optional: true
+- back

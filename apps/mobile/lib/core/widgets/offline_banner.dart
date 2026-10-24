@@ -4,6 +4,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_metrics.dart';
 import '../theme/la_nonna_theme.dart';
 import '../../l10n/app_localizations.dart';
+import 'app_semantics.dart';
 
 class OfflineBanner extends StatelessWidget {
   const OfflineBanner({super.key});
@@ -11,7 +12,9 @@ class OfflineBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Material(
+    return AppSemantics.container(
+      'offline_banner',
+      Material(
       color: AppColors.peachTint,
       child: SafeArea(
         bottom: false,
@@ -32,6 +35,7 @@ class OfflineBanner extends StatelessWidget {
         ),
         ),
       ),
+    ),
     );
   }
 }

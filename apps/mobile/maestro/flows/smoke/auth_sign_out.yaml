@@ -1,0 +1,18 @@
+# tags: smoke, auth
+appId: com.lanonna.lanonna
+---
+- runFlow: ../subflows/ensure_signed_in.yaml
+- runFlow: ../subflows/open_account.yaml
+- scrollUntilVisible:
+    element:
+      id: account_sign_out
+    direction: UP
+    timeout: 30000
+- tapOn:
+    id: account_sign_out
+- extendedWaitUntil:
+    notVisible: ".*Tab 1 of 5.*"
+    timeout: 45000
+- extendedWaitUntil:
+    visible: "I already have an account|Welcome back|Skip"
+    timeout: 20000

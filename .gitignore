@@ -63,6 +63,7 @@ apps/mobile/android/key.properties
 
 # Maestro local credentials
 apps/mobile/maestro/local.env
+.e2e-out/
 apps/mobile/maestro/.fixtures.env
 apps/mobile/maestro/.qa-fixtures.env
 

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_error_message.dart';
+import '../../../core/widgets/app_semantics.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/input/app_text_input_kind.dart';
 import '../../../core/widgets/app_labeled_text_field.dart';
@@ -232,17 +233,20 @@ class _BabyEditScreenState extends State<BabyEditScreen> {
           ),
           if (_baby?.canDeleteProfile ?? false) ...[
             const SizedBox(height: AppSpacing.xxl),
-            OutlinedButton(
-              style: AppButtonStyles.outlinedDestructive,
-              onPressed: _saving
-                  ? null
-                  : () async {
-                      await deleteBabyProfileWithConfirmation(
-                        context,
-                        _baby!,
-                      );
-                    },
-              child: Text(l10n.deleteBabyProfileAction),
+            AppSemantics.button(
+              'baby_edit_delete_profile',
+              OutlinedButton(
+                style: AppButtonStyles.outlinedDestructive,
+                onPressed: _saving
+                    ? null
+                    : () async {
+                        await deleteBabyProfileWithConfirmation(
+                          context,
+                          _baby!,
+                        );
+                      },
+                child: Text(l10n.deleteBabyProfileAction),
+              ),
             ),
           ],
         ],

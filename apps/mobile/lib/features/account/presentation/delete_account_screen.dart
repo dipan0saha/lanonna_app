@@ -14,6 +14,7 @@ import '../../../core/theme/la_nonna_theme.dart';
 import '../../../core/widgets/app_confirm_dialog.dart';
 import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/app_snackbar.dart';
+import '../../../core/widgets/app_semantics.dart';
 import '../../../core/widgets/prototype_subpage_scaffold.dart';
 import '../../onboarding/domain/onboarding_routes.dart';
 import '../data/account_repository.dart';
@@ -225,13 +226,16 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
               ),
             ],
             const SizedBox(height: 24),
-            FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-              onPressed: (_deleting || !canDelete) ? null : _delete,
-              child: Text(
-                _deleting
-                    ? l10n.deleteAccountDeleting
-                    : l10n.deleteAccountButton,
+            AppSemantics.button(
+              'delete_account_submit',
+              FilledButton(
+                style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+                onPressed: (_deleting || !canDelete) ? null : _delete,
+                child: Text(
+                  _deleting
+                      ? l10n.deleteAccountDeleting
+                      : l10n.deleteAccountButton,
+                ),
               ),
             ),
           ],

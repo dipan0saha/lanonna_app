@@ -99,6 +99,7 @@ class _OnboardingWrongEmailScreenState extends State<OnboardingWrongEmailScreen>
           ),
           const SizedBox(height: 28),
           OnboardingPrimaryButton(
+            semanticsId: 'wrong_email_switch_account',
             label: l10n.wrongEmailSwitchAccount,
             onPressed: () => _switchAccount(
               inviteeEmail: mismatch.inviteeEmail,

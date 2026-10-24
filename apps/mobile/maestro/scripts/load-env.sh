@@ -2,14 +2,25 @@
 # Sources maestro/local.env when present; exports SMOKE_TEST_* for Maestro -e flags.
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-ENV_FILE="${ROOT}/maestro/local.env"
 
-if [[ -f "${ENV_FILE}" ]]; then
-  set -a
-  # shellcheck disable=SC1090
-  source "${ENV_FILE}"
-  set +a
+# Credentials never committed — load first match (public repo).
+QA_ENV_CANDIDATES=()
+if [[ -n "${LANONNA_QA_ENV_FILE:-}" ]]; then
+  QA_ENV_CANDIDATES+=("${LANONNA_QA_ENV_FILE}")
 fi
+QA_ENV_CANDIDATES+=(
+  "${HOME}/Neo_Workspace/qa_secrets/lanonna_qa363_accounts.env"
+  "${ROOT}/maestro/local.env"
+)
+for candidate in "${QA_ENV_CANDIDATES[@]}"; do
+  if [[ -f "${candidate}" ]]; then
+    set -a
+    # shellcheck disable=SC1090
+    source "${candidate}"
+    set +a
+    break
+  fi
+done
 
 if [[ -z "${SMOKE_TEST_EMAIL:-}" ]]; then
   SMOKE_TEST_EMAIL="lanonna.dev.smoke@test.com"
