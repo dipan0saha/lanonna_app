@@ -49,7 +49,9 @@ if [[ "${_stamp_artifact}" == "appbundle" || "${_stamp_app_env}" == "prod" ]]; t
   export ANDROID_RELEASE_BUILD=1
 fi
 
-eval "$(bash "${MOBILE}/scripts/build_stamp.sh")"
+# Capture first: a failing command substitution inside eval would not stop the build.
+_stamp_exports="$(bash "${MOBILE}/scripts/build_stamp.sh")" || exit 1
+eval "${_stamp_exports}"
 
 STAMP_ARGS=(
   "--dart-define=BUILD_GIT_SHA=${BUILD_GIT_SHA}"

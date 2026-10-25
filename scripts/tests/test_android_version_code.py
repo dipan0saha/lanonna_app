@@ -334,6 +334,7 @@ def test_play_bound_builds_run_the_guard(repo, tmp_path, name, args):
     out = _wrapper(repo, tmp_path, name, *args)
     assert out.returncode != 0
     assert "release guard" in out.stderr and "not on origin/main" in out.stderr
+    assert "unbound variable" not in out.stderr  # stops at the guard, not by accident later
     assert "build" not in out.stdout.splitlines()
 
 
