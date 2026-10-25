@@ -39,7 +39,7 @@ flutter run -d emulator-5554 --dart-define-from-file=flavors/dev.json
 ```
 
 - **Do not** pass `DEV_AUTO_SIGN_IN_*` unless you intentionally want auto sign-in.
-- If an old release APK is installed (`versionCode` 2001 vs debug `1`), uninstall or use `flutter run` to avoid `INSTALL_FAILED_VERSION_DOWNGRADE`.
+- Wrapper-built APKs use `versionCode` = committer seconds since 2020 ([issue-444 RCA](../docs/engineering/rca/issue-444-build-number-regression.md)), so a newer commit installs over an older one with `adb install -r`. Going back to an older commit's debug build needs `adb install -r -d` or an uninstall (`flutter run` builds are `versionCode 1`).
 
 **Disposable account pattern**
 

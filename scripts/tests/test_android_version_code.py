@@ -358,3 +358,9 @@ def test_unreadable_flavor_file_fails_closed(repo, tmp_path):
     out = _wrapper(repo, tmp_path, "flutter_build_apk.sh", "--release", "--dart-define-from-file=flavors/missing.json")
     assert out.returncode != 0 and "cannot read --dart-define-from-file" in out.stderr
     assert "build" not in out.stdout.splitlines()
+
+
+def test_split_per_abi_is_refused(repo, tmp_path):
+    out = _wrapper(repo, tmp_path, "flutter_build_apk.sh", "--debug", "--split-per-abi")
+    assert out.returncode != 0 and "--split-per-abi" in out.stderr
+    assert "build" not in out.stdout.splitlines()

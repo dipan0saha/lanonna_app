@@ -86,6 +86,7 @@ Alternatives considered:
 | `build_stamp.sh` | Calls derivation; invalid override fails; `ANDROID_RELEASE_BUILD=1` requires the stamp and runs the guard; `rev-list` and `GITHUB_RUN_NUMBER` removed |
 | `flutter_build_stamp.sh` | Shared stamp args; decides Play-bound (AAB or `APP_ENV=prod`) |
 | `flutter_build_apk.sh` / `flutter_build_appbundle.sh` | Thin wrappers over the shared stamp (old per-wrapper `flavors/prod.json` substring check and `REQUIRE_BUILD_STAMP` removed) |
+| `maestro/scripts/build-install.sh` | One ABI via `--target-platform` instead of `--split-per-abi` |
 | Docs | Every build command uses a wrapper; release runbook includes recording the tag |
 
 ## Impact analysis
@@ -93,14 +94,14 @@ Alternatives considered:
 | Surface | Detail | Covered by |
 |---------|--------|------------|
 | **Installed dev builds (239–241)** | New codes (~215M) install over them with `adb install -r` | Install-over check on emulator (PR #445 report) |
-| **Dev debug APK** | `maestro/scripts/build-install.sh` → wrapper `--debug` + dev flavor; not guarded | `test_flutter_build_apk_script.py`, `test_dev_apk_from_branch_is_not_guarded` |
+| **Dev debug APK** | `maestro/scripts/build-install.sh` → wrapper `--debug` + dev flavor + `--target-platform` for the device ABI; not guarded. It used `--split-per-abi`, which makes Flutter set `versionCode = abi×1000 + code` (the emulator had `2245` for rev-list 245), so `versionCode` ≠ Crashlytics `build_number`; the wrapper now refuses `--split-per-abi` | `test_flutter_build_apk_script.py`, `test_dev_apk_from_branch_is_not_guarded` |
 | **Dev release APKs** | `ship_release_apk_to_drive.sh`, `ship_release_apk_x86_64_to_drive.sh`; not guarded | Same |
 | **Any AAB** | `flutter_build_appbundle.sh`; guarded | `test_play_bound_builds_run_the_guard`, `test_aab_from_clean_main_is_stamped` |
 | **Prod APK/AAB** | `APP_ENV=prod` via flavor file or define; guarded | Same, plus `test_dart_define_app_env_dev_overrides_prod_file`, `test_unreadable_flavor_file_fails_closed` |
 | **`BUILD_NUMBER` override** | Dev: any valid value. Play-bound: must exceed last release. Invalid: always fails | `test_release_override_must_exceed_last_release`, `test_invalid_override_fails_loudly_even_for_dev` |
 | **Non-monotonic committer time** | Skewed or same-second main commits are caught for Play | `test_release_catches_committer_time_going_backwards`, `test_release_same_second_collision_is_refused` |
 | **Release record** | `android-vc-*` tags on origin; local-only tags ignored | `test_record_then_next_main_commit_passes`, `test_unpushed_local_tag_does_not_count_but_remote_tag_does`, `test_record_refuses_lower_code_and_off_main` |
-| **Gradle `versionCode` / pubspec** | `--build-number` overrides `+1`; `versionName` from pubspec | Wrapper tests assert `--build-number` equals the dart-define |
+| **Gradle `versionCode` / pubspec** | `--build-number` overrides `+1`; `versionName` from pubspec; `--split-per-abi` refused | Wrapper tests assert `--build-number` equals the dart-define; `test_split_per_abi_is_refused`; `aapt dump badging` on the built APK |
 | **Crashlytics keys** | `build_number` equals `versionCode`; `build_git_sha` unchanged | Same |
 | **Force-update** | Uses `versionName`; unaffected, but `versionName` must be bumped per release | Docs |
 | **Release process** | Prod config must be committed to `main`; build from a clean `origin/main` checkout; record the tag after upload | `operations.md`, `mobile-prod-flavor-and-crashlytics.md` |

@@ -19,15 +19,24 @@ if [[ "${MAESTRO_AUTO_LOGIN:-}" == "1" ]]; then
 fi
 EXTRA_DEFINES+=("--dart-define=MAESTRO_SEMANTICS=true")
 
+# One ABI via --target-platform (not --split-per-abi), so versionCode stays the
+# build stamp's BUILD_NUMBER.
+ABI="$(adb shell getprop ro.product.cpu.abi | tr -d '\r')"
+case "${ABI}" in
+  arm64-v8a) PLATFORM="android-arm64" ;;
+  x86_64) PLATFORM="android-x64" ;;
+  armeabi-v7a) PLATFORM="android-arm" ;;
+  *) echo "Unsupported device ABI: ${ABI}" >&2; exit 1 ;;
+esac
+
 "${ROOT}/scripts/flutter_build_apk.sh" --debug \
   --dart-define-from-file=flavors/dev.json \
-  --split-per-abi \
+  --target-platform "${PLATFORM}" \
   "${EXTRA_DEFINES[@]}"
 
-ABI="$(adb shell getprop ro.product.cpu.abi | tr -d '\r')"
-APK="build/app/outputs/flutter-apk/app-${ABI}-debug.apk"
+APK="build/app/outputs/flutter-apk/app-debug.apk"
 if [[ ! -f "${APK}" ]]; then
-  echo "APK not found for ABI ${ABI}: ${APK}" >&2
+  echo "APK not found: ${APK}" >&2
   exit 1
 fi
 
