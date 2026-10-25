@@ -236,7 +236,7 @@ Clears babies and related rows for that user and clears `owner_onboarding_comple
 | `delete_dev_account.sh <email>` | Delete a dev account through the product delete path (`domain.account_delete.delete_account`: SQL transaction, GCS cleanup job, Firebase); use `--dry-run` first |
 | `provision_qa_validation_accounts.sh`, `seed_qa_gallery_photo.sh` | Provision QA owner/follower accounts and seed a gallery photo for Maestro/manual QA |
 | `mark_firebase_email_verified.py <email>` | Mark a dev Firebase user email-verified when the inbox cannot receive mail (`@test.com`) |
-| `configure-android-google-sign-in.sh` | One-time dev setup: Android debug SHA + refresh `google-services.json` for Google Sign-In |
+| `configure-android-google-sign-in.sh` | One-time **dev-only** setup: Android debug SHA + refresh `google-services.json` for Google Sign-In. It hardcodes the dev Firebase app and the debug keystore, so **never use it for prod**: register the upload-key (and later Play signing) SHAs with `firebase apps:android:sha:create` as in [prod-launch-plan.md](prod-launch-plan.md) item 8.2 |
 
 ## API rate limiting
 

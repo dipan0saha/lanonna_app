@@ -809,15 +809,15 @@ _Containers come from Terraform. Values are piped, never printed. Don't recreate
 |---|---|---|
 | `apps/mobile/android/README.md` | Built the AAB with Flutter directly, skipping the build stamp | Done in PR #445: points to the AAB wrapper (11.4) |
 | `apps/mobile/scripts/flutter_build_apk.sh` | APK only | Done in PR #445: separate `flutter_build_appbundle.sh` wrapper (11.4) |
-| `docs/engineering/pre-prod-consolidation.md` | Says 41 migrations and a CI diff check | 52 migrations; no CI |
-| `docs/engineering/operations.md` | Automation SA 'CI + WIF later' | No CI; deployer is your login on the Mac, run by Grok Bot's executors after your OK |
-| `docs/engineering/operations.md` prod step 8 | Phase 2 edits tracked `main.tf` | Expose a variable (2.4a) |
-| `docs/engineering/operations.md` prod step 5 | `admin-api-key` and postgres password optional | Both required (3.4, 4.3) |
-| `infra/env/prod.api.env` | `APP_CHECK_ENFORCE=true` | false until 12.9 |
-| `services/api/src/lanonna_api/config.py` | Silent dev defaults | Fail loudly (7.3) |
-| `scripts/configure-android-google-sign-in.sh` | Hardcodes the dev app id and debug keystore | Don't use for prod; follow 8.2 |
-| `scripts/infra-smoke-display-upload.sh` | Hardcodes the dev bucket and key | Parameterize (12.3) |
-| `docs/engineering/mobile-prod-flavor-and-crashlytics.md` | One `google-services.json` path, no switch | Per-env copy (11.5) |
+| `docs/engineering/pre-prod-consolidation.md` | Says 41 migrations and a CI diff check | Done in PR #447: current counts say 52 (`001`–`052`), diff check is a local script, no CI; 2026-10-20 plan kept as history |
+| `docs/engineering/operations.md` | Automation SA 'CI + WIF later' | Done in PR #447: no CI or WIF; deployer is your login on the Mac, run by Grok Bot's executors after your OK |
+| `docs/engineering/operations.md` prod step 8 | Phase 2 edits tracked `main.tf` | Open: needs the Terraform variable first (2.4a, code); the runbook changes with that PR |
+| `docs/engineering/operations.md` prod step 5 | `admin-api-key` and postgres password optional | Done in PR #447: both marked required, with how to add each (3.4, 4.3) |
+| `infra/env/prod.api.env` | `APP_CHECK_ENFORCE=true` | Open: config change, not a doc fix (7.1, D7); false until 12.9 |
+| `services/api/src/lanonna_api/config.py` | Silent dev defaults | Open: code change with tests (7.3) |
+| `scripts/configure-android-google-sign-in.sh` | Hardcodes the dev app id and debug keystore | Done in PR #447: `development.md` marks it dev-only and points prod to 8.2. Script unchanged (a prod refusal guard would be code, see 3.6) |
+| `scripts/infra-smoke-display-upload.sh` | Hardcodes the dev bucket and key | Open: script change (12.3) |
+| `docs/engineering/mobile-prod-flavor-and-crashlytics.md` | One `google-services.json` path, no switch | Open: needs the per-env copy wrapper first (11.5, code); the doc changes with that PR |
 | `apps/mobile/scripts/build_stamp.sh` docs | Mention `GITHUB_RUN_NUMBER` | Done in PR #445: `GITHUB_RUN_NUMBER` removed; commit-time versionCode (11.3) |
 
 ## Couldn't verify
@@ -842,6 +842,7 @@ _Containers come from Terraform. Values are piped, never printed. Don't recreate
 | Pass 2 | Play Help pages; GCP practice; dependency order | Added 0.2, 0.9, 0.12, 13.1, 13.7, 11.7, 12.7, 12.9; moved SHA registration after the first upload |
 | Pass 3 (25 Oct, Dipan's follow-up) | Ownership rule change; Firebase App Check REST, Identity Toolkit v2, gcloud billing / budgets / essential-contacts / api-keys, Play Developer API; official email pricing pages | Re-tagged every item (Grok Bot after Dipan's OK, Dipan, or console only); split 8.3, 11.11, 13.4; replaced console steps 1.3, 1.7, 8.5, 8.12, 9.4 with CLI/API; added the inputs list (D1–D23), manual list (M1–M22), console-settings table, 6.8–6.9 email move, Email provider options |
 | Repo copy (25 Oct) | Converted to Markdown | Added registrar comparison and Mailjet-without-domain note; 11.3, 11.4 and three runbook corrections marked done (PR #445) |
+| Runbook corrections (25 Oct) | `pre-prod-consolidation.md`, `operations.md`, `development.md` against the repo at 0a14fa5 | Docs-only PR #447: four corrections done; five left open because they need code or config changes |
 
 ## Sources
 
