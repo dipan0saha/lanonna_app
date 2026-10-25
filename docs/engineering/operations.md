@@ -291,7 +291,7 @@ After migration `030` is applied, null emails on active users can be restored fr
 - Flavor: `apps/mobile/flavors/dev.json` — **`API_BASE_URL`**, `APP_LINK_HOST`, `APP_ENV=dev`
 - Prod template: `flavors/prod.json` — see [mobile-prod-flavor-and-crashlytics.md](mobile-prod-flavor-and-crashlytics.md)
 - Release signing: dev release always uses the debug keystore; `android/key.properties` (gitignored) is required only for **prod** release ([android/README.md](../../apps/mobile/android/README.md), [rca/release-signing-environment.md](rca/release-signing-environment.md))
-- Crashlytics: enabled for prod; dev release on by default (`CRASHLYTICS_ENABLED` in flavor JSON to opt out). Custom keys `build_git_sha`, `build_number`, `build_env` — build APKs/AABs with `flutter_build_apk.sh` / `flutter_build_appbundle.sh` (monotonic `versionCode` from HEAD committer time; see [rca/issue-444-build-number-regression.md](rca/issue-444-build-number-regression.md) and [mobile-prod-flavor-and-crashlytics.md](mobile-prod-flavor-and-crashlytics.md))
+- Crashlytics: enabled for prod; dev release on by default (`CRASHLYTICS_ENABLED` in flavor JSON to opt out). Custom keys `build_git_sha`, `build_number`, `build_env` — build APKs/AABs with `flutter_build_apk.sh` / `flutter_build_appbundle.sh` (`versionCode` from HEAD committer time, release guard for Play builds; see [rca/issue-444-build-number-regression.md](rca/issue-444-build-number-regression.md) and [mobile-prod-flavor-and-crashlytics.md](mobile-prod-flavor-and-crashlytics.md))
 
 ```bash
 cd apps/mobile
@@ -306,13 +306,14 @@ scripts/flutter_build_apk.sh --release --target-platform android-arm64 \
   --dart-define-from-file=flavors/dev.json
 ```
 
-**Prod release** (after owner fills `flavors/prod.json`, keystore, and `flutterfire configure`; the wrapper requires a real stamp for prod):
+**Prod release** (after owner fills `flavors/prod.json`, keystore, and `flutterfire configure`). Every AAB and every prod-flavor build runs the release guard: clean tree, HEAD on `origin/main`, and a `versionCode` above the highest `android-vc-<code>` tag on origin ([rca/issue-444-build-number-regression.md](rca/issue-444-build-number-regression.md)):
 
 ```bash
-scripts/flutter_build_apk.sh --release --target-platform android-arm64 \
-  --dart-define-from-file=flavors/prod.json
+git fetch origin && git switch --detach origin/main   # clean checkout of main
 scripts/flutter_build_appbundle.sh --release \
-  --dart-define-from-file=flavors/prod.json
+  --dart-define-from-file=flavors/prod.json         # prints "Build stamp: ... versionCode/build <code>"
+# upload build/app/outputs/bundle/release/app-release.aab to Play; once Play accepts it:
+scripts/record_android_release.sh <code>            # tags HEAD android-vc-<code> and pushes the tag
 ```
 
 Create **Email/Password** users in Firebase console (or smoke user `lanonna.dev.smoke@test.com`). iOS: `cd ios && pod install` once.

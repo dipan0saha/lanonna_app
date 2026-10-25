@@ -28,7 +28,7 @@
 
 ### Constraints
 
-- **Dev command unchanged:** `flutter build apk --release --target-platform android-arm64 --dart-define-from-file=flavors/dev.json` with existing `com.lanonna.lanonna` and dev `google-services.json`.
+- **Dev command unchanged:** `scripts/flutter_build_apk.sh --release --target-platform android-arm64 --dart-define-from-file=flavors/dev.json` with existing `com.lanonna.lanonna` and dev `google-services.json`.
 - **No prod GCP/Firebase yet** — prod `FirebaseOptions` stay a typed placeholder until `flutterfire configure` against `lanonna-prod` (or chosen project).
 - **Public repo** — no keystore, passwords, or owner emails in git.
 
@@ -113,7 +113,9 @@ scripts/flutter_build_apk.sh --release --target-platform android-arm64 \
 
 Or from repo root: `./scripts/ship_release_apk_to_drive.sh` (uses the same wrapper). Debug emulator builds: `./maestro/scripts/build-install.sh` (also the wrapper).
 
-`BUILD_NUMBER` / `versionCode` default to `max(300, committer_unix(HEAD) − 2020-01-01T00:00:00Z)` so squash merges cannot lower the code (issue #444). Override only with an explicit `BUILD_NUMBER` env var for local experiments. `BUILD_GIT_SHA` is `git rev-parse --short HEAD` (or `unknown` when git is unavailable). Keep **marketing version** (`version:` in `pubspec.yaml` / `--build-name`) on a sane semver for prod; wrappers always pass `--build-number` for the binary’s `versionCode`.
+`BUILD_NUMBER` / `versionCode` is the seconds from 2020-01-01T00:00:00Z to HEAD's committer time (`derive_android_version_code.sh`), so a squash merge on `main` gets a higher code than the branch it merged (issue #444). The same value goes to Gradle `versionCode` (`--build-number`), the `BUILD_NUMBER` dart-define and Crashlytics `build_number`. `BUILD_GIT_SHA` is `git rev-parse --short HEAD` (or `unknown` when git is unavailable). Keep the **marketing version** (`version:` in `pubspec.yaml`, Android `versionName`) on semver and bump it per Play release; wrappers always pass `--build-number`.
+
+**Play-bound builds are guarded.** Every AAB (any flavor) and every prod-flavor build (`APP_ENV=prod` from `--dart-define-from-file` or `--dart-define`) runs `android_release_guard.sh`: clean tree, HEAD on `origin/main` (freshly fetched), and a `versionCode` strictly greater than the highest `android-vc-<code>` tag on origin. A `BUILD_NUMBER` override is accepted only when it clears the same bar. After Play accepts an upload, record it from the same checkout with `scripts/record_android_release.sh <versionCode>` (creates and pushes the tag). Dev APKs are not guarded: branch builds can carry a higher code than an older `main` commit, so to go back to an older debug build use `adb install -r -d` (debuggable only) or uninstall first.
 
 **Prod (after owner fills `flavors/prod.json`, keystore, and `flutterfire configure`):**
 
@@ -126,6 +128,6 @@ scripts/flutter_build_appbundle.sh --release \
 # iOS: not wired yet; pass the same stamp defines on flutter build ipa
 ```
 
-Prod release fails at compile time or at `ensureProdConfigReady()` if `BUILD_GIT_SHA` or `BUILD_NUMBER` is missing.
+Prod release fails in the wrapper (release guard), at compile time, or at `ensureProdConfigReady()` if `BUILD_GIT_SHA` or `BUILD_NUMBER` is missing.
 
 A prod release APK/AAB fails before any task runs (Gradle task-graph check, so a prod debug `flutter run` still works) without `android/key.properties`, or when `android/app/google-services.json` is missing or still points at `lanonna-dev`. With both in place it still fails at the Dart compile guard until the `__PROD_` placeholders are replaced.

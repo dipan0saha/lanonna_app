@@ -5,7 +5,7 @@
 After the owner created `apps/mobile/android/key.properties` for upcoming Play upload signing, **dev** release APKs built with:
 
 ```bash
-flutter build apk --release --target-platform android-arm64 --dart-define-from-file=flavors/dev.json
+scripts/flutter_build_apk.sh --release --target-platform android-arm64 --dart-define-from-file=flavors/dev.json
 ```
 
 were signed with the **upload** certificate instead of the **debug** certificate. That SHA-1 does not match the debug key registered in Firebase project **lanonna-dev**, so **Google Sign-In** fails and testers must reinstall to recover a matching signing identity.
