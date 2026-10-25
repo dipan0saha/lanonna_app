@@ -2,7 +2,7 @@
 
 > **Source of truth:** this document is the source of truth for the La Nonna production launch from **25 Oct 2026** onward. It replaces the Grok Bot Page it was converted from; update it here via PR.
 >
-> Everything between today's dev setup and La Nonna live on Google Play: 15 phases (0–14) with owner, dependencies, command and check for each item, what only Dipan can decide or click, and cheaper email options. Status as of 25 Oct 2026, repo main at 5ef8a75 (item 11.3 updated for PR #445, main at c12beba).
+> Everything between today's dev setup and La Nonna live on Google Play: 15 phases (0–14) with owner, dependencies, command and check for each item, what only Dipan can decide or click, and cheaper email options. Status as of 25 Oct 2026, repo main at 5ef8a75 (items 11.3, 11.4 and three runbook corrections updated for PR #445, main at c12beba).
 >
 > No addresses, account IDs, keys or secret values belong in this file. Where a value is needed it appears as a placeholder such as `<ID>` or `<addr>`, and the real value goes only into gitignored files, Secret Manager or gcloud.
 
@@ -32,8 +32,8 @@
 | Region | us-central1 |
 | Package id | com.lanonna.lanonna |
 | Target SDK | 36 (meets Play's 2026 rule) |
-| Items done | 10 |
-| Open or partly done | 105 |
+| Items done | 11 |
+| Open or partly done | 104 |
 | Blocked | 1 |
 | Grok Bot items | 99 |
 | Dipan items (incl. console only) | 18 + 12 |
@@ -639,11 +639,11 @@ _Containers come from Terraform. Values are piped, never printed. Don't recreate
   - Verify: Signing key 'Google-managed'
 - [x] **11.3** versionCode must only go up (`build_stamp.sh` count drops after squash merges)
   - Owner: Grok Bot (after Dipan's OK) · Needs: D19 · Status: Done
-  - How: PR: first-parent count of `origin/main` plus a local high-water mark
-  - Verify: A lower code fails the build (done: #444 / PR #445, merged c12beba)
-- [ ] **11.4** AAB build wrapper with the build stamp
-  - Owner: Grok Bot (after Dipan's OK) · Needs: 11.3, D19 · Status: Open
-  - How: Appbundle mode in `scripts/flutter_build_apk.sh`
+  - How: Done in #444 / PR #445 (c12beba): versionCode from HEAD commit time; release guard requires a clean tree, HEAD on `origin/main` and a code above the last `android-vc-<code>` tag (`apps/mobile/scripts/record_android_release.sh`)
+  - Verify: A lower code fails the build
+- [x] **11.4** AAB build wrapper with the build stamp
+  - Owner: Grok Bot (after Dipan's OK) · Needs: 11.3, D19 · Status: Done
+  - How: Done in PR #445: `apps/mobile/scripts/flutter_build_appbundle.sh` (shared stamp in `flutter_build_stamp.sh`)
   - Verify: `app-release.aab` produced; stamp guard passes
 - [ ] **11.5** google-services.json per environment, copied by `APP_ENV`
   - Owner: Grok Bot (after Dipan's OK) · Needs: 8.4, D19 · Status: Open
@@ -807,8 +807,8 @@ _Containers come from Terraform. Values are piped, never printed. Don't recreate
 
 | Where | What's wrong | Fix |
 |---|---|---|
-| `apps/mobile/android/README.md` | Runs `flutter build appbundle` directly, skipping the build stamp | Point to the AAB wrapper (11.4) |
-| `scripts/flutter_build_apk.sh` | APK only | Add an appbundle mode (11.4) |
+| `apps/mobile/android/README.md` | Built the AAB with Flutter directly, skipping the build stamp | Done in PR #445: points to the AAB wrapper (11.4) |
+| `apps/mobile/scripts/flutter_build_apk.sh` | APK only | Done in PR #445: separate `flutter_build_appbundle.sh` wrapper (11.4) |
 | `docs/engineering/pre-prod-consolidation.md` | Says 41 migrations and a CI diff check | 52 migrations; no CI |
 | `docs/engineering/operations.md` | Automation SA 'CI + WIF later' | No CI; deployer is your login on the Mac, run by Grok Bot's executors after your OK |
 | `docs/engineering/operations.md` prod step 8 | Phase 2 edits tracked `main.tf` | Expose a variable (2.4a) |
@@ -818,7 +818,7 @@ _Containers come from Terraform. Values are piped, never printed. Don't recreate
 | `scripts/configure-android-google-sign-in.sh` | Hardcodes the dev app id and debug keystore | Don't use for prod; follow 8.2 |
 | `scripts/infra-smoke-display-upload.sh` | Hardcodes the dev bucket and key | Parameterize (12.3) |
 | `docs/engineering/mobile-prod-flavor-and-crashlytics.md` | One `google-services.json` path, no switch | Per-env copy (11.5) |
-| `scripts/build_stamp.sh` docs | Mention `GITHUB_RUN_NUMBER` | No CI; local high-water mark (11.3) |
+| `apps/mobile/scripts/build_stamp.sh` docs | Mention `GITHUB_RUN_NUMBER` | Done in PR #445: `GITHUB_RUN_NUMBER` removed; commit-time versionCode (11.3) |
 
 ## Couldn't verify
 
@@ -841,7 +841,7 @@ _Containers come from Terraform. Values are piped, never printed. Don't recreate
 | Pass 1 | Repo at 5ef8a75 file by file; read-only dev inventory; open PRs and issues | Added 1.5, 2.4, 3.4, 4.3, 7.3, 10.3, 11.4, 11.5, 12.3; corrected 048/049 ordering; marked notes |
 | Pass 2 | Play Help pages; GCP practice; dependency order | Added 0.2, 0.9, 0.12, 13.1, 13.7, 11.7, 12.7, 12.9; moved SHA registration after the first upload |
 | Pass 3 (25 Oct, Dipan's follow-up) | Ownership rule change; Firebase App Check REST, Identity Toolkit v2, gcloud billing / budgets / essential-contacts / api-keys, Play Developer API; official email pricing pages | Re-tagged every item (Grok Bot after Dipan's OK, Dipan, or console only); split 8.3, 11.11, 13.4; replaced console steps 1.3, 1.7, 8.5, 8.12, 9.4 with CLI/API; added the inputs list (D1–D23), manual list (M1–M22), console-settings table, 6.8–6.9 email move, Email provider options |
-| Repo copy (25 Oct) | Converted to Markdown | Added registrar comparison and Mailjet-without-domain note; 11.3 marked done (PR #445) |
+| Repo copy (25 Oct) | Converted to Markdown | Added registrar comparison and Mailjet-without-domain note; 11.3, 11.4 and three runbook corrections marked done (PR #445) |
 
 ## Sources
 
