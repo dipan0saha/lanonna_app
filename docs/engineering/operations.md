@@ -92,7 +92,7 @@ terraform apply               # when plan looks safe
 | Worker Cloud Run | min **0** (deploy script) | min **0** |
 | GCS lifecycle rules | Off (default module) | On (abort stale multipart uploads after 1 day) |
 | Platform monitoring | Off unless opted in via tfvars | On (emails + optional uptime host in tfvars) |
-| Automation SA (`lanonna-automation`, Editor) | **Yes** (local only) | **No** — CI + WIF later |
+| Automation SA (`lanonna-automation`, Editor) | **Yes** (local only) | **No** (`create_automation_sa = false`). There is no CI and no WIF planned: the prod deployer is Dipan's own Google login (gcloud + ADC) on the Mac, used by Grok Bot's executors only after Dipan OKs each phase. No service-account keys |
 
 **Prod launch budget (order of magnitude):** dedicated-core zonal SQL (~\$25–35/mo) + one warm API instance (~\$10–15/mo idle at 1 vCPU / 512 MiB) + small GCS/Pub/Secret/Monitoring footprint → about **\$35–60/mo** at low traffic. Shared-core tiers (e.g. `g1-small`) are cheaper but do not qualify for the [Cloud SQL SLA](https://cloud.google.com/sql/sla); prod defaults use **`db-custom-1-3840`**.
 
@@ -106,7 +106,10 @@ terraform apply               # when plan looks safe
 2. `./infra/terraform/scripts/ensure-state-bucket.sh lanonna-prod lanonna-prod-terraform-state`
 3. `cd infra/terraform/environments/prod` → `cp terraform.tfvars.example terraform.tfvars` → set **`monitoring_notification_emails`** (gitignored tfvars; no addresses in git).
 4. `terraform init && terraform apply` (fresh apply, no import). Creates Cloud SQL (small dedicated tier), Secret Manager containers, writes **`db-lanonna-app-password`** (`manage_sql_app_password = true`), enables prod bucket lifecycle rules and alert policies (uptime check waits until step 8).
-5. Bootstrap remaining secrets (`mailjet-*`, `admin-api-key`, `db-postgres-root-password` as needed) via `gcloud secrets versions add`.
+5. Bootstrap the remaining secrets via `gcloud secrets versions add` (pipe values, never print them). All are **required**:
+   - **`admin-api-key`**: the API deploy mounts `ADMIN_API_KEY=admin-api-key:latest`, so it fails without a version. `openssl rand -hex 32 | gcloud secrets versions add admin-api-key --data-file=- --project=lanonna-prod`.
+   - **`db-postgres-root-password`**: generate once with `openssl rand`, add it as the secret version and set it with `gcloud sql users set-password postgres` from the same shell variable, so the `postgres` user never keeps an unknown password.
+   - **`mailjet-api-key`** / **`mailjet-api-secret`**: the worker sends invite email with them.
 6. Cloud SQL Auth Proxy + `infra/db/apply_migrations.py` with `DB_PASSWORD` from **`db-lanonna-app-password`** — the full chain (currently **`001`–`052`**) on the empty DB. On a fresh database no older API is serving, so `048` and `049` are safe here; the ordering rules below apply once prod has a running API. Confirm with `./scripts/verify-migrations.sh` (`GCP_PROJECT_ID=lanonna-prod`, proxy + `PGPASSWORD`).
 7. Set real values in [`infra/env/prod.worker.env`](../../infra/env/prod.worker.env) (`MAILJET_FROM_EMAIL`) and review [`infra/env/prod.api.env`](../../infra/env/prod.api.env).
 8. Deploy **worker** (`GCP_PROJECT_ID=lanonna-prod`) → `./scripts/apply-run-iam.sh` → enable push subscriptions (two-phase Terraform below) → deploy **API** → set **`monitoring_api_host`** in `terraform.tfvars` from `gcloud run services describe api --format='value(status.uri)'` (hostname only) → `terraform apply` for uptime alerts → `GCP_PROJECT_ID=lanonna-prod ./scripts/setup-schedulers.sh` → invite hosting with release `ANDROID_SHA256`.

@@ -3,10 +3,12 @@
 | Field | Value |
 |-------|--------|
 | **Status** | Planning (not yet executed) |
-| **Last updated** | 2026-10-21 |
+| **Last updated** | 2026-10-25 |
 | **Related** | [operations.md](operations.md), [open-gaps.md](open-gaps.md) (L-28, M-47, M-52), [migrations README](../../infra/db/migrations/README.md) |
 
-**Summary:** Do not delay `lanonna-prod` for a migration squash or L-28 refactors. Run the existing migration chain (`001`–`041_biometric_credentials`) on a fresh prod DB (minutes, safe). Optionally squash to one baseline later when you reset dev. Prioritize small, prod-wiring consolidations (deploy/env, Terraform secrets, IAM scripts) before or in parallel with the prod project.
+> **Correction (2026-10-25):** The chain is now 52 migrations (`052_drop_duplicate_photos_baby_created_index`) and the repo has no GitHub CI; all checks run locally through `scripts/premerge_check.sh`. The 2026-10-20 execution plan below is kept as a historical record (its "41" and "CI" mentions describe that time). Current launch steps: [prod-launch-plan.md](prod-launch-plan.md).
+
+**Summary:** Do not delay `lanonna-prod` for a migration squash or L-28 refactors. Run the existing migration chain (`001`–`052` as of 2026-10-25; `scripts/verify-migrations.sh` checks file count against applied rows) on a fresh prod DB (minutes, safe). Optionally squash to one baseline later when you reset dev. Prioritize small, prod-wiring consolidations (deploy/env, Terraform secrets, IAM scripts) before or in parallel with the prod project.
 
 ## Execution plan (2026-10-20)
 
@@ -94,8 +96,8 @@ Rename/generalize `verify-dev-migrations.sh` → `scripts/verify-migrations.sh`,
 
 | Approach | Verdict |
 |----------|---------|
-| **Squash migrations → 1 before creating prod** | **Not required.** Fresh prod applies [`apply_migrations.py`](../../infra/db/apply_migrations.py) over empty Cloud SQL; backfill migrations (e.g. `032`–`039`) are **no-ops** on empty data. Cost of squash: large diff, review risk, doc/CI updates—benefit: slightly faster apply and less history noise. |
-| **Squash after you reset dev** | **Reasonable optional cleanup** if you are OK wiping dev. Best done **once** schema is stable for v1 launch (after `041`), not as a gate for prod. |
+| **Squash migrations → 1 before creating prod** | **Not required.** Fresh prod applies [`apply_migrations.py`](../../infra/db/apply_migrations.py) over empty Cloud SQL; backfill migrations (e.g. `032`–`039`) are **no-ops** on empty data. Cost of squash: large diff, review risk, doc/test updates—benefit: slightly faster apply and less history noise. |
+| **Squash after you reset dev** | **Reasonable optional cleanup** if you are OK wiping dev. Best done **once** schema is stable for v1 launch, not as a gate for prod. |
 | **L-28 code consolidation** ([open-gaps.md](open-gaps.md) L-28) | **Defer** until post-launch or quiet cycles—explicitly “medium risk, live request paths.” |
 | **Prod-wiring “consolidation”** | **Do**—these reduce copy-paste and prod footguns without refactoring domain logic. |
 
@@ -104,7 +106,7 @@ flowchart LR
   subgraph now [Do not block prod]
     A[Create lanonna-prod]
     B[TF apply + secrets bootstrap]
-    C[Run migrations 001 through 041]
+    C[Run migrations 001 through 052]
     D[Deploy API/worker with prod env]
   end
   subgraph optional [Optional after v1 schema freeze]
@@ -120,11 +122,11 @@ flowchart LR
 
 ## Tracking checklist
 
-- [ ] Create `lanonna-prod` (GCP quota) and apply existing migrations `001`–`041` on empty Cloud SQL (no squash gate)
+- [ ] Create `lanonna-prod` (GCP quota) and apply existing migrations `001`–`052` on empty Cloud SQL (no squash gate)
 - [x] Prod Terraform sizing, deletion protection, bucket lifecycle, monitoring opt-in, `verify-migrations.sh` — lanonna-prod prep PR
 - [x] Add `infra/env/prod.api.env` / `prod.worker.env`, fix `ENVIRONMENT` in deploy scripts (M-52), TF SQL password → Secret Manager (M-47), generalize `apply-run-iam.sh` — merged in #347
 - [x] Mobile prod flavor + Crashlytics wiring ([mobile-prod-flavor-and-crashlytics.md](mobile-prod-flavor-and-crashlytics.md); owner still: keystore, `flutterfire configure`, fill `flavors/prod.json`)
-- [ ] (Optional, after schema freeze) Generate `001_baseline_v1.sql`, archive `002`–`040`, reset dev DB, add schema-only diff check in CI
+- [ ] (Optional, after schema freeze) Generate `001_baseline_v1.sql`, archive `002` onward, reset dev DB, add a schema-only diff check as a local script (no GitHub CI; checks run on the Mac via `scripts/premerge_check.sh`)
 - [ ] Keep L-28 refactors and email-tree merge out of pre-prod scope
 
 ---
@@ -135,7 +137,7 @@ flowchart LR
 
 - [`infra/db/apply_migrations.py`](../../infra/db/apply_migrations.py): lexicographic `*.sql`, skip if `schema_migrations.version` exists.
 - Each file self-registers via `INSERT INTO schema_migrations` (see [`001_app_users.sql`](../../infra/db/migrations/001_app_users.sql)).
-- [`scripts/verify-migrations.sh`](../../scripts/verify-migrations.sh): **file count must equal row count** in `schema_migrations` (currently 41).
+- [`scripts/verify-migrations.sh`](../../scripts/verify-migrations.sh): **file count must equal row count** in `schema_migrations` (currently 52).
 
 ### Why squashing is not a prod prerequisite
 
@@ -148,17 +150,17 @@ flowchart LR
 Do this **after** prod is up or in the same window as a planned dev wipe—not instead of prod:
 
 1. **Freeze schema:** no new migrations until squash is done.
-2. **Generate baseline** from a DB that has all 41 applied (dev after proxy):
+2. **Generate baseline** from a DB that has the full chain applied (52 today) (dev after proxy):
    - `pg_dump --schema-only --no-owner` (or use Cloud SQL export), then hand-edit: keep `schema_migrations` table, end with `INSERT INTO schema_migrations (version) VALUES ('001_baseline_v1')`.
    - **Omit** dev-only backfill DML from the baseline; keep only final `CREATE`/`ALTER`/indexes/constraints.
 3. **Replace migration set:**
-   - Move `002`–`041` to `infra/db/migrations/archive/pre_baseline/` (read-only audit trail) **or** delete with pointer in [migrations README](../../infra/db/migrations/README.md).
+   - Move `002` onward to `infra/db/migrations/archive/pre_baseline/` (read-only audit trail) **or** delete with pointer in [migrations README](../../infra/db/migrations/README.md).
    - Single active file: e.g. `001_baseline_v1.sql`.
 4. **Reset environments:** drop/recreate `lanonna` DB on dev (and only use baseline on **new** prod if prod was not already migrated—if prod already ran the incremental chain, **do not** squash prod in place without a deliberate migration strategy).
 5. **Update tooling:** `verify-migrations.sh` expected count = 1; Postgres integration tests that assume specific migration files (grep `infra/db/migrations` in tests).
 6. **Going forward:** new changes are `002_add_foo.sql`, etc.
 
-**Risk control:** add a one-off CI job or script that compares `pg_dump --schema-only` of “baseline apply” vs the full incremental chain on empty Postgres (Docker) and diffs—only merge squash when identical.
+**Risk control:** add a one-off local script (run on the Mac; there is no CI) that compares `pg_dump --schema-only` of “baseline apply” vs the full incremental chain on empty Postgres (Docker) and diffs—only merge squash when identical.
 
 ---
 
@@ -211,6 +213,6 @@ These are “make prod and dev symmetric” tasks, not refactors.
 
 ## 6. Practical decision
 
-1. **Create `lanonna-prod` now** and apply **existing** `001`–`041` on fresh Cloud SQL.
+1. **Create `lanonna-prod` now** and apply **existing** `001`–`052` on fresh Cloud SQL.
 2. Land **deploy/env + M-47 + IAM script rename** (see PR `cursor/pre-prod-wiring-0549`).
 3. **After v1 schema freeze** (no pending DDL for a few weeks), optionally **squash to `001_baseline_v1`** and **reset dev**—keeps one migration file for the greenfield era without blocking prod.
