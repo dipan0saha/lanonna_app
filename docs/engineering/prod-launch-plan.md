@@ -1,12 +1,12 @@
 # La Nonna production launch plan
 
-> **Source of truth:** this document is the source of truth for the La Nonna production launch from **25 Oct 2026** onward. It replaces the Grok Bot Page it was converted from; update it here via PR.
+> **Source of truth:** this document is the source of truth for the La Nonna production launch from **25 Oct 2026** onward. Update it here via PR.
 >
-> Everything between today's dev setup and La Nonna live on Google Play: 15 phases (0–14) with owner, dependencies, command and check for each item, what only Dipan can decide or click, and cheaper email options. Status as of 25 Oct 2026, repo main at 5ef8a75 (items 11.3, 11.4 and three runbook corrections updated for PR #445, main at c12beba).
+> Everything between today's dev setup and La Nonna live on Google Play: 15 phases (0–14) with owner, dependencies, command and check for each item, what only Dipan can decide or click, and cheaper email options. Only open work is listed; completed items are removed. Status as of 25 Oct 2026.
 >
 > No addresses, account IDs, keys or secret values belong in this file. Where a value is needed it appears as a placeholder such as `<ID>` or `<addr>`, and the real value goes only into gitignored files, Secret Manager or gcloud.
 
-**Legend.** Owner "Grok Bot (after Dipan's OK)" = Grok Bot runs it by CLI, API or code through executors on Dipan's Mac with his logins, after he approves the phase (D1). "Dipan" = a decision or physical step. "Dipan (console only)" = no API exists. Status values: Open, Done, Partly, Blocked, Unverified, Decision. ⚠️ in email tables = couldn't be confirmed on the official page.
+**Legend.** Owner "Grok Bot (after Dipan's OK)" = Grok Bot runs it by CLI, API or code through executors on Dipan's Mac with his logins, after he approves the phase (D1). "Dipan" = a decision or physical step. "Dipan (console only)" = no API exists. Status values: Open, Partly, Blocked, Unverified, Decision. ⚠️ in email tables = couldn't be confirmed on the official page.
 
 ## Contents
 
@@ -20,7 +20,6 @@
 - [Phases 0–14 checklist](#phases-014-checklist)
 - [Runbook corrections](#runbook-corrections)
 - [Couldn't verify](#couldnt-verify)
-- [Review log](#review-log)
 - [Sources](#sources)
 
 ## Where things stand
@@ -28,14 +27,13 @@
 | Item | Value |
 |---|---|
 | Prod project | Not created |
-| Repo | main at 5ef8a75, 52 migrations (c12beba after PR #445) |
+| Repo | 52 migrations |
 | Region | us-central1 |
 | Package id | com.lanonna.lanonna |
 | Target SDK | 36 (meets Play's 2026 rule) |
-| Items done | 11 |
 | Open or partly done | 104 |
 | Blocked | 1 |
-| Grok Bot items | 99 |
+| Grok Bot items | 88 |
 | Dipan items (incl. console only) | 18 + 12 |
 | Mac CLIs with Dipan's logins | gcloud, firebase, terraform, flutter, adb: Grok Bot runs them after Dipan's OK |
 | Emulator | On the Mac, for Maestro and screenshots |
@@ -69,7 +67,7 @@ Grok Bot runs every step that can be done by CLI, API or code, including those t
 | D16 | Store category (Parenting) and 18+ audience; answers for the Health apps declaration | App content forms (0.9, 13.9) | Phase 13 |
 | D17 | App icon (512 px) and feature graphic (1024×500): provide or approve. Grok Bot captures the screenshots on the emulator for your approval | Store listing (11.11, 13.5) | Phase 13 |
 | D18 | Closed-test tester list (12+ Google accounts) if personal account | Play testing requirement (13.11) | Phase 13 |
-| D19 | Review and OK to merge each Grok Bot PR (2.4, 2.7, 3.6, 7.1, 7.3, 9.3, 10.1–10.3, 11.3–11.5, 11.7, 12.3, 13.7, 6.8) | Prod deploys must come from reviewed `main` | Before the phase that uses them |
+| D19 | Review and OK to merge each Grok Bot PR (2.4, 2.7, 3.6, 7.1, 7.3, 9.3, 10.1–10.3, 11.5, 11.7, 12.3, 13.7, 6.8) | Prod deploys must come from reviewed `main` | Before the phase that uses them |
 | D20 | Merge or close QA plan PR #363 | Decides which checklist 12.x uses (12.6) | Phase 12 |
 | D21 | Go-ahead to turn App Check enforcement on | Sideloaded builds start getting 401 (12.9) | After 12.4 |
 | D22 | Go-ahead for each rollout step 10 % → 50 % → 100 % | Production release (13.12) | Phase 13 |
@@ -136,7 +134,7 @@ Official pricing pages read 25 Oct 2026, monthly USD before tax. ⚠️ = couldn
 
 > **Constraint from Google Cloud.** Google Cloud has no transactional email service of its own and blocks outbound port 25, so the provider must take an HTTPS API call (what the worker does today) or SMTP on 587 or 2525. Every option below does.
 
-> **La Nonna's volume.** At 5ef8a75 the worker sends one kind of email: invitations (`invite_email.py`, the only caller of `mailjet_send.send_messages`). The weekly digest and notifications are push and in-app, not email. Firebase Auth sends verification and password-reset mail itself, so those don't count. At 5–10 invites per new family: 100 new families a month is 500–1,000 emails, 500 is 2,500–5,000, and 10,000 needs about 1,000–2,000 new families a month. Expect under 3,000 a month in year one.
+> **La Nonna's volume.** The worker sends one kind of email: invitations (`invite_email.py`, the only caller of `mailjet_send.send_messages`). The weekly digest and notifications are push and in-app, not email. Firebase Auth sends verification and password-reset mail itself, so those don't count. At 5–10 invites per new family: 100 new families a month is 500–1,000 emails, 500 is 2,500–5,000, and 10,000 needs about 1,000–2,000 new families a month. Expect under 3,000 a month in year one.
 
 ### Cost
 
@@ -194,29 +192,22 @@ All five include free WHOIS privacy and allow the DNS records an email provider 
 
 ## Notes and old TODOs, checked
 
-Checked against main 5ef8a75 and, read-only, lanonna-dev on 25 Oct 2026 (build-number row updated for PR #445).
+Open notes only, checked against the repo and, read-only, lanonna-dev on 25 Oct 2026.
 
 | Note | From | Status | Evidence |
 |---|---|---|---|
-| Crashlytics enabled in lanonna-dev | Dipan msg 1, item 3 | Done | API enabled; stamped events in dev. Prod in 8.10 |
 | In-app Terms and Privacy: samples, not reachable from Settings | Dipan msg 1, item 5 | Still open | Assets titled '(Sample)'; only linked from onboarding (10.1) |
-| `deploy-invite-hosting.sh` failed at the IAM step | Dipan msg 1, item 6 | Done | IAM step removed in #349; not yet run against prod |
-| Personal emails in the public repo | Dipan msg 1, item 6 | Partly done | 0 in tracked files at 5ef8a75; still in git history by your choice |
+| Personal emails in the public repo | Dipan msg 1, item 6 | Partly done | 0 in tracked files; still in git history by your choice |
 | PR #351 legal pages and store listing | Dipan msg 1, item 4 | Still open | Open draft; 5 placeholders; no deletion-request page |
 | PR #363 pre-prod QA plan | Brief | Still open | Open, unmerged |
-| Migrations 048/049 after the API deploy | pre-prod-consolidation.md | Done | Safe on an empty DB; rule only matters for a running prod |
-| Run `setup-schedulers.sh` | pre-prod-consolidation.md | Done | Dev has 4 ENABLED; prod is 6.6 |
-| Worker deploy before API | pre-prod-consolidation.md | Done | 6.4 → 6.5 → 7.2 |
 | Dev monitoring on so the email alert works | pre-prod-consolidation.md | Still open | Dev has only the DLQ policy, 0 channels (9.2) |
 | Launch checklist in mobile-prod-flavor doc | mobile-prod-flavor-and-crashlytics.md | Partly done | Keystore exists; rest mapped into phases 8, 11, 13 |
 | Same sender and Mailjet account as dev; move to a cheaper provider long term | Dipan msgs 1 and follow-up | Still open | Interim via gitignored `prod.worker.local.env` (6.2); move in 6.8 per Email provider options |
 | App Check off in prod until Play is linked | Dipan msg 1, item 2 | Still open | `prod.api.env` still says true (7.1) |
 | Google sign-in needs the upload key; debug key not reused | Dipan msg 1, item 2 | Partly done | Upload keystore exists; SHA registration in 8.2 |
-| Prod DB deletion protection on | Dipan msg 1, item 2 | Done | `sql_deletion_protection = true` in prod Terraform |
 | Register prod signing SHA-256; longer App Check TTL | Dipan msg 1, item 5 | Still open | TTL settable by REST (8.8); Play link is console only (M6) |
 | App Check debug-token script prints the token | Dipan msg 1, item 6 | Still open | Still echoes it; dev-only, can't reach prod |
 | `delete_dev_account.sh` breaks on Python 3.14 | Dipan msg 1, item 6 | Couldn't verify | Not reproduced; dev-only |
-| Build numbers go backwards after squash merges | Dipan msg 1, item 6 | Done | Fixed in #444 / PR #445 (merged c12beba); see 11.3 |
 | Upload key and Play Console | Dipan msg 1, item 3 | Partly done | Keystore on the Mac; backup (M16) and enrollment (M1) pending |
 | Has lanonna-prod been created? | Read-only check | Still open | Not visible to the Mac's gcloud account; state bucket 404 |
 
@@ -236,7 +227,7 @@ Checked against main 5ef8a75 and, read-only, lanonna-dev on 25 Oct 2026 (build-n
 
 ## Phases 0–14 checklist
 
-Each item: owner, needs (D = input, M = manual step, or item IDs), status, then the command or console location and how to verify. Ticked = Done as recorded.
+Each item: owner, needs (D = input, M = manual step, or item IDs), status, then the command or console location and how to verify.
 
 ### Phase 0: Decisions and inputs
 
@@ -305,10 +296,6 @@ _Every row here is also in Inputs and decisions (D-codes). 0.1–0.4 must be set
   - Owner: Grok Bot (after Dipan's OK) · Needs: D3, 1.2 · Status: Open
   - How: `gcloud billing budgets create --billing-account=<ID> --display-name=lanonna-prod --budget-amount=<amount> --filter-projects=projects/lanonna-prod --threshold-rule=percent=0.5 --threshold-rule=percent=0.9 --threshold-rule=percent=1.0 --threshold-rule=percent=1.0,basis=forecasted-spend`
   - Verify: `gcloud billing budgets list --billing-account=<ID>` shows it
-- [x] **1.4** Org policies: not applicable (no organization parent; per-resource hardening in 2.4)
-  - Owner: Grok Bot (after Dipan's OK) · Needs: — · Status: Done
-  - How: Checked: `gcloud projects describe lanonna-dev` has no parent
-  - Verify: No action
 - [ ] **1.5** APIs: add the Firebase ones the prod list lacks (`identitytoolkit`, `securetoken`, `fcm`, `firebaseinstallations`, `firebasecrashlytics`) plus `billingbudgets`, `androidpublisher`
   - Owner: Grok Bot (after Dipan's OK) · Needs: D19 · Status: Open
   - How: PR editing `standard_apis` (part of 2.4)
@@ -363,10 +350,6 @@ _Every row here is also in Inputs and decisions (D-codes). 0.1–0.4 must be set
   - Owner: Grok Bot (after Dipan's OK) · Needs: 2.6 · Status: Open
   - How: `modules/platform/sql.tf`
   - Verify: `gcloud sql instances describe lanonna-db --project=lanonna-prod --format='value(settings.tier,settings.backupConfiguration.pointInTimeRecoveryEnabled,settings.deletionProtectionEnabled)'`
-- [x] **3.2** Public IP with zero authorized networks; Cloud Run connector and Auth Proxy only
-  - Owner: Grok Bot (after Dipan's OK) · Needs: 3.1 · Status: Done
-  - How: Same as dev
-  - Verify: `authorizedNetworks` empty
 - [ ] **3.2b** Maintenance window and SSL mode (from 2.4d)
   - Owner: Grok Bot (after Dipan's OK) · Needs: 2.4 · Status: Open
   - How: Terraform
@@ -548,10 +531,6 @@ _Containers come from Terraform. Values are piped, never printed. Don't recreate
   - Owner: Grok Bot (after Dipan's OK) · Needs: 8.1; M14 only if asked · Status: Open
   - How: API on via Terraform; forced test crash from a prod build
   - Verify: Stamped test event appears
-- [x] **8.11** Google Analytics off for prod (`firebase_analytics` not a dependency)
-  - Owner: Grok Bot (after Dipan's OK) · Needs: — · Status: Done
-  - How: Checked `pubspec.yaml`
-  - Verify: No `AD_ID` in the AAB manifest
 - [ ] **8.12** Restrict the prod Android API key to package + SHA-1s
   - Owner: Grok Bot (after Dipan's OK) · Needs: 8.2, 13.4 · Status: Open
   - How: `gcloud services api-keys update <key> --allowed-application=sha1_fingerprint=<sha1>,package_name=com.lanonna.lanonna`
@@ -602,26 +581,10 @@ _Containers come from Terraform. Values are piped, never printed. Don't recreate
   - Owner: Grok Bot (after Dipan's OK) · Needs: D11, D19 · Status: Open
   - How: PR in `app_config.dart`, `flavors/prod.json`, guard tests
   - Verify: Prod build fails if unset
-- [x] **10.4** No App Check debug token in prod builds
-  - Owner: Grok Bot (after Dipan's OK) · Needs: — · Status: Done
-  - How: Gradle embeds it only for non-prod
-  - Verify: Empty in prod BuildConfig
-- [x] **10.5** No personal emails in prod config or the repo
-  - Owner: Grok Bot (after Dipan's OK) · Needs: — · Status: Done
-  - How: `scripts/verify-no-personal-emails.sh` before every PR
-  - Verify: Prints OK
 - [ ] **10.6** Account deletion removes Storage files
   - Owner: Grok Bot (after Dipan's OK) · Needs: 6.6 · Status: Open
   - How: Exercise in 12.4
   - Verify: Objects gone; `storage_cleanup_completed` logged
-- [x] **10.7** Rate limiting on; CORS empty
-  - Owner: Grok Bot (after Dipan's OK) · Needs: — · Status: Done
-  - How: `middleware/rate_limit.py`, `config.py`
-  - Verify: Unchanged in prod env
-- [x] **10.8** Android backup off, no cleartext, release minified
-  - Owner: Grok Bot (after Dipan's OK) · Needs: — · Status: Done
-  - How: `AndroidManifest.xml`, `build.gradle.kts`
-  - Verify: Checked in 11.10
 - [ ] **10.9** Processor agreements: Mailjet DPA now, new provider's DPA at the move
   - Owner: Dipan · Needs: M18 · Status: Open
   - How: Provider account settings
@@ -637,14 +600,6 @@ _Containers come from Terraform. Values are piped, never printed. Don't recreate
   - Owner: Dipan (console only) · Needs: M5 · Status: Open
   - How: Play Console → App integrity
   - Verify: Signing key 'Google-managed'
-- [x] **11.3** versionCode must only go up (`build_stamp.sh` count drops after squash merges)
-  - Owner: Grok Bot (after Dipan's OK) · Needs: D19 · Status: Done
-  - How: Done in #444 / PR #445 (c12beba): versionCode from HEAD commit time; release guard requires a clean tree, HEAD on `origin/main` and a code above the last `android-vc-<code>` tag (`apps/mobile/scripts/record_android_release.sh`)
-  - Verify: A lower code fails the build
-- [x] **11.4** AAB build wrapper with the build stamp
-  - Owner: Grok Bot (after Dipan's OK) · Needs: 11.3, D19 · Status: Done
-  - How: Done in PR #445: `apps/mobile/scripts/flutter_build_appbundle.sh` (shared stamp in `flutter_build_stamp.sh`)
-  - Verify: `app-release.aab` produced; stamp guard passes
 - [ ] **11.5** google-services.json per environment, copied by `APP_ENV`
   - Owner: Grok Bot (after Dipan's OK) · Needs: 8.4, D19 · Status: Open
   - How: Wrapper copies `.dev` / `.prod` json
@@ -654,19 +609,11 @@ _Containers come from Terraform. Values are piped, never printed. Don't recreate
   - How: `apps/mobile/flavors/prod.json`; placeholder guard
   - Verify: Prod build compiles
 - [ ] **11.7** Obfuscate, upload Dart symbols, native symbol table
-  - Owner: Grok Bot (after Dipan's OK) · Needs: 11.4, D19 · Status: Open
+  - Owner: Grok Bot (after Dipan's OK) · Needs: D19 · Status: Open
   - How: `--obfuscate --split-debug-info=build/symbols`; `firebase crashlytics:symbols:upload --app=<prodAppId> build/symbols`
   - Verify: Readable Dart frames on a test crash
-- [x] **11.8** Build stamp keys in prod Crashlytics
-  - Owner: Grok Bot (after Dipan's OK) · Needs: 11.4 · Status: Done
-  - How: Existing guard
-  - Verify: Keys visible
-- [x] **11.9** Target SDK 36 (Play rule from 31 Aug 2026)
-  - Owner: Grok Bot (after Dipan's OK) · Needs: 11.4 · Status: Done
-  - How: Flutter default on the Mac
-  - Verify: `bundletool dump manifest` shows 36
 - [ ] **11.10** Merged-manifest permissions match Data safety; no `AD_ID`
-  - Owner: Grok Bot (after Dipan's OK) · Needs: 11.4 · Status: Open
+  - Owner: Grok Bot (after Dipan's OK) · Needs: — · Status: Open
   - How: `bundletool dump manifest`
   - Verify: Only expected permissions
 - [ ] **11.11a** Screenshots (no email address visible; skip account and manage-followers screens)
@@ -732,7 +679,7 @@ _Containers come from Terraform. Values are piped, never printed. Don't recreate
   - How: Grok Bot fills and deploys with the Hosting script; you do the review
   - Verify: Privacy URL loads publicly
 - [ ] **13.4a** Build the first prod AAB
-  - Owner: Grok Bot (after Dipan's OK) · Needs: 11.4, 11.6 · Status: Open
+  - Owner: Grok Bot (after Dipan's OK) · Needs: 11.6 · Status: Open
   - How: AAB wrapper on the Mac
   - Verify: AAB path handed to you
 - [ ] **13.4b** First upload to internal testing, Play App Signing, copy signing fingerprints
@@ -807,18 +754,11 @@ _Containers come from Terraform. Values are piped, never printed. Don't recreate
 
 | Where | What's wrong | Fix |
 |---|---|---|
-| `apps/mobile/android/README.md` | Built the AAB with Flutter directly, skipping the build stamp | Done in PR #445: points to the AAB wrapper (11.4) |
-| `apps/mobile/scripts/flutter_build_apk.sh` | APK only | Done in PR #445: separate `flutter_build_appbundle.sh` wrapper (11.4) |
-| `docs/engineering/pre-prod-consolidation.md` | Says 41 migrations and a CI diff check | Done in PR #447: current counts say 52 (`001`–`052`), diff check is a local script, no CI; 2026-10-20 plan kept as history |
-| `docs/engineering/operations.md` | Automation SA 'CI + WIF later' | Done in PR #447: no CI or WIF; deployer is your login on the Mac, run by Grok Bot's executors after your OK |
 | `docs/engineering/operations.md` prod step 8 | Phase 2 edits tracked `main.tf` | Open: needs the Terraform variable first (2.4a, code); the runbook changes with that PR |
-| `docs/engineering/operations.md` prod step 5 | `admin-api-key` and postgres password optional | Done in PR #447: both marked required, with how to add each (3.4, 4.3) |
 | `infra/env/prod.api.env` | `APP_CHECK_ENFORCE=true` | Open: config change, not a doc fix (7.1, D7); false until 12.9 |
 | `services/api/src/lanonna_api/config.py` | Silent dev defaults | Open: code change with tests (7.3) |
-| `scripts/configure-android-google-sign-in.sh` | Hardcodes the dev app id and debug keystore | Done in PR #447: `development.md` marks it dev-only and points prod to 8.2. Script unchanged (a prod refusal guard would be code, see 3.6) |
 | `scripts/infra-smoke-display-upload.sh` | Hardcodes the dev bucket and key | Open: script change (12.3) |
 | `docs/engineering/mobile-prod-flavor-and-crashlytics.md` | One `google-services.json` path, no switch | Open: needs the per-env copy wrapper first (11.5, code); the doc changes with that PR |
-| `apps/mobile/scripts/build_stamp.sh` docs | Mention `GITHUB_RUN_NUMBER` | Done in PR #445: `GITHUB_RUN_NUMBER` removed; commit-time versionCode (11.3) |
 
 ## Couldn't verify
 
@@ -833,16 +773,6 @@ _Containers come from Terraform. Values are piped, never printed. Don't recreate
 - **SES sandbox limits** — Known behavior, not on the pricing page
 - **Health apps declaration trigger** — Answer in 13.9
 
-## Review log
-
-| Pass | Checked against | Added or corrected |
-|---|---|---|
-| Draft | Brief phases 0–14, `operations.md`, `pre-prod-consolidation.md`, Terraform, deploy scripts | First tracker |
-| Pass 1 | Repo at 5ef8a75 file by file; read-only dev inventory; open PRs and issues | Added 1.5, 2.4, 3.4, 4.3, 7.3, 10.3, 11.4, 11.5, 12.3; corrected 048/049 ordering; marked notes |
-| Pass 2 | Play Help pages; GCP practice; dependency order | Added 0.2, 0.9, 0.12, 13.1, 13.7, 11.7, 12.7, 12.9; moved SHA registration after the first upload |
-| Pass 3 (25 Oct, Dipan's follow-up) | Ownership rule change; Firebase App Check REST, Identity Toolkit v2, gcloud billing / budgets / essential-contacts / api-keys, Play Developer API; official email pricing pages | Re-tagged every item (Grok Bot after Dipan's OK, Dipan, or console only); split 8.3, 11.11, 13.4; replaced console steps 1.3, 1.7, 8.5, 8.12, 9.4 with CLI/API; added the inputs list (D1–D23), manual list (M1–M22), console-settings table, 6.8–6.9 email move, Email provider options |
-| Repo copy (25 Oct) | Converted to Markdown | Added registrar comparison and Mailjet-without-domain note; 11.3, 11.4 and three runbook corrections marked done (PR #445) |
-| Runbook corrections (25 Oct) | `pre-prod-consolidation.md`, `operations.md`, `development.md` against the repo at 0a14fa5 | Docs-only PR #447: four corrections done; five left open because they need code or config changes |
 
 ## Sources
 
