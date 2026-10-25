@@ -15,15 +15,7 @@ for arg in "$@"; do
   fi
 done
 
-eval "$(bash "${MOBILE}/scripts/build_stamp.sh")"
+# shellcheck source=flutter_build_stamp.sh
+source "${MOBILE}/scripts/flutter_build_stamp.sh"
 
-STAMP_ARGS=(
-  "--dart-define=BUILD_GIT_SHA=${BUILD_GIT_SHA}"
-  "--dart-define=BUILD_NUMBER=${BUILD_NUMBER}"
-)
-if [[ "${BUILD_NUMBER}" =~ ^[0-9]+$ ]]; then
-  STAMP_ARGS+=("--build-number=${BUILD_NUMBER}")
-fi
-
-echo "Build stamp: git ${BUILD_GIT_SHA}, build ${BUILD_NUMBER}" >&2
 exec flutter build apk "${STAMP_ARGS[@]}" "$@"

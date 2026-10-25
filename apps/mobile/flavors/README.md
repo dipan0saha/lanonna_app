@@ -28,7 +28,7 @@ Release and profile builds read `API_BASE_URL` from this file. If the key is mis
 
 **App Check:** `APP_ENV=dev` selects the Firebase **debug** provider (not Play Integrity). Optional `APP_CHECK_DEBUG_TOKEN` in `maestro/local.env` — see [app-check-dev-release-play-integrity.md](../../../docs/engineering/rca/app-check-dev-release-play-integrity.md).
 
-Build every APK with `scripts/flutter_build_apk.sh` (a `flutter build apk` wrapper; all args pass through). It adds the **build stamp** (`BUILD_GIT_SHA`, `BUILD_NUMBER`, `--build-number`) so Crashlytics can tell binaries apart:
+Build every Android APK with `scripts/flutter_build_apk.sh` and every Play AAB with `scripts/flutter_build_appbundle.sh` (Flutter build wrappers; all args pass through). They add the **build stamp** (`BUILD_GIT_SHA`, monotonic `BUILD_NUMBER`, `--build-number`) so Crashlytics and `versionCode` stay aligned — see [issue-444 RCA](../../../docs/engineering/rca/issue-444-build-number-regression.md).
 
 ```bash
 scripts/flutter_build_apk.sh --release --target-platform android-arm64 \

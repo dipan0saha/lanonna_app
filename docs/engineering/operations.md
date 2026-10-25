@@ -291,7 +291,7 @@ After migration `030` is applied, null emails on active users can be restored fr
 - Flavor: `apps/mobile/flavors/dev.json` — **`API_BASE_URL`**, `APP_LINK_HOST`, `APP_ENV=dev`
 - Prod template: `flavors/prod.json` — see [mobile-prod-flavor-and-crashlytics.md](mobile-prod-flavor-and-crashlytics.md)
 - Release signing: dev release always uses the debug keystore; `android/key.properties` (gitignored) is required only for **prod** release ([android/README.md](../../apps/mobile/android/README.md), [rca/release-signing-environment.md](rca/release-signing-environment.md))
-- Crashlytics: enabled for prod; dev release on by default (`CRASHLYTICS_ENABLED` in flavor JSON to opt out). Custom keys `build_git_sha`, `build_number`, `build_env` — build APKs with `apps/mobile/scripts/flutter_build_apk.sh`, which passes `BUILD_GIT_SHA` / `BUILD_NUMBER` (see [mobile-prod-flavor-and-crashlytics.md](mobile-prod-flavor-and-crashlytics.md))
+- Crashlytics: enabled for prod; dev release on by default (`CRASHLYTICS_ENABLED` in flavor JSON to opt out). Custom keys `build_git_sha`, `build_number`, `build_env` — build APKs/AABs with `flutter_build_apk.sh` / `flutter_build_appbundle.sh` (monotonic `versionCode` from HEAD committer time; see [rca/issue-444-build-number-regression.md](rca/issue-444-build-number-regression.md) and [mobile-prod-flavor-and-crashlytics.md](mobile-prod-flavor-and-crashlytics.md))
 
 ```bash
 cd apps/mobile
@@ -310,6 +310,8 @@ scripts/flutter_build_apk.sh --release --target-platform android-arm64 \
 
 ```bash
 scripts/flutter_build_apk.sh --release --target-platform android-arm64 \
+  --dart-define-from-file=flavors/prod.json
+scripts/flutter_build_appbundle.sh --release \
   --dart-define-from-file=flavors/prod.json
 ```
 

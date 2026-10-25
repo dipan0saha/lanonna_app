@@ -3,7 +3,7 @@
 | Field | Value |
 |-------|--------|
 | **Status** | Implemented (mobile); prod Firebase project still owner-owned |
-| **Last updated** | 2026-10-24 |
+| **Last updated** | 2026-10-25 |
 | **Related** | [pre-prod-consolidation.md](pre-prod-consolidation.md) §2 / §4, [platform-architecture.md](platform-architecture.md), [operations.md](operations.md), [open-gaps.md](open-gaps.md) H-01 |
 
 ## Goals
@@ -79,7 +79,7 @@ Document keystore creation in [apps/mobile/android/README.md](../../apps/mobile/
 - **Wiring:** `configureAppErrorReporting()` chains `FlutterError.onError` and `PlatformDispatcher.instance.onError` once: it records to Crashlytics, then calls the handler that was already installed (framework default printing, or any earlier app/test handler). Installed only when collection is enabled.
 - **Collection:** `AppConfig.crashlyticsCollectionEnabled` — always true when `APP_ENV=prod`; in dev, `CRASHLYTICS_ENABLED` dart-define (`true`/`false`), default **true** when `dart.vm.product` (release) and unset.
 - **User id:** set/clear on auth state changes using Firebase **uid** only (never email or display name).
-- **Build stamp:** at startup, `startCrashReporting` sets Crashlytics custom keys `build_git_sha`, `build_number`, and `build_env` from dart-defines (`BUILD_GIT_SHA`, `BUILD_NUMBER`, `APP_ENV`). Missing SHA/number in non-prod builds report as `unknown` and never crash. **Prod release/profile** must pass both defines (compile-time `prodBuildStampGuard` in `app_config.dart`, runtime `ensureProdConfigReady()` for prod debug runs). Every repo APK build goes through `apps/mobile/scripts/flutter_build_apk.sh`, which runs `build_stamp.sh` and passes `--build-number` plus the defines; with `flavors/prod.json` it also fails in the shell when git or the build number is unavailable.
+- **Build stamp:** at startup, `startCrashReporting` sets Crashlytics custom keys `build_git_sha`, `build_number`, and `build_env` from dart-defines (`BUILD_GIT_SHA`, `BUILD_NUMBER`, `APP_ENV`). Missing SHA/number in non-prod builds report as `unknown` and never crash. **Prod release/profile** must pass both defines (compile-time `prodBuildStampGuard` in `app_config.dart`, runtime `ensureProdConfigReady()` for prod debug runs). Every repo Android binary build goes through `flutter_build_apk.sh` or `flutter_build_appbundle.sh`, which source `flutter_build_stamp.sh` → `build_stamp.sh` → `derive_android_version_code.sh` and pass `--build-number` plus the defines; with `flavors/prod.json` the shell fails when git or the stamp is unavailable. See [rca/issue-444-build-number-regression.md](rca/issue-444-build-number-regression.md).
 
 ### Tests
 
@@ -113,13 +113,15 @@ scripts/flutter_build_apk.sh --release --target-platform android-arm64 \
 
 Or from repo root: `./scripts/ship_release_apk_to_drive.sh` (uses the same wrapper). Debug emulator builds: `./maestro/scripts/build-install.sh` (also the wrapper).
 
-`BUILD_NUMBER` defaults to `git rev-list --count HEAD`, or `GITHUB_RUN_NUMBER` in CI. `BUILD_GIT_SHA` is `git rev-parse --short HEAD` (or `unknown` when git is unavailable). Keep **marketing version** (`version:` in `pubspec.yaml` / `--build-name`) on a sane semver for prod; use `--build-number` for every binary’s unique `versionCode`.
+`BUILD_NUMBER` / `versionCode` default to `max(300, committer_unix(HEAD) − 2020-01-01T00:00:00Z)` so squash merges cannot lower the code (issue #444). Override only with an explicit `BUILD_NUMBER` env var for local experiments. `BUILD_GIT_SHA` is `git rev-parse --short HEAD` (or `unknown` when git is unavailable). Keep **marketing version** (`version:` in `pubspec.yaml` / `--build-name`) on a sane semver for prod; wrappers always pass `--build-number` for the binary’s `versionCode`.
 
 **Prod (after owner fills `flavors/prod.json`, keystore, and `flutterfire configure`):**
 
 ```bash
 cd apps/mobile
 scripts/flutter_build_apk.sh --release --target-platform android-arm64 \
+  --dart-define-from-file=flavors/prod.json
+scripts/flutter_build_appbundle.sh --release \
   --dart-define-from-file=flavors/prod.json
 # iOS: not wired yet; pass the same stamp defines on flutter build ipa
 ```
