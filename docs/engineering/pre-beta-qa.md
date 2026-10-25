@@ -108,7 +108,7 @@ Use a **throwaway** Firebase account (not Maestro smoke user).
 ## 13. Regression smoke
 
 - [ ] `./scripts/premerge_check.sh` green on the merge commit (see [change-safety.md](change-safety.md)); optional `--e2e` for Maestro P0 when mobile flows changed.
-- [ ] Optional: `flutter build apk --release --dart-define-from-file=flavors/dev.json` (R8 shrink) installs and launches on a device.
+- [ ] Optional: `scripts/flutter_build_apk.sh --release --dart-define-from-file=flavors/dev.json` (R8 shrink) installs and launches on a device.
 - [ ] Optional: `flutter test integration_test/home_summary_load_test.dart` on emulator.
 - [ ] Owner onboarding + gallery + calendar still usable.
 

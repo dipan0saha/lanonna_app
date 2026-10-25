@@ -1,6 +1,7 @@
 """apps/mobile/scripts/flutter_build_apk.sh: every APK build carries the build stamp."""
 
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -21,10 +22,18 @@ def _run(tmp_path, *args, env_extra=None, copy_to=None):
     if copy_to is not None:
         scripts = copy_to / "apps" / "mobile" / "scripts"
         scripts.mkdir(parents=True)
-        for name in ("flutter_build_apk.sh", "build_stamp.sh"):
+        for name in (
+            "flutter_build_apk.sh",
+            "flutter_build_appbundle.sh",
+            "flutter_build_stamp.sh",
+            "build_stamp.sh",
+            "derive_android_version_code.sh",
+            "android_release_guard.sh",
+        ):
             shutil.copy2(_MOBILE / "scripts" / name, scripts / name)
         wrapper = scripts / "flutter_build_apk.sh"
-    env = {k: v for k, v in os.environ.items() if k not in ("BUILD_NUMBER", "GITHUB_RUN_NUMBER", "REQUIRE_BUILD_STAMP")}
+        shutil.copytree(_MOBILE / "flavors", copy_to / "apps" / "mobile" / "flavors")
+    env = {k: v for k, v in os.environ.items() if k not in ("BUILD_NUMBER", "ANDROID_RELEASE_BUILD")}
     env["PATH"] = f"{bin_dir}{os.pathsep}{env['PATH']}"
     env.update(env_extra or {})
     return subprocess.run(
@@ -45,15 +54,27 @@ def _head_sha():
     ).stdout.strip()
 
 
+def _expected_build_number():
+    ts = int(
+        subprocess.run(
+            ["git", "-C", str(_REPO), "log", "-1", "--format=%ct", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+    )
+    return str(ts - 1_577_836_800)
+
+
 def test_dev_build_gets_git_sha_and_build_number(tmp_path):
     result = _run(tmp_path, "--debug", "--dart-define-from-file=flavors/dev.json")
     assert result.returncode == 0, result.stderr
     args = result.stdout.splitlines()
     assert args[0] == "build" and args[1] == "apk"
     assert f"--dart-define=BUILD_GIT_SHA={_head_sha()}" in args
-    number = next(a for a in args if a.startswith("--dart-define=BUILD_NUMBER="))
-    assert number.split("=", 2)[2].isdigit()
-    assert f"--build-number={number.split('=', 2)[2]}" in args
+    expected = _expected_build_number()
+    assert f"--dart-define=BUILD_NUMBER={expected}" in args
+    assert f"--build-number={expected}" in args
     assert args[-2:] == ["--debug", "--dart-define-from-file=flavors/dev.json"]
 
 
@@ -85,24 +106,42 @@ def test_prod_build_without_git_fails_loudly(tmp_path):
     assert "build" not in result.stdout.splitlines()
 
 
-def test_repo_apk_scripts_use_the_wrapper():
-    scripts = [
-        _MOBILE / "maestro" / "scripts" / "build-install.sh",
-        _REPO / "scripts" / "ship_release_apk_to_drive.sh",
-        _REPO / "scripts" / "ship_release_apk_x86_64_to_drive.sh",
-    ]
+_DIRECT_BUILD = re.compile(r"flutter\s+build\s+(apk|appbundle)\b|gradlew\S*\s+(\S+\s+)*:?(app:)?(assemble|bundle)")
+
+
+def test_every_android_build_path_uses_a_wrapper():
+    """No tracked script, doc or config builds an APK/AAB without the stamp (and release guard)."""
+    wrappers = {
+        "apps/mobile/scripts/flutter_build_apk.sh",
+        "apps/mobile/scripts/flutter_build_appbundle.sh",
+        "apps/mobile/scripts/flutter_build_stamp.sh",
+    }
     tracked = subprocess.run(
-        ["git", "-C", str(_REPO), "ls-files", "*.sh"],
+        ["git", "-C", str(_REPO), "ls-files"],
         check=True,
         capture_output=True,
         text=True,
     ).stdout.split()
-    direct = [
-        path
-        for path in tracked
-        if path != "apps/mobile/scripts/flutter_build_apk.sh"
-        and "flutter build apk" in (_REPO / path).read_text()
-    ]
-    assert direct == [], f"build APKs via flutter_build_apk.sh: {direct}"
-    for script in scripts:
+    direct = []
+    for path in tracked:
+        if path in wrappers or path.startswith("scripts/tests/"):
+            continue
+        if Path(path).suffix not in {".sh", ".md", ".py", ".yaml", ".yml", ".toml", ".json", ".kts", ".gradle", ""}:
+            continue
+        file = _REPO / path
+        if not file.is_file():
+            continue
+        try:
+            text = file.read_text()
+        except UnicodeDecodeError:
+            continue
+        for number, line in enumerate(text.splitlines(), 1):
+            if _DIRECT_BUILD.search(line):
+                direct.append(f"{path}:{number}")
+    assert direct == [], f"build via scripts/flutter_build_apk.sh or scripts/flutter_build_appbundle.sh: {direct}"
+    for script in (
+        _MOBILE / "maestro" / "scripts" / "build-install.sh",
+        _REPO / "scripts" / "ship_release_apk_to_drive.sh",
+        _REPO / "scripts" / "ship_release_apk_x86_64_to_drive.sh",
+    ):
         assert "flutter_build_apk.sh" in script.read_text(), script

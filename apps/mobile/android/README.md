@@ -14,7 +14,7 @@ Prod release builds (`APP_ENV=prod` via `flavors/prod.json`) **require** `androi
 
 2. Copy `key.properties.example` to `key.properties` and set `storeFile` to the absolute path of the keystore.
 
-3. Build prod with `flutter build appbundle --dart-define-from-file=flavors/prod.json` after filling prod placeholders and Firebase config (see [mobile-prod-flavor-and-crashlytics.md](../../../docs/engineering/mobile-prod-flavor-and-crashlytics.md)).
+3. Build prod with `scripts/flutter_build_appbundle.sh --release --dart-define-from-file=flavors/prod.json` after filling prod placeholders and Firebase config (see [mobile-prod-flavor-and-crashlytics.md](../../../docs/engineering/mobile-prod-flavor-and-crashlytics.md)).
 
 ## App Link host
 

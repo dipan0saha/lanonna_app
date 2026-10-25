@@ -3,7 +3,7 @@
 | Field | Value |
 |-------|--------|
 | **Status** | Implemented (mobile); prod Firebase project still owner-owned |
-| **Last updated** | 2026-10-24 |
+| **Last updated** | 2026-10-25 |
 | **Related** | [pre-prod-consolidation.md](pre-prod-consolidation.md) §2 / §4, [platform-architecture.md](platform-architecture.md), [operations.md](operations.md), [open-gaps.md](open-gaps.md) H-01 |
 
 ## Goals
@@ -28,7 +28,7 @@
 
 ### Constraints
 
-- **Dev command unchanged:** `flutter build apk --release --target-platform android-arm64 --dart-define-from-file=flavors/dev.json` with existing `com.lanonna.lanonna` and dev `google-services.json`.
+- **Dev command unchanged:** `scripts/flutter_build_apk.sh --release --target-platform android-arm64 --dart-define-from-file=flavors/dev.json` with existing `com.lanonna.lanonna` and dev `google-services.json`.
 - **No prod GCP/Firebase yet** — prod `FirebaseOptions` stay a typed placeholder until `flutterfire configure` against `lanonna-prod` (or chosen project).
 - **Public repo** — no keystore, passwords, or owner emails in git.
 
@@ -79,7 +79,7 @@ Document keystore creation in [apps/mobile/android/README.md](../../apps/mobile/
 - **Wiring:** `configureAppErrorReporting()` chains `FlutterError.onError` and `PlatformDispatcher.instance.onError` once: it records to Crashlytics, then calls the handler that was already installed (framework default printing, or any earlier app/test handler). Installed only when collection is enabled.
 - **Collection:** `AppConfig.crashlyticsCollectionEnabled` — always true when `APP_ENV=prod`; in dev, `CRASHLYTICS_ENABLED` dart-define (`true`/`false`), default **true** when `dart.vm.product` (release) and unset.
 - **User id:** set/clear on auth state changes using Firebase **uid** only (never email or display name).
-- **Build stamp:** at startup, `startCrashReporting` sets Crashlytics custom keys `build_git_sha`, `build_number`, and `build_env` from dart-defines (`BUILD_GIT_SHA`, `BUILD_NUMBER`, `APP_ENV`). Missing SHA/number in non-prod builds report as `unknown` and never crash. **Prod release/profile** must pass both defines (compile-time `prodBuildStampGuard` in `app_config.dart`, runtime `ensureProdConfigReady()` for prod debug runs). Every repo APK build goes through `apps/mobile/scripts/flutter_build_apk.sh`, which runs `build_stamp.sh` and passes `--build-number` plus the defines; with `flavors/prod.json` it also fails in the shell when git or the build number is unavailable.
+- **Build stamp:** at startup, `startCrashReporting` sets Crashlytics custom keys `build_git_sha`, `build_number`, and `build_env` from dart-defines (`BUILD_GIT_SHA`, `BUILD_NUMBER`, `APP_ENV`). Missing SHA/number in non-prod builds report as `unknown` and never crash. **Prod release/profile** must pass both defines (compile-time `prodBuildStampGuard` in `app_config.dart`, runtime `ensureProdConfigReady()` for prod debug runs). Every repo Android binary build goes through `flutter_build_apk.sh` or `flutter_build_appbundle.sh`, which source `flutter_build_stamp.sh` → `build_stamp.sh` → `derive_android_version_code.sh` and pass `--build-number` plus the defines; with `flavors/prod.json` the shell fails when git or the stamp is unavailable. See [rca/issue-444-build-number-regression.md](rca/issue-444-build-number-regression.md).
 
 ### Tests
 
@@ -113,7 +113,9 @@ scripts/flutter_build_apk.sh --release --target-platform android-arm64 \
 
 Or from repo root: `./scripts/ship_release_apk_to_drive.sh` (uses the same wrapper). Debug emulator builds: `./maestro/scripts/build-install.sh` (also the wrapper).
 
-`BUILD_NUMBER` defaults to `git rev-list --count HEAD`, or `GITHUB_RUN_NUMBER` in CI. `BUILD_GIT_SHA` is `git rev-parse --short HEAD` (or `unknown` when git is unavailable). Keep **marketing version** (`version:` in `pubspec.yaml` / `--build-name`) on a sane semver for prod; use `--build-number` for every binary’s unique `versionCode`.
+`BUILD_NUMBER` / `versionCode` is the seconds from 2020-01-01T00:00:00Z to HEAD's committer time (`derive_android_version_code.sh`), so a squash merge on `main` gets a higher code than the branch it merged (issue #444). The same value goes to Gradle `versionCode` (`--build-number`), the `BUILD_NUMBER` dart-define and Crashlytics `build_number`. `BUILD_GIT_SHA` is `git rev-parse --short HEAD` (or `unknown` when git is unavailable). Keep the **marketing version** (`version:` in `pubspec.yaml`, Android `versionName`) on semver and bump it per Play release; wrappers always pass `--build-number`.
+
+**Play-bound builds are guarded.** Every AAB (any flavor) and every prod-flavor build (`APP_ENV=prod` from `--dart-define-from-file` or `--dart-define`) runs `android_release_guard.sh`: clean tree, HEAD on `origin/main` (freshly fetched), and a `versionCode` strictly greater than the highest `android-vc-<code>` tag on origin. A `BUILD_NUMBER` override is accepted only when it clears the same bar. After Play accepts an upload, record it from the same checkout with `scripts/record_android_release.sh <versionCode>` (creates and pushes the tag). Dev APKs are not guarded: branch builds can carry a higher code than an older `main` commit, so to go back to an older debug build use `adb install -r -d` (debuggable only) or uninstall first.
 
 **Prod (after owner fills `flavors/prod.json`, keystore, and `flutterfire configure`):**
 
@@ -121,9 +123,11 @@ Or from repo root: `./scripts/ship_release_apk_to_drive.sh` (uses the same wrapp
 cd apps/mobile
 scripts/flutter_build_apk.sh --release --target-platform android-arm64 \
   --dart-define-from-file=flavors/prod.json
+scripts/flutter_build_appbundle.sh --release \
+  --dart-define-from-file=flavors/prod.json
 # iOS: not wired yet; pass the same stamp defines on flutter build ipa
 ```
 
-Prod release fails at compile time or at `ensureProdConfigReady()` if `BUILD_GIT_SHA` or `BUILD_NUMBER` is missing.
+Prod release fails in the wrapper (release guard), at compile time, or at `ensureProdConfigReady()` if `BUILD_GIT_SHA` or `BUILD_NUMBER` is missing.
 
 A prod release APK/AAB fails before any task runs (Gradle task-graph check, so a prod debug `flutter run` still works) without `android/key.properties`, or when `android/app/google-services.json` is missing or still points at `lanonna-dev`. With both in place it still fails at the Dart compile guard until the `__PROD_` placeholders are replaced.

@@ -2,7 +2,7 @@
 
 ## Summary
 
-Dev **release** builds (`flutter build apk --release --dart-define-from-file=flavors/dev.json`) used the Firebase **Play Integrity** App Check provider because provider selection followed `kDebugMode`, not `APP_ENV`. Sideloaded dev APKs cannot pass Play Integrity attestation. The Firebase SDK returned **403 App attestation failed**, cached nothing, and **`ApiClient`** awaited App Check on every authorized request — ~**0.9 s** per cold launch on emulator (measured main @ b0f7b3e).
+Dev **release** builds (`scripts/flutter_build_apk.sh --release --dart-define-from-file=flavors/dev.json`) used the Firebase **Play Integrity** App Check provider because provider selection followed `kDebugMode`, not `APP_ENV`. Sideloaded dev APKs cannot pass Play Integrity attestation. The Firebase SDK returned **403 App attestation failed**, cached nothing, and **`ApiClient`** awaited App Check on every authorized request — ~**0.9 s** per cold launch on emulator (measured main @ b0f7b3e).
 
 GitHub: [#366](https://github.com/dipan0saha/lanonna_app/issues/366)
 
